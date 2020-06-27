@@ -91,8 +91,8 @@ namespace MMX.Engine
 
             MMXFloat minX = minCameraPos.X + w2;
             MMXFloat minY = minCameraPos.Y + h2;
-            MMXFloat maxX = Math.Min(maxCameraPos.X, world.Width) - w2;
-            MMXFloat maxY = Math.Min(maxCameraPos.Y, world.Height) - h2;
+            MMXFloat maxX = MMXFloat.Min(maxCameraPos.X, world.Width) - w2;
+            MMXFloat maxY = MMXFloat.Min(maxCameraPos.Y, world.Height) - h2;
 
             if (x < minX)
                 x = minX;

@@ -657,22 +657,22 @@ namespace MMX.Engine
 
         public static Interval MakeOpenInterval(MMXFloat v1, MMXFloat v2)
         {
-            return new Interval(Math.Min(v1, v2), false, Math.Max(v1, v2), false);
+            return new Interval(MMXFloat.Min(v1, v2), false, MMXFloat.Max(v1, v2), false);
         }
 
         public static Interval MakeClosedInterval(MMXFloat v1, MMXFloat v2)
         {
-            return new Interval(Math.Min(v1, v2), true, Math.Max(v1, v2), true);
+            return new Interval(MMXFloat.Min(v1, v2), true, MMXFloat.Max(v1, v2), true);
         }
 
         public static Interval MakeSemiOpenLeftInterval(MMXFloat v1, MMXFloat v2)
         {
-            return new Interval(Math.Min(v1, v2), false, Math.Max(v1, v2), true);
+            return new Interval(MMXFloat.Min(v1, v2), false, MMXFloat.Max(v1, v2), true);
         }
 
         public static Interval MakeSemiOpenRightInterval(MMXFloat v1, MMXFloat v2)
         {
-            return new Interval(Math.Min(v1, v2), true, Math.Max(v1, v2), false);
+            return new Interval(MMXFloat.Min(v1, v2), true, MMXFloat.Max(v1, v2), false);
         }
 
         public override string ToString()
@@ -833,10 +833,10 @@ namespace MMX.Engine
             if (Compare(v) != 0)
                 return false;
 
-            MMXFloat mX = Math.Min(start.X, end.X);
-            MMXFloat MX = Math.Max(start.X, end.X);
-            MMXFloat mY = Math.Min(start.Y, end.Y);
-            MMXFloat MY = Math.Max(start.Y, end.Y);
+            MMXFloat mX = MMXFloat.Min(start.X, end.X);
+            MMXFloat MX = MMXFloat.Max(start.X, end.X);
+            MMXFloat mY = MMXFloat.Min(start.Y, end.Y);
+            MMXFloat MY = MMXFloat.Max(start.Y, end.Y);
 
             return mX <= v.X && v.X <= MX && mY <= v.Y && v.Y <= MY;
         }
@@ -1393,7 +1393,7 @@ namespace MMX.Engine
         {
             get
             {
-                return Math.Min(origin.X + mins.X, origin.X + maxs.X);
+                return MMXFloat.Min(origin.X + mins.X, origin.X + maxs.X);
             }
         }
 
@@ -1401,7 +1401,7 @@ namespace MMX.Engine
         {
             get
             {
-                return Math.Min(origin.Y + mins.Y, origin.Y + maxs.Y);
+                return MMXFloat.Min(origin.Y + mins.Y, origin.Y + maxs.Y);
             }
         }
 
@@ -1409,7 +1409,7 @@ namespace MMX.Engine
         {
             get
             {
-                return Math.Max(origin.X + mins.X, origin.X + maxs.X);
+                return MMXFloat.Max(origin.X + mins.X, origin.X + maxs.X);
             }
         }
 
@@ -1417,7 +1417,7 @@ namespace MMX.Engine
         {
             get
             {
-                return Math.Max(origin.Y + mins.Y, origin.Y + maxs.Y);
+                return MMXFloat.Max(origin.Y + mins.Y, origin.Y + maxs.Y);
             }
         }
 
@@ -1919,11 +1919,11 @@ namespace MMX.Engine
             MMXVector m2 = box2.origin + box2.mins;
             MMXVector M2 = box2.origin + box2.maxs;
 
-            MMXFloat minsX = Math.Min(m1.X, m2.X);
-            MMXFloat maxsX = Math.Max(M1.X, M2.X);
+            MMXFloat minsX = MMXFloat.Min(m1.X, m2.X);
+            MMXFloat maxsX = MMXFloat.Max(M1.X, M2.X);
 
-            MMXFloat minsY = Math.Min(m1.Y, m2.Y);
-            MMXFloat maxsY = Math.Max(M1.Y, M2.Y);
+            MMXFloat minsY = MMXFloat.Min(m1.Y, m2.Y);
+            MMXFloat maxsY = MMXFloat.Max(M1.Y, M2.Y);
 
             return new MMXBox(new MMXVector(minsX, minsY), MMXVector.NULL_VECTOR, new MMXVector(maxsX - minsX, maxsY - minsY));
         }
@@ -1942,14 +1942,14 @@ namespace MMX.Engine
             MMXVector m2 = box2.origin + box2.mins;
             MMXVector M2 = box2.origin + box2.maxs;
 
-            MMXFloat minsX = Math.Max(m1.X, m2.X);
-            MMXFloat maxsX = Math.Min(M1.X, M2.X);
+            MMXFloat minsX = MMXFloat.Max(m1.X, m2.X);
+            MMXFloat maxsX = MMXFloat.Min(M1.X, M2.X);
 
             if (maxsX < minsX)
                 return EMPTY_BOX;
 
-            MMXFloat minsY = Math.Max(m1.Y, m2.Y);
-            MMXFloat maxsY = Math.Min(M1.Y, M2.Y);
+            MMXFloat minsY = MMXFloat.Max(m1.Y, m2.Y);
+            MMXFloat maxsY = MMXFloat.Min(M1.Y, M2.Y);
 
             if (maxsY < minsY)
                 return EMPTY_BOX;
@@ -2339,7 +2339,7 @@ namespace MMX.Engine
         {
             get
             {
-                return new MMXBox(Math.Min(origin.X, origin.X + hCathetus), Math.Min(origin.Y, origin.Y + vCathetus), HCathetus, VCathetus);
+                return new MMXBox(MMXFloat.Min(origin.X, origin.X + hCathetus), MMXFloat.Min(origin.Y, origin.Y + vCathetus), HCathetus, VCathetus);
             }
         }
 
@@ -2347,7 +2347,7 @@ namespace MMX.Engine
         {
             get
             {
-                return Math.Min(origin.X, origin.X + hCathetus);
+                return MMXFloat.Min(origin.X, origin.X + hCathetus);
             }
         }
 
@@ -2355,7 +2355,7 @@ namespace MMX.Engine
         {
             get
             {
-                return Math.Min(origin.Y, origin.Y + vCathetus);
+                return MMXFloat.Min(origin.Y, origin.Y + vCathetus);
             }
         }
 
@@ -2363,7 +2363,7 @@ namespace MMX.Engine
         {
             get
             {
-                return Math.Max(origin.X, origin.X + hCathetus);
+                return MMXFloat.Max(origin.X, origin.X + hCathetus);
             }
         }
 
@@ -2371,7 +2371,7 @@ namespace MMX.Engine
         {
             get
             {
-                return Math.Max(origin.Y, origin.Y + vCathetus);
+                return MMXFloat.Max(origin.Y, origin.Y + vCathetus);
             }
         }
 

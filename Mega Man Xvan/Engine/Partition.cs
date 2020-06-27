@@ -287,26 +287,26 @@ namespace MMX.Engine
             MMXVector mins1 = box.Mins + origin1;
             MMXVector maxs1 = box.Maxs + origin1;
 
-            int startCol = (int) ((Math.Min(mins0.X, mins1.X) - mins.X) / cellWidth); // Calcula a coluna da primeira célula para qual deverá ser verificada
+            int startCol = (int) ((MMXFloat.Min(mins0.X, mins1.X) - mins.X) / cellWidth); // Calcula a coluna da primeira célula para qual deverá ser verificada
             if (startCol < 0)
                 startCol = 0;
             if (startCol >= cols)
                 startCol = cols - 1;
 
-            int startRow = (int) ((Math.Min(mins0.Y, mins1.Y) - mins.Y) / cellHeight); // Calcula a linha da primeira célula para a qual deverá ser verificada
+            int startRow = (int) ((MMXFloat.Min(mins0.Y, mins1.Y) - mins.Y) / cellHeight); // Calcula a linha da primeira célula para a qual deverá ser verificada
             if (startRow < 0)
                 startRow = 0;
             if (startRow >= rows)
                 startRow = rows - 1;
 
-            int endCol = (int) ((Math.Max(maxs0.X, maxs1.X) - mins.X - 1) / cellWidth); // Calcula a coluna da útlima célula para qual deverá ser verificada
+            int endCol = (int) ((MMXFloat.Max(maxs0.X, maxs1.X) - mins.X - 1) / cellWidth); // Calcula a coluna da útlima célula para qual deverá ser verificada
 
             if (endCol < 0)
                 endCol = 0;
             if (endCol >= cols)
                 endCol = cols - 1;
 
-            int endRow = (int) ((Math.Max(maxs0.Y, maxs1.Y) - mins.Y - 1) / cellHeight); // Calcula a linha da última célula para qual deverá ser verificada
+            int endRow = (int) ((MMXFloat.Max(maxs0.Y, maxs1.Y) - mins.Y - 1) / cellHeight); // Calcula a linha da última célula para qual deverá ser verificada
 
             if (endRow < 0)
                 endRow = 0;

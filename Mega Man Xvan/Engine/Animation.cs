@@ -1,14 +1,6 @@
 ﻿using SharpDX;
 using SharpDX.Direct2D1;
-using SharpDX.Mathematics.Interop;
-using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
-using static MMX.Engine.Consts;
-
-using MatrixTransform = System.Windows.Media.MatrixTransform;
 
 namespace MMX.Engine
 {
@@ -277,7 +269,7 @@ namespace MMX.Engine
         public void OnFrame()
         {
             // Se a animação não está em execução ou não ouver pelo menos dois quadros na animação então não é necessário computar o próximo quadro da animação
-            if (!animating || sequence.Count == 0)
+            if (!animating || animationEndFired || sequence.Count == 0)
                 return;
 
             animationEvents[currentFrameSequenceIndex]?.Invoke(this, currentFrameSequenceIndex);
