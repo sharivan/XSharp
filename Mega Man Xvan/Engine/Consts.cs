@@ -61,8 +61,8 @@ namespace MMX.Engine
         public static readonly FixedSingle GRAVITY = 0.25;
         public static readonly FixedSingle TERMINAL_DOWNWARD_SPEED = 5.75;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_JUMP = new FixedSingle((1363 + 0 * 64) / 256.0);
-        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = new FixedSingle((1417 + 0 * 64) / 256.0);
-        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2 = new FixedSingle((1505 + 0 * 64) / 256.0);
+        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = new FixedSingle((1417 + 1 * 64) / 256.0);
+        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2 = new FixedSingle((1505 + 1 * 64) / 256.0);
         public static readonly FixedSingle LADDER_CLIMB_SPEED = new FixedSingle(376 / 256.0);
         public static readonly FixedSingle WALL_SLIDE_SPEED = 2;
         public static readonly FixedSingle PRE_WALKING_SPEED = 1;

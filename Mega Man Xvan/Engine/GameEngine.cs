@@ -30,21 +30,21 @@ namespace MMX.Engine
         private World world;
         internal Partition<Entity> partition;
         private Player player;
-        internal long engineTime;
-        internal Random random;
-        internal List<Entity> entities;
+        private long engineTime;
+        private Random random;
+        private List<Entity> entities;
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
-        internal List<RespawnEntry> scheduleRespawns;
-        internal int currentLevel;
-        internal int enemyCount;
-        internal bool changeLevel;
-        internal int levelToChange;
-        internal bool gameOver;
-        internal string currentStageMusic;
-        internal bool loadingLevel;
-        internal bool paused;
-        internal bool noCameraConstraints;
+        private List<RespawnEntry> scheduleRespawns;
+        private int currentLevel;
+        //private int enemyCount;
+        private bool changeLevel;
+        private int levelToChange;
+        private bool gameOver;
+        private string currentStageMusic;
+        private bool loadingLevel;
+        private bool paused;
+        private bool noCameraConstraints;
 
         private int currentSaveSlot;
 
@@ -80,7 +80,6 @@ namespace MMX.Engine
         private bool recording;
         private bool playbacking;
 
-        private bool wasPressingPause;
         private bool wasPressingToggleFrameAdvance;
         private bool wasPressingNextFrame;
         private bool wasPressingSaveState;
@@ -229,6 +228,22 @@ namespace MMX.Engine
             get
             {
                 return noCameraConstraints ? world.BoundingBox.RightBottom : cameraConstraintsBox.RightBottom;
+            }
+        }
+
+        public bool Paused
+        {
+            get
+            {
+                return paused;
+            }
+
+            set
+            {
+                if (value && !paused)
+                    PauseGame();
+                else if (!value && paused)
+                    ContinueGame();
             }
         }
 
@@ -576,19 +591,20 @@ namespace MMX.Engine
                 if (state.IsPressed(Key.X))
                     keys |= Keys.DASH;
 
+                if (state.IsPressed(Key.D))
+                    keys |= Keys.WEAPON;
+
+                if (state.IsPressed(Key.L))
+                    keys |= Keys.LWS;
+
+                if (state.IsPressed(Key.R))
+                    keys |= Keys.RWS;
+
                 if (state.IsPressed(Key.Return))
-                {
-                    if (!wasPressingPause)
-                    {
-                        wasPressingPause = true;
-                        if (!paused)
-                            PauseGame();
-                        else
-                            ContinueGame();
-                    }
-                }
-                else
-                    wasPressingPause = false;
+                    keys |= Keys.START;
+
+                if (state.IsPressed(Key.Escape))
+                    keys |= Keys.SELECT;
 
                 if (state.IsPressed(Key.Backslash) && state.IsPressed(Key.LeftControl))
                 {
@@ -870,18 +886,7 @@ namespace MMX.Engine
                                 keys |= Keys.DASH;
 
                             if (buttons[7])
-                            {
-                                if (!wasPressingPause)
-                                {
-                                    wasPressingPause = true;
-                                    if (!paused)
-                                        PauseGame();
-                                    else
-                                        ContinueGame();
-                                }
-                            }
-                            else
-                                wasPressingPause = false;
+                                keys |= Keys.START;
                         }
 
                         int[] pov = joyState.PointOfViewControllers;
@@ -935,7 +940,7 @@ namespace MMX.Engine
 
             engineTime++;
 
-            if (!paused && !loadingLevel)
+            if (!loadingLevel)
             {
                 int count = scheduleRespawns.Count;
 
@@ -972,25 +977,30 @@ namespace MMX.Engine
                 if (player != null)
                     player.PushKeys(keys);
 
-                foreach (Entity obj in entities)
+                if (paused)
+                    player.OnFrame();
+                else
                 {
-                    if (changeLevel)
-                        break;
-
-                    if (!obj.MarkedToRemove)
-                        obj.OnFrame();
-                }
-
-                if (removedEntities.Count > 0)
-                {
-                    foreach (Entity removed in removedEntities)
+                    foreach (Entity obj in entities)
                     {
-                        entities.Remove(removed);
-                        partition.Remove(removed);
+                        if (changeLevel)
+                            break;
+
+                        if (!obj.MarkedToRemove)
+                            obj.OnFrame();
                     }
 
-                    removedEntities.Clear();
-                }  
+                    if (removedEntities.Count > 0)
+                    {
+                        foreach (Entity removed in removedEntities)
+                        {
+                            entities.Remove(removed);
+                            partition.Remove(removed);
+                        }
+
+                        removedEntities.Clear();
+                    }
+                }
             }
 
             world.OnFrame();

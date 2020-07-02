@@ -1661,6 +1661,7 @@ namespace MMX.Engine
         {
             return MoveUntilIntersect(box, dir, null, maxDistance, maskSize, ignore, side);
         }
+
         public Box MoveUntilIntersect(Box box, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER)
         {
             return MoveUntilIntersect(box, dir, placements, QUERY_MAX_DISTANCE, MASK_SIZE, ignore, side);
@@ -1685,11 +1686,11 @@ namespace MMX.Engine
         public Box MoveUntilIntersect(Box box, Vector dir, List<CollisionPlacement> placements, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER)
         {
             Vector deltaDir = GetStepVector(dir);
-            FixedSingle step = FixedSingle.Max(deltaDir.X.Abs, deltaDir.Y.Abs);
+            FixedSingle step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs; // FixedSingle.Max(deltaDir.X.Abs, deltaDir.Y.Abs);
             Box lastBox = box;
             for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += step, box += deltaDir)
             {
-                if (GetCollisionFlags(box /*| lastBox*/, placements, ignore, true, side) != CollisionFlags.NONE)
+                if (GetCollisionFlags(box, placements, ignore, true, side) != CollisionFlags.NONE)
                     break;
 
                 lastBox = box;
@@ -1709,12 +1710,12 @@ namespace MMX.Engine
             FixedSingle x = dir.X;
             FixedSingle xm = x.Abs;
             FixedSingle y = dir.Y;
-            FixedSingle ym = y.Abs;
+            //FixedSingle ym = y.Abs;
 
-            if (xm > ym)
-                return new Vector(y != 0 ? x / ym * STEP_SIZE : FixedSingle.ZERO, y.Signal * STEP_SIZE);
+            //if (xm > ym)
+            //    return new Vector(x / ym * STEP_SIZE, y.Signal * STEP_SIZE);
 
-            return new Vector(x.Signal * STEP_SIZE, x != 0 ? y / xm * STEP_SIZE : FixedSingle.ZERO);
+            return new Vector(x.Signal * STEP_SIZE, y / xm * STEP_SIZE);
         }
 
         public CollisionFlags GetTouchingFlags(Box collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)

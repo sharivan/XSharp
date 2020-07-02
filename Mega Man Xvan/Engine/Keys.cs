@@ -15,6 +15,11 @@ namespace MMX.Engine
         DOWN = 8,
         SHOT = 16,
         JUMP = 32,
-        DASH = 64
+        DASH = 64,
+        WEAPON = 128,
+        LWS = 256,
+        RWS = 512,
+        START = 1024,
+        SELECT = 2048
     }
 }

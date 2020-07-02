@@ -301,12 +301,14 @@ namespace MMX.Engine
                     wasLandedOnSlope = true;
                     lastLandedSlope = landedSlope;
                 }
-                else if (world.GetCollisionFlags(downCollider, out RightTriangle slope, CollisionFlags.NONE, true, CollisionSide.FLOOR).HasFlag(CollisionFlags.SLOPE))
+                /*else if (world.GetCollisionFlags(downCollider, out RightTriangle slope, CollisionFlags.NONE, true, CollisionSide.FLOOR).HasFlag(CollisionFlags.SLOPE))
                     ClipFromSlope(slope);
                 else if (wasLandedOnSlope && downMaskFlags == CollisionFlags.NONE)
+                {
                     ClipFromSlope(lastLandedSlope);
+                }
                 else
-                    wasLandedOnSlope = false;
+                    wasLandedOnSlope = false;*/
 
                 //upMaskFlags = world.GetCollisionFlags(upCollider, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
                 //leftMaskFlags = world.GetCollisionFlags(leftCollider, leftCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.LEFT_WALL);

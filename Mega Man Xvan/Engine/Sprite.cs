@@ -693,13 +693,13 @@ namespace MMX.Engine
 
             collider.Translate(dx);
 
-            if (wasLanded)
-            {
+            //if (wasLanded)
+            //{
                 if (collider.Landed)
                     collider.AdjustOnTheFloor((TILE_SIZE / 2) * QUERY_MAX_DISTANCE);
-                else if (gravity)
+                else if (gravity && wasLanded)
                     collider.TryMoveContactSlope((TILE_SIZE / 2) * QUERY_MAX_DISTANCE);
-            }
+            //}
 
             Box union = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
             CollisionFlags collisionFlags = engine.GetCollisionFlags(union, CollisionFlags.NONE, true, deltaX > 0 ? CollisionSide.RIGHT_WALL : deltaX < 0 ? CollisionSide.LEFT_WALL : CollisionSide.NONE);
@@ -781,6 +781,14 @@ namespace MMX.Engine
                             MoveAlongSlope(collider, lastSlope, deltaX);
                         }
                     }
+                }
+                else if (!wasLanded)
+                {
+                    collider.Box = lastBox;
+                    if (deltaX > 0)
+                        collider.MoveContactSolid(Vector.RIGHT_VECTOR, deltaX.Ceil(), Direction.RIGHT, CollisionFlags.NONE);
+                    else
+                        collider.MoveContactSolid(Vector.LEFT_VECTOR, (-deltaX).Ceil(), Direction.LEFT, CollisionFlags.NONE);
                 }
             }
             else
@@ -1070,13 +1078,16 @@ namespace MMX.Engine
         protected override void Think()
         {
             // Se ele não for estático, processa as interações físicas deste sprite com os outros elementos do jogo
-            if (!isStatic)
+            if (!isStatic && !engine.Paused)
                 DoPhysics();
         }
 
         protected override void PostThink()
         {
             base.PostThink();
+
+            if (engine.Paused)
+                return;
 
             // Se ele estiver invencível, continue gerando o efeito de pisca pisca
             if (invincible && engine.GetEngineTime() >= invincibleExpires)
