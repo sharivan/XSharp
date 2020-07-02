@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MMX.Geometry;
+using MMX.Math;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,26 +13,28 @@ namespace MMX.Engine
     public class BoxCollider
     {
         private World world;
-        private MMXBox box;
-        private MMXFloat maskSize;
-
-        private MMXFloat vClipLeft;
-        private MMXFloat vClipRight;
+        private Box box;
+        private FixedSingle maskSize;
 
         private CollisionFlags leftMaskFlags;
         private CollisionFlags upMaskFlags;
         private CollisionFlags rightMaskFlags;
         private CollisionFlags downMaskFlags;
 
+        private Box leftCollider;
+        private Box upCollider;
+        private Box rightCollider;
+        private Box downCollider;
+
         private List<CollisionPlacement> leftCollisionPlacements;
         private List<CollisionPlacement> upCollisionPlacements;
         private List<CollisionPlacement> rightCollisionPlacements;
         private List<CollisionPlacement> downCollisionPlacements;
 
-        private MMXRightTriangle landedSlope;
+        private RightTriangle landedSlope;
 
         private bool wasLandedOnSlope;
-        private MMXRightTriangle lastLandedSlope;
+        private RightTriangle lastLandedSlope;
 
         private bool leftMaskComputed;
         private bool upMaskComputed;
@@ -46,11 +50,11 @@ namespace MMX.Engine
             set
             {
                 world = value;
-                UpdateFlags();
+                UpdateColliders();
             }
         }
 
-        public MMXBox Box
+        public Box Box
         {
             get
             {
@@ -60,11 +64,11 @@ namespace MMX.Engine
             set
             {
                 box = value;
-                UpdateFlags();
+                UpdateColliders();
             }
         }
 
-        public MMXFloat MaskSize
+        public FixedSingle MaskSize
         {
             get
             {
@@ -74,7 +78,7 @@ namespace MMX.Engine
             set
             {
                 maskSize = value;
-                UpdateFlags();
+                UpdateColliders();
             }
         }
 
@@ -86,6 +90,38 @@ namespace MMX.Engine
             }
         }
 
+        public Box LeftCollider
+        {
+            get
+            {
+                return leftCollider;
+            }
+        }
+
+        public Box UpCollider
+        {
+            get
+            {
+                return upCollider;
+            }
+        }
+
+        public Box RightCollider
+        {
+            get
+            {
+                return rightCollider;
+            }
+        }
+
+        public Box DownCollider
+        {
+            get
+            {
+                return downCollider;
+            }
+        }
+
         public CollisionFlags LeftMaskFlags
         {
             get
@@ -93,7 +129,7 @@ namespace MMX.Engine
                 if (!leftMaskComputed)
                 {
                     leftCollisionPlacements.Clear();
-                    leftMaskFlags = world.GetCollisionFlags(box.ClipBottom(vClipLeft) + maskSize * MMXVector.LEFT_VECTOR, leftCollisionPlacements, CollisionFlags.NONE,true, CollisionSide.LEFT_WALL);
+                    leftMaskFlags = world.GetCollisionFlags(leftCollider, leftCollisionPlacements, CollisionFlags.NONE,true, CollisionSide.LEFT_WALL);
                     leftMaskComputed = true;
                 }
 
@@ -116,7 +152,7 @@ namespace MMX.Engine
                 if (!upMaskComputed)
                 {
                     upCollisionPlacements.Clear();
-                    upMaskFlags = world.GetCollisionFlags(box + maskSize * MMXVector.UP_VECTOR, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                    upMaskFlags = world.GetCollisionFlags(upCollider, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
                     upMaskComputed = true;
                 }
 
@@ -139,7 +175,7 @@ namespace MMX.Engine
                 if (!rightMaskComputed)
                 {
                     rightCollisionPlacements.Clear();
-                    rightMaskFlags = world.GetCollisionFlags(box.ClipBottom(vClipRight) + maskSize * MMXVector.RIGHT_VECTOR, rightCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.RIGHT_WALL);
+                    rightMaskFlags = world.GetCollisionFlags(rightCollider, rightCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.RIGHT_WALL);
                     rightMaskComputed = true;
                 }
 
@@ -187,7 +223,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXRightTriangle LandedSlope
+        public RightTriangle LandedSlope
         {
             get
             {
@@ -195,22 +231,22 @@ namespace MMX.Engine
             }
         }
 
-        public BoxCollider(MMXBox box) :
+        public BoxCollider(Box box) :
             this(null, box, MASK_SIZE)
         {
         }
 
-        public BoxCollider(MMXBox box, MMXFloat maskSize) :
+        public BoxCollider(Box box, FixedSingle maskSize) :
             this(null, box, maskSize)
         {
         }
 
-        public BoxCollider(World world, MMXBox box) :
+        public BoxCollider(World world, Box box) :
             this(world, box, MASK_SIZE)
         {
         }
 
-        public BoxCollider(World world, MMXBox box, MMXFloat maskSize)
+        public BoxCollider(World world, Box box, FixedSingle maskSize)
         {
             this.world = world;
             this.box = box;
@@ -221,24 +257,28 @@ namespace MMX.Engine
             rightCollisionPlacements = new List<CollisionPlacement>();
             downCollisionPlacements = new List<CollisionPlacement>();
 
+            UpdateColliders();
+        }
+
+        private void UpdateColliders()
+        {
+            leftCollider = new Box(box.LeftTop, -maskSize, box.Height);
+            upCollider = new Box(box.LeftTop, box.Width, -maskSize);
+            rightCollider = new Box(box.RightTop, maskSize, box.Height);
+            downCollider = new Box(box.LeftBottom, box.Width, maskSize);
+
             UpdateFlags();
         }
 
-        private void ClipFromSlope(MMXRightTriangle slope)
+        private void ClipFromSlope(RightTriangle slope)
         {
-            MMXFloat h = slope.HCathetusVector.X;
-            MMXFloat vclip = Math.Abs(slope.VCathetusVector.Y * (box.Width + maskSize) / h);
+            FixedSingle h = slope.HCathetusVector.X;
+            FixedSingle vclip = (FixedSingle) ((FixedDouble) slope.VCathetusVector.Y * (box.Width + maskSize) / h).Abs;
 
             if (h > 0)
-            {
-                vClipLeft = vclip;
-                vClipRight = 0;
-            }
+                leftCollider = leftCollider.ClipBottom(vclip);
             else
-            {
-                vClipLeft = 0;
-                vClipRight = vclip;
-            }
+                rightCollider = rightCollider.ClipBottom(vclip);
         }
 
         private void UpdateFlags()
@@ -261,20 +301,16 @@ namespace MMX.Engine
                     wasLandedOnSlope = true;
                     lastLandedSlope = landedSlope;
                 }
-                else if (world.GetCollisionFlags(box, out MMXRightTriangle slope, CollisionFlags.NONE, true, CollisionSide.FLOOR).HasFlag(CollisionFlags.SLOPE))
+                else if (world.GetCollisionFlags(downCollider, out RightTriangle slope, CollisionFlags.NONE, true, CollisionSide.FLOOR).HasFlag(CollisionFlags.SLOPE))
                     ClipFromSlope(slope);
-                else if (wasLandedOnSlope)
+                else if (wasLandedOnSlope && downMaskFlags == CollisionFlags.NONE)
                     ClipFromSlope(lastLandedSlope);
                 else
-                {
-                    vClipLeft = 0;
-                    vClipRight = 0;
                     wasLandedOnSlope = false;
-                }
 
-                upMaskFlags = world.GetCollisionFlags(box + maskSize * MMXVector.UP_VECTOR, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
-                leftMaskFlags = world.GetCollisionFlags(box.ClipBottom(vClipLeft) + maskSize * MMXVector.LEFT_VECTOR, leftCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.LEFT_WALL);
-                rightMaskFlags = world.GetCollisionFlags(box.ClipBottom(vClipRight) + maskSize * MMXVector.RIGHT_VECTOR, rightCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.RIGHT_WALL);
+                //upMaskFlags = world.GetCollisionFlags(upCollider, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                //leftMaskFlags = world.GetCollisionFlags(leftCollider, leftCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.LEFT_WALL);
+                //rightMaskFlags = world.GetCollisionFlags(rightCollider, rightCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.RIGHT_WALL);
             }
             else
             {
@@ -290,46 +326,40 @@ namespace MMX.Engine
             }
         }
 
-        public void Translate(MMXVector delta)
+        public void Translate(Vector delta)
         {
             box += delta;
-            UpdateFlags();
+            UpdateColliders();
         }
 
-        public void MoveContactSolid(MMXVector dir, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
+        public void MoveContactSolid(Vector dir, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
         {
             MoveContactSolid(dir, QUERY_MAX_DISTANCE, masks, ignore);
         }
 
-        public void MoveContactSolid(MMXVector dir, MMXFloat maxDistance, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
+        public void MoveContactSolid(Vector dir, FixedSingle maxDistance, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            MMXVector delta1;
-            MMXVector delta2;
-            MMXBox newBox;
+            Vector delta1;
+            Vector delta2;
+            Box newBox;
 
             if (dir.X > 0)
             {
                 if (masks.HasFlag(Direction.RIGHT))
-                {
-                    newBox = world.MoveUntilIntersect(box.ClipBottom(vClipRight) + maskSize * MMXVector.RIGHT_VECTOR, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER);
-                    newBox -= maskSize * MMXVector.RIGHT_VECTOR;
-                }
+                    newBox = world.MoveUntilIntersect(rightCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER, CollisionSide.RIGHT_WALL);
                 else
-                    newBox = box + dir;
+                    newBox = rightCollider + dir;
 
-                delta1 = newBox.Origin - box.Origin;
+                delta1 = newBox.Origin - rightCollider.Origin;
             }
             else if (dir.X < 0)
             {
                 if (masks.HasFlag(Direction.LEFT))
-                {
-                    newBox = world.MoveUntilIntersect(box.ClipBottom(vClipLeft) + maskSize * MMXVector.LEFT_VECTOR, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER);
-                    newBox -= maskSize * MMXVector.LEFT_VECTOR;
-                }
+                    newBox = world.MoveUntilIntersect(leftCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER, CollisionSide.LEFT_WALL);
                 else
-                    newBox = box + dir;
+                    newBox = leftCollider + dir;
 
-                delta1 = newBox.Origin - box.Origin;
+                delta1 = newBox.Origin - leftCollider.Origin;
             }
             else
                 delta1 = dir;
@@ -337,34 +367,28 @@ namespace MMX.Engine
             if (dir.Y > 0)
             {
                 if (masks.HasFlag(Direction.DOWN))
-                {
-                    newBox = world.MoveUntilIntersect(box + maskSize * MMXVector.DOWN_VECTOR, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER);
-                    newBox -= maskSize * MMXVector.DOWN_VECTOR;
-                }
+                    newBox = world.MoveUntilIntersect(downCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER, CollisionSide.FLOOR);
                 else
-                    newBox = box + dir;
+                    newBox = downCollider + dir;
 
-                delta2 = newBox.Origin - box.Origin;
+                delta2 = newBox.Origin - downCollider.Origin;
             }
             else if (dir.Y < 0)
             {
                 if (masks.HasFlag(Direction.UP))
-                {
-                    newBox = world.MoveUntilIntersect(box + maskSize * MMXVector.UP_VECTOR, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER);
-                    newBox -= maskSize * MMXVector.UP_VECTOR;
-                }
+                    newBox = world.MoveUntilIntersect(upCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER, CollisionSide.CEIL);
                 else
-                    newBox = box + dir;
+                    newBox = upCollider + dir;
 
-                delta2 = newBox.Origin - box.Origin;
+                delta2 = newBox.Origin - upCollider.Origin;
             }
             else
                 delta2 = delta1;
 
-            MMXVector delta = delta1.Length < delta2.Length ? delta1 : delta2;
+            Vector delta = delta1.Length < delta2.Length ? delta1 : delta2;
 
             box += delta;
-            UpdateFlags();
+            UpdateColliders();
         }
 
         public void MoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
@@ -372,27 +396,27 @@ namespace MMX.Engine
             MoveContactFloor(QUERY_MAX_DISTANCE, ignore);
         }
 
-        public void MoveContactFloor(MMXFloat maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
+        public void MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             box = world.MoveContactFloor(box, maxDistance, maskSize, ignore);
-            UpdateFlags();
+            UpdateColliders();
         }
 
-        public void TryMoveContactFloor(MMXFloat maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
+        public void TryMoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            if (world.TryMoveContactFloor(box, out MMXBox newBox, maxDistance, maskSize, ignore))
+            if (world.TryMoveContactFloor(box, out Box newBox, maxDistance, maskSize, ignore))
             {
                 box = newBox;
-                UpdateFlags();
+                UpdateColliders();
             }
         }
 
-        public void TryMoveContactSlope(MMXFloat maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
+        public void TryMoveContactSlope(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            if (world.TryMoveContactSlope(box, out MMXBox newBox, maxDistance, maskSize, ignore))
+            if (world.TryMoveContactSlope(box, out Box newBox, maxDistance, maskSize, ignore))
             {
                 box = newBox;
-                UpdateFlags();
+                UpdateColliders();
             }
         }
 
@@ -401,10 +425,10 @@ namespace MMX.Engine
             AdjustOnTheFloor(QUERY_MAX_DISTANCE, ignore);
         }
 
-        public void AdjustOnTheFloor(MMXFloat maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
+        public void AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             box = world.AdjustOnTheFloor(box, maxDistance, maskSize, ignore);
-            UpdateFlags();
+            UpdateColliders();
         }
 
         public void AdjustOnTheLadder()
@@ -415,10 +439,10 @@ namespace MMX.Engine
                 {
                     if (placement.Flag == CollisionFlags.TOP_LADDER)
                     {
-                        MMXBox placementBox = placement.Placement.BoudingBox;
-                        MMXFloat delta = placementBox.Left + MAP_SIZE / 2 - box.Left - box.Width / 2;
-                        box += delta * MMXVector.RIGHT_VECTOR;
-                        UpdateFlags();
+                        Box placementBox = placement.Placement.BoudingBox;
+                        FixedSingle delta = placementBox.Left + MAP_SIZE / 2 - box.Left - box.Width / 2;
+                        box += delta * Vector.RIGHT_VECTOR;
+                        UpdateColliders();
                         return;
                     }
                 }
@@ -429,10 +453,10 @@ namespace MMX.Engine
                 {
                     if (placement.Flag == CollisionFlags.LADDER)
                     {
-                        MMXBox placementBox = placement.Placement.BoudingBox;
-                        MMXFloat delta = placementBox.Left + MAP_SIZE / 2 - box.Left - box.Width / 2;
-                        box += delta * MMXVector.RIGHT_VECTOR;
-                        UpdateFlags();
+                        Box placementBox = placement.Placement.BoudingBox;
+                        FixedSingle delta = placementBox.Left + MAP_SIZE / 2 - box.Left - box.Width / 2;
+                        box += delta * Vector.RIGHT_VECTOR;
+                        UpdateColliders();
                         return;
                     }
                 }

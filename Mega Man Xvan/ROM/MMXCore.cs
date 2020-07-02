@@ -8,6 +8,10 @@ using System.Runtime.InteropServices;
 using SharpDX.Direct2D1;
 
 using static MMX.Engine.Consts;
+using MMX.Geometry;
+using MMX.Math;
+using System.Diagnostics;
+using SharpDX.DXGI;
 
 namespace MMX.ROM
 {
@@ -276,53 +280,53 @@ namespace MMX.ROM
         private ushort[] fontPalCache;
         private byte[] fontCache;
 
-        public MMXVector BackgroundPos
+        public Vector BackgroundPos
         {
             get
             {
-                MMXFloat x = ReadWord(checkpointInfoTable[point].bkgX);
-                MMXFloat y = ReadWord(checkpointInfoTable[point].bkgY);
-                return new MMXVector(x, y);
+                FixedSingle x = ReadWord(checkpointInfoTable[point].bkgX);
+                FixedSingle y = ReadWord(checkpointInfoTable[point].bkgY);
+                return new Vector(x, y);
             }
         }
 
-        public MMXVector CameraPos
+        public Vector CameraPos
         {
             get
             {
-                MMXFloat x = ReadWord(checkpointInfoTable[point].camX);
-                MMXFloat y = ReadWord(checkpointInfoTable[point].camY);
-                return new MMXVector(x, y);
+                FixedSingle x = ReadWord(checkpointInfoTable[point].camX);
+                FixedSingle y = ReadWord(checkpointInfoTable[point].camY);
+                return new Vector(x, y);
             }
         }
 
-        public MMXVector CharacterPos
+        public Vector CharacterPos
         {
             get
             {
-                MMXFloat x = ReadWord(checkpointInfoTable[point].chX);
-                MMXFloat y = ReadWord(checkpointInfoTable[point].chY);
-                return new MMXVector(x, y);
+                FixedSingle x = ReadWord(checkpointInfoTable[point].chX);
+                FixedSingle y = ReadWord(checkpointInfoTable[point].chY);
+                return new Vector(x, y);
             }
         }
 
-        public MMXVector MinCharacterPos
+        public Vector MinCharacterPos
         {
             get
             {
-                MMXFloat x = ReadWord(checkpointInfoTable[point].minX);
-                MMXFloat y = ReadWord(checkpointInfoTable[point].minY);
-                return new MMXVector(x, y);
+                FixedSingle x = ReadWord(checkpointInfoTable[point].minX);
+                FixedSingle y = ReadWord(checkpointInfoTable[point].minY);
+                return new Vector(x, y);
             }
         }
 
-        public MMXVector MaxCharacterPos
+        public Vector MaxCharacterPos
         {
             get
             {
-                MMXFloat x = ReadWord(checkpointInfoTable[point].maxX) + 256;
-                MMXFloat y = ReadWord(checkpointInfoTable[point].maxY) + 224;
-                return new MMXVector(x, y);
+                FixedSingle x = ReadWord(checkpointInfoTable[point].maxX) + 256;
+                FixedSingle y = ReadWord(checkpointInfoTable[point].maxY) + 224;
+                return new Vector(x, y);
             }
         }
 
@@ -1803,10 +1807,10 @@ namespace MMX.ROM
                                 // do nothing
                                 break;
                             case ESort.SORT_MIN:
-                                tileInfo[i].value = Math.Min(tileInfo[i].value, value);
+                                tileInfo[i].value = System.Math.Min(tileInfo[i].value, value);
                                 break;
                             case ESort.SORT_MAX:
-                                tileInfo[i].value = Math.Max(tileInfo[i].value, value);
+                                tileInfo[i].value = System.Math.Max(tileInfo[i].value, value);
                                 break;
                             case ESort.SORT_MEDIAN:
                                 tileInfo[i].count[value]++;
@@ -2875,9 +2879,10 @@ namespace MMX.ROM
             return (byte) (i * 256.0f / 32.0f);
         }
 
-        private int Transform(int input, bool transparent)
+        private int Transform(int color, bool transparent)
         {
-            return !transparent ? 0 : (int) (Expand(input & 0x1F) | (Expand((input & 0x3E0) >> 5) << 8) | (Expand((input & 0x7C00) >> 10) << 16) | 0xFF000000);
+            //return !transparent ? 0 : (int) (Expand(color & 0x1F) | (Expand((color & 0x3E0) >> 5) << 8) | (Expand((color & 0x7C00) >> 10) << 16) | 0xFF000000);
+            return !transparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
         }
 
         private Tile AddTile(World world, uint tile, CollisionData collisionData = CollisionData.NONE, bool transparent = false)
@@ -2898,13 +2903,16 @@ namespace MMX.ROM
                 }
             }
 
-            BitmapProperties properties = new BitmapProperties(new PixelFormat(SharpDX.DXGI.Format.B8G8R8A8_UNorm, AlphaMode.Premultiplied));
+            /*BitmapProperties properties = new BitmapProperties(new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied));
             using (Bitmap bmp = new Bitmap(world.Engine.Target, new Size2(TILE_SIZE, TILE_SIZE), properties))
             {
                 bmp.CopyFromMemory(imageData, sizeof(int) * TILE_SIZE);
                 Tile wtile = world.AddTile(bmp);
                 return wtile;
-            }
+            }*/
+
+            Tile wtile = world.AddTile(imageData);
+            return wtile;
         }
 
         private void RefreshMapCache(World world)
@@ -2922,22 +2930,22 @@ namespace MMX.ROM
                 uint tileData = ReadWord(map);
                 map += 2;
                 Tile tile = AddTile(world, tileData, collisionData, true);
-                wmap.SetTile(new MMXVector(0, 0), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                wmap.SetTile(new Vector(0, 0), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
 
                 tileData = ReadWord(map);
                 map += 2;
                 tile = AddTile(world, tileData, collisionData, true);
-                wmap.SetTile(new MMXVector(TILE_SIZE, 0), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                wmap.SetTile(new Vector(TILE_SIZE, 0), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
 
                 tileData = ReadWord(map);
                 map += 2;
                 tile = AddTile(world, tileData, collisionData, true);
-                wmap.SetTile(new MMXVector(0, TILE_SIZE), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                wmap.SetTile(new Vector(0, TILE_SIZE), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
 
                 tileData = ReadWord(map);
                 map += 2;
                 tile = AddTile(world, tileData, collisionData, true);
-                wmap.SetTile(new MMXVector(TILE_SIZE, TILE_SIZE), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                wmap.SetTile(new Vector(TILE_SIZE, TILE_SIZE), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
 
                 maps[i] = wmap;
             }
@@ -2946,7 +2954,7 @@ namespace MMX.ROM
         private void LoadMap(World world, int x, int y, ushort index, bool background = false)
         {
             if (index < maps.Length)
-                world.SetMap(new MMXVector(x * MAP_SIZE, y * MAP_SIZE), maps[index], background);
+                world.SetMap(new Vector(x * MAP_SIZE, y * MAP_SIZE), maps[index], background);
         }
 
         private void LoadBlock(World world, int x, int y, ushort index)
@@ -3013,11 +3021,11 @@ namespace MMX.ROM
                 uint maxX = ReadWord(info.maxX);
                 uint maxY = ReadWord(info.maxY);
                 engine.AddCheckpoint(
-                    new MMXBox(minX, minY, maxX - minX + SCREEN_WIDTH, maxY - minY + SCREEN_HEIGHT),
-                    new MMXVector(ReadWord(info.chX), ReadWord(info.chY)),
-                    new MMXVector(ReadWord(info.camX), ReadWord(info.camY)),
-                    new MMXVector(ReadWord(info.bkgX), ReadWord(info.bkgY)),
-                    new MMXVector(ReadShort(info.forceX), ReadShort(info.forceY)),
+                    new Box(minX, minY, maxX - minX + SCREEN_WIDTH, maxY - minY + SCREEN_HEIGHT),
+                    new Vector(ReadWord(info.chX), ReadWord(info.chY)),
+                    new Vector(ReadWord(info.camX), ReadWord(info.camY)),
+                    new Vector(ReadWord(info.bkgX), ReadWord(info.bkgY)),
+                    new Vector(ReadShort(info.forceX), ReadShort(info.forceY)),
                     ReadByte(info.scroll)
                     );
             }
@@ -3048,14 +3056,14 @@ namespace MMX.ROM
                         int top = ReadWord(pBase);
                         pBase += 2;
 
-                        MMXBox boudingBox = new MMXBox(left, top, right - left, bottom - top);
+                        Box boudingBox = new Box(left, top, right - left, bottom - top);
 
                         uint lockNum = 0;
 
-                        List<MMXVector> extensions = new List<MMXVector>();
+                        List<Vector> extensions = new List<Vector>();
                         while (((expandedROM && expandedROMVersion >= 4) ? ReadWord(pBase) : rom[pBase]) != 0)
                         {
-                            MMXBox lockBox = boudingBox;
+                            Box lockBox = boudingBox;
                             ushort camOffset = 0;
                             ushort camValue = 0;
 
@@ -3107,7 +3115,7 @@ namespace MMX.ROM
                             int lockX = lockLeft < lockX0 ? lockLeft : lockRight;
                             int lockY = lockTop < lockY0 ? lockTop : lockBottom;
 
-                            extensions.Add(new MMXVector(lockX - lockX0, lockY - lockY0));
+                            extensions.Add(new Vector(lockX - lockX0, lockY - lockY0));
                             lockNum++;
                         }
 

@@ -1,4 +1,5 @@
-﻿using SharpDX;
+﻿using MMX.Geometry;
+using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DXGI;
 using System;
@@ -53,7 +54,7 @@ namespace MMX.Engine
                     if (value != null)
                         PaintBlock(row, col, value);
                     else
-                        PaintFreeBlock(row, col);
+                        ClearBlock(row, col);
                 }
             }
         }
@@ -69,19 +70,26 @@ namespace MMX.Engine
             var sizef = new Size2F(SCENE_SIZE, SCENE_SIZE);
             var pixelFormat = new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied);
 
-            downLayerTarget = new BitmapRenderTarget(world.Engine.Target, CompatibleRenderTargetOptions.GdiCompatible, sizef, size, pixelFormat);
-            upLayerTarget = new BitmapRenderTarget(world.Engine.Target, CompatibleRenderTargetOptions.GdiCompatible, sizef, size, pixelFormat);
+            downLayerTarget = new BitmapRenderTarget(world.Engine.Target, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat);
+            upLayerTarget = new BitmapRenderTarget(world.Engine.Target, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat);
         }
 
         private void PaintBlock(int row, int col, Block block)
-        {         
-            block.PaintDownLayer(downLayerTarget, new MMXVector(col * BLOCK_SIZE, row * BLOCK_SIZE));
-            block.PaintUpLayer(upLayerTarget, new MMXVector(col * BLOCK_SIZE, row * BLOCK_SIZE));
+        {
+            downLayerTarget.BeginDraw();
+            block.PaintDownLayer(downLayerTarget, new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
+            downLayerTarget.Flush();
+            downLayerTarget.EndDraw();
+
+            upLayerTarget.BeginDraw();
+            block.PaintUpLayer(upLayerTarget, new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
+            upLayerTarget.Flush();
+            upLayerTarget.EndDraw();
         }
 
-        private void PaintFreeBlock(int row, int col)
+        private void ClearBlock(int row, int col)
         {
-            /*using (Brush brush = new SolidColorBrush(downLayerTarget, Color.Transparent))
+            using (Brush brush = new SolidColorBrush(downLayerTarget, Color.Transparent))
             {
                 downLayerTarget.FillRectangle(new RectangleF(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), brush);   
             }
@@ -89,15 +97,37 @@ namespace MMX.Engine
             using (Brush brush = new SolidColorBrush(upLayerTarget, Color.Transparent))
             {
                 upLayerTarget.FillRectangle(new RectangleF(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), brush);
-            }*/
+            }
         }
 
-        internal void UpdateGraphics()
+        internal void UpdateLayers()
+        {
+            UpdateDownLayer();
+            UpdateUpLayer();
+        }
+
+        private void UpdateDownLayer()
         {
             downLayerTarget.BeginDraw();
-            upLayerTarget.BeginDraw();
-
+            downLayerTarget.Transform = Matrix3x2.Identity;
             downLayerTarget.Clear(Color.Transparent);
+
+            for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
+                for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
+                {
+                    Block block = blocks[row, col];
+                    if (block != null)
+                        block.PaintDownLayer(downLayerTarget, new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
+                }
+
+            //downLayerTarget.Flush();
+            downLayerTarget.EndDraw();
+        }
+
+        private void UpdateUpLayer()
+        {
+            upLayerTarget.BeginDraw();
+            upLayerTarget.Transform = Matrix3x2.Identity;
             upLayerTarget.Clear(Color.Transparent);
 
             for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
@@ -105,13 +135,11 @@ namespace MMX.Engine
                 {
                     Block block = blocks[row, col];
                     if (block != null)
-                        PaintBlock(row, col, block);
-                    else
-                        PaintFreeBlock(row, col);
+                        block.PaintUpLayer(upLayerTarget, new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
                 }
 
+            //upLayerTarget.Flush();
             upLayerTarget.EndDraw();
-            downLayerTarget.EndDraw();
         }
 
         internal void BeginUpdate()
@@ -125,7 +153,7 @@ namespace MMX.Engine
                 return;
 
             updating = false;
-            UpdateGraphics();
+            UpdateLayers();
         }
 
         public void Dispose()
@@ -134,7 +162,7 @@ namespace MMX.Engine
             upLayerTarget.Dispose();          
         }
 
-        public Tile GetTileFrom(MMXVector pos)
+        public Tile GetTileFrom(Vector pos)
         {
             Cell tsp = World.GetBlockCellFromPos(pos);
             int row = tsp.Row;
@@ -147,10 +175,10 @@ namespace MMX.Engine
             if (block == null)
                 return null;
 
-            return block.GetTileFrom(pos - new MMXVector(col * BLOCK_SIZE, row * BLOCK_SIZE));
+            return block.GetTileFrom(pos - new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
         }
 
-        public Map GetMapFrom(MMXVector pos)
+        public Map GetMapFrom(Vector pos)
         {
             Cell tsp = World.GetBlockCellFromPos(pos);
             int row = tsp.Row;
@@ -163,10 +191,10 @@ namespace MMX.Engine
             if (block == null)
                 return null;
 
-            return block.GetMapFrom(pos - new MMXVector(col * BLOCK_SIZE, row * BLOCK_SIZE));
+            return block.GetMapFrom(pos - new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
         }
 
-        public Block GetBlockFrom(MMXVector pos)
+        public Block GetBlockFrom(Vector pos)
         {
             Cell tsp = World.GetBlockCellFromPos(pos);
             int row = tsp.Row;
@@ -188,11 +216,11 @@ namespace MMX.Engine
                     if (blocks[row, col] == block)
                     {
                         blocks[row, col] = null;
-                        PaintFreeBlock(row, col);
+                        ClearBlock(row, col);
                     }
         }
 
-        public void SetMap(MMXVector pos, Map map)
+        public void SetMap(Vector pos, Map map)
         {
             Cell cell = World.GetBlockCellFromPos(pos);
             Block block = blocks[cell.Row, cell.Col];
@@ -202,13 +230,13 @@ namespace MMX.Engine
                 blocks[cell.Row, cell.Col] = block;
             }
 
-            block.SetMap(pos - new MMXVector(cell.Col * BLOCK_SIZE, cell.Row * BLOCK_SIZE), map);
+            block.SetMap(pos - new Vector(cell.Col * BLOCK_SIZE, cell.Row * BLOCK_SIZE), map);
 
             if (!updating)
                 PaintBlock(cell.Row, cell.Col, block);
         }
 
-        public void SetBlock(MMXVector pos, Block block)
+        public void SetBlock(Vector pos, Block block)
         {
             Cell cell = World.GetBlockCellFromPos(pos);
             blocks[cell.Row, cell.Col] = block;
@@ -218,7 +246,7 @@ namespace MMX.Engine
                 if (block != null)
                     PaintBlock(cell.Row, cell.Col, block);
                 else
-                    PaintFreeBlock(cell.Row, cell.Col);
+                    ClearBlock(cell.Row, cell.Col);
             }
         }
 
@@ -236,10 +264,10 @@ namespace MMX.Engine
             EndUpdate();
         }
 
-        public void FillRectangle(MMXBox box, Map map)
+        public void FillRectangle(Box box, Map map)
         {
-            MMXVector boxLT = box.LeftTop;
-            MMXVector boxSize = box.DiagonalVector;
+            Vector boxLT = box.LeftTop;
+            Vector boxSize = box.DiagonalVector;
 
             int col = (int) (boxLT.X / MAP_SIZE);
             int row = (int) (boxLT.Y / MAP_SIZE);
@@ -249,15 +277,15 @@ namespace MMX.Engine
             BeginUpdate();
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetMap(new MMXVector((col + c) * MAP_SIZE, (row + r) * MAP_SIZE), map);
+                    SetMap(new Vector((col + c) * MAP_SIZE, (row + r) * MAP_SIZE), map);
 
             EndUpdate();
         }
 
-        public void FillRectangle(MMXBox box, Block block)
+        public void FillRectangle(Box box, Block block)
         {
-            MMXVector boxLT = box.LeftTop;
-            MMXVector boxSize = box.DiagonalVector;
+            Vector boxLT = box.LeftTop;
+            Vector boxSize = box.DiagonalVector;
 
             int col = (int) (boxLT.X / BLOCK_SIZE);
             int row = (int) (boxLT.Y / BLOCK_SIZE);
@@ -267,7 +295,7 @@ namespace MMX.Engine
             BeginUpdate();
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetBlock(new MMXVector((col + c) * BLOCK_SIZE, (row + r) * BLOCK_SIZE), block);
+                    SetBlock(new Vector((col + c) * BLOCK_SIZE, (row + r) * BLOCK_SIZE), block);
 
             EndUpdate();
         }

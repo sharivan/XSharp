@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MMX.Geometry;
+using MMX.Math;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace MMX.Engine
 {
-    public delegate void TriggerEvent(MMXObject obj);
+    public delegate void TriggerEvent(Entity obj);
 
-    public abstract class AbstractTrigger : MMXObject
+    public abstract class AbstractTrigger : Entity
     {
-        private MMXBox boundingBox;
+        private Box boundingBox;
 
         private bool enabled;
         private uint triggers;
@@ -55,7 +57,7 @@ namespace MMX.Engine
             }
         }
 
-        protected AbstractTrigger(GameEngine engine, MMXBox boundingBox) :
+        protected AbstractTrigger(GameEngine engine, Box boundingBox) :
             base(engine, boundingBox.Origin)
         {
             this.boundingBox = boundingBox - boundingBox.Origin;
@@ -64,7 +66,7 @@ namespace MMX.Engine
             maxTriggers = uint.MaxValue;
         }
 
-        protected override void OnStartTouch(MMXObject obj)
+        protected override void OnStartTouch(Entity obj)
         {
             if (enabled && triggers < maxTriggers)
             {
@@ -73,17 +75,17 @@ namespace MMX.Engine
             }
         }
 
-        protected virtual void DoTrigger(MMXObject obj)
+        protected virtual void DoTrigger(Entity obj)
         {
             TriggerEvent?.Invoke(obj);
         }
 
-        protected override MMXBox GetBoundingBox()
+        protected override Box GetBoundingBox()
         {
             return Origin + boundingBox;
         }
 
-        protected override void SetBoundingBox(MMXBox boundingBox)
+        protected override void SetBoundingBox(Box boundingBox)
         {
             this.boundingBox = boundingBox - boundingBox.Origin;
             SetOrigin(boundingBox.Origin);
@@ -118,7 +120,7 @@ namespace MMX.Engine
             }
         }
 
-        public Trigger(GameEngine engine, MMXBox boudingBox) :
+        public Trigger(GameEngine engine, Box boudingBox) :
             base(engine, boudingBox)
         {
             uint i = MaxTriggers;
@@ -127,9 +129,9 @@ namespace MMX.Engine
 
     public class CameraEventTrigger : AbstractTrigger
     {
-        private List<MMXVector> extensions;
+        private List<Vector> extensions;
 
-        public MMXVector ExtensionOrigin
+        public Vector ExtensionOrigin
         {
             get
             {
@@ -145,19 +147,19 @@ namespace MMX.Engine
             }
         }
 
-        public CameraEventTrigger(GameEngine engine, MMXBox boudingBox) :
+        public CameraEventTrigger(GameEngine engine, Box boudingBox) :
             base(engine, boudingBox)
         {
-            extensions = new List<MMXVector>();
+            extensions = new List<Vector>();
         }
 
-        public CameraEventTrigger(GameEngine engine, MMXBox boudingBox, IEnumerable<MMXVector> extensions) :
+        public CameraEventTrigger(GameEngine engine, Box boudingBox, IEnumerable<Vector> extensions) :
             base(engine, boudingBox)
         {
-            this.extensions = new List<MMXVector>(extensions);
+            this.extensions = new List<Vector>(extensions);
         }
 
-        protected override void DoTrigger(MMXObject obj)
+        protected override void DoTrigger(Entity obj)
         {
             base.DoTrigger(obj);
 
@@ -168,17 +170,17 @@ namespace MMX.Engine
             engine.SetExtensions(ExtensionOrigin, extensions);
         }
 
-        public void AddExtension(MMXVector extension)
+        public void AddExtension(Vector extension)
         {
             extensions.Add(extension);
         }
 
-        public MMXVector GetExtension(int index)
+        public Vector GetExtension(int index)
         {
             return extensions[index];
         }
 
-        public bool ContainsExtension(MMXVector extension)
+        public bool ContainsExtension(Vector extension)
         {
             return extensions.Contains(extension);
         }
@@ -191,13 +193,13 @@ namespace MMX.Engine
 
     public class Checkpoint : AbstractTrigger
     {
-        private MMXVector characterPos;
-        private MMXVector cameraPos;
-        private MMXVector backgroundPos;
-        private MMXVector forceBackground;
+        private Vector characterPos;
+        private Vector cameraPos;
+        private Vector backgroundPos;
+        private Vector forceBackground;
         private uint scroll;
 
-        public MMXVector CharacterPos
+        public Vector CharacterPos
         {
             get
             {
@@ -205,7 +207,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector CameraPos
+        public Vector CameraPos
         {
             get
             {
@@ -213,7 +215,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector BackgroundPos
+        public Vector BackgroundPos
         {
             get
             {
@@ -221,7 +223,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector ForceBackground
+        public Vector ForceBackground
         {
             get
             {
@@ -237,7 +239,7 @@ namespace MMX.Engine
             }
         }
 
-        public Checkpoint(GameEngine engine, MMXBox boudingBox, MMXVector characterPos, MMXVector cameraPos, MMXVector backgroundPos, MMXVector forceBackground, uint scroll) :
+        public Checkpoint(GameEngine engine, Box boudingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll) :
             base(engine, boudingBox)
         {
             this.characterPos = characterPos;
@@ -249,13 +251,13 @@ namespace MMX.Engine
 
         internal void UpdateBoudingBox()
         {
-            MMXBox boundingBox = engine.cameraConstraintsBox;
-            MMXFloat minX = boundingBox.Left;
-            MMXFloat minY = boundingBox.Top;
-            MMXFloat maxX = boundingBox.Right;
-            MMXFloat maxY = boundingBox.Bottom;
+            Box boundingBox = engine.cameraConstraintsBox;
+            FixedSingle minX = boundingBox.Left;
+            FixedSingle minY = boundingBox.Top;
+            FixedSingle maxX = boundingBox.Right;
+            FixedSingle maxY = boundingBox.Bottom;
 
-            foreach (MMXVector extension in engine.extensions)
+            foreach (Vector extension in engine.extensions)
             {
                 if (extension.Y == 0)
                 {
@@ -273,10 +275,10 @@ namespace MMX.Engine
                 }
             }
 
-            engine.cameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
+            engine.cameraConstraintsBox = new Box(minX, minY, maxX - minX, maxY - minY);
         }
 
-        protected override void DoTrigger(MMXObject obj)
+        protected override void DoTrigger(Entity obj)
         {
             base.DoTrigger(obj);
 
@@ -298,7 +300,7 @@ namespace MMX.Engine
             //Enabled = false;
         }
 
-        protected override void OnEndTouch(MMXObject obj)
+        protected override void OnEndTouch(Entity obj)
         {
             if (!(obj is Player))
                 return;

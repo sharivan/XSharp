@@ -49,7 +49,7 @@ namespace MMX.ROM
             uint i, m;
             int[] table = new int[MAX_LENGTH];
 
-            ComputeKMP(src, (int) uncompStart, table, (int) Math.Min(size - uncompStart, MAX_LENGTH));
+            ComputeKMP(src, (int) uncompStart, table, (int) System.Math.Min(size - uncompStart, MAX_LENGTH));
 
             match.length = 0;
             match.offset = 0;

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MMX.Geometry;
+using MMX.Math;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,27 +13,27 @@ namespace MMX.Engine
     public class Screen
     {
         private World world;
-        private MMXFloat width;
-        private MMXFloat height;
+        private FixedSingle width;
+        private FixedSingle height;
 
-        private MMXVector lastCenter;
-        private MMXVector center;
-        private MMXObject focusOn;
+        private Vector lastCenter;
+        private Vector center;
+        private Entity focusOn;
 
-        private MMXFloat moveDistance;
-        private MMXFloat moveStep;
-        private MMXVector moveTo;
-        private MMXVector vel;
+        private FixedSingle moveDistance;
+        private FixedSingle moveStep;
+        private Vector moveTo;
+        private Vector vel;
 
-        internal Screen(World world, MMXFloat width, MMXFloat height)
+        internal Screen(World world, FixedSingle width, FixedSingle height)
         {
             this.world = world;
             this.width = width;
             this.height = height;
 
-            lastCenter = MMXVector.NULL_VECTOR;
-            center = new MMXVector(width / 2, height / 2);
-            vel = MMXVector.NULL_VECTOR;
+            lastCenter = Vector.NULL_VECTOR;
+            center = new Vector(width / 2, height / 2);
+            vel = Vector.NULL_VECTOR;
             focusOn = null;           
         }
 
@@ -55,7 +57,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat Width
+        public FixedSingle Width
         {
             get
             {
@@ -63,7 +65,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat Height
+        public FixedSingle Height
         {
             get
             {
@@ -71,28 +73,28 @@ namespace MMX.Engine
             }
         }
 
-        private void SetLeftTop(MMXVector v)
+        private void SetLeftTop(Vector v)
         {
             SetCenter(v.X + width, v.Y + height);
         }
 
-        private void SetCenter(MMXVector v)
+        private void SetCenter(Vector v)
         {
             SetCenter(v.X, v.Y);
         }
 
-        private void SetCenter(MMXFloat x, MMXFloat y)
+        private void SetCenter(FixedSingle x, FixedSingle y)
         {
-            MMXVector minCameraPos = world.Engine.MinCameraPos;
-            MMXVector maxCameraPos = world.Engine.MaxCameraPos;
+            Vector minCameraPos = world.Engine.MinCameraPos;
+            Vector maxCameraPos = world.Engine.MaxCameraPos;
 
-            MMXFloat w2 = width / 2;
-            MMXFloat h2 = height / 2;
+            FixedSingle w2 = width / 2;
+            FixedSingle h2 = height / 2;
 
-            MMXFloat minX = minCameraPos.X + w2;
-            MMXFloat minY = minCameraPos.Y + h2;
-            MMXFloat maxX = MMXFloat.Min(maxCameraPos.X, world.Width) - w2;
-            MMXFloat maxY = MMXFloat.Min(maxCameraPos.Y, world.Height) - h2;
+            FixedSingle minX = minCameraPos.X + w2;
+            FixedSingle minY = minCameraPos.Y + h2;
+            FixedSingle maxX = FixedSingle.Min(maxCameraPos.X, world.Width) - w2;
+            FixedSingle maxY = FixedSingle.Min(maxCameraPos.Y, world.Height) - h2;
 
             if (x < minX)
                 x = minX;
@@ -104,10 +106,10 @@ namespace MMX.Engine
             else if (y > maxY)
                 y = maxY;
 
-            center = new MMXVector(x, y);
+            center = new Vector(x, y);
         }
 
-        public MMXVector Center
+        public Vector Center
         {
             get
             {
@@ -122,7 +124,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector LeftTop
+        public Vector LeftTop
         {
             get
             {
@@ -135,7 +137,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector RightBottom
+        public Vector RightBottom
         {
             get
             {
@@ -143,7 +145,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXObject FocusOn
+        public Entity FocusOn
         {
             get
             {
@@ -157,24 +159,24 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector SizeVector
+        public Vector SizeVector
         {
             get
             {
-                return new MMXVector(width, height);
+                return new Vector(width, height);
             }
         }
 
-        public MMXBox BoudingBox
+        public Box BoudingBox
         {
             get
             {
-                MMXVector sv2 = SizeVector / 2;
-                return new MMXBox(center, -sv2, sv2);
+                Vector sv2 = SizeVector / 2;
+                return new Box(center, -sv2, sv2);
             }
         }
 
-        public MMXVector Velocity
+        public Vector Velocity
         {
             get
             {
@@ -195,28 +197,28 @@ namespace MMX.Engine
             }
         }
 
-        public void MoveToLeftTop(MMXVector dest)
+        public void MoveToLeftTop(Vector dest)
         {
             MoveToCenter(dest + SizeVector / 2, WALKING_SPEED);
         }
 
-        public void MoveToLeftTop(MMXVector dest, MMXFloat speed)
+        public void MoveToLeftTop(Vector dest, FixedSingle speed)
         {
             MoveToCenter(dest + SizeVector / 2, speed);
         }
 
-        public void MoveToCenter(MMXVector dest)
+        public void MoveToCenter(Vector dest)
         {
             MoveToCenter(dest, WALKING_SPEED);
         }
 
-        public void MoveToCenter(MMXVector dest, MMXFloat speed)
+        public void MoveToCenter(Vector dest, FixedSingle speed)
         {
             if (speed <= STEP_SIZE)
                 return;
 
-            MMXVector delta = dest - center;
-            MMXFloat moveDistance = delta.Length;
+            Vector delta = dest - center;
+            FixedSingle moveDistance = delta.Length;
             if (moveDistance <= STEP_SIZE)
                 return;
 
@@ -231,21 +233,21 @@ namespace MMX.Engine
             moveDistance = 0;
         }
 
-        public MMXBox VisibleBox(MMXBox box)
+        public Box VisibleBox(Box box)
         {
             return BoudingBox & box;
         }
 
-        public bool IsVisible(MMXBox box)
+        public bool IsVisible(Box box)
         {
-            return VisibleBox(box).Area() > 0;
+            return VisibleBox(box).Area > 0;
         }
 
         public void OnFrame()
         {
             if (Moving)
             {
-                MMXVector newCenter = center + vel;
+                Vector newCenter = center + vel;
                 moveDistance -= moveStep;
                 if (moveDistance <= STEP_SIZE)
                 {
@@ -256,7 +258,7 @@ namespace MMX.Engine
                     SetCenter(newCenter);
             }
             else if (focusOn != null)
-                SetCenter(focusOn.Origin + HITBOX_HEIGHT * MMXVector.UP_VECTOR);
+                SetCenter(focusOn.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR);
 
             if (center != lastCenter)
                 lastCenter = center;

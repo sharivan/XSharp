@@ -1,5 +1,8 @@
-﻿using SharpDX.Direct2D1;
+﻿using MMX.Geometry;
+using SharpDX.Direct2D1;
 using System.Collections.Generic;
+
+using static MMX.Engine.Consts;
 
 namespace MMX.Engine
 {
@@ -11,7 +14,7 @@ namespace MMX.Engine
             private string name;
             private List<int> indices;
             private int loopFromFrame;
-            private MMXVector offset;
+            private Vector offset;
 
             public SpriteSheet Sheet
             {
@@ -53,7 +56,7 @@ namespace MMX.Engine
                 }
             }
 
-            public MMXVector Offset
+            public Vector Offset
             {
                 get
                 {
@@ -117,7 +120,7 @@ namespace MMX.Engine
                 AddRepeated(sheet.FrameCount - 1, count);
             }
 
-            public void AddFrame(MMXBox boudingBox, int count = 1)
+            public void AddFrame(Box boudingBox, int count = 1)
             {
                 sheet.AddFrame(boudingBox + offset);
                 AddRepeated(sheet.FrameCount - 1, count);
@@ -138,7 +141,7 @@ namespace MMX.Engine
         private string name;
 
         private SharpDX.Direct2D1.Bitmap d2dBitmap;
-        private List<MMXBox> frames;
+        private List<Box> frames;
         private Dictionary<string, FrameSequence> sequences;
 
         public GameEngine Engine
@@ -191,7 +194,7 @@ namespace MMX.Engine
             this.engine = engine;
             this.name = name;
 
-            frames = new List<MMXBox>();
+            frames = new List<Box>();
             sequences = new Dictionary<string, FrameSequence>();
         }
 
@@ -214,35 +217,35 @@ namespace MMX.Engine
 
         public void AddFrame(int x, int y, int width, int height)
         {
-            AddFrame(new MMXBox(x, y, x, y, width, height));
+            AddFrame(new Box(x, y, x, y, width, height));
         }
 
         public void AddFrame(float cbX, float cbY, int bbX, int bbY, int bbWidth, int bbHeight)
         {
-            AddFrame(new MMXBox(cbX, cbY, bbX, bbY, bbWidth, bbHeight));
+            AddFrame(new Box(cbX, cbY, bbX, bbY, bbWidth, bbHeight));
         }
 
-        public void AddFrame(MMXBox boudingBox)
+        public void AddFrame(Box boudingBox)
         {
             frames.Add(boudingBox);
         }
 
-        public MMXBox GetFrame(int frameIndex)
+        public Box GetFrame(int frameIndex)
         {
             return frames[frameIndex];
         }
 
-        public int IndexOfFrame(MMXBox frame)
+        public int IndexOfFrame(Box frame)
         {
             return frames.IndexOf(frame);
         }
 
-        public bool ContainsFrame(MMXBox frame)
+        public bool ContainsFrame(Box frame)
         {
             return frames.Contains(frame);
         }
 
-        public bool RemoveFrame(MMXBox frame)
+        public bool RemoveFrame(Box frame)
         {
             return frames.Remove(frame);
         }
@@ -307,19 +310,19 @@ namespace MMX.Engine
             DrawFrame(frames[index]);
         }
 
-        public void DrawFrame(int index, MMXBox dstBox)
+        public void DrawFrame(int index, Box dstBox)
         {
             DrawFrame(dstBox, frames[index]);
         }
 
-        public void DrawFrame(MMXBox box)
+        public void DrawFrame(Box box)
         {
-            engine.Target.DrawBitmap(d2dBitmap, 1, BitmapInterpolationMode.NearestNeighbor, GameEngine.ToRectangleF(box));
+            engine.Target.DrawBitmap(d2dBitmap, 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(box));
         }
 
-        public void DrawFrame(MMXBox dstBox, MMXBox box)
+        public void DrawFrame(Box dstBox, Box box)
         {
-            engine.Target.DrawBitmap(d2dBitmap, GameEngine.ToRectangleF(dstBox), 1, BitmapInterpolationMode.NearestNeighbor, GameEngine.ToRectangleF(box));
+            engine.Target.DrawBitmap(d2dBitmap, GameEngine.ToRectangleF(dstBox), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(box));
         }
     }
 }

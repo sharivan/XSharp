@@ -1,9 +1,11 @@
 ﻿using System;
 using SharpDX;
 using SharpDX.Direct2D1;
+using SharpDX.DXGI;
+using MMX.Math;
+using MMX.Geometry;
 
 using static MMX.Engine.Consts;
-using SharpDX.DXGI;
 
 namespace MMX.Engine
 {
@@ -39,8 +41,10 @@ namespace MMX.Engine
             var sizef = new Size2F(TILE_SIZE, TILE_SIZE);
             var pixelFormat = new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied);
 
-            target = new BitmapRenderTarget(world.Engine.Target, CompatibleRenderTargetOptions.GdiCompatible, sizef, size, pixelFormat);
-            target.AntialiasMode = AntialiasMode.Aliased;
+            target = new BitmapRenderTarget(world.Engine.Target, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat)
+            {
+                AntialiasMode = ANTIALIAS_MODE
+            };
         }
 
         internal Tile(World world, int id, Color color) :
@@ -71,6 +75,12 @@ namespace MMX.Engine
             this(world, id)
         {
             SetPixels(source, offset);
+        }
+
+        internal Tile(World world, int id, byte[] source) :
+            this(world, id)
+        {
+            SetPixels(source);
         }
 
         /*public Color GetPixel(int x, int y)
@@ -117,9 +127,14 @@ namespace MMX.Engine
         public void SetPixels(Bitmap source, Point offset)
         {
             target.BeginDraw();
-            target.DrawBitmap(source, new RectangleF(0, 0, TILE_SIZE, TILE_SIZE), 1, BitmapInterpolationMode.Linear, new RectangleF(offset.X, offset.Y, TILE_SIZE, TILE_SIZE));
+            target.DrawBitmap(source, new RectangleF(0, 0, TILE_SIZE, TILE_SIZE), 1, INTERPOLATION_MODE, new RectangleF(offset.X, offset.Y, TILE_SIZE, TILE_SIZE));
             //target.Flush();
             target.EndDraw();
+        }
+
+        public void SetPixels(byte[] source)
+        {
+            target.Bitmap.CopyFromMemory(source, sizeof(int) * TILE_SIZE);
         }
 
         public void FillColor(Color color)
@@ -133,28 +148,6 @@ namespace MMX.Engine
         public void Dispose()
         {
             target.Dispose();
-            //bitmap.Dispose();
-        }
-
-        private MMXFloat angle = 0;
-        private static readonly MMXFloat DELTA_ANGLE = 0.1;
-
-        public void OnFrame()
-        {
-            MMXVector v0 = new MMXVector(TILE_SIZE / 2, TILE_SIZE / 2);
-            MMXVector v = new MMXVector(TILE_SIZE, 0);
-            MMXVector dv = v - v0;
-            v = v0 + dv.Rotate(angle);
-            angle += DELTA_ANGLE;
-
-            target.BeginDraw();
-
-            using (SolidColorBrush brush = new SolidColorBrush(target, new Color(0, 1, 1, 1)))
-            {
-                target.DrawLine(GameEngine.ToVector2(v0), GameEngine.ToVector2(v), brush, 2);
-            }
-
-            target.EndDraw();
         }
     }
 }

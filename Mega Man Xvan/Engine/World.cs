@@ -7,6 +7,8 @@ using SharpDX;
 using SharpDX.Direct2D1;
 
 using static MMX.Engine.Consts;
+using MMX.Geometry;
+using MMX.Math;
 
 namespace MMX.Engine
 {
@@ -160,35 +162,35 @@ namespace MMX.Engine
             }
         }
 
-        public MMXBox BoundingBox
+        public Box BoundingBox
         {
             get
             {
-                return new MMXBox(0, 0, Width, Height);
+                return new Box(0, 0, Width, Height);
             }
         }
 
-        public MMXVector Size
+        public Vector Size
         {
             get
             {
-                return new MMXVector(Width, Height);
+                return new Vector(Width, Height);
             }
         }
 
-        public MMXVector LayoutSize
+        public Vector LayoutSize
         {
             get
             {
-                return new MMXVector(sceneRowCount, sceneColCount);
+                return new Vector(sceneRowCount, sceneColCount);
             }
         }
 
-        public MMXVector LayoutBackgroundtSize
+        public Vector LayoutBackgroundtSize
         {
             get
             {
-                return new MMXVector(backgroundSceneRowCount, backgroundSceneColCount);
+                return new Vector(backgroundSceneRowCount, backgroundSceneColCount);
             }
         }
 
@@ -229,6 +231,13 @@ namespace MMX.Engine
         public Tile AddTile(Bitmap source)
         {
             return AddTile(source, Point.Zero);
+        }
+
+        public Tile AddTile(byte[] source)
+        {
+            Tile result = new Tile(this, tileList.Count, source);
+            tileList.Add(result);
+            return result;
         }
 
         public Tile AddTile(Bitmap source, Point offset)
@@ -317,7 +326,7 @@ namespace MMX.Engine
             return result;
         }
 
-        public Scene AddScene(MMXVector pos, bool background = false)
+        public Scene AddScene(Vector pos, bool background = false)
         {
             Scene result = AddScene();
             if (updating)
@@ -333,14 +342,14 @@ namespace MMX.Engine
             return result;
         }
 
-        public Map AddMap(MMXVector pos, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public Map AddMap(Vector pos, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             Map result = AddMap(collisionData);
             SetMap(pos, result, background);
             return result;
         }
 
-        public Map AddMap(MMXVector pos, Color color, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public Map AddMap(Vector pos, Color color, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             Map result = AddMap(color, collisionData);
             SetMap(pos, result, background);
@@ -359,26 +368,26 @@ namespace MMX.Engine
             return result;
         }*/
 
-        public Map AddMap(MMXVector pos, Bitmap source, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public Map AddMap(Vector pos, Bitmap source, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             return AddMap(pos, source, Point.Zero, collisionData, background);
         }
 
-        public Map AddMap(MMXVector pos, Bitmap source, Point offset, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public Map AddMap(Vector pos, Bitmap source, Point offset, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             Map result = AddMap(source, offset, collisionData);
             SetMap(pos, result, background);
             return result;
         }
 
-        public Map AddRectangle(MMXBox box, Color color, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public Map AddRectangle(Box box, Color color, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             Map map = AddMap(color, collisionData);
             FillRectangle(box, map, background);
             return map;
         }
 
-        public void AddRectangle(MMXBox box, Bitmap source, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public void AddRectangle(Box box, Bitmap source, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             int imgWidth = (int) source.Size.Width;
             int imgHeight = (int) source.Size.Height;
@@ -393,8 +402,8 @@ namespace MMX.Engine
                     maps[r, c] = map;
                 }
 
-            MMXVector boxLT = box.LeftTop;
-            MMXVector boxSize = box.DiagonalVector;
+            Vector boxLT = box.LeftTop;
+            Vector boxSize = box.DiagonalVector;
 
             int col = (int) (boxLT.X / MAP_SIZE);
             int row = (int) (boxLT.Y / MAP_SIZE);
@@ -403,10 +412,10 @@ namespace MMX.Engine
 
             for (int j = 0; j < cols; j++)
                 for (int i = 0; i < rows; i++)
-                    SetMap(new MMXVector(j * MAP_SIZE, i * MAP_SIZE), maps[i % imgRowCount, j % imgColCount], background);
+                    SetMap(new Vector(j * MAP_SIZE, i * MAP_SIZE), maps[i % imgRowCount, j % imgColCount], background);
         }
 
-        public void SetMap(MMXVector pos, Map map, bool background = false)
+        public void SetMap(Vector pos, Map map, bool background = false)
         {
             Cell cell = GetSceneCellFromPos(pos);
             Scene scene = background ? backgroundScenes[cell.Row, cell.Col] : scenes[cell.Row, cell.Col];
@@ -416,10 +425,10 @@ namespace MMX.Engine
             if (updating)
                 scene.BeginUpdate();
 
-            scene.SetMap(pos - new MMXVector(cell.Col * SCENE_SIZE, cell.Row * SCENE_SIZE), map);
+            scene.SetMap(pos - new Vector(cell.Col * SCENE_SIZE, cell.Row * SCENE_SIZE), map);
         }
 
-        public void SetBlock(MMXVector pos, Block block, bool background = false)
+        public void SetBlock(Vector pos, Block block, bool background = false)
         {
             Cell cell = GetSceneCellFromPos(pos);
             Scene scene = background ? backgroundScenes[cell.Row, cell.Col] : scenes[cell.Row, cell.Col];
@@ -429,10 +438,10 @@ namespace MMX.Engine
             if (updating)
                 scene.BeginUpdate();
 
-            scene.SetBlock(pos - new MMXVector(cell.Col * SCENE_SIZE, cell.Row * SCENE_SIZE), block);
+            scene.SetBlock(pos - new Vector(cell.Col * SCENE_SIZE, cell.Row * SCENE_SIZE), block);
         }
 
-        public void SetScene(MMXVector pos, Scene scene, bool background = false)
+        public void SetScene(Vector pos, Scene scene, bool background = false)
         {
             Cell cell = GetSceneCellFromPos(pos);
 
@@ -531,8 +540,8 @@ namespace MMX.Engine
 
             Scene[,] newScenes = new Scene[rowCount, colCount];
 
-            int minRows = Math.Min(rowCount, sceneRowCount);
-            int minCols = Math.Min(colCount, sceneColCount);
+            int minRows = System.Math.Min(rowCount, sceneRowCount);
+            int minCols = System.Math.Min(colCount, sceneColCount);
 
             for (int col = 0; col < minCols; col++)
                 for (int row = 0; row < minRows; row++)
@@ -551,8 +560,8 @@ namespace MMX.Engine
 
             Scene[,] newScenes = new Scene[rowCount, colCount];
 
-            int minRows = Math.Min(rowCount, backgroundSceneRowCount);
-            int minCols = Math.Min(colCount, backgroundSceneColCount);
+            int minRows = System.Math.Min(rowCount, backgroundSceneRowCount);
+            int minCols = System.Math.Min(colCount, backgroundSceneColCount);
 
             for (int col = 0; col < minCols; col++)
                 for (int row = 0; row < minRows; row++)
@@ -587,10 +596,10 @@ namespace MMX.Engine
             tileList.Clear();
         }
 
-        public void FillRectangle(MMXBox box, Map map, bool background = false)
+        public void FillRectangle(Box box, Map map, bool background = false)
         {
-            MMXVector boxLT = box.LeftTop;
-            MMXVector boxSize = box.DiagonalVector;
+            Vector boxLT = box.LeftTop;
+            Vector boxSize = box.DiagonalVector;
 
             int col = (int) (boxLT.X / MAP_SIZE);
             int row = (int) (boxLT.Y / MAP_SIZE);
@@ -599,13 +608,13 @@ namespace MMX.Engine
 
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetMap(new MMXVector((col + c) * MAP_SIZE, (row + r) * MAP_SIZE), map, background);
+                    SetMap(new Vector((col + c) * MAP_SIZE, (row + r) * MAP_SIZE), map, background);
         }
 
-        public void FillRectangle(MMXBox box, Block block, bool background = false)
+        public void FillRectangle(Box box, Block block, bool background = false)
         {
-            MMXVector boxLT = box.LeftTop;
-            MMXVector boxSize = box.DiagonalVector;
+            Vector boxLT = box.LeftTop;
+            Vector boxSize = box.DiagonalVector;
 
             int col = (int) (boxLT.X / BLOCK_SIZE);
             int row = (int) (boxLT.Y / BLOCK_SIZE);
@@ -614,13 +623,13 @@ namespace MMX.Engine
 
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetBlock(new MMXVector((col + c) * BLOCK_SIZE, (row + r) * BLOCK_SIZE), block, background);
+                    SetBlock(new Vector((col + c) * BLOCK_SIZE, (row + r) * BLOCK_SIZE), block, background);
         }
 
-        public void FillRectangle(MMXBox box, Scene scene, bool background = false)
+        public void FillRectangle(Box box, Scene scene, bool background = false)
         {
-            MMXVector boxLT = box.LeftTop;
-            MMXVector boxSize = box.DiagonalVector;
+            Vector boxLT = box.LeftTop;
+            Vector boxSize = box.DiagonalVector;
 
             int col = (int) (boxLT.X / SCENE_SIZE);
             int row = (int) (boxLT.Y / SCENE_SIZE);
@@ -629,7 +638,7 @@ namespace MMX.Engine
 
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetScene(new MMXVector((col + c) * SCENE_SIZE, (row + r) * SCENE_SIZE), scene, background);
+                    SetScene(new Vector((col + c) * SCENE_SIZE, (row + r) * SCENE_SIZE), scene, background);
         }
 
         public void Dispose()
@@ -643,18 +652,18 @@ namespace MMX.Engine
             if (checkpoint == null)
                 return;
 
-            MMXBox screenBox = screen.BoudingBox;
-            MMXVector screenLT = screen.LeftTop;
+            Box screenBox = screen.BoudingBox;
+            Vector screenLT = screen.LeftTop;
 
-            MMXVector backgroundPos = checkpoint.BackgroundPos;
-            MMXBox checkpointBox = checkpoint.BoundingBox;
-            MMXVector checkpointPos = checkpointBox.LeftTop;
-            MMXFloat factorX = (float) BackgroundWidth / Width;
-            MMXFloat factorY = (float) BackgroundHeight / Height;
+            Vector backgroundPos = checkpoint.BackgroundPos;
+            Box checkpointBox = checkpoint.BoundingBox;
+            Vector checkpointPos = checkpointBox.LeftTop;
+            FixedSingle factorX = (float) BackgroundWidth / Width;
+            FixedSingle factorY = (float) BackgroundHeight / Height;
 
-            MMXVector delta = checkpointPos - backgroundPos;
-            MMXBox backgroundBox = new MMXBox(backgroundPos.X, backgroundPos.Y, checkpointBox.Width, checkpointBox.Height);
-            MMXVector screenDelta = new MMXVector(factorX * (screenLT.X - checkpointPos.X), checkpoint.Scroll != 0 ? factorY * (screenLT.Y - checkpointPos.Y) : 0);
+            Vector delta = checkpointPos - backgroundPos;
+            Box backgroundBox = new Box(backgroundPos.X, backgroundPos.Y, checkpointBox.Width, checkpointBox.Height);
+            Vector screenDelta = new Vector(factorX * (screenLT.X - checkpointPos.X), checkpoint.Scroll != 0 ? factorY * (screenLT.Y - checkpointPos.Y) : 0);
             backgroundBox &= screenBox - delta - screenDelta;
 
             Cell start = GetSceneCellFromPos(backgroundBox.LeftTop);
@@ -670,12 +679,12 @@ namespace MMX.Engine
                     if (row < 0 || row >= backgroundSceneRowCount)
                         continue;
 
-                    MMXVector sceneLT = new MMXVector(col * SCENE_SIZE, row * SCENE_SIZE);
+                    Vector sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
                     Scene scene = backgroundScenes[row, col];
                     if (scene != null)
                     {
-                        MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                        engine.Target.DrawBitmap(scene.downLayerTarget.Bitmap, engine.TransformBox(sceneBox + delta + screenDelta), 1, BitmapInterpolationMode.NearestNeighbor, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
+                        Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
+                        engine.Target.DrawBitmap(scene.downLayerTarget.Bitmap, engine.WorldBoxToScreen(sceneBox + delta + screenDelta), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
                     }
                 }
             }
@@ -683,8 +692,8 @@ namespace MMX.Engine
 
         public void RenderDownLayer()
         {
-            MMXBox screenBox = screen.BoudingBox;
-            MMXVector screenLT = screen.LeftTop;
+            Box screenBox = screen.BoudingBox;
+            Vector screenLT = screen.LeftTop;
 
             Cell start = GetSceneCellFromPos(screenLT);
 
@@ -698,12 +707,12 @@ namespace MMX.Engine
                     if (row < 0 || row >= sceneRowCount)
                         continue;
 
-                    MMXVector sceneLT = new MMXVector(col * SCENE_SIZE, row * SCENE_SIZE);
+                    Vector sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
                     Scene scene = scenes[row, col];
                     if (scene != null)
                     {
-                        MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                        engine.Target.DrawBitmap(scene.downLayerTarget.Bitmap, engine.TransformBox(sceneBox), 1, BitmapInterpolationMode.NearestNeighbor, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
+                        Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
+                        engine.Target.DrawBitmap(scene.downLayerTarget.Bitmap, engine.WorldBoxToScreen(sceneBox), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
                     }
                 }
             }
@@ -711,8 +720,8 @@ namespace MMX.Engine
 
         public void RenderUpLayer()
         {
-            MMXBox screenBox = screen.BoudingBox;
-            MMXVector screenLT = screen.LeftTop;
+            Box screenBox = screen.BoudingBox;
+            Vector screenLT = screen.LeftTop;
 
             Cell start = GetSceneCellFromPos(screenLT);
 
@@ -726,12 +735,12 @@ namespace MMX.Engine
                     if (row < 0 || row >= sceneRowCount)
                         continue;
 
-                    MMXVector sceneLT = new MMXVector(col * SCENE_SIZE, row * SCENE_SIZE);
+                    Vector sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
                     Scene scene = scenes[row, col];
                     if (scene != null)
                     {
-                        MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);                      
-                        engine.Target.DrawBitmap(scene.upLayerTarget.Bitmap, engine.TransformBox(sceneBox), 1, BitmapInterpolationMode.NearestNeighbor, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
+                        Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);                      
+                        engine.Target.DrawBitmap(scene.upLayerTarget.Bitmap, engine.WorldBoxToScreen(sceneBox), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
                     }
                 }
             }
@@ -742,7 +751,7 @@ namespace MMX.Engine
             screen.OnFrame();
         }
 
-        public static Cell GetTileCellFromPos(MMXVector pos)
+        public static Cell GetTileCellFromPos(Vector pos)
         {
             int col = (int) (pos.X / TILE_SIZE);
             int row = (int) (pos.Y / TILE_SIZE);
@@ -750,7 +759,7 @@ namespace MMX.Engine
             return new Cell(row, col);
         }
 
-        public static Cell GetMapCellFromPos(MMXVector pos)
+        public static Cell GetMapCellFromPos(Vector pos)
         {
             int col = (int) (pos.X / MAP_SIZE);
             int row = (int) (pos.Y / MAP_SIZE);
@@ -758,7 +767,7 @@ namespace MMX.Engine
             return new Cell(row, col);
         }
 
-        public static Cell GetBlockCellFromPos(MMXVector pos)
+        public static Cell GetBlockCellFromPos(Vector pos)
         {
             int col = (int) (pos.X / BLOCK_SIZE);
             int row = (int) (pos.Y / BLOCK_SIZE);
@@ -766,7 +775,7 @@ namespace MMX.Engine
             return new Cell(row, col);
         }
 
-        public static Cell GetSceneCellFromPos(MMXVector pos)
+        public static Cell GetSceneCellFromPos(Vector pos)
         {
             int col = (int) (pos.X / SCENE_SIZE);
             int row = (int) (pos.Y / SCENE_SIZE);
@@ -774,7 +783,7 @@ namespace MMX.Engine
             return new Cell(row, col);
         }
 
-        public Tile GetTileFrom(MMXVector pos, bool background = false)
+        public Tile GetTileFrom(Vector pos, bool background = false)
         {
             Cell tsp = GetSceneCellFromPos(pos);
             int row = tsp.Row;
@@ -787,10 +796,10 @@ namespace MMX.Engine
             if (scene == null)
                 return null;
 
-            return scene.GetTileFrom(pos - new MMXVector(col * SCENE_SIZE, row * SCENE_SIZE));
+            return scene.GetTileFrom(pos - new Vector(col * SCENE_SIZE, row * SCENE_SIZE));
         }
 
-        public Map GetMapFrom(MMXVector pos, bool background = false)
+        public Map GetMapFrom(Vector pos, bool background = false)
         {
             Cell tsp = GetSceneCellFromPos(pos);
             int row = tsp.Row;
@@ -803,10 +812,10 @@ namespace MMX.Engine
             if (scene == null)
                 return null;
 
-            return scene.GetMapFrom(pos - new MMXVector(col * SCENE_SIZE, row * SCENE_SIZE));
+            return scene.GetMapFrom(pos - new Vector(col * SCENE_SIZE, row * SCENE_SIZE));
         }
 
-        public Block GetBlockFrom(MMXVector pos, bool background = false)
+        public Block GetBlockFrom(Vector pos, bool background = false)
         {
             Cell tsp = GetSceneCellFromPos(pos);
             int row = tsp.Row;
@@ -819,10 +828,10 @@ namespace MMX.Engine
             if (scene == null)
                 return null;
 
-            return scene.GetBlockFrom(pos - new MMXVector(col * SCENE_SIZE, row * SCENE_SIZE));
+            return scene.GetBlockFrom(pos - new Vector(col * SCENE_SIZE, row * SCENE_SIZE));
         }
 
-        public Scene GetSceneFrom(MMXVector pos, bool background = false)
+        public Scene GetSceneFrom(Vector pos, bool background = false)
         {
             Cell tsp = GetSceneCellFromPos(pos);
             int row = tsp.Row;
@@ -834,61 +843,61 @@ namespace MMX.Engine
             return background ? backgroundScenes[row, col] : scenes[row, col];
         }
 
-        public static MMXBox GetTileBoundingBox(int row, int col)
+        public static Box GetTileBoundingBox(int row, int col)
         {
             return GetTileBoundingBox(new Cell(row, col));
         }
 
-        public static MMXBox GetMapBoundingBox(int row, int col)
+        public static Box GetMapBoundingBox(int row, int col)
         {
             return GetMapBoundingBox(new Cell(row, col));
         }
 
-        public static MMXBox GetBlockBoundingBox(int row, int col)
+        public static Box GetBlockBoundingBox(int row, int col)
         {
             return GetBlockBoundingBox(new Cell(row, col));
         }
 
-        public static MMXBox GetSceneBoundingBox(int row, int col)
+        public static Box GetSceneBoundingBox(int row, int col)
         {
             return GetSceneBoundingBox(new Cell(row, col));
         }
 
-        public static MMXBox GetTileBoundingBox(Cell pos)
+        public static Box GetTileBoundingBox(Cell pos)
         {
-            return new MMXBox(pos.Col * TILE_SIZE, pos.Row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            return new Box(pos.Col * TILE_SIZE, pos.Row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
 
-        public static MMXBox GetMapBoundingBox(Cell pos)
+        public static Box GetMapBoundingBox(Cell pos)
         {
-            return new MMXBox(pos.Col * MAP_SIZE, pos.Row * MAP_SIZE, MAP_SIZE, MAP_SIZE);
+            return new Box(pos.Col * MAP_SIZE, pos.Row * MAP_SIZE, MAP_SIZE, MAP_SIZE);
         }
 
-        public static MMXBox GetBlockBoundingBox(Cell pos)
+        public static Box GetBlockBoundingBox(Cell pos)
         {
-            return new MMXBox(pos.Col * BLOCK_SIZE, pos.Row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            return new Box(pos.Col * BLOCK_SIZE, pos.Row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
         }
-        public static MMXBox GetSceneBoundingBox(Cell pos)
+        public static Box GetSceneBoundingBox(Cell pos)
         {
-            return new MMXBox(pos.Col * SCENE_SIZE, pos.Row * SCENE_SIZE, SCENE_SIZE, SCENE_SIZE);
+            return new Box(pos.Col * SCENE_SIZE, pos.Row * SCENE_SIZE, SCENE_SIZE, SCENE_SIZE);
         }
 
-        public static MMXBox GetTileBoundingBoxFromPos(MMXVector pos)
+        public static Box GetTileBoundingBoxFromPos(Vector pos)
         {
             return GetTileBoundingBox(GetTileCellFromPos(pos));
         }
 
-        public static MMXBox GetMapBoundingBoxFromPos(MMXVector pos)
+        public static Box GetMapBoundingBoxFromPos(Vector pos)
         {
             return GetMapBoundingBox(GetMapCellFromPos(pos));
         }
 
-        public static MMXBox GetBlockBoundingBoxFromPos(MMXVector pos)
+        public static Box GetBlockBoundingBoxFromPos(Vector pos)
         {
             return GetBlockBoundingBox(GetBlockCellFromPos(pos));
         }
 
-        public static MMXBox GetSceneBoundingBoxFromPos(MMXVector pos)
+        public static Box GetSceneBoundingBoxFromPos(Vector pos)
         {
             return GetSceneBoundingBox(GetSceneCellFromPos(pos));
         }
@@ -947,15 +956,15 @@ namespace MMX.Engine
                 collisionData >= CollisionData.ICE_SLOPE_16_12 && collisionData <= CollisionData.ICE_SLOPE_0_4;
         }
 
-        internal static MMXRightTriangle MakeSlopeTriangle(int left, int right)
+        internal static RightTriangle MakeSlopeTriangle(int left, int right)
         {
             if (left < right)
-                return new MMXRightTriangle(new MMXVector(0, right), MAP_SIZE, left - right);
+                return new RightTriangle(new Vector(0, right), MAP_SIZE, left - right);
 
-            return new MMXRightTriangle(new MMXVector(MAP_SIZE, left), -MAP_SIZE, right - left);
+            return new RightTriangle(new Vector(MAP_SIZE, left), -MAP_SIZE, right - left);
         }
 
-        internal static MMXRightTriangle MakeSlopeTriangle(CollisionData collisionData)
+        internal static RightTriangle MakeSlopeTriangle(CollisionData collisionData)
         {
             switch (collisionData)
             {
@@ -1044,27 +1053,27 @@ namespace MMX.Engine
                     return MakeSlopeTriangle(16, 12);
             }
 
-            return MMXRightTriangle.EMPTY;
+            return RightTriangle.EMPTY;
         }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
+        public CollisionFlags GetCollisionFlags(Box collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
         {
-            return GetCollisionFlags(collisionBox, null, out MMXRightTriangle slopeTriangle, ignore, preciseCollisionCheck, side);
+            return GetCollisionFlags(collisionBox, null, out RightTriangle slopeTriangle, ignore, preciseCollisionCheck, side);
         }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
+        public CollisionFlags GetCollisionFlags(Box collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
         {
-            return GetCollisionFlags(collisionBox, placements, out MMXRightTriangle slopeTriangle, ignore, preciseCollisionCheck, side);
+            return GetCollisionFlags(collisionBox, placements, out RightTriangle slopeTriangle, ignore, preciseCollisionCheck, side);
         }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out MMXRightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
+        public CollisionFlags GetCollisionFlags(Box collisionBox, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
         {
             return GetCollisionFlags(collisionBox, null, out slopeTriangle, ignore, preciseCollisionCheck, side);
         }
 
-        private bool HasIntersection(MMXBox box1, MMXBox box2, CollisionSide side)
+        private bool HasIntersection(Box box1, Box box2, CollisionSide side)
         {
-            if (side.HasFlag(CollisionSide.FLOOR) && (box1 & box2.TopSegment).Length > 0)
+            /*if (side.HasFlag(CollisionSide.FLOOR) && (box1 & box2.TopSegment).Length > 0)
                 return true;
 
             if (side.HasFlag(CollisionSide.CEIL) && (box1 & box2.BottomSegment).Length > 0)
@@ -1076,15 +1085,17 @@ namespace MMX.Engine
             if (side.HasFlag(CollisionSide.RIGHT_WALL) && (box1 & box2.LeftSegment).Length > 0)
                 return true;
 
-            if (side.HasFlag(CollisionSide.INNER) && (box1 & box2).Area() > 0)
+            if (side.HasFlag(CollisionSide.INNER) && (box1 & box2).Area > 0)
                 return true;
 
-            return false;
+            return false;*/
+
+            return (box1 & box2).Area > 0;
         }
 
-        private bool HasIntersection(MMXBox box, MMXRightTriangle slope, CollisionSide side)
+        private bool HasIntersection(Box box, RightTriangle slope, CollisionSide side)
         {
-            if (side.HasFlag(CollisionSide.FLOOR) && (box & slope.HypotenuseLine).Length > 0)
+            /*if (side.HasFlag(CollisionSide.FLOOR) && (box & slope.HypotenuseLine).Length > 0)
                 return true;
 
             if (side.HasFlag(CollisionSide.CEIL) && (box & slope.HCathetusLine).Length > 0)
@@ -1099,12 +1110,14 @@ namespace MMX.Engine
             if (side.HasFlag(CollisionSide.INNER) && slope.HasIntersectionWith(box, true))
                 return true;
 
-            return false;
+            return false;*/
+
+            return slope.HasIntersectionWith(box, true);
         }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out MMXRightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
+        public CollisionFlags GetCollisionFlags(Box collisionBox, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
         {
-            slopeTriangle = MMXRightTriangle.EMPTY;
+            slopeTriangle = RightTriangle.EMPTY;
 
             Cell start = GetMapCellFromPos(collisionBox.LeftTop);
             Cell end = GetMapCellFromPos(collisionBox.RightBottom);
@@ -1143,14 +1156,14 @@ namespace MMX.Engine
             for (int row = startRow; row <= endRow; row++)
                 for (int col = startCol; col <= endCol; col++)
                 {
-                    MMXVector v = new MMXVector(col * MAP_SIZE, row * MAP_SIZE);
+                    Vector v = new Vector(col * MAP_SIZE, row * MAP_SIZE);
                     Map map = GetMapFrom(v);
                     if (map != null)
                     {
-                        MMXBox mapBox = GetMapBoundingBox(row, col);
+                        Box mapBox = GetMapBoundingBox(row, col);
                         CollisionData collisionData = map.CollisionData;
 
-                        if (collisionData == CollisionData.NONE || (mapBox & collisionBox).Area() == 0)
+                        if (collisionData == CollisionData.NONE || (mapBox & collisionBox).Area == 0)
                             continue;
 
                         if (!ignore.HasFlag(CollisionFlags.BLOCK) && IsSolidBlock(collisionData) && HasIntersection(collisionBox, mapBox, side))
@@ -1176,9 +1189,7 @@ namespace MMX.Engine
                         }
                         else if (!ignore.HasFlag(CollisionFlags.SLOPE) && IsSlope(collisionData))
                         {
-                            MMXRightTriangle st = MakeSlopeTriangle(collisionData) + v;
-                            MMXVector hv = st.HCathetusVector;
-
+                            RightTriangle st = MakeSlopeTriangle(collisionData) + v;
                             if (preciseCollisionCheck)
                             {
                                 if (HasIntersection(collisionBox, st, side))
@@ -1205,17 +1216,17 @@ namespace MMX.Engine
             return result;
         }
 
-        public CollisionFlags ComputedLandedState(MMXBox box, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE)
+        public CollisionFlags ComputedLandedState(Box box, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            return ComputedLandedState(box, placements, out MMXRightTriangle slope, MASK_SIZE, ignore);
+            return ComputedLandedState(box, placements, out RightTriangle slope, MASK_SIZE, ignore);
         }
 
-        public CollisionFlags ComputedLandedState(MMXBox box, out MMXRightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
+        public CollisionFlags ComputedLandedState(Box box, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return ComputedLandedState(box, null, out slope, MASK_SIZE, ignore);
         }
 
-        public CollisionFlags ComputedLandedState(MMXBox box, out MMXRightTriangle slope, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public CollisionFlags ComputedLandedState(Box box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return ComputedLandedState(box, null, out slope, maskSize, ignore);
         }
@@ -1223,15 +1234,15 @@ namespace MMX.Engine
         private static List<CollisionPlacement> bottomPlacementsDisplacedHalfLeft = new List<CollisionPlacement>();
         private static List<CollisionPlacement> bottomPlacementsDisplacedHalfRight = new List<CollisionPlacement>();
 
-        public CollisionFlags ComputedLandedState(MMXBox box, List<CollisionPlacement> placements, out MMXRightTriangle slope, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        /*public CollisionFlags ComputedLandedState(Box box, List<CollisionPlacement> placements, out RightTriangle slope, Fixed maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            slope = MMXRightTriangle.EMPTY;
+            slope = RightTriangle.EMPTY;
 
-            MMXBox bottomMask = box.ClipTop(box.Height - maskSize);
-            MMXBox bottomMaskDisplaced = bottomMask + maskSize * MMXVector.DOWN_VECTOR;
+            Box bottomMask = box.ClipTop(box.Height - maskSize);
+            Box bottomMaskDisplaced = bottomMask + maskSize * Vector.DOWN_VECTOR;
 
-            MMXBox bottomMaskDisplacedHalfLeft = bottomMaskDisplaced.HalfLeft();
-            MMXBox bottomMaskDisplacedHalfRight = bottomMaskDisplaced.HalfRight();
+            Box bottomMaskDisplacedHalfLeft = bottomMaskDisplaced.HalfLeft();
+            Box bottomMaskDisplacedHalfRight = bottomMaskDisplaced.HalfRight();
 
             if (placements != null)
             {
@@ -1239,8 +1250,8 @@ namespace MMX.Engine
                 bottomPlacementsDisplacedHalfRight.Clear();
             }
 
-            CollisionFlags bottomLeftDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfLeft, bottomPlacementsDisplacedHalfLeft, out MMXRightTriangle leftDisplaceSlope, ignore, true, CollisionSide.INNER);
-            CollisionFlags bottomRightDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfRight, bottomPlacementsDisplacedHalfRight, out MMXRightTriangle rightDisplaceSlope, ignore, true, CollisionSide.INNER);
+            CollisionFlags bottomLeftDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfLeft, bottomPlacementsDisplacedHalfLeft, out RightTriangle leftDisplaceSlope, ignore, true, CollisionSide.INNER);
+            CollisionFlags bottomRightDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfRight, bottomPlacementsDisplacedHalfRight, out RightTriangle rightDisplaceSlope, ignore, true, CollisionSide.INNER);
 
             if (bottomLeftDisplacedCollisionFlags == CollisionFlags.NONE && bottomRightDisplacedCollisionFlags == CollisionFlags.NONE)
                 return CollisionFlags.NONE;
@@ -1276,11 +1287,146 @@ namespace MMX.Engine
             }
             else
             {
-                MMXBox bottomMaskHalfLeft = bottomMask.HalfLeft();
-                MMXBox bottomMaskHalfRight = bottomMask.HalfRight();
+                Box bottomMaskHalfLeft = bottomMask.HalfLeft();
+                Box bottomMaskHalfRight = bottomMask.HalfRight();
 
-                CollisionFlags bottomLeftCollisionFlags = GetCollisionFlags(bottomMaskHalfLeft, out MMXRightTriangle leftSlope, ignore, true);
-                CollisionFlags bottomRightCollisionFlags = GetCollisionFlags(bottomMaskHalfRight, out MMXRightTriangle rightSlope, ignore, true);
+                CollisionFlags bottomLeftCollisionFlags = GetCollisionFlags(bottomMaskHalfLeft, out RightTriangle leftSlope, ignore, true, CollisionSide.INNER);
+                CollisionFlags bottomRightCollisionFlags = GetCollisionFlags(bottomMaskHalfRight, out RightTriangle rightSlope, ignore, true, CollisionSide.INNER);
+
+                if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
+                {
+                    if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK))
+                    {
+                        if (placements != null)
+                            placements.AddRange(bottomPlacementsDisplacedHalfLeft);
+
+                        return CollisionFlags.BLOCK;
+                    }
+
+                    if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER))
+                    {
+                        if (placements != null)
+                            placements.AddRange(bottomPlacementsDisplacedHalfLeft);
+
+                        return CollisionFlags.TOP_LADDER;
+                    }
+
+                    if (rightDisplaceSlope.HCathetusSign > 0)
+                    {
+                        if (placements != null)
+                            placements.AddRange(bottomPlacementsDisplacedHalfRight);
+
+                        slope = rightDisplaceSlope;
+                        return CollisionFlags.SLOPE;
+                    }
+
+                    return CollisionFlags.NONE;
+                }
+
+                if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && !bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
+                {
+                    if (bottomRightDisplacedCollisionFlags == CollisionFlags.BLOCK)
+                    {
+                        if (placements != null)
+                            placements.AddRange(bottomPlacementsDisplacedHalfRight);
+
+                        return CollisionFlags.BLOCK;
+                    }
+
+                    if (bottomRightDisplacedCollisionFlags == CollisionFlags.TOP_LADDER)
+                    {
+                        if (placements != null)
+                            placements.AddRange(bottomPlacementsDisplacedHalfRight);
+
+                        return CollisionFlags.TOP_LADDER;
+                    }
+
+                    if (leftDisplaceSlope.HCathetusSign < 0)
+                    {
+                        if (placements != null)
+                            placements.AddRange(bottomPlacementsDisplacedHalfLeft);
+
+                        slope = leftDisplaceSlope;
+                        return CollisionFlags.SLOPE;
+                    }
+
+                    return CollisionFlags.NONE;
+                }
+
+                if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
+                {
+                    if (placements != null)
+                    {
+                        placements.AddRange(bottomPlacementsDisplacedHalfLeft);
+                        placements.AddRange(bottomPlacementsDisplacedHalfRight);
+                    }
+
+                    slope = leftDisplaceSlope;
+                    return CollisionFlags.SLOPE;
+                }
+            }
+
+            return CollisionFlags.NONE;
+        }*/
+
+        public CollisionFlags ComputedLandedState(Box box, List<CollisionPlacement> placements, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            slope = RightTriangle.EMPTY;
+
+            Box bottomMask = box.ClipTop(box.Height - maskSize);
+            Box bottomMaskDisplaced = bottomMask + maskSize * Vector.DOWN_VECTOR;
+
+            Box bottomMaskDisplacedHalfLeft = bottomMaskDisplaced.HalfLeft();
+            Box bottomMaskDisplacedHalfRight = bottomMaskDisplaced.HalfRight();
+
+            if (placements != null)
+            {
+                bottomPlacementsDisplacedHalfLeft.Clear();
+                bottomPlacementsDisplacedHalfRight.Clear();
+            }
+
+            CollisionFlags bottomLeftDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfLeft, bottomPlacementsDisplacedHalfLeft, out RightTriangle leftDisplaceSlope, ignore, true, CollisionSide.INNER);
+            CollisionFlags bottomRightDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfRight, bottomPlacementsDisplacedHalfRight, out RightTriangle rightDisplaceSlope, ignore, true, CollisionSide.INNER);
+
+            if (bottomLeftDisplacedCollisionFlags == CollisionFlags.NONE && bottomRightDisplacedCollisionFlags == CollisionFlags.NONE)
+                return CollisionFlags.NONE;
+
+            if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && !bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
+            {
+                if (bottomLeftDisplacedCollisionFlags == CollisionFlags.NONE && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
+                {
+                    if (placements != null)
+                        placements.AddRange(bottomPlacementsDisplacedHalfRight);
+
+                    return bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
+                }
+
+                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && bottomRightDisplacedCollisionFlags == CollisionFlags.NONE)
+                {
+                    if (placements != null)
+                        placements.AddRange(bottomPlacementsDisplacedHalfLeft);
+
+                    return bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER; ;
+                }
+
+                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
+                {
+                    if (placements != null)
+                    {
+                        placements.AddRange(bottomPlacementsDisplacedHalfLeft);
+                        placements.AddRange(bottomPlacementsDisplacedHalfRight);
+                    }
+
+                    return bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
+                }
+            }
+            else
+            {
+                Box bottomMaskHalfLeft = bottomMask.HalfLeft();
+                Box bottomMaskHalfRight = bottomMask.HalfRight();
+
+                CollisionFlags bottomLeftCollisionFlags = GetCollisionFlags(bottomMaskHalfLeft, out RightTriangle leftSlope, ignore, true, CollisionSide.INNER);
+                CollisionFlags bottomRightCollisionFlags = GetCollisionFlags(bottomMaskHalfRight, out RightTriangle rightSlope, ignore, true, CollisionSide.INNER);
 
                 if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
                 {
@@ -1358,138 +1504,113 @@ namespace MMX.Engine
             return CollisionFlags.NONE;
         }
 
-        public MMXBox MoveContactFloor(MMXBox box, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box MoveContactFloor(Box box, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            return MoveContactFloor(box, out MMXRightTriangle slope, QUERY_MAX_DISTANCE, maskSize, ignore);
+            return MoveContactFloor(box, out RightTriangle slope, QUERY_MAX_DISTANCE, maskSize, ignore);
         }
 
-        public MMXBox MoveContactFloor(MMXBox box, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box MoveContactFloor(Box box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            return MoveContactFloor(box, out MMXRightTriangle slope, maxDistance, maskSize, ignore);
+            return MoveContactFloor(box, out RightTriangle slope, maxDistance, maskSize, ignore);
         }
 
-        public MMXBox MoveContactFloor(MMXBox box, out MMXRightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box MoveContactFloor(Box box, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return MoveContactFloor(box, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
         }
 
-        public MMXBox MoveContactFloor(MMXBox box, out MMXRightTriangle slope, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box MoveContactFloor(Box box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            slope = MMXRightTriangle.EMPTY;
+            slope = RightTriangle.EMPTY;
 
-            //bool found = false;
-            for (MMXFloat distance = MMXFloat.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_DOWN_VECTOR)
+            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_DOWN_VECTOR)
             {
                 if (ComputedLandedState(box, out slope, maskSize, ignore) != CollisionFlags.NONE)
-                {
-                    //found = true;
                     break;
-                }
             }
-
-            //if (found)
-            //    box = AdjustOnTheFloor(box + maskSize * MMXVector.DOWN_VECTOR, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
 
             return box;
         }
 
-        public bool TryMoveContactFloor(MMXBox box, out MMXBox newBox, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactFloor(Box box, out Box newBox, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            return TryMoveContactFloor(box, out newBox, out MMXRightTriangle slope, maxDistance, maskSize, ignore);
+            return TryMoveContactFloor(box, out newBox, out RightTriangle slope, maxDistance, maskSize, ignore);
         }
 
-        public bool TryMoveContactFloor(MMXBox box, out MMXBox newBox, out MMXRightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactFloor(Box box, out Box newBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return TryMoveContactFloor(box, out newBox, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
         }
 
-        public bool TryMoveContactFloor(MMXBox box, out MMXBox newBox, out MMXRightTriangle slope, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactFloor(Box box, out Box newBox, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            slope = MMXRightTriangle.EMPTY;
-            newBox = MMXBox.EMPTY_BOX;
+            slope = RightTriangle.EMPTY;
+            newBox = Box.EMPTY_BOX;
 
-            //bool found = false;
-            for (MMXFloat distance = MMXFloat.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_DOWN_VECTOR)
+            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_DOWN_VECTOR)
             {
                 if (ComputedLandedState(box, out slope, maskSize, ignore) != CollisionFlags.NONE)
                 {
                     newBox = box;
-                    //found = true;
-                    //break;
                     return true;
                 }
             }
 
-            /*if (found)
-            {
-                newBox = AdjustOnTheFloor(newBox + maskSize * MMXVector.DOWN_VECTOR, maskSize, STEP_SIZE, ignore);
-                return true;
-            }*/
-
             return false;
         }
 
-        public bool TryMoveContactSlope(MMXBox box, out MMXBox newBox, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactSlope(Box box, out Box newBox, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            return TryMoveContactSlope(box, out newBox, out MMXRightTriangle slope, maxDistance, maskSize, ignore);
+            return TryMoveContactSlope(box, out newBox, out RightTriangle slope, maxDistance, maskSize, ignore);
         }
 
-        public bool TryMoveContactSlope(MMXBox box, out MMXBox newBox, out MMXRightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactSlope(Box box, out Box newBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return TryMoveContactSlope(box, out newBox, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
         }
 
-        public bool TryMoveContactSlope(MMXBox box, out MMXBox newBox, out MMXRightTriangle slope, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactSlope(Box box, out Box newBox, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            slope = MMXRightTriangle.EMPTY;
-            newBox = MMXBox.EMPTY_BOX;
+            slope = RightTriangle.EMPTY;
+            newBox = Box.EMPTY_BOX;
 
-            //bool found = false;
-            for (MMXFloat distance = MMXFloat.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_DOWN_VECTOR)
+            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_DOWN_VECTOR)
             {
                 if (ComputedLandedState(box, out slope, maskSize, ignore).HasFlag(CollisionFlags.SLOPE))
                 {
                     newBox = box;
-                    //found = true;
-                    //break;
                     return true;
                 }
             }
 
-            /*if (found)
-            {
-                newBox = AdjustOnTheFloor(newBox + maskSize * MMXVector.DOWN_VECTOR, maskSize, STEP_SIZE, ignore);
-                return true;
-            }*/
-
             return false;
         }
 
-        public MMXBox AdjustOnTheFloor(MMXBox box, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box AdjustOnTheFloor(Box box, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            return AdjustOnTheFloor(box, out MMXRightTriangle slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
+            return AdjustOnTheFloor(box, out RightTriangle slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
         }
 
-        public MMXBox AdjustOnTheFloor(MMXBox box, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box AdjustOnTheFloor(Box box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            return AdjustOnTheFloor(box, out MMXRightTriangle slope, maxDistance, maskSize, ignore);
+            return AdjustOnTheFloor(box, out RightTriangle slope, maxDistance, maskSize, ignore);
         }
 
-        public MMXBox AdjustOnTheFloor(MMXBox box, out MMXRightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box AdjustOnTheFloor(Box box, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return AdjustOnTheFloor(box, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
         }
 
-        public MMXBox AdjustOnTheFloor(MMXBox box, out MMXRightTriangle slope, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box AdjustOnTheFloor(Box box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
             if (ComputedLandedState(box, out slope, maskSize, ignore) == CollisionFlags.NONE)
                 return box;
 
-            slope = MMXRightTriangle.EMPTY;
+            slope = RightTriangle.EMPTY;
 
-            for (MMXFloat distance = MMXFloat.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_UP_VECTOR)
+            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_UP_VECTOR)
             {
-                if (ComputedLandedState(box + STEP_UP_VECTOR, out MMXRightTriangle slope2, maskSize, ignore) == CollisionFlags.NONE)
+                if (ComputedLandedState(box + STEP_UP_VECTOR, out RightTriangle slope2, maskSize, ignore) == CollisionFlags.NONE)
                     break;
 
                 slope = slope2;
@@ -1498,30 +1619,30 @@ namespace MMX.Engine
             return box;
         }
 
-        public MMXBox MoveContactSolid(MMXBox box, MMXVector dir, CollisionFlags ignore = CollisionFlags.NONE)
+        /*public Box MoveContactSolid(Box box, Vector dir, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            return MoveContactSolid(box, dir, out MMXRightTriangle slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
+            return MoveContactSolid(box, dir, out RightTriangle slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
         }
 
-        public MMXBox MoveContactSolid(MMXBox box, MMXVector dir, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box MoveContactSolid(Box box, Vector dir, Fixed maxDistance, Fixed maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            return MoveContactSolid(box, dir, out MMXRightTriangle slope, maxDistance, maskSize, ignore);
+            return MoveContactSolid(box, dir, out RightTriangle slope, maxDistance, maskSize, ignore);
         }
-        public MMXBox MoveContactSolid(MMXBox box, MMXVector dir, out MMXRightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box MoveContactSolid(Box box, Vector dir, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return MoveContactSolid(box, dir, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
         }
 
-        public MMXBox MoveContactSolid(MMXBox box, MMXVector dir, out MMXRightTriangle slope, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box MoveContactSolid(Box box, Vector dir, out RightTriangle slope, Fixed maxDistance, Fixed maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            slope = MMXRightTriangle.EMPTY;
+            slope = RightTriangle.EMPTY;
 
-            MMXVector deltaDir = GetStepVector(dir);
-            MMXVector dx = deltaDir.XVector;
-            MMXVector dy = deltaDir.YVector;
-            MMXFloat step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs;
+            Vector deltaDir = GetStepVector(dir);
+            Vector dx = deltaDir.XVector;
+            Vector dy = deltaDir.YVector;
+            Fixed step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs;
             CollisionSide sideX = dir.X > 0 ? CollisionSide.RIGHT_WALL : dir.X < 0 ? CollisionSide.LEFT_WALL : CollisionSide.NONE;
-            for (MMXFloat distance = MMXFloat.ZERO; distance < maxDistance; distance += step, box += deltaDir)
+            for (Fixed distance = Fixed.ZERO; distance < maxDistance; distance += step, box += deltaDir)
             {
                 if (GetCollisionFlags(box + dx, ignore, true, sideX) != CollisionFlags.NONE ||
                     (dy.Y > 0 ? ComputedLandedState(box, out slope, maskSize, ignore) : GetCollisionFlags(box + dy, ignore, true, CollisionSide.CEIL)) != CollisionFlags.NONE)
@@ -1529,23 +1650,23 @@ namespace MMX.Engine
             }
 
             return box;
+        }*/
+
+        public Box MoveUntilIntersect(Box box, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER)
+        {
+            return MoveUntilIntersect(box, dir, null, QUERY_MAX_DISTANCE, MASK_SIZE, ignore, side);
         }
 
-        public MMXBox MoveUntilIntersect(MMXBox box, MMXVector dir, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box MoveUntilIntersect(Box box, Vector dir, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER)
         {
-            return MoveUntilIntersect(box, dir, null, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
+            return MoveUntilIntersect(box, dir, null, maxDistance, maskSize, ignore, side);
+        }
+        public Box MoveUntilIntersect(Box box, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER)
+        {
+            return MoveUntilIntersect(box, dir, placements, QUERY_MAX_DISTANCE, MASK_SIZE, ignore, side);
         }
 
-        public MMXBox MoveUntilIntersect(MMXBox box, MMXVector dir, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveUntilIntersect(box, dir, null, maxDistance, maskSize, ignore);
-        }
-        public MMXBox MoveUntilIntersect(MMXBox box, MMXVector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveUntilIntersect(box, dir, placements, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
-
-        private CollisionSide GetCollisionSide(MMXVector dir)
+        private CollisionSide GetCollisionSide(Vector dir)
         {
             CollisionSide result = CollisionSide.NONE;
             if (dir.X > 0)
@@ -1561,55 +1682,57 @@ namespace MMX.Engine
             return result;
         }
 
-        public MMXBox MoveUntilIntersect(MMXBox box, MMXVector dir, List<CollisionPlacement> placements, MMXFloat maxDistance, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public Box MoveUntilIntersect(Box box, Vector dir, List<CollisionPlacement> placements, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER)
         {
-            MMXVector deltaDir = GetStepVector(dir);
-            MMXFloat step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs;
-            CollisionSide side = GetCollisionSide(dir);
-            for (MMXFloat distance = MMXFloat.ZERO; distance < maxDistance; distance += step, box += deltaDir)
+            Vector deltaDir = GetStepVector(dir);
+            FixedSingle step = FixedSingle.Max(deltaDir.X.Abs, deltaDir.Y.Abs);
+            Box lastBox = box;
+            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += step, box += deltaDir)
             {
-                if (GetCollisionFlags(box, placements, ignore, true, side) != CollisionFlags.NONE)
+                if (GetCollisionFlags(box /*| lastBox*/, placements, ignore, true, side) != CollisionFlags.NONE)
                     break;
+
+                lastBox = box;
             }
 
             return box;
         }
 
-        private static MMXVector GetStepVector(MMXVector dir)
+        private static Vector GetStepVector(Vector dir)
         {
             if (dir.X == 0)
-                return dir.Y > 0 ? STEP_DOWN_VECTOR : dir.Y < 0 ? STEP_UP_VECTOR : MMXVector.NULL_VECTOR;
+                return dir.Y > 0 ? STEP_DOWN_VECTOR : dir.Y < 0 ? STEP_UP_VECTOR : Vector.NULL_VECTOR;
 
             if (dir.Y == 0)
-                return dir.X > 0 ? STEP_RIGHT_VECTOR : dir.X < 0 ? STEP_LEFT_VECTOR : MMXVector.NULL_VECTOR;
+                return dir.X > 0 ? STEP_RIGHT_VECTOR : dir.X < 0 ? STEP_LEFT_VECTOR : Vector.NULL_VECTOR;
 
-            MMXFloat x = dir.X;
-            MMXFloat xm = x.Abs;
-            MMXFloat y = dir.Y;
-            MMXFloat ym = y.Abs;
+            FixedSingle x = dir.X;
+            FixedSingle xm = x.Abs;
+            FixedSingle y = dir.Y;
+            FixedSingle ym = y.Abs;
 
             if (xm > ym)
-                return new MMXVector(y != 0 ? x / ym * STEP_SIZE : MMXFloat.ZERO, y.Signal * STEP_SIZE);
+                return new Vector(y != 0 ? x / ym * STEP_SIZE : FixedSingle.ZERO, y.Signal * STEP_SIZE);
 
-            return new MMXVector(x.Signal * STEP_SIZE, x != 0 ? y / xm * STEP_SIZE : MMXFloat.ZERO);
+            return new Vector(x.Signal * STEP_SIZE, x != 0 ? y / xm * STEP_SIZE : FixedSingle.ZERO);
         }
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, MMXVector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        public CollisionFlags GetTouchingFlags(Box collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             return GetCollisionFlags(collisionBox + dir, ignore, preciseCollisionCheck, GetCollisionSide(dir));
         }
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, MMXVector dir, out MMXRightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        public CollisionFlags GetTouchingFlags(Box collisionBox, Vector dir, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             return GetCollisionFlags(collisionBox + dir, out slopeTriangle, ignore, preciseCollisionCheck, GetCollisionSide(dir));
         }
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, MMXVector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        public CollisionFlags GetTouchingFlags(Box collisionBox, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             return GetCollisionFlags(collisionBox + dir, placements, ignore, preciseCollisionCheck, GetCollisionSide(dir));
         }
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, MMXVector dir, List<CollisionPlacement> placements, out MMXRightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        public CollisionFlags GetTouchingFlags(Box collisionBox, Vector dir, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             return GetCollisionFlags(collisionBox + dir, placements, out slopeTriangle, ignore, preciseCollisionCheck, GetCollisionSide(dir));
         }

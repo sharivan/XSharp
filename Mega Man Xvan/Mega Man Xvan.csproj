@@ -55,6 +55,9 @@
     <StartupObject>Mega_Man_Xvan.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DynamicLua, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DynamicLua.1.1.2.0\lib\net40-Client\DynamicLua.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
@@ -111,9 +114,9 @@
     <Compile Include="Engine\GameEngine.cs" />
     <Compile Include="Engine\Keys.cs" />
     <Compile Include="Engine\Map.cs" />
-    <Compile Include="Engine\MMXFloat.cs" />
-    <Compile Include="Engine\MMXGeometry.cs" />
-    <Compile Include="Engine\MMXObject.cs" />
+    <Compile Include="Math\FMath.cs" />
+    <Compile Include="Math\Geometry2D.cs" />
+    <Compile Include="Engine\Entity.cs" />
     <Compile Include="Engine\Partition.cs" />
     <Compile Include="Engine\Player.cs" />
     <Compile Include="Engine\RespawnEntry.cs" />
@@ -126,8 +129,7 @@
     <Compile Include="Engine\Utils.cs" />
     <Compile Include="Engine\World.cs" />
     <Compile Include="GdiUtil.cs" />
-    <Compile Include="Geometry\Geometry2D.cs" />
-    <Compile Include="Graph2D\Graph2D.cs" />
+    <Compile Include="Util\Graph2D.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ROM\CompressionCore.cs" />

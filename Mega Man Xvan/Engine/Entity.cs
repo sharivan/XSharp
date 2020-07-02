@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MMX.Geometry;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace MMX.Engine
 {
-    public abstract class MMXObject
+    public abstract class Entity
     {
         protected GameEngine engine;
         internal int index; // Posição deste objeto na lista de objetos do engine
-        private MMXVector origin;
-        private MMXVector lastOrigin;
-        private List<MMXObject> touchingObjects;
+        private Vector origin;
+        private Vector lastOrigin;
+        private List<Entity> touchingEntities;
         protected bool markedToRemove;
 
         public GameEngine Engine
@@ -35,7 +36,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector Origin
+        public Vector Origin
         {
             get
             {
@@ -48,7 +49,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector LastOrigin
+        public Vector LastOrigin
         {
             get
             {
@@ -56,7 +57,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXBox BoundingBox
+        public Box BoundingBox
         {
             get
             {
@@ -80,31 +81,31 @@ namespace MMX.Engine
             }
         }
 
-        protected MMXObject(GameEngine engine, MMXVector origin)
+        protected Entity(GameEngine engine, Vector origin)
         {
             this.engine = engine;
             this.origin = origin;
 
-            touchingObjects = new List<MMXObject>();
+            touchingEntities = new List<Entity>();
         }
 
-        protected virtual void SetOrigin(MMXVector origin)
+        protected virtual void SetOrigin(Vector origin)
         {
             lastOrigin = this.origin;
             this.origin = origin;
             engine.partition.Update(this);
         }
 
-        protected abstract MMXBox GetBoundingBox();
+        protected abstract Box GetBoundingBox();
 
-        protected virtual void SetBoundingBox(MMXBox boudingBox)
+        protected virtual void SetBoundingBox(Box boudingBox)
         {
         }
 
         public virtual void LoadState(BinaryReader reader)
         {
-            origin = new MMXVector(reader);
-            lastOrigin = new MMXVector(reader);
+            origin = new Vector(reader);
+            lastOrigin = new Vector(reader);
             markedToRemove = reader.ReadBoolean();
         }
 
@@ -134,19 +135,19 @@ namespace MMX.Engine
 
             PostThink(); // Realiza o pós-pensamento do objeto
 
-            List<MMXObject> touching = engine.partition.Query(BoundingBox, this);
+            List<Entity> touching = engine.partition.Query(BoundingBox, this);
 
             // Processa a lista global de objetos que anteriormente estavam tocando esta entidade no frame anterior
-            int count = touchingObjects.Count;
+            int count = touchingEntities.Count;
             for (int i = 0; i < count; i++)
             {
                 // Se pra cada objeto desta lista
-                MMXObject obj = touchingObjects[i];
+                Entity obj = touchingEntities[i];
                 int index = touching.IndexOf(obj);
 
                 if (index == -1) // ele não estiver na lista de toques local (ou seja, não está mais tocando este objeto)
                 {
-                    touchingObjects.RemoveAt(i); // então remove-o da lista global
+                    touchingEntities.RemoveAt(i); // então remove-o da lista global
                     i--;
                     count--;
                     OnEndTouch(obj); // e notifica que ele nao está mais tocando esta objeto
@@ -159,22 +160,22 @@ namespace MMX.Engine
             }
 
             // Para cada objetos que sobrou na lista de toques local
-            foreach (MMXObject obj in touching)
+            foreach (Entity obj in touching)
             {
-                touchingObjects.Add(obj); // Adiciona-o na lista global de toques
+                touchingEntities.Add(obj); // Adiciona-o na lista global de toques
                 OnStartTouch(obj); // e notifique que ele começou a tocar este objeto
             }
         }
 
-        protected virtual void OnStartTouch(MMXObject obj)
+        protected virtual void OnStartTouch(Entity obj)
         {
         }
 
-        protected virtual void OnTouching(MMXObject obj)
+        protected virtual void OnTouching(Entity obj)
         {
         }
 
-        protected virtual void OnEndTouch(MMXObject obj)
+        protected virtual void OnEndTouch(Entity obj)
         {
         }
 

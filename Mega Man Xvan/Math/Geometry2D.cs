@@ -1,11 +1,11 @@
-﻿using System;
+﻿using MMX.Math;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
-namespace MMX.Engine
+namespace MMX.Geometry
 {
     public enum GeometryType
     {
@@ -18,42 +18,57 @@ namespace MMX.Engine
         UNION = 6
     }
 
-    public interface MMXGeometry
+    public interface IGeometry
     {
-        GeometryType GetType();
-    }
-
-    public sealed class EmptyGeometry : MMXGeometry
-    {
-        public const GeometryType type = GeometryType.EMPTY;
-
-        GeometryType MMXGeometry.GetType()
+        GeometryType Type
         {
-            return type;
+            get;
+        }
+
+        FixedSingle Length
+        {
+            get;
+        }
+
+        FixedSingle Area
+        {
+            get;
         }
     }
 
-    public struct MMXUnion : MMXGeometry
+    public struct EmptyGeometry : IGeometry
+    {
+        public const GeometryType type = GeometryType.EMPTY;
+
+        public FixedSingle Length => FixedSingle.ZERO;
+
+        public FixedSingle Area => FixedSingle.ZERO;
+
+        public GeometryType Type => type;
+    }
+
+    public struct Union : IGeometry
     {
         public const GeometryType type = GeometryType.UNION;
 
-        public static readonly MMXUnion EMPTY_SET = new MMXUnion();
+        public static readonly Union EMPTY_SET = new Union();
 
-        private MMXGeometry[] parts;
+        private IGeometry[] parts;
 
         /// <summary>
         /// Cria uma união a partir das partes
         /// </summary>
         /// <param name="parts">Partes</param>
-        public MMXUnion(params MMXGeometry[] parts)
+        public Union(params IGeometry[] parts)
         {
             this.parts = parts;
         }
 
-        GeometryType MMXGeometry.GetType()
-        {
-            return type;
-        }
+        public GeometryType Type => type;
+
+        public FixedSingle Length => throw new NotImplementedException();
+
+        public FixedSingle Area => throw new NotImplementedException();
 
         /// <summary>
         /// Quantidade de partes disjuntas contidas na união
@@ -66,14 +81,30 @@ namespace MMX.Engine
             }
         }
 
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Union))
+            {
+                return false;
+            }
+
+            var union = (Union) obj;
+            return this == union;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1480434725;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<IGeometry[]>.Default.GetHashCode(parts);
+            return hashCode;
+        }
+
         /// <summary>
         /// Retorna true se a união for vazia, false caso contrário
         /// </summary>
         /// <returns></returns>
-        public bool IsEmpty()
-        {
-            return parts.Length == 0;
-        }
+        public bool Empty => parts.Length == 0;
 
         /// <summary>
         /// Igualdade entre uniões
@@ -81,18 +112,18 @@ namespace MMX.Engine
         /// <param name="set1">Primeira união</param>
         /// <param name="set2">Segunda união</param>
         /// <returns>true se as uniões forem iguais, false caso contrário</returns>
-        public static bool operator ==(MMXUnion set1, MMXUnion set2)
+        public static bool operator ==(Union set1, Union set2)
         {
-            List<MMXGeometry> list = set2.parts.ToList<MMXGeometry>();
+            List<IGeometry> list = set2.parts.ToList<IGeometry>();
 
             for (int i = 0; i < set1.parts.Length; i++)
             {
-                MMXGeometry g1 = set1.parts[i];
+                IGeometry g1 = set1.parts[i];
                 bool found = false;
 
                 for (int j = 0; j < list.Count; j++)
                 {
-                    MMXGeometry g2 = list[j];
+                    IGeometry g2 = list[j];
 
                     if (g1 == g2)
                     {
@@ -115,7 +146,7 @@ namespace MMX.Engine
         /// <param name="set1">Primeira união</param>
         /// <param name="set2">Segunda união</param>
         /// <returns>true se as uniões forem diferentes, false caso contrário</returns>
-        public static bool operator !=(MMXUnion set1, MMXUnion set2)
+        public static bool operator !=(Union set1, Union set2)
         {
             return !(set1 == set2);
         }
@@ -124,38 +155,38 @@ namespace MMX.Engine
     /// <summary>
     /// Vetor bidimensional
     /// </summary>
-    public struct MMXVector : MMXGeometry
+    public struct Vector : IGeometry
     {
         public const GeometryType type = GeometryType.VECTOR;
 
         /// <summary>
         /// Vetor nulo
         /// </summary>
-        public static readonly MMXVector NULL_VECTOR = new MMXVector(0, 0); // Vetor nulo
+        public static readonly Vector NULL_VECTOR = new Vector(0, 0); // Vetor nulo
                                                                       /// <summary>
                                                                       /// Vetor leste
                                                                       /// </summary>
-        public static readonly MMXVector LEFT_VECTOR = new MMXVector(-1, 0);
+        public static readonly Vector LEFT_VECTOR = new Vector(-1, 0);
         /// <summary>
         /// Vetor norte
         /// </summary>
-        public static readonly MMXVector UP_VECTOR = new MMXVector(0, -1);
+        public static readonly Vector UP_VECTOR = new Vector(0, -1);
         /// <summary>
         /// Vetor oeste
         /// </summary>
-        public static readonly MMXVector RIGHT_VECTOR = new MMXVector(1, 0);
+        public static readonly Vector RIGHT_VECTOR = new Vector(1, 0);
         /// <summary>
         /// Vetor sul
         /// </summary>
-        public static readonly MMXVector DOWN_VECTOR = new MMXVector(0, 1);
+        public static readonly Vector DOWN_VECTOR = new Vector(0, 1);
 
-        private MMXFloat x; // Coordenada x
-        private MMXFloat y; // Coordenada y
+        private FixedSingle x; // Coordenada x
+        private FixedSingle y; // Coordenada y
 
         /// <summary>
         /// Coordenada x do vetor
         /// </summary>
-        public MMXFloat X
+        public FixedSingle X
         {
             get
             {
@@ -166,7 +197,7 @@ namespace MMX.Engine
         /// <summary>
         /// Coordenada y do vetor
         /// </summary>
-        public MMXFloat Y
+        public FixedSingle Y
         {
             get
             {
@@ -177,17 +208,19 @@ namespace MMX.Engine
         /// <summary>
         /// Módulo/Norma/Comprimento do vetor
         /// </summary>
-        public MMXFloat Length
+        public FixedSingle Length
         {
             get
             {
-                if (x == 0)
-                    return y.Abs;
+                if (this.x == 0)
+                    return this.y.Abs;
 
-                if (y == 0)
-                    return x.Abs;
+                if (this.y == 0)
+                    return this.x.Abs;
 
-                return Math.Sqrt((double) x * (double) x + (double) y * (double) y);
+                FixedDouble x = this.x;
+                FixedDouble y = this.y;
+                return System.Math.Sqrt(x * x + y * y);
             }
         }
 
@@ -202,37 +235,39 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector XVector
+        public Vector XVector
         {
             get
             {
-                return new MMXVector(X, 0);
+                return new Vector(X, 0);
             }
         }
 
-        public MMXVector YVector
+        public Vector YVector
         {
             get
             {
-                return new MMXVector(0, Y);
+                return new Vector(0, Y);
             }
         }
+
+        public FixedSingle Area => FixedSingle.ZERO;
 
         /// <summary>
         /// Cria um vetor a partir de duas coordenadas
         /// </summary>
         /// <param name="x">Coordenada x</param>
         /// <param name="y">Coordenada y</param>
-        public MMXVector(MMXFloat x, MMXFloat y)
+        public Vector(FixedSingle x, FixedSingle y)
         {
             this.x = x;
             this.y = y;
         }
 
-        public MMXVector(BinaryReader reader)
+        public Vector(BinaryReader reader)
         {
-            x = new MMXFloat(reader);
-            y = new MMXFloat(reader);
+            x = new FixedSingle(reader);
+            y = new FixedSingle(reader);
         }
 
         public void Write(BinaryWriter writer)
@@ -248,29 +283,29 @@ namespace MMX.Engine
 
         public override bool Equals(object obj)
         {
-            if (!(obj is MMXVector))
+            if (!(obj is Vector))
                 return false;
 
-            MMXVector other = (MMXVector) obj;
-            return other.x == x && other.y == y;
+            Vector other = (Vector) obj;
+            return this == other;
         }
 
         public override string ToString()
         {
-            return "(" + x + ";" + y + ")";
+            return "(" + x + ", " + y + ")";
         }
 
         /// <summary>
         /// Normaliza o vetor
         /// </summary>
         /// <returns>O vetor normalizado</returns>
-        public MMXVector Versor()
+        public Vector Versor()
         {
             if (IsNull)
                 return NULL_VECTOR;
 
-            MMXFloat abs = Length;
-            return new MMXVector(x / abs, y / abs);
+            FixedSingle abs = Length;
+            return new Vector(x / abs, y / abs);
         }
 
         /// <summary>
@@ -278,12 +313,16 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="angle">Angulo de rotação em radianos</param>
         /// <returns>O vetor rotacionado</returns>
-        public MMXVector Rotate(MMXFloat angle)
+        public Vector Rotate(FixedSingle angle)
         {
-            double cos = Math.Cos(angle);
-            double sin = Math.Sin(angle);
+            FixedDouble x = this.x;
+            FixedDouble y = this.y;
+            FixedDouble a = (FixedDouble) angle;
 
-            return new MMXVector((double) x * cos - (double) y * sin, (double) x * sin + (double) y * cos);
+            FixedDouble cos = a.Cos();
+            FixedDouble sin = a.Sin();
+
+            return new Vector((FixedSingle) (x * cos - y * sin), (FixedSingle) (x * sin + y * cos));
         }
 
         /// <summary>
@@ -292,7 +331,7 @@ namespace MMX.Engine
         /// <param name="center">Centro de rotação</param>
         /// <param name="angle">Angulo de rotação em radianos</param>
         /// <returns>O vetor rotacionado</returns>
-        public MMXVector Rotate(MMXVector center, MMXFloat angle)
+        public Vector Rotate(Vector center, FixedSingle angle)
         {
             return (this - center).Rotate(angle) + center;
         }
@@ -301,9 +340,9 @@ namespace MMX.Engine
         /// Rotaciona um vetor em 90 graus ao redor da origem
         /// </summary>
         /// <returns>O vetor rotacionado</returns>
-        public MMXVector Rotate90()
+        public Vector Rotate90()
         {
-            return new MMXVector(-y, x);
+            return new Vector(-y, x);
         }
 
         /// <summary>
@@ -311,7 +350,7 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="center">Centro de rotação</param>
         /// <returns>O vetor rotacionado</returns>
-        public MMXVector Rotate90(MMXVector center)
+        public Vector Rotate90(Vector center)
         {
             return (this - center).Rotate90() + center;
         }
@@ -320,9 +359,9 @@ namespace MMX.Engine
         /// Rotaciona um vetor em 180 graus ao redor da origem
         /// </summary>
         /// <returns>O vetor rotacionado</returns>
-        public MMXVector Rotate180()
+        public Vector Rotate180()
         {
-            return new MMXVector(-x, -y);
+            return new Vector(-x, -y);
         }
 
         /// <summary>
@@ -330,7 +369,7 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="center">Centro de rotação</param>
         /// <returns>O vetor rotacionado</returns>
-        public MMXVector Rotate180(MMXVector center)
+        public Vector Rotate180(Vector center)
         {
             return (this - center).Rotate180() + center;
         }
@@ -339,9 +378,9 @@ namespace MMX.Engine
         /// Rotaciona um vetor em 270 graus ao redor da origem
         /// </summary>
         /// <returns>O vetor rotacionado</returns>
-        public MMXVector Rotate270()
+        public Vector Rotate270()
         {
-            return new MMXVector(y, -x);
+            return new Vector(y, -x);
         }
 
         /// <summary>
@@ -349,54 +388,54 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="center">Centro de rotação</param>
         /// <returns>O vetor rotacionado</returns>
-        public MMXVector Rotate270(MMXVector center)
+        public Vector Rotate270(Vector center)
         {
             return (this - center).Rotate270() + center;
         }
 
-        public MMXVector RoundToCeil()
+        public Vector RoundToCeil()
         {
-            return new MMXVector(x.RoundToCeil(), y.RoundToCeil());
+            return new Vector(x.Ceil(), y.Ceil());
         }
 
-        public MMXVector RoundToFloor()
+        public Vector RoundToFloor()
         {
-            return new MMXVector(x.RoundToFloor(), y.RoundToFloor());
+            return new Vector(x.Floor(), y.Floor());
         }
 
-        public MMXVector RoundXToCeil()
+        public Vector RoundXToCeil()
         {
-            return new MMXVector(x.RoundToCeil(), y);
+            return new Vector(x.Ceil(), y);
         }
 
-        public MMXVector RoundXToFloor()
+        public Vector RoundXToFloor()
         {
-            return new MMXVector(x.RoundToFloor(), y);
+            return new Vector(x.Floor(), y);
         }
 
-        public MMXVector RoundYToCeil()
+        public Vector RoundYToCeil()
         {
-            return new MMXVector(x, y.RoundToCeil());
+            return new Vector(x, y.Ceil());
         }
 
-        public MMXVector RoundYToFloor()
+        public Vector RoundYToFloor()
         {
-            return new MMXVector(x, y.RoundToFloor());
+            return new Vector(x, y.Floor());
         }
 
-        public MMXVector Round(MMXFloat dx, MMXFloat dy)
+        public Vector Round()
         {
-            return new MMXVector(x.Round(dx), y.Round(dy));
+            return new Vector(x.Round(), y.Round());
         }
 
-        public MMXVector RoundX(MMXFloat dx)
+        public Vector RoundX()
         {
-            return new MMXVector(x.Round(dx), y);
+            return new Vector(x.Round(), y);
         }
 
-        public MMXVector RoundY(MMXFloat dy)
+        public Vector RoundY()
         {
-            return new MMXVector(x, y.Round(dy));
+            return new Vector(x, y.Round());
         }
 
         /// <summary>
@@ -404,17 +443,14 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="vec">Vetor no qual será medido a sua distância até este vetor</param>
         /// <returns>A distância entre este vetor e o vetor dado</returns>
-        public MMXFloat DistanceTo(MMXVector vec)
+        public FixedSingle DistanceTo(Vector vec)
         {
-            double dx = x - vec.x;
-            double dy = y - vec.y;
-            return Math.Sqrt(dx * dx + dy * dy);
+            FixedDouble dx = x - vec.x;
+            FixedDouble dy = y - vec.y;
+            return System.Math.Sqrt(dx * dx + dy * dy);
         }
 
-        GeometryType MMXGeometry.GetType()
-        {
-            return type;
-        }
+        public GeometryType Type => type;
 
         /// <summary>
         /// Adição de vetores
@@ -422,9 +458,9 @@ namespace MMX.Engine
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>Soma entre os dois vetores</returns>
-        public static MMXVector operator +(MMXVector vec1, MMXVector vec2)
+        public static Vector operator +(Vector vec1, Vector vec2)
         {
-            return new MMXVector(vec1.x + vec2.x, vec1.y + vec2.y);
+            return new Vector(vec1.x + vec2.x, vec1.y + vec2.y);
         }
 
         /// <summary>
@@ -433,9 +469,9 @@ namespace MMX.Engine
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>Diferença entre os dois vetores</returns>
-        public static MMXVector operator -(MMXVector vec1, MMXVector vec2)
+        public static Vector operator -(Vector vec1, Vector vec2)
         {
-            return new MMXVector(vec1.x - vec2.x, vec1.y - vec2.y);
+            return new Vector(vec1.x - vec2.x, vec1.y - vec2.y);
         }
 
         /// <summary>
@@ -443,9 +479,9 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="vec">Vetor</param>
         /// <returns>O oposto do vetor</returns>
-        public static MMXVector operator -(MMXVector vec)
+        public static Vector operator -(Vector vec)
         {
-            return new MMXVector(-vec.x, -vec.y);
+            return new Vector(-vec.x, -vec.y);
         }
 
         /// <summary>
@@ -454,9 +490,9 @@ namespace MMX.Engine
         /// <param name="alpha">Escalar</param>
         /// <param name="vec">Vetor</param>
         /// <returns>O vetor escalado por alpha</returns>
-        public static MMXVector operator *(MMXFloat alpha, MMXVector vec)
+        public static Vector operator *(FixedSingle alpha, Vector vec)
         {
-            return new MMXVector(alpha * vec.x, alpha * vec.y);
+            return new Vector(alpha * vec.x, alpha * vec.y);
         }
 
         /// <summary>
@@ -465,9 +501,9 @@ namespace MMX.Engine
         /// <param name="vec">Vetor</param>
         /// <param name="alpha">Escalar</param>
         /// <returns>O vetor escalado por alpha</returns>
-        public static MMXVector operator *(MMXVector vec, MMXFloat alpha)
+        public static Vector operator *(Vector vec, FixedSingle alpha)
         {
-            return new MMXVector(alpha * vec.x, alpha * vec.y);
+            return new Vector(alpha * vec.x, alpha * vec.y);
         }
 
         /// <summary>
@@ -476,9 +512,9 @@ namespace MMX.Engine
         /// <param name="vec">Vetor</param>
         /// <param name="alpha">Escalar</param>
         /// <returns>O vetor dividido pelo escalar alpha</returns>
-        public static MMXVector operator /(MMXVector vec, MMXFloat alpha)
+        public static Vector operator /(Vector vec, FixedSingle alpha)
         {
-            return new MMXVector(vec.x / alpha, vec.y / alpha);
+            return new Vector(vec.x / alpha, vec.y / alpha);
         }
 
         /// <summary>
@@ -487,7 +523,7 @@ namespace MMX.Engine
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>Produto escalar entre os dois vetores</returns>
-        public static MMXFloat operator *(MMXVector vec1, MMXVector vec2)
+        public static FixedSingle operator *(Vector vec1, Vector vec2)
         {
             return vec1.x * vec2.x + vec1.y * vec2.y;
         }
@@ -498,7 +534,7 @@ namespace MMX.Engine
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>true se os vetores forem iguais, false caso contrário</returns>
-        public static bool operator ==(MMXVector vec1, MMXVector vec2)
+        public static bool operator ==(Vector vec1, Vector vec2)
         {
             return vec1.x == vec2.x && vec1.y == vec2.y;
         }
@@ -509,206 +545,30 @@ namespace MMX.Engine
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>true se os vetores forem diferentes, false caso contrário</returns>
-        public static bool operator !=(MMXVector vec1, MMXVector vec2)
+        public static bool operator !=(Vector vec1, Vector vec2)
         {
             return vec1.x != vec2.x || vec1.y != vec2.y;
-        }
-    }
-
-    public struct Interval
-    {
-        public static readonly Interval EMPTY = MakeOpenInterval(0, 0);
-
-        private MMXFloat min;
-        private bool closedLeft;
-        private MMXFloat max;
-        private bool closedRight;
-
-        public MMXFloat Min
-        {
-            get
-            {
-                return min;
-            }
-        }
-
-        public bool ClosedLeft
-        {
-            get
-            {
-                return closedLeft;
-            }
-        }
-
-        public bool ClosedRight
-        {
-            get
-            {
-                return closedRight;
-            }
-        }
-
-        public bool IsEmpty
-        {
-            get
-            {
-                return closedLeft && closedRight ? min > max : min >= max;
-            }
-        }
-
-        public bool IsPoint
-        {
-            get
-            {
-                return min == max;
-            }
-        }
-
-        private Interval(MMXFloat min, bool closedLeft, MMXFloat max, bool closedRight)
-        {
-            this.min = min;
-            this.closedLeft = closedLeft;
-            this.max = max;
-            this.closedRight = closedRight;
-        }
-
-        public bool Equals(Interval other)
-        {
-            if (IsEmpty && other.IsEmpty)
-                return true;
-
-            return min == other.min && closedLeft == other.closedLeft && max == other.max && closedRight == other.closedRight;
-        }
-
-        public bool Contains(MMXFloat element, bool inclusive = true)
-        {
-            if (!inclusive)
-                return min < element && element < max;
-
-            if (closedLeft ? min > element : min >= element)
-                return false;
-
-            if (closedRight ? element > max : element >= max)
-                return false;
-
-            return true;
-        }
-
-        public bool Contains(Interval interval, bool inclusive = true)
-        {
-            if (interval.IsEmpty)
-                return !inclusive ? !IsEmpty : true;
-
-            if (!inclusive)
-                return min < interval.min && interval.max < max;
-
-            if (closedLeft ? min > interval.min : interval.closedLeft ? min >= interval.min : min > interval.min)
-                return false;
-
-            if (closedRight ? interval.max > max : interval.closedRight ? interval.max >= max : interval.max > max)
-                return false;
-
-            return true;
-        }
-
-        public Interval Intersection(Interval other)
-        {
-            if (other.IsEmpty)
-                return EMPTY;
-
-            MMXFloat newMin;
-            bool newClosedLeft;
-            if (min > other.min)
-            {
-                newMin = min;
-                newClosedLeft = closedLeft;
-            }
-            else if (min < other.min)
-            {
-                newMin = other.min;
-                newClosedLeft = other.closedLeft;
-            }
-            else
-            {
-                newMin = min;
-                newClosedLeft = closedLeft && other.closedLeft;
-            }
-
-            MMXFloat newMax;
-            bool newClosedRight;
-            if (max < other.max)
-            {
-                newMax = max;
-                newClosedRight = closedRight;
-            }
-            else if (max > other.max)
-            {
-                newMax = other.max;
-                newClosedRight = other.closedRight;
-            }
-            else
-            {
-                newMax = max;
-                newClosedRight = closedRight && other.closedRight;
-            }
-
-            return new Interval(newMin, newClosedLeft, newMax, newClosedRight);
-        }
-
-        public static Interval MakeOpenInterval(MMXFloat v1, MMXFloat v2)
-        {
-            return new Interval(MMXFloat.Min(v1, v2), false, MMXFloat.Max(v1, v2), false);
-        }
-
-        public static Interval MakeClosedInterval(MMXFloat v1, MMXFloat v2)
-        {
-            return new Interval(MMXFloat.Min(v1, v2), true, MMXFloat.Max(v1, v2), true);
-        }
-
-        public static Interval MakeSemiOpenLeftInterval(MMXFloat v1, MMXFloat v2)
-        {
-            return new Interval(MMXFloat.Min(v1, v2), false, MMXFloat.Max(v1, v2), true);
-        }
-
-        public static Interval MakeSemiOpenRightInterval(MMXFloat v1, MMXFloat v2)
-        {
-            return new Interval(MMXFloat.Min(v1, v2), true, MMXFloat.Max(v1, v2), false);
-        }
-
-        public override string ToString()
-        {
-            return (closedLeft ? "[" : "(") + min + ";" + max + (closedRight ? "]" : ")");
-        }
-
-        public static bool operator ==(Interval left, Interval right)
-        {
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(Interval left, Interval right)
-        {
-            return !left.Equals(right);
         }
     }
 
     /// <summary>
     /// Segmento de reta
     /// </summary>
-    public struct MMXLineSegment : MMXGeometry
+    public struct LineSegment : IGeometry
     {
         public const GeometryType type = GeometryType.LINE_SEGMENT;
 
-        public static readonly MMXLineSegment NULL_SEGMENT = new MMXLineSegment(MMXVector.NULL_VECTOR, MMXVector.NULL_VECTOR);
+        public static readonly LineSegment NULL_SEGMENT = new LineSegment(Vector.NULL_VECTOR, Vector.NULL_VECTOR);
 
-        private MMXVector start; // Ponto inicial do segmento
-        private MMXVector end; // Ponto final do segmento
+        private Vector start; // Ponto inicial do segmento
+        private Vector end; // Ponto final do segmento
 
         /// <summary>
         /// Cria um segmento de reta a partir de dois pontos
         /// </summary>
         /// <param name="start">Ponto inicial do segmento</param>
         /// <param name="end">Ponto final do segmento</param>
-        public MMXLineSegment(MMXVector start, MMXVector end)
+        public LineSegment(Vector start, Vector end)
         {
             this.start = start;
             this.end = end;
@@ -717,7 +577,7 @@ namespace MMX.Engine
         /// <summary>
         /// Ponto inicial do segmento
         /// </summary>
-        public MMXVector Start
+        public Vector Start
         {
             get
             {
@@ -728,7 +588,7 @@ namespace MMX.Engine
         /// <summary>
         /// Ponto final do segmento
         /// </summary>
-        public MMXVector End
+        public Vector End
         {
             get
             {
@@ -739,21 +599,15 @@ namespace MMX.Engine
         /// <summary>
         /// Comprimento do segmento
         /// </summary>
-        public MMXFloat Length
-        {
-            get
-            {
-                return (end - start).Length;
-            }
-        }
+        public FixedSingle Length => (end - start).Length;
 
         /// <summary>
         /// Inverte o sentido do segmento trocando seu ponto inicial com seu ponto final
         /// </summary>
         /// <returns>O segmento de reta invertido</returns>
-        public MMXLineSegment Negate()
+        public LineSegment Negate()
         {
-            return new MMXLineSegment(end, start);
+            return new LineSegment(end, start);
         }
 
         /// <summary>
@@ -762,11 +616,11 @@ namespace MMX.Engine
         /// <param name="origin">Centro de rotação</param>
         /// <param name="angle">Algumo de rotação em radianos</param>
         /// <returns>Segmento de reta rotacionado</returns>
-        public MMXLineSegment Rotate(MMXVector origin, MMXFloat angle)
+        public LineSegment Rotate(Vector origin, FixedSingle angle)
         {
-            MMXVector u = start.Rotate(origin, angle);
-            MMXVector v = end.Rotate(origin, angle);
-            return new MMXLineSegment(u, v);
+            Vector u = start.Rotate(origin, angle);
+            Vector v = end.Rotate(origin, angle);
+            return new LineSegment(u, v);
         }
 
         /// <summary>
@@ -774,11 +628,11 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="origin">Centro de rotação</param>
         /// <returns>Segmento de reta rotacionado</returns>
-        public MMXLineSegment Rotate90(MMXVector origin)
+        public LineSegment Rotate90(Vector origin)
         {
-            MMXVector u = start.Rotate90(origin);
-            MMXVector v = end.Rotate90(origin);
-            return new MMXLineSegment(u, v);
+            Vector u = start.Rotate90(origin);
+            Vector v = end.Rotate90(origin);
+            return new LineSegment(u, v);
         }
 
         /// <summary>
@@ -786,11 +640,11 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="origin">Centro de rotação</param>
         /// <returns>Segmento de reta rotacionado</returns>
-        public MMXLineSegment Rotate180(MMXVector origin)
+        public LineSegment Rotate180(Vector origin)
         {
-            MMXVector u = start.Rotate180(origin);
-            MMXVector v = end.Rotate180(origin);
-            return new MMXLineSegment(u, v);
+            Vector u = start.Rotate180(origin);
+            Vector v = end.Rotate180(origin);
+            return new LineSegment(u, v);
         }
 
         /// <summary>
@@ -798,11 +652,11 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="origin">Centro de rotação</param>
         /// <returns>Segmento de reta rotacionado</returns>
-        public MMXLineSegment Rotate270(MMXVector origin)
+        public LineSegment Rotate270(Vector origin)
         {
-            MMXVector u = start.Rotate270(origin);
-            MMXVector v = end.Rotate270(origin);
-            return new MMXLineSegment(u, v);
+            Vector u = start.Rotate270(origin);
+            Vector v = end.Rotate270(origin);
+            return new LineSegment(u, v);
         }
 
         /// <summary>
@@ -810,9 +664,9 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="v">Vetor a ser testado</param>
         /// <returns>1 se o vetor está a esquerda do segmento, -1 se estiver a direta, 0 se for colinear ao segmento</returns>
-        public int Compare(MMXVector v)
+        public int Compare(Vector v)
         {
-            MMXFloat f = (v.Y - start.Y) * (end.X - start.X) - (v.X - start.X) * (end.Y - start.Y);
+            FixedSingle f = (v.Y - start.Y) * (end.X - start.X) - (v.X - start.X) * (end.Y - start.Y);
 
             if (f > 0)
                 return 1;
@@ -828,15 +682,15 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="v">Vetor a ser testado</param>
         /// <returns>true se o segmento contém o vetor, false caso contrário</returns>
-        public bool Contains(MMXVector v)
+        public bool Contains(Vector v)
         {
             if (Compare(v) != 0)
                 return false;
 
-            MMXFloat mX = MMXFloat.Min(start.X, end.X);
-            MMXFloat MX = MMXFloat.Max(start.X, end.X);
-            MMXFloat mY = MMXFloat.Min(start.Y, end.Y);
-            MMXFloat MY = MMXFloat.Max(start.Y, end.Y);
+            FixedSingle mX = FixedSingle.Min(start.X, end.X);
+            FixedSingle MX = FixedSingle.Max(start.X, end.X);
+            FixedSingle mY = FixedSingle.Min(start.Y, end.Y);
+            FixedSingle MY = FixedSingle.Max(start.Y, end.Y);
 
             return mX <= v.X && v.X <= MX && mY <= v.Y && v.Y <= MY;
         }
@@ -846,12 +700,12 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="s">Segmento a ser testado</param>
         /// <returns>true se forem paralelos, false caso contrário</returns>
-        public bool IsParallel(MMXLineSegment s)
+        public bool IsParallel(LineSegment s)
         {
-            MMXFloat A1 = end.Y - start.Y;
-            MMXFloat B1 = end.X - start.X;
-            MMXFloat A2 = s.end.Y - s.start.Y;
-            MMXFloat B2 = s.end.X - s.start.X;
+            FixedSingle A1 = end.Y - start.Y;
+            FixedSingle B1 = end.X - start.X;
+            FixedSingle A2 = s.end.Y - s.start.Y;
+            FixedSingle B2 = s.end.X - s.start.X;
 
             return A1 * B2 == A2 * B1;
         }
@@ -861,10 +715,10 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="s">Segmento de reta a ser testado</param>
         /// <returns>A intersecção entre os dois segmentos caso ela exista, ou retorna conjunto vazio caso contrário</returns>
-        public GeometryType Intersection(MMXLineSegment s, out MMXVector resultVector, out MMXLineSegment resultLineSegment)
+        public GeometryType Intersection(LineSegment s, out Vector resultVector, out LineSegment resultLineSegment)
         {
-            resultVector = MMXVector.NULL_VECTOR;
-            resultLineSegment = MMXLineSegment.NULL_SEGMENT;
+            resultVector = Vector.NULL_VECTOR;
+            resultLineSegment = NULL_SEGMENT;
 
             if (s == this)
             {
@@ -872,44 +726,44 @@ namespace MMX.Engine
                 return GeometryType.LINE_SEGMENT;
             }
 
-            MMXFloat A1 = end.Y - start.Y;
-            MMXFloat B1 = end.X - start.X;
-            MMXFloat A2 = s.end.Y - s.start.Y;
-            MMXFloat B2 = s.end.X - s.start.X;
+            FixedDouble A1 = end.Y - start.Y;
+            FixedDouble B1 = end.X - start.X;
+            FixedDouble A2 = s.end.Y - s.start.Y;
+            FixedDouble B2 = s.end.X - s.start.X;
 
-            MMXFloat D = A1 * B2 - A2 * B1;
+            FixedDouble D = A1 * B2 - A2 * B1;
 
-            MMXFloat C1 = start.X * end.Y - end.X * start.Y;
-            MMXFloat C2 = s.start.X * s.end.Y - s.end.X * s.start.Y;
+            FixedDouble C1 = start.X * end.Y - end.X * start.Y;
+            FixedDouble C2 = s.start.X * s.end.Y - s.end.X * s.start.Y;
 
             if (D == 0)
             {
                 if (C1 != 0 || C2 != 0)
                     return GeometryType.EMPTY;
 
-                MMXFloat xmin = MMXFloat.Max(start.X, s.start.X);
-                MMXFloat ymin = MMXFloat.Max(start.Y, s.start.Y);
-                MMXFloat xmax = MMXFloat.Min(end.X, s.end.X);
-                MMXFloat ymax = MMXFloat.Min(end.Y, s.end.Y);
+                FixedSingle xmin = FixedSingle.Max(start.X, s.start.X);
+                FixedSingle ymin = FixedSingle.Max(start.Y, s.start.Y);
+                FixedSingle xmax = FixedSingle.Min(end.X, s.end.X);
+                FixedSingle ymax = FixedSingle.Min(end.Y, s.end.Y);
 
                 if (xmin < xmax)
                 {
-                    resultLineSegment = new MMXLineSegment(new MMXVector(xmin, ymin), new MMXVector(xmax, ymax));
+                    resultLineSegment = new LineSegment(new Vector(xmin, ymin), new Vector(xmax, ymax));
                     return GeometryType.LINE_SEGMENT;
                 }
 
                 if (xmin == xmax)
                 {
-                    resultVector = new MMXVector(xmin, ymin);
+                    resultVector = new Vector(xmin, ymin);
                     return GeometryType.VECTOR;
                 }
 
                 return GeometryType.EMPTY;
             }            
 
-            MMXFloat x = (B2 * C1 - B1 * C2) / D;
-            MMXFloat y = (A2 * C1 - A1 * C2) / D;
-            MMXVector v = new MMXVector(x, y);
+            FixedSingle x = (FixedSingle) ((B2 * C1 - B1 * C2) / D);
+            FixedSingle y = (FixedSingle) ((A2 * C1 - A1 * C2) / D);
+            Vector v = new Vector(x, y);
 
             if (!Contains(v))
                 return GeometryType.EMPTY;
@@ -918,15 +772,44 @@ namespace MMX.Engine
             return GeometryType.VECTOR;
         }
 
-        public MMXBox WrappingBox()
+        public Box WrappingBox()
         {
-            return new MMXBox(start, MMXVector.NULL_VECTOR, end - start);
+            return new Box(start, Vector.NULL_VECTOR, end - start);
         }
 
-        GeometryType MMXGeometry.GetType()
+        public override bool Equals(object obj)
         {
-            return type;
+            if (!(obj is LineSegment))
+            {
+                return false;
+            }
+
+            var segment = (LineSegment) obj;
+            return StrictEquals(segment);
         }
+
+        public bool StrictEquals(LineSegment other)
+        {
+            return start == other.start && end == other.end;
+        }
+
+        public bool UnstrictEquals(LineSegment other)
+        {
+            return start == other.start && end == other.end || start == other.end && end == other.start;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1075529825;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<Vector>.Default.GetHashCode(start);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Vector>.Default.GetHashCode(end);
+            return hashCode;
+        }
+
+        public GeometryType Type => type;
+
+        public FixedSingle Area => FixedSingle.ZERO;
 
         /// <summary>
         /// Verifica se o vetor v está a direita do seguimento de reta s
@@ -934,7 +817,7 @@ namespace MMX.Engine
         /// <param name="v">Vetor</param>
         /// <param name="s">Seguimento de reta</param>
         /// <returns>Resultado da comparação</returns>
-        public static bool operator <(MMXVector v, MMXLineSegment s)
+        public static bool operator <(Vector v, LineSegment s)
         {
             return s.Compare(v) == -1;
         }
@@ -945,7 +828,7 @@ namespace MMX.Engine
         /// <param name="v">Vetor</param>
         /// <param name="s">Seguimento de reta</param>
         /// <returns>Resultado da comparação</returns>
-        public static bool operator <=(MMXVector v, MMXLineSegment s)
+        public static bool operator <=(Vector v, LineSegment s)
         {
             return s.Compare(v) <= 0;
         }
@@ -956,7 +839,7 @@ namespace MMX.Engine
         /// <param name="v">Vetor</param>
         /// <param name="s">Seguimento de reta</param>
         /// <returns>Resultado da comparação</returns>
-        public static bool operator >(MMXVector v, MMXLineSegment s)
+        public static bool operator >(Vector v, LineSegment s)
         {
             return s.Compare(v) == 1;
         }
@@ -967,7 +850,7 @@ namespace MMX.Engine
         /// <param name="v">Vetor</param>
         /// <param name="s">Seguimento de reta</param>
         /// <returns>Resultado da comparação</returns>
-        public static bool operator >=(MMXVector v, MMXLineSegment s)
+        public static bool operator >=(Vector v, LineSegment s)
         {
             return s.Compare(v) >= 0;
         }
@@ -978,7 +861,7 @@ namespace MMX.Engine
         /// <param name="s">Seguimento de reta</param>
         /// <param name="v">Vetor</param>
         /// <returns>v > s</returns>
-        public static bool operator <(MMXLineSegment s, MMXVector v)
+        public static bool operator <(LineSegment s, Vector v)
         {
             return v > s;
         }
@@ -989,7 +872,7 @@ namespace MMX.Engine
         /// <param name="s">Seguimento de reta</param>
         /// <param name="v">Vetor</param>
         /// <returns>v >= s</returns>
-        public static bool operator <=(MMXLineSegment s, MMXVector v)
+        public static bool operator <=(LineSegment s, Vector v)
         {
             return v >= s;
         }
@@ -1000,7 +883,7 @@ namespace MMX.Engine
         /// <param name="s">Seguimento de reta</param>
         /// <param name="v">Vetor</param>
         /// <returns>v < s</returns>
-        public static bool operator >(MMXLineSegment s, MMXVector v)
+        public static bool operator >(LineSegment s, Vector v)
         {
             return v < s;
         }
@@ -1011,7 +894,7 @@ namespace MMX.Engine
         /// <param name="s">Seguimento de reta</param>
         /// <param name="v">Vetor</param>
         /// <returns>v <= s</returns>
-        public static bool operator >=(MMXLineSegment s, MMXVector v)
+        public static bool operator >=(LineSegment s, Vector v)
         {
             return v <= s;
         }
@@ -1022,9 +905,9 @@ namespace MMX.Engine
         /// <param name="s1">Primeiro seguimento de reta</param>
         /// <param name="s2">Seguindo seguimento de reta</param>
         /// <returns>true se forem iguais, false caso contrário</returns>
-        public static bool operator ==(MMXLineSegment s1, MMXLineSegment s2)
+        public static bool operator ==(LineSegment s1, LineSegment s2)
         {
-            return s1.start == s2.start && s1.end == s2.end;
+            return s1.StrictEquals(s2);
         }
 
         /// <summary>
@@ -1033,41 +916,41 @@ namespace MMX.Engine
         /// <param name="s1">Primeiro seguimento de reta</param>
         /// <param name="s2">Seguindo seguimento de reta</param>
         /// <returns>true se forem diferentes, false caso contrário</returns>
-        public static bool operator !=(MMXLineSegment s1, MMXLineSegment s2)
+        public static bool operator !=(LineSegment s1, LineSegment s2)
         {
-            return s1.start != s2.start || s1.end != s2.end;
+            return !s1.StrictEquals(s2);
         }
     }
 
     /// <summary>
     /// Uma matriz quadrada de ordem 2
     /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
     public struct Matrix2x2
     {
         /// <summary>
         /// Matriz nula
         /// </summary>
-        public static readonly Matrix2x2 NULL_MATRIX = new Matrix2x2();
+        public static readonly Matrix2x2 NULL_MATRIX = new Matrix2x2(0, 0, 0, 0);
         /// <summary>
         /// Matriz identidade
         /// </summary>
         public static readonly Matrix2x2 IDENTITY = new Matrix2x2(1, 0, 0, 1);
 
-        private MMXFloat elements00;
-        private MMXFloat elements01;
-        private MMXFloat elements10;
-        private MMXFloat elements11;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4 * 4)]
+        private int[] elements;
 
         /// <summary>
         /// Cria uma matriz a partir de um array de valores numéricos
         /// </summary>
         /// <param name="values"></param>
-        public Matrix2x2(params MMXFloat[] values)
+        public Matrix2x2(params FixedSingle[] values)
         {
-            elements00 = values[0];
-            elements01 = values[1];
-            elements10 = values[2];
-            elements11 = values[3];
+            elements = new int[4];
+            elements[0] = values[0].RawValue;
+            elements[1] = values[1].RawValue;
+            elements[2] = values[2].RawValue;
+            elements[3] = values[3].RawValue;
         }
 
         /// <summary>
@@ -1075,53 +958,59 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="v1"></param>
         /// <param name="v2"></param>
-        public Matrix2x2(MMXVector v1, MMXVector v2)
+        public Matrix2x2(Vector v1, Vector v2)
         {
-            elements00 = v1.X;
-            elements01 = v1.Y;
-            elements10 = v2.X;
-            elements11 = v2.Y;
+            elements = new int[4];
+            elements[0] = v1.X.RawValue;
+            elements[1] = v1.Y.RawValue;
+            elements[2] = v2.X.RawValue;
+            elements[3] = v2.Y.RawValue;
         }
 
-        public MMXFloat Element00
+        public FixedSingle Element00
         {
             get
             {
-                return elements00;
+                return FixedSingle.FromRawValue(elements[0]);
             }
         }
 
-        public MMXFloat Element01
+        public FixedSingle Element01
         {
             get
             {
-                return elements01;
+                return FixedSingle.FromRawValue(elements[1]);
             }
         }
 
-        public MMXFloat Element10
+        public FixedSingle Element10
         {
             get
             {
-                return elements10;
+                return FixedSingle.FromRawValue(elements[2]);
             }
         }
 
-        public MMXFloat Element11
+        public FixedSingle Element11
         {
             get
             {
-                return elements11;
+                return FixedSingle.FromRawValue(elements[3]);
             }
+        }
+
+        public FixedSingle GetElement(int i, int j)
+        {
+            return FixedSingle.FromRawValue(elements[2 * i + j]);
         }
 
         /// <summary>
         /// Calcula o determinante da uma matriz
         /// </summary>
         /// <returns>Determinante</returns>
-        public MMXFloat Determinant()
+        public FixedSingle Determinant()
         {
-            return elements00 * elements11 - elements10 * elements01;
+            return Element00 * Element11 - Element10 * Element01;
         }
 
         /// <summary>
@@ -1130,7 +1019,7 @@ namespace MMX.Engine
         /// <returns>Transposta da matriz</returns>
         public Matrix2x2 Transpose()
         {
-            return new Matrix2x2(elements00, elements10, elements01, elements11);
+            return new Matrix2x2(Element00, Element10, Element01, Element11);
         }
 
         /// <summary>
@@ -1139,7 +1028,7 @@ namespace MMX.Engine
         /// <returns>Inversa da matriz</returns>
         public Matrix2x2 Inverse()
         {
-            return new Matrix2x2(elements11, -elements01, -elements10, elements00) / Determinant();
+            return new Matrix2x2(Element01, -Element01, -Element10, Element00) / Determinant();
         }
 
         /// <summary>
@@ -1150,7 +1039,7 @@ namespace MMX.Engine
         /// <returns>Soma</returns>
         public static Matrix2x2 operator +(Matrix2x2 m1, Matrix2x2 m2)
         {
-            return new Matrix2x2(m1.elements00 + m2.elements00, m1.elements01 + m2.elements01, m1.elements10 + m2.elements10, m1.elements11 + m2.elements11);
+            return new Matrix2x2(m1.Element00 + m2.Element00, m1.Element01 + m2.Element01, m1.Element10 + m2.Element10, m1.Element11 + m2.Element11);
         }
 
         /// <summary>
@@ -1161,7 +1050,7 @@ namespace MMX.Engine
         /// <returns>Diferença</returns>
         public static Matrix2x2 operator -(Matrix2x2 m1, Matrix2x2 m2)
         {
-            return new Matrix2x2(m1.elements00 - m2.elements00, m1.elements01 - m2.elements01, m1.elements10 - m2.elements10, m1.elements11 - m2.elements11);
+            return new Matrix2x2(m1.Element00 - m2.Element00, m1.Element01 - m2.Element01, m1.Element10 - m2.Element10, m1.Element11 - m2.Element11);
         }
 
         /// <summary>
@@ -1171,7 +1060,7 @@ namespace MMX.Engine
         /// <returns>Oposto</returns>
         public static Matrix2x2 operator -(Matrix2x2 m)
         {
-            return new Matrix2x2(-m.elements00, -m.elements01, -m.elements10, -m.elements11);
+            return new Matrix2x2(-m.Element00, -m.Element01, -m.Element10, -m.Element11);
         }
 
         /// <summary>
@@ -1180,9 +1069,9 @@ namespace MMX.Engine
         /// <param name="factor">Escalar</param>
         /// <param name="m">Matriz</param>
         /// <returns>Produto</returns>
-        public static Matrix2x2 operator *(MMXFloat factor, Matrix2x2 m)
+        public static Matrix2x2 operator *(FixedSingle factor, Matrix2x2 m)
         {
-            return new Matrix2x2(factor * m.elements00, factor * m.elements01, factor * m.elements10, factor * m.elements11);
+            return new Matrix2x2(factor * m.Element00, factor * m.Element01, factor * m.Element10, factor * m.Element11);
         }
 
         /// <summary>
@@ -1191,9 +1080,9 @@ namespace MMX.Engine
         /// <param name="m">Matriz</param>
         /// <param name="factor">Escalar</param>
         /// <returns>Produto</returns>
-        public static Matrix2x2 operator *(Matrix2x2 m, MMXFloat factor)
+        public static Matrix2x2 operator *(Matrix2x2 m, FixedSingle factor)
         {
-            return new Matrix2x2(m.elements00 * factor, m.elements01 * factor, m.elements10 * factor, m.elements11 * factor);
+            return new Matrix2x2(m.Element00 * factor, m.Element01 * factor, m.Element10 * factor, m.Element11 * factor);
         }
 
         /// <summary>
@@ -1202,9 +1091,9 @@ namespace MMX.Engine
         /// <param name="m">Matriz</param>
         /// <param name="divisor">Escalar</param>
         /// <returns>Divisão</returns>
-        public static Matrix2x2 operator /(Matrix2x2 m, MMXFloat divisor)
+        public static Matrix2x2 operator /(Matrix2x2 m, FixedSingle divisor)
         {
-            return new Matrix2x2(m.elements00 / divisor, m.elements01 / divisor, m.elements10 / divisor, m.elements11 / divisor);
+            return new Matrix2x2(m.Element00 / divisor, m.Element01 / divisor, m.Element10 / divisor, m.Element11 / divisor);
         }
 
         /// <summary>
@@ -1215,8 +1104,8 @@ namespace MMX.Engine
         /// <returns>Produto matricial</returns>
         public static Matrix2x2 operator *(Matrix2x2 m1, Matrix2x2 m2)
         {
-            return new Matrix2x2(m1.elements00 * m2.elements00 + m1.elements01 * m2.elements10, m1.elements00 * m2.elements01 + m1.elements01 * m2.elements11,
-                                 m1.elements10 * m2.elements00 + m1.elements11 * m2.elements10, m1.elements10 * m2.elements01 + m1.elements11 * m2.elements11);
+            return new Matrix2x2(m1.Element00 * m2.Element00 + m1.Element01 * m2.Element10, m1.Element00 * m2.Element01 + m1.Element01 * m2.Element11,
+                                 m1.Element10 * m2.Element00 + m1.Element11 * m2.Element10, m1.Element10 * m2.Element01 + m1.Element11 * m2.Element11);
         }
 
         /// <summary>
@@ -1224,17 +1113,16 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="angle">Angulo em radianos</param>
         /// <returns>Matriz de rotação</returns>
-        public static Matrix2x2 RotationMatrix(MMXFloat angle)
+        public static Matrix2x2 RotationMatrix(FixedSingle angle)
         {
-            MMXFloat cos = Math.Cos(angle);
-            MMXFloat sin = Math.Sin(angle);
+            FixedSingle cos = System.Math.Cos(angle);
+            FixedSingle sin = System.Math.Sin(angle);
             return new Matrix2x2(cos, -sin, sin, cos);
         }
     }
 
-    public interface MMXShape : MMXGeometry
+    public interface IShape : IGeometry
     {
-        MMXFloat Area();
     }
 
     public enum BoxSide
@@ -1248,32 +1136,32 @@ namespace MMX.Engine
     /// <summary>
     /// Retângulo bidimensional com lados paralelos aos eixos coordenados
     /// </summary>
-    public struct MMXBox : MMXShape
+    public struct Box : IShape
     {
         public const GeometryType type = GeometryType.BOX;
 
         /// <summary>
         /// Retângulo vazio
         /// </summary>
-        public static readonly MMXBox EMPTY_BOX = new MMXBox();
+        public static readonly Box EMPTY_BOX = new Box();
         /// <summary>
         /// Retângulo universo
         /// </summary>
-        public static readonly MMXBox UNIVERSE_BOX = new MMXBox(MMXVector.NULL_VECTOR, MMXVector.NULL_VECTOR, new MMXVector(MMXFloat.MAX_VALUE, MMXFloat.MAX_VALUE));
+        public static readonly Box UNIVERSE_BOX = new Box(Vector.NULL_VECTOR, Vector.NULL_VECTOR, new Vector(FixedSingle.MAX_VALUE, FixedSingle.MAX_VALUE));
 
-        private MMXVector origin; // origen
-        private MMXVector mins; // mínimos
-        private MMXVector maxs; // máximos
+        private Vector origin; // origen
+        private Vector mins; // mínimos
+        private Vector maxs; // máximos
 
         /// <summary>
         /// Cria um retângulo vazio com uma determinada origem
         /// </summary>
         /// <param name="origin">origem do retângulo</param>
-        public MMXBox(MMXVector origin)
+        public Box(Vector origin)
         {
             this.origin = origin;
-            mins = MMXVector.NULL_VECTOR;
-            maxs = MMXVector.NULL_VECTOR;
+            mins = Vector.NULL_VECTOR;
+            maxs = Vector.NULL_VECTOR;
         }
 
         /// <summary>
@@ -1282,32 +1170,44 @@ namespace MMX.Engine
         /// <param name="origin">Origem</param>
         /// <param name="mins">Mínimos</param>
         /// <param name="maxs">Máximos</param>
-        public MMXBox(MMXVector origin, MMXVector mins, MMXVector maxs)
+        public Box(Vector origin, Vector mins, Vector maxs)
         {
             this.origin = origin;
             this.mins = mins;
             this.maxs = maxs;
         }
 
-        public MMXBox(MMXFloat x, MMXFloat y, MMXFloat width, MMXFloat height)
+        public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height) :
+            this(new Vector(x, y), width, height)
         {
-            origin = new MMXVector(x, y);
-            mins = MMXVector.NULL_VECTOR;
-            maxs = new MMXVector(width, height);
         }
 
-        public MMXBox(MMXFloat x, MMXFloat y, MMXFloat left, MMXFloat top, MMXFloat width, MMXFloat height)
+        public Box(Vector origin, FixedSingle width, FixedSingle height)
         {
-            origin = new MMXVector(x, y);
-            mins = new MMXVector(left - x, top - y);
-            maxs = new MMXVector(left + width - x, top + height - y);
+            this.origin = origin;
+            mins = Vector.NULL_VECTOR;
+            maxs = new Vector(width, height);
         }
 
-        public MMXBox(BinaryReader reader)
+        public Box(FixedSingle x, FixedSingle y, FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height)
         {
-            origin = new MMXVector(reader);
-            mins = new MMXVector(reader);
-            maxs = new MMXVector(reader);
+            origin = new Vector(x, y);
+            mins = new Vector(left - x, top - y);
+            maxs = new Vector(left + width - x, top + height - y);
+        }
+
+        public Box(Vector v1, Vector v2)
+        {
+            origin = v1;
+            mins = Vector.NULL_VECTOR;
+            maxs = v2 - v1;
+        }
+
+        public Box(BinaryReader reader)
+        {
+            origin = new Vector(reader);
+            mins = new Vector(reader);
+            maxs = new Vector(reader);
         }
 
         public void Write(BinaryWriter writer)
@@ -1321,21 +1221,21 @@ namespace MMX.Engine
         /// Trunca as coordenadas do retângulo
         /// </summary>
         /// <returns>Retângulo truncado</returns>
-        public MMXBox Truncate()
+        public Box Truncate()
         {
-            MMXVector mins = origin + this.mins;
-            mins = new MMXVector(Math.Floor(mins.X), Math.Floor(mins.Y));
-            MMXVector maxs = origin + this.maxs;
-            maxs = new MMXVector(Math.Floor(maxs.X), Math.Floor(maxs.Y));
-            return new MMXBox(mins, MMXVector.NULL_VECTOR, maxs - mins);
+            Vector mins = origin + this.mins;
+            mins = new Vector(mins.X.Floor(), mins.Y.Floor());
+            Vector maxs = origin + this.maxs;
+            maxs = new Vector(maxs.X.Floor(), maxs.Y.Floor());
+            return new Box(mins, Vector.NULL_VECTOR, maxs - mins);
         }
 
         public override int GetHashCode()
         {
-            MMXVector m = origin + mins;
-            MMXVector M = origin + maxs;
+            Vector m = origin + mins;
+            Vector M = origin + maxs;
 
-            return 31 * m.GetHashCode() + M.GetHashCode();
+            return 65536 * m.GetHashCode() + M.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -1343,29 +1243,22 @@ namespace MMX.Engine
             if (obj == null)
                 return false;
 
-            if (!(obj is MMXBox))
+            if (!(obj is Box))
                 return false;
 
-            MMXBox other = (MMXBox) obj;
-
-            MMXVector m1 = origin + mins;
-            MMXVector M1 = origin + maxs;
-
-            MMXVector m2 = other.origin + other.mins;
-            MMXVector M2 = other.origin + other.maxs;
-
-            return m1 == m2 && M1 == M2;
+            Box other = (Box) obj;
+            return this == other;
         }
 
         public override string ToString()
         {
-            return "[" + origin + ":" + mins + ":" + maxs + "]";
+            return "[" + origin + " : " + mins + " : " + maxs + "]";
         }
 
         /// <summary>
         /// Origem do retângulo
         /// </summary>
-        public MMXVector Origin
+        public Vector Origin
         {
             get
             {
@@ -1373,7 +1266,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat X
+        public FixedSingle X
         {
             get
             {
@@ -1381,7 +1274,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat Y
+        public FixedSingle Y
         {
             get
             {
@@ -1389,141 +1282,141 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat Left
+        public FixedSingle Left
         {
             get
             {
-                return MMXFloat.Min(origin.X + mins.X, origin.X + maxs.X);
+                return FixedSingle.Min(origin.X + mins.X, origin.X + maxs.X);
             }
         }
 
-        public MMXFloat Top
+        public FixedSingle Top
         {
             get
             {
-                return MMXFloat.Min(origin.Y + mins.Y, origin.Y + maxs.Y);
+                return FixedSingle.Min(origin.Y + mins.Y, origin.Y + maxs.Y);
             }
         }
 
-        public MMXFloat Right
+        public FixedSingle Right
         {
             get
             {
-                return MMXFloat.Max(origin.X + mins.X, origin.X + maxs.X);
+                return FixedSingle.Max(origin.X + mins.X, origin.X + maxs.X);
             }
         }
 
-        public MMXFloat Bottom
+        public FixedSingle Bottom
         {
             get
             {
-                return MMXFloat.Max(origin.Y + mins.Y, origin.Y + maxs.Y);
+                return FixedSingle.Max(origin.Y + mins.Y, origin.Y + maxs.Y);
             }
         }
 
-        public MMXLineSegment LeftSegment
+        public LineSegment LeftSegment
         {
             get
             {
-                return new MMXLineSegment(LeftTop, LeftBottom);
+                return new LineSegment(LeftTop, LeftBottom);
             }
         }
 
-        public MMXLineSegment TopSegment
+        public LineSegment TopSegment
         {
             get
             {
-                return new MMXLineSegment(LeftTop, RightTop);
+                return new LineSegment(LeftTop, RightTop);
             }
         }
 
-        public MMXLineSegment RightSegment
+        public LineSegment RightSegment
         {
             get
             {
-                return new MMXLineSegment(RightTop, RightBottom);
+                return new LineSegment(RightTop, RightBottom);
             }
         }
 
-        public MMXLineSegment BottomSegment
+        public LineSegment BottomSegment
         {
             get
             {
-                return new MMXLineSegment(LeftBottom, RightBottom);
+                return new LineSegment(LeftBottom, RightBottom);
             }
         }
 
         /// <summary>
         /// Extremo superior esquerdo do retângulo (ou mínimos absolutos)
         /// </summary>
-        public MMXVector LeftTop
+        public Vector LeftTop
         {
             get
             {
-                return new MMXVector(Left, Top);
+                return new Vector(Left, Top);
             }
         }
 
-        public MMXVector LeftMiddle
+        public Vector LeftMiddle
         {
             get
             {
-                return new MMXVector(Left, (Top + Bottom) / 2);
+                return new Vector(Left, (Top + Bottom) / 2);
             }
         }
 
-        public MMXVector LeftBottom
+        public Vector LeftBottom
         {
             get
             {
-                return new MMXVector(Left, Bottom);
+                return new Vector(Left, Bottom);
             }
         }
 
-        public MMXVector RightTop
+        public Vector RightTop
         {
             get
             {
-                return new MMXVector(Right, Top);
+                return new Vector(Right, Top);
             }
         }
 
-        public MMXVector RightMiddle
+        public Vector RightMiddle
         {
             get
             {
-                return new MMXVector(Right, (Top + Bottom) / 2);
+                return new Vector(Right, (Top + Bottom) / 2);
             }
         }
 
-        public MMXVector MiddleTop
+        public Vector MiddleTop
         {
             get
             {
-                return new MMXVector((Left + Right) / 2, Top);
+                return new Vector((Left + Right) / 2, Top);
             }
         }
 
-        public MMXVector MiddleBottom
+        public Vector MiddleBottom
         {
             get
             {
-                return new MMXVector((Left + Right) / 2, Bottom);
+                return new Vector((Left + Right) / 2, Bottom);
             }
         }
 
         /// <summary>
         /// Extremo inferior direito do retângulo (ou máximos absolutos)
         /// </summary>
-        public MMXVector RightBottom
+        public Vector RightBottom
         {
             get
             {
-                return new MMXVector(Right, Bottom);
+                return new Vector(Right, Bottom);
             }
         }
 
-        public MMXVector Center
+        public Vector Center
         {
             get
             {
@@ -1534,7 +1427,7 @@ namespace MMX.Engine
         /// <summary>
         /// Mínimos relativos
         /// </summary>
-        public MMXVector Mins
+        public Vector Mins
         {
             get
             {
@@ -1545,7 +1438,7 @@ namespace MMX.Engine
         /// <summary>
         /// Máximos relativos
         /// </summary>
-        public MMXVector Maxs
+        public Vector Maxs
         {
             get
             {
@@ -1553,37 +1446,37 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector WidthVector
+        public Vector WidthVector
         {
             get
             {
-                return new MMXVector(Width, 0);
+                return new Vector(Width, 0);
             }
         }
 
-        public MMXVector HeightVector
+        public Vector HeightVector
         {
             get
             {
-                return new MMXVector(0, Height);
+                return new Vector(0, Height);
             }
         }
 
         /// <summary>
         /// Vetor correspondente ao tamanho do retângulo contendo sua largura (width) na coordenada x e sua altura (height) na coordenada y
         /// </summary>
-        public MMXVector DiagonalVector
+        public Vector DiagonalVector
         {
             get
             {
-                return new MMXVector(Width, Height);
+                return new Vector(Width, Height);
             }
         }
 
         /// <summary>
         /// Largura (base) do retângulo
         /// </summary>
-        public MMXFloat Width
+        public FixedSingle Width
         {
             get
             {
@@ -1594,7 +1487,7 @@ namespace MMX.Engine
         /// <summary>
         /// Altura do retângulo
         /// </summary>
-        public MMXFloat Height
+        public FixedSingle Height
         {
             get
             {
@@ -1602,90 +1495,87 @@ namespace MMX.Engine
             }
         }
 
-        public MMXBox LeftTopOrigin()
+        public Box LeftTopOrigin()
         {
-            return new MMXBox(LeftTop, MMXVector.NULL_VECTOR, DiagonalVector);
+            return new Box(LeftTop, Vector.NULL_VECTOR, DiagonalVector);
         }
 
-        public MMXBox RightBottomOrigin()
+        public Box RightBottomOrigin()
         {
-            return new MMXBox(RightBottom, -DiagonalVector, MMXVector.NULL_VECTOR);
+            return new Box(RightBottom, -DiagonalVector, Vector.NULL_VECTOR);
         }
 
-        public MMXBox CenterOrigin()
+        public Box CenterOrigin()
         {
-            MMXVector sv2 = DiagonalVector / 2;
-            return new MMXBox(Center, -sv2, sv2);
+            Vector sv2 = DiagonalVector / 2;
+            return new Box(Center, -sv2, sv2);
         }
 
-        public MMXBox RoundOriginToCeil()
+        public Box RoundOriginToCeil()
         {
-            return new MMXBox(origin.RoundToCeil(), mins, maxs);
+            return new Box(origin.RoundToCeil(), mins, maxs);
         }
 
-        public MMXBox RoundOriginXToCeil()
+        public Box RoundOriginXToCeil()
         {
-            return new MMXBox(origin.RoundXToCeil(), mins, maxs);
+            return new Box(origin.RoundXToCeil(), mins, maxs);
         }
 
-        public MMXBox RoundOriginYToCeil()
+        public Box RoundOriginYToCeil()
         {
-            return new MMXBox(origin.RoundYToCeil(), mins, maxs);
+            return new Box(origin.RoundYToCeil(), mins, maxs);
         }
 
-        public MMXBox RoundOriginToFloor()
+        public Box RoundOriginToFloor()
         {
-            return new MMXBox(origin.RoundToFloor(), mins, maxs);
+            return new Box(origin.RoundToFloor(), mins, maxs);
         }
 
-        public MMXBox RoundOriginXToFloor()
+        public Box RoundOriginXToFloor()
         {
-            return new MMXBox(origin.RoundXToFloor(), mins, maxs);
+            return new Box(origin.RoundXToFloor(), mins, maxs);
         }
 
-        public MMXBox RoundOriginYToFloor()
+        public Box RoundOriginYToFloor()
         {
-            return new MMXBox(origin.RoundYToFloor(), mins, maxs);
+            return new Box(origin.RoundYToFloor(), mins, maxs);
         }
 
-        public MMXBox RoundOrigin(MMXFloat dx, MMXFloat dy)
+        public Box RoundOrigin()
         {
-            return new MMXBox(origin.Round(dx, dy), mins, maxs);
+            return new Box(origin.Round(), mins, maxs);
         }
 
-        public MMXBox RoundOriginX(MMXFloat dx)
+        public Box RoundOriginX()
         {
-            return new MMXBox(origin.RoundX(dx), mins, maxs);
+            return new Box(origin.RoundX(), mins, maxs);
         }
 
-        public MMXBox RoundOriginY(MMXFloat dy)
+        public Box RoundOriginY()
         {
-            return new MMXBox(origin.RoundY(dy), mins, maxs);
+            return new Box(origin.RoundY(), mins, maxs);
         }
 
         /// <summary>
         /// Área do retângulo
         /// </summary>
         /// <returns></returns>
-        public MMXFloat Area()
-        {
-            return Width * Height;
-        }
+        public FixedSingle Area => Width * Height;
 
         /// <summary>
         /// Escala o retângulo para a esquerda
         /// </summary>
         /// <param name="alpha"></param>
         /// <returns></returns>
-        public MMXBox ScaleLeft(MMXFloat alpha)
+        public Box ScaleLeft(FixedSingle alpha)
         {
-            MMXFloat width = Width;
-            return new MMXBox(LeftTop + alpha * (width - 1) * MMXVector.LEFT_VECTOR, MMXVector.NULL_VECTOR, new MMXVector(alpha * width, Height));
+            FixedSingle width = Width;
+            return new Box(LeftTop + alpha * (width - 1) * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, new Vector(alpha * width, Height));
         }
 
-        public MMXBox ClipLeft(MMXFloat clip)
+        public Box ClipLeft(FixedSingle clip)
         {
-            return new MMXBox(origin, new MMXVector(mins.X + clip, mins.Y), maxs);
+            return new Box(origin, new Vector(mins.X + clip, mins.Y), maxs);
         }
 
         /// <summary>
@@ -1693,14 +1583,14 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="alpha"></param>
         /// <returns></returns>
-        public MMXBox ScaleRight(MMXFloat alpha)
+        public Box ScaleRight(FixedSingle alpha)
         {
-            return new MMXBox(LeftTop, MMXVector.NULL_VECTOR, new MMXVector(alpha * Width, Height));
+            return new Box(LeftTop, Vector.NULL_VECTOR, new Vector(alpha * Width, Height));
         }
 
-        public MMXBox ClipRight(MMXFloat clip)
+        public Box ClipRight(FixedSingle clip)
         {
-            return new MMXBox(origin, mins, new MMXVector(maxs.X - clip, maxs.Y));
+            return new Box(origin, mins, new Vector(maxs.X - clip, maxs.Y));
         }
 
         /// <summary>
@@ -1708,15 +1598,15 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="alpha"></param>
         /// <returns></returns>
-        public MMXBox ScaleTop(MMXFloat alpha)
+        public Box ScaleTop(FixedSingle alpha)
         {
-            MMXFloat height = Height;
-            return new MMXBox(LeftTop + alpha * (height - 1) * MMXVector.UP_VECTOR, MMXVector.NULL_VECTOR, new MMXVector(Width, alpha * height));
+            FixedSingle height = Height;
+            return new Box(LeftTop + alpha * (height - 1) * Vector.UP_VECTOR, Vector.NULL_VECTOR, new Vector(Width, alpha * height));
         }
 
-        public MMXBox ClipTop(MMXFloat clip)
+        public Box ClipTop(FixedSingle clip)
         {
-            return new MMXBox(origin, new MMXVector(mins.X, mins.Y + clip), maxs);
+            return new Box(origin, new Vector(mins.X, mins.Y + clip), maxs);
         }
 
         /// <summary>
@@ -1724,116 +1614,115 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="alpha"></param>
         /// <returns></returns>
-        public MMXBox ScaleBottom(MMXFloat alpha)
+        public Box ScaleBottom(FixedSingle alpha)
         {
-            return new MMXBox(LeftTop, MMXVector.NULL_VECTOR, new MMXVector(Width, alpha * Height));
+            return new Box(LeftTop, Vector.NULL_VECTOR, new Vector(Width, alpha * Height));
         }
 
-        public MMXBox ClipBottom(MMXFloat clip)
+        public Box ClipBottom(FixedSingle clip)
         {
-            return new MMXBox(origin, mins, new MMXVector(maxs.X, maxs.Y - clip));
+            return new Box(origin, mins, new Vector(maxs.X, maxs.Y - clip));
         }
 
-        public MMXBox Mirror()
+        public Box Mirror()
         {
             return Mirror(0);
         }
 
-        public MMXBox Flip()
+        public Box Flip()
         {
             return Flip(0);
         }
 
-        public MMXBox Mirror(MMXFloat x)
+        public Box Mirror(FixedSingle x)
         {
-            MMXFloat originX = origin.X;
+            FixedSingle originX = origin.X;
             x += originX;
-            MMXFloat minsX = originX + mins.X;
-            MMXFloat maxsX = originX + maxs.X;
+            FixedSingle minsX = originX + mins.X;
+            FixedSingle maxsX = originX + maxs.X;
 
-            MMXFloat newMinsX = 2 * x - maxsX;
-            MMXFloat newMaxsX = 2 * x - minsX;
+            FixedSingle newMinsX = 2 * x - maxsX;
+            FixedSingle newMaxsX = 2 * x - minsX;
 
-            return new MMXBox(origin, new MMXVector(newMinsX - originX, mins.Y), new MMXVector(newMaxsX - originX, maxs.Y));
+            return new Box(origin, new Vector(newMinsX - originX, mins.Y), new Vector(newMaxsX - originX, maxs.Y));
         }
 
-        public MMXBox Flip(MMXFloat y)
+        public Box Flip(FixedSingle y)
         {
-            MMXFloat originY = origin.Y;
+            FixedSingle originY = origin.Y;
             y += originY;
-            MMXFloat minsY = originY + mins.Y;
-            MMXFloat maxsY = originY + maxs.Y;
+            FixedSingle minsY = originY + mins.Y;
+            FixedSingle maxsY = originY + maxs.Y;
 
-            MMXFloat newMinsY = 2 * y - maxsY;
-            MMXFloat newMaxsY = 2 * y - minsY;
+            FixedSingle newMinsY = 2 * y - maxsY;
+            FixedSingle newMaxsY = 2 * y - minsY;
 
-            return new MMXBox(origin, new MMXVector(mins.X, newMinsY - originY), new MMXVector(maxs.X, newMaxsY - originY));
+            return new Box(origin, new Vector(mins.X, newMinsY - originY), new Vector(maxs.X, newMaxsY - originY));
         }
 
-        public MMXVector GetNormal(BoxSide side)
+        public Vector GetNormal(BoxSide side)
         {
             switch (side)
             {
                 case BoxSide.LEFT:
-                    return MMXVector.RIGHT_VECTOR;
+                    return Vector.RIGHT_VECTOR;
 
                 case BoxSide.UP:
-                    return MMXVector.DOWN_VECTOR;
+                    return Vector.DOWN_VECTOR;
 
                 case BoxSide.RIGHT:
-                    return MMXVector.LEFT_VECTOR;
+                    return Vector.LEFT_VECTOR;
 
                 case BoxSide.DOWN:
-                    return MMXVector.UP_VECTOR;
+                    return Vector.UP_VECTOR;
             }
 
-            return MMXVector.NULL_VECTOR;
+            return Vector.NULL_VECTOR;
         }
 
-        public MMXLineSegment GetSideSegment(BoxSide side)
+        public LineSegment GetSideSegment(BoxSide side)
         {
             switch (side)
             {
                 case BoxSide.LEFT:
-                    return new MMXLineSegment(LeftTop, LeftBottom);
+                    return new LineSegment(LeftTop, LeftBottom);
 
                 case BoxSide.UP:
-                    return new MMXLineSegment(LeftTop, RightTop);
+                    return new LineSegment(LeftTop, RightTop);
 
                 case BoxSide.RIGHT:
-                    return new MMXLineSegment(RightTop, RightBottom);
+                    return new LineSegment(RightTop, RightBottom);
 
                 case BoxSide.DOWN:
-                    return new MMXLineSegment(LeftBottom, RightBottom);
+                    return new LineSegment(LeftBottom, RightBottom);
             }
 
-            return MMXLineSegment.NULL_SEGMENT;
+            return LineSegment.NULL_SEGMENT;
         }
 
-        public MMXBox HalfLeft()
+        public Box HalfLeft()
         {
-            return new MMXBox(origin, mins, new MMXVector((mins.X + maxs.X) / 2, maxs.Y));
+            return new Box(origin, mins, new Vector((mins.X + maxs.X) * FixedSingle.HALF, maxs.Y));
         }
 
-        public MMXBox HalfTop()
+        public Box HalfTop()
         {
-            return new MMXBox(origin, mins, new MMXVector(maxs.X, (mins.Y + maxs.Y) / 2));
+            return new Box(origin, mins, new Vector(maxs.X, (mins.Y + maxs.Y) * FixedSingle.HALF));
         }
 
-        public MMXBox HalfRight()
+        public Box HalfRight()
         {
-            return new MMXBox(origin, new MMXVector((mins.X + maxs.X) / 2, mins.Y), maxs);
+            return new Box(origin, new Vector((mins.X + maxs.X) * FixedSingle.HALF, mins.Y), maxs);
         }
 
-        public MMXBox HalfBottom()
+        public Box HalfBottom()
         {
-            return new MMXBox(origin, new MMXVector(mins.X, (mins.Y + maxs.Y) / 2), maxs);
+            return new Box(origin, new Vector(mins.X, (mins.Y + maxs.Y) * FixedSingle.HALF), maxs);
         }
 
-        GeometryType MMXGeometry.GetType()
-        {
-            return type;
-        }
+        public GeometryType Type => type;
+
+        public FixedSingle Length => FixedSingle.TWO * (Width + Height);
 
         /// <summary>
         /// Translata um retângulo na direção de um vetor
@@ -1841,9 +1730,9 @@ namespace MMX.Engine
         /// <param name="box">Retângulo</param>
         /// <param name="vec">Vetor</param>
         /// <returns>Retângulo box translatado na direção de vec</returns>
-        public static MMXBox operator +(MMXBox box, MMXVector vec)
+        public static Box operator +(Box box, Vector vec)
         {
-            return new MMXBox(box.origin + vec, box.mins, box.maxs);
+            return new Box(box.origin + vec, box.mins, box.maxs);
         }
 
         /// <summary>
@@ -1853,9 +1742,9 @@ namespace MMX.Engine
         /// /// <param name="box">Retângulo</param>
         /// <returns>Retângulo box translatado na direção de vec</returns>
 
-        public static MMXBox operator +(MMXVector vec, MMXBox box)
+        public static Box operator +(Vector vec, Box box)
         {
-            return new MMXBox(box.origin + vec, box.mins, box.maxs);
+            return new Box(box.origin + vec, box.mins, box.maxs);
         }
 
         /// <summary>
@@ -1864,9 +1753,9 @@ namespace MMX.Engine
         /// <param name="box">Retângulo</param>
         /// <param name="vec">Vetor</param>
         /// <returns>Retângulo box translatado na direção oposta de vec</returns>
-        public static MMXBox operator -(MMXBox box, MMXVector vec)
+        public static Box operator -(Box box, Vector vec)
         {
-            return new MMXBox(box.origin - vec, box.mins, box.maxs);
+            return new Box(box.origin - vec, box.mins, box.maxs);
         }
 
         /// <summary>
@@ -1875,10 +1764,10 @@ namespace MMX.Engine
         /// <param name="factor">Fator de escala</param>
         /// <param name="box">Retângulo</param>
         /// <returns>Retângulo com suas coordenadas e dimensões escaladas por factor</returns>
-        public static MMXBox operator *(MMXFloat factor, MMXBox box)
+        public static Box operator *(FixedSingle factor, Box box)
         {
-            MMXVector m = box.origin + box.mins;
-            return new MMXBox(m * factor, MMXVector.NULL_VECTOR, box.DiagonalVector * factor);
+            Vector m = box.origin + box.mins;
+            return new Box(m * factor, Vector.NULL_VECTOR, box.DiagonalVector * factor);
         }
 
         /// <summary>
@@ -1887,10 +1776,10 @@ namespace MMX.Engine
         /// <param name="box">Retângulo</param>
         /// /// <param name="factor">Fator de escala</param>
         /// <returns>Retângulo com suas coordenadas e dimensões escaladas por factor</returns>
-        public static MMXBox operator *(MMXBox box, MMXFloat factor)
+        public static Box operator *(Box box, FixedSingle factor)
         {
-            MMXVector m = box.origin + box.mins;
-            return new MMXBox(m * factor, MMXVector.NULL_VECTOR, box.DiagonalVector * factor);
+            Vector m = box.origin + box.mins;
+            return new Box(m * factor, Vector.NULL_VECTOR, box.DiagonalVector * factor);
         }
 
         /// <summary>
@@ -1899,10 +1788,10 @@ namespace MMX.Engine
         /// <param name="box">Retângulo</param>
         /// <param name="divisor">Divisor</param>
         /// <returns>Retângulo com suas coordenadas e dimensões divididas por divisor</returns>
-        public static MMXBox operator /(MMXBox box, MMXFloat divisor)
+        public static Box operator /(Box box, FixedSingle divisor)
         {
-            MMXVector m = box.origin + box.mins;
-            return new MMXBox(m / divisor, MMXVector.NULL_VECTOR, box.DiagonalVector / divisor);
+            Vector m = box.origin + box.mins;
+            return new Box(m / divisor, Vector.NULL_VECTOR, box.DiagonalVector / divisor);
         }
 
         /// <summary>
@@ -1911,21 +1800,21 @@ namespace MMX.Engine
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>Menor retângulo que contém os dois retângulos dados</returns>
-        public static MMXBox operator |(MMXBox box1, MMXBox box2)
+        public static Box operator |(Box box1, Box box2)
         {
-            MMXVector m1 = box1.origin + box1.mins;
-            MMXVector M1 = box1.origin + box1.maxs;
+            Vector lt1 = box1.LeftTop;
+            Vector rb1 = box1.RightBottom;
 
-            MMXVector m2 = box2.origin + box2.mins;
-            MMXVector M2 = box2.origin + box2.maxs;
+            Vector lt2 = box2.LeftTop;
+            Vector rb2 = box2.RightBottom;
 
-            MMXFloat minsX = MMXFloat.Min(m1.X, m2.X);
-            MMXFloat maxsX = MMXFloat.Max(M1.X, M2.X);
+            FixedSingle minX = FixedSingle.Min(lt1.X, lt2.X);
+            FixedSingle maxX = FixedSingle.Max(rb1.X, rb2.X);
 
-            MMXFloat minsY = MMXFloat.Min(m1.Y, m2.Y);
-            MMXFloat maxsY = MMXFloat.Max(M1.Y, M2.Y);
+            FixedSingle minY = FixedSingle.Min(lt1.Y, lt2.Y);
+            FixedSingle maxY = FixedSingle.Max(rb1.Y, rb2.Y);
 
-            return new MMXBox(new MMXVector(minsX, minsY), MMXVector.NULL_VECTOR, new MMXVector(maxsX - minsX, maxsY - minsY));
+            return new Box(new Vector(box1.mins.X <= box1.maxs.X ? minX : maxX, box1.mins.Y <= box1.maxs.Y ? minY : maxY), box1.mins.X <= box1.maxs.X ? maxX - minX : minX - maxX, box1.mins.Y <= box1.maxs.Y ? maxY - minY : minY - maxY);
         }
 
         /// <summary>
@@ -1934,30 +1823,30 @@ namespace MMX.Engine
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>Interesecção entre os dois retângulos dados ou um vetor nulo caso a intersecção seja um conjunto vazio</returns>
-        public static MMXBox operator &(MMXBox box1, MMXBox box2)
+        public static Box operator &(Box box1, Box box2)
         {
-            MMXVector m1 = box1.origin + box1.mins;
-            MMXVector M1 = box1.origin + box1.maxs;
+            Vector lt1 = box1.LeftTop;
+            Vector rb1 = box1.RightBottom;
 
-            MMXVector m2 = box2.origin + box2.mins;
-            MMXVector M2 = box2.origin + box2.maxs;
+            Vector lt2 = box2.LeftTop;
+            Vector rb2 = box2.RightBottom;
 
-            MMXFloat minsX = MMXFloat.Max(m1.X, m2.X);
-            MMXFloat maxsX = MMXFloat.Min(M1.X, M2.X);
+            FixedSingle minX = FixedSingle.Max(lt1.X, lt2.X);
+            FixedSingle maxX = FixedSingle.Min(rb1.X, rb2.X);
 
-            if (maxsX < minsX)
+            if (maxX < minX)
                 return EMPTY_BOX;
 
-            MMXFloat minsY = MMXFloat.Max(m1.Y, m2.Y);
-            MMXFloat maxsY = MMXFloat.Min(M1.Y, M2.Y);
+            FixedSingle minY = FixedSingle.Max(lt1.Y, lt2.Y);
+            FixedSingle maxY = FixedSingle.Min(rb1.Y, rb2.Y);
 
-            if (maxsY < minsY)
+            if (maxY < minY)
                 return EMPTY_BOX;
 
-            return new MMXBox(new MMXVector(minsX, minsY), MMXVector.NULL_VECTOR, new MMXVector(maxsX - minsX, maxsY - minsY));
+            return new Box(new Vector(minX, minY), Vector.NULL_VECTOR, new Vector(maxX - minX, maxY - minY));
         }
 
-        public static MMXLineSegment operator &(MMXBox box, MMXLineSegment line)
+        public static LineSegment operator &(Box box, LineSegment line)
         {
             if (line.Start <= box)
             {                
@@ -1966,22 +1855,22 @@ namespace MMX.Engine
 
                 for (BoxSide side = BoxSide.LEFT; side <= BoxSide.DOWN; side++)
                 {
-                    MMXLineSegment sideSegment = box.GetSideSegment(side);
+                    LineSegment sideSegment = box.GetSideSegment(side);
                     if (sideSegment.Contains(line.Start))
                         continue;
 
-                    GeometryType type = line.Intersection(sideSegment, out MMXVector v, out MMXLineSegment l);
+                    GeometryType type = line.Intersection(sideSegment, out Vector v, out LineSegment l);
                     switch (type)
                     {
                         case GeometryType.VECTOR:
-                            return new MMXLineSegment(line.Start, v);
+                            return new LineSegment(line.Start, v);
 
                         case GeometryType.LINE_SEGMENT:
                             return l;
                     }
                 }
 
-                return MMXLineSegment.NULL_SEGMENT;
+                return LineSegment.NULL_SEGMENT;
             }
 
             if (line.End <= box)
@@ -1991,62 +1880,62 @@ namespace MMX.Engine
 
                 for (BoxSide side = BoxSide.LEFT; side <= BoxSide.DOWN; side++)
                 {
-                    MMXLineSegment sideSegment = box.GetSideSegment(side);
+                    LineSegment sideSegment = box.GetSideSegment(side);
                     if (sideSegment.Contains(line.End))
                         continue;
 
-                    GeometryType type = line.Intersection(sideSegment, out MMXVector v, out MMXLineSegment l);
+                    GeometryType type = line.Intersection(sideSegment, out Vector v, out LineSegment l);
                     switch (type)
                     {
                         case GeometryType.VECTOR:
-                            return new MMXLineSegment(line.End, v);
+                            return new LineSegment(line.End, v);
 
                         case GeometryType.LINE_SEGMENT:
                             return l;
                     }
                 }
 
-                return MMXLineSegment.NULL_SEGMENT;
+                return LineSegment.NULL_SEGMENT;
             }
 
-            MMXVector v1 = MMXVector.NULL_VECTOR;
+            Vector foundVector = Vector.NULL_VECTOR;
+            bool found = false;
+            BoxSide foundSide = BoxSide.LEFT;
             for (BoxSide side = BoxSide.LEFT; side <= BoxSide.DOWN; side++)
             {
-                GeometryType type = line.Intersection(box.GetSideSegment(side), out v1, out MMXLineSegment l);
+                GeometryType type = line.Intersection(box.GetSideSegment(side), out foundVector, out LineSegment l);
                 switch (type)
                 {
-                    case GeometryType.EMPTY:
-                        return MMXLineSegment.NULL_SEGMENT;
-
                     case GeometryType.VECTOR:
-                        return new MMXLineSegment(line.End, v1);
+                        found = true;
+                        foundSide = side;
+                        break;
 
                     case GeometryType.LINE_SEGMENT:
                         return l;
                 }
             }
 
-            MMXVector v2 = MMXVector.NULL_VECTOR;
+            if (!found)
+                return LineSegment.NULL_SEGMENT;
+
             for (BoxSide side = BoxSide.LEFT; side <= BoxSide.DOWN; side++)
             {
-                GeometryType type = line.Intersection(box.GetSideSegment(side), out v2, out MMXLineSegment l);
+                if (side == foundSide)
+                    continue;
+
+                GeometryType type = line.Intersection(box.GetSideSegment(side), out Vector v, out LineSegment l);
                 switch (type)
                 {
-                    case GeometryType.EMPTY:
-                        return MMXLineSegment.NULL_SEGMENT;
-
                     case GeometryType.VECTOR:
-                        return new MMXLineSegment(line.End, v2);
-
-                    case GeometryType.LINE_SEGMENT:
-                        return l;
+                        return new LineSegment(foundVector, v);
                 }
             }
 
-            return new MMXLineSegment(v1, v2);
+            return new LineSegment(foundVector, foundVector);
         }
 
-        public static MMXLineSegment operator &(MMXLineSegment line, MMXBox box)
+        public static LineSegment operator &(LineSegment line, Box box)
         {
             return box & line;
         }
@@ -2057,11 +1946,17 @@ namespace MMX.Engine
         /// <param name="vec">Vetor</param>
         /// <param name="box">Retângulo</param>
         /// <returns>true se vec estiver contido no interior box, false caso contrário</returns>
-        public static bool operator <(MMXVector vec, MMXBox box)
+        public static bool operator <(Vector vec, Box box)
         {
-            MMXVector m = box.origin + box.mins;
-            MMXVector M = box.origin + box.maxs;
-            return m.X < vec.X && vec.X < M.X && m.Y < vec.Y && vec.Y < M.Y;
+            Vector m = box.origin + box.mins;
+            Vector M = box.origin + box.maxs;
+
+            Interval interval = Interval.MakeOpenInterval(m.X, M.X);
+            if (!interval.Contains(vec.X))
+                return false;
+
+            interval = Interval.MakeOpenInterval(m.Y, M.Y);
+            return interval.Contains(vec.Y);
         }
 
         /// <summary>
@@ -2070,7 +1965,7 @@ namespace MMX.Engine
         /// <param name="vec">Vetor</param>
         /// <param name="box">Retângulo</param>
         /// <returns>true se vec estiver contido no exterior de box, false caso contrário</returns>
-        public static bool operator >(MMXVector vec, MMXBox box)
+        public static bool operator >(Vector vec, Box box)
         {
             return !(vec <= box);
         }
@@ -2081,7 +1976,7 @@ namespace MMX.Engine
         /// <param name="box">Retângulo</param>
         /// <param name="vec">Vetor</param>
         /// <returns>true se box contém vec em seu exterior, false caso contrário</returns>
-        public static bool operator <(MMXBox box, MMXVector vec)
+        public static bool operator <(Box box, Vector vec)
         {
             return !(box >= vec);
         }
@@ -2092,7 +1987,7 @@ namespace MMX.Engine
         /// <param name="box">Retângulo</param>
         /// /// <param name="vec">Vetor</param>
         /// <returns>true box contém vec em seu interior, false caso contrário</returns>
-        public static bool operator >(MMXBox box, MMXVector vec)
+        public static bool operator >(Box box, Vector vec)
         {
             return vec < box;
         }
@@ -2103,11 +1998,17 @@ namespace MMX.Engine
         /// <param name="vec">Vetor</param>
         /// <param name="box">Retângulo</param>
         /// <returns>true se vec estiver contido no interior ou na borda de box, false caso contrário</returns>
-        public static bool operator <=(MMXVector vec, MMXBox box)
+        public static bool operator <=(Vector vec, Box box)
         {
-            MMXVector m = box.origin + box.mins;
-            MMXVector M = box.origin + box.maxs;
-            return m.X <= vec.X && vec.X < M.X && m.Y <= vec.Y && vec.Y < M.Y;
+            Vector m = box.origin + box.mins;
+            Vector M = box.origin + box.maxs;
+
+            Interval interval = m.X <= M.X ? Interval.MakeSemiOpenRightInterval(m.X, M.X) : Interval.MakeSemiOpenLeftInterval(M.X, m.X);
+            if (!interval.Contains(vec.X))
+                return false;
+
+            interval = m.Y <= M.Y ? Interval.MakeSemiOpenRightInterval(m.Y, M.Y) : Interval.MakeSemiOpenLeftInterval(M.Y, m.Y);
+            return interval.Contains(vec.Y);
         }
 
         /// <summary>
@@ -2116,7 +2017,7 @@ namespace MMX.Engine
         /// <param name="vec">Vetor</param>
         /// <param name="box">Retângulo</param>
         /// <returns>true se vec estiver contido no exterior ou na borda de box, false caso contrário</returns>
-        public static bool operator >=(MMXVector vec, MMXBox box)
+        public static bool operator >=(Vector vec, Box box)
         {
             return !(vec < box);
         }
@@ -2127,7 +2028,7 @@ namespace MMX.Engine
         /// <param name="box">Retângulo</param>
         /// <param name="vec">Vetor</param>
         /// <returns>true se box contém vec em seu exterior ou em sua borda, false caso contrário</returns>
-        public static bool operator <=(MMXBox box, MMXVector vec)
+        public static bool operator <=(Box box, Vector vec)
         {
             return !(box > vec);
         }
@@ -2138,7 +2039,7 @@ namespace MMX.Engine
         /// <param name="box">Retângulo</param>
         /// /// <param name="vec">Vetor</param>
         /// <returns>true box contém vec em seu interior ou em sua borda, false caso contrário</returns>
-        public static bool operator >=(MMXBox box, MMXVector vec)
+        public static bool operator >=(Box box, Vector vec)
         {
             return vec <= box;
         }
@@ -2149,7 +2050,7 @@ namespace MMX.Engine
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se box1 está contido em box2, falso caso contrário</returns>
-        public static bool operator <=(MMXBox box1, MMXBox box2)
+        public static bool operator <=(Box box1, Box box2)
         {
             return (box1 & box2) == box1;
         }
@@ -2160,7 +2061,7 @@ namespace MMX.Engine
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se box1 contém box2, false caso contrário</returns>
-        public static bool operator >=(MMXBox box1, MMXBox box2)
+        public static bool operator >=(Box box1, Box box2)
         {
             return (box2 & box1) == box2;
         }
@@ -2171,7 +2072,7 @@ namespace MMX.Engine
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se box1 está inteiramente contido em box2 (ou seja box1 está em box2 mas box1 não é igual a box2), falso caso contrário</returns>
-        public static bool operator <(MMXBox box1, MMXBox box2)
+        public static bool operator <(Box box1, Box box2)
         {
             return (box1 <= box2) && (box1 != box2);
         }
@@ -2182,7 +2083,7 @@ namespace MMX.Engine
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se box1 contém inteiramente box2 (ou seja, box1 contém box2 mas box1 não é igual a box2), false caso contrário</returns>
-        public static bool operator >(MMXBox box1, MMXBox box2)
+        public static bool operator >(Box box1, Box box2)
         {
             return (box2 <= box1) && (box1 != box2);
         }
@@ -2193,15 +2094,18 @@ namespace MMX.Engine
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se forem iguais, false caso contrário</returns>
-        public static bool operator ==(MMXBox box1, MMXBox box2)
+        public static bool operator ==(Box box1, Box box2)
         {
-            MMXVector m1 = box1.origin + box1.mins;
-            MMXVector M1 = box1.origin + box1.maxs;
+            Vector m1 = box1.origin + box1.mins;
+            Vector m2 = box2.origin + box2.mins;
 
-            MMXVector m2 = box2.origin + box2.mins;
-            MMXVector M2 = box2.origin + box2.maxs;
+            if (m1 != m2)
+                return false;
 
-            return m1 == m2 && M1 == M2;
+            Vector M1 = box1.origin + box1.maxs;
+            Vector M2 = box2.origin + box2.maxs;
+
+            return M1 == M2;
         }
 
         /// <summary>
@@ -2210,15 +2114,9 @@ namespace MMX.Engine
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se forem diferentes, false caso contrário</returns>
-        public static bool operator !=(MMXBox box1, MMXBox box2)
+        public static bool operator !=(Box box1, Box box2)
         {
-            MMXVector m1 = box1.origin + box1.mins;
-            MMXVector M1 = box1.origin + box1.maxs;
-
-            MMXVector m2 = box2.origin + box2.mins;
-            MMXVector M2 = box2.origin + box2.maxs;
-
-            return m1 != m2 || M1 != M2;
+            return !(box1 == box2);
         }
     }
 
@@ -2229,17 +2127,17 @@ namespace MMX.Engine
         HYPOTENUSE
     }
 
-    public struct MMXRightTriangle : MMXShape
+    public struct RightTriangle : IShape
     {
         public const GeometryType type = GeometryType.RIGHT_TRIANGLE;
 
-        public static readonly MMXRightTriangle EMPTY = new MMXRightTriangle(MMXVector.NULL_VECTOR, 0, 0);
+        public static readonly RightTriangle EMPTY = new RightTriangle(Vector.NULL_VECTOR, 0, 0);
 
-        private MMXVector origin;
-        private MMXFloat hCathetus;
-        private MMXFloat vCathetus;
+        private Vector origin;
+        private FixedSingle hCathetus;
+        private FixedSingle vCathetus;
 
-        public MMXVector Origin
+        public Vector Origin
         {
             get
             {
@@ -2247,7 +2145,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector HCathetusVertex
+        public Vector HCathetusVertex
         {
             get
             {
@@ -2255,7 +2153,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector VCathetusVertex
+        public Vector VCathetusVertex
         {
             get
             {
@@ -2263,7 +2161,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat HCathetus
+        public FixedSingle HCathetus
         {
             get
             {
@@ -2271,7 +2169,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat VCathetus
+        public FixedSingle VCathetus
         {
             get
             {
@@ -2279,31 +2177,33 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat Hypotenuse
+        public FixedSingle Hypotenuse
         {
             get
             {
-                return (MMXFloat) Math.Sqrt(hCathetus * hCathetus + vCathetus * vCathetus);
+                FixedDouble h = hCathetus;
+                FixedDouble v = vCathetus;
+                return System.Math.Sqrt(h * h + v * v);
             }
         }
 
-        public MMXVector HCathetusVector
+        public Vector HCathetusVector
         {
             get
             {
-                return new MMXVector(hCathetus, 0);
+                return new Vector(hCathetus, 0);
             }
         }
 
-        public MMXVector VCathetusVector
+        public Vector VCathetusVector
         {
             get
             {
-                return new MMXVector(0, vCathetus);
+                return new Vector(0, vCathetus);
             }
         }
 
-        public MMXVector HypotenuseVector
+        public Vector HypotenuseVector
         {
             get
             {
@@ -2311,83 +2211,83 @@ namespace MMX.Engine
             }
         }
 
-        public MMXLineSegment HypotenuseLine
+        public LineSegment HypotenuseLine
         {
             get
             {
-                return new MMXLineSegment(HCathetusVertex, VCathetusVertex);
+                return new LineSegment(HCathetusVertex, VCathetusVertex);
             }
         }
 
-        public MMXLineSegment HCathetusLine
+        public LineSegment HCathetusLine
         {
             get
             {
-                return new MMXLineSegment(origin, HCathetusVertex);
+                return new LineSegment(origin, HCathetusVertex);
             }
         }
 
-        public MMXLineSegment VCathetusLine
+        public LineSegment VCathetusLine
         {
             get
             {
-                return new MMXLineSegment(origin, VCathetusVertex);
+                return new LineSegment(origin, VCathetusVertex);
             }
         }
 
-        public MMXBox WrappingBox
+        public Box WrappingBox
         {
             get
             {
-                return new MMXBox(MMXFloat.Min(origin.X, origin.X + hCathetus), MMXFloat.Min(origin.Y, origin.Y + vCathetus), HCathetus, VCathetus);
+                return new Box(FixedSingle.Min(origin.X, origin.X + hCathetus), FixedSingle.Min(origin.Y, origin.Y + vCathetus), HCathetus, VCathetus);
             }
         }
 
-        public MMXFloat Left
+        public FixedSingle Left
         {
             get
             {
-                return MMXFloat.Min(origin.X, origin.X + hCathetus);
+                return FixedSingle.Min(origin.X, origin.X + hCathetus);
             }
         }
 
-        public MMXFloat Top
+        public FixedSingle Top
         {
             get
             {
-                return MMXFloat.Min(origin.Y, origin.Y + vCathetus);
+                return FixedSingle.Min(origin.Y, origin.Y + vCathetus);
             }
         }
 
-        public MMXFloat Right
+        public FixedSingle Right
         {
             get
             {
-                return MMXFloat.Max(origin.X, origin.X + hCathetus);
+                return FixedSingle.Max(origin.X, origin.X + hCathetus);
             }
         }
 
-        public MMXFloat Bottom
+        public FixedSingle Bottom
         {
             get
             {
-                return MMXFloat.Max(origin.Y, origin.Y + vCathetus);
+                return FixedSingle.Max(origin.Y, origin.Y + vCathetus);
             }
         }
 
-        public MMXVector LeftTop
+        public Vector LeftTop
         {
             get
             {
-                return new MMXVector(Left, Top);
+                return new Vector(Left, Top);
             }
         }
 
-        public MMXVector RightBottom
+        public Vector RightBottom
         {
             get
             {
-                return new MMXVector(Right, Bottom);
+                return new Vector(Right, Bottom);
             }
         }
 
@@ -2406,57 +2306,54 @@ namespace MMX.Engine
             }
         }
 
-        public MMXRightTriangle(MMXVector origin, MMXFloat hCathetus, MMXFloat vCathetus)
+        public RightTriangle(Vector origin, FixedSingle hCathetus, FixedSingle vCathetus)
         {
             this.origin = origin;
             this.hCathetus = hCathetus;
             this.vCathetus = vCathetus;
         }
 
-        public MMXRightTriangle Translate(MMXVector shift)
+        public RightTriangle Translate(Vector shift)
         {
-            return new MMXRightTriangle(origin + shift, hCathetus, vCathetus);
+            return new RightTriangle(origin + shift, hCathetus, vCathetus);
         }
 
-        public MMXRightTriangle Negate()
+        public RightTriangle Negate()
         {
-            return new MMXRightTriangle(-origin, -hCathetus, -vCathetus);
+            return new RightTriangle(-origin, -hCathetus, -vCathetus);
         }
 
-        public MMXFloat Area()
-        {
-            return 0.5F * HCathetus * VCathetus;
-        }
+        public FixedSingle Area => FixedSingle.HALF * HCathetus * VCathetus;
 
-        public MMXVector GetNormal(RightTriangleSide side)
+        public Vector GetNormal(RightTriangleSide side)
         {
             switch (side)
             {
                 case RightTriangleSide.HCATHETUS:
-                    return vCathetus >= 0 ? MMXVector.UP_VECTOR : MMXVector.DOWN_VECTOR;
+                    return vCathetus >= 0 ? Vector.UP_VECTOR : Vector.DOWN_VECTOR;
 
                 case RightTriangleSide.VCATHETUS:
-                    return hCathetus >= 0 ? MMXVector.RIGHT_VECTOR : MMXVector.LEFT_VECTOR;
+                    return hCathetus >= 0 ? Vector.RIGHT_VECTOR : Vector.LEFT_VECTOR;
 
                 case RightTriangleSide.HYPOTENUSE:
                     {
                         int sign = vCathetus.Signal == hCathetus.Signal ? 1 : -1;
-                        MMXVector v = new MMXVector(sign * vCathetus, -sign * hCathetus);
+                        Vector v = new Vector(sign * vCathetus, -sign * hCathetus);
                         return v.Versor();
                     }
             }
 
-            return MMXVector.NULL_VECTOR;
+            return Vector.NULL_VECTOR;
         }
 
-        private static MMXFloat Sign(MMXVector p1, MMXVector p2, MMXVector p3)
+        private static FixedSingle Sign(Vector p1, Vector p2, Vector p3)
         {
             return (p1.X - p3.X) * (p2.Y - p3.Y) - (p2.X - p3.X) * (p1.Y - p3.Y);
         }
 
-        private static bool PointInTriangle(MMXVector pt, MMXVector v1, MMXVector v2, MMXVector v3)
+        private static bool PointInTriangle(Vector pt, Vector v1, Vector v2, Vector v3)
         {
-            MMXFloat d1, d2, d3;
+            FixedSingle d1, d2, d3;
             bool has_neg, has_pos;
 
             d1 = Sign(pt, v1, v2);
@@ -2469,11 +2366,11 @@ namespace MMX.Engine
             return !(has_neg && has_pos);
         }
 
-        public bool Contains(MMXVector v, bool inclusive = true, bool excludeHypotenuse = false)
+        public bool Contains(Vector v, bool inclusive = true, bool excludeHypotenuse = false)
         {
             if (excludeHypotenuse)
             {
-                MMXLineSegment hypotenuseLine = HypotenuseLine;
+                LineSegment hypotenuseLine = HypotenuseLine;
                 if (hypotenuseLine.Contains(v))
                     return false;
             }
@@ -2493,10 +2390,10 @@ namespace MMX.Engine
             return PointInTriangle(v, origin, HCathetusVertex, VCathetusVertex);
         }
 
-        public bool HasIntersectionWith(MMXBox box, bool excludeHypotenuse = false)
+        public bool HasIntersectionWith(Box box, bool excludeHypotenuse = false)
         {
-            MMXBox intersection = box & WrappingBox;
-            if (intersection.Area() == 0)
+            Box intersection = box & WrappingBox;
+            if (intersection.Area == 0)
                 return false;
 
             if (Contains(intersection.LeftTop, true, excludeHypotenuse))
@@ -2516,44 +2413,66 @@ namespace MMX.Engine
 
         public override string ToString()
         {
-            return "[" + origin + ":" + hCathetus + ":" + vCathetus + "]";
+            return "[" + origin + " : " + hCathetus + " : " + vCathetus + "]";
         }
 
-        GeometryType MMXGeometry.GetType()
+        public override bool Equals(object obj)
         {
-            return type;
+            if (!(obj is RightTriangle))
+            {
+                return false;
+            }
+
+            var triangle = (RightTriangle) obj;
+            return EqualityComparer<Vector>.Default.Equals(origin, triangle.origin) &&
+                   EqualityComparer<FixedSingle>.Default.Equals(hCathetus, triangle.hCathetus) &&
+                   EqualityComparer<FixedSingle>.Default.Equals(vCathetus, triangle.vCathetus);
         }
 
-        public static bool operator ==(MMXRightTriangle left, MMXRightTriangle right)
+        public override int GetHashCode()
+        {
+            var hashCode = -1211292891;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<Vector>.Default.GetHashCode(origin);
+            hashCode = hashCode * -1521134295 + EqualityComparer<FixedSingle>.Default.GetHashCode(hCathetus);
+            hashCode = hashCode * -1521134295 + EqualityComparer<FixedSingle>.Default.GetHashCode(vCathetus);
+            return hashCode;
+        }
+
+        public GeometryType Type => type;
+
+        public FixedSingle Length => HCathetus + VCathetus + Hypotenuse;
+
+        public static bool operator ==(RightTriangle left, RightTriangle right)
         {
             return left.origin == right.origin && left.hCathetus == right.hCathetus && left.vCathetus == right.vCathetus;
         }
-        public static bool operator !=(MMXRightTriangle left, MMXRightTriangle right)
+        public static bool operator !=(RightTriangle left, RightTriangle right)
         {
             return left.origin != right.origin || left.hCathetus != right.hCathetus || left.vCathetus != right.vCathetus;
         }
 
-        public static MMXRightTriangle operator +(MMXRightTriangle triangle, MMXVector shift)
+        public static RightTriangle operator +(RightTriangle triangle, Vector shift)
         {
             return triangle.Translate(shift);
         }
 
-        public static MMXRightTriangle operator +(MMXVector shift, MMXRightTriangle triangle)
+        public static RightTriangle operator +(Vector shift, RightTriangle triangle)
         {
             return triangle.Translate(shift);
         }
 
-        public static MMXRightTriangle operator -(MMXRightTriangle triangle)
+        public static RightTriangle operator -(RightTriangle triangle)
         {
             return triangle.Negate();
         }
 
-        public static MMXRightTriangle operator -(MMXRightTriangle triangle, MMXVector shift)
+        public static RightTriangle operator -(RightTriangle triangle, Vector shift)
         {
             return triangle.Translate(-shift);
         }
 
-        public static MMXRightTriangle operator -(MMXVector shift, MMXRightTriangle triangle)
+        public static RightTriangle operator -(Vector shift, RightTriangle triangle)
         {
             return (-triangle).Translate(shift);
         }

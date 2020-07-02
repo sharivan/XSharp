@@ -1,6 +1,9 @@
-﻿using SharpDX;
-using SharpDX.Direct2D1;
+﻿using MMX.Geometry;
+using MMX.Math;
+using SharpDX;
 using System.IO;
+
+using static MMX.Engine.Consts;
 
 namespace MMX.Engine
 {
@@ -15,21 +18,27 @@ namespace MMX.Engine
         private int initialFrameSequenceIndex; // Quadro inicial da animação
         private bool visible; // Indica se a animação será visivel (se ela será renderizada ou não)
         private bool animating; // Indica se a animação será dinâmica ou estática
+        private FixedSingle rotation;
         private bool mirrored;
-        private bool flipped;
+        private bool flipped;       
 
         private int currentFrameSequenceIndex; // Quadro atual
         private bool animationEndFired; // Indica se o evento OnAnimationEnd da entidade associada a esta animação foi chamado desde que a animação foi completada
 
-        private MMXBox[] boundingBoxes;
+        private Box[] boundingBoxes;
         private AnimationFrameEvent[] animationEvents;
 
-        public MMXBox DrawBox
+        public Box DrawBox
         {
             get
             {
                 return sprite.Origin + boundingBoxes[currentFrameSequenceIndex];
             }
+        }
+
+        public Animation(Sprite sprite, int index, SpriteSheet sheet, string frameSequenceName, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false) :
+            this(sprite, index, sheet, frameSequenceName, FixedSingle.ZERO, initialFrame, startVisible, startOn, mirrored, flipped)
+        {
         }
 
         /// <summary>
@@ -43,29 +52,30 @@ namespace MMX.Engine
         /// <param name="startVisible">Especifica se a animação iniciará visível ou não</param>
         /// <param name="startOn">Especifica se a animação começará ativa ou não</param>
         /// <param name="loop">Especifica se a animação estará em looping ou não</param>
-        public Animation(Sprite sprite, int index, SpriteSheet sheet, string frameSequenceName, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+        public Animation(Sprite sprite, int index, SpriteSheet sheet, string frameSequenceName, FixedSingle rotation, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
         {
             this.sprite = sprite;
             this.index = index;
             this.sheet = sheet;
             sequence = sheet.GetFrameSequence(frameSequenceName);
-            this.initialFrameSequenceIndex = initialFrame;
+            initialFrameSequenceIndex = initialFrame;
             visible = startVisible;
             animating = startOn;
             this.mirrored = mirrored;
             this.flipped = flipped;
+            this.rotation = rotation;
 
             currentFrameSequenceIndex = initialFrame; // Define o frame atual para o frame inicial
             animationEndFired = false;
 
             int count = sequence.Count;
-            boundingBoxes = new MMXBox[count];
+            boundingBoxes = new Box[count];
             animationEvents = new AnimationFrameEvent[count];
 
             for (int i = 0; i < count; i++)
             {
-                MMXBox boundingBox = sheet.GetFrame(sequence[i]);
-                boundingBoxes[i] = new MMXBox(MMXVector.NULL_VECTOR, boundingBox.Mins, boundingBox.Maxs);
+                Box boundingBox = sheet.GetFrame(sequence[i]);
+                boundingBoxes[i] = new Box(Vector.NULL_VECTOR, boundingBox.Mins, boundingBox.Maxs);
             }
         }
 
@@ -74,6 +84,10 @@ namespace MMX.Engine
             writer.Write(index);
             writer.Write(visible);
             writer.Write(animating);
+
+            rotation.Write(writer);
+            writer.Write(flipped);
+            writer.Write(mirrored);
 
             writer.Write(currentFrameSequenceIndex);
             writer.Write(animationEndFired);
@@ -84,6 +98,10 @@ namespace MMX.Engine
             index = reader.ReadInt32();
             visible = reader.ReadBoolean();
             animating = reader.ReadBoolean();
+
+            rotation = new FixedSingle(reader);
+            flipped = reader.ReadBoolean();
+            mirrored = reader.ReadBoolean();
 
             currentFrameSequenceIndex = reader.ReadInt32();
             animationEndFired = reader.ReadBoolean();
@@ -209,15 +227,15 @@ namespace MMX.Engine
             }
         }
 
-        public MMXBox CurrentFrameBoundingBox
+        public Box CurrentFrameBoundingBox
         {
             get
             {
                 if (currentFrameSequenceIndex < 0 || currentFrameSequenceIndex > sequence.Count)
-                    return MMXBox.EMPTY_BOX;
+                    return Box.EMPTY_BOX;
 
-                MMXBox boundingBox = sheet.GetFrame(sequence[currentFrameSequenceIndex]);
-                return new MMXBox(MMXVector.NULL_VECTOR, boundingBox.Mins, boundingBox.Maxs);
+                Box boundingBox = sheet.GetFrame(sequence[currentFrameSequenceIndex]);
+                return new Box(Vector.NULL_VECTOR, boundingBox.Mins, boundingBox.Maxs);
             }
         }
 
@@ -230,6 +248,7 @@ namespace MMX.Engine
             {
                 return visible;
             }
+
             set
             {
                 visible = value;
@@ -246,6 +265,7 @@ namespace MMX.Engine
             {
                 return animating;
             }
+
             set
             {
                 if (value && !animating)
@@ -260,6 +280,45 @@ namespace MMX.Engine
             get
             {
                 return sequence.LoopFromFrame;
+            }
+        }
+
+        public FixedSingle Rotation
+        {
+            get
+            {
+                return rotation;
+            }
+
+            set
+            {
+                rotation = value;
+            }
+        }
+
+        public bool Flipped
+        {
+            get
+            {
+                return flipped;
+            }
+
+            set
+            {
+                flipped = value;
+            }
+        }
+
+        public bool Mirrored
+        {
+            get
+            {
+                return mirrored;
+            }
+
+            set
+            {
+                mirrored = value;
             }
         }
 
@@ -303,22 +362,28 @@ namespace MMX.Engine
             if (!visible || sequence.Count == 0)
                 return;
 
-            MMXBox drawBox = DrawBox; // Obtém o retângulo de desenho da entidade
+            Box drawBox = DrawBox; // Obtém o retângulo de desenho da entidade
             int frameIndex = sequence[currentFrameSequenceIndex];
-            MMXBox srcBox = sheet.GetFrame(frameIndex);
+            Box srcBox = sheet.GetFrame(frameIndex);
+            Vector2 center = sprite.Engine.WorldVectorToScreen(drawBox.Origin);
+
+            Matrix3x2 lastTransform = sprite.Engine.Target.Transform;
+            Matrix3x2 transform = rotation != FixedSingle.ZERO ? Matrix3x2.Rotation((float) rotation, center) : Matrix3x2.Identity;
 
             if (flipped)
             {
                 if (mirrored)
-                    sprite.Engine.Target.Transform = Matrix3x2.Scaling(-1, -1, sprite.Engine.TransformVector(drawBox.Origin));                   
+                    transform = Matrix3x2.Scaling(-1, -1, center) * transform;                   
                 else
-                    sprite.Engine.Target.Transform = Matrix3x2.Scaling(1, -1, sprite.Engine.TransformVector(drawBox.Origin));
+                    transform = Matrix3x2.Scaling(1, -1, center) * transform;
             }
             else if (mirrored)
-                sprite.Engine.Target.Transform = Matrix3x2.Scaling(-1, 1, sprite.Engine.TransformVector(drawBox.Origin));
+                transform = Matrix3x2.Scaling(-1, 1, center) * transform;
 
-            sprite.Engine.Target.DrawBitmap(sequence.Sheet.Image, sprite.Engine.TransformBox(drawBox), 1, BitmapInterpolationMode.NearestNeighbor, GameEngine.ToRectangleF(srcBox));
-            sprite.Engine.Target.Transform = Matrix3x2.Identity;
+            sprite.Engine.Target.Transform *= transform;
+            sprite.Engine.Target.DrawBitmap(sequence.Sheet.Image, sprite.Engine.WorldBoxToScreen(drawBox), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(srcBox));
+            //sprite.Engine.Target.Flush();
+            sprite.Engine.Target.Transform = lastTransform;
         }
 
         public override string ToString()

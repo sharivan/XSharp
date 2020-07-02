@@ -1,4 +1,6 @@
-﻿using SharpDX;
+﻿using MMX.Geometry;
+using MMX.Math;
+using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DirectWrite;
 using SharpDX.Mathematics.Interop;
@@ -125,27 +127,35 @@ namespace MMX.Engine
                 }
         }
 
-        private void PaintTile(RenderTarget target, Tile tile, MMXFloat x, MMXFloat y, bool flipped, bool mirrored)
+        private void PaintTile(RenderTarget target, Tile tile, FixedSingle x, FixedSingle y, bool flipped, bool mirrored)
         {
             Vector2 center = new Vector2((float) x + TILE_SIZE / 2, (float) y + TILE_SIZE / 2);
             RectangleF dst = new RectangleF((float) x, (float) y, TILE_SIZE, TILE_SIZE);
             RectangleF src = new RectangleF(0, 0, TILE_SIZE, TILE_SIZE);
+
+            var lastTransform = target.Transform;
+
             if (flipped)
             {
                 if (mirrored)
-                    target.Transform = Matrix3x2.Scaling(-1, -1, center);
+                    target.Transform *= Matrix3x2.Scaling(-1, -1, center);
                 else
-                    target.Transform = Matrix3x2.Scaling(1, -1, center);
+                    target.Transform *= Matrix3x2.Scaling(1, -1, center);
             
             }
             else if (mirrored)
-                target.Transform = Matrix3x2.Scaling(-1, 1, center);
+                target.Transform *= Matrix3x2.Scaling(-1, 1, center);
 
-            target.DrawBitmap(tile.target.Bitmap, dst, 1, BitmapInterpolationMode.NearestNeighbor, src);
-            target.Transform = Matrix3x2.Identity;
+            target.DrawBitmap(tile.target.Bitmap, dst, 1, INTERPOLATION_MODE, src);
+
+            //if (flipped || mirrored)
+            //{
+                target.Flush();
+                target.Transform = lastTransform;
+            //}
         }
 
-        internal void PaintDownLayer(RenderTarget target, MMXVector offset)
+        internal void PaintDownLayer(RenderTarget target, Vector offset)
         {
             for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
                 for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
@@ -153,15 +163,10 @@ namespace MMX.Engine
                     Tile tile = tiles[row, col];
                     if (tile != null && !upLayer[row, col])
                         PaintTile(target, tile, offset.X + col * TILE_SIZE, offset.Y + row * TILE_SIZE, flipped[row, col], mirrored[row, col]);
-                    else
-                        using (Brush brush = new SolidColorBrush(target, Color.Transparent))
-                        {
-                            target.FillRectangle(new RectangleF((float) (offset.X + col * TILE_SIZE), (float) (offset.Y + row * TILE_SIZE), TILE_SIZE, TILE_SIZE), brush);
-                        }
                 }
         }
 
-        internal void PaintUpLayer(RenderTarget target, MMXVector offset)
+        internal void PaintUpLayer(RenderTarget target, Vector offset)
         {
             for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
                 for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
@@ -169,11 +174,6 @@ namespace MMX.Engine
                     Tile tile = tiles[row, col];
                     if (tile != null && upLayer[row, col])
                         PaintTile(target, tile, offset.X + col * TILE_SIZE, offset.Y + row * TILE_SIZE, flipped[row, col], mirrored[row, col]);
-                    else
-                        using (Brush brush = new SolidColorBrush(target, Color.Transparent))
-                        {
-                            target.FillRectangle(new RectangleF((float) (offset.X + col * TILE_SIZE), (float) (offset.Y + row * TILE_SIZE), TILE_SIZE, TILE_SIZE), brush);
-                        }
                 }
 
             if (collisionData != CollisionData.NONE)
@@ -191,7 +191,7 @@ namespace MMX.Engine
 
                 if (DEBUG_DRAW_MAP_BOUNDS)
                 {
-                    const int TILE_BOUND_STRIKE_WIDTH = 2;
+                    const int TILE_BOUND_STRIKE_WIDTH = 1;
 
                     using (Brush brush = new SolidColorBrush(target, Color.Red))
                     {
@@ -199,13 +199,13 @@ namespace MMX.Engine
                             target.DrawRectangle(new RectangleF((float) offset.X, (float) offset.Y, MAP_SIZE, MAP_SIZE), brush, TILE_BOUND_STRIKE_WIDTH);
                         else if (World.IsSlope(collisionData))
                         {
-                            MMXRightTriangle slopeTriangle = World.MakeSlopeTriangle(collisionData);
-                            MMXVector tv1 = slopeTriangle.Origin;
-                            MMXVector tv2 = slopeTriangle.HCathetusVertex;
-                            MMXVector tv3 = slopeTriangle.VCathetusVertex;
+                            RightTriangle slopeTriangle = World.MakeSlopeTriangle(collisionData);
+                            Vector tv1 = slopeTriangle.Origin;
+                            Vector tv2 = slopeTriangle.HCathetusVertex;
+                            Vector tv3 = slopeTriangle.VCathetusVertex;
 
-                            MMXFloat h = slopeTriangle.Origin.Y;
-                            MMXFloat H = MAP_SIZE - h;
+                            FixedSingle h = slopeTriangle.Origin.Y;
+                            FixedSingle H = MAP_SIZE - h;
                             if (H > 0)
                             {
                                 target.DrawLine(new Vector2((float) (offset.X + tv2.X), (float) (offset.Y + tv2.Y)), new Vector2((float) (offset.X + tv3.X), (float) (offset.Y + tv3.Y)), brush, TILE_BOUND_STRIKE_WIDTH);
@@ -235,7 +235,7 @@ namespace MMX.Engine
             }
         }
 
-        public Tile GetTileFrom(MMXVector pos)
+        public Tile GetTileFrom(Vector pos)
         {
             Cell tsp = World.GetTileCellFromPos(pos);
             int row = tsp.Row;
@@ -263,13 +263,13 @@ namespace MMX.Engine
                     }
         }
 
-        public Tile GetTile(MMXVector pos)
+        public Tile GetTile(Vector pos)
         {
             Cell cell = World.GetTileCellFromPos(pos);
             return tiles[cell.Row, cell.Col];
         }
 
-        public void SetTile(MMXVector pos, Tile tile, bool flipped = false, bool mirrored = false, bool upLayer = false)
+        public void SetTile(Vector pos, Tile tile, bool flipped = false, bool mirrored = false, bool upLayer = false)
         {
             Cell cell = World.GetTileCellFromPos(pos);
             SetTile(cell, tile, flipped, mirrored, upLayer);
@@ -301,10 +301,10 @@ namespace MMX.Engine
                 }
         }
 
-        public void FillRectangle(MMXBox box, Tile tile, bool flipped = false, bool mirrored = false, bool upLayer = false)
+        public void FillRectangle(Box box, Tile tile, bool flipped = false, bool mirrored = false, bool upLayer = false)
         {
-            MMXVector boxLT = box.LeftTop;
-            MMXVector boxSize = box.DiagonalVector;
+            Vector boxLT = box.LeftTop;
+            Vector boxSize = box.DiagonalVector;
 
             int col = (int) (boxLT.X / TILE_SIZE);
             int row = (int) (boxLT.Y / TILE_SIZE);
@@ -313,7 +313,7 @@ namespace MMX.Engine
 
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetTile(new MMXVector((col + c) * TILE_SIZE, (row + r) * TILE_SIZE), tile, flipped, mirrored, upLayer);
+                    SetTile(new Vector((col + c) * TILE_SIZE, (row + r) * TILE_SIZE), tile, flipped, mirrored, upLayer);
         }
     }
 }

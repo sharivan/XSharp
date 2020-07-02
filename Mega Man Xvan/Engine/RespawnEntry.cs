@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MMX.Math;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,14 +10,14 @@ namespace MMX.Engine
     internal class RespawnEntry
     {
         private Player player; // Bomberman que será respawnado
-        private MMXFloat time; // Tempo que deverá se esperar para que o respawn ocorra
+        private FixedSingle time; // Tempo que deverá se esperar para que o respawn ocorra
 
         /// <summary>
         /// Cria uma nova entrada de respawn
         /// </summary>
         /// <param name="bomberman">Bomberman que será respawnado</param>
         /// <param name="time">Tempo que deverá se esperar para que o respawn ocorra</param>
-        public RespawnEntry(Player player, MMXFloat time)
+        public RespawnEntry(Player player, FixedSingle time)
         {
             this.player = player;
             this.time = time;
@@ -36,7 +37,7 @@ namespace MMX.Engine
         /// <summary>
         /// Tempo que deverá se esperar para que o respawn ocorra
         /// </summary>
-        public MMXFloat Time
+        public FixedSingle Time
         {
             get
             {

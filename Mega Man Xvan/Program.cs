@@ -10,6 +10,7 @@ using MMX.Engine;
 using System.Threading;
 
 using static MMX.Engine.Consts;
+using MMX.Math;
 
 namespace Mega_Man_Xvan
 {
@@ -23,7 +24,7 @@ namespace Mega_Man_Xvan
             //    engine.UpdateScale();
         }
 
-        static private Rational Rationalize(MMXFloat number)
+        static private Rational Rationalize(FixedSingle number)
         {
             int intPart = (int) number;
             int numerator = intPart;
@@ -48,7 +49,7 @@ namespace Mega_Man_Xvan
         {
             var form = new RenderForm("Mega Man Xvan");
             form.ClientSize = new System.Drawing.Size((int) DEFAULT_CLIENT_WIDTH, (int) DEFAULT_CLIENT_HEIGHT);
-            form.Resize += new System.EventHandler(Form_Resize);
+            form.Resize += new EventHandler(Form_Resize);
 
             // SwapChain description
             var desc = new SwapChainDescription()
@@ -56,7 +57,7 @@ namespace Mega_Man_Xvan
                 BufferCount = 1,
                 ModeDescription =
                                    new ModeDescription(form.ClientSize.Width, form.ClientSize.Height,
-                                                       Rationalize(TICKRATE), Format.R8G8B8A8_UNorm),
+                                                       Rationalize(TICKRATE), Format.B8G8R8A8_UNorm),
                 IsWindowed = true,
                 OutputHandle = form.Handle,
                 SampleDescription = new SampleDescription(1, 0),
@@ -82,9 +83,11 @@ namespace Mega_Man_Xvan
 
             Surface surface = backBuffer.QueryInterface<Surface>();
 
-            var d2dRenderTarget = new RenderTarget(d2dFactory, surface, new RenderTargetProperties(new PixelFormat(Format.Unknown, SharpDX.Direct2D1.AlphaMode.Premultiplied)));
-            d2dRenderTarget.TextAntialiasMode = TextAntialiasMode.Cleartype;
-            d2dRenderTarget.AntialiasMode = AntialiasMode.Aliased;
+            var d2dRenderTarget = new RenderTarget(d2dFactory, surface, new RenderTargetProperties(new PixelFormat(Format.Unknown, SharpDX.Direct2D1.AlphaMode.Premultiplied)))
+            {
+                TextAntialiasMode = TEXT_ANTIALIAS_MODE,
+                AntialiasMode = ANTIALIAS_MODE
+            };
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MMX.Geometry;
+using MMX.Math;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -45,7 +47,7 @@ namespace MMX.Engine
         private bool jumpReleased;
         private bool dashReleased;
 
-        private MMXFloat baseHSpeed;
+        private FixedSingle baseHSpeed;
         private int dashFrameCounter;
         private bool spawing;
         private bool wallJumpStarted;
@@ -56,6 +58,7 @@ namespace MMX.Engine
 
         private Direction direction = Direction.RIGHT;
         private PlayerState state;
+        private Direction stateDirection;
         private bool shooting;
         private int shotFrameCounter;
 
@@ -66,7 +69,7 @@ namespace MMX.Engine
         /// <param name="name">Nome do Bomberman</param>
         /// <param name="box">Retângulo de desenho do Bomberman</param>
         /// <param name="imageLists">Array de lista de imagens que serão usadas na animação do Bomberman</param>
-        internal Player(GameEngine engine, string name, MMXVector origin, SpriteSheet sheet)
+        internal Player(GameEngine engine, string name, Vector origin, SpriteSheet sheet)
         // Dado o retângulo de desenho do Bomberman, o retângulo de colisão será a metade deste enquanto o de dano será um pouco menor ainda.
         // A posição do retângulo de colisão será aquela que ocupa a metade inferior do retângulo de desenho enquanto o retângulo de dano terá o mesmo centro que o retângulo de colisão.
         : base(engine, name, origin, sheet, false, true)
@@ -118,6 +121,7 @@ namespace MMX.Engine
 
             writer.Write((int) direction);
             writer.Write((int) state);
+            writer.Write((int) stateDirection);
             writer.Write(shooting);
             writer.Write(shotFrameCounter);
         }
@@ -140,7 +144,7 @@ namespace MMX.Engine
             jumpReleased = reader.ReadBoolean();
             dashReleased = reader.ReadBoolean();
 
-            baseHSpeed = new MMXFloat(reader);
+            baseHSpeed = new FixedSingle(reader);
             dashFrameCounter = reader.ReadInt32();
             spawing = reader.ReadBoolean();
             wallJumpStarted = reader.ReadBoolean();
@@ -151,19 +155,20 @@ namespace MMX.Engine
 
             direction = (Direction) reader.ReadInt32();
             state = (PlayerState) reader.ReadInt32();
+            stateDirection = (Direction) reader.ReadInt32();
             shooting = reader.ReadBoolean();
             shotFrameCounter = reader.ReadInt32();
         }
 
-        protected override MMXBox GetCollisionBox(MMXFloat clipBottom)
+        protected override Box GetCollisionBox(FixedSingle clipBottom)
         {
             if (Dashing)
-                return new MMXBox(new MMXVector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 2), new MMXVector(0, 0), new MMXVector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 2 - clipBottom));
+                return new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 2), new Vector(0, 0), new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 2 - clipBottom));
 
-            return new MMXBox(new MMXVector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 2), new MMXVector(0, 0), new MMXVector(HITBOX_WIDTH, HITBOX_HEIGHT + 2 - clipBottom));
+            return new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 2), new Vector(0, 0), new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 2 - clipBottom));
         }
 
-        protected override void OnHealthChanged(MMXFloat health)
+        protected override void OnHealthChanged(FixedSingle health)
         {
             engine.RepaintHP(); // Notifica o engine que o HP do caracter foi alterado para que seja redesenhado.
         }
@@ -196,7 +201,7 @@ namespace MMX.Engine
         {
             get
             {
-                return (state == PlayerState.PRE_DASH || state == PlayerState.DASH) && direction == Direction.LEFT;
+                return (state == PlayerState.PRE_DASH || state == PlayerState.DASH) && stateDirection == Direction.LEFT;
             }
         }
 
@@ -204,7 +209,7 @@ namespace MMX.Engine
         {
             get
             {
-                return (state == PlayerState.PRE_DASH || state == PlayerState.DASH) && direction == Direction.RIGHT;
+                return (state == PlayerState.PRE_DASH || state == PlayerState.DASH) && stateDirection == Direction.RIGHT;
             }
         }
 
@@ -252,7 +257,7 @@ namespace MMX.Engine
         {
             get
             {
-                return state == PlayerState.WALL_JUMP && direction == Direction.LEFT;
+                return state == PlayerState.WALL_JUMP && stateDirection == Direction.LEFT;
             }
         }
 
@@ -260,7 +265,7 @@ namespace MMX.Engine
         {
             get
             {
-                return state == PlayerState.WALL_JUMP && direction == Direction.RIGHT;
+                return state == PlayerState.WALL_JUMP && stateDirection == Direction.RIGHT;
             }
         }
 
@@ -316,7 +321,7 @@ namespace MMX.Engine
         {
             get
             {
-                return (state == PlayerState.PRE_WALK || state == PlayerState.WALK) && direction == Direction.LEFT;
+                return (state == PlayerState.PRE_WALK || state == PlayerState.WALK) && stateDirection == Direction.LEFT;
             }
         }
 
@@ -324,7 +329,7 @@ namespace MMX.Engine
         {
             get
             {
-                return state == PlayerState.PRE_WALK && direction == Direction.LEFT;
+                return state == PlayerState.PRE_WALK && stateDirection == Direction.LEFT;
             }
         }
 
@@ -332,7 +337,7 @@ namespace MMX.Engine
         {
             get
             {
-                return state == PlayerState.WALK && direction == Direction.LEFT;
+                return state == PlayerState.WALK && stateDirection == Direction.LEFT;
             }
         }
 
@@ -340,7 +345,7 @@ namespace MMX.Engine
         {
             get
             {
-                return (state == PlayerState.PRE_WALK || state == PlayerState.WALK) && direction == Direction.RIGHT;
+                return (state == PlayerState.PRE_WALK || state == PlayerState.WALK) && stateDirection == Direction.RIGHT;
             }
         }
 
@@ -348,7 +353,7 @@ namespace MMX.Engine
         {
             get
             {
-                return state == PlayerState.PRE_WALK && direction == Direction.RIGHT;
+                return state == PlayerState.PRE_WALK && stateDirection == Direction.RIGHT;
             }
         }
 
@@ -356,7 +361,7 @@ namespace MMX.Engine
         {
             get
             {
-                return state == PlayerState.WALK && direction == Direction.RIGHT;
+                return state == PlayerState.WALK && stateDirection == Direction.RIGHT;
             }
         }
 
@@ -663,7 +668,13 @@ namespace MMX.Engine
 
         protected void SetState(PlayerState state, int startAnimationIndex = -1)
         {
+            SetState(state, direction, startAnimationIndex);
+        }
+
+        protected void SetState(PlayerState state, Direction direction, int startAnimationIndex = -1)
+        {
             this.state = state;
+            stateDirection = direction;
             CurrentAnimationIndex = GetAnimationIndex(state, direction, shooting && !(TopLadderClimbing || TopLadderDescending || PreLadderClimbing || PreWalking));
             CurrentAnimation.Start(startAnimationIndex);
         }
@@ -695,7 +706,7 @@ namespace MMX.Engine
         {
             if (WallJumping && wallJumpFrameCounter >= 4)
             {
-                vel = MMXVector.NULL_VECTOR;
+                vel = Vector.NULL_VECTOR;
                 wallJumpStarted = false;
                 SetAirStateAnimation(true);
             }
@@ -738,7 +749,7 @@ namespace MMX.Engine
                     TryMoveRight();
                 else
                 {
-                    vel = MMXVector.NULL_VECTOR;
+                    vel = Vector.NULL_VECTOR;
                     SetState(PlayerState.LAND, 0);
                 }
             }
@@ -746,7 +757,7 @@ namespace MMX.Engine
                 SetState(PlayerState.SPAWN_END, 0);
         }
 
-        protected override MMXFloat GetTerminalDownwardSpeed()
+        protected override FixedSingle GetTerminalDownwardSpeed()
         {
             return WallSliding ? WALL_SLIDE_SPEED : TERMINAL_DOWNWARD_SPEED;
         }
@@ -790,29 +801,29 @@ namespace MMX.Engine
         private void TryMoveLeft(bool standOnly = false)
         {
             if (!standOnly && !BlockedLeft)
-                vel = new MMXVector(-baseHSpeed, vel.Y);
+                vel = new Vector(-baseHSpeed, vel.Y);
             else
-                vel = new MMXVector(0, vel.Y);
+                vel = new Vector(0, vel.Y);
 
             if (Landed)
             {
                 if (standOnly || BlockedLeft)
                 {
                     bool wasStanding = Standing;
-                    SetState(PlayerState.STAND, !wasStanding ? 0 : -1);
+                    SetState(PlayerState.STAND, Direction.LEFT, !wasStanding ? 0 : -1);
                 }
                 else
                 {
                     if (!shooting && baseHSpeed == PRE_WALKING_SPEED)
                     {
                         bool wasPreWalkingLeft = PreWalkingLeft;
-                        SetState(PlayerState.PRE_WALK, !wasPreWalkingLeft ? 0 : -1);
+                        SetState(PlayerState.PRE_WALK, Direction.LEFT, !wasPreWalkingLeft ? 0 : -1);
                     }
                     else
                     {
                         baseHSpeed = GetWalkingSpeed();
                         bool wasWalkingLeftOnly = WalkingLeftOnly;
-                        SetState(PlayerState.WALK, !wasWalkingLeftOnly ? 0 : -1);
+                        SetState(PlayerState.WALK, Direction.LEFT, !wasWalkingLeftOnly ? 0 : -1);
                     }
                 }
             }
@@ -824,8 +835,8 @@ namespace MMX.Engine
                     {
                         if (!WallSliding)
                         {
-                            vel = MMXVector.NULL_VECTOR;
-                            SetState(PlayerState.WALL_SLIDE, 0);
+                            vel = Vector.NULL_VECTOR;
+                            SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
                         }
                     }
                     else if (!WallJumping)
@@ -839,29 +850,29 @@ namespace MMX.Engine
         private void TryMoveRight(bool standOnly = false)
         {
             if (!standOnly && !BlockedRight)
-                vel = new MMXVector(baseHSpeed, vel.Y);
+                vel = new Vector(baseHSpeed, vel.Y);
             else
-                vel = new MMXVector(0, vel.Y);
+                vel = new Vector(0, vel.Y);
 
             if (Landed)
             {
                 if (standOnly || BlockedRight)
                 {
                     bool wasStanding = Standing;
-                    SetState(PlayerState.STAND, !wasStanding ? 0 : -1);
+                    SetState(PlayerState.STAND, Direction.RIGHT, !wasStanding ? 0 : -1);
                 }
                 else
                 {
                     if (!shooting && baseHSpeed == PRE_WALKING_SPEED)
                     {
                         bool wasPreWalkingRight = PreWalkingRight;
-                        SetState(PlayerState.PRE_WALK, !wasPreWalkingRight ? 0 : -1);
+                        SetState(PlayerState.PRE_WALK, Direction.RIGHT, !wasPreWalkingRight ? 0 : -1);
                     }
                     else
                     {
                         baseHSpeed = GetWalkingSpeed();
                         bool wasWalkingRightOnly = WalkingRightOnly;
-                        SetState(PlayerState.WALK, !wasWalkingRightOnly ? 0 : -1);
+                        SetState(PlayerState.WALK, Direction.RIGHT, !wasWalkingRightOnly ? 0 : -1);
                     }
                 }
             }
@@ -873,8 +884,8 @@ namespace MMX.Engine
                     {
                         if (!WallSliding)
                         {
-                            vel = MMXVector.NULL_VECTOR;
-                            SetState(PlayerState.WALL_SLIDE, 0);
+                            vel = Vector.NULL_VECTOR;
+                            SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
                         }
                     }
                     else if (!WallJumping)
@@ -892,12 +903,12 @@ namespace MMX.Engine
             return base.PreThink();
         }
 
-        private MMXFloat GetWalkingSpeed()
+        private FixedSingle GetWalkingSpeed()
         {
             if (Walking && LandedOnSlope && LandedSlope.HCathetusSign == vel.X.Signal)
             {
-                MMXRightTriangle slope = LandedSlope;
-                MMXFloat ratio = slope.HCathetus / slope.VCathetus;
+                RightTriangle slope = LandedSlope;
+                FixedSingle ratio = slope.HCathetus / slope.VCathetus;
 
                 if (ratio == 4)
                     return SLOPE_DOWNWARD_WALKING_SPEED_1;
@@ -909,12 +920,12 @@ namespace MMX.Engine
             return WALKING_SPEED;
         }
 
-        private MMXFloat GetInitialJumpSpeed()
+        private FixedSingle GetInitialJumpSpeed()
         {
             if (Walking && LandedOnSlope && baseHSpeed > WALKING_SPEED)
             {
-                MMXRightTriangle slope = LandedSlope;
-                MMXFloat ratio = slope.HCathetus / slope.VCathetus;
+                RightTriangle slope = LandedSlope;
+                FixedSingle ratio = slope.HCathetus / slope.VCathetus;
 
                 if (ratio == 4)
                     return INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1;
@@ -947,7 +958,7 @@ namespace MMX.Engine
                 }
 
                 baseHSpeed = PressingDash ? NO_CLIP_SPEED_BOOST : NO_CLIP_SPEED;
-                vel = new MMXVector(mirrored ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, PressingUp ? -baseHSpeed : PressingDown ? baseHSpeed : 0);
+                vel = new Vector(mirrored ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, PressingUp ? -baseHSpeed : PressingDown ? baseHSpeed : 0);
                 SetAirStateAnimation();
             }
             else if (!spawing)
@@ -966,7 +977,7 @@ namespace MMX.Engine
                             direction = Direction.LEFT;
 
                             bool mirrored = false;
-                            if (lastDirection == Direction.RIGHT && !WalkingRight)
+                            if (lastDirection == Direction.RIGHT && !WalkingRight && !DashingRight)
                             {
                                 mirrored = true;
                                 RefreshAnimation();
@@ -990,8 +1001,8 @@ namespace MMX.Engine
                                 {
                                     if (!WallSliding)
                                     {
-                                        vel = MMXVector.NULL_VECTOR;
-                                        SetState(PlayerState.WALL_SLIDE, 0);
+                                        vel = Vector.NULL_VECTOR;
+                                        SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
                                     }
                                     else if (!WallJumping)
                                         TryMoveLeft(mirrored);
@@ -1005,7 +1016,7 @@ namespace MMX.Engine
                             direction = Direction.RIGHT;
 
                             bool mirrored = false;
-                            if (lastDirection == Direction.LEFT && !WalkingLeft)
+                            if (lastDirection == Direction.LEFT && !WalkingLeft && !DashingLeft)
                             {
                                 mirrored = true;
                                 RefreshAnimation();
@@ -1029,8 +1040,8 @@ namespace MMX.Engine
                                 {
                                     if (!WallSliding)
                                     {
-                                        vel = MMXVector.NULL_VECTOR;
-                                        SetState(PlayerState.WALL_SLIDE, 0);
+                                        vel = Vector.NULL_VECTOR;
+                                        SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
                                     }
                                     else if (!WallJumping)
                                         TryMoveRight(mirrored);
@@ -1046,7 +1057,7 @@ namespace MMX.Engine
                                 if (!Standing && !Dashing)
                                 {
                                     if (!WallJumping)
-                                        vel = new MMXVector(0, vel.Y);
+                                        vel = new Vector(0, vel.Y);
 
                                     if (!Landing && !PostDashing)
                                     {
@@ -1057,7 +1068,7 @@ namespace MMX.Engine
                             else
                             {
                                 if (!WallJumping)
-                                    vel = new MMXVector(0, vel.Y);
+                                    vel = new Vector(0, vel.Y);
 
                                 SetAirStateAnimation();
                             }
@@ -1070,7 +1081,8 @@ namespace MMX.Engine
                         {
                             if (!shooting)
                             {
-                                MMXBox collisionBox = CollisionBox + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * MMXVector.DOWN_VECTOR;
+                                collider.Box = CollisionBox;
+                                Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
                                 CollisionFlags flags = engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
                                 if (flags.HasFlag(CollisionFlags.TOP_LADDER))
                                 {
@@ -1079,22 +1091,23 @@ namespace MMX.Engine
                                 }
                                 else if (!TopLadderClimbing && !TopLadderDescending)
                                 {
-                                    vel = new MMXVector(0, -LADDER_CLIMB_SPEED);
+                                    vel = new Vector(0, -LADDER_CLIMB_SPEED);
                                     CurrentAnimation.Start();
                                 }
                             }
                         }
                         else if (!OnLadder)
                         {
-                            MMXBox collisionBox = CollisionBox + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * MMXVector.DOWN_VECTOR;
+                            collider.Box = CollisionBox;
+                            Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
                             CollisionFlags flags = engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
                             if (flags.HasFlag(CollisionFlags.LADDER))
                             {
-                                vel = MMXVector.NULL_VECTOR;
+                                vel = Vector.NULL_VECTOR;
 
                                 collider.Box = collisionBox;
                                 collider.AdjustOnTheLadder();
-                                MMXVector delta = collider.Box.Origin - collisionBox.Origin;
+                                Vector delta = collider.Box.Origin - collisionBox.Origin;
                                 Origin += delta;
 
                                 SetState(PlayerState.PRE_LADDER_CLIMB, 0);
@@ -1107,7 +1120,8 @@ namespace MMX.Engine
                         {
                             if (!shooting)
                             {
-                                MMXBox collisionBox = CollisionBox + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * MMXVector.DOWN_VECTOR;
+                                collider.Box = CollisionBox;
+                                Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
                                 CollisionFlags flags = engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
                                 if (!flags.HasFlag(CollisionFlags.LADDER))
                                 {
@@ -1118,25 +1132,25 @@ namespace MMX.Engine
                                     }
                                     else if (!TopLadderClimbing && !TopLadderDescending)
                                     {
-                                        vel = MMXVector.NULL_VECTOR;
+                                        vel = Vector.NULL_VECTOR;
                                         SetAirStateAnimation();
                                     }
                                 }
                                 else if (!TopLadderClimbing && !TopLadderDescending)
                                 {
-                                    vel = new MMXVector(0, LADDER_CLIMB_SPEED);
+                                    vel = new Vector(0, LADDER_CLIMB_SPEED);
                                     CurrentAnimation.Start();
                                 }
                             }
                         }
                         else if (LandedOnTopLadder && !TopLadderDescending && !TopLadderClimbing)
                         {
-                            vel = MMXVector.NULL_VECTOR;
+                            vel = Vector.NULL_VECTOR;
 
-                            MMXBox collisionBox = CollisionBox;
+                            Box collisionBox = CollisionBox;
                             collider.Box = collisionBox;
                             collider.AdjustOnTheLadder();
-                            MMXVector delta = collider.Box.Origin - collisionBox.Origin;
+                            Vector delta = collider.Box.Origin - collisionBox.Origin;
                             Origin += delta;
 
                             SetState(PlayerState.TOP_LADDER_DESCEND, 0);
@@ -1144,7 +1158,7 @@ namespace MMX.Engine
                     }
                     else if (OnLadderOnly && (WasPressingUp || WasPressingDown))
                     {
-                        vel = MMXVector.NULL_VECTOR;
+                        vel = Vector.NULL_VECTOR;
                         CurrentAnimation.Stop();
                     }
 
@@ -1159,7 +1173,7 @@ namespace MMX.Engine
                                 {
                                     baseHSpeed = DASH_SPEED;
                                     dashFrameCounter = 0;
-                                    vel = new MMXVector(direction == Direction.LEFT ? -DASH_SPEED : DASH_SPEED, vel.Y);
+                                    vel = new Vector(direction == Direction.LEFT ? -DASH_SPEED : DASH_SPEED, vel.Y);
                                     SetState(PlayerState.PRE_DASH, 0);
                                 }
                             }
@@ -1180,17 +1194,17 @@ namespace MMX.Engine
                                     {
                                         if (PressingLeft && !BlockedLeft)
                                         {
-                                            vel = new MMXVector(-baseHSpeed, vel.Y);
+                                            vel = new Vector(-baseHSpeed, vel.Y);
                                             SetState(PlayerState.WALK, 0);
                                         }
                                         else if (PressingRight && !BlockedRight)
                                         {
-                                            vel = new MMXVector(baseHSpeed, vel.Y);
+                                            vel = new Vector(baseHSpeed, vel.Y);
                                             SetState(PlayerState.WALK, 0);
                                         }
                                         else
                                         {
-                                            vel = new MMXVector(0, vel.Y);
+                                            vel = new Vector(0, vel.Y);
                                             SetState(PlayerState.POST_DASH, 0);
                                         }
                                     }
@@ -1217,13 +1231,13 @@ namespace MMX.Engine
                             }
 
                             jumped = true;
-                            vel = new MMXVector(hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
+                            vel = new Vector(hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
                             SetState(PlayerState.JUMP, 0);
                         }
                     }
                     else if (OnLadder)
                     {
-                        vel = MMXVector.NULL_VECTOR;
+                        vel = Vector.NULL_VECTOR;
                         SetAirStateAnimation();
                     }
                 }
@@ -1236,7 +1250,7 @@ namespace MMX.Engine
                         if (jumped && !Landed && !WallSliding && vel.Y < 0)
                         {
                             jumped = false;
-                            vel = new MMXVector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, 0);
+                            vel = new Vector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, 0);
                         }
                     }
                 }
@@ -1252,7 +1266,7 @@ namespace MMX.Engine
                         baseHSpeed = PressingDash ? DASH_SPEED : WALKING_SPEED;
 
                         jumped = true;
-                        vel = MMXVector.NULL_VECTOR;
+                        vel = Vector.NULL_VECTOR;
                         SetState(PlayerState.WALL_JUMP, 0);
                     }
                 }
@@ -1265,17 +1279,17 @@ namespace MMX.Engine
                         baseHSpeed = WALKING_SPEED;
                         if (PressingLeft && !BlockedLeft)
                         {
-                            vel = new MMXVector(-baseHSpeed, vel.Y);
+                            vel = new Vector(-baseHSpeed, vel.Y);
                             SetState(PlayerState.WALK, 0);
                         }
                         else if (PressingRight && !BlockedRight)
                         {
-                            vel = new MMXVector(baseHSpeed, vel.Y);
+                            vel = new Vector(baseHSpeed, vel.Y);
                             SetState(PlayerState.WALK, 0);
                         }
                         else
                         {
-                            vel = new MMXVector(0, vel.Y);
+                            vel = new Vector(0, vel.Y);
                             SetState(PlayerState.POST_DASH, 0);
                         }
                     }
@@ -1287,16 +1301,16 @@ namespace MMX.Engine
                     if (wallJumpFrameCounter > WALL_JUMP_DURATION)
                     {
                         wallJumpStarted = false;
-                        vel = new MMXVector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, vel.Y);
+                        vel = new Vector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, vel.Y);
                         SetState(PlayerState.GOING_UP, 0);
                     }
                     else if (wallJumpFrameCounter == 4)
                     {
                         baseHSpeed = PressingDash ? DASH_SPEED : WALKING_SPEED;
-                        vel = new MMXVector(WallJumpingToLeft ? baseHSpeed : -baseHSpeed, -INITIAL_UPWARD_SPEED_FROM_JUMP);
+                        vel = new Vector(WallJumpingToLeft ? baseHSpeed : -baseHSpeed, -INITIAL_UPWARD_SPEED_FROM_JUMP);
                     }
                     else if (wallJumpFrameCounter < 4)
-                        vel = MMXVector.NULL_VECTOR;
+                        vel = Vector.NULL_VECTOR;
                 }
             }
 
@@ -1309,7 +1323,7 @@ namespace MMX.Engine
 
                     if (OnLadderOnly)
                     {
-                        vel = MMXVector.NULL_VECTOR;
+                        vel = Vector.NULL_VECTOR;
 
                         if (PressingLeft)
                             direction = Direction.LEFT;
@@ -1344,12 +1358,12 @@ namespace MMX.Engine
 
         public Direction GetWallJumpDir()
         {
-            MMXFloat vclip;
+            FixedSingle vclip;
             int slopeSign;
             if (LandedOnSlope)
             {
-                MMXRightTriangle slopeTriangle = LandedSlope;
-                MMXFloat h = slopeTriangle.HCathetusVector.X;
+                RightTriangle slopeTriangle = LandedSlope;
+                FixedSingle h = slopeTriangle.HCathetusVector.X;
                 vclip = (slopeTriangle.VCathetusVector.Y * CollisionBox.Width / h).Abs;
                 slopeSign = h.Signal;
             }
@@ -1359,11 +1373,11 @@ namespace MMX.Engine
                 slopeSign = 0;
             }
 
-            MMXBox collisionBox = Origin + GetCollisionBox(slopeSign == 1 ? vclip : 0).ClipTop(-2).ClipBottom(2) + WALL_MAX_DISTANCE_TO_WALL_JUMP * MMXVector.LEFT_VECTOR;
+            Box collisionBox = Origin + GetCollisionBox(slopeSign == 1 ? vclip : 0).ClipTop(-2).ClipBottom(2) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.LEFT_VECTOR;
             if (engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE, true, CollisionSide.LEFT_WALL).HasFlag(CollisionFlags.BLOCK))
                 return Direction.LEFT;
 
-            collisionBox = Origin + GetCollisionBox(slopeSign == -1 ? vclip : 0).ClipTop(-2).ClipBottom(2) + WALL_MAX_DISTANCE_TO_WALL_JUMP * MMXVector.RIGHT_VECTOR;
+            collisionBox = Origin + GetCollisionBox(slopeSign == -1 ? vclip : 0).ClipTop(-2).ClipBottom(2) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.RIGHT_VECTOR;
             if (engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE, true, CollisionSide.RIGHT_WALL).HasFlag(CollisionFlags.BLOCK))
                 return Direction.RIGHT;
 
@@ -1415,24 +1429,24 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="direction">Direção que o vetor derá ter</param>
         /// <returns>Vetor unitário na direção de direction</returns>
-        public static MMXVector GetVectorDir(Direction direction)
+        public static Vector GetVectorDir(Direction direction)
         {
             switch (direction)
             {
                 case Direction.LEFT:
-                    return MMXVector.LEFT_VECTOR;
+                    return Vector.LEFT_VECTOR;
 
                 case Direction.UP:
-                    return MMXVector.UP_VECTOR;
+                    return Vector.UP_VECTOR;
 
                 case Direction.RIGHT:
-                    return MMXVector.RIGHT_VECTOR;
+                    return Vector.RIGHT_VECTOR;
 
                 case Direction.DOWN:
-                    return MMXVector.DOWN_VECTOR;
+                    return Vector.DOWN_VECTOR;
             }
 
-            return MMXVector.NULL_VECTOR;
+            return Vector.NULL_VECTOR;
         }
 
         /// <summary>
@@ -1518,9 +1532,9 @@ namespace MMX.Engine
                 SetState(PlayerState.LADDER, 0);
 
                 if (PressingUp)
-                    vel = new MMXVector(0, shooting ? 0 : -LADDER_CLIMB_SPEED);
+                    vel = new Vector(0, shooting ? 0 : -LADDER_CLIMB_SPEED);
                 else if (PressingDown)
-                    vel = new MMXVector(0, shooting ? 0 : LADDER_CLIMB_SPEED);
+                    vel = new Vector(0, shooting ? 0 : LADDER_CLIMB_SPEED);
                 else
                     CurrentAnimation.Stop();
 
@@ -1529,26 +1543,26 @@ namespace MMX.Engine
             }
             else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animation.Index, true, true))
             {
-                MMXBox collisionBox = CollisionBox;
-                MMXVector delta = Origin - collisionBox.Origin;
-                collider.Box = collisionBox + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * MMXVector.UP_VECTOR;
+                Box collisionBox = CollisionBox;
+                Vector delta = Origin - collisionBox.Origin;
+                collider.Box = collisionBox + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.UP_VECTOR;
                 collider.MoveContactFloor(MAP_SIZE);
 
                 Origin = collider.Box.Origin + delta;
 
-                vel = MMXVector.NULL_VECTOR;
+                vel = Vector.NULL_VECTOR;
                 SetState(PlayerState.STAND, 0);
             }
             else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animation.Index, true, true))
             {
-                Origin += (HITBOX_HEIGHT - LADDER_BOX_VCLIP + MAP_SIZE) * MMXVector.DOWN_VECTOR;
+                Origin += (HITBOX_HEIGHT - LADDER_BOX_VCLIP + MAP_SIZE) * Vector.DOWN_VECTOR;
 
                 SetState(PlayerState.LADDER, 0);
 
                 if (PressingUp)
-                    vel = new MMXVector(0, shooting ? 0 : -LADDER_CLIMB_SPEED);
+                    vel = new Vector(0, shooting ? 0 : -LADDER_CLIMB_SPEED);
                 else if (PressingDown)
-                    vel = new MMXVector(0, shooting ? 0 : LADDER_CLIMB_SPEED);
+                    vel = new Vector(0, shooting ? 0 : LADDER_CLIMB_SPEED);
                 else
                     CurrentAnimation.Stop();
 
@@ -1643,7 +1657,7 @@ namespace MMX.Engine
                 SetAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animationIndex, true, false);
         }
 
-        public override MMXFloat GetGravity()
+        public override FixedSingle GetGravity()
         {
             if (wallJumpStarted && wallJumpFrameCounter <= 2 || OnLadder)
                 return 0;

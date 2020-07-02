@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MMX.Geometry;
+using MMX.Math;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -12,7 +14,7 @@ namespace MMX.Engine
     /// Usada para dispor as entidades de forma a acelerar a busca de uma determinada entidade na tela de acordo com um retângulo de desenho especificado.
     /// </summary>
     /// <typeparam name="T">Tipo da entidade (deve descender da classe Sprite)</typeparam>
-    internal class Partition<T> where T : MMXObject
+    internal class Partition<T> where T : Entity
     {
         /// <summary>
         /// Elemento/Célula de uma partição.
@@ -20,10 +22,10 @@ namespace MMX.Engine
         /// Cada célula armazena uma lista de entidades que possuem intersecção não vazia com ela, facilitando assim a busca por entidades que possuem intersecção não vazia com um retângulo dado.
         /// </summary>
         /// <typeparam name="U">Tipo da entidade (deve descender da classe Sprite)</typeparam>
-        private class PartitionCell<U> where U : MMXObject
+        private class PartitionCell<U> where U : Entity
         {
             Partition<U> partition; // Partição a qual esta célula pertence
-            MMXBox box; // Retângulo que delimita a célula
+            Box box; // Retângulo que delimita a célula
             List<U> values; // Lista de entides que possuem intersecção não vazia com esta célula
 
             /// <summary>
@@ -31,7 +33,7 @@ namespace MMX.Engine
             /// </summary>
             /// <param name="partition">Partição a qual esta célula pertence</param>
             /// <param name="box">Retângulo que delimita esta célula</param>
-            public PartitionCell(Partition<U> partition, MMXBox box)
+            public PartitionCell(Partition<U> partition, Box box)
             {
                 this.partition = partition;
                 this.box = box;
@@ -54,7 +56,7 @@ namespace MMX.Engine
             /// </summary>
             /// <param name="box">Retângulo usado para pesquisa</param>
             /// <param name="result">Lista de resultados a ser obtido</param>
-            public void Query(MMXBox box, List<U> result, U exclude)
+            public void Query(Box box, List<U> result, U exclude)
             {
                 // Verifica a lista de entidades da célula
                 foreach (U value in values)
@@ -62,9 +64,9 @@ namespace MMX.Engine
                     if (exclude != null && value.Equals(exclude))
                         continue;
 
-                    MMXBox intersection = value.BoundingBox & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
+                    Box intersection = value.BoundingBox & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
 
-                    if (intersection.Area() > 0 && !result.Contains(value)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                    if (intersection.Area > 0 && !result.Contains(value)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                         result.Add(value); // adiciona esta entidade à lista
                 }
             }
@@ -75,8 +77,8 @@ namespace MMX.Engine
             /// <param name="value">Entidade a ser atualizada nesta célula</param>
             public void Update(U value)
             {
-                MMXBox intersection = value.BoundingBox & box; // Calcula a interecção
-                bool intersectionNull = intersection.Area() <= 0;
+                Box intersection = value.BoundingBox & box; // Calcula a interecção
+                bool intersectionNull = intersection.Area == 0;
 
                 if (!intersectionNull && !values.Contains(value)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
                     values.Add(value); // então adiciona-a em sua lista de entidades
@@ -113,13 +115,13 @@ namespace MMX.Engine
             }
         }
 
-        private MMXBox box; // Retângulo que define esta partição
+        private Box box; // Retângulo que define esta partição
         private int rows; // Número de linhas da subdivisão
         private int cols; // Número de colunas da subdivisão
 
         private PartitionCell<T>[,] cells; // Matriz da partição
-        private MMXFloat cellWidth; // Largura de cada subdivisão
-        private MMXFloat cellHeight; // Altura de cada subdivisão
+        private FixedSingle cellWidth; // Largura de cada subdivisão
+        private FixedSingle cellHeight; // Altura de cada subdivisão
 
         /// <summary>
         /// Cria uma nova partição
@@ -130,8 +132,8 @@ namespace MMX.Engine
         /// <param name="height">Altura da partição</param>
         /// <param name="rows">Número de linhas da subdivisão da partição</param>
         /// <param name="cols">Número de colunas da subdivisão da partição</param>
-        public Partition(MMXFloat left, MMXFloat top, MMXFloat width, MMXFloat height, int rows, int cols)
-        : this(new MMXBox(new MMXVector(left, top), MMXVector.NULL_VECTOR, new MMXVector(width, height)), rows, cols)
+        public Partition(FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height, int rows, int cols)
+        : this(new Box(new Vector(left, top), Vector.NULL_VECTOR, new Vector(width, height)), rows, cols)
         {
         }
 
@@ -141,7 +143,7 @@ namespace MMX.Engine
         /// <param name="box">Retângulo que delimita a partição</param>
         /// <param name="rows">Número de linhas da subdivisão da partição</param>
         /// <param name="cols">Número de colunas da subdivisão da partição</param>
-        public Partition(MMXBox box, int rows, int cols)
+        public Partition(Box box, int rows, int cols)
         {
             this.box = box;
             this.rows = rows;
@@ -159,17 +161,17 @@ namespace MMX.Engine
         /// <param name="item">Entidade a ser adicionada</param>
         public void Insert(T item)
         {
-            MMXBox box = item.BoundingBox;
+            Box box = item.BoundingBox;
 
             // Calcula os mínimos e máximos absolutos do retângulo que delimita esta partição
-            MMXVector origin = this.box.Origin;
-            MMXVector mins = this.box.Mins + origin;
-            MMXVector maxs = this.box.Maxs + origin;
+            Vector origin = this.box.Origin;
+            Vector mins = this.box.Mins + origin;
+            Vector maxs = this.box.Maxs + origin;
 
             // Calcula os mínimos e máximos absolutos do retângulo de desenho da entidade a ser adicionada
-            MMXVector origin1 = box.Origin;
-            MMXVector mins1 = box.Mins + origin1;
-            MMXVector maxs1 = box.Maxs + origin1;
+            Vector origin1 = box.Origin;
+            Vector mins1 = box.Mins + origin1;
+            Vector maxs1 = box.Maxs + origin1;
 
             int startCol = (int) ((mins1.X - mins.X) / cellWidth); // Calcula a coluna da primeira célula a qual interceptará a entidade
             if (startCol < 0)
@@ -191,10 +193,10 @@ namespace MMX.Engine
             for (int i = startCol; i <= endCol; i++)
                 for (int j = startRow; j <= endRow; j++)
                 {
-                    MMXBox box1 = new MMXBox(new MMXVector(mins.X + cellWidth * i, mins.Y + cellHeight * j), MMXVector.NULL_VECTOR, new MMXVector(cellWidth, cellHeight));
-                    MMXBox intersection = box1 & box; // Calcula a intesecção
+                    Box box1 = new Box(new Vector(mins.X + cellWidth * i, mins.Y + cellHeight * j), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
+                    Box intersection = box1 & box; // Calcula a intesecção
 
-                    if (intersection.Area() == 0) // Se a intesecção for vazia, não precisa adicionar a entidade a célula
+                    if (intersection.Area == 0) // Se a intesecção for vazia, não precisa adicionar a entidade a célula
                         continue;
 
                     if (cells[i, j] == null) // Verifica se a célula já foi criada antes, caso não tenha sido ainda então a cria
@@ -204,7 +206,7 @@ namespace MMX.Engine
                 }
         }
 
-        public List<T> Query(MMXBox box)
+        public List<T> Query(Box box)
         {
             return Query(box, null);
         }
@@ -214,19 +216,19 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="box"></param>
         /// <returns></returns>
-        public List<T> Query(MMXBox box, T exclude)
+        public List<T> Query(Box box, T exclude)
         {
             List<T> result = new List<T>();
 
             // Calcula os máximos e mínimos absulutos do retângulo que delimita esta partição
-            MMXVector origin = this.box.Origin;
-            MMXVector mins = this.box.Mins + origin;
-            MMXVector maxs = this.box.Maxs + origin;
+            Vector origin = this.box.Origin;
+            Vector mins = this.box.Mins + origin;
+            Vector maxs = this.box.Maxs + origin;
 
             // Calcula os máximos e mínimos do retângulo de pesquisa
-            MMXVector origin1 = box.Origin;
-            MMXVector mins1 = box.Mins + origin1;
-            MMXVector maxs1 = box.Maxs + origin1;
+            Vector origin1 = box.Origin;
+            Vector mins1 = box.Mins + origin1;
+            Vector maxs1 = box.Maxs + origin1;
 
             int startCol = (int) ((mins1.X - mins.X) / cellWidth); // Calcula a coluna da primeira célula a qual deverá ser consultada
 
@@ -264,49 +266,49 @@ namespace MMX.Engine
         /// <param name="item">Entidade a ser atualizada dentro da partição</param>
         public void Update(T item)
         {
-            MMXVector delta = item.Origin - item.LastOrigin; // Obtém o vetor de deslocamento da entidade desde o último tick
+            Vector delta = item.Origin - item.LastOrigin; // Obtém o vetor de deslocamento da entidade desde o último tick
 
-            if (delta == MMXVector.NULL_VECTOR) // Se a entidade não se deslocou desde o último tick então não há nada o que se fazer aqui
+            if (delta == Vector.NULL_VECTOR) // Se a entidade não se deslocou desde o último tick então não há nada o que se fazer aqui
                 return;
 
-            MMXBox box = item.BoundingBox; // Obtém o retângulo de desenho atual da entidade
-            MMXBox box0 = box - delta; // Obtém o retângulo de desenho da entidade antes do deslocamento (do tick anterior)
+            Box box = item.BoundingBox; // Obtém o retângulo de desenho atual da entidade
+            Box box0 = box - delta; // Obtém o retângulo de desenho da entidade antes do deslocamento (do tick anterior)
 
             // Calcula os máximos e mínimos absolutos do retângulo que delimita esta partição
-            MMXVector origin = this.box.Origin;
-            MMXVector mins = this.box.Mins + origin;
-            MMXVector maxs = this.box.Maxs + origin;
+            Vector origin = this.box.Origin;
+            Vector mins = this.box.Mins + origin;
+            Vector maxs = this.box.Maxs + origin;
 
             // Calcula os máximos e mínimos absolutos do rêtângulo de desenho anterior da entidade
-            MMXVector origin0 = box0.Origin;
-            MMXVector mins0 = box0.Mins + origin0;
-            MMXVector maxs0 = box0.Maxs + origin0;
+            Vector origin0 = box0.Origin;
+            Vector mins0 = box0.Mins + origin0;
+            Vector maxs0 = box0.Maxs + origin0;
 
             // Calcula os máximos e mínimos absolutos do retângulo de desenho atual da entidade
-            MMXVector origin1 = box.Origin;
-            MMXVector mins1 = box.Mins + origin1;
-            MMXVector maxs1 = box.Maxs + origin1;
+            Vector origin1 = box.Origin;
+            Vector mins1 = box.Mins + origin1;
+            Vector maxs1 = box.Maxs + origin1;
 
-            int startCol = (int) ((MMXFloat.Min(mins0.X, mins1.X) - mins.X) / cellWidth); // Calcula a coluna da primeira célula para qual deverá ser verificada
+            int startCol = (int) ((FixedSingle.Min(mins0.X, mins1.X) - mins.X) / cellWidth); // Calcula a coluna da primeira célula para qual deverá ser verificada
             if (startCol < 0)
                 startCol = 0;
             if (startCol >= cols)
                 startCol = cols - 1;
 
-            int startRow = (int) ((MMXFloat.Min(mins0.Y, mins1.Y) - mins.Y) / cellHeight); // Calcula a linha da primeira célula para a qual deverá ser verificada
+            int startRow = (int) ((FixedSingle.Min(mins0.Y, mins1.Y) - mins.Y) / cellHeight); // Calcula a linha da primeira célula para a qual deverá ser verificada
             if (startRow < 0)
                 startRow = 0;
             if (startRow >= rows)
                 startRow = rows - 1;
 
-            int endCol = (int) ((MMXFloat.Max(maxs0.X, maxs1.X) - mins.X - 1) / cellWidth); // Calcula a coluna da útlima célula para qual deverá ser verificada
+            int endCol = (int) ((FixedSingle.Max(maxs0.X, maxs1.X) - mins.X - 1) / cellWidth); // Calcula a coluna da útlima célula para qual deverá ser verificada
 
             if (endCol < 0)
                 endCol = 0;
             if (endCol >= cols)
                 endCol = cols - 1;
 
-            int endRow = (int) ((MMXFloat.Max(maxs0.Y, maxs1.Y) - mins.Y - 1) / cellHeight); // Calcula a linha da última célula para qual deverá ser verificada
+            int endRow = (int) ((FixedSingle.Max(maxs0.Y, maxs1.Y) - mins.Y - 1) / cellHeight); // Calcula a linha da última célula para qual deverá ser verificada
 
             if (endRow < 0)
                 endRow = 0;
@@ -326,10 +328,10 @@ namespace MMX.Engine
                     else
                     {
                         // Senão...
-                        MMXBox box1 = new MMXBox(new MMXVector(mins.X + cellWidth * i, mins.Y + cellHeight * j), MMXVector.NULL_VECTOR, new MMXVector(cellWidth, cellHeight));
-                        MMXBox intersection = box1 & box; // Calcula a intersecção desta célula com o retângulo de desenho atual da entidade
+                        Box box1 = new Box(new Vector(mins.X + cellWidth * i, mins.Y + cellHeight * j), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
+                        Box intersection = box1 & box; // Calcula a intersecção desta célula com o retângulo de desenho atual da entidade
 
-                        if (intersection.Area() == 0) // Se ela for vazia, não há nada o que fazer nesta célula
+                        if (intersection.Area == 0) // Se ela for vazia, não há nada o que fazer nesta célula
                             continue;
 
                         // Senão...
@@ -346,17 +348,17 @@ namespace MMX.Engine
         /// <param name="item">Entidade a ser removida</param>
         public void Remove(T item)
         {
-            MMXBox box = item.BoundingBox; // Obtém o retângulo de desenho da entidade
+            Box box = item.BoundingBox; // Obtém o retângulo de desenho da entidade
 
             // Calcula os máximos e mínimos absolutos do retângulo que delimita esta partição
-            MMXVector origin = this.box.Origin;
-            MMXVector mins = this.box.Mins + origin;
-            MMXVector maxs = this.box.Maxs + origin;
+            Vector origin = this.box.Origin;
+            Vector mins = this.box.Mins + origin;
+            Vector maxs = this.box.Maxs + origin;
 
             // Calcula os máximos e mínimos absolutos do retângulo de desenho da entidade a ser removida
-            MMXVector origin1 = box.Origin;
-            MMXVector mins1 = box.Mins + origin1;
-            MMXVector maxs1 = box.Maxs + origin1;
+            Vector origin1 = box.Origin;
+            Vector mins1 = box.Mins + origin1;
+            Vector maxs1 = box.Maxs + origin1;
 
             int startCol = (int) ((mins1.X - mins.X) / cellWidth); // Calcula a coluna da primeira célula a ser verificada
             int startRow = (int) ((mins1.Y - mins.Y) / cellHeight); // Calcula a linha da primeira célula a ser verificada

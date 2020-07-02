@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MMX.Geometry;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,15 +47,15 @@ namespace MMX.Engine
             }
         }
 
-        public MMXVector LeftTop
+        public Vector LeftTop
         {
             get
             {
-                return new MMXVector(cell.Col * MAP_SIZE, cell.Row * MAP_SIZE);
+                return new Vector(cell.Col * MAP_SIZE, cell.Row * MAP_SIZE);
             }
         }
 
-        public MMXBox BoudingBox
+        public Box BoudingBox
         {
             get
             {
@@ -62,7 +63,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXRightTriangle SlopeTriangle
+        public RightTriangle SlopeTriangle
         {
             get
             {

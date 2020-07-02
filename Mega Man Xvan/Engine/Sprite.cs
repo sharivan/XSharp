@@ -1,22 +1,18 @@
-﻿using SharpDX;
-using SharpDX.Direct2D1;
+﻿using MMX.Geometry;
+using MMX.Math;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using static MMX.Engine.Consts;
 
 namespace MMX.Engine
 {
-    public abstract class Sprite : MMXObject, IDisposable
+    public abstract class Sprite : Entity, IDisposable
     {
         protected string name; // Nome da entidade
-        protected MMXBox lastDrawBox;
-        protected MMXBox drawBox; // Retângulo que delimita a àrea máxima de desenho do sprite
+        protected Box lastDrawBox;
+        protected Box drawBox; // Retângulo que delimita a àrea máxima de desenho do sprite
         protected List<Animation> animations; // Animações
         private bool tiled; // Especifica se a imagem (ou a animação) desta entidade será desenhanda com preenchimento lado a lado dentro da área de desenho
         private bool directional;
@@ -36,7 +32,7 @@ namespace MMX.Engine
 
         internal SpriteSheet sheet; // Sprite sheet a ser usado na animação deste sprite
 
-        protected MMXVector vel; // Velocidade
+        protected Vector vel; // Velocidade
         private bool noClip;
         protected bool moving; // Indica se o sprite está continuou se movendo desde a última iteração física com os demais elementos do jogo
         protected bool isStatic; // Indica se o sprite é estático
@@ -55,7 +51,7 @@ namespace MMX.Engine
         /// <param name="engine">Engine</param>
         /// <param name="name">Nome da entidade</param>
         /// <param name="tiled">true se o desenho desta entidade será preenchido em sua área de pintura lado a lado</param>
-        protected Sprite(GameEngine engine, string name, MMXVector origin, SpriteSheet sheet, bool tiled = false, bool directional = false):
+        protected Sprite(GameEngine engine, string name, Vector origin, SpriteSheet sheet, bool tiled = false, bool directional = false):
             base(engine, origin)
         {
             this.name = name;
@@ -73,8 +69,8 @@ namespace MMX.Engine
             base.LoadState(reader);
 
             opacity = reader.ReadSingle();
-            lastDrawBox = new MMXBox(reader);
-            drawBox = new MMXBox(reader);
+            lastDrawBox = new Box(reader);
+            drawBox = new Box(reader);
 
             int animationCount = reader.ReadInt32();
             for (int i = 0; i < animationCount; i++)
@@ -93,7 +89,7 @@ namespace MMX.Engine
             checkCollisionWithSprites = reader.ReadBoolean();
             checkCollisionWithWorld = reader.ReadBoolean();
 
-            vel = new MMXVector(reader);
+            vel = new Vector(reader);
             noClip = reader.ReadBoolean();
             moving = reader.ReadBoolean();
             markedToRemove = reader.ReadBoolean();
@@ -225,7 +221,7 @@ namespace MMX.Engine
         /// <summary>
         /// Vetor velocidade deste sprite
         /// </summary>
-        public MMXVector Velocity
+        public Vector Velocity
         {
             get
             {
@@ -237,7 +233,16 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat Gravity
+        public BoxCollider Collider
+        {
+            get
+            {
+                collider.Box = CollisionBox;
+                return collider;
+            }
+        }
+
+        public FixedSingle Gravity
         {
             get
             {
@@ -245,7 +250,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXFloat TerminalDownwardSpeed
+        public FixedSingle TerminalDownwardSpeed
         {
             get
             {
@@ -325,7 +330,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXRightTriangle LandedSlope
+        public RightTriangle LandedSlope
         {
             get
             {
@@ -348,7 +353,7 @@ namespace MMX.Engine
         public virtual void Dispose()
         {
             markedToRemove = true;
-            engine.removedObjects.Add(this);
+            engine.removedEntities.Add(this);
 
             if (!disposed)
             {
@@ -456,7 +461,7 @@ namespace MMX.Engine
             }
 
             // Inicializa todos os campos
-            vel = new MMXVector();
+            vel = new Vector();
             noClip = false;
             moving = false;
             markedToRemove = false;
@@ -467,7 +472,7 @@ namespace MMX.Engine
             invincibilityTime = DEFAULT_INVINCIBLE_TIME;            
             broke = false;
 
-            engine.addedObjects.Add(this); // Adiciona este sprite a lista de sprites do engine
+            engine.addedEntities.Add(this); // Adiciona este sprite a lista de sprites do engine
         }
 
         /// <summary>
@@ -478,7 +483,7 @@ namespace MMX.Engine
         /// <param name="region">Retângulo que delimita a área de dano a ser infringida neste sprite pelo atacante</param>
         /// <param name="damage">Quandidade de dano a ser causada pelo atacante. É passado por referência e portanto qualquer alteração deste parâmetro poderá mudar o comportamento do dano sofrido por este sprite.</param>
         /// <returns>true se o dano deverá ser processado, false se o dano deverá ser cancelado</returns>
-        protected virtual bool OnTakeDamage(Sprite attacker, MMXBox region, ref int damage)
+        protected virtual bool OnTakeDamage(Sprite attacker, Box region, ref int damage)
         {
             return true;
         }
@@ -489,7 +494,7 @@ namespace MMX.Engine
         /// <param name="attacker">Atacante, o sprite que causou o dano</param>
         /// <param name="region">Retângulo que delimita a área de dano infringido neste sprite pelo atacante</param>
         /// <param name="damage">Quantidade de dano causada pelo atacante</param>
-        protected virtual void OnTakeDamagePost(Sprite attacker, MMXBox region, MMXFloat damage)
+        protected virtual void OnTakeDamagePost(Sprite attacker, Box region, FixedSingle damage)
         {
         }
 
@@ -497,7 +502,7 @@ namespace MMX.Engine
         /// Evento interno que será chamado sempre que o HP deste sprite for alterado
         /// </summary>
         /// <param name="health"></param>
-        protected virtual void OnHealthChanged(MMXFloat health)
+        protected virtual void OnHealthChanged(FixedSingle health)
         {
         }
 
@@ -507,7 +512,7 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="victim">Vítima que sofrerá o dano/param>
         /// <param name="damage">Quantidade de dano a ser causada na vítima</param>
-        public void Hurt(Sprite victim, MMXFloat damage)
+        public void Hurt(Sprite victim, FixedSingle damage)
         {
             //Hurt(victim, collisionBox, damage);
         }
@@ -518,15 +523,15 @@ namespace MMX.Engine
         /// <param name="victim">Vítima que sofrerá o dano</param>
         /// <param name="region">Retângulo delimitando a região no qual o dano será aplicado na vítima. Norlammente o dano só é aplicado quando a interseção deste retângulo com o retângulo de dano da vítima for não vazia.</param>
         /// <param name="damage">Quantidade de dano a ser causada na vítima</param>
-        public void Hurt(Sprite victim, MMXBox region, int damage)
+        public void Hurt(Sprite victim, Box region, int damage)
         {
             // Se a vítima já estver quebrada, se estiver marcada para remoção ou seu HP não for maior que zero então não há nada o que se fazer aqui.
             if (victim.broke || victim.markedToRemove || health <= 0)
                 return;
 
-            MMXBox intersection = /*victim.hitBox &*/ region; // Calcula a intesecção com a área de dano da vítima e a região dada
+            Box intersection = /*victim.hitBox &*/ region; // Calcula a intesecção com a área de dano da vítima e a região dada
 
-            if (intersection.Area() == 0) // Se a intersecção for vazia, não aplica o dano
+            if (intersection.Area == 0) // Se a intersecção for vazia, não aplica o dano
                 return;
 
             //if (damage > maxDamage) // Verifica se o dano aplicado é maior que o máximo de dano permitido pela vítima
@@ -584,14 +589,14 @@ namespace MMX.Engine
             return engine.CheckCollisionWithTiles(collisionBox, delta, ignore);
         }*/
 
-        protected CollisionFlags GetTouchingFlags(MMXVector delta, MMXFloat clipBottom, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        protected CollisionFlags GetTouchingFlags(Vector delta, FixedSingle clipBottom, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
-            return GetTouchingFlags(delta, out MMXRightTriangle slope, clipBottom, ignore, preciseCollisionCheck);
+            return GetTouchingFlags(delta, out RightTriangle slope, clipBottom, ignore, preciseCollisionCheck);
         }
 
-        protected virtual CollisionFlags GetTouchingFlags(MMXVector delta, out MMXRightTriangle slopeTriangle, MMXFloat clipBottom, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        protected virtual CollisionFlags GetTouchingFlags(Vector delta, out RightTriangle slopeTriangle, FixedSingle clipBottom, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
-            MMXBox collisionBox = Origin + GetCollisionBox(clipBottom);
+            Box collisionBox = Origin + GetCollisionBox(clipBottom);
             return engine.GetTouchingFlags(collisionBox, delta, out slopeTriangle, ignore, preciseCollisionCheck);
         }
 
@@ -601,10 +606,10 @@ namespace MMX.Engine
         /// <param name="delta">Vetor de deslocamento</param>
         /// <param name="touching">Lista de sprites que estarão tocando este sprite, usada como retorno</param>
         /// <returns>Um novo vetor de deslocamento</returns>
-        protected MMXVector DoCheckCollisionWithSprites(MMXVector delta)
+        protected Vector DoCheckCollisionWithSprites(Vector delta)
         {
             //MMXBox newBox = collisionBox + delta; // Calcula o vetor de deslocamento inicial
-            MMXVector result = delta;
+            Vector result = delta;
 
             // Para cada sprite do engine
             /*for (int i = 0; i < engine.sprites.Count; i++)
@@ -637,7 +642,7 @@ namespace MMX.Engine
             return result;
         }
 
-        public MMXBox CollisionBox
+        public Box CollisionBox
         {
             get
             {
@@ -645,28 +650,28 @@ namespace MMX.Engine
             }
         }
 
-        protected MMXBox GetCollisionBox()
+        protected Box GetCollisionBox()
         {
-            return GetCollisionBox(MMXFloat.ZERO);
+            return GetCollisionBox(FixedSingle.ZERO);
         }
 
-        protected abstract MMXBox GetCollisionBox(MMXFloat clipBottom);
+        protected abstract Box GetCollisionBox(FixedSingle clipBottom);
 
-        protected override MMXBox GetBoundingBox()
+        protected override Box GetBoundingBox()
         {
             return CollisionBox;
         }
 
-        private void MoveAlongSlope(BoxCollider collider, MMXRightTriangle slope, MMXFloat dx, bool gravity = true)
+        private void MoveAlongSlope(BoxCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)
         {
-            MMXFloat h = slope.HCathetusVector.X;
+            FixedSingle h = slope.HCathetusVector.X;
             int slopeSign = h.Signal;
             int dxs = dx.Signal;
             bool goingDown = dxs == slopeSign;
 
-            MMXFloat dy = (slope.VCathetus * dx / slope.HCathetus).Abs * dxs * slopeSign;            
-            MMXVector delta = new MMXVector(dx, dy);
-            collider.MoveContactSolid(delta, dx.Abs, goingDown ? Direction.LEFT | Direction.UP | Direction.RIGHT : Direction.ALL, CollisionFlags.SLOPE);
+            FixedSingle dy = (FixedSingle) (((FixedDouble) slope.VCathetus * dx / slope.HCathetus).Abs * dxs * slopeSign);            
+            Vector delta = new Vector(dx, dy);
+            collider.MoveContactSolid(delta, dx.Abs, (goingDown ? Direction.NONE : Direction.UP) | (dxs > 0 ? Direction.RIGHT : Direction.LEFT) , CollisionFlags.SLOPE);
 
             if (gravity)
                 collider.MoveContactFloor((TILE_SIZE / 2) * QUERY_MAX_DISTANCE);
@@ -675,24 +680,29 @@ namespace MMX.Engine
                 collider.AdjustOnTheFloor();
         }
 
-        private void MoveX(BoxCollider collider, MMXFloat deltaX, bool gravity = true, bool followSlopes = true)
+        private void MoveX(BoxCollider collider, FixedSingle deltaX, bool gravity = true, bool followSlopes = true)
         {
-            MMXVector dx = new MMXVector(deltaX, 0);
+            Vector dx = new Vector(deltaX, 0);
 
-            MMXBox lastBox = collider.Box;
+            Box lastBox = collider.Box;
             bool wasLanded = collider.Landed;
             bool wasLandedOnSlope = collider.LandedOnSlope;
-            MMXRightTriangle lastSlope = collider.LandedSlope;
+            RightTriangle lastSlope = collider.LandedSlope;
+            Box lastLeftCollider = collider.LeftCollider;
+            Box lastRightCollider = collider.RightCollider;
 
             collider.Translate(dx);
 
-            if (collider.Landed)
-                collider.AdjustOnTheFloor((TILE_SIZE / 2) * QUERY_MAX_DISTANCE);
-            else if (gravity && wasLanded)
-                collider.TryMoveContactSlope((TILE_SIZE / 2) * QUERY_MAX_DISTANCE);
+            if (wasLanded)
+            {
+                if (collider.Landed)
+                    collider.AdjustOnTheFloor((TILE_SIZE / 2) * QUERY_MAX_DISTANCE);
+                else if (gravity)
+                    collider.TryMoveContactSlope((TILE_SIZE / 2) * QUERY_MAX_DISTANCE);
+            }
 
-            MMXBox union = lastBox | collider.Box;
-            CollisionFlags collisionFlags = engine.GetCollisionFlags(union, CollisionFlags.NONE, true, deltaX > 0 ? CollisionSide.RIGHT_WALL : deltaX < 0 ? CollisionSide.LEFT_WALL : 0);
+            Box union = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
+            CollisionFlags collisionFlags = engine.GetCollisionFlags(union, CollisionFlags.NONE, true, deltaX > 0 ? CollisionSide.RIGHT_WALL : deltaX < 0 ? CollisionSide.LEFT_WALL : CollisionSide.NONE);
 
             if (collisionFlags == CollisionFlags.NONE)
             {
@@ -700,23 +710,23 @@ namespace MMX.Engine
                 {
                     if (collider.LandedOnSlope)
                     {
-                        MMXRightTriangle slope = collider.LandedSlope;
-                        MMXFloat h = slope.HCathetusVector.X;
+                        RightTriangle slope = collider.LandedSlope;
+                        FixedSingle h = slope.HCathetusVector.X;
                         if (h > 0 && deltaX > 0 || h < 0 && deltaX < 0)
                         {
-                            MMXFloat x = lastBox.Origin.X;
-                            MMXFloat stx = deltaX > 0 ? slope.Left : slope.Right;
-                            MMXFloat stx_x = stx - x;
+                            FixedSingle x = lastBox.Origin.X;
+                            FixedSingle stx = deltaX > 0 ? slope.Left : slope.Right;
+                            FixedSingle stx_x = stx - x;
                             if (deltaX > 0 && stx_x > 0 && stx_x <= deltaX || deltaX < 0 && stx_x < 0 && stx_x >= deltaX)
                             {
                                 deltaX -= stx_x;
-                                dx = new MMXVector(deltaX, 0);
+                                dx = new Vector(deltaX, 0);
 
                                 collider.Box = lastBox;
                                 if (wasLandedOnSlope)
                                     MoveAlongSlope(collider, lastSlope, stx_x);
                                 else
-                                    collider.Translate(new MMXVector(stx_x, 0));
+                                    collider.Translate(new Vector(stx_x, 0));
 
                                 MoveAlongSlope(collider, slope, deltaX);
                             }
@@ -738,28 +748,28 @@ namespace MMX.Engine
                             }
                         }
                     }
-                    else if (engine.GetCollisionFlags(collider.Box, CollisionFlags.NONE, false, CollisionSide.FLOOR).HasFlag(CollisionFlags.SLOPE))
+                    else if (engine.GetCollisionFlags(collider.DownCollider, CollisionFlags.NONE, false, CollisionSide.FLOOR).HasFlag(CollisionFlags.SLOPE))
                         collider.MoveContactFloor();
                 }
             }
-            else if (collisionFlags == CollisionFlags.SLOPE)
+            else if (collisionFlags.HasFlag(CollisionFlags.SLOPE))
             {
                 if (collider.LandedOnSlope)
                 {
-                    MMXRightTriangle slope = collider.LandedSlope;
-                    MMXFloat x = lastBox.Origin.X;
-                    MMXFloat stx = deltaX > 0 ? slope.Left : slope.Right;
-                    MMXFloat stx_x = stx - x;
+                    RightTriangle slope = collider.LandedSlope;
+                    FixedSingle x = lastBox.Origin.X;
+                    FixedSingle stx = deltaX > 0 ? slope.Left : slope.Right;
+                    FixedSingle stx_x = stx - x;
                     if (deltaX > 0 && stx_x < 0 && stx_x >= deltaX || deltaX < 0 && stx_x > 0 && stx_x <= deltaX)
                     {
                         deltaX -= stx_x;
-                        dx = new MMXVector(deltaX, 0);
+                        dx = new Vector(deltaX, 0);
 
                         collider.Box = lastBox;
                         if (wasLandedOnSlope)
                             MoveAlongSlope(collider, lastSlope, stx_x);
                         else
-                            collider.Translate(new MMXVector(stx_x, 0));
+                            collider.Translate(new Vector(stx_x, 0));
 
                         MoveAlongSlope(collider, slope, deltaX);
                     }
@@ -777,13 +787,13 @@ namespace MMX.Engine
             {
                 collider.Box = lastBox;
                 if (deltaX > 0)
-                    collider.MoveContactSolid(MMXVector.RIGHT_VECTOR, Math.Ceiling(deltaX), Direction.LEFTRIGHT);
+                    collider.MoveContactSolid(Vector.RIGHT_VECTOR, deltaX.Ceil(), Direction.RIGHT, CollisionFlags.NONE);
                 else
-                    collider.MoveContactSolid(MMXVector.LEFT_VECTOR, Math.Ceiling(-deltaX), Direction.LEFTRIGHT);
+                    collider.MoveContactSolid(Vector.LEFT_VECTOR, (-deltaX).Ceil(), Direction.LEFT, CollisionFlags.NONE);
             }
         }
 
-        private bool IsTouchingASlope(MMXBox box, out MMXRightTriangle slope, MMXFloat maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        private bool IsTouchingASlope(Box box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return engine.ComputedLandedState(box, out slope, maskSize, ignore) == CollisionFlags.SLOPE;
         }
@@ -800,7 +810,7 @@ namespace MMX.Engine
             bool lastBlockedRight = BlockedRight;
             bool lastLanded = Landed;
 
-            MMXFloat gravity = Gravity;
+            FixedSingle gravity = Gravity;
             if (!skipPhysics)
             {
                 // Verifica se ele estava se movendo no último frame mas a velocidade atual agora é nula
@@ -811,7 +821,7 @@ namespace MMX.Engine
                                   //engine.Repaint(this); // Notifica o engine que deverá ser feita este sprite deverá ser redesenhado
                 }
 
-                MMXVector delta = !isStatic && !vel.IsNull ? vel : MMXVector.NULL_VECTOR;
+                Vector delta = !isStatic && !vel.IsNull ? vel : Vector.NULL_VECTOR;
 
                 if (!delta.IsNull)
                 {
@@ -839,25 +849,28 @@ namespace MMX.Engine
 
                         if (delta.Y != 0)
                         {
-                            MMXVector dy = new MMXVector(0, delta.Y);
-                            MMXBox lastBox = collider.Box;
+                            Vector dy = new Vector(0, delta.Y);
+                            Box lastBox = collider.Box;
+                            Box lastUpCollider = collider.UpCollider;
+                            Box lastDownCollider = collider.DownCollider;
                             collider.Translate(dy);
-                            MMXBox union = lastBox | collider.Box;
 
                             if (dy.Y > 0)
                             {
+                                Box union = lastDownCollider | collider.DownCollider;
                                 if (engine.GetCollisionFlags(union, CollisionFlags.NONE, true, CollisionSide.FLOOR) != CollisionFlags.NONE)
                                 {
                                     collider.Box = lastBox;
-                                    collider.MoveContactFloor(Math.Ceiling(dy.Y));
+                                    collider.MoveContactFloor(dy.Y.Ceil());
                                 }
                             }
                             else
                             {
+                                Box union = lastUpCollider | collider.UpCollider;
                                 if (engine.GetCollisionFlags(union, CollisionFlags.NONE, true, CollisionSide.CEIL) != CollisionFlags.NONE)
                                 {
                                     collider.Box = lastBox;
-                                    collider.MoveContactSolid(dy, Math.Ceiling(-dy.Y), Direction.UP);
+                                    collider.MoveContactSolid(dy, (-dy.Y).Ceil(), Direction.UP);
                                 }
                             }
                         }
@@ -869,34 +882,34 @@ namespace MMX.Engine
                         delta = DoCheckCollisionWithSprites(delta); // Verifica a colisão deste sprite com os sprites do jogo, verificando também quais sprites estão tocando este sprite e retornando o vetor de deslocamento
                 }
 
-                if (delta != MMXVector.NULL_VECTOR) // Se o deslocamento não for nulo
+                if (delta != Vector.NULL_VECTOR) // Se o deslocamento não for nulo
                 {
-                    MMXVector newOrigin = Origin + delta;
+                    Vector newOrigin = Origin + delta;
 
-                    MMXFloat x = newOrigin.X;
-                    MMXFloat y = newOrigin.Y;
+                    FixedSingle x = newOrigin.X;
+                    FixedSingle y = newOrigin.Y;
 
-                    MMXBox collisionBox = newOrigin + GetCollisionBox();
+                    Box collisionBox = newOrigin + GetCollisionBox();
 
-                    MMXFloat minX = collisionBox.Left;
+                    FixedSingle minX = collisionBox.Left;
                     if (minX < 0)
                         x -= minX;
 
-                    MMXFloat minY = collisionBox.Top;
+                    FixedSingle minY = collisionBox.Top;
                     if (minY < 0)
                         y -= minY;
 
                     int worldWidth = engine.World.Width;
-                    MMXFloat maxX = collisionBox.Right;
+                    FixedSingle maxX = collisionBox.Right;
                     if (maxX > worldWidth)
                         x += worldWidth - maxX;
 
-                    MMXFloat maxY = collisionBox.Bottom;
+                    FixedSingle maxY = collisionBox.Bottom;
                     int worldHeight = engine.World.Height;
                     if (maxY > worldHeight)
                         y += worldHeight - maxY;
 
-                    Origin = new MMXVector(x, y);
+                    Origin = new Vector(x, y);
 
                     StartMoving(); // Notifica que o sprite começou a se mover, caso ele estivesse parado antes
                 }
@@ -909,11 +922,11 @@ namespace MMX.Engine
                 {
                     if (gravity != 0)
                     {
-                        vel += gravity * MMXVector.DOWN_VECTOR;
+                        vel += gravity * Vector.DOWN_VECTOR;
 
-                        MMXFloat terminalDownwardSpeed = TerminalDownwardSpeed;
+                        FixedSingle terminalDownwardSpeed = TerminalDownwardSpeed;
                         if (vel.Y > terminalDownwardSpeed)
-                            vel = new MMXVector(vel.X, terminalDownwardSpeed);
+                            vel = new Vector(vel.X, terminalDownwardSpeed);
                     }
 
                     if (collider.Landed && vel.Y > 0)
@@ -922,7 +935,7 @@ namespace MMX.Engine
             }
 
             if (!Landed && vel.Y > gravity && vel.Y < 2 * gravity)
-                vel = new MMXVector(vel.X, gravity);
+                vel = new Vector(vel.X, gravity);
 
             if (BlockedUp && !lastBlockedUp)
                 OnBlockedUp();
@@ -937,12 +950,12 @@ namespace MMX.Engine
                 OnLanded();
         }
 
-        public virtual MMXFloat GetGravity()
+        public virtual FixedSingle GetGravity()
         {
             return GRAVITY;
         }
 
-        protected virtual MMXFloat GetTerminalDownwardSpeed()
+        protected virtual FixedSingle GetTerminalDownwardSpeed()
         {
             return TERMINAL_DOWNWARD_SPEED;
         }
@@ -984,7 +997,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXBox DrawBox
+        public Box DrawBox
         {
             get
             {
@@ -992,7 +1005,7 @@ namespace MMX.Engine
             }
         }
 
-        public MMXBox LastDrawBox
+        public Box LastDrawBox
         {
             get
             {
@@ -1072,7 +1085,7 @@ namespace MMX.Engine
             }
 
             lastDrawBox = drawBox;
-            drawBox = MMXBox.EMPTY_BOX;
+            drawBox = Box.EMPTY_BOX;
 
             // Processa cada animação
             foreach (Animation animation in animations)
