@@ -13,8 +13,11 @@ namespace MMX.Engine
         protected GameEngine engine;
         internal int index; // Posição deste objeto na lista de objetos do engine
         private Vector origin;
+        private Entity parent;
+
         private Vector lastOrigin;
         private List<Entity> touchingEntities;
+        private List<Entity> childs;
         protected bool markedToRemove;
 
         public GameEngine Engine
@@ -46,6 +49,25 @@ namespace MMX.Engine
             set
             {
                 SetOrigin(value);
+            }
+        }
+
+        public Entity Parent
+        {
+            get
+            {
+                return parent;
+            }
+
+            set
+            {
+                if (parent != null)
+                    parent.childs.Remove(this);
+
+                parent = value;
+
+                if (parent != null)
+                    parent.childs.Add(this);
             }
         }
 
@@ -81,12 +103,21 @@ namespace MMX.Engine
             }
         }
 
+        public bool Offscreen
+        {
+            get
+            {
+                return (BoundingBox & engine.World.Screen.BoudingBox).Area == 0;
+            }
+        }
+
         protected Entity(GameEngine engine, Vector origin)
         {
             this.engine = engine;
             this.origin = origin;
 
             touchingEntities = new List<Entity>();
+            childs = new List<Entity>();
         }
 
         protected virtual void SetOrigin(Vector origin)
@@ -94,6 +125,10 @@ namespace MMX.Engine
             lastOrigin = this.origin;
             this.origin = origin;
             engine.partition.Update(this);
+
+            Vector delta = origin - lastOrigin;
+            foreach (Entity child in childs)
+                child.Origin += delta;
         }
 
         protected abstract Box GetBoundingBox();
@@ -135,7 +170,7 @@ namespace MMX.Engine
 
             PostThink(); // Realiza o pós-pensamento do objeto
 
-            List<Entity> touching = engine.partition.Query(BoundingBox, this);
+            List<Entity> touching = engine.partition.Query(BoundingBox, this, childs);
 
             // Processa a lista global de objetos que anteriormente estavam tocando esta entidade no frame anterior
             int count = touchingEntities.Count;

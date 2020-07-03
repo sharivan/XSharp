@@ -59,6 +59,9 @@ namespace MMX.Engine
         internal Box cameraConstraintsBox;
 
         private SpriteSheet xSpriteSheet;
+        private SpriteSheet xWeaponsSpriteSheet;
+        private SpriteSheet xEffectsSpriteSheet;
+
         private SolidColorBrush screenBoxBrush;
         private SolidColorBrush hitBoxBrush;
         private SolidColorBrush hitBoxBorderBrush;
@@ -323,10 +326,14 @@ namespace MMX.Engine
             Vector normalOffset = new Vector(HITBOX_WIDTH / 2, HITBOX_HEIGHT + 3);
             Vector dashingOffset = new Vector(DASHING_HITBOX_WIDTH / 2, DASHING_HITBOX_HEIGHT + 3);
 
+            xSpriteSheet = new SpriteSheet(this, "X");
+            xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons");
+            xEffectsSpriteSheet = new SpriteSheet(this, "X Effects");
+
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.sprites.X.X[small].png"))
             {
                 var newBitmap = CreateD2DBitmapFromStream(stream);
-                xSpriteSheet = new SpriteSheet(this, "X", newBitmap);
+                xSpriteSheet.CurrentBitmap = newBitmap;
             }
 
             var sequence = xSpriteSheet.AddFrameSquence("Spawn");
@@ -505,6 +512,36 @@ namespace MMX.Engine
             sequence.Offset = normalOffset;
             sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
             sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
+
+            xSpriteSheet.ReleaseCurrentBitmap();
+
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.sprites.X.Weapons.png"))
+            {
+                var newBitmap = CreateD2DBitmapFromStream(stream);
+                xWeaponsSpriteSheet.CurrentBitmap = newBitmap;
+            }
+
+            Vector lemonOffset = new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("Shot", 0);
+            sequence.Offset = lemonOffset;
+            sequence.AddFrame(5, -1, 123, 253, 8, 6);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("ShotHit");
+            sequence.Offset = lemonOffset;
+            sequence.AddFrame(137, 250, 12, 12, 4);
+            sequence.AddFrame(154, 249, 13, 13, 2);
+            sequence.AddFrame(172, 248, 15, 15);
+
+            xWeaponsSpriteSheet.ReleaseCurrentBitmap();
+
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.sprites.X.Effects.png"))
+            {
+                var newBitmap = CreateD2DBitmapFromStream(stream);
+                xEffectsSpriteSheet.CurrentBitmap = newBitmap;
+            }
+
+            xEffectsSpriteSheet.ReleaseCurrentBitmap();
 
             if (LOAD_ROM)
             {
@@ -1422,7 +1459,16 @@ namespace MMX.Engine
 
                         Sprite sprite = obj as Sprite;
                         if (sprite != null)
+                        {
                             sprite.Paint();
+
+                            if (drawCollisionBox)
+                            {
+                                Box collisionBox = sprite.CollisionBox;
+                                target.FillRectangle(WorldBoxToScreen(collisionBox), hitBoxBrush);
+                                target.DrawRectangle(WorldBoxToScreen(collisionBox), hitBoxBorderBrush, 1);
+                            }
+                        }
                         else
                         {
                             AbstractTrigger trigger = obj as AbstractTrigger;
@@ -1555,6 +1601,8 @@ namespace MMX.Engine
 
             if (mmx != null)
                 mmx.Dispose();
+
+            xSpriteSheet.Dispose();
         }
 
         /*public MMXVector CheckCollisionWithTiles(MMXBox collisionBox, MMXVector dir, CollisionFlags ignore = CollisionFlags.NONE)
@@ -1762,6 +1810,12 @@ namespace MMX.Engine
         public void ClearExtensions()
         {
             extensions.Clear();
+        }
+
+        internal void ShootLemon(Player shooter, Vector origin, Direction direction, bool dashLemon)
+        {
+            BusterLemon lemon = new BusterLemon(this, shooter, "X Buster Lemon", origin, direction, dashLemon, xWeaponsSpriteSheet);
+            lemon.Spawn();
         }
     }
 }

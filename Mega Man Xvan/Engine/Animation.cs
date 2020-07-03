@@ -1,6 +1,8 @@
 ﻿using MMX.Geometry;
 using MMX.Math;
 using SharpDX;
+using SharpDX.Direct2D1;
+using System;
 using System.IO;
 
 using static MMX.Engine.Consts;
@@ -25,14 +27,14 @@ namespace MMX.Engine
         private int currentFrameSequenceIndex; // Quadro atual
         private bool animationEndFired; // Indica se o evento OnAnimationEnd da entidade associada a esta animação foi chamado desde que a animação foi completada
 
-        private Box[] boundingBoxes;
         private AnimationFrameEvent[] animationEvents;
 
         public Box DrawBox
         {
             get
             {
-                return sprite.Origin + boundingBoxes[currentFrameSequenceIndex];
+                Tuple<Box, Bitmap> frame = sheet.GetFrame(sequence[currentFrameSequenceIndex]);
+                return sprite.Origin + frame.Item1;
             }
         }
 
@@ -69,14 +71,7 @@ namespace MMX.Engine
             animationEndFired = false;
 
             int count = sequence.Count;
-            boundingBoxes = new Box[count];
             animationEvents = new AnimationFrameEvent[count];
-
-            for (int i = 0; i < count; i++)
-            {
-                Box boundingBox = sheet.GetFrame(sequence[i]);
-                boundingBoxes[i] = new Box(Vector.NULL_VECTOR, boundingBox.Mins, boundingBox.Maxs);
-            }
         }
 
         public void SaveState(BinaryWriter writer)
@@ -234,8 +229,8 @@ namespace MMX.Engine
                 if (currentFrameSequenceIndex < 0 || currentFrameSequenceIndex > sequence.Count)
                     return Box.EMPTY_BOX;
 
-                Box boundingBox = sheet.GetFrame(sequence[currentFrameSequenceIndex]);
-                return new Box(Vector.NULL_VECTOR, boundingBox.Mins, boundingBox.Maxs);
+                Box boundingBox = sheet.GetFrame(sequence[currentFrameSequenceIndex]).Item1;
+                return boundingBox;
             }
         }
 
@@ -362,9 +357,12 @@ namespace MMX.Engine
             if (!visible || sequence.Count == 0)
                 return;
 
-            Box drawBox = DrawBox; // Obtém o retângulo de desenho da entidade
             int frameIndex = sequence[currentFrameSequenceIndex];
-            Box srcBox = sheet.GetFrame(frameIndex);
+            Tuple<Box, Bitmap> frame = sheet.GetFrame(frameIndex);
+            Box srcBox = frame.Item1;
+            Bitmap bitmap = frame.Item2;
+            
+            Box drawBox = sprite.Origin + srcBox;
             Vector2 center = sprite.Engine.WorldVectorToScreen(drawBox.Origin);
 
             Matrix3x2 lastTransform = sprite.Engine.Target.Transform;
@@ -381,7 +379,7 @@ namespace MMX.Engine
                 transform = Matrix3x2.Scaling(-1, 1, center) * transform;
 
             sprite.Engine.Target.Transform *= transform;
-            sprite.Engine.Target.DrawBitmap(sequence.Sheet.Image, sprite.Engine.WorldBoxToScreen(drawBox), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(srcBox));
+            sprite.Engine.Target.DrawBitmap(bitmap, sprite.Engine.WorldBoxToScreen(drawBox), 1, INTERPOLATION_MODE, new RectangleF(0, 0, (float) srcBox.Width, (float) srcBox.Height));
             //sprite.Engine.Target.Flush();
             sprite.Engine.Target.Transform = lastTransform;
         }

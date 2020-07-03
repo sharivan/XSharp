@@ -80,6 +80,13 @@ namespace MMX.Engine
         public static readonly FixedSingle FALL_ANIMATION_MINIMAL_SPEED = 1.25;
         public static readonly FixedSingle NO_CLIP_SPEED = 6;
         public static readonly FixedSingle NO_CLIP_SPEED_BOOST = 2.5 * NO_CLIP_SPEED;
+        public const int MAX_SHOT_LEMONS = 3;
+        public const int LEMON_HITBOX_WIDTH = 9;
+        public const int LEMON_HITBOX_HEIGHT = 9;
+        public static readonly FixedSingle LEMON_INITIAL_SPEED = new FixedSingle(1024 / 256.0);
+        public static readonly FixedSingle LEMON_ACCELERATION = new FixedSingle(64 / 256.0);
+        public static readonly FixedSingle LEMON_TERMINAL_SPEED = new FixedSingle(1536 / 256.0);
+        public static readonly FixedSingle LEMON_REFLECTION_VSPEED = new FixedSingle(768 / 256.0);
 
         // X
         public const int HITBOX_WIDTH = 12;

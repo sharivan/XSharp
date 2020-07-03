@@ -103,6 +103,7 @@
     <Compile Include="Engine\Animation.cs" />
     <Compile Include="Engine\Block.cs" />
     <Compile Include="Engine\BoxCollider.cs" />
+    <Compile Include="Engine\BusterLemon.cs" />
     <Compile Include="Engine\CollisionPlacement.cs" />
     <Compile Include="Engine\CollisionResult.cs" />
     <Compile Include="Engine\CollisionData.cs" />
@@ -114,6 +115,7 @@
     <Compile Include="Engine\GameEngine.cs" />
     <Compile Include="Engine\Keys.cs" />
     <Compile Include="Engine\Map.cs" />
+    <Compile Include="Engine\Weapon.cs" />
     <Compile Include="Math\FMath.cs" />
     <Compile Include="Math\Geometry2D.cs" />
     <Compile Include="Engine\Entity.cs" />
@@ -181,6 +183,10 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="resources\sprites\X\X[small].png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="resources\sprites\X\Effects.png" />
+    <EmbeddedResource Include="resources\sprites\X\Weapons.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

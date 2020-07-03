@@ -60,6 +60,7 @@ namespace MMX.Engine
         private PlayerState state;
         private Direction stateDirection;
         private bool shooting;
+        internal int shotLemons;
         private int shotFrameCounter;
 
         /// <summary>
@@ -160,12 +161,12 @@ namespace MMX.Engine
             shotFrameCounter = reader.ReadInt32();
         }
 
-        protected override Box GetCollisionBox(FixedSingle clipBottom)
+        protected override Box GetCollisionBox()
         {
             if (Dashing)
-                return new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 2), new Vector(0, 0), new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 2 - clipBottom));
+                return new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 2), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 2));
 
-            return new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 2), new Vector(0, 0), new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 2 - clipBottom));
+            return new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 2), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 2));
         }
 
         protected override void OnHealthChanged(FixedSingle health)
@@ -1401,7 +1402,7 @@ namespace MMX.Engine
 
                 if (!WasPressingShot && PressingShot)
                 {
-                    if (!PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
+                    if (shotLemons < MAX_SHOT_LEMONS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
                     {
                         shooting = true;
                         shotFrameCounter = 0;
@@ -1421,6 +1422,8 @@ namespace MMX.Engine
                             SetState(PlayerState.STAND, 0);
                         else
                             RefreshAnimation();
+
+                        ShootLemon();
                     }
                 }
                 else if (WasPressingShot && !PressingShot)
@@ -1445,6 +1448,51 @@ namespace MMX.Engine
             base.Think();
         }
 
+        private Vector GetShotOrigin()
+        {
+            switch (state)
+            {
+                case PlayerState.STAND:
+                case PlayerState.LAND:
+                    return new Vector(9, 8);
+
+                case PlayerState.WALK:
+                    return new Vector(18, 6);
+
+                case PlayerState.JUMP:
+                case PlayerState.WALL_JUMP:
+                case PlayerState.GOING_UP:
+                case PlayerState.FALL:
+                    return new Vector(18, 7);
+
+                case PlayerState.PRE_DASH:
+                    return new Vector(21, -4);
+
+                case PlayerState.DASH:
+                    return new Vector(26, 0);
+
+                case PlayerState.POST_DASH:
+                    return new Vector(24, 8);
+
+                case PlayerState.LADDER:
+                    return new Vector(9, 5);
+            }
+
+            return new Vector(9, 8);
+        }
+
+        public void ShootLemon()
+        {
+            shotLemons++;
+
+            Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5);
+            Direction direction = Direction;
+            if (state == PlayerState.WALL_SLIDE)
+                direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
+
+            engine.ShootLemon(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction, baseHSpeed == DASH_SPEED);
+        }
+
         public Direction GetWallJumpDir()
         {
             FixedSingle vclip;
@@ -1462,11 +1510,11 @@ namespace MMX.Engine
                 slopeSign = 0;
             }
 
-            Box collisionBox = Origin + GetCollisionBox(slopeSign == 1 ? vclip : 0).ClipTop(-2).ClipBottom(2) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.LEFT_VECTOR;
+            Box collisionBox = Origin + GetCollisionBox().ClipTop(-2).ClipBottom(2 + (slopeSign == 1 ? vclip : 0)) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.LEFT_VECTOR;
             if (engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE, true, CollisionSide.LEFT_WALL).HasFlag(CollisionFlags.BLOCK))
                 return Direction.LEFT;
 
-            collisionBox = Origin + GetCollisionBox(slopeSign == -1 ? vclip : 0).ClipTop(-2).ClipBottom(2) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.RIGHT_VECTOR;
+            collisionBox = Origin + GetCollisionBox().ClipTop(-2).ClipBottom(2 + (slopeSign == -1 ? vclip : 0)) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.RIGHT_VECTOR;
             if (engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE, true, CollisionSide.RIGHT_WALL).HasFlag(CollisionFlags.BLOCK))
                 return Direction.RIGHT;
 

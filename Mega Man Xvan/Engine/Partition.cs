@@ -56,12 +56,15 @@ namespace MMX.Engine
             /// </summary>
             /// <param name="box">Retângulo usado para pesquisa</param>
             /// <param name="result">Lista de resultados a ser obtido</param>
-            public void Query(Box box, List<U> result, U exclude)
+            public void Query(Box box, List<U> result, U exclude, List<U> addictionalExclusionList)
             {
                 // Verifica a lista de entidades da célula
                 foreach (U value in values)
                 {
-                    if (exclude != null && value.Equals(exclude))
+                    if (exclude != null && exclude.Equals(value))
+                        continue;
+
+                    if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
                         continue;
 
                     Box intersection = value.BoundingBox & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
@@ -208,7 +211,17 @@ namespace MMX.Engine
 
         public List<T> Query(Box box)
         {
-            return Query(box, null);
+            return Query(box, null, null);
+        }
+
+        public List<T> Query(Box box, T exclude)
+        {
+            return Query(box, exclude, null);
+        }
+
+        public List<T> Query(Box box, List<T> exclusionList)
+        {
+            return Query(box, null, exclusionList);
         }
 
         /// <summary>
@@ -216,7 +229,7 @@ namespace MMX.Engine
         /// </summary>
         /// <param name="box"></param>
         /// <returns></returns>
-        public List<T> Query(Box box, T exclude)
+        public List<T> Query(Box box, T exclude, List<T> addictionalExclusionList)
         {
             List<T> result = new List<T>();
 
@@ -254,7 +267,7 @@ namespace MMX.Engine
             for (int i = startCol; i <= endCol; i++)
                 for (int j = startRow; j <= endRow; j++)
                     if (cells[i, j] != null) // Para cada célula que já foi previamente criada
-                        cells[i, j].Query(box, result, exclude); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
+                        cells[i, j].Query(box, result, exclude, addictionalExclusionList); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
 
             return result;
         }
@@ -290,14 +303,18 @@ namespace MMX.Engine
             Vector maxs1 = box.Maxs + origin1;
 
             int startCol = (int) ((FixedSingle.Min(mins0.X, mins1.X) - mins.X) / cellWidth); // Calcula a coluna da primeira célula para qual deverá ser verificada
+
             if (startCol < 0)
                 startCol = 0;
+
             if (startCol >= cols)
                 startCol = cols - 1;
 
             int startRow = (int) ((FixedSingle.Min(mins0.Y, mins1.Y) - mins.Y) / cellHeight); // Calcula a linha da primeira célula para a qual deverá ser verificada
+
             if (startRow < 0)
                 startRow = 0;
+
             if (startRow >= rows)
                 startRow = rows - 1;
 
@@ -305,6 +322,7 @@ namespace MMX.Engine
 
             if (endCol < 0)
                 endCol = 0;
+
             if (endCol >= cols)
                 endCol = cols - 1;
 
@@ -312,6 +330,7 @@ namespace MMX.Engine
 
             if (endRow < 0)
                 endRow = 0;
+
             if (endRow >= rows)
                 endRow = rows - 1;
 
@@ -361,14 +380,33 @@ namespace MMX.Engine
             Vector maxs1 = box.Maxs + origin1;
 
             int startCol = (int) ((mins1.X - mins.X) / cellWidth); // Calcula a coluna da primeira célula a ser verificada
+
+            if (startCol < 0)
+                startCol = 0;
+
+            if (startCol >= cols)
+                startCol = cols - 1;
+
             int startRow = (int) ((mins1.Y - mins.Y) / cellHeight); // Calcula a linha da primeira célula a ser verificada
 
+            if (startRow < 0)
+                startRow = 0;
+
+            if (startRow >= rows)
+                startRow = rows - 1;
+
             int endCol = (int) ((maxs1.X - mins.X - 1) / cellWidth); // Calcula a coluna da última célula a ser verificada
+
+            if (endCol < 0)
+                endCol = 0;
 
             if (endCol >= cols)
                 endCol = cols - 1;
 
             int endRow = (int) ((maxs1.Y - mins.Y - 1) / cellHeight); // Calcula a linha da última célula a ser verificada
+
+            if (endRow < 0)
+                endRow = 0;
 
             if (endRow >= rows)
                 endRow = rows - 1;

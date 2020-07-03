@@ -44,6 +44,7 @@ namespace MMX.Engine
         protected bool broke; // Indica se este sprite foi quebrado
 
         protected bool skipPhysics;
+        private bool canGoOutOfMapBounds;
 
         /// <summary>
         /// Cria uma nova entidade
@@ -338,6 +339,19 @@ namespace MMX.Engine
             }
         }
 
+        public bool CanGoOutOfMapBounds
+        {
+            get
+            {
+                return canGoOutOfMapBounds;
+            }
+
+            set
+            {
+                canGoOutOfMapBounds = value;
+            }
+        }
+
         /// <summary>
         /// Mata o sprite (sem quebra-la).
         /// </summary>
@@ -360,8 +374,6 @@ namespace MMX.Engine
                 animations.Clear();
                 disposed = true;
             }
-
-            //engine.Repaint(this);
         }
         /// <summary>
         /// Evento interno que é lançado sempre que o sprite for morto
@@ -461,7 +473,7 @@ namespace MMX.Engine
             }
 
             // Inicializa todos os campos
-            vel = new Vector();
+            vel = Vector.NULL_VECTOR;
             noClip = false;
             moving = false;
             markedToRemove = false;
@@ -580,27 +592,6 @@ namespace MMX.Engine
         }
 
         /// <summary>
-        /// Verifica a colisão deste sprite com os blocos (ou também com qualquer outro sprite marcada como estático)
-        /// </summary>
-        /// <returns>Vetor de deslocamento deste sprite após verificada as possíveis colisões</returns>
-        /*protected virtual MMXVector DoCheckCollisionWithWorld(MMXVector delta, CollisionFlags ignore = CollisionFlags.NONE, MMXFloat clipBottom = 0)
-        {
-            MMXBox collisionBox = GetCollisionBox(clipBottom);
-            return engine.CheckCollisionWithTiles(collisionBox, delta, ignore);
-        }*/
-
-        protected CollisionFlags GetTouchingFlags(Vector delta, FixedSingle clipBottom, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return GetTouchingFlags(delta, out RightTriangle slope, clipBottom, ignore, preciseCollisionCheck);
-        }
-
-        protected virtual CollisionFlags GetTouchingFlags(Vector delta, out RightTriangle slopeTriangle, FixedSingle clipBottom, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            Box collisionBox = Origin + GetCollisionBox(clipBottom);
-            return engine.GetTouchingFlags(collisionBox, delta, out slopeTriangle, ignore, preciseCollisionCheck);
-        }
-
-        /// <summary>
         /// Verifica a colisão com os sprites (que não estejam marcados como estáticos)
         /// </summary>
         /// <param name="delta">Vetor de deslocamento</param>
@@ -650,12 +641,7 @@ namespace MMX.Engine
             }
         }
 
-        protected Box GetCollisionBox()
-        {
-            return GetCollisionBox(FixedSingle.ZERO);
-        }
-
-        protected abstract Box GetCollisionBox(FixedSingle clipBottom);
+        protected abstract Box GetCollisionBox();
 
         protected override Box GetBoundingBox()
         {
@@ -897,25 +883,28 @@ namespace MMX.Engine
                     FixedSingle x = newOrigin.X;
                     FixedSingle y = newOrigin.Y;
 
-                    Box collisionBox = newOrigin + GetCollisionBox();
+                    if (!canGoOutOfMapBounds)
+                    {
+                        Box collisionBox = newOrigin + GetCollisionBox();
 
-                    FixedSingle minX = collisionBox.Left;
-                    if (minX < 0)
-                        x -= minX;
+                        FixedSingle minX = collisionBox.Left;
+                        if (minX < 0)
+                            x -= minX;
 
-                    FixedSingle minY = collisionBox.Top;
-                    if (minY < 0)
-                        y -= minY;
+                        FixedSingle minY = collisionBox.Top;
+                        if (minY < 0)
+                            y -= minY;
 
-                    int worldWidth = engine.World.Width;
-                    FixedSingle maxX = collisionBox.Right;
-                    if (maxX > worldWidth)
-                        x += worldWidth - maxX;
+                        int worldWidth = engine.World.Width;
+                        FixedSingle maxX = collisionBox.Right;
+                        if (maxX > worldWidth)
+                            x += worldWidth - maxX;
 
-                    FixedSingle maxY = collisionBox.Bottom;
-                    int worldHeight = engine.World.Height;
-                    if (maxY > worldHeight)
-                        y += worldHeight - maxY;
+                        FixedSingle maxY = collisionBox.Bottom;
+                        int worldHeight = engine.World.Height;
+                        if (maxY > worldHeight)
+                            y += worldHeight - maxY;
+                    }
 
                     Origin = new Vector(x, y);
 

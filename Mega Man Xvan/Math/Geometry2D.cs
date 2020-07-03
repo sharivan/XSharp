@@ -807,6 +807,11 @@ namespace MMX.Geometry
             return hashCode;
         }
 
+        public override string ToString()
+        {
+            return "[" + start + " : " + end + "]";
+        }
+
         public GeometryType Type => type;
 
         public FixedSingle Area => FixedSingle.ZERO;

@@ -1,12 +1,15 @@
 ﻿using MMX.Geometry;
+using SharpDX;
 using SharpDX.Direct2D1;
+using SharpDX.DXGI;
+using System;
 using System.Collections.Generic;
 
 using static MMX.Engine.Consts;
 
 namespace MMX.Engine
 {
-    public class SpriteSheet
+    public class SpriteSheet : IDisposable
     {
         public class FrameSequence
         {
@@ -140,8 +143,8 @@ namespace MMX.Engine
         private GameEngine engine;
         private string name;
 
-        private SharpDX.Direct2D1.Bitmap d2dBitmap;
-        private List<Box> frames;
+        private Bitmap currentBitmap;
+        private List<Tuple<Box, Bitmap>> frames;
         private Dictionary<string, FrameSequence> sequences;
 
         public GameEngine Engine
@@ -160,16 +163,25 @@ namespace MMX.Engine
             }
         }
 
-        public SharpDX.Direct2D1.Bitmap Image
+        public Bitmap CurrentBitmap
         {
             get
             {
-                return d2dBitmap;
+                return currentBitmap;
             }
 
             set
             {
-                d2dBitmap = value;
+                currentBitmap = value;
+            }
+        }
+
+        public void ReleaseCurrentBitmap()
+        {
+            if (currentBitmap != null)
+            {
+                currentBitmap.Dispose();
+                currentBitmap = null;
             }
         }
 
@@ -194,14 +206,14 @@ namespace MMX.Engine
             this.engine = engine;
             this.name = name;
 
-            frames = new List<Box>();
+            frames = new List<Tuple<Box, Bitmap>>();
             sequences = new Dictionary<string, FrameSequence>();
         }
 
         public SpriteSheet(GameEngine engine, string name, Bitmap image) :
             this(engine, name)
         {
-            d2dBitmap = image;
+            currentBitmap = image;
         }
 
         public SpriteSheet(GameEngine engine, string name, string imageFileName) :
@@ -212,7 +224,7 @@ namespace MMX.Engine
 
         public void LoadFromFile(string imageFileName)
         {
-            d2dBitmap = engine.CreateD2DBitmapFromFile(imageFileName);
+            currentBitmap = engine.CreateD2DBitmapFromFile(imageFileName);
         }
 
         public void AddFrame(int x, int y, int width, int height)
@@ -227,25 +239,41 @@ namespace MMX.Engine
 
         public void AddFrame(Box boudingBox)
         {
-            frames.Add(boudingBox);
+            var size = new Size2((int) boudingBox.Width, (int) boudingBox.Height);
+            var sizef = new Size2F((float) boudingBox.Width, (float) boudingBox.Height);
+            var pixelFormat = new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied);
+            var properties = new BitmapProperties(pixelFormat);
+
+            using (BitmapRenderTarget target = new BitmapRenderTarget(engine.Target, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat))
+            {
+                target.AntialiasMode = ANTIALIAS_MODE;
+
+                target.BeginDraw();
+                target.DrawBitmap(currentBitmap, new RectangleF(0, 0, sizef.Width, sizef.Height), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(boudingBox));
+                target.Flush();
+                target.EndDraw();
+
+                Tuple<Box, Bitmap> frame = new Tuple<Box, Bitmap>(boudingBox - boudingBox.Origin, target.Bitmap);
+                frames.Add(frame);
+            } 
         }
 
-        public Box GetFrame(int frameIndex)
+        public Tuple<Box, Bitmap> GetFrame(int frameIndex)
         {
             return frames[frameIndex];
         }
 
-        public int IndexOfFrame(Box frame)
+        public int IndexOfFrame(Tuple<Box, Bitmap> frame)
         {
             return frames.IndexOf(frame);
         }
 
-        public bool ContainsFrame(Box frame)
+        public bool ContainsFrame(Tuple<Box, Bitmap> frame)
         {
             return frames.Contains(frame);
         }
 
-        public bool RemoveFrame(Box frame)
+        public bool RemoveFrame(Tuple<Box, Bitmap> frame)
         {
             return frames.Remove(frame);
         }
@@ -305,24 +333,12 @@ namespace MMX.Engine
             sequences.Clear();
         }
 
-        public void DrawFrame(int index)
+        public void Dispose()
         {
-            DrawFrame(frames[index]);
-        }
+            ReleaseCurrentBitmap();
 
-        public void DrawFrame(int index, Box dstBox)
-        {
-            DrawFrame(dstBox, frames[index]);
-        }
-
-        public void DrawFrame(Box box)
-        {
-            engine.Target.DrawBitmap(d2dBitmap, 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(box));
-        }
-
-        public void DrawFrame(Box dstBox, Box box)
-        {
-            engine.Target.DrawBitmap(d2dBitmap, GameEngine.ToRectangleF(dstBox), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(box));
+            foreach (var frame in frames)
+                frame.Item2.Dispose();
         }
     }
 }
