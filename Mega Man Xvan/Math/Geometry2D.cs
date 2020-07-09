@@ -1138,6 +1138,19 @@ namespace MMX.Geometry
         DOWN = 3
     }
 
+    public enum OriginPosition
+    {
+        LEFT_TOP = 0,
+        LEFT_MIDDLE = 1,
+        LEFT_BOTTOM = 2,
+        MIDDLE_TOP = 3,
+        CENTER = 4,
+        MIDDLE_BOTTOM = 5,
+        RIGHT_TOP = 6,
+        RIGHT_MIDDLE = 7,
+        RIGHT_BOTTOM = 8
+    }
+
     /// <summary>
     /// Retângulo bidimensional com lados paralelos aos eixos coordenados
     /// </summary>
@@ -1148,11 +1161,11 @@ namespace MMX.Geometry
         /// <summary>
         /// Retângulo vazio
         /// </summary>
-        public static readonly Box EMPTY_BOX = new Box();
+        public static readonly Box EMPTY_BOX = new Box(0, 0, 0, 0);
         /// <summary>
         /// Retângulo universo
         /// </summary>
-        public static readonly Box UNIVERSE_BOX = new Box(Vector.NULL_VECTOR, Vector.NULL_VECTOR, new Vector(FixedSingle.MAX_VALUE, FixedSingle.MAX_VALUE));
+        public static readonly Box UNIVERSE_BOX = new Box(Vector.NULL_VECTOR, new Vector(FixedSingle.MIN_VALUE, FixedSingle.MIN_VALUE), new Vector(FixedSingle.MAX_VALUE, FixedSingle.MAX_VALUE));
 
         private Vector origin; // origen
         private Vector mins; // mínimos
@@ -1185,6 +1198,69 @@ namespace MMX.Geometry
         public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height) :
             this(new Vector(x, y), width, height)
         {
+        }
+
+        public Box(FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height, OriginPosition originPosition)
+        {
+            switch (originPosition)
+            {
+                case OriginPosition.LEFT_TOP:
+                    origin = new Vector(left, top);
+                    mins = Vector.NULL_VECTOR;
+                    maxs = new Vector(width, height);
+                    break;
+
+                case OriginPosition.LEFT_MIDDLE:
+                    origin = new Vector(left, top + height * FixedSingle.HALF);
+                    mins = new Vector(0, -height * FixedSingle.HALF);
+                    maxs = new Vector(width, height * FixedSingle.HALF);
+                    break;
+
+                case OriginPosition.LEFT_BOTTOM:
+                    origin = new Vector(left, top + height);
+                    mins = new Vector(0, -height);
+                    maxs = new Vector(width, 0);
+                    break;
+
+                case OriginPosition.MIDDLE_TOP:
+                    origin = new Vector(left + width * FixedSingle.HALF, top);
+                    mins = new Vector(-width * FixedSingle.HALF, 0);
+                    maxs = new Vector(width * FixedSingle.HALF, height);
+                    break;
+
+                case OriginPosition.CENTER:
+                    origin = new Vector(left + width * FixedSingle.HALF, top + height * FixedSingle.HALF);
+                    mins = new Vector(-width * FixedSingle.HALF, -height * FixedSingle.HALF);
+                    maxs = new Vector(width * FixedSingle.HALF, height * FixedSingle.HALF);
+                    break;
+
+                case OriginPosition.MIDDLE_BOTTOM:
+                    origin = new Vector(left + width * FixedSingle.HALF, top + height);
+                    mins = new Vector(-width * FixedSingle.HALF, -height);
+                    maxs = new Vector(width * FixedSingle.HALF, 0);
+                    break;
+
+                case OriginPosition.RIGHT_TOP:
+                    origin = new Vector(left + width, top);
+                    mins = new Vector(-width, 0);
+                    maxs = new Vector(0, height);
+                    break;
+
+                case OriginPosition.RIGHT_MIDDLE:
+                    origin = new Vector(left + width, top + height * FixedSingle.HALF);
+                    mins = new Vector(-width, -height * FixedSingle.HALF);
+                    maxs = new Vector(0, height * FixedSingle.HALF);
+                    break;
+
+                case OriginPosition.RIGHT_BOTTOM:
+                    origin = new Vector(left + width, top + height);
+                    mins = new Vector(-width, -height);
+                    maxs = Vector.NULL_VECTOR;
+                    break;
+
+                default:
+                    throw new ArgumentException("Unrecognized Origin Position.");
+            }
         }
 
         public Box(Vector origin, FixedSingle width, FixedSingle height)

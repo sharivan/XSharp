@@ -104,6 +104,7 @@
     <Compile Include="Engine\Block.cs" />
     <Compile Include="Engine\BoxCollider.cs" />
     <Compile Include="Engine\BusterLemon.cs" />
+    <Compile Include="Engine\BusterSemiCharged.cs" />
     <Compile Include="Engine\CollisionPlacement.cs" />
     <Compile Include="Engine\CollisionResult.cs" />
     <Compile Include="Engine\CollisionData.cs" />
@@ -187,6 +188,9 @@
   <ItemGroup>
     <EmbeddedResource Include="resources\sprites\X\Effects.png" />
     <EmbeddedResource Include="resources\sprites\X\Weapons.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

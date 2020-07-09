@@ -1,24 +1,23 @@
-﻿using System;
+﻿using MMX.Geometry;
+using MMX.Math;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MMX.Geometry;
-using MMX.Math;
 
 using static MMX.Engine.Consts;
 
 namespace MMX.Engine
 {
-    public class BusterLemon : Weapon
+    public class BusterSemiCharged : Weapon
     {
-        private bool dashLemon;
+        private bool firing;
+        private bool exploding;
+        private bool hitting;
 
         private int currentAnimationIndex;
         private int[] animationIndices;
-
-        private bool reflected;
-        private bool exploding;
 
         new public Player Shooter
         {
@@ -28,14 +27,36 @@ namespace MMX.Engine
             }
         }
 
-        internal BusterLemon(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, bool dashLemon, SpriteSheet sheet) :
+        public bool Firing
+        {
+            get
+            {
+                return firing;
+            }
+        }
+
+        public bool Exploding
+        {
+            get
+            {
+                return exploding;
+            }
+        }
+
+        public bool Hitting
+        {
+            get
+            {
+                return hitting;
+            }
+        }
+
+        internal BusterSemiCharged(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, SpriteSheet sheet) :
             base(engine, shooter, name, origin, direction, sheet)
         {
-            this.dashLemon = dashLemon;
-
             CheckCollisionWithWorld = false;
 
-            animationIndices = new int[2];
+            animationIndices = new int[4];
         }
 
         protected Animation CurrentAnimation
@@ -52,6 +73,7 @@ namespace MMX.Engine
             {
                 return currentAnimationIndex;
             }
+
             set
             {
                 Animation animation = CurrentAnimation;
@@ -80,21 +102,25 @@ namespace MMX.Engine
 
         public override FixedSingle GetGravity()
         {
-            return reflected && dashLemon && !exploding ? GRAVITY : FixedSingle.ZERO;
+            return FixedSingle.ZERO;
         }
 
         protected override Box GetCollisionBox()
         {
-            return new Box(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
+            Animation animation = CurrentAnimation;
+            return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
         }
 
         public override void Spawn()
         {
             base.Spawn();
 
+            firing = true;
+            exploding = false;
+            hitting = false;
             currentAnimationIndex = -1;
 
-            vel = new Vector(Direction == Direction.LEFT ? (dashLemon ? -LEMON_TERMINAL_SPEED : -LEMON_INITIAL_SPEED) : (dashLemon ? LEMON_TERMINAL_SPEED : LEMON_INITIAL_SPEED), 0);
+            vel = new Vector(Direction == Direction.LEFT ? -SEMI_CHARGED_INITIAL_SPEED : SEMI_CHARGED_INITIAL_SPEED, 0);
 
             CurrentAnimationIndex = animationIndices[0];
             CurrentAnimation.StartFromBegin();
@@ -102,7 +128,7 @@ namespace MMX.Engine
 
         protected override void Think()
         {
-            if (!exploding)
+            if (!firing && !exploding && !hitting)
             {
                 vel += new Vector(vel.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
                 if (vel.X.Abs > LEMON_TERMINAL_SPEED)
@@ -118,44 +144,57 @@ namespace MMX.Engine
             {
                 exploding = true;
                 vel = Vector.NULL_VECTOR;
-                CurrentAnimationIndex = animationIndices[1];
+                CurrentAnimationIndex = animationIndices[3];
                 CurrentAnimation.StartFromBegin();
             }
         }
 
-        public void Reflect()
+        public void Hit()
         {
-            if (!reflected && !exploding)
+            if (!hitting)
             {
-                reflected = true;
-                vel = new Vector(-vel.X, LEMON_REFLECTION_VSPEED);
+                hitting = true;
+                vel = Vector.NULL_VECTOR;
+                CurrentAnimationIndex = animationIndices[2];
+                CurrentAnimation.StartFromBegin();
             }
         }
 
         protected override void OnDeath()
         {
             Shooter.shots--;
+            Shooter.shootingCharged = false;
 
             base.OnDeath();
         }
 
-        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
+        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
         {
-            base.OnCreateAnimation(animationIndex, sheet, ref frameSequenceName, ref initialSequenceIndex, ref startVisible, ref startOn, ref add);
+            base.OnCreateAnimation(animationIndex, sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
             startOn = false;
             startVisible = false;
 
-            if (frameSequenceName == "LemonShot")
+            if (frameSequenceName == "SemiChargedShotFiring")
                 animationIndices[0] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
-            else if (frameSequenceName == "LemonShotExplode")
+            else if (frameSequenceName == "SemiChargedShot")
                 animationIndices[1] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+            else if (frameSequenceName == "SemiChargedShotHit")
+                animationIndices[2] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+            else if (frameSequenceName == "SemiChargedShotExplode")
+                animationIndices[3] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
             else
                 add = false;
         }
 
         internal override void OnAnimationEnd(Animation animation)
         {
-            if (animation.Index == animationIndices[1])
+            if (animation.Index == animationIndices[0])
+            {
+                firing = false;
+                CurrentAnimationIndex = animationIndices[1];
+                CurrentAnimation.StartFromBegin();
+            }
+            else if (animation.Index == animationIndices[2] || animation.Index == animationIndices[3])
                 Kill();
         }
     }

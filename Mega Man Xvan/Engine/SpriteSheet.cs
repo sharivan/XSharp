@@ -1,4 +1,5 @@
 ﻿using MMX.Geometry;
+using MMX.Math;
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DXGI;
@@ -15,9 +16,10 @@ namespace MMX.Engine
         {
             private SpriteSheet sheet;
             private string name;
-            private List<int> indices;
-            private int loopFromFrame;
-            private Vector offset;
+            private List<Frame> frames;
+            private int loopFromSequenceIndex;
+            private Vector boudingBoxOriginOffset;
+            private Box collisionBox;
 
             public SpriteSheet Sheet
             {
@@ -35,11 +37,11 @@ namespace MMX.Engine
                 }
             }
 
-            public int this[int index]
+            public Frame this[int index]
             {
                 get
                 {
-                    return indices[index];
+                    return frames[index];
                 }
             }
 
@@ -47,104 +49,224 @@ namespace MMX.Engine
             {
                 get
                 {
-                    return indices.Count;
+                    return frames.Count;
                 }
             }
 
-            public int LoopFromFrame
+            public int LoopFromSequenceIndex
             {
                 get
                 {
-                    return loopFromFrame;
-                }
-            }
-
-            public Vector Offset
-            {
-                get
-                {
-                    return offset;
+                    return loopFromSequenceIndex;
                 }
 
                 set
                 {
-                    offset = value;
+                    loopFromSequenceIndex = value;
                 }
             }
 
-            internal FrameSequence(SpriteSheet sheet, string name, int loopFromFrame = -1)
+            public Vector BoudingBoxOriginOffset
+            {
+                get
+                {
+                    return boudingBoxOriginOffset;
+                }
+
+                set
+                {
+                    boudingBoxOriginOffset = value;
+                }
+            }
+
+            public Box CollisionBox
+            {
+                get
+                {
+                    return collisionBox;
+                }
+
+                set
+                {
+                    collisionBox = value;
+                }
+            }
+
+            internal FrameSequence(SpriteSheet sheet, string name, int loopFromSequenceIndex = -1)
             {
                 this.sheet = sheet;
                 this.name = name;
-                this.loopFromFrame = loopFromFrame;
+                this.loopFromSequenceIndex = loopFromSequenceIndex;
 
-                indices = new List<int>();
+                frames = new List<Frame>();
             }
 
 
-            public void Add(int frameIndex)
+            public void Add(Frame frame)
             {
-                indices.Add(frameIndex);
+                frames.Add(frame);
             }
 
-            public void AddRepeated(int frameIndex, int count)
-            {
-                for (int i = 0; i < count; i++)
-                    Add(frameIndex);
-            }
-
-            public void AddRange(int startFrameIndex, int endFrameIndex)
-            {
-                for (int frameIndex = startFrameIndex; frameIndex <= endFrameIndex; frameIndex++)
-                    Add(frameIndex);
-            }
-
-            public void AddRangeRepeated(int startFrameIndex, int endFrameIndex, int count)
-            {
-                for (int frameIndex = startFrameIndex; frameIndex <= endFrameIndex; frameIndex++)
-                    AddRepeated(frameIndex, count);
-            }
-
-            public void AddRangeRepeatedRange(int startFrameIndex, int endFrameIndex, int count)
+            public void AddRepeated(Frame frame, int count)
             {
                 for (int i = 0; i < count; i++)
-                    AddRange(startFrameIndex, endFrameIndex);
+                    Add(frame);
             }
 
-            public void AddFrame(int x, int y, int width, int height, int count = 1)
+            public void AddRange(Frame fromFrame, Frame toFrame)
             {
-                sheet.AddFrame((int) (x + offset.X), (int) (y + offset.Y), x, y, width, height);
-                AddRepeated(sheet.FrameCount - 1, count);
+                for (int frameIndex = fromFrame.Index; frameIndex <= toFrame.Index; frameIndex++)
+                    Add(sheet.GetFrame(frameIndex));
             }
 
-            public void AddFrame(float cbXOff, float cbYOff, int bbX, int bbY, int bbWidth, int bbHeight, int count = 1)
+            public void AddRangeRepeated(Frame fromFrame, Frame toFrame, int count)
             {
-                sheet.AddFrame((int) (bbX + cbXOff + offset.X), (int) (bbY + cbYOff + offset.Y), bbX, bbY, bbWidth, bbHeight);
-                AddRepeated(sheet.FrameCount - 1, count);
+                for (int frameIndex = fromFrame.Index; frameIndex <= toFrame.Index; frameIndex++)
+                    AddRepeated(sheet.GetFrame(frameIndex), count);
             }
 
-            public void AddFrame(Box boudingBox, int count = 1)
+            public void AddRangeRepeatedRange(Frame fromFrame, Frame toFrame, int count)
             {
-                sheet.AddFrame(boudingBox + offset);
-                AddRepeated(sheet.FrameCount - 1, count);
+                for (int i = 0; i < count; i++)
+                    AddRange(fromFrame, toFrame);
+            }
+
+            public Frame AddFrame(int x, int y, int width, int height, int count = 1, bool loopPoint = false, OriginPosition originPosition = OriginPosition.CENTER)
+            {
+                if (loopPoint)
+                    loopFromSequenceIndex = frames.Count;
+
+                Frame frame = sheet.AddFrame(x, y, width, height, originPosition);
+                AddRepeated(frame, count);
+                return frame;
+            }
+
+            public Frame AddFrame(FixedSingle bbOriginXOff, FixedSingle bbOriginYOff, int bbLeft, int bbTop, int bbWidth, int bbHeight, int count = 1, bool loopPoint = false)
+            {
+                if (loopPoint)
+                    loopFromSequenceIndex = frames.Count;
+
+                Box boundingBox = new Box(bbLeft + bbOriginXOff + boudingBoxOriginOffset.X, bbTop + bbOriginYOff + boudingBoxOriginOffset.Y, bbLeft, bbTop, bbWidth, bbHeight);
+                Frame frame = sheet.AddFrame(boundingBox, collisionBox);
+                AddRepeated(frame, count);
+                return frame;
+            }
+
+            public Frame AddFrame(Box boudingBox, Box collisionBox, int count = 1, bool loopPoint = false)
+            {
+                if (loopPoint)
+                    loopFromSequenceIndex = frames.Count;
+
+                Frame frame = sheet.AddFrame(boudingBox, collisionBox);
+                AddRepeated(frame, count);
+                return frame;
             }
 
             public void Clear()
             {
-                indices.Clear();
+                frames.Clear();
+            }
+
+            public bool Remove(Frame frame)
+            {
+                return frames.Remove(frame);
             }
 
             public void Remove(int index)
             {
-                indices.RemoveAt(index);
+                frames.RemoveAt(index);
+            }
+        }
+
+        public class Frame
+        {
+            private int index;
+            private Box boundingBox;
+            private Box collisionBox;
+            private Bitmap bitmap;
+            private bool precached;
+
+            public int Index
+            {
+                get
+                {
+                    return index;
+                }
+            }
+
+            public Box BoundingBox
+            {
+                get
+                {
+                    return boundingBox;
+                }
+            }
+
+            public Box CollisionBox
+            {
+                get
+                {
+                    return collisionBox;
+                }
+            }
+
+            public Bitmap Bitmap
+            {
+                get
+                {
+                    return bitmap;
+                }
+            }
+
+            public bool Precached
+            {
+                get
+                {
+                    return precached;
+                }
+            }
+
+            internal Frame(int index, Box boundingBox, Box collisionBox, Bitmap bitmap, bool precached)
+            {
+                this.index = index;
+                this.boundingBox = boundingBox;
+                this.collisionBox = collisionBox;
+                this.bitmap = bitmap;
+                this.precached = precached;
+            }
+
+            public override bool Equals(object obj)
+            {
+                var frame = obj as Frame;
+                return frame != null &&
+                       EqualityComparer<Box>.Default.Equals(boundingBox, frame.boundingBox) &&
+                       EqualityComparer<Box>.Default.Equals(collisionBox, frame.collisionBox) &&
+                       EqualityComparer<Bitmap>.Default.Equals(bitmap, frame.bitmap);
+            }
+
+            public override int GetHashCode()
+            {
+                var hashCode = -250932352;
+                hashCode = hashCode * -1521134295 + EqualityComparer<Box>.Default.GetHashCode(boundingBox);
+                hashCode = hashCode * -1521134295 + EqualityComparer<Box>.Default.GetHashCode(collisionBox);
+                hashCode = hashCode * -1521134295 + EqualityComparer<Bitmap>.Default.GetHashCode(bitmap);
+                return hashCode;
+            }
+
+            public override string ToString()
+            {
+                return "{" + boundingBox + ", " + collisionBox + "}";
             }
         }
 
         private GameEngine engine;
         private string name;
+        private bool precache;
 
         private Bitmap currentBitmap;
-        private List<Tuple<Box, Bitmap>> frames;
+        private bool disposeBitmap;
+
+        private List<Frame> frames;
         private Dictionary<string, FrameSequence> sequences;
 
         public GameEngine Engine
@@ -161,6 +283,21 @@ namespace MMX.Engine
             {
                 return name;
             }
+
+
+        }
+
+        public bool Precache
+        {
+            get
+            {
+                return precache;
+            }
+
+            set
+            {
+                precache = value;
+            }
         }
 
         public Bitmap CurrentBitmap
@@ -176,13 +313,25 @@ namespace MMX.Engine
             }
         }
 
+        public bool DisposeBitmap
+        {
+            get
+            {
+                return disposeBitmap;
+            }
+
+            set
+            {
+                disposeBitmap = value;
+            }
+        }
+
         public void ReleaseCurrentBitmap()
         {
-            if (currentBitmap != null)
-            {
+            if (disposeBitmap && currentBitmap != null)
                 currentBitmap.Dispose();
-                currentBitmap = null;
-            }
+
+            currentBitmap = null;
         }
 
         public int FrameCount
@@ -201,24 +350,28 @@ namespace MMX.Engine
             }
         }
 
-        public SpriteSheet(GameEngine engine, string name)
+        public SpriteSheet(GameEngine engine, string name, bool disposeBitmap = false, bool precache = false)
         {
             this.engine = engine;
             this.name = name;
+            this.precache = precache;
+            this.disposeBitmap = disposeBitmap;
 
-            frames = new List<Tuple<Box, Bitmap>>();
+            frames = new List<Frame>();
             sequences = new Dictionary<string, FrameSequence>();
         }
 
-        public SpriteSheet(GameEngine engine, string name, Bitmap image) :
-            this(engine, name)
+        public SpriteSheet(GameEngine engine, string name, Bitmap bitmap, bool disposeBitmap = false, bool precache = false) :
+            this(engine, name, precache)
         {
-            currentBitmap = image;
+            currentBitmap = bitmap;
+            this.disposeBitmap = disposeBitmap;
         }
 
-        public SpriteSheet(GameEngine engine, string name, string imageFileName) :
-            this(engine, name)
+        public SpriteSheet(GameEngine engine, string name, string imageFileName, bool precache = false) :
+            this(engine, name, precache)
         {
+            disposeBitmap = true;
             LoadFromFile(imageFileName);
         }
 
@@ -227,53 +380,59 @@ namespace MMX.Engine
             currentBitmap = engine.CreateD2DBitmapFromFile(imageFileName);
         }
 
-        public void AddFrame(int x, int y, int width, int height)
+        public Frame AddFrame(int x, int y, int width, int height, OriginPosition originPosition = OriginPosition.CENTER)
         {
-            AddFrame(new Box(x, y, x, y, width, height));
+            Box boudingBox = new Box(x, y, width, height, originPosition);
+            return AddFrame(boudingBox, boudingBox);
         }
 
-        public void AddFrame(float cbX, float cbY, int bbX, int bbY, int bbWidth, int bbHeight)
+        public Frame AddFrame(Box boudingBox, Box collisionBox)
         {
-            AddFrame(new Box(cbX, cbY, bbX, bbY, bbWidth, bbHeight));
-        }
+            Frame frame;
 
-        public void AddFrame(Box boudingBox)
-        {
-            var size = new Size2((int) boudingBox.Width, (int) boudingBox.Height);
-            var sizef = new Size2F((float) boudingBox.Width, (float) boudingBox.Height);
-            var pixelFormat = new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied);
-            var properties = new BitmapProperties(pixelFormat);
-
-            using (BitmapRenderTarget target = new BitmapRenderTarget(engine.Target, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat))
+            if (precache)
             {
-                target.AntialiasMode = ANTIALIAS_MODE;
+                var size = new Size2((int) boudingBox.Width, (int) boudingBox.Height);
+                var sizef = new Size2F((float) boudingBox.Width, (float) boudingBox.Height);
+                var pixelFormat = new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied);
+                var properties = new BitmapProperties(pixelFormat);
 
-                target.BeginDraw();
-                target.DrawBitmap(currentBitmap, new RectangleF(0, 0, sizef.Width, sizef.Height), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(boudingBox));
-                target.Flush();
-                target.EndDraw();
+                using (BitmapRenderTarget target = new BitmapRenderTarget(engine.Context, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat))
+                {
+                    target.AntialiasMode = ANTIALIAS_MODE;
 
-                Tuple<Box, Bitmap> frame = new Tuple<Box, Bitmap>(boudingBox - boudingBox.Origin, target.Bitmap);
-                frames.Add(frame);
-            } 
+                    target.BeginDraw();
+                    target.DrawBitmap(currentBitmap, new RectangleF(0, 0, sizef.Width, sizef.Height), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(boudingBox));
+                    target.Flush();
+                    target.EndDraw();
+
+                    frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, collisionBox, target.Bitmap, true);
+                    frames.Add(frame);
+                    return frame;
+                }
+            }
+
+            frame = new Frame(frames.Count, boudingBox, collisionBox, currentBitmap, false);
+            frames.Add(frame);
+            return frame;
         }
 
-        public Tuple<Box, Bitmap> GetFrame(int frameIndex)
+        public Frame GetFrame(int frameIndex)
         {
             return frames[frameIndex];
         }
 
-        public int IndexOfFrame(Tuple<Box, Bitmap> frame)
+        public int IndexOfFrame(Frame frame)
         {
             return frames.IndexOf(frame);
         }
 
-        public bool ContainsFrame(Tuple<Box, Bitmap> frame)
+        public bool ContainsFrame(Frame frame)
         {
             return frames.Contains(frame);
         }
 
-        public bool RemoveFrame(Tuple<Box, Bitmap> frame)
+        public bool RemoveFrame(Frame frame)
         {
             return frames.Remove(frame);
         }
@@ -285,6 +444,12 @@ namespace MMX.Engine
 
         public void ClearFrames()
         {
+            foreach (var frame in frames)
+            {
+                if (frame.Precached && frame.Bitmap != null)
+                    frame.Bitmap.Dispose();
+            }
+
             frames.Clear();
         }
 
@@ -335,10 +500,8 @@ namespace MMX.Engine
 
         public void Dispose()
         {
+            ClearFrames();
             ReleaseCurrentBitmap();
-
-            foreach (var frame in frames)
-                frame.Item2.Dispose();
         }
     }
 }

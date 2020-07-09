@@ -70,8 +70,8 @@ namespace MMX.Engine
             var sizef = new Size2F(SCENE_SIZE, SCENE_SIZE);
             var pixelFormat = new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied);
 
-            downLayerTarget = new BitmapRenderTarget(world.Engine.Target, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat);
-            upLayerTarget = new BitmapRenderTarget(world.Engine.Target, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat);
+            downLayerTarget = new BitmapRenderTarget(world.Engine.Context, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat);
+            upLayerTarget = new BitmapRenderTarget(world.Engine.Context, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat);
         }
 
         private void PaintBlock(int row, int col, Block block)

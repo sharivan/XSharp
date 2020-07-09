@@ -80,13 +80,20 @@ namespace MMX.Engine
         public static readonly FixedSingle FALL_ANIMATION_MINIMAL_SPEED = 1.25;
         public static readonly FixedSingle NO_CLIP_SPEED = 6;
         public static readonly FixedSingle NO_CLIP_SPEED_BOOST = 2.5 * NO_CLIP_SPEED;
-        public const int MAX_SHOT_LEMONS = 3;
-        public const int LEMON_HITBOX_WIDTH = 9;
-        public const int LEMON_HITBOX_HEIGHT = 9;
+        public const int MAX_SHOTS = 3;
+        public const int LEMON_HITBOX_WIDTH = 8;
+        public const int LEMON_HITBOX_HEIGHT = 8;
         public static readonly FixedSingle LEMON_INITIAL_SPEED = new FixedSingle(1024 / 256.0);
         public static readonly FixedSingle LEMON_ACCELERATION = new FixedSingle(64 / 256.0);
         public static readonly FixedSingle LEMON_TERMINAL_SPEED = new FixedSingle(1536 / 256.0);
-        public static readonly FixedSingle LEMON_REFLECTION_VSPEED = new FixedSingle(768 / 256.0);
+        public static readonly FixedSingle LEMON_REFLECTION_VSPEED = new FixedSingle(-768 / 256.0);        
+        public const int SEMI_CHARGED_HITBOX_WIDTH_1 = 18;
+        public const int SEMI_CHARGED_HITBOX_HEIGHT_1 = 18;
+        public const int SEMI_CHARGED_HITBOX_WIDTH_2 = 26;
+        public const int SEMI_CHARGED_HITBOX_HEIGHT_2 = 26;
+        public const int SEMI_CHARGED_HITBOX_WIDTH_3 = 32;
+        public const int SEMI_CHARGED_HITBOX_HEIGHT_3 = 18;
+        public static readonly FixedSingle SEMI_CHARGED_INITIAL_SPEED = new FixedSingle(1536 / 256.0);
 
         // X
         public const int HITBOX_WIDTH = 12;
@@ -119,11 +126,11 @@ namespace MMX.Engine
         // Debug
         // Constantes usadas para depuração do jogo
         //public const bool DEBUG_DRAW_BOX = false;
-        public const bool DEBUG_DRAW_COLLISION_BOX = true;
-        public const bool DEBUG_SHOW_COLLIDERS = true;
+        public const bool DEBUG_DRAW_COLLISION_BOX = false;
+        public const bool DEBUG_SHOW_COLLIDERS = false;
         public const bool DEBUG_DRAW_COLLISION_DATA = false;
-        public const bool DEBUG_DRAW_MAP_BOUNDS = true;
-        public const bool DEBUG_HIGHLIGHT_TOUCHING_MAPS = true;
+        public const bool DEBUG_DRAW_MAP_BOUNDS = false;
+        public const bool DEBUG_HIGHLIGHT_TOUCHING_MAPS = false;
         public const bool DEBUG_HIGHLIGHT_POINTED_TILES = false;
         public const bool DEBUG_DRAW_PLAYER_ORIGIN_AXIS = false;
         public const bool DEBUG_SHOW_INFO_TEXT = true;

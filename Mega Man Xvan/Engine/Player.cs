@@ -60,8 +60,11 @@ namespace MMX.Engine
         private PlayerState state;
         private Direction stateDirection;
         private bool shooting;
-        internal int shotLemons;
+        internal int shots;
         private int shotFrameCounter;
+        private bool charging;
+        private int chargingFrameCounter;
+        internal bool shootingCharged;
 
         /// <summary>
         /// Cria um novo Bomberman
@@ -164,9 +167,9 @@ namespace MMX.Engine
         protected override Box GetCollisionBox()
         {
             if (Dashing)
-                return new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 2), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 2));
+                return new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
 
-            return new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 2), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 2));
+            return new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
         }
 
         protected override void OnHealthChanged(FixedSingle health)
@@ -513,7 +516,7 @@ namespace MMX.Engine
                 if (animation != null)
                 {
                     animating = animation.Animating;
-                    animationFrame = animation.CurrentFrameSequenceIndex;
+                    animationFrame = animation.CurrentSequenceIndex;
                     animation.Stop();
                     animation.Visible = false;
                 }
@@ -525,7 +528,7 @@ namespace MMX.Engine
 
                 currentAnimationIndex = value;
                 animation = CurrentAnimation;
-                animation.CurrentFrameSequenceIndex = animationFrame != -1 ? animationFrame : 0;
+                animation.CurrentSequenceIndex = animationFrame != -1 ? animationFrame : 0;
                 animation.Animating = animating;
                 animation.Visible = true;
             }
@@ -1400,11 +1403,57 @@ namespace MMX.Engine
                     }
                 }
 
-                if (!WasPressingShot && PressingShot)
+                if (PressingShot)
                 {
-                    if (shotLemons < MAX_SHOT_LEMONS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
+                    if (!WasPressingShot)
+                    {
+                        if (shots < MAX_SHOTS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
+                        {
+                            shooting = true;
+                            shotFrameCounter = 0;
+
+                            if (OnLadderOnly)
+                            {
+                                vel = Vector.NULL_VECTOR;
+
+                                if (PressingLeft)
+                                    direction = Direction.LEFT;
+                                else if (PressingRight)
+                                    direction = Direction.RIGHT;
+
+                                RefreshAnimation();
+                            }
+                            else if (Standing || PreWalking)
+                                SetState(PlayerState.STAND, 0);
+                            else
+                                RefreshAnimation();
+
+                            ShootLemon();
+                        }
+                    }
+                    else
+                    {
+                        if (!shooting && !charging && !shootingCharged)
+                        {
+                            charging = true;
+                            chargingFrameCounter = 0;
+                        }
+
+                        if (charging)
+                            chargingFrameCounter++;
+                    }
+                }
+                else if (WasPressingShot && !PressingShot)
+                {
+                    bool charging = this.charging;
+                    int chargingFrameCounter = this.chargingFrameCounter;
+                    this.charging = false;                   
+                    this.chargingFrameCounter = 0;
+
+                    if (charging && chargingFrameCounter >= 4 && shots < MAX_SHOTS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
                     {
                         shooting = true;
+                        shootingCharged = true;
                         shotFrameCounter = 0;
 
                         if (OnLadderOnly)
@@ -1423,12 +1472,8 @@ namespace MMX.Engine
                         else
                             RefreshAnimation();
 
-                        ShootLemon();
+                        ShootSemiCharged();
                     }
-                }
-                else if (WasPressingShot && !PressingShot)
-                {
-
                 }
 
                 if (shooting)
@@ -1483,7 +1528,7 @@ namespace MMX.Engine
 
         public void ShootLemon()
         {
-            shotLemons++;
+            shots++;
 
             Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5);
             Direction direction = Direction;
@@ -1491,6 +1536,18 @@ namespace MMX.Engine
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
             engine.ShootLemon(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction, baseHSpeed == DASH_SPEED);
+        }
+
+        public void ShootSemiCharged()
+        {
+            shots++;
+
+            Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5);
+            Direction direction = Direction;
+            if (state == PlayerState.WALL_SLIDE)
+                direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
+
+            engine.ShootSemiCharged(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
         }
 
         public Direction GetWallJumpDir()
@@ -1726,9 +1783,9 @@ namespace MMX.Engine
             }
         }
 
-        protected override void OnCreateAnimation(int animationIndex, ref SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn)
+        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
         {
-            base.OnCreateAnimation(animationIndex, ref sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn);
+            base.OnCreateAnimation(animationIndex, sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
             startOn = false; // Por padrão, a animação de um jogador começa parada.
             startVisible = false;
 
@@ -1792,6 +1849,8 @@ namespace MMX.Engine
                 SetAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animationIndex, true, false);
             else if (frameSequenceName == "TopLadderDescending")
                 SetAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animationIndex, true, false);
+            else
+                add = false;
         }
 
         public override FixedSingle GetGravity()

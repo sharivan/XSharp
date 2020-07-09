@@ -12,20 +12,26 @@ using SharpDX.DirectInput;
 using SharpDX.DirectWrite;
 using SharpDX.IO;
 using Types;
-
-using static MMX.Engine.Consts;
 using MMX.Geometry;
 using MMX.Math;
+
+using D2DFactory = SharpDX.Direct2D1.Factory;
+using DWFactory = SharpDX.DirectWrite.Factory;
+using D2DBitmap = SharpDX.Direct2D1.Bitmap;
+using DWTextAlignment = SharpDX.DirectWrite.TextAlignment;
+using WicPixelFormat = SharpDX.WIC.PixelFormat;
+
+using static MMX.Engine.Consts;
 
 namespace MMX.Engine
 {
     public class GameEngine : IDisposable
     {
         private Form form;
-        private SharpDX.Direct2D1.Factory d2dFactory;
-        private ImagingFactory imgFactory;
-        private SharpDX.DirectWrite.Factory dwFactory;
-        private RenderTarget target;
+        private D2DFactory d2dFactory;
+        private ImagingFactory wicFactory;
+        private DWFactory dwFactory;
+        private DeviceContext context;
 
         private World world;
         internal Partition<Entity> partition;
@@ -141,7 +147,7 @@ namespace MMX.Engine
             }
         }
 
-        public SharpDX.Direct2D1.Factory D2DFactory
+        public D2DFactory D2DFactory
         {
             get
             {
@@ -149,15 +155,15 @@ namespace MMX.Engine
             }
         }
 
-        public ImagingFactory ImgFactory
+        public ImagingFactory WicFactory
         {
             get
             {
-                return imgFactory;
+                return wicFactory;
             }
         }
 
-        public SharpDX.DirectWrite.Factory DWFactory
+        public DWFactory DWFactory
         {
             get
             {
@@ -165,15 +171,15 @@ namespace MMX.Engine
             }
         }
 
-        public RenderTarget Target
+        public DeviceContext Context
         {
             get
             {
-                return target;
+                return context;
             }
         }
 
-        public SharpDX.RectangleF RenderRectangle
+        public RectangleF RenderRectangle
         {
             get
             {
@@ -250,13 +256,13 @@ namespace MMX.Engine
             }
         }
 
-        public GameEngine(Form form, SharpDX.Direct2D1.Factory d2dFactory, ImagingFactory imgFactory, SharpDX.DirectWrite.Factory dwFactory, RenderTarget target)
+        public GameEngine(Form form, D2DFactory d2dFactory, ImagingFactory wicFactory, DWFactory dwFactory, DeviceContext context)
         {
             this.form = form;
             this.d2dFactory = d2dFactory;
-            this.imgFactory = imgFactory;
+            this.wicFactory = wicFactory;
             this.dwFactory = dwFactory;
-            this.target = target;
+            this.context = context;
 
             noCameraConstraints = NO_CAMERA_CONSTRAINTS;
 
@@ -283,28 +289,28 @@ namespace MMX.Engine
                 joystick.Acquire();
             }
 
-            screenBoxBrush = new SolidColorBrush(target, new Color4(1, 1, 0, 0.5F));
-            hitBoxBrush = new SolidColorBrush(target, new Color4(0, 1, 0, 0.5F));
-            hitBoxBorderBrush = new SolidColorBrush(target, new Color4(0, 1, 0, 1));
-            touchingMapBrush = new SolidColorBrush(target, new Color4(0, 0, 1, 1));
-            playerOriginBrush = new SolidColorBrush(target, new Color4(0, 1, 1, 1));
-            coordsTextBrush = new SolidColorBrush(target, new Color4(1, 1, 1, 1));
-            checkpointBoxBrush = new SolidColorBrush(target, new Color4(1, 0.5F, 0, 1));
-            triggerBoxBrush = new SolidColorBrush(target, new Color4(0, 1, 0, 1));
-            cameraEventExtensionBrush = new SolidColorBrush(target, new Color4(1, 1, 0, 1));
-            downColliderBrush = new SolidColorBrush(target, new Color4(0, 1, 0, 1));
-            upColliderBrush = new SolidColorBrush(target, new Color4(0, 0, 1, 1));
-            leftColliderBrush = new SolidColorBrush(target, new Color4(1, 0, 0, 1));
-            rightColliderBrush = new SolidColorBrush(target, new Color4(1, 1, 0, 1));
+            screenBoxBrush = new SolidColorBrush(context, new Color4(1, 1, 0, 0.5F));
+            hitBoxBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 0.5F));
+            hitBoxBorderBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 1));
+            touchingMapBrush = new SolidColorBrush(context, new Color4(0, 0, 1, 1));
+            playerOriginBrush = new SolidColorBrush(context, new Color4(0, 1, 1, 1));
+            coordsTextBrush = new SolidColorBrush(context, new Color4(1, 1, 1, 1));
+            checkpointBoxBrush = new SolidColorBrush(context, new Color4(1, 0.5F, 0, 1));
+            triggerBoxBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 1));
+            cameraEventExtensionBrush = new SolidColorBrush(context, new Color4(1, 1, 0, 1));
+            downColliderBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 1));
+            upColliderBrush = new SolidColorBrush(context, new Color4(0, 0, 1, 1));
+            leftColliderBrush = new SolidColorBrush(context, new Color4(1, 0, 0, 1));
+            rightColliderBrush = new SolidColorBrush(context, new Color4(1, 1, 0, 1));
 
             coordsTextFormat = new TextFormat(dwFactory, "Arial", 24)
             {
-                TextAlignment = SharpDX.DirectWrite.TextAlignment.Leading,
+                TextAlignment = DWTextAlignment.Leading,
                 ParagraphAlignment = ParagraphAlignment.Center
             };
             highlightMapTextFormat = new TextFormat(dwFactory, "Arial", 24)
             {
-                TextAlignment = SharpDX.DirectWrite.TextAlignment.Leading,
+                TextAlignment = DWTextAlignment.Leading,
                 ParagraphAlignment = ParagraphAlignment.Center
             };
 
@@ -323,12 +329,14 @@ namespace MMX.Engine
             drawScale = DEFAULT_DRAW_SCALE;
             UpdateScale();
 
-            Vector normalOffset = new Vector(HITBOX_WIDTH / 2, HITBOX_HEIGHT + 3);
-            Vector dashingOffset = new Vector(DASHING_HITBOX_WIDTH / 2, DASHING_HITBOX_HEIGHT + 3);
+            Vector normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3);
+            Box normalCollisionBox = new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
+            Vector dashingOffset = new Vector(DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT + 3);
+            Box dashingCollisionBox = new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
 
-            xSpriteSheet = new SpriteSheet(this, "X");
-            xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons");
-            xEffectsSpriteSheet = new SpriteSheet(this, "X Effects");
+            xSpriteSheet = new SpriteSheet(this, "X", true, true);
+            xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons", true, true);
+            xEffectsSpriteSheet = new SpriteSheet(this, "X Effects", true, true);
 
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.sprites.X.X[small].png"))
             {
@@ -337,11 +345,13 @@ namespace MMX.Engine
             }
 
             var sequence = xSpriteSheet.AddFrameSquence("Spawn");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(-4, 25, 5, 15, 8, 48);
 
             sequence = xSpriteSheet.AddFrameSquence("SpawnEnd");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(-4, 32, 5, 15, 8, 48);
             sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
             sequence.AddFrame(8, 11, 46, 21, 30, 42);
@@ -351,7 +361,8 @@ namespace MMX.Engine
             sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
 
             sequence = xSpriteSheet.AddFrameSquence("Stand", 0);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(9, 3, 226, 29, 30, 34, 80);
             sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
             sequence.AddFrame(9, 3, 295, 29, 30, 34, 8);
@@ -366,16 +377,19 @@ namespace MMX.Engine
             sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
 
             sequence = xSpriteSheet.AddFrameSquence("Shooting", 4);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(9, 3, 365, 29, 30, 34, 4);
             sequence.AddFrame(9, 3, 402, 29, 29, 34, 12);
 
             sequence = xSpriteSheet.AddFrameSquence("PreWalking");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(8, 3, 5, 67, 30, 34, 5);
 
             sequence = xSpriteSheet.AddFrameSquence("Walking", 0);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 3, 50, 67, 20, 34);
             sequence.AddFrame(3, 4, 75, 67, 23, 35, 2);
             sequence.AddFrame(7, 3, 105, 68, 32, 34, 3);
@@ -389,7 +403,8 @@ namespace MMX.Engine
             sequence.AddFrame(1, 3, 50, 67, 20, 34);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootWalking", 0);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 3, 41, 107, 29, 34);
             sequence.AddFrame(3, 4, 76, 107, 32, 35, 2);
             sequence.AddFrame(7, 3, 115, 108, 35, 34, 3);
@@ -403,95 +418,115 @@ namespace MMX.Engine
             sequence.AddFrame(1, 3, 41, 107, 29, 34);
 
             sequence = xSpriteSheet.AddFrameSquence("Jumping");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 0, 6, 148, 25, 37, 3);
             sequence.AddFrame(-5, 1, 37, 148, 15, 41);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootJumping");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 0, 201, 148, 29, 37, 3);
             sequence.AddFrame(-5, 1, 240, 148, 24, 41);
 
             sequence = xSpriteSheet.AddFrameSquence("GoingUp", 0);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(-1, 5, 56, 146, 19, 46);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp", 0);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(-1, 5, 271, 146, 27, 46);
 
             sequence = xSpriteSheet.AddFrameSquence("Falling", 4);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 5, 80, 150, 23, 41, 4);
             sequence.AddFrame(5, 6, 108, 150, 27, 42);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootFalling", 4);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
             sequence.AddFrame(5, 6, 341, 150, 31, 42);
 
             sequence = xSpriteSheet.AddFrameSquence("Landing");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 2, 139, 151, 24, 38, 2);
             sequence.AddFrame(8, 1, 166, 153, 30, 32, 2);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootLanding");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 2, 378, 151, 30, 38, 2);
             sequence.AddFrame(8, 1, 413, 153, 36, 32, 2);
 
             sequence = xSpriteSheet.AddFrameSquence("PreDashing");
-            sequence.Offset = dashingOffset;
+            sequence.BoudingBoxOriginOffset = dashingOffset;
+            sequence.CollisionBox = dashingCollisionBox;
             sequence.AddFrame(4, 12, 4, 335, 28, 31, 3);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootPreDashing");
-            sequence.Offset = dashingOffset;
+            sequence.BoudingBoxOriginOffset = dashingOffset;
+            sequence.CollisionBox = dashingCollisionBox;
             sequence.AddFrame(4, 12, 76, 335, 37, 31, 3);
 
             sequence = xSpriteSheet.AddFrameSquence("Dashing", 0);
-            sequence.Offset = dashingOffset;
+            sequence.BoudingBoxOriginOffset = dashingOffset;
+            sequence.CollisionBox = dashingCollisionBox;
             sequence.AddFrame(14, 7, 34, 341, 38, 26);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootDashing", 0);
-            sequence.Offset = dashingOffset;
+            sequence.BoudingBoxOriginOffset = dashingOffset;
+            sequence.CollisionBox = dashingCollisionBox;
             sequence.AddFrame(14, 7, 115, 341, 48, 26);
 
             sequence = xSpriteSheet.AddFrameSquence("PostDashing");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(5, 0, 4, 335, 28, 31, 8);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootPostDashing");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(5, 0, 4, 341, 38, 31, 8);
 
             sequence = xSpriteSheet.AddFrameSquence("WallSliding", 11);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(5, 5, 5, 197, 25, 42, 5);
             sequence.AddFrame(9, 7, 33, 196, 27, 43, 6);
             sequence.AddFrame(9, 8, 64, 196, 28, 42);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding", 11);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(5, 2, 158, 200, 31, 39, 5);
             sequence.AddFrame(9, 7, 201, 196, 32, 43, 6);
             sequence.AddFrame(9, 8, 240, 196, 32, 42);
 
             sequence = xSpriteSheet.AddFrameSquence("WallJumping");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(7, 2, 95, 199, 30, 39, 3);
             sequence.AddFrame(5, 10, 128, 195, 27, 44);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootWallJumping");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(7, 1, 276, 200, 31, 38, 3);
             sequence.AddFrame(5, 5, 315, 200, 32, 39);
 
             sequence = xSpriteSheet.AddFrameSquence("PreLadderClimbing");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(3, 4, 7, 267, 21, 36, 8);
 
             sequence = xSpriteSheet.AddFrameSquence("LadderMoving", 0);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(2, 10, 111, 261, 18, 49, 8);
             sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
             sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
@@ -500,16 +535,18 @@ namespace MMX.Engine
             sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootLadder", 0);
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(5, 14, 137, 261, 26, 48, 16);
 
             sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
             sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
 
             sequence = xSpriteSheet.AddFrameSquence("TopLadderDescending");
-            sequence.Offset = normalOffset;
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
             sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
 
@@ -521,17 +558,88 @@ namespace MMX.Engine
                 xWeaponsSpriteSheet.CurrentBitmap = newBitmap;
             }
 
-            Vector lemonOffset = new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5);
+            Box lemonCollisionBox = new Box(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
 
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("Shot", 0);
-            sequence.Offset = lemonOffset;
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShot", 0);
+            sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
+            sequence.CollisionBox = lemonCollisionBox;
             sequence.AddFrame(5, -1, 123, 253, 8, 6);
 
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("ShotHit");
-            sequence.Offset = lemonOffset;
-            sequence.AddFrame(137, 250, 12, 12, 4);
-            sequence.AddFrame(154, 249, 13, 13, 2);
-            sequence.AddFrame(172, 248, 15, 15);
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShotExplode");
+            sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
+            sequence.CollisionBox = lemonCollisionBox;
+            sequence.AddFrame(2, 1, 137, 250, 12, 12, 4);
+            sequence.AddFrame(2, 2, 154, 249, 13, 13, 2);
+            sequence.AddFrame(3, 3, 172, 248, 15, 15);
+
+            Box semiChargedShotCollisionBox1 = new Box(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5));
+            Box semiChargedShotCollisionBox2 = new Box(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5));
+            Box semiChargedShotCollisionBox3 = new Box(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotFiring");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox1;
+            sequence.AddFrame(-5, 3, 128, 563, 14, 14);
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox2;
+            sequence.AddFrame(-9, -6, 128, 563, 14, 14);
+            sequence.AddFrame(-9, -1, 147, 558, 24, 24);
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox3;
+            sequence.AddFrame(-11, -3, 147, 558, 24, 24);
+            sequence.AddFrame(-11, -3, 176, 564, 28, 12);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShot");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox3;
+            sequence.AddFrame(3, -3, 176, 564, 28, 12);
+            sequence.AddFrame(3, -5, 210, 566, 32, 8, 3);
+            sequence.AddFrame(9, -5, 210, 566, 32, 8);
+            sequence.AddFrame(7, 1, 379, 562, 38, 16);
+            sequence.AddFrame(9, -3, 333, 564, 36, 12, 1, true); // loop point
+            sequence.AddFrame(8, 1, 292, 559, 36, 22, 2);
+            sequence.AddFrame(9, -3, 333, 564, 36, 12);
+            sequence.AddFrame(7, 1, 379, 562, 38, 16, 2);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotHit");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox2;
+            sequence.AddFrame(-9, -6, 424, 563, 14, 14);
+            sequence.AddFrame(-9, -1, 443, 558, 24, 24);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotExplode");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+            sequence.AddFrame(487, 273, 16, 16);
+            sequence.AddFrame(507, 269, 24, 24);
+            sequence.AddFrame(535, 273, 16, 16);
+            sequence.AddFrame(555, 270, 22, 22);
+            sequence.AddFrame(581, 269, 24, 24);
+            sequence.AddFrame(609, 269, 24, 24);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotFiring");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+            sequence.AddFrame(5, -1, 144, 599, 14, 20);
+            sequence.AddFrame(5, -1, 166, 601, 23, 16);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShot", 0);
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+            sequence.AddFrame(5, -1, 193, 594, 46, 31);
+            sequence.AddFrame(5, -1, 244, 595, 45, 29);
+            sequence.AddFrame(5, -1, 293, 594, 42, 31);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotHit");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+            sequence.AddFrame(2, 1, 387, 599, 14, 20);
+            sequence.AddFrame(2, 2, 405, 595, 24, 28);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotExplode");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+            sequence.AddFrame(2, 1, 441, 596, 28, 28);
+            sequence.AddFrame(2, 2, 473, 597, 26, 26);
+            sequence.AddFrame(3, 3, 503, 596, 28, 28);
+            sequence.AddFrame(3, 3, 535, 595, 30, 30);
+            sequence.AddFrame(3, 3, 569, 594, 32, 32);
+            sequence.AddFrame(3, 3, 605, 594, 32, 32);
 
             xWeaponsSpriteSheet.ReleaseCurrentBitmap();
 
@@ -563,7 +671,7 @@ namespace MMX.Engine
                 mmx.UpdateVRAMCache();
         }
 
-        public SharpDX.Direct2D1.Bitmap CreateD2DBitmapFromFile(string filePath)
+        public D2DBitmap CreateD2DBitmapFromFile(string filePath)
         {
             using (var fileStream = new NativeFileStream(
                 filePath,
@@ -574,27 +682,27 @@ namespace MMX.Engine
             }
         }
 
-        public SharpDX.Direct2D1.Bitmap CreateD2DBitmapFromStream(Stream stream, Color[] customPalette = null)
+        public D2DBitmap CreateD2DBitmapFromStream(Stream stream, Color[] customPalette = null)
         {
-            return CreateD2DBitmapFromStream(stream, SharpDX.WIC.PixelFormat.Format32bppPRGBA, SharpDX.WIC.PixelFormat.Format32bppPRGBA, customPalette);
+            return CreateD2DBitmapFromStream(stream, WicPixelFormat.Format32bppPRGBA, WicPixelFormat.Format32bppPRGBA, customPalette);
         }
 
-        public SharpDX.Direct2D1.Bitmap CreateD2DBitmapFromStream(Stream stream, Guid srcFormat, Guid dstFormat, Color[] customPalette = null)
+        public D2DBitmap CreateD2DBitmapFromStream(Stream stream, Guid srcFormat, Guid dstFormat, Color[] customPalette = null)
         {
-            BitmapDecoder bitmapDecoder = new BitmapDecoder(imgFactory, stream, srcFormat, DecodeOptions.CacheOnDemand);
+            BitmapDecoder bitmapDecoder = new BitmapDecoder(wicFactory, stream, srcFormat, DecodeOptions.CacheOnDemand);
             BitmapFrameDecode frame = bitmapDecoder.GetFrame(0);
-            FormatConverter converter = new FormatConverter(imgFactory);
+            FormatConverter converter = new FormatConverter(wicFactory);
 
             if (customPalette != null)
             {
-                Palette palette = new Palette(imgFactory);
+                Palette palette = new Palette(wicFactory);
                 palette.Initialize(customPalette);
                 converter.Initialize(frame, dstFormat, BitmapDitherType.None, palette, 0, BitmapPaletteType.Custom);
             }
             else
                 converter.Initialize(frame, dstFormat);
 
-            return SharpDX.Direct2D1.Bitmap.FromWicBitmap(target, converter);
+            return D2DBitmap.FromWicBitmap(context, converter);
         }
 
         private void OnFrame()
@@ -1033,6 +1141,8 @@ namespace MMX.Engine
                         {
                             entities.Remove(removed);
                             partition.Remove(removed);
+
+                            removed.Dispose();
                         }
 
                         removedEntities.Clear();
@@ -1215,7 +1325,7 @@ namespace MMX.Engine
                     mmx.LoadToWorld(world, true);
                 }
 
-                SharpDX.Direct2D1.Bitmap bmp = CreateD2DBitmapFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.tiles.Gator_Stage_Floor_Block.png"));
+                D2DBitmap bmp = CreateD2DBitmapFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.tiles.Gator_Stage_Floor_Block.png"));
                 /*world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 35, 0, 4, 40, bmp, CollisionData.SOLID);
                 world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 30, 40, 4, 4, bmp, CollisionData.SOLID);
                 world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 25, 44, 4, 4, bmp, CollisionData.SOLID);
@@ -1304,22 +1414,22 @@ namespace MMX.Engine
 
         private void DrawLine(FixedSingle x1, FixedSingle y1, FixedSingle x2, FixedSingle y2, SolidColorBrush brush)
         {
-            target.DrawLine(WorldVectorToScreen(x1, y1), WorldVectorToScreen(x2, y2), brush);
+            context.DrawLine(WorldVectorToScreen(x1, y1), WorldVectorToScreen(x2, y2), brush);
         }
 
         private void DrawLine(FixedSingle x1, FixedSingle y1, FixedSingle x2, FixedSingle y2, SolidColorBrush brush, float strokeWidth)
         {
-            target.DrawLine(WorldVectorToScreen(x1, y1), WorldVectorToScreen(x2, y2), brush, strokeWidth);
+            context.DrawLine(WorldVectorToScreen(x1, y1), WorldVectorToScreen(x2, y2), brush, strokeWidth);
         }
 
         private void DrawLine(Vector v1, Vector v2, SolidColorBrush brush)
         {
-            target.DrawLine(WorldVectorToScreen(v1), WorldVectorToScreen(v2), brush);
+            context.DrawLine(WorldVectorToScreen(v1), WorldVectorToScreen(v2), brush);
         }
 
         private void DrawLine(Vector v1, Vector v2, SolidColorBrush brush, float strokeWidth)
         {
-            target.DrawLine(WorldVectorToScreen(v1), WorldVectorToScreen(v2), brush, strokeWidth);
+            context.DrawLine(WorldVectorToScreen(v1), WorldVectorToScreen(v2), brush, strokeWidth);
         }
 
         private void DrawSlopeMap(Box box, RightTriangle triangle, float strokeWidth)
@@ -1358,7 +1468,7 @@ namespace MMX.Engine
         {
             Box mapBox = World.GetMapBoundingBox(row, col);
             if (World.IsSolidBlock(collisionData))
-                target.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
+                context.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
             else if (World.IsSlope(collisionData))
             {
                 RightTriangle st = World.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
@@ -1373,7 +1483,7 @@ namespace MMX.Engine
 
             Box mapBox = World.GetMapBoundingBox(row, col);
             if (World.IsSolidBlock(collisionData) && (mapBox & collisionBox).Area > 0)
-                target.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
+                context.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
             else if (!ignoreSlopes && World.IsSlope(collisionData))
             {
                 RightTriangle st = World.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
@@ -1432,9 +1542,9 @@ namespace MMX.Engine
         {
             OnFrame();
 
-            target.BeginDraw();
-            target.Transform = Matrix3x2.Identity;
-            target.Clear(Color.Black);
+            context.BeginDraw();
+            context.Transform = Matrix3x2.Identity;
+            context.Clear(Color.Black);
 
             if (world != null)
             {
@@ -1465,8 +1575,8 @@ namespace MMX.Engine
                             if (drawCollisionBox)
                             {
                                 Box collisionBox = sprite.CollisionBox;
-                                target.FillRectangle(WorldBoxToScreen(collisionBox), hitBoxBrush);
-                                target.DrawRectangle(WorldBoxToScreen(collisionBox), hitBoxBorderBrush, 1);
+                                context.FillRectangle(WorldBoxToScreen(collisionBox), hitBoxBrush);
+                                context.DrawRectangle(WorldBoxToScreen(collisionBox), hitBoxBorderBrush, 1);
                             }
                         }
                         else
@@ -1474,7 +1584,7 @@ namespace MMX.Engine
                             AbstractTrigger trigger = obj as AbstractTrigger;
                             if (trigger != null && DEBUG_SHOW_TRIGGERS)
                             {
-                                target.DrawRectangle(WorldBoxToScreen(trigger.BoundingBox), triggerBoxBrush, 4);
+                                context.DrawRectangle(WorldBoxToScreen(trigger.BoundingBox), triggerBoxBrush, 4);
                                 CameraEventTrigger camTrigger = trigger as CameraEventTrigger;
                                 if (camTrigger != null)
                                 {
@@ -1482,7 +1592,7 @@ namespace MMX.Engine
                                     for (int i = 0; i < camTrigger.ExtensionCount; i++)
                                     {
                                         Vector extension = camTrigger.GetExtension(i);
-                                        target.DrawLine(WorldVectorToScreen(extensionOrigin), WorldVectorToScreen(extensionOrigin + extension), cameraEventExtensionBrush, 4);
+                                        context.DrawLine(WorldVectorToScreen(extensionOrigin), WorldVectorToScreen(extensionOrigin + extension), cameraEventExtensionBrush, 4);
                                     }
                                 }
                             }
@@ -1514,56 +1624,56 @@ namespace MMX.Engine
                 if (drawCollisionBox)
                 {
                     Box collisionBox = player.CollisionBox;
-                    target.FillRectangle(WorldBoxToScreen(collisionBox), hitBoxBrush);
-                    target.DrawRectangle(WorldBoxToScreen(collisionBox), hitBoxBorderBrush, 1);
+                    context.FillRectangle(WorldBoxToScreen(collisionBox), hitBoxBrush);
+                    context.DrawRectangle(WorldBoxToScreen(collisionBox), hitBoxBorderBrush, 1);
                 }
 
                 if (showColliders)
                 {
                     BoxCollider collider = player.Collider;
-                    target.FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), downColliderBrush);
-                    target.FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), upColliderBrush);
-                    target.FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), leftColliderBrush);
-                    target.FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), rightColliderBrush);
+                    context.FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), downColliderBrush);
+                    context.FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), upColliderBrush);
+                    context.FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), leftColliderBrush);
+                    context.FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), rightColliderBrush);
                 }
 
                 if (drawHighlightedPointingTiles)
                 {
                     System.Drawing.Point cursorPos = form.PointToClient(Cursor.Position);
                     Vector v = ScreenPointToVector(cursorPos.X, cursorPos.Y);
-                    target.DrawText(string.Format("Mouse Pos: X: {0} Y: {1}", v.X, v.Y), highlightMapTextFormat, new RectangleF(0, 0, 400, 50), touchingMapBrush);
+                    context.DrawText(string.Format("Mouse Pos: X: {0} Y: {1}", v.X, v.Y), highlightMapTextFormat, new RectangleF(0, 0, 400, 50), touchingMapBrush);
 
                     Scene scene = world.GetSceneFrom(v, false);
                     if (scene != null)
                     {
                         Cell sceneCell = World.GetSceneCellFromPos(v);
                         Box sceneBox = World.GetSceneBoundingBox(sceneCell);
-                        target.DrawRectangle(WorldBoxToScreen(sceneBox), touchingMapBrush, 4);
-                        target.DrawText(string.Format("Scene: ID: {0} Row: {1} Col: {2}", scene.ID, sceneCell.Row, sceneCell.Col), highlightMapTextFormat, new RectangleF(0, 50, 400, 50), touchingMapBrush);
+                        context.DrawRectangle(WorldBoxToScreen(sceneBox), touchingMapBrush, 4);
+                        context.DrawText(string.Format("Scene: ID: {0} Row: {1} Col: {2}", scene.ID, sceneCell.Row, sceneCell.Col), highlightMapTextFormat, new RectangleF(0, 50, 400, 50), touchingMapBrush);
 
                         Block block = world.GetBlockFrom(v, false);
                         if (block != null)
                         {
                             Cell blockCell = World.GetBlockCellFromPos(v);
                             Box blockBox = World.GetBlockBoundingBox(blockCell);
-                            target.DrawRectangle(WorldBoxToScreen(blockBox), touchingMapBrush, 4);
-                            target.DrawText(string.Format("Block: ID: {0} Row: {1} Col: {2}", block.ID, blockCell.Row, blockCell.Col), highlightMapTextFormat, new RectangleF(0, 100, 400, 50), touchingMapBrush);
+                            context.DrawRectangle(WorldBoxToScreen(blockBox), touchingMapBrush, 4);
+                            context.DrawText(string.Format("Block: ID: {0} Row: {1} Col: {2}", block.ID, blockCell.Row, blockCell.Col), highlightMapTextFormat, new RectangleF(0, 100, 400, 50), touchingMapBrush);
 
                             Map map = world.GetMapFrom(v, false);
                             if (map != null)
                             {
                                 Cell mapCell = World.GetMapCellFromPos(v);
                                 Box mapBox = World.GetMapBoundingBox(mapCell);
-                                target.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
-                                target.DrawText(string.Format("Map: ID: {0} Row: {1} Col: {2}", map.ID, mapCell.Row, mapCell.Col), highlightMapTextFormat, new RectangleF(0, 150, 400, 50), touchingMapBrush);
+                                context.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
+                                context.DrawText(string.Format("Map: ID: {0} Row: {1} Col: {2}", map.ID, mapCell.Row, mapCell.Col), highlightMapTextFormat, new RectangleF(0, 150, 400, 50), touchingMapBrush);
 
                                 Tile tile = world.GetTileFrom(v, false);
                                 if (tile != null)
                                 {
                                     Cell tileCell = World.GetTileCellFromPos(v);
                                     Box tileBox = World.GetTileBoundingBox(tileCell);
-                                    target.DrawRectangle(WorldBoxToScreen(tileBox), touchingMapBrush, 4);
-                                    target.DrawText(string.Format("Tile: ID: {0} Row: {1} Col: {2}", tile.ID, tileCell.Row, tileCell.Col), highlightMapTextFormat, new RectangleF(0, 200, 400, 50), touchingMapBrush);
+                                    context.DrawRectangle(WorldBoxToScreen(tileBox), touchingMapBrush, 4);
+                                    context.DrawText(string.Format("Tile: ID: {0} Row: {1} Col: {2}", tile.ID, tileCell.Row, tileCell.Col), highlightMapTextFormat, new RectangleF(0, 200, 400, 50), touchingMapBrush);
                                 }
                             }
                         }
@@ -1578,18 +1688,18 @@ namespace MMX.Engine
                 if (drawPlayerOriginAxis)
                 {
                     Vector2 v = WorldVectorToScreen(player.Origin);
-                    target.DrawLine(new Vector2(v.X, drawRect.Top), new Vector2(v.X, drawRect.Bottom), playerOriginBrush, 1);
-                    target.DrawLine(new Vector2(drawRect.Left, v.Y - 17), new Vector2(drawRect.Right, v.Y - 17), playerOriginBrush, 1);
+                    context.DrawLine(new Vector2(v.X, drawRect.Top), new Vector2(v.X, drawRect.Bottom), playerOriginBrush, 1);
+                    context.DrawLine(new Vector2(drawRect.Left, v.Y - 17), new Vector2(drawRect.Right, v.Y - 17), playerOriginBrush, 1);
                 }
 
                 if (showCheckpointBounds && currentCheckpoint != null)
-                    target.DrawRectangle(WorldBoxToScreen(currentCheckpoint.BoundingBox), checkpointBoxBrush, 4);
+                    context.DrawRectangle(WorldBoxToScreen(currentCheckpoint.BoundingBox), checkpointBoxBrush, 4);
 
                 if (showInfoText)
-                    target.DrawText(string.Format("X: {0} Y: {1} VX: {2} VY: {3} Checkpoint: {4}", (int) ((float) player.Origin.X * 256), (int) (((float) player.Origin.Y - 17) * 256), (int) ((float) player.Velocity.X * 256), (int) ((float) player.Velocity.Y * -256), currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none"), coordsTextFormat, new SharpDX.RectangleF(drawRect.Left, drawRect.Bottom - 50, drawRect.Width, 50), coordsTextBrush);
+                    context.DrawText(string.Format("X: {0} Y: {1} VX: {2} VY: {3} Checkpoint: {4}", (int) ((float) player.Origin.X * 256), (int) (((float) player.Origin.Y - 17) * 256), (int) ((float) player.Velocity.X * 256), (int) ((float) player.Velocity.Y * -256), currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none"), coordsTextFormat, new RectangleF(drawRect.Left, drawRect.Bottom - 50, drawRect.Width, 50), coordsTextBrush);
             }
 
-            target.EndDraw();
+            context.EndDraw();
         }
 
         public void Dispose()
@@ -1816,6 +1926,12 @@ namespace MMX.Engine
         {
             BusterLemon lemon = new BusterLemon(this, shooter, "X Buster Lemon", origin, direction, dashLemon, xWeaponsSpriteSheet);
             lemon.Spawn();
+        }
+
+        internal void ShootSemiCharged(Player shooter, Vector origin, Direction direction)
+        {
+            BusterSemiCharged semiCharged = new BusterSemiCharged(this, shooter, "X Buster Semi Charged", origin, direction, xWeaponsSpriteSheet);
+            semiCharged.Spawn();
         }
     }
 }

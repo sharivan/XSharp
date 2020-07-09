@@ -17,14 +17,14 @@ namespace MMX.Engine
         private int index;
         private SpriteSheet sheet; // Sprite sheet usado para gerar a animação (cada elemento do ImageList é um frame desta animação)
         private SpriteSheet.FrameSequence sequence;
-        private int initialFrameSequenceIndex; // Quadro inicial da animação
+        private int initialSequenceIndex; // Quadro inicial da animação
         private bool visible; // Indica se a animação será visivel (se ela será renderizada ou não)
         private bool animating; // Indica se a animação será dinâmica ou estática
         private FixedSingle rotation;
         private bool mirrored;
         private bool flipped;       
 
-        private int currentFrameSequenceIndex; // Quadro atual
+        private int currentSequenceIndex; // Quadro atual
         private bool animationEndFired; // Indica se o evento OnAnimationEnd da entidade associada a esta animação foi chamado desde que a animação foi completada
 
         private AnimationFrameEvent[] animationEvents;
@@ -33,8 +33,8 @@ namespace MMX.Engine
         {
             get
             {
-                Tuple<Box, Bitmap> frame = sheet.GetFrame(sequence[currentFrameSequenceIndex]);
-                return sprite.Origin + frame.Item1;
+                var frame = sequence[currentSequenceIndex];
+                return sprite.Origin + frame.BoundingBox;
             }
         }
 
@@ -50,24 +50,24 @@ namespace MMX.Engine
         /// <param name="index">Índice da animação</param>
         /// <param name="imageList">ImageList usado para gerar a animação (cada elemento do ImageList é um frame desta animação)</param>
         /// <param name="fps">Quandidade de quadros por segundo da animação</param>
-        /// <param name="initialFrame">Quadro inicial da animação</param>
+        /// <param name="initialSequenceIndex">Quadro inicial da animação</param>
         /// <param name="startVisible">Especifica se a animação iniciará visível ou não</param>
         /// <param name="startOn">Especifica se a animação começará ativa ou não</param>
         /// <param name="loop">Especifica se a animação estará em looping ou não</param>
-        public Animation(Sprite sprite, int index, SpriteSheet sheet, string frameSequenceName, FixedSingle rotation, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+        public Animation(Sprite sprite, int index, SpriteSheet sheet, string frameSequenceName, FixedSingle rotation, int initialSequenceIndex = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
         {
             this.sprite = sprite;
             this.index = index;
             this.sheet = sheet;
             sequence = sheet.GetFrameSequence(frameSequenceName);
-            initialFrameSequenceIndex = initialFrame;
+            this.initialSequenceIndex = initialSequenceIndex;
             visible = startVisible;
             animating = startOn;
             this.mirrored = mirrored;
             this.flipped = flipped;
             this.rotation = rotation;
 
-            currentFrameSequenceIndex = initialFrame; // Define o frame atual para o frame inicial
+            currentSequenceIndex = initialSequenceIndex; // Define o frame atual para o frame inicial
             animationEndFired = false;
 
             int count = sequence.Count;
@@ -84,7 +84,7 @@ namespace MMX.Engine
             writer.Write(flipped);
             writer.Write(mirrored);
 
-            writer.Write(currentFrameSequenceIndex);
+            writer.Write(currentSequenceIndex);
             writer.Write(animationEndFired);
         }
 
@@ -98,7 +98,7 @@ namespace MMX.Engine
             flipped = reader.ReadBoolean();
             mirrored = reader.ReadBoolean();
 
-            currentFrameSequenceIndex = reader.ReadInt32();
+            currentSequenceIndex = reader.ReadInt32();
             animationEndFired = reader.ReadBoolean();
         }
 
@@ -121,7 +121,7 @@ namespace MMX.Engine
             animating = true;
 
             if (startIndex != -1)
-                currentFrameSequenceIndex = initialFrameSequenceIndex + startIndex;
+                currentSequenceIndex = initialSequenceIndex + startIndex;
         }
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace MMX.Engine
         /// </summary>
         public void Reset()
         {
-            currentFrameSequenceIndex = initialFrameSequenceIndex;
+            currentSequenceIndex = initialSequenceIndex;
         }
 
         /// <summary>
@@ -189,36 +189,35 @@ namespace MMX.Engine
         /// <summary>
         /// Frame inicial da animação
         /// </summary>
-        public int InitialFrameSequenceIndex
+        public int InitialSequenceIndex
         {
             get
             {
-                return initialFrameSequenceIndex;
+                return initialSequenceIndex;
             }
             set
             {
-                initialFrameSequenceIndex = value;
+                initialSequenceIndex = value;
             }
         }
 
         /// <summary>
         /// Frame atual da animação
         /// </summary>
-        public int CurrentFrameSequenceIndex
+        public int CurrentSequenceIndex
         {
             get
             {
-                return currentFrameSequenceIndex;
+                return currentSequenceIndex;
             }
             set
             {
                 if (value >= sequence.Count)
-                    currentFrameSequenceIndex = sequence.Count - 1;
+                    currentSequenceIndex = sequence.Count - 1;
                 else
-                    currentFrameSequenceIndex = value;
+                    currentSequenceIndex = value;
 
                 animationEndFired = false;
-                //sprite.Engine.Repaint(sprite);
             }
         }
 
@@ -226,11 +225,23 @@ namespace MMX.Engine
         {
             get
             {
-                if (currentFrameSequenceIndex < 0 || currentFrameSequenceIndex > sequence.Count)
+                if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
                     return Box.EMPTY_BOX;
 
-                Box boundingBox = sheet.GetFrame(sequence[currentFrameSequenceIndex]).Item1;
+                Box boundingBox = sequence[currentSequenceIndex].BoundingBox;
                 return boundingBox;
+            }
+        }
+
+        public Box CurrentFrameCollisionBox
+        {
+            get
+            {
+                if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
+                    return Box.EMPTY_BOX;
+
+                Box collisionBox = sequence[currentSequenceIndex].CollisionBox;
+                return collisionBox;
             }
         }
 
@@ -247,7 +258,6 @@ namespace MMX.Engine
             set
             {
                 visible = value;
-                //sprite.Engine.Repaint(sprite);
             }
         }
 
@@ -274,7 +284,7 @@ namespace MMX.Engine
         {
             get
             {
-                return sequence.LoopFromFrame;
+                return sequence.LoopFromSequenceIndex;
             }
         }
 
@@ -326,12 +336,12 @@ namespace MMX.Engine
             if (!animating || animationEndFired || sequence.Count == 0)
                 return;
 
-            animationEvents[currentFrameSequenceIndex]?.Invoke(this, currentFrameSequenceIndex);
-            currentFrameSequenceIndex++;
+            animationEvents[currentSequenceIndex]?.Invoke(this, currentSequenceIndex);
+            currentSequenceIndex++;
 
-            if (currentFrameSequenceIndex >= sequence.Count) // Se chegamos no final da animação
+            if (currentSequenceIndex >= sequence.Count) // Se chegamos no final da animação
             {
-                currentFrameSequenceIndex = sequence.Count - 1;
+                currentSequenceIndex = sequence.Count - 1;
 
                 if (!animationEndFired)
                 {
@@ -339,9 +349,9 @@ namespace MMX.Engine
                     sprite.OnAnimationEnd(this);
                 }
 
-                if (sequence.LoopFromFrame != -1) // e se a animação está em looping, então o próximo frame deverá ser o primeiro frame da animação (não o frame inicial, definido por initialFrame)
+                if (sequence.LoopFromSequenceIndex != -1) // e se a animação está em looping, então o próximo frame deverá ser o primeiro frame da animação (não o frame inicial, definido por initialFrame)
                 {
-                    currentFrameSequenceIndex = sequence.LoopFromFrame;
+                    currentSequenceIndex = sequence.LoopFromSequenceIndex;
                     animationEndFired = false;
                 }
             }
@@ -357,15 +367,14 @@ namespace MMX.Engine
             if (!visible || sequence.Count == 0)
                 return;
 
-            int frameIndex = sequence[currentFrameSequenceIndex];
-            Tuple<Box, Bitmap> frame = sheet.GetFrame(frameIndex);
-            Box srcBox = frame.Item1;
-            Bitmap bitmap = frame.Item2;
+            var frame = sequence[currentSequenceIndex];
+            Box srcBox = frame.BoundingBox;
+            Bitmap bitmap = frame.Bitmap;
             
             Box drawBox = sprite.Origin + srcBox;
             Vector2 center = sprite.Engine.WorldVectorToScreen(drawBox.Origin);
 
-            Matrix3x2 lastTransform = sprite.Engine.Target.Transform;
+            Matrix3x2 lastTransform = sprite.Engine.Context.Transform;
             Matrix3x2 transform = rotation != FixedSingle.ZERO ? Matrix3x2.Rotation((float) rotation, center) : Matrix3x2.Identity;
 
             if (flipped)
@@ -378,15 +387,15 @@ namespace MMX.Engine
             else if (mirrored)
                 transform = Matrix3x2.Scaling(-1, 1, center) * transform;
 
-            sprite.Engine.Target.Transform *= transform;
-            sprite.Engine.Target.DrawBitmap(bitmap, sprite.Engine.WorldBoxToScreen(drawBox), 1, INTERPOLATION_MODE, new RectangleF(0, 0, (float) srcBox.Width, (float) srcBox.Height));
+            sprite.Engine.Context.Transform *= transform;
+            sprite.Engine.Context.DrawBitmap(bitmap, sprite.Engine.WorldBoxToScreen(drawBox), 1, INTERPOLATION_MODE, new RectangleF(0, 0, (float) srcBox.Width, (float) srcBox.Height));
             //sprite.Engine.Target.Flush();
-            sprite.Engine.Target.Transform = lastTransform;
+            sprite.Engine.Context.Transform = lastTransform;
         }
 
         public override string ToString()
         {
-            return sequence.Name + (mirrored ? " left" : " right") + (flipped ? " down" : " up");
+            return sequence.Name + (rotation != 0 ? " rotated " + rotation : "") + (mirrored ? " left" : " right") + (flipped ? " down" : " up");
         }
     }
 }

@@ -11,6 +11,7 @@ using System.Threading;
 
 using static MMX.Engine.Consts;
 using MMX.Math;
+using SharpDX;
 
 namespace Mega_Man_Xvan
 {
@@ -66,15 +67,33 @@ namespace Mega_Man_Xvan
             };
 
             // Create Device and SwapChain
-            SharpDX.Direct3D11.Device device;
-            SwapChain swapChain;
-            SharpDX.Direct3D11.Device.CreateWithSwapChain(DriverType.Hardware, DeviceCreationFlags.BgraSupport, new SharpDX.Direct3D.FeatureLevel[] { SharpDX.Direct3D.FeatureLevel.Level_10_0 }, desc, out device, out swapChain);
+            SharpDX.Direct3D11.Device.CreateWithSwapChain(
+                DriverType.Hardware,
+                DeviceCreationFlags.BgraSupport
+#if DEBUG
+                | DeviceCreationFlags.Debug
+#endif
+                ,
+                new SharpDX.Direct3D.FeatureLevel[] {
+                    SharpDX.Direct3D.FeatureLevel.Level_11_1,
+                    SharpDX.Direct3D.FeatureLevel.Level_11_0,
+                    SharpDX.Direct3D.FeatureLevel.Level_10_1,
+                    SharpDX.Direct3D.FeatureLevel.Level_10_0,
+                    SharpDX.Direct3D.FeatureLevel.Level_9_3,
+                    SharpDX.Direct3D.FeatureLevel.Level_9_2,
+                    SharpDX.Direct3D.FeatureLevel.Level_9_1 },
+                desc,
+                out SharpDX.Direct3D11.Device device,
+                out SwapChain swapChain);
 
-            var d2dFactory = new SharpDX.Direct2D1.Factory();
-            var imgFactory = new SharpDX.WIC.ImagingFactory();
+            var dxgiDevice = ComObject.As<SharpDX.DXGI.Device>(device.NativePointer);
+            var d2DDevice = new SharpDX.Direct2D1.Device(dxgiDevice);
+
+            var d2dFactory = d2DDevice.Factory; //new SharpDX.Direct2D1.Factory();
+            var wicFactory = new SharpDX.WIC.ImagingFactory();
             var dwFactory = new SharpDX.DirectWrite.Factory();
 
-            SharpDX.DXGI.Factory parentFactory = swapChain.GetParent<SharpDX.DXGI.Factory>();
+            var parentFactory = swapChain.GetParent<SharpDX.DXGI.Factory>();
             parentFactory.MakeWindowAssociation(form.Handle, WindowAssociationFlags.IgnoreAll);
 
             // New RenderTargetView from the backbuffer
@@ -83,8 +102,15 @@ namespace Mega_Man_Xvan
 
             Surface surface = backBuffer.QueryInterface<Surface>();
 
-            var d2dRenderTarget = new RenderTarget(d2dFactory, surface, new RenderTargetProperties(new PixelFormat(Format.Unknown, SharpDX.Direct2D1.AlphaMode.Premultiplied)))
+            /*var d2dRenderTarget = new RenderTarget(d2dFactory, surface, new RenderTargetProperties(new PixelFormat(Format.Unknown, SharpDX.Direct2D1.AlphaMode.Premultiplied)))
             {
+                TextAntialiasMode = TEXT_ANTIALIAS_MODE,
+                AntialiasMode = ANTIALIAS_MODE
+            };*/
+
+            var d2DDeviceContext = new SharpDX.Direct2D1.DeviceContext(surface)
+            {
+                DotsPerInch = new Size2F(form.DeviceDpi, form.DeviceDpi),
                 TextAntialiasMode = TEXT_ANTIALIAS_MODE,
                 AntialiasMode = ANTIALIAS_MODE
             };
@@ -92,7 +118,7 @@ namespace Mega_Man_Xvan
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            engine = new GameEngine(form, d2dFactory, imgFactory, dwFactory, d2dRenderTarget);
+            engine = new GameEngine(form, d2dFactory, wicFactory, dwFactory, d2DDeviceContext/*d2dRenderTarget*/);
 
             try
             {
@@ -155,6 +181,7 @@ namespace Mega_Man_Xvan
                 // Release all resources
                 renderView.Dispose();
                 backBuffer.Dispose();
+                d2DDevice.Dispose();
                 device.ImmediateContext.ClearState();
                 device.ImmediateContext.Flush();
                 device.Dispose();

@@ -357,6 +357,9 @@ namespace MMX.Engine
         /// </summary>
         public void Kill()
         {
+            markedToRemove = true;
+            engine.removedEntities.Add(this);
+
             OnDeath();
         }
 
@@ -364,23 +367,22 @@ namespace MMX.Engine
         /// Libera qualquer recurso associado a esta entidade.
         /// Utilize este método somente quando este objeto não for mais utilizado.
         /// </summary>
-        public virtual void Dispose()
+        public override void Dispose()
         {
-            markedToRemove = true;
-            engine.removedEntities.Add(this);
-
             if (!disposed)
             {
                 animations.Clear();
                 disposed = true;
             }
+
+            base.Dispose();
         }
+
         /// <summary>
         /// Evento interno que é lançado sempre que o sprite for morto
         /// </summary>
         protected virtual void OnDeath()
-        {
-            Dispose(); // Por padrão ele apenas dispões ele da memória, liberando todos os recursos associados a ele
+        {            
         }
 
         /// <summary>
@@ -390,11 +392,11 @@ namespace MMX.Engine
         /// <param name="animationIndex">Índice da animação</param>
         /// <param name="imageList">Lista de imagens contendo cada quadro usado pela animação</param>
         /// <param name="fps">Número de quadros por segundo</param>
-        /// <param name="initialFrame">Quadro inicial</param>
+        /// <param name="initialSequenceIndex">Quadro inicial</param>
         /// <param name="startVisible">true se a animação iniciará visível, false caso contrário</param>
         /// <param name="startOn">true se a animação iniciará em execução, false caso contrário</param>
         /// <param name="loop">true se a animação executará em looping, false caso contrário</param>
-        protected virtual void OnCreateAnimation(int animationIndex, ref SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn)
+        protected virtual void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
         {
         }
 
@@ -449,26 +451,30 @@ namespace MMX.Engine
                 int initialFrame = 0;
                 bool startVisible = true;
                 bool startOn = true;
+                bool add = true;
 
                 // Chama o evento OnCreateAnimation() passando os como parâmetros os dados da animação a ser criada.
                 // O evento OnCreateAnimation() poderá ou não redefinir os dados da animação.
-                OnCreateAnimation(animationIndex, ref sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn);
+                OnCreateAnimation(animationIndex, sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
 
-                if (frameSequenceName != sequence.Name)
-                    sequence = sheet.GetFrameSequence(frameSequenceName);
+                if (add)
+                {
+                    if (frameSequenceName != sequence.Name)
+                        sequence = sheet.GetFrameSequence(frameSequenceName);
 
-                // Cria-se a animação com os dados retornados de OnCreateAnimation().
-                if (directional)
-                {
-                    animations.Add(new Animation(this, animationIndex, sheet, frameSequenceName, initialFrame, startVisible, startOn));
-                    animationIndex++;
-                    animations.Add(new Animation(this, animationIndex, sheet, frameSequenceName, initialFrame, startVisible, startOn, true, false));
-                    animationIndex++;
-                }
-                else
-                {
-                    animations.Add(new Animation(this, animationIndex, sheet, frameSequenceName, initialFrame, startVisible, startOn));
-                    animationIndex++;
+                    // Cria-se a animação com os dados retornados de OnCreateAnimation().
+                    if (directional)
+                    {
+                        animations.Add(new Animation(this, animationIndex, sheet, frameSequenceName, initialFrame, startVisible, startOn));
+                        animationIndex++;
+                        animations.Add(new Animation(this, animationIndex, sheet, frameSequenceName, initialFrame, startVisible, startOn, true, false));
+                        animationIndex++;
+                    }
+                    else
+                    {
+                        animations.Add(new Animation(this, animationIndex, sheet, frameSequenceName, initialFrame, startVisible, startOn));
+                        animationIndex++;
+                    }
                 }
             }
 
@@ -1049,7 +1055,7 @@ namespace MMX.Engine
         /// <returns>Animação de índice index</returns>
         public Animation GetAnimation(int index)
         {
-            if (index == -1)
+            if (animations == null || index < 0 || index >= animations.Count)
                 return null;
 
             return animations[index];

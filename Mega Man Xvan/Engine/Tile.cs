@@ -41,7 +41,7 @@ namespace MMX.Engine
             var sizef = new Size2F(TILE_SIZE, TILE_SIZE);
             var pixelFormat = new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied);
 
-            target = new BitmapRenderTarget(world.Engine.Target, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat)
+            target = new BitmapRenderTarget(world.Engine.Context, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat)
             {
                 AntialiasMode = ANTIALIAS_MODE
             };

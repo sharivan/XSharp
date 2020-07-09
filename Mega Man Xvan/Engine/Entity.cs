@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MMX.Engine
 {
-    public abstract class Entity
+    public abstract class Entity : IDisposable
     {
         protected GameEngine engine;
         internal int index; // Posição deste objeto na lista de objetos do engine
@@ -237,6 +237,10 @@ namespace MMX.Engine
         /// Sobreponha este evento em suas classes descendentes se desejar realizar alguma operação final neste objeto antes do próximo tick do jogo.
         /// </summary>
         protected virtual void PostThink()
+        {
+        }
+
+        public virtual void Dispose()
         {
         }
     }
