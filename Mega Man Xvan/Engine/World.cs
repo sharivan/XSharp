@@ -684,7 +684,7 @@ namespace MMX.Engine
                     if (scene != null)
                     {
                         Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                        engine.Context.DrawBitmap(scene.downLayerTarget.Bitmap, engine.WorldBoxToScreen(sceneBox + delta + screenDelta), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
+                        engine.Context.DrawBitmap(scene.downLayerTarget.Bitmap, engine.WorldBoxToScreen(sceneBox + delta + screenDelta), 1, BITMAP_INTERPOLATION_MODE, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
                     }
                 }
             }
@@ -712,7 +712,7 @@ namespace MMX.Engine
                     if (scene != null)
                     {
                         Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                        engine.Context.DrawBitmap(scene.downLayerTarget.Bitmap, engine.WorldBoxToScreen(sceneBox), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
+                        engine.Context.DrawBitmap(scene.downLayerTarget.Bitmap, engine.WorldBoxToScreen(sceneBox), 1, BITMAP_INTERPOLATION_MODE, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
                     }
                 }
             }
@@ -740,7 +740,7 @@ namespace MMX.Engine
                     if (scene != null)
                     {
                         Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);                      
-                        engine.Context.DrawBitmap(scene.upLayerTarget.Bitmap, engine.WorldBoxToScreen(sceneBox), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
+                        engine.Context.DrawBitmap(scene.upLayerTarget.Bitmap, engine.WorldBoxToScreen(sceneBox), 1, BITMAP_INTERPOLATION_MODE, GameEngine.ToRectangleF(sceneBox.LeftTopOrigin() - sceneBox.LeftTop));
                     }
                 }
             }

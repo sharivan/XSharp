@@ -402,7 +402,7 @@ namespace MMX.Engine
                     target.AntialiasMode = ANTIALIAS_MODE;
 
                     target.BeginDraw();
-                    target.DrawBitmap(currentBitmap, new RectangleF(0, 0, sizef.Width, sizef.Height), 1, INTERPOLATION_MODE, GameEngine.ToRectangleF(boudingBox));
+                    target.DrawBitmap(currentBitmap, new RectangleF(0, 0, sizef.Width, sizef.Height), 1, BITMAP_INTERPOLATION_MODE, GameEngine.ToRectangleF(boudingBox));
                     target.Flush();
                     target.EndDraw();
 

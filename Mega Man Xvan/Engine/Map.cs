@@ -63,6 +63,22 @@ namespace MMX.Engine
             }
         }
 
+        public bool IsNull
+        {
+            get
+            {
+                for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
+                    for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
+                    {
+                        Tile tile = tiles[row, col];
+                        if (tile != null)
+                            return false;
+                    }
+
+                return true;
+            }
+        }
+
         internal Map(World world, int id, CollisionData collisionData = CollisionData.NONE)
         {
             this.world = world;
@@ -146,7 +162,7 @@ namespace MMX.Engine
             else if (mirrored)
                 target.Transform *= Matrix3x2.Scaling(-1, 1, center);
 
-            target.DrawBitmap(tile.target.Bitmap, dst, 1, INTERPOLATION_MODE, src);
+            target.DrawBitmap(tile.target.Bitmap, dst, 1, BITMAP_INTERPOLATION_MODE, src);
 
             //if (flipped || mirrored)
             //{

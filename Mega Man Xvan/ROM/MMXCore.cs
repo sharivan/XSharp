@@ -2888,6 +2888,7 @@ namespace MMX.ROM
         private Tile AddTile(World world, uint tile, CollisionData collisionData = CollisionData.NONE, bool transparent = false)
         {
             byte[] imageData = new byte[TILE_SIZE * TILE_SIZE * sizeof(int)];
+            bool notNull = false;
             using (MemoryStream ms = new MemoryStream(imageData))
             {
                 using (BinaryWriter writter = new BinaryWriter(ms))
@@ -2898,18 +2899,16 @@ namespace MMX.ROM
                     for (int i = 0; i < 0x40; i++, image++)
                     {
                         var v = vramCache[image];
-                        writter.Write(Transform(palCache[v | palette], v != 0 || !transparent));
+                        bool notTransparent = v != 0 || !transparent;
+                        var color = Transform(palCache[v | palette], notTransparent);
+                        notNull |= notTransparent;
+                        writter.Write(color);
                     }
                 }
             }
 
-            /*BitmapProperties properties = new BitmapProperties(new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied));
-            using (Bitmap bmp = new Bitmap(world.Engine.Target, new Size2(TILE_SIZE, TILE_SIZE), properties))
-            {
-                bmp.CopyFromMemory(imageData, sizeof(int) * TILE_SIZE);
-                Tile wtile = world.AddTile(bmp);
-                return wtile;
-            }*/
+            if (!notNull)
+                return null;
 
             Tile wtile = world.AddTile(imageData);
             return wtile;
@@ -2947,14 +2946,18 @@ namespace MMX.ROM
                 tile = AddTile(world, tileData, collisionData, true);
                 wmap.SetTile(new Vector(TILE_SIZE, TILE_SIZE), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
 
-                maps[i] = wmap;
+                maps[i] = wmap.IsNull ? null : wmap;
             }
         }
 
         private void LoadMap(World world, int x, int y, ushort index, bool background = false)
         {
             if (index < maps.Length)
-                world.SetMap(new Vector(x * MAP_SIZE, y * MAP_SIZE), maps[index], background);
+            {
+                Map map = maps[index];
+                if (map != null)
+                    world.SetMap(new Vector(x * MAP_SIZE, y * MAP_SIZE), map, background);
+            }
         }
 
         private void LoadBlock(World world, int x, int y, ushort index)

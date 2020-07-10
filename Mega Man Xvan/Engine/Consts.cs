@@ -118,7 +118,8 @@ namespace MMX.Engine
         public static readonly FixedSingle DEFAULT_CLIENT_HEIGHT = DEFAULT_DRAW_SCALE * SCREEN_HEIGHT; // Tamanho padrão da altura do retângulo do jogo
         public static readonly Vector DEFAULT_CLIENT_SIZE = new Vector(DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
         public static readonly Box DEFAULT_CLIENT_BOX = new Box(DEFAULT_DRAW_ORIGIN.X, DEFAULT_DRAW_ORIGIN.Y, DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
-        public static readonly BitmapInterpolationMode INTERPOLATION_MODE = BitmapInterpolationMode.NearestNeighbor;
+        public static readonly InterpolationMode IMAGE_INTERPOLATION_MODE = InterpolationMode.NearestNeighbor;
+        public static readonly BitmapInterpolationMode BITMAP_INTERPOLATION_MODE = BitmapInterpolationMode.NearestNeighbor;       
         public static readonly AntialiasMode ANTIALIAS_MODE = AntialiasMode.Aliased;
         public static readonly TextAntialiasMode TEXT_ANTIALIAS_MODE = TextAntialiasMode.Cleartype;
         public const bool VSYNC = false;

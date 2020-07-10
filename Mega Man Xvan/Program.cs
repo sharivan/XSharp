@@ -89,7 +89,7 @@ namespace Mega_Man_Xvan
             var dxgiDevice = ComObject.As<SharpDX.DXGI.Device>(device.NativePointer);
             var d2DDevice = new SharpDX.Direct2D1.Device(dxgiDevice);
 
-            var d2dFactory = d2DDevice.Factory; //new SharpDX.Direct2D1.Factory();
+            var d2dFactory = d2DDevice.Factory;
             var wicFactory = new SharpDX.WIC.ImagingFactory();
             var dwFactory = new SharpDX.DirectWrite.Factory();
 
@@ -102,12 +102,6 @@ namespace Mega_Man_Xvan
 
             Surface surface = backBuffer.QueryInterface<Surface>();
 
-            /*var d2dRenderTarget = new RenderTarget(d2dFactory, surface, new RenderTargetProperties(new PixelFormat(Format.Unknown, SharpDX.Direct2D1.AlphaMode.Premultiplied)))
-            {
-                TextAntialiasMode = TEXT_ANTIALIAS_MODE,
-                AntialiasMode = ANTIALIAS_MODE
-            };*/
-
             var d2DDeviceContext = new SharpDX.Direct2D1.DeviceContext(surface)
             {
                 DotsPerInch = new Size2F(form.DeviceDpi, form.DeviceDpi),
@@ -118,7 +112,7 @@ namespace Mega_Man_Xvan
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            engine = new GameEngine(form, d2dFactory, wicFactory, dwFactory, d2DDeviceContext/*d2dRenderTarget*/);
+            engine = new GameEngine(form, d2dFactory, wicFactory, dwFactory, d2DDeviceContext);
 
             try
             {

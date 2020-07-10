@@ -127,7 +127,7 @@ namespace MMX.Engine
         public void SetPixels(Bitmap source, Point offset)
         {
             target.BeginDraw();
-            target.DrawBitmap(source, new RectangleF(0, 0, TILE_SIZE, TILE_SIZE), 1, INTERPOLATION_MODE, new RectangleF(offset.X, offset.Y, TILE_SIZE, TILE_SIZE));
+            target.DrawBitmap(source, new RectangleF(0, 0, TILE_SIZE, TILE_SIZE), 1, BITMAP_INTERPOLATION_MODE, new RectangleF(offset.X, offset.Y, TILE_SIZE, TILE_SIZE));
             //target.Flush();
             target.EndDraw();
         }

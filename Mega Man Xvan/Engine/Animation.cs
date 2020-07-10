@@ -2,6 +2,7 @@
 using MMX.Math;
 using SharpDX;
 using SharpDX.Direct2D1;
+using SharpDX.Mathematics.Interop;
 using System;
 using System.IO;
 
@@ -357,6 +358,35 @@ namespace MMX.Engine
             }
         }
 
+        private static RawMatrix5x4 CreateRawMatrix5x4(float[][] values)
+        {
+            RawMatrix5x4 result = new RawMatrix5x4
+            {
+                M11 = values[0][0],
+                M12 = values[0][1],
+                M13 = values[0][2],
+                M14 = values[0][3],
+                M21 = values[1][0],
+                M22 = values[1][1],
+                M23 = values[1][2],
+                M24 = values[1][3],
+                M31 = values[2][0],
+                M32 = values[2][1],
+                M33 = values[2][2],
+                M34 = values[2][3],
+                M41 = values[3][0],
+                M42 = values[3][1],
+                M43 = values[3][2],
+                M44 = values[3][3],
+                M51 = values[4][0],
+                M52 = values[4][1],
+                M53 = values[4][2],
+                M54 = values[4][3]
+            };
+
+            return result;
+        }
+
         /// <summary>
         /// Realiza a pintura da animação
         /// </summary>
@@ -375,21 +405,44 @@ namespace MMX.Engine
             Vector2 center = sprite.Engine.WorldVectorToScreen(drawBox.Origin);
 
             Matrix3x2 lastTransform = sprite.Engine.Context.Transform;
-            Matrix3x2 transform = rotation != FixedSingle.ZERO ? Matrix3x2.Rotation((float) rotation, center) : Matrix3x2.Identity;
+
+            Matrix3x2 transform = Matrix3x2.Translation(GameEngine.ToVector2(-sprite.Engine.World.Screen.LeftTop));
+
+            float drawScale = (float) sprite.Engine.DrawScale;
+            transform *= Matrix3x2.Scaling(drawScale);
+
+            if (rotation != FixedSingle.ZERO)
+                transform *= Matrix3x2.Rotation((float) rotation, center);
 
             if (flipped)
             {
                 if (mirrored)
-                    transform = Matrix3x2.Scaling(-1, -1, center) * transform;                   
+                    transform *= Matrix3x2.Scaling(-1, -1, center);                   
                 else
-                    transform = Matrix3x2.Scaling(1, -1, center) * transform;
+                    transform *= Matrix3x2.Scaling(1, -1, center);
             }
             else if (mirrored)
-                transform = Matrix3x2.Scaling(-1, 1, center) * transform;
+                transform *= Matrix3x2.Scaling(-1, 1, center);
+
+            float brightness = 0;
+            float contrast = 1;
+
+            float[][] ptsArray =
+            {
+                new float[] {contrast, 0, 0, 0, 0}, // scale red
+                new float[] {0, contrast, 0, 0, 0}, // scale green
+                new float[] {0, 0, contrast, 0, 0}, // scale blue
+                new float[] {0, 0, 0, 1, 0}, // scale alpha
+                new float[] {brightness, brightness, brightness, 0, 1}
+            };
+
+            var effect = new SharpDX.Direct2D1.Effects.ColorMatrix(sprite.Engine.Context);
+            effect.SetInput(0, bitmap, true);
+            RawMatrix5x4 matrix = CreateRawMatrix5x4(ptsArray);
+            effect.Matrix = matrix;
 
             sprite.Engine.Context.Transform *= transform;
-            sprite.Engine.Context.DrawBitmap(bitmap, sprite.Engine.WorldBoxToScreen(drawBox), 1, INTERPOLATION_MODE, new RectangleF(0, 0, (float) srcBox.Width, (float) srcBox.Height));
-            //sprite.Engine.Target.Flush();
+            sprite.Engine.Context.DrawImage(effect, GameEngine.ToVector2(drawBox.LeftTop), IMAGE_INTERPOLATION_MODE, CompositeMode.SourceOver);
             sprite.Engine.Context.Transform = lastTransform;
         }
 

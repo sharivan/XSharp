@@ -256,6 +256,19 @@ namespace MMX.Engine
             }
         }
 
+        public FixedSingle DrawScale
+        {
+            get
+            {
+                return drawScale;
+            }
+
+            set
+            {
+                drawScale = value;
+            }
+        }
+
         public GameEngine(Form form, D2DFactory d2dFactory, ImagingFactory wicFactory, DWFactory dwFactory, DeviceContext context)
         {
             this.form = form;
@@ -1326,25 +1339,16 @@ namespace MMX.Engine
                 }
 
                 D2DBitmap bmp = CreateD2DBitmapFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.tiles.Gator_Stage_Floor_Block.png"));
-                /*world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 35, 0, 4, 40, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 30, 40, 4, 4, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 25, 44, 4, 4, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 20, 48, 4, 4, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 15, 52, 4, 4, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 10, 56, 4, 4, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 5, 60, 4, 4, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 0, 64, 4, 32, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) - 12, 64, 4, 16, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) - 10, 80, 4, 16, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 0, 96, 128, 4, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 128, 96, 4, 256, bmp, CollisionData.SOLID);
-                world.AddRectangle((int) (SCREEN_HEIGHT * 0.75f / TILESET_SIZE) + 0, (int) (SCREEN_WIDTH * 0.75f / TILESET_SIZE) - 44, 4, 48, bmp, CollisionData.SOLID);
-                world.AddRectangle(world.TileSetRowCount - 4, 0, 4, world.TileSetColCount, bmp, CollisionData.SOLID);*/
 
                 world.BeginUpdate();
 
                 Block block = world.AddBlock(bmp, CollisionData.SOLID);
-                world.FillRectangle(new Box(0, world.Height - BLOCK_SIZE, world.Width, BLOCK_SIZE), block);
+
+                if (romLoaded)
+                    world.FillRectangle(new Box(0, world.Height - BLOCK_SIZE, world.Width, BLOCK_SIZE), block);
+                else
+                    world.FillRectangle(new Box(0, 512, world.Width, BLOCK_SIZE), block);
+
                 world.EndUpdate();
 
                 Player oldPlayer = player;
