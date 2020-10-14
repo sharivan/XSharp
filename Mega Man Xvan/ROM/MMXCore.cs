@@ -2879,14 +2879,15 @@ namespace MMX.ROM
             return (byte) (i * 256.0f / 32.0f);
         }
 
-        private int Transform(int color, bool transparent)
+        private int Transform(int color, bool notTransparent)
         {
             //return !transparent ? 0 : (int) (Expand(color & 0x1F) | (Expand((color & 0x3E0) >> 5) << 8) | (Expand((color & 0x7C00) >> 10) << 16) | 0xFF000000);
-            return !transparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
+            return !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
         }
 
         private Tile AddTile(World world, uint tile, CollisionData collisionData = CollisionData.NONE, bool transparent = false)
         {
+            Color[] customPalette;
             byte[] imageData = new byte[TILE_SIZE * TILE_SIZE * sizeof(int)];
             bool notNull = false;
             using (MemoryStream ms = new MemoryStream(imageData))
@@ -2896,6 +2897,13 @@ namespace MMX.ROM
                     byte palette = (byte) ((tile >> 6) & 0x70);
                     uint image = (tile & 0x3FF) << 6;
 
+                    customPalette = new Color[16];
+                    for (int i = 0; i < 16; i++)
+                    {
+                        Color color = new Color(Transform(palCache[i | palette], true));
+                        customPalette[i] = color;
+                    }
+
                     for (int i = 0; i < 0x40; i++, image++)
                     {
                         var v = vramCache[image];
@@ -2904,12 +2912,21 @@ namespace MMX.ROM
                         notNull |= notTransparent;
                         writter.Write(color);
                     }
+
+                    /*for (int i = 0; i < 0x40; i++, image++)
+                    {
+                        var v = vramCache[image];
+                        bool notTransparent = v != 0 || !transparent;
+                        notNull |= notTransparent;
+                        writter.Write(v);
+                    }*/
                 }
             }
 
             if (!notNull)
                 return null;
 
+            //Tile wtile = world.AddTile(imageData, customPalette);
             Tile wtile = world.AddTile(imageData);
             return wtile;
         }

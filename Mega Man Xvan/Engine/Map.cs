@@ -1,9 +1,12 @@
 ﻿using MMX.Geometry;
 using MMX.Math;
+
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DirectWrite;
 using SharpDX.Mathematics.Interop;
+using SharpDX.Direct2D1.Effects;
+
 using System;
 
 using static MMX.Engine.Consts;
@@ -163,10 +166,12 @@ namespace MMX.Engine
                 target.Transform *= Matrix3x2.Scaling(-1, 1, center);
 
             target.DrawBitmap(tile.target.Bitmap, dst, 1, BITMAP_INTERPOLATION_MODE, src);
+            //var effect = new BitmapSource(world.Engine.Context);
+            //target.DrawBitmap(tile.bitmap, dst, 1, BITMAP_INTERPOLATION_MODE, src);
 
             //if (flipped || mirrored)
             //{
-                target.Flush();
+            target.Flush();
                 target.Transform = lastTransform;
             //}
         }

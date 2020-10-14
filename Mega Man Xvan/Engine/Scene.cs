@@ -1,8 +1,12 @@
 ﻿using MMX.Geometry;
+
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DXGI;
+
 using System;
+
+//using WicBitmap = SharpDX.WIC.Bitmap;
 
 using static MMX.Engine.Consts;
 
@@ -14,10 +18,10 @@ namespace MMX.Engine
         private int id;
         internal Block[,] blocks;
 
-        //internal Bitmap downLayerImage;
+        //internal WicBitmap downLayerBitmap;
         internal BitmapRenderTarget downLayerTarget;
 
-        //internal Bitmap upLayerImage;
+        //internal WicBitmap upLayerBitmap;
         internal BitmapRenderTarget upLayerTarget;
 
         private bool updating;

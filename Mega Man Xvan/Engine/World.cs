@@ -5,10 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using SharpDX;
 using SharpDX.Direct2D1;
-
-using static MMX.Engine.Consts;
 using MMX.Geometry;
 using MMX.Math;
+using SharpDX.WIC;
+
+using D2DBitmap = SharpDX.Direct2D1.Bitmap;
+
+using static MMX.Engine.Consts;
 
 namespace MMX.Engine
 {
@@ -27,6 +30,8 @@ namespace MMX.Engine
         private List<Map> mapList;
         private List<Block> blockList;
         private List<Scene> sceneList;
+
+        private List<Palette> palettes;
 
         private Scene[,] scenes;
         private Scene[,] backgroundScenes;
@@ -53,6 +58,8 @@ namespace MMX.Engine
             mapList = new List<Map>();
             blockList = new List<Block>();
             sceneList = new List<Scene>();
+
+            palettes = new List<Palette>();
 
             scenes = new Scene[sceneRowCount, sceneColCount];
             backgroundScenes = new Scene[backgroundSceneRowCount, backgroundSceneColCount];
@@ -228,19 +235,19 @@ namespace MMX.Engine
             return result;
         }*/
 
-        public Tile AddTile(Bitmap source)
+        public Tile AddTile(D2DBitmap source)
         {
             return AddTile(source, Point.Zero);
         }
 
-        public Tile AddTile(byte[] source)
+        public Tile AddTile(byte[] source, Color[] customPalette = null)
         {
-            Tile result = new Tile(this, tileList.Count, source);
+            Tile result = new Tile(this, tileList.Count, source, customPalette);
             tileList.Add(result);
             return result;
         }
 
-        public Tile AddTile(Bitmap source, Point offset)
+        public Tile AddTile(D2DBitmap source, Point offset)
         {
             Tile result = new Tile(this, tileList.Count, source, offset);
             tileList.Add(result);
@@ -276,12 +283,12 @@ namespace MMX.Engine
             return result;
         }*/
 
-        public Map AddMap(Bitmap source, CollisionData collisionData = CollisionData.NONE)
+        public Map AddMap(D2DBitmap source, CollisionData collisionData = CollisionData.NONE)
         {
             return AddMap(source, Point.Zero, collisionData);
         }
 
-        public Map AddMap(Bitmap source, Point offset, CollisionData collisionData = CollisionData.NONE)
+        public Map AddMap(D2DBitmap source, Point offset, CollisionData collisionData = CollisionData.NONE)
         {
             Map result = new Map(this, tileList.Count, source, offset, collisionData);
             mapList.Add(result);
@@ -295,7 +302,7 @@ namespace MMX.Engine
             return result;
         }
 
-        public Block AddBlock(Bitmap source, CollisionData collisionData = CollisionData.NONE)
+        public Block AddBlock(D2DBitmap source, CollisionData collisionData = CollisionData.NONE)
         {
             Block result = AddBlock();
             result.Fill(source, Point.Zero, collisionData);
@@ -368,12 +375,12 @@ namespace MMX.Engine
             return result;
         }*/
 
-        public Map AddMap(Vector pos, Bitmap source, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public Map AddMap(Vector pos, D2DBitmap source, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             return AddMap(pos, source, Point.Zero, collisionData, background);
         }
 
-        public Map AddMap(Vector pos, Bitmap source, Point offset, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public Map AddMap(Vector pos, D2DBitmap source, Point offset, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             Map result = AddMap(source, offset, collisionData);
             SetMap(pos, result, background);
@@ -387,7 +394,7 @@ namespace MMX.Engine
             return map;
         }
 
-        public void AddRectangle(Box box, Bitmap source, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public void AddRectangle(Box box, D2DBitmap source, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             int imgWidth = (int) source.Size.Width;
             int imgHeight = (int) source.Size.Height;

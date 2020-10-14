@@ -1,8 +1,10 @@
 ﻿using MMX.Geometry;
 using MMX.Math;
+
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.Mathematics.Interop;
+
 using System;
 using System.IO;
 
@@ -429,20 +431,20 @@ namespace MMX.Engine
 
             float[][] ptsArray =
             {
-                new float[] {contrast, 0, 0, 0, 0}, // scale red
-                new float[] {0, contrast, 0, 0, 0}, // scale green
-                new float[] {0, 0, contrast, 0, 0}, // scale blue
-                new float[] {0, 0, 0, 1, 0}, // scale alpha
-                new float[] {brightness, brightness, brightness, 0, 1}
+                new float[] {contrast, 0, 0, 0}, // scale red
+                new float[] {0, contrast, 0, 0}, // scale green
+                new float[] {0, 0, contrast, 0}, // scale blue
+                new float[] {0, 0, 0, 1}, // scale alpha
+                new float[] {brightness, brightness, brightness, 0}
             };
 
-            var effect = new SharpDX.Direct2D1.Effects.ColorMatrix(sprite.Engine.Context);
-            effect.SetInput(0, bitmap, true);
-            RawMatrix5x4 matrix = CreateRawMatrix5x4(ptsArray);
-            effect.Matrix = matrix;
+            //var effect = new LookupTable3D(sprite.Engine.Context);
+            //effect.SetInput(0, bitmap, true);
+            //RawMatrix5x4 matrix = CreateRawMatrix5x4(ptsArray);
+            //effect.Matrix = matrix;
 
             sprite.Engine.Context.Transform *= transform;
-            sprite.Engine.Context.DrawImage(effect, GameEngine.ToVector2(drawBox.LeftTop), IMAGE_INTERPOLATION_MODE, CompositeMode.SourceOver);
+            sprite.Engine.Context.DrawImage(bitmap, GameEngine.ToVector2(drawBox.LeftTop), IMAGE_INTERPOLATION_MODE, CompositeMode.SourceOver);
             sprite.Engine.Context.Transform = lastTransform;
         }
 
