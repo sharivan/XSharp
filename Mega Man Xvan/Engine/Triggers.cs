@@ -127,7 +127,7 @@ namespace MMX.Engine
         }
     }
 
-    public class CameraEventTrigger : AbstractTrigger
+    public class CameraLockTrigger : AbstractTrigger
     {
         private List<Vector> extensions;
 
@@ -147,13 +147,13 @@ namespace MMX.Engine
             }
         }
 
-        public CameraEventTrigger(GameEngine engine, Box boudingBox) :
+        public CameraLockTrigger(GameEngine engine, Box boudingBox) :
             base(engine, boudingBox)
         {
             extensions = new List<Vector>();
         }
 
-        public CameraEventTrigger(GameEngine engine, Box boudingBox, IEnumerable<Vector> extensions) :
+        public CameraLockTrigger(GameEngine engine, Box boudingBox, IEnumerable<Vector> extensions) :
             base(engine, boudingBox)
         {
             this.extensions = new List<Vector>(extensions);
@@ -193,11 +193,20 @@ namespace MMX.Engine
 
     public class Checkpoint : AbstractTrigger
     {
+        private int point;
         private Vector characterPos;
         private Vector cameraPos;
         private Vector backgroundPos;
         private Vector forceBackground;
         private uint scroll;
+
+        public int Point
+        {
+            get
+            {
+                return point;
+            }
+        }
 
         public Vector CharacterPos
         {
@@ -239,9 +248,10 @@ namespace MMX.Engine
             }
         }
 
-        public Checkpoint(GameEngine engine, Box boudingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll) :
+        public Checkpoint(GameEngine engine, int point, Box boudingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll) :
             base(engine, boudingBox)
         {
+            this.point = point;
             this.characterPos = characterPos;
             this.cameraPos = cameraPos;
             this.backgroundPos = backgroundPos;
@@ -282,18 +292,18 @@ namespace MMX.Engine
         {
             base.DoTrigger(obj);
 
-            if (engine.currentCheckpoint == this)
+            if (engine.CurrentCheckpoint == this)
                 return;
 
             if (!(obj is Player))
                 return;
 
-            if (engine.currentCheckpoint == null)
+            if (engine.CurrentCheckpoint == null)
                 engine.cameraConstraintsBox = BoundingBox;
             else
                 engine.cameraConstraintsBox |= BoundingBox;
 
-            engine.currentCheckpoint = this;
+            engine.CurrentCheckpoint = this;
 
             UpdateBoudingBox();
 

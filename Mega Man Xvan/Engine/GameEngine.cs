@@ -1,25 +1,24 @@
-﻿using MMX.ROM;
-using SharpDX;
-using SharpDX.Direct2D1;
-using SharpDX.WIC;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
-using SharpDX.DirectInput;
-using SharpDX.DirectWrite;
-using SharpDX.IO;
-using Types;
-using MMX.Geometry;
-using MMX.Math;
 
-using D2DFactory = SharpDX.Direct2D1.Factory;
-using DWFactory = SharpDX.DirectWrite.Factory;
-using D2DBitmap = SharpDX.Direct2D1.Bitmap;
-using DWTextAlignment = SharpDX.DirectWrite.TextAlignment;
-using WicPixelFormat = SharpDX.WIC.PixelFormat;
+using SharpDX;
+using SharpDX.Direct3D9;
+using SharpDX.DirectInput;
+using SharpDX.IO;
+
+using Types;
+
+using MMX.Math;
+using MMX.Geometry;
+using MMX.ROM;
+
+using Device9 = SharpDX.Direct3D9.Device;
+using DXSprite = SharpDX.Direct3D9.Sprite;
+using MMXBox = MMX.Geometry.Box;
 
 using static MMX.Engine.Consts;
 
@@ -27,11 +26,98 @@ namespace MMX.Engine
 {
     public class GameEngine : IDisposable
     {
+        public const VertexFormat D3DFVF_TLVERTEX = VertexFormat.Position | VertexFormat.Diffuse | VertexFormat.Texture1;
+        public const int VERTEX_SIZE = 24;
+
+        private static readonly byte[] VERTEX_SHADER_BYTECODE = new byte[]
+        {
+              0,   2, 254, 255, 254, 255,
+             20,   0,  67,  84,  65,  66,
+             28,   0,   0,   0,  35,   0,
+              0,   0,   0,   2, 254, 255,
+              0,   0,   0,   0,   0,   0,
+              0,   0,   0,   1,   0,   0,
+             28,   0,   0,   0, 118, 115,
+             95,  50,  95,  48,   0,  77,
+            105,  99, 114, 111, 115, 111,
+            102, 116,  32,  40,  82,  41,
+             32,  72,  76,  83,  76,  32,
+             83, 104,  97, 100, 101, 114,
+             32,  67, 111, 109, 112, 105,
+            108, 101, 114,  32,  49,  48,
+             46,  49,   0, 171,  81,   0,
+              0,   5,   0,   0,  15, 160,
+              0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   1,   0,
+              0,   2,   0,   0,  15, 192,
+              0,   0,   0, 160, 255, 255,
+              0,   0
+        };
+
+        private static readonly byte[] PIXEL_SHADER_BYTECODE = new byte[]
+        {
+              0,   2, 255, 255, 254, 255,
+             42,   0,  67,  84,  65,  66,
+             28,   0,   0,   0, 123,   0,
+              0,   0,   0,   2, 255, 255,
+              2,   0,   0,   0,  28,   0,
+              0,   0,   0,   1,   0,   0,
+            116,   0,   0,   0,  68,   0,
+              0,   0,   3,   0,   0,   0,
+              1,   0,   0,   0,  76,   0,
+              0,   0,   0,   0,   0,   0,
+             92,   0,   0,   0,   3,   0,
+              1,   0,   1,   0,   0,   0,
+            100,   0,   0,   0,   0,   0,
+              0,   0, 105, 109,  97, 103,
+            101,   0, 171, 171,   4,   0,
+             12,   0,   1,   0,   1,   0,
+              1,   0,   0,   0,   0,   0,
+              0,   0, 112,  97, 108, 101,
+            116, 116, 101,   0,   4,   0,
+             11,   0,   1,   0,   1,   0,
+              1,   0,   0,   0,   0,   0,
+              0,   0, 112, 115,  95,  50,
+             95,  48,   0,  77, 105,  99,
+            114, 111, 115, 111, 102, 116,
+             32,  40,  82,  41,  32,  72,
+             76,  83,  76,  32,  83, 104,
+             97, 100, 101, 114,  32,  67,
+            111, 109, 112, 105, 108, 101,
+            114,  32,  49,  48,  46,  49,
+              0, 171,  81,   0,   0,   5,
+              0,   0,  15, 160,   0,   0,
+            127,  63,   0,   0,   0,  59,
+              0,   0,   0,   0,   0,   0,
+              0,   0,  31,   0,   0,   2,
+              0,   0,   0, 128,   0,   0,
+              3, 176,  31,   0,   0,   2,
+              0,   0,   0, 144,   0,   8,
+             15, 160,  31,   0,   0,   2,
+              0,   0,   0, 144,   1,   8,
+             15, 160,  66,   0,   0,   3,
+              0,   0,  15, 128,   0,   0,
+            228, 176,   0,   8, 228, 160,
+              4,   0,   0,   4,   0,   0,
+              3, 128,   0,   0,   0, 128,
+              0,   0,   0, 160,   0,   0,
+             85, 160,  66,   0,   0,   3,
+              0,   0,  15, 128,   0,   0,
+            228, 128,   1,   8, 228, 160,
+              1,   0,   0,   2,   0,   8,
+             15, 128,   0,   0, 228, 128,
+            255, 255,   0,   0
+        };
+
         private Form form;
-        private D2DFactory d2dFactory;
-        private ImagingFactory wicFactory;
-        private DWFactory dwFactory;
-        private DeviceContext context;
+        private Device9 device;
+        private VertexBuffer vb;
+        private VertexShader vertexShader;
+        private PixelShader pixelShader;
+        private DXSprite sprite;
+
+        private Texture xSmallSS;
 
         private World world;
         internal Partition<Entity> partition;
@@ -56,19 +142,23 @@ namespace MMX.Engine
 
         private SoundCollection sounds;
         private long lastCurrentMemoryUsage;
-        private Box drawBox;
+        private MMXBox drawBox;
         private FixedSingle drawScale;
 
-        internal Checkpoint currentCheckpoint;
+        private Checkpoint currentCheckpoint;
         internal Vector extensionOrigin;
         internal List<Vector> extensions;
-        internal Box cameraConstraintsBox;
+        internal MMXBox cameraConstraintsBox;
 
         private SpriteSheet xSpriteSheet;
         private SpriteSheet xWeaponsSpriteSheet;
         private SpriteSheet xEffectsSpriteSheet;
 
-        private SolidColorBrush screenBoxBrush;
+        private Texture x1NormalPalette;
+        private Texture chargeLevel1Palette;
+        private Texture chargeLevel2Palette;
+
+        /*private SolidColorBrush screenBoxBrush;
         private SolidColorBrush hitBoxBrush;
         private SolidColorBrush hitBoxBorderBrush;
         private SolidColorBrush touchingMapBrush;
@@ -83,7 +173,7 @@ namespace MMX.Engine
         private SolidColorBrush rightColliderBrush;
 
         private TextFormat coordsTextFormat;
-        private TextFormat highlightMapTextFormat;
+        private TextFormat highlightMapTextFormat;*/
 
         private bool frameAdvance;
         private bool recording;
@@ -147,35 +237,19 @@ namespace MMX.Engine
             }
         }
 
-        public D2DFactory D2DFactory
+        public Device9 Device
         {
             get
             {
-                return d2dFactory;
+                return device;
             }
         }
 
-        public ImagingFactory WicFactory
+        public VertexBuffer VertexBuffer
         {
             get
             {
-                return wicFactory;
-            }
-        }
-
-        public DWFactory DWFactory
-        {
-            get
-            {
-                return dwFactory;
-            }
-        }
-
-        public DeviceContext Context
-        {
-            get
-            {
-                return context;
+                return vb;
             }
         }
 
@@ -269,13 +343,99 @@ namespace MMX.Engine
             }
         }
 
-        public GameEngine(Form form, D2DFactory d2dFactory, ImagingFactory wicFactory, DWFactory dwFactory, DeviceContext context)
+        public VertexShader VertexShader
+        {
+            get
+            {
+                return vertexShader;
+            }
+        }
+
+        public PixelShader PixelShader
+        {
+            get
+            {
+                return pixelShader;
+            }
+        }
+
+        public Texture X1NormalPalette
+        {
+            get
+            {
+                return x1NormalPalette;
+            }
+        }
+
+        public Texture ChargeLevel1Palette
+        {
+            get
+            {
+                return chargeLevel1Palette;
+            }
+        }
+
+        public Texture ChargeLevel2Palette
+        {
+            get
+            {
+                return chargeLevel2Palette;
+            }
+        }
+
+        public Checkpoint CurrentCheckpoint
+        {
+            get
+            {
+                return currentCheckpoint;
+            }
+
+            set
+            {
+                if (currentCheckpoint != value)
+                {
+                    currentCheckpoint = value;
+
+                    if (romLoaded)
+                    {
+                        mmx.SetLevel(INITIAL_LEVEL, (ushort) currentCheckpoint.Point);
+                        mmx.LoadTilesAndPalettes();
+                        mmx.LoadPalette(world, false);
+                        mmx.RefreshMapCache(world, false);
+                    }
+                }
+            }
+        }
+
+        public GameEngine(Form form, Device9 device)
         {
             this.form = form;
-            this.d2dFactory = d2dFactory;
-            this.wicFactory = wicFactory;
-            this.dwFactory = dwFactory;
-            this.context = context;
+            this.device = device;
+
+            ShaderBytecode function = new ShaderBytecode(VERTEX_SHADER_BYTECODE);
+            vertexShader = new VertexShader(device, function);
+
+            function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
+            pixelShader = new PixelShader(device, function);
+
+            device.VertexShader = null;
+            device.PixelShader = null;
+            device.VertexFormat = D3DFVF_TLVERTEX;
+
+            vb = new VertexBuffer(device, VERTEX_SIZE * 4, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
+
+            device.SetRenderState(RenderState.ZEnable, false);
+            device.SetRenderState(RenderState.Lighting, false);
+            device.SetRenderState(RenderState.AlphaBlendEnable, true);
+            device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
+            device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
+            device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.Modulate);
+            device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+            device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+            sprite = new DXSprite(device);
+
+            SetupQuad(vb);
 
             noCameraConstraints = NO_CAMERA_CONSTRAINTS;
 
@@ -288,11 +448,11 @@ namespace MMX.Engine
             keyboard.Acquire();
 
             var joystickGuid = Guid.Empty;
-            foreach (var deviceInstance in directInput.GetDevices(DeviceType.Gamepad, DeviceEnumerationFlags.AllDevices))
+            foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Gamepad, DeviceEnumerationFlags.AllDevices))
                 joystickGuid = deviceInstance.InstanceGuid;
 
             if (joystickGuid == Guid.Empty)
-                foreach (var deviceInstance in directInput.GetDevices(DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
+                foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
                     joystickGuid = deviceInstance.InstanceGuid;
 
             if (joystickGuid != Guid.Empty)
@@ -302,7 +462,7 @@ namespace MMX.Engine
                 joystick.Acquire();
             }
 
-            screenBoxBrush = new SolidColorBrush(context, new Color4(1, 1, 0, 0.5F));
+            /*screenBoxBrush = new SolidColorBrush(context, new Color4(1, 1, 0, 0.5F));
             hitBoxBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 0.5F));
             hitBoxBorderBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 1));
             touchingMapBrush = new SolidColorBrush(context, new Color4(0, 0, 1, 1));
@@ -325,7 +485,7 @@ namespace MMX.Engine
             {
                 TextAlignment = DWTextAlignment.Leading,
                 ParagraphAlignment = ParagraphAlignment.Center
-            };
+            };*/
 
             world = new World(this, 32, 32);
             partition = new Partition<Entity>(world.BoundingBox, world.SceneRowCount, world.SceneColCount);
@@ -343,9 +503,13 @@ namespace MMX.Engine
             UpdateScale();
 
             Vector normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3);
-            Box normalCollisionBox = new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
+            MMXBox normalCollisionBox = new MMXBox(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
             Vector dashingOffset = new Vector(DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT + 3);
-            Box dashingCollisionBox = new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
+            MMXBox dashingCollisionBox = new MMXBox(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
+
+            x1NormalPalette = CreatePalette(X1_NORMAL_PALETTE);
+            chargeLevel1Palette = CreatePalette(CHARGE_LEVEL_1_PALETTE);
+            chargeLevel2Palette = CreatePalette(CHARGE_LEVEL_2_PALETTE);
 
             xSpriteSheet = new SpriteSheet(this, "X", true, true);
             xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons", true, true);
@@ -356,6 +520,11 @@ namespace MMX.Engine
                 var newBitmap = CreateD2DBitmapFromStream(stream);
                 xSpriteSheet.CurrentBitmap = newBitmap;
             }
+
+            xSpriteSheet.CurrentPalette = x1NormalPalette;
+
+            //xSmallSS = CreateD2DBitmapFromFile("resources\\sprites\\X\\X[small].png");
+            //xSpriteSheet.CurrentBitmap = xSmallSS;
 
             var sequence = xSpriteSheet.AddFrameSquence("Spawn");
             sequence.BoudingBoxOriginOffset = normalOffset;
@@ -567,11 +736,11 @@ namespace MMX.Engine
 
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.sprites.X.Weapons.png"))
             {
-                var newBitmap = CreateD2DBitmapFromStream(stream);
-                xWeaponsSpriteSheet.CurrentBitmap = newBitmap;
+                var texture = CreateD2DBitmapFromStream(stream);
+                xWeaponsSpriteSheet.CurrentBitmap = texture;
             }
 
-            Box lemonCollisionBox = new Box(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
+            MMXBox lemonCollisionBox = new MMXBox(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
 
             sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShot", 0);
             sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
@@ -585,9 +754,9 @@ namespace MMX.Engine
             sequence.AddFrame(2, 2, 154, 249, 13, 13, 2);
             sequence.AddFrame(3, 3, 172, 248, 15, 15);
 
-            Box semiChargedShotCollisionBox1 = new Box(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5));
-            Box semiChargedShotCollisionBox2 = new Box(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5));
-            Box semiChargedShotCollisionBox3 = new Box(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5));
+            MMXBox semiChargedShotCollisionBox1 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5));
+            MMXBox semiChargedShotCollisionBox2 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5));
+            MMXBox semiChargedShotCollisionBox3 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5));
 
             sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotFiring");
             sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
@@ -658,8 +827,8 @@ namespace MMX.Engine
 
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.sprites.X.Effects.png"))
             {
-                var newBitmap = CreateD2DBitmapFromStream(stream);
-                xEffectsSpriteSheet.CurrentBitmap = newBitmap;
+                var texture = CreateD2DBitmapFromStream(stream);
+                xEffectsSpriteSheet.CurrentBitmap = texture;
             }
 
             xEffectsSpriteSheet.ReleaseCurrentBitmap();
@@ -684,38 +853,125 @@ namespace MMX.Engine
                 mmx.UpdateVRAMCache();
         }
 
-        public D2DBitmap CreateD2DBitmapFromFile(string filePath)
+        public Texture CreateD2DBitmapFromFile(string filePath)
         {
-            using (var fileStream = new NativeFileStream(
-                filePath,
-                NativeFileMode.Open,
-                NativeFileAccess.Read))
-            {
-                return CreateD2DBitmapFromStream(fileStream);
-            }
+            Texture result = Texture.FromFile(device, filePath, Usage.None, Pool.SystemMemory);
+            return result;
         }
 
-        public D2DBitmap CreateD2DBitmapFromStream(Stream stream, Color[] customPalette = null)
+        public Texture CreateD2DBitmapFromStream(Stream stream)
         {
-            return CreateD2DBitmapFromStream(stream, WicPixelFormat.Format32bppPRGBA, WicPixelFormat.Format32bppPRGBA, customPalette);
+            Texture result = Texture.FromStream(device, stream, Usage.None, Pool.SystemMemory);
+            return result;
         }
 
-        public D2DBitmap CreateD2DBitmapFromStream(Stream stream, Guid srcFormat, Guid dstFormat, Color[] customPalette = null)
+        private static void WriteVertex(DataStream vbData, float x, float y, float u, float v)
         {
-            BitmapDecoder bitmapDecoder = new BitmapDecoder(wicFactory, stream, srcFormat, DecodeOptions.CacheOnDemand);
-            BitmapFrameDecode frame = bitmapDecoder.GetFrame(0);
-            FormatConverter converter = new FormatConverter(wicFactory);
+            vbData.Write(x);
+            vbData.Write(y);
+            vbData.Write(0f);
+            vbData.Write(0xffffffff);
+            vbData.Write(u);
+            vbData.Write(v);
+        }
 
-            if (customPalette != null)
+        public static void SetupQuad(VertexBuffer vb)
+        {
+            DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, LockFlags.None);
+
+            WriteVertex(vbData, 0, 0, 0, 0);
+            WriteVertex(vbData, 1, 0, 1, 0);
+            WriteVertex(vbData, 1, -1, 1, 1);
+            WriteVertex(vbData, 0, -1, 0, 1);
+
+            vb.Unlock();
+        }
+
+        public void RenderTexture(Texture texture, Texture palette, MMXBox box, Matrix transform)
+        {
+            RectangleF rDest = WorldBoxToScreen(box);
+
+            float x = rDest.Left;
+            float y = rDest.Top;
+
+            Matrix matScaling = Matrix.Scaling(1, 1, 1);
+            Matrix matTranslation = Matrix.Translation(x, y, 0);
+            Matrix matTransform = matScaling * matTranslation * transform;
+
+            sprite.Begin();
+
+            device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
+            device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+
+            device.VertexShader = null;
+
+            if (palette != null)
             {
-                Palette palette = new Palette(wicFactory);
-                palette.Initialize(customPalette);
-                converter.Initialize(frame, dstFormat, BitmapDitherType.None, palette, 0, BitmapPaletteType.Custom);
+                device.PixelShader = pixelShader;
+                device.SetTexture(1, palette);
             }
             else
-                converter.Initialize(frame, dstFormat);
+                device.PixelShader = null;
 
-            return D2DBitmap.FromWicBitmap(context, converter);
+            sprite.Transform = matTransform;
+            sprite.Draw(texture, Color.FromRgba(0xffffffff));
+
+            sprite.End();
+
+            /*device.SetStreamSource(0, vb, 0, VERTEX_SIZE);
+
+            float x = rDest.Left - (float) world.Screen.Width * 0.5f;
+            float y = -rDest.Top + (float) world.Screen.Height * 0.5f;
+
+            Matrix matScaling = Matrix.Scaling(rDest.Width, rDest.Height, 1);
+            Matrix matTranslation = Matrix.Translation(x, y, 1);
+            Matrix matTransform = matScaling * matTranslation * transform;
+
+            device.SetTransform(TransformState.World, matTransform);
+            device.SetTexture(0, texture);
+
+            device.VertexShader = null;
+
+            if (palette != null)
+            {
+                device.PixelShader = pixelShader;
+                device.SetTexture(1, palette);
+            }
+            else
+                device.PixelShader = null;
+
+            device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
+            device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+            device.DrawPrimitives(PrimitiveType.TriangleFan, 0, 2);*/
+        }
+
+        public void PaintTexture(Texture texture, MMXBox box, Matrix transform)
+        {
+            RenderTexture(texture, null, box, transform);
+        }
+
+        public void PaintTexture(Texture texture, Vector v, Matrix transform)
+        {
+            var description = texture.GetLevelDescription(0);
+            RenderTexture(texture, null, new MMXBox(v.X, v.Y, description.Width, description.Height), transform);
+        }
+
+        public void PaintTexture(Texture texture, FixedSingle x, FixedSingle y, Matrix transform)
+        {
+            var description = texture.GetLevelDescription(0);
+            RenderTexture(texture, null, new MMXBox(x, y, description.Width, description.Height), transform);
+        }
+
+        public void PaintTexture(Texture texture, Texture palette, Vector v, Matrix transform)
+        {
+            var description = texture.GetLevelDescription(0);
+            RenderTexture(texture, palette, new MMXBox(v.X, v.Y, description.Width, description.Height), transform);
+        }
+
+        public void PaintTexture(Texture texture, Texture palette, FixedSingle x, FixedSingle y, Matrix transform)
+        {
+            var description = texture.GetLevelDescription(0);
+            RenderTexture(texture, palette, new MMXBox(x, y, description.Width, description.Height), transform);
         }
 
         private void OnFrame()
@@ -1182,19 +1438,24 @@ namespace MMX.Engine
             return new Vector2((float) v.X, (float) v.Y);
         }
 
-        public static Rectangle ToRectangle(Box box)
+        public static Vector3 ToVector3(Vector v)
+        {
+            return new Vector3((float) v.X, (float) v.Y, 0);
+        }
+
+        public static Rectangle ToRectangle(MMXBox box)
         {
             return new Rectangle((int) box.Left, (int) box.Top, (int) box.Width, (int) box.Height);
         }
 
-        public static RectangleF ToRectangleF(Box box)
+        public static RectangleF ToRectangleF(MMXBox box)
         {
             return new RectangleF((float) box.Left, (float) box.Top, (float) box.Width, (float) box.Height);
         }
 
         public Vector2 WorldVectorToScreen(Vector v)
         {
-            return ToVector2((v - world.Screen.LeftTop) * drawScale + drawBox.Origin);
+            return ToVector2(((v - world.Screen.LeftTop.Round()) * drawScale + drawBox.Origin));
         }
 
         public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
@@ -1217,9 +1478,9 @@ namespace MMX.Engine
             return (new Vector(v.X, v.Y) - drawBox.Origin) / drawScale + world.Screen.LeftTop;
         }
 
-        public RectangleF WorldBoxToScreen(Box box)
+        public RectangleF WorldBoxToScreen(MMXBox box)
         {
-            return ToRectangleF((box.LeftTopOrigin() - world.Screen.LeftTop) * drawScale + drawBox.Origin);
+            return ToRectangleF(((box.LeftTopOrigin() - world.Screen.LeftTop.Round()) * drawScale + drawBox.Origin));
         }
 
         public long GetEngineTime()
@@ -1312,6 +1573,7 @@ namespace MMX.Engine
             world.Screen.LeftTop = cameraPos;
 
             player = new Player(this, "X", spawnPos, xSpriteSheet);
+            player.Palette = x1NormalPalette;
             player.Spawn();
 
             world.Screen.FocusOn = player;
@@ -1338,18 +1600,7 @@ namespace MMX.Engine
                     mmx.LoadToWorld(world, true);
                 }
 
-                D2DBitmap bmp = CreateD2DBitmapFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.tiles.Gator_Stage_Floor_Block.png"));
-
-                world.BeginUpdate();
-
-                Block block = world.AddBlock(bmp, CollisionData.SOLID);
-
-                if (romLoaded)
-                    world.FillRectangle(new Box(0, world.Height - BLOCK_SIZE, world.Width, BLOCK_SIZE), block);
-                else
-                    world.FillRectangle(new Box(0, 512, world.Width, BLOCK_SIZE), block);
-
-                world.EndUpdate();
+                world.Tessellate();
 
                 Player oldPlayer = player;
                 SpawnPlayer();
@@ -1413,10 +1664,10 @@ namespace MMX.Engine
             }*/
             drawOrigin = Vector.NULL_VECTOR;
 
-            drawBox = new Box(drawOrigin.X, drawOrigin.Y, width, height);
+            drawBox = new MMXBox(drawOrigin.X, drawOrigin.Y, width, height);
         }
 
-        private void DrawLine(FixedSingle x1, FixedSingle y1, FixedSingle x2, FixedSingle y2, SolidColorBrush brush)
+        /*private void DrawLine(FixedSingle x1, FixedSingle y1, FixedSingle x2, FixedSingle y2, SolidColorBrush brush)
         {
             context.DrawLine(WorldVectorToScreen(x1, y1), WorldVectorToScreen(x2, y2), brush);
         }
@@ -1436,7 +1687,7 @@ namespace MMX.Engine
             context.DrawLine(WorldVectorToScreen(v1), WorldVectorToScreen(v2), brush, strokeWidth);
         }
 
-        private void DrawSlopeMap(Box box, RightTriangle triangle, float strokeWidth)
+        private void DrawSlopeMap(MMXBox box, RightTriangle triangle, float strokeWidth)
         {
             Vector tv1 = triangle.Origin;
             Vector tv2 = triangle.HCathetusVertex;
@@ -1470,7 +1721,7 @@ namespace MMX.Engine
 
         private void DrawHighlightMap(int row, int col, CollisionData collisionData)
         {
-            Box mapBox = World.GetMapBoundingBox(row, col);
+            MMXBox mapBox = World.GetMapBoundingBox(row, col);
             if (World.IsSolidBlock(collisionData))
                 context.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
             else if (World.IsSlope(collisionData))
@@ -1480,12 +1731,12 @@ namespace MMX.Engine
             }
         }
 
-        private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, Box collisionBox, bool ignoreSlopes = false)
+        private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, MMXBox collisionBox, bool ignoreSlopes = false)
         {
-            Box halfCollisionBox1 = new Box(collisionBox.Left, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
-            Box halfCollisionBox2 = new Box(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
+            MMXBox halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
+            MMXBox halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
 
-            Box mapBox = World.GetMapBoundingBox(row, col);
+            MMXBox mapBox = World.GetMapBoundingBox(row, col);
             if (World.IsSolidBlock(collisionData) && (mapBox & collisionBox).Area > 0)
                 context.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
             else if (!ignoreSlopes && World.IsSlope(collisionData))
@@ -1497,7 +1748,7 @@ namespace MMX.Engine
             }
         }
 
-        private void CheckAndDrawTouchingMaps(Box collisionBox, bool ignoreSlopes = false)
+        private void CheckAndDrawTouchingMaps(MMXBox collisionBox, bool ignoreSlopes = false)
         {
             Cell start = World.GetMapCellFromPos(collisionBox.LeftTop);
             Cell end = World.GetMapCellFromPos(collisionBox.RightBottom);
@@ -1540,26 +1791,34 @@ namespace MMX.Engine
                     if (map != null)
                         CheckAndDrawTouchingMap(row, col, map.CollisionData, collisionBox, ignoreSlopes);
                 }
-        }
+        }*/
 
         public void Render()
         {
             OnFrame();
 
-            context.BeginDraw();
-            context.Transform = Matrix3x2.Identity;
-            context.Clear(Color.Black);
+            device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
+            device.BeginScene();
+
+            Matrix orthoLH = Matrix.OrthoLH(SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f, 10.0f);
+            device.SetTransform(TransformState.Projection, orthoLH);
+            device.SetTransform(TransformState.World, Matrix.Identity);
+            device.SetTransform(TransformState.View, Matrix.Identity);
 
             if (world != null)
             {
+                //Vector screenLT = world.Screen.LeftTop;
+                //device.Viewport = new Viewport((int) screenLT.X, (int) screenLT.Y, (int) world.Screen.Width, (int) world.Screen.Height);
+
                 if (drawBackground)
                 {
-                    world.RenderBackground();
+                    world.RenderBackground(false);
+                    world.RenderBackground(true);
                 }
 
                 if (drawDownLayer)
                 {
-                    world.RenderDownLayer();
+                    world.RenderForeground(false);
                 }
 
                 if (drawSprites)
@@ -1576,16 +1835,16 @@ namespace MMX.Engine
                         {
                             sprite.Paint();
 
-                            if (drawCollisionBox)
+                            /*if (drawCollisionBox)
                             {
-                                Box collisionBox = sprite.CollisionBox;
+                                MMXBox collisionBox = sprite.CollisionBox;
                                 context.FillRectangle(WorldBoxToScreen(collisionBox), hitBoxBrush);
                                 context.DrawRectangle(WorldBoxToScreen(collisionBox), hitBoxBorderBrush, 1);
-                            }
+                            }*/
                         }
                         else
                         {
-                            AbstractTrigger trigger = obj as AbstractTrigger;
+                            /*AbstractTrigger trigger = obj as AbstractTrigger;
                             if (trigger != null && DEBUG_SHOW_TRIGGERS)
                             {
                                 context.DrawRectangle(WorldBoxToScreen(trigger.BoundingBox), triggerBoxBrush, 4);
@@ -1599,7 +1858,7 @@ namespace MMX.Engine
                                         context.DrawLine(WorldVectorToScreen(extensionOrigin), WorldVectorToScreen(extensionOrigin + extension), cameraEventExtensionBrush, 4);
                                     }
                                 }
-                            }
+                            }*/
                         }
                     }
                 }
@@ -1612,12 +1871,15 @@ namespace MMX.Engine
 
                 if (drawUpLayer)
                 {
-                    world.RenderUpLayer();
+                    world.RenderForeground(true);
                 }
 
-                if (drawTouchingMapBounds)
+                //PaintTexture(world.foregroundTilemap, world.Palette, new MMXBox(0, 0, World.TILEMAP_WIDTH, World.TILEMAP_HEIGHT), 0, false, false);
+                //PaintTexture(world.backgroundTilemap, world.Palette, new MMXBox(0, World.TILEMAP_WIDTH, World.TILEMAP_WIDTH, World.TILEMAP_HEIGHT), -2, false, false);
+
+                /*if (drawTouchingMapBounds)
                 {
-                    Box collisionBox = player.CollisionBox;
+                    MMXBox collisionBox = player.CollisionBox;
 
                     CheckAndDrawTouchingMaps(collisionBox + Vector.LEFT_VECTOR, true);
                     CheckAndDrawTouchingMaps(collisionBox + Vector.UP_VECTOR);
@@ -1627,7 +1889,7 @@ namespace MMX.Engine
 
                 if (drawCollisionBox)
                 {
-                    Box collisionBox = player.CollisionBox;
+                    MMXBox collisionBox = player.CollisionBox;
                     context.FillRectangle(WorldBoxToScreen(collisionBox), hitBoxBrush);
                     context.DrawRectangle(WorldBoxToScreen(collisionBox), hitBoxBorderBrush, 1);
                 }
@@ -1651,7 +1913,7 @@ namespace MMX.Engine
                     if (scene != null)
                     {
                         Cell sceneCell = World.GetSceneCellFromPos(v);
-                        Box sceneBox = World.GetSceneBoundingBox(sceneCell);
+                        MMXBox sceneBox = World.GetSceneBoundingBox(sceneCell);
                         context.DrawRectangle(WorldBoxToScreen(sceneBox), touchingMapBrush, 4);
                         context.DrawText(string.Format("Scene: ID: {0} Row: {1} Col: {2}", scene.ID, sceneCell.Row, sceneCell.Col), highlightMapTextFormat, new RectangleF(0, 50, 400, 50), touchingMapBrush);
 
@@ -1659,7 +1921,7 @@ namespace MMX.Engine
                         if (block != null)
                         {
                             Cell blockCell = World.GetBlockCellFromPos(v);
-                            Box blockBox = World.GetBlockBoundingBox(blockCell);
+                            MMXBox blockBox = World.GetBlockBoundingBox(blockCell);
                             context.DrawRectangle(WorldBoxToScreen(blockBox), touchingMapBrush, 4);
                             context.DrawText(string.Format("Block: ID: {0} Row: {1} Col: {2}", block.ID, blockCell.Row, blockCell.Col), highlightMapTextFormat, new RectangleF(0, 100, 400, 50), touchingMapBrush);
 
@@ -1667,7 +1929,7 @@ namespace MMX.Engine
                             if (map != null)
                             {
                                 Cell mapCell = World.GetMapCellFromPos(v);
-                                Box mapBox = World.GetMapBoundingBox(mapCell);
+                                MMXBox mapBox = World.GetMapBoundingBox(mapCell);
                                 context.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
                                 context.DrawText(string.Format("Map: ID: {0} Row: {1} Col: {2}", map.ID, mapCell.Row, mapCell.Col), highlightMapTextFormat, new RectangleF(0, 150, 400, 50), touchingMapBrush);
 
@@ -1675,21 +1937,21 @@ namespace MMX.Engine
                                 if (tile != null)
                                 {
                                     Cell tileCell = World.GetTileCellFromPos(v);
-                                    Box tileBox = World.GetTileBoundingBox(tileCell);
+                                    MMXBox tileBox = World.GetTileBoundingBox(tileCell);
                                     context.DrawRectangle(WorldBoxToScreen(tileBox), touchingMapBrush, 4);
                                     context.DrawText(string.Format("Tile: ID: {0} Row: {1} Col: {2}", tile.ID, tileCell.Row, tileCell.Col), highlightMapTextFormat, new RectangleF(0, 200, 400, 50), touchingMapBrush);
                                 }
                             }
                         }
                     }
-                }
+                }*/
 
                 RectangleF drawRect = RenderRectangle;
 
                 //if (DEBUG_DRAW_BOX)
                 //    target.DrawRectangle(drawRect, screenBoxBrush, 4);
 
-                if (drawPlayerOriginAxis)
+                /*if (drawPlayerOriginAxis)
                 {
                     Vector2 v = WorldVectorToScreen(player.Origin);
                     context.DrawLine(new Vector2(v.X, drawRect.Top), new Vector2(v.X, drawRect.Bottom), playerOriginBrush, 1);
@@ -1700,10 +1962,11 @@ namespace MMX.Engine
                     context.DrawRectangle(WorldBoxToScreen(currentCheckpoint.BoundingBox), checkpointBoxBrush, 4);
 
                 if (showInfoText)
-                    context.DrawText(string.Format("X: {0} Y: {1} VX: {2} VY: {3} Checkpoint: {4}", (int) ((float) player.Origin.X * 256), (int) (((float) player.Origin.Y - 17) * 256), (int) ((float) player.Velocity.X * 256), (int) ((float) player.Velocity.Y * -256), currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none"), coordsTextFormat, new RectangleF(drawRect.Left, drawRect.Bottom - 50, drawRect.Width, 50), coordsTextBrush);
+                    context.DrawText(string.Format("X: {0} Y: {1} VX: {2} VY: {3} Checkpoint: {4}", (int) ((float) player.Origin.X * 256), (int) (((float) player.Origin.Y - 17) * 256), (int) ((float) player.Velocity.X * 256), (int) ((float) player.Velocity.Y * -256), currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none"), coordsTextFormat, new RectangleF(drawRect.Left, drawRect.Bottom - 50, drawRect.Width, 50), coordsTextBrush);*/
             }
 
-            context.EndDraw();
+            device.EndScene();
+            device.Present();
         }
 
         public void Dispose()
@@ -1724,22 +1987,22 @@ namespace MMX.Engine
             return world.CheckCollision(collisionBox, dir, ignore);
         }*/
 
-        public CollisionFlags GetTouchingFlags(Box collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             return world.GetTouchingFlags(collisionBox, dir, ignore, preciseCollisionCheck);
         }
 
-        public CollisionFlags GetTouchingFlags(Box collisionBox, Vector dir, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             return world.GetTouchingFlags(collisionBox, dir, out slopeTriangle, ignore, preciseCollisionCheck);
         }
 
-        public CollisionFlags GetTouchingFlags(Box collisionBox, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             return world.GetTouchingFlags(collisionBox, dir, placements, ignore, preciseCollisionCheck);
         }
 
-        public CollisionFlags GetTouchingFlags(Box collisionBox, Vector dir, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             return world.GetTouchingFlags(collisionBox, dir, placements, out slopeTriangle, ignore, preciseCollisionCheck);
         }
@@ -1754,37 +2017,37 @@ namespace MMX.Engine
             return world.MoveContactSolid(box, dir, out slope, maxDistance, maskSize, ignore);
         }*/
 
-        public Box MoveContactFloor(Box box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public MMXBox MoveContactFloor(MMXBox box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return world.MoveContactFloor(box, maxDistance, maskSize, ignore);
         }
 
-        public Box MoveContactFloor(Box box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public MMXBox MoveContactFloor(MMXBox box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return world.MoveContactFloor(box, out slope, maxDistance, maskSize, ignore);
         }
 
-        public CollisionFlags GetCollisionFlags(Box collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
         {
             return world.GetCollisionFlags(collisionBox, ignore, preciseCollisionCheck, side);
         }
 
-        public CollisionFlags GetCollisionFlags(Box collisionBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
         {
             return world.GetCollisionFlags(collisionBox, out slope, ignore, preciseCollisionCheck, side);
         }
 
-        public CollisionFlags GetCollisionFlags(Box collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
         {
             return world.GetCollisionFlags(collisionBox, placements, ignore, preciseCollisionCheck, side);
         }
 
-        public CollisionFlags GetCollisionFlags(Box collisionBox, List<CollisionPlacement> placements, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
         {
             return world.GetCollisionFlags(collisionBox, placements, out slope, ignore, preciseCollisionCheck, side);
         }
 
-        public CollisionFlags ComputedLandedState(Box box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        public CollisionFlags ComputedLandedState(MMXBox box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
             return world.ComputedLandedState(box, out slope, maskSize, ignore);
         }
@@ -1798,7 +2061,7 @@ namespace MMX.Engine
                 writer.Write(seedArray[i]);
 
             if (currentCheckpoint != null)
-                writer.Write(currentCheckpoint.Index);
+                writer.Write(currentCheckpoint.Point);
 
             cameraConstraintsBox.Write(writer);
 
@@ -1826,7 +2089,7 @@ namespace MMX.Engine
             int checkPointIndex = reader.ReadInt32();
             currentCheckpoint = checkPointIndex != -1 ? (Checkpoint) entities[checkPointIndex] : null;
 
-            cameraConstraintsBox = new Box(reader);
+            cameraConstraintsBox = new MMXBox(reader);
 
             gameOver = reader.ReadBoolean();
             currentStageMusic = reader.ReadString();
@@ -1881,16 +2144,16 @@ namespace MMX.Engine
             }
         }
 
-        public Checkpoint AddCheckpoint(Box boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
+        public Checkpoint AddCheckpoint(int index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
         {
-            Checkpoint checkpoint = new Checkpoint(this, boundingBox, characterPos, cameraPos, backgroundPos, forceBackground, scroll);
+            Checkpoint checkpoint = new Checkpoint(this, index, boundingBox, characterPos, cameraPos, backgroundPos, forceBackground, scroll);
             addedEntities.Add(checkpoint);
             return checkpoint;
         }
 
-        public CameraEventTrigger AddCameraEventTrigger(Box boundingBox, IEnumerable<Vector> extensions)
+        public CameraLockTrigger AddCameraEventTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
         {
-            CameraEventTrigger trigger = new CameraEventTrigger(this, boundingBox, extensions);
+            CameraLockTrigger trigger = new CameraLockTrigger(this, boundingBox, extensions);
             addedEntities.Add(trigger);
             return trigger;
         }
@@ -1936,6 +2199,131 @@ namespace MMX.Engine
         {
             BusterSemiCharged semiCharged = new BusterSemiCharged(this, shooter, "X Buster Semi Charged", origin, direction, xWeaponsSpriteSheet);
             semiCharged.Spawn();
+        }
+
+        public static void WriteTriangle(DataStream vbData, Vector r0, Vector r1, Vector r2, Vector t0, Vector t1, Vector t2)
+        {
+            WriteVertex(vbData, (float) r0.X, (float) r0.Y, (float) t0.X, (float) t0.Y);
+            WriteVertex(vbData, (float) r1.X, (float) r1.Y, (float) t1.X, (float) t1.Y);
+            WriteVertex(vbData, (float) r2.X, (float) r2.Y, (float) t2.X, (float) t2.Y);
+        }
+
+        public static void WriteSquare(DataStream vbData, Vector vSource, Vector vDest, Vector srcSize, Vector dstSize)
+        {
+            if (vSource.X < 0 || vSource.X > 1 || vSource.Y < 0 || vSource.Y > 1)
+                throw new Exception();
+
+            Vector r0 = new Vector(vDest.X, vDest.Y);
+            Vector r1 = new Vector(vDest.X + dstSize.X, vDest.Y);
+            Vector r2 = new Vector(vDest.X + dstSize.X, vDest.Y - dstSize.Y);
+            Vector r3 = new Vector(vDest.X, vDest.Y - dstSize.Y);
+
+            Vector t0 = new Vector(vSource.X, vSource.Y);
+            Vector t1 = new Vector(vSource.X + srcSize.X, vSource.Y);
+            Vector t2 = new Vector(vSource.X + srcSize.X, vSource.Y + srcSize.Y);
+            Vector t3 = new Vector(vSource.X, vSource.Y + srcSize.Y);
+
+            if (t0.X < 0 || t0.X > 1 || t0.Y < 0 || t0.Y > 1)
+                throw new Exception();
+
+            if (t1.X < 0 || t1.X > 1 || t1.Y < 0 || t1.Y > 1)
+                throw new Exception();
+
+            if (t2.X < 0 || t2.X > 1 || t2.Y < 0 || t2.Y > 1)
+                throw new Exception();
+
+            if (t3.X < 0 || t3.X > 1 || t3.Y < 0 || t3.Y > 1)
+                throw new Exception();
+
+            WriteTriangle(vbData, r0, r1, r2, t0, t1, t2);
+            WriteTriangle(vbData, r0, r2, r3, t0, t2, t3);
+        }
+
+        public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, Texture texture, Texture palette, MMXBox box)
+        {
+            device.SetStreamSource(0, vb, 0, vertexSize);
+
+            RectangleF rDest = WorldBoxToScreen(box);
+
+            float x = rDest.Left - (float) world.Screen.Width * 0.5f;
+            float y = -rDest.Top + (float) world.Screen.Height * 0.5f;
+
+            Matrix matScaling = Matrix.Scaling(1, 1, 1);
+            Matrix matTranslation = Matrix.Translation(x, y, 1);
+            Matrix matTransform = matScaling * matTranslation;
+
+            device.SetTransform(TransformState.World, matTransform);
+            device.SetTransform(TransformState.View, Matrix.Identity);
+            device.SetTransform(TransformState.Texture0, Matrix.Identity);
+            device.SetTransform(TransformState.Texture1, Matrix.Identity);
+            device.SetTexture(0, texture);
+
+            device.VertexShader = null;
+
+            if (palette != null)
+            {
+                device.PixelShader = pixelShader;
+                device.SetTexture(1, palette);
+            }
+            else
+                device.PixelShader = null;
+
+            device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
+            device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+            device.DrawPrimitives(PrimitiveType.TriangleList, 0, primitiveCount);
+        }
+
+        public Texture CreatePalette(Color[] colors)
+        {
+            if (colors.Length > 256)
+                throw new ArgumentException("Length of colors should up to 256.");
+
+            Texture palette = new Texture(device, 256, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
+            DataRectangle rect = palette.LockRectangle(0, LockFlags.None);
+
+            using (DataStream stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
+            {
+                for (int i = 0; i < colors.Length; i++)
+                    stream.Write(colors[i].ToBgra());
+
+                for (int i = colors.Length; i < 256; i++)
+                    stream.Write(0);
+            }
+
+            palette.UnlockRectangle(0);
+            return palette;
+        }
+
+        public static int LookupColor(Texture palette, Color color)
+        {
+            return LookupColor(palette, color, 0, 256);
+        }
+
+        public static int LookupColor(Texture palette, Color color, int start, int count)
+        {
+            DataRectangle rect = palette.LockRectangle(0, LockFlags.Discard);
+            try
+            {
+                using (DataStream stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
+                {
+                    using (BinaryReader reader = new BinaryReader(stream))
+                    {
+                        for (int i = start; i < start + count; i++)
+                        {
+                            int bgra = reader.ReadInt32();
+                            Color c = Color.FromBgra(bgra);
+                            if (color == c)
+                                return i;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                palette.UnlockRectangle(0);
+            }
+
+            return -1;
         }
     }
 }

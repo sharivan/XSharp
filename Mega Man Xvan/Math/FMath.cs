@@ -42,11 +42,11 @@ namespace MMX.Math
             }
         }
 
-        public int RawFracPart
+        public uint RawFracPart
         {
             get
             {
-                return rawValue & FRAC_PART_MASK;
+                return (uint) (rawValue & FRAC_PART_MASK);
             }
         }
 

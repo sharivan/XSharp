@@ -1,8 +1,10 @@
-﻿using MMX.Geometry;
-using SharpDX;
-using SharpDX.Direct2D1;
-using System;
-using System.Diagnostics;
+﻿using SharpDX;
+using SharpDX.Direct3D9;
+
+using MMX.Geometry;
+
+using MMXBox = MMX.Geometry.Box;
+
 using static MMX.Engine.Consts;
 
 namespace MMX.Engine
@@ -108,18 +110,7 @@ namespace MMX.Engine
             maps[cell.Row, cell.Col] = map;
         }
 
-        public void Fill(Bitmap source, Point offset, CollisionData collisionData = CollisionData.NONE, bool flipped = false, bool mirrored = false, bool upLayer = false)
-        {
-            for (int col = 0; col < SIDE_MAPS_PER_BLOCK; col++)
-                for (int row = 0; row < SIDE_MAPS_PER_BLOCK; row++)
-                {
-                    Map map = world.AddMap(collisionData);
-                    map.Fill(source, new Point(offset.X + col * MAP_SIZE, offset.Y + row * MAP_SIZE), flipped, mirrored, upLayer);
-                    maps[row, col] = map;
-                }
-        }
-
-        public void FillRectangle(Box box, Tile tile)
+        public void FillRectangle(MMXBox box, Tile tile)
         {
             Vector boxLT = box.LeftTop;
             Vector boxSize = box.DiagonalVector;
@@ -134,7 +125,7 @@ namespace MMX.Engine
                     SetTile(new Vector((col + c) * TILE_SIZE, (row + r) * TILE_SIZE), tile);
         }
 
-        public void FillRectangle(Box box, Map map)
+        public void FillRectangle(MMXBox box, Map map)
         {
             Vector boxLT = box.LeftTop;
             Vector boxSize = box.DiagonalVector;
@@ -149,25 +140,26 @@ namespace MMX.Engine
                     SetMap(new Vector((col + c) * MAP_SIZE, (row + r) * MAP_SIZE), map);
         }
 
-        internal void PaintDownLayer(RenderTarget target, Vector offset)
+        internal void Tessellate(DataStream downLayerVBData, DataStream upLayerVBData, Vector pos)
         {
             for (int col = 0; col < SIDE_MAPS_PER_BLOCK; col++)
                 for (int row = 0; row < SIDE_MAPS_PER_BLOCK; row++)
                 {
+                    Vector mapPos = new Vector(pos.X + col * MAP_SIZE, pos.Y - row * MAP_SIZE);
                     Map map = maps[row, col];
-                    if (map != null)
-                        map.PaintDownLayer(target, new Vector(offset.X + col * MAP_SIZE, offset.Y + row * MAP_SIZE));
-                }
-        }
 
-        internal void PaintUpLayer(RenderTarget target, Vector offset)
-        {
-            for (int col = 0; col < SIDE_MAPS_PER_BLOCK; col++)
-                for (int row = 0; row < SIDE_MAPS_PER_BLOCK; row++)
-                {
-                    Map map = maps[row, col];
                     if (map != null)
-                        map.PaintUpLayer(target, new Vector(offset.X + col * MAP_SIZE, offset.Y + row * MAP_SIZE));
+                        map.Tessellate(downLayerVBData, upLayerVBData, mapPos);
+                    else
+                    {
+                        for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP; tileRow++)
+                            for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP; tileCol++)
+                            {
+                                Vector tilePos = new Vector(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
+                                GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                                GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            }
+                    }
                 }
         }
     }

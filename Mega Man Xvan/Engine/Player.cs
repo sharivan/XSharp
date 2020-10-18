@@ -1440,7 +1440,17 @@ namespace MMX.Engine
                         }
 
                         if (charging)
+                        {
                             chargingFrameCounter++;
+                            if (chargingFrameCounter >= 5)
+                            {
+                                int frame = chargingFrameCounter - 5;
+                                if ((frame & 2) == 0 || (frame & 2) == 1)
+                                    Palette = engine.ChargeLevel1Palette;
+                                else
+                                    Palette = engine.X1NormalPalette;
+                            }
+                        }
                     }
                 }
                 else if (WasPressingShot && !PressingShot)
@@ -1455,6 +1465,8 @@ namespace MMX.Engine
                         shooting = true;
                         shootingCharged = true;
                         shotFrameCounter = 0;
+
+                        Palette = engine.X1NormalPalette;
 
                         if (OnLadderOnly)
                         {

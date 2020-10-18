@@ -1,12 +1,12 @@
-﻿using MMX.Geometry;
+﻿using System;
 
 using SharpDX;
-using SharpDX.Direct2D1;
-using SharpDX.DXGI;
+using SharpDX.Direct3D9;
 
-using System;
+using MMX.Math;
+using MMX.Geometry;
 
-//using WicBitmap = SharpDX.WIC.Bitmap;
+using MMXBox = MMX.Geometry.Box;
 
 using static MMX.Engine.Consts;
 
@@ -14,17 +14,14 @@ namespace MMX.Engine
 {
     public class Scene : IDisposable
     {
+        public const int PRIMITIVE_COUNT = 2 * SIDE_BLOCKS_PER_SCENE * SIDE_MAPS_PER_BLOCK * SIDE_TILES_PER_MAP * SIDE_BLOCKS_PER_SCENE * SIDE_MAPS_PER_BLOCK * SIDE_TILES_PER_MAP;
+
         private World world;
         private int id;
         internal Block[,] blocks;
 
-        //internal WicBitmap downLayerBitmap;
-        internal BitmapRenderTarget downLayerTarget;
-
-        //internal WicBitmap upLayerBitmap;
-        internal BitmapRenderTarget upLayerTarget;
-
-        private bool updating;
+        internal VertexBuffer downLayerVB;
+        internal VertexBuffer upLayerVB;        
 
         public World World
         {
@@ -52,14 +49,6 @@ namespace MMX.Engine
             set
             {
                 blocks[row, col] = value;
-
-                if (!updating)
-                {
-                    if (value != null)
-                        PaintBlock(row, col, value);
-                    else
-                        ClearBlock(row, col);
-                }
             }
         }
 
@@ -69,101 +58,8 @@ namespace MMX.Engine
             this.id = id;
 
             blocks = new Block[SIDE_BLOCKS_PER_SCENE, SIDE_BLOCKS_PER_SCENE];
-
-            var size = new Size2(SCENE_SIZE, SCENE_SIZE);
-            var sizef = new Size2F(SCENE_SIZE, SCENE_SIZE);
-            var pixelFormat = new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied);
-
-            downLayerTarget = new BitmapRenderTarget(world.Engine.Context, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat);
-            upLayerTarget = new BitmapRenderTarget(world.Engine.Context, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat);
-        }
-
-        private void PaintBlock(int row, int col, Block block)
-        {
-            downLayerTarget.BeginDraw();
-            block.PaintDownLayer(downLayerTarget, new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
-            downLayerTarget.Flush();
-            downLayerTarget.EndDraw();
-
-            upLayerTarget.BeginDraw();
-            block.PaintUpLayer(upLayerTarget, new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
-            upLayerTarget.Flush();
-            upLayerTarget.EndDraw();
-        }
-
-        private void ClearBlock(int row, int col)
-        {
-            using (Brush brush = new SolidColorBrush(downLayerTarget, Color.Transparent))
-            {
-                downLayerTarget.FillRectangle(new RectangleF(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), brush);   
-            }
-
-            using (Brush brush = new SolidColorBrush(upLayerTarget, Color.Transparent))
-            {
-                upLayerTarget.FillRectangle(new RectangleF(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), brush);
-            }
-        }
-
-        internal void UpdateLayers()
-        {
-            UpdateDownLayer();
-            UpdateUpLayer();
-        }
-
-        private void UpdateDownLayer()
-        {
-            downLayerTarget.BeginDraw();
-            downLayerTarget.Transform = Matrix3x2.Identity;
-            downLayerTarget.Clear(Color.Transparent);
-
-            for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
-                for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
-                {
-                    Block block = blocks[row, col];
-                    if (block != null)
-                        block.PaintDownLayer(downLayerTarget, new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
-                }
-
-            //downLayerTarget.Flush();
-            downLayerTarget.EndDraw();
-        }
-
-        private void UpdateUpLayer()
-        {
-            upLayerTarget.BeginDraw();
-            upLayerTarget.Transform = Matrix3x2.Identity;
-            upLayerTarget.Clear(Color.Transparent);
-
-            for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
-                for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
-                {
-                    Block block = blocks[row, col];
-                    if (block != null)
-                        block.PaintUpLayer(upLayerTarget, new Vector(col * BLOCK_SIZE, row * BLOCK_SIZE));
-                }
-
-            //upLayerTarget.Flush();
-            upLayerTarget.EndDraw();
-        }
-
-        internal void BeginUpdate()
-        {
-            updating = true;
-        }
-
-        internal void EndUpdate()
-        {
-            if (!updating)
-                return;
-
-            updating = false;
-            UpdateLayers();
-        }
-
-        public void Dispose()
-        {
-            downLayerTarget.Dispose();
-            upLayerTarget.Dispose();          
+            downLayerVB = new VertexBuffer(world.Device, GameEngine.VERTEX_SIZE * 3 * PRIMITIVE_COUNT, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
+            upLayerVB = new VertexBuffer(world.Device, GameEngine.VERTEX_SIZE * 3 * PRIMITIVE_COUNT, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
         }
 
         public Tile GetTileFrom(Vector pos)
@@ -218,10 +114,7 @@ namespace MMX.Engine
             for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
                 for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
                     if (blocks[row, col] == block)
-                    {
                         blocks[row, col] = null;
-                        ClearBlock(row, col);
-                    }
         }
 
         public void SetMap(Vector pos, Map map)
@@ -235,40 +128,15 @@ namespace MMX.Engine
             }
 
             block.SetMap(pos - new Vector(cell.Col * BLOCK_SIZE, cell.Row * BLOCK_SIZE), map);
-
-            if (!updating)
-                PaintBlock(cell.Row, cell.Col, block);
         }
 
         public void SetBlock(Vector pos, Block block)
         {
             Cell cell = World.GetBlockCellFromPos(pos);
             blocks[cell.Row, cell.Col] = block;
-
-            if (!updating)
-            {
-                if (block != null)
-                    PaintBlock(cell.Row, cell.Col, block);
-                else
-                    ClearBlock(cell.Row, cell.Col);
-            }
         }
 
-        public void Fill(Bitmap source, Point offset, CollisionData collisionData = CollisionData.NONE, bool flipped = false, bool mirrored = false, bool upLayer = false)
-        {
-            BeginUpdate();
-            for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
-                for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
-                {
-                    Block block = world.AddBlock();
-                    block.Fill(source, new Point((int) (offset.X + col * BLOCK_SIZE), (int) (offset.Y + row * BLOCK_SIZE)), collisionData, flipped, mirrored, upLayer);
-                    blocks[row, col] = block;
-                }
-
-            EndUpdate();
-        }
-
-        public void FillRectangle(Box box, Map map)
+        public void FillRectangle(MMXBox box, Map map)
         {
             Vector boxLT = box.LeftTop;
             Vector boxSize = box.DiagonalVector;
@@ -278,15 +146,12 @@ namespace MMX.Engine
             int cols = (int) (boxSize.X / MAP_SIZE);
             int rows = (int) (boxSize.Y / MAP_SIZE);
 
-            BeginUpdate();
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
                     SetMap(new Vector((col + c) * MAP_SIZE, (row + r) * MAP_SIZE), map);
-
-            EndUpdate();
         }
 
-        public void FillRectangle(Box box, Block block)
+        public void FillRectangle(MMXBox box, Block block)
         {
             Vector boxLT = box.LeftTop;
             Vector boxSize = box.DiagonalVector;
@@ -296,16 +161,53 @@ namespace MMX.Engine
             int cols = (int) (boxSize.X / BLOCK_SIZE);
             int rows = (int) (boxSize.Y / BLOCK_SIZE);
 
-            BeginUpdate();
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
                     SetBlock(new Vector((col + c) * BLOCK_SIZE, (row + r) * BLOCK_SIZE), block);
-
-            EndUpdate();
         }
 
-        public void OnFrame()
+        internal void Tessellate()
         {
+            DataStream downLayerVBData = downLayerVB.Lock(0, 4 * GameEngine.VERTEX_SIZE, LockFlags.None);
+            DataStream upLayerVBData = upLayerVB.Lock(0, 4 * GameEngine.VERTEX_SIZE, LockFlags.None);
+
+            for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
+                for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
+                {
+                    Vector blockPos = new Vector(col * BLOCK_SIZE, -row * BLOCK_SIZE);
+                    Block block = blocks[row, col];
+
+                    if (block != null)
+                        block.Tessellate(downLayerVBData, upLayerVBData, blockPos);
+                    else
+                    {
+                        for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileRow++)
+                            for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileCol++)
+                            {
+                                Vector tilePos = new Vector(blockPos.X + tileCol * TILE_SIZE, blockPos.Y - tileRow * TILE_SIZE);
+                                GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                                GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            }
+                    }
+                }
+
+            upLayerVB.Unlock();
+            downLayerVB.Unlock();
+        }
+
+        public void Dispose()
+        {
+            if (downLayerVB != null)
+            {
+                downLayerVB.Dispose();
+                downLayerVB = null;
+            }
+
+            if (upLayerVB != null)
+            {
+                upLayerVB.Dispose();
+                upLayerVB = null;
+            }
         }
     }
 }

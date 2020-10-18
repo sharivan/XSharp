@@ -1,28 +1,151 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Reflection;
+
 using SharpDX;
 using SharpDX.Direct3D9;
-using SharpDX.Mathematics.Interop;
 using SharpDX.Windows;
 
 using MMX.ROM;
 
 using Color = SharpDX.Color;
-using System.Reflection;
 
 namespace D3D9Test
 {
     public class MainClass
     {
+        private static readonly byte[] VERTEX_SHADER_BYTECODE = new byte[]
+        {
+              0,   2, 254, 255, 254, 255,
+             20,   0,  67,  84,  65,  66,
+             28,   0,   0,   0,  35,   0,
+              0,   0,   0,   2, 254, 255,
+              0,   0,   0,   0,   0,   0,
+              0,   0,   0,   1,   0,   0,
+             28,   0,   0,   0, 118, 115,
+             95,  50,  95,  48,   0,  77,
+            105,  99, 114, 111, 115, 111,
+            102, 116,  32,  40,  82,  41,
+             32,  72,  76,  83,  76,  32,
+             83, 104,  97, 100, 101, 114,
+             32,  67, 111, 109, 112, 105,
+            108, 101, 114,  32,  49,  48,
+             46,  49,   0, 171,  31,   0,
+              0,   2,   0,   0,   0, 128,
+              0,   0,  15, 144,  31,   0,
+              0,   2,  10,   0,   0, 128,
+              1,   0,  15, 144,   1,   0,
+              0,   2,   0,   0,  15, 192,
+              0,   0, 228, 144,   1,   0,
+              0,   2,   0,   0,  15, 208,
+              1,   0, 228, 144, 255, 255,
+              0,   0
+        };
+
+        private static readonly byte[] PIXEL_SHADER_BYTECODE = new byte[]
+        {
+              0,   2, 255, 255, 254, 255,
+             42,   0,  67,  84,  65,  66,
+             28,   0,   0,   0, 123,   0,
+              0,   0,   0,   2, 255, 255,
+              2,   0,   0,   0,  28,   0,
+              0,   0,   0,   1,   0,   0,
+            116,   0,   0,   0,  68,   0,
+              0,   0,   3,   0,   0,   0,
+              1,   0,   0,   0,  76,   0,
+              0,   0,   0,   0,   0,   0,
+             92,   0,   0,   0,   3,   0,
+              1,   0,   1,   0,   0,   0,
+            100,   0,   0,   0,   0,   0,
+              0,   0, 105, 109,  97, 103,
+            101,   0, 171, 171,   4,   0,
+             12,   0,   1,   0,   1,   0,
+              1,   0,   0,   0,   0,   0,
+              0,   0, 112,  97, 108, 101,
+            116, 116, 101,   0,   4,   0,
+             11,   0,   1,   0,   1,   0,
+              1,   0,   0,   0,   0,   0,
+              0,   0, 112, 115,  95,  50,
+             95,  48,   0,  77, 105,  99,
+            114, 111, 115, 111, 102, 116,
+             32,  40,  82,  41,  32,  72,
+             76,  83,  76,  32,  83, 104,
+             97, 100, 101, 114,  32,  67,
+            111, 109, 112, 105, 108, 101,
+            114,  32,  49,  48,  46,  49,
+              0, 171,  81,   0,   0,   5,
+              0,   0,  15, 160,   0,   0,
+            127,  63,   0,   0,   0,  59,
+              0,   0,   0,   0,   0,   0,
+              0,   0,  31,   0,   0,   2,
+              0,   0,   0, 128,   0,   0,
+              3, 176,  31,   0,   0,   2,
+              0,   0,   0, 144,   0,   8,
+             15, 160,  31,   0,   0,   2,
+              0,   0,   0, 144,   1,   8,
+             15, 160,  66,   0,   0,   3,
+              0,   0,  15, 128,   0,   0,
+            228, 176,   0,   8, 228, 160,
+              4,   0,   0,   4,   0,   0,
+              3, 128,   0,   0,   0, 128,
+              0,   0,   0, 160,   0,   0,
+             85, 160,  66,   0,   0,   3,
+              0,   0,  15, 128,   0,   0,
+            228, 128,   1,   8, 228, 160,
+              1,   0,   0,   2,   0,   8,
+             15, 128,   0,   0, 228, 128,
+            255, 255,   0,   0
+        };
+
+        private static readonly byte[] EMPTY_TILE = new byte[]
+        {
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
+        };
+
         private const int TILE_SIZE = 8;
         private const int MAP_SIZE = 2 * TILE_SIZE;
         private const int SIDE_TILES_PER_MAP = 2;
 
         private static readonly string ROM_NAME = "Mega Man X (U) (V1.0) [!]";
         private const int LEVEL = 0;
+
+        //private const VertexFormat D3DFVF_TLVERTEX = VertexFormat.PositionRhw | VertexFormat.Diffuse | VertexFormat.Texture1;
+        private const VertexFormat D3DFVF_TLVERTEX = VertexFormat.Position | VertexFormat.Diffuse | VertexFormat.Texture1;
+        private const int VERTEX_SIZE = 24;
+
+        private const int TILESET_WIDTH = 32 * TILE_SIZE;
+        private const int TILESET_HEIGHT = 32 * TILE_SIZE;
+
+        private const float TILESET_SIZE = (float) TILE_SIZE / TILESET_WIDTH;
+
+        private const int TILEMAP_WIDTH = 32 * MAP_SIZE;
+        private const int TILEMAP_HEIGHT = 32 * MAP_SIZE;
+
+        private const float TILE_FRAC_SIZE_IN_TILEMAP = (float) TILE_SIZE / TILEMAP_WIDTH;
+
+        private const int MAPS_PER_ROW_IN_IMAGE = 16;
+        private const int MAPS_PER_COL_IN_IMAGE = 16;
+
+        private const int IMAGE_WIDTH = MAPS_PER_COL_IN_IMAGE * MAP_SIZE;
+        private const int IMAGE_HEIGHT = MAPS_PER_ROW_IN_IMAGE * MAP_SIZE;
+
+        private const float TILE_FRAC_SIZE_IN_IMAGE = (float) TILE_SIZE / TILESET_WIDTH;
+
+        private const float TILE_FRAC_WIDTH_IN_IMAGE = 8;// (float) TILE_SIZE / IMAGE_WIDTH;
+        private const float TILE_FRAC_HEIGHT_IN_IMAGE = 8;// (float) TILE_SIZE / IMAGE_HEIGHT;
+
+        private const int SCREEN_WIDTH = IMAGE_WIDTH;
+        private const int SCREEN_HEIGHT = IMAGE_HEIGHT;
+        private const int SCREEN_SCALE = 4;
 
         private enum CollisionData
         {
@@ -185,70 +308,88 @@ namespace D3D9Test
             }
         }
 
-        private const VertexFormat D3DFVF_TLVERTEX = VertexFormat.PositionRhw | VertexFormat.Diffuse | VertexFormat.Texture1;
-
-        private static void WriteVertex(DataStream vbData, float x, float y, float z, float rhw, Color4 color, float u, float v)
+        private static void WriteVertex(DataStream vbData, float x, float y, float z, float rhw, Color color, float u, float v)
         {
             vbData.Write(x);
             vbData.Write(y);
-            vbData.Write(z);
-            vbData.Write(rhw);
-            vbData.Write(color.ToRgba());
+            vbData.Write(1f);
+            //vbData.Write(rhw);
+            //vbData.Write(color.ToRgba());
+            vbData.Write(0xffffffff);
             vbData.Write(u);
             vbData.Write(v);
         }
 
-        private static void BlitD3D(Device device, VertexBuffer vb, Texture texture, Texture palette, SharpDX.Rectangle rDest, Color4 vertexColor, bool flipped, bool mirrored)
+        private static void SetupQuad(VertexBuffer vb, bool flipped, bool mirrored, bool upLayer)
         {
-            DataStream vbData = vb.Lock(0, 0, LockFlags.Discard);
+            DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, LockFlags.None);
+
+            float z = upLayer ? 1 : -1;
+            Color vertexColor = Color.White;
 
             if (flipped)
             {
                 if (mirrored)
                 {
-                    WriteVertex(vbData, rDest.Left - 0.5f, rDest.Top - 0.5f, 0, 1, vertexColor, 1, 1);
-                    WriteVertex(vbData, rDest.Right - 0.5f, rDest.Top - 0.5f, 0, 1, vertexColor, 0, 1);
-                    WriteVertex(vbData, rDest.Right - 0.5f, rDest.Bottom - 0.5f, 0, 1, vertexColor, 0, 0);
-                    WriteVertex(vbData, rDest.Left - 0.5f, rDest.Bottom - 0.5f, 0, 1, vertexColor, 1, 0);
+                    WriteVertex(vbData, 0, 0, z, 1, vertexColor, 1, 1);
+                    WriteVertex(vbData, 1, 0, z, 1, vertexColor, 0, 1);
+                    WriteVertex(vbData, 1, -1, z, 1, vertexColor, 0, 0);
+                    WriteVertex(vbData, 0, -1, z, 1, vertexColor, 1, 0);
                 }
                 else
                 {
-                    WriteVertex(vbData, rDest.Left - 0.5f, rDest.Top - 0.5f, 0, 1, vertexColor, 0, 1);
-                    WriteVertex(vbData, rDest.Right - 0.5f, rDest.Top - 0.5f, 0, 1, vertexColor, 1, 1);
-                    WriteVertex(vbData, rDest.Right - 0.5f, rDest.Bottom - 0.5f, 0, 1, vertexColor, 1, 0);
-                    WriteVertex(vbData, rDest.Left - 0.5f, rDest.Bottom - 0.5f, 0, 1, vertexColor, 0, 0);
+                    WriteVertex(vbData, 0, 0, z, 1, vertexColor, 0, 1);
+                    WriteVertex(vbData, 1, 0, z, 1, vertexColor, 1, 1);
+                    WriteVertex(vbData, 1, -1, z, 1, vertexColor, 1, 0);
+                    WriteVertex(vbData, 0, -1, z, 1, vertexColor, 0, 0);
                 }
             }
             else if (mirrored)
             {
-                WriteVertex(vbData, rDest.Left - 0.5f, rDest.Top - 0.5f, 0, 1, vertexColor, 1, 0);
-                WriteVertex(vbData, rDest.Right - 0.5f, rDest.Top - 0.5f, 0, 1, vertexColor, 0, 0);
-                WriteVertex(vbData, rDest.Right - 0.5f, rDest.Bottom - 0.5f, 0, 1, vertexColor, 0, 1);
-                WriteVertex(vbData, rDest.Left - 0.5f, rDest.Bottom - 0.5f, 0, 1, vertexColor, 1, 1);
+                WriteVertex(vbData, 0, 0, z, 1, vertexColor, 1, 0);
+                WriteVertex(vbData, 1, 0, z, 1, vertexColor, 0, 0);
+                WriteVertex(vbData, 1, -1, z, 1, vertexColor, 0, 1);
+                WriteVertex(vbData, 0, -1, z, 1, vertexColor, 1, 1);
             }
             else
             {
-                WriteVertex(vbData, rDest.Left - 0.5f, rDest.Top - 0.5f, 0, 1, vertexColor, 0, 0);
-                WriteVertex(vbData, rDest.Right - 0.5f, rDest.Top - 0.5f, 0, 1, vertexColor, 1, 0);
-                WriteVertex(vbData, rDest.Right - 0.5f, rDest.Bottom - 0.5f, 0, 1, vertexColor, 1, 1);
-                WriteVertex(vbData, rDest.Left - 0.5f, rDest.Bottom - 0.5f, 0, 1, vertexColor, 0, 1);
+                WriteVertex(vbData, 0, 0, z, 1, vertexColor, 0, 0);
+                WriteVertex(vbData, 1, 0, z, 1, vertexColor, 1, 0);
+                WriteVertex(vbData, 1, -1, z, 1, vertexColor, 1, 1);
+                WriteVertex(vbData, 0, -1, z, 1, vertexColor, 0, 1);
             }
 
             vb.Unlock();
+        }
 
+        private static void BlitD3D(Device device, VertexBuffer vb, Texture texture, Texture palette, Rectangle rDest, Color vertexColor, bool flipped, bool mirrored, bool upLayer)
+        {
+            device.SetStreamSource(0, vb, 0, VERTEX_SIZE);
+
+            float x = rDest.Left - SCREEN_WIDTH * 0.5f;
+            float y = -rDest.Top + SCREEN_HEIGHT * 0.5f;
+
+            Matrix matScaling = Matrix.Scaling(rDest.Width, rDest.Height, 1);
+            Matrix matTranslation = Matrix.Translation(x, y, 0);            
+            Matrix matTransform = matScaling * matTranslation;
+
+            device.SetTransform(TransformState.World, matTransform);
+            device.SetTransform(TransformState.Texture0, Matrix.Identity);
             device.SetTexture(0, texture);
-            device.SetTexture(1, palette);
+
+            if (palette != null)
+                device.SetTexture(1, palette);
+
             device.DrawPrimitives(PrimitiveType.TriangleFan, 0, 2);
         }
 
         private class Map
         {
             internal int id;
-            internal Texture[] paletteTextures;
             internal CollisionData collisionData;
 
-            internal Tile[,] tiles;           
-            internal int[,] palette;
+            internal Tile[,] tiles;
+            internal int[,] subPalette;
             internal bool[,] flipped;
             internal bool[,] mirrored;
             internal bool[,] upLayer;
@@ -282,44 +423,16 @@ namespace D3D9Test
                 }
             }
 
-            internal Map(int id, Texture[] paletteTextures, CollisionData collisionData = CollisionData.NONE)
+            internal Map(int id, CollisionData collisionData = CollisionData.NONE)
             {
                 this.id = id;
-                this.paletteTextures = paletteTextures;
                 this.collisionData = collisionData;
 
                 tiles = new Tile[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
-                palette = new int[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
+                subPalette = new int[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
                 flipped = new bool[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
                 mirrored = new bool[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
                 upLayer = new bool[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
-            }
-
-            private void PaintTile(Device device, VertexBuffer vb, Tile tile, int x, int y, int palette, bool flipped, bool mirrored)
-            {               
-                BlitD3D(device, vb, tile.tex, paletteTextures[palette], new SharpDX.Rectangle(x, y, TILE_SIZE, TILE_SIZE), new Color4(0xFFFFFFFF), flipped, mirrored);
-            }
-
-            internal void PaintDownLayer(Device device, VertexBuffer vb, int x, int y)
-            {
-                for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
-                    for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
-                    {
-                        Tile tile = tiles[row, col];
-                        if (tile != null && !upLayer[row, col])
-                            PaintTile(device, vb, tile, x + col * TILE_SIZE, y + row * TILE_SIZE, palette[row, col], flipped[row, col], mirrored[row, col]);
-                    }
-            }
-
-            internal void PaintUpLayer(Device device, VertexBuffer vb, int x, int y)
-            {
-                for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
-                    for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
-                    {
-                        Tile tile = tiles[row, col];
-                        if (tile != null && upLayer[row, col])
-                            PaintTile(device, vb, tile, x + col * TILE_SIZE, y + row * TILE_SIZE, palette[row, col], flipped[row, col], mirrored[row, col]);
-                    }
             }
 
             public void RemoveTile(Tile tile)
@@ -343,10 +456,10 @@ namespace D3D9Test
                 SetTile(new Cell(row, col), tile, palette, flipped, mirrored, upLayer);
             }
 
-            public void SetTile(Cell cell, Tile tile, int palette, bool flipped = false, bool mirrored = false, bool upLayer = false)
+            public void SetTile(Cell cell, Tile tile, int subPalette, bool flipped = false, bool mirrored = false, bool upLayer = false)
             {
                 tiles[cell.Row, cell.Col] = tile;
-                this.palette[cell.Row, cell.Col] = palette;
+                this.subPalette[cell.Row, cell.Col] = subPalette;
                 this.flipped[cell.Row, cell.Col] = flipped;
                 this.mirrored[cell.Row, cell.Col] = mirrored;
                 this.upLayer[cell.Row, cell.Col] = upLayer;
@@ -360,99 +473,9 @@ namespace D3D9Test
             app.Run();
         }
 
-        private static readonly byte[] g_ps20_main = new byte[]
-        {
-              0,   2, 255, 255, 254, 255,
-             42,   0,  67,  84,  65,  66,
-             28,   0,   0,   0, 123,   0,
-              0,   0,   0,   2, 255, 255,
-              2,   0,   0,   0,  28,   0,
-              0,   0,   0,   1,   0,   0,
-            116,   0,   0,   0,  68,   0,
-              0,   0,   3,   0,   0,   0,
-              1,   0,   0,   0,  76,   0,
-              0,   0,   0,   0,   0,   0,
-             92,   0,   0,   0,   3,   0,
-              1,   0,   1,   0,   0,   0,
-            100,   0,   0,   0,   0,   0,
-              0,   0, 105, 109,  97, 103,
-            101,   0, 171, 171,   4,   0,
-             12,   0,   1,   0,   1,   0,
-              1,   0,   0,   0,   0,   0,
-              0,   0, 112,  97, 108, 101,
-            116, 116, 101,   0,   4,   0,
-             11,   0,   1,   0,   1,   0,
-              1,   0,   0,   0,   0,   0,
-              0,   0, 112, 115,  95,  50,
-             95,  48,   0,  77, 105,  99,
-            114, 111, 115, 111, 102, 116,
-             32,  40,  82,  41,  32,  72,
-             76,  83,  76,  32,  83, 104,
-             97, 100, 101, 114,  32,  67,
-            111, 109, 112, 105, 108, 101,
-            114,  32,  49,  48,  46,  49,
-              0, 171,  81,   0,   0,   5,
-              0,   0,  15, 160,   0,   0,
-            127,  65,   0,   0,   0,  61,
-              0,   0,   0,   0,   0,   0,
-              0,   0,  31,   0,   0,   2,
-              0,   0,   0, 128,   0,   0,
-              3, 176,  31,   0,   0,   2,
-              0,   0,   0, 144,   0,   8,
-             15, 160,  31,   0,   0,   2,
-              0,   0,   0, 144,   1,   8,
-             15, 160,  66,   0,   0,   3,
-              0,   0,  15, 128,   0,   0,
-            228, 176,   0,   8, 228, 160,
-              4,   0,   0,   4,   0,   0,
-              3, 128,   0,   0,   0, 128,
-              0,   0,   0, 160,   0,   0,
-             85, 160,  66,   0,   0,   3,
-              0,   0,  15, 128,   0,   0,
-            228, 128,   1,   8, 228, 160,
-              1,   0,   0,   2,   0,   8,
-             15, 128,   0,   0, 228, 128,
-            255, 255,   0,   0
-        };
-
-        private static readonly byte[] bytes = new byte[]
-        {
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-            4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-            5, 5, 6, 6, 6, 6, 5, 5, 5, 5, 6, 6, 6, 6, 5, 5, 5, 5, 6, 6, 6, 6, 5, 5, 5, 5, 6, 6, 6, 6, 5, 5,
-            7, 8, 9, 10, 10, 9, 8, 7, 7, 8, 9, 10, 10, 9, 8, 7, 7, 8, 9, 10, 10, 9, 8, 7, 7, 8, 9, 10, 10, 9, 8, 7,
-            10, 10, 11, 11, 11, 11, 10, 10, 10, 10, 11, 11, 11, 11, 10, 10, 10, 10, 11, 11, 11, 11, 10, 10, 10, 10, 11, 11, 11, 11, 10, 10,
-            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-            2, 2, 12, 2, 2, 12, 2, 2, 2, 2, 12, 2, 2, 12, 2, 2, 2, 2, 12, 2, 2, 12, 2, 2, 2, 2, 12, 2, 2, 12, 2, 2,
-            13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
-            12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-            14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 1, 1, 15, 14, 14,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0,
-            0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0
-        };
-
         private MMXCore core;
-        private Texture[] paletteTextures = new Texture[8];
+        private Texture tilemap;
+        private Texture palette;
         private Map[] maps;
 
         private int Transform(int color, bool notTransparent)
@@ -461,8 +484,9 @@ namespace D3D9Test
         }
 
         private Tile AddTile(Device device, uint tile, bool transparent = false)
-        {           
-            uint image = (tile & 0x3FF) << 6;
+        {
+            uint tileNum = tile & 0x3FF;
+            uint image = tileNum << 6;
 
             byte[] imageData = new byte[TILE_SIZE * TILE_SIZE * sizeof(byte)];
             bool notNull = false;
@@ -483,184 +507,284 @@ namespace D3D9Test
             if (!notNull)
                 return null;
 
-            Tile wtile = new Tile(device, (int) tile, imageData);
+            Tile wtile = new Tile(device, (int) tileNum, imageData);
             return wtile;
         }
 
-        private void RefreshMapCache(Device device)
+        private void WriteTile(DataRectangle tilemapRect, byte[] data, int mapIndex, int tileRow, int tileCol, int subPalette, bool flipped, bool mirrored)
         {
+            int mapRow = mapIndex / 32;
+            int mapCol = mapIndex % 32;
+
+            IntPtr ptr = tilemapRect.DataPointer;
+            ptr += mapCol * MAP_SIZE * sizeof(byte);
+            ptr += TILEMAP_WIDTH * mapRow * MAP_SIZE * sizeof(byte);
+            ptr += TILE_SIZE * tileCol * sizeof(byte);
+            ptr += TILEMAP_WIDTH * TILE_SIZE * tileRow * sizeof(byte);
+
+            if (flipped)
+                ptr += TILEMAP_WIDTH * (TILE_SIZE - 1) * sizeof(byte);
+
+            for (int row = 0; row < TILE_SIZE; row++)
+            {
+                int dataIndex = row * TILE_SIZE;
+                if (mirrored)
+                    dataIndex += TILE_SIZE - 1;
+
+                using (DataStream stream = new DataStream(ptr, TILE_SIZE * sizeof(byte), true, true))
+                {
+                    for (int col = 0; col < TILE_SIZE; col++)
+                    {
+                        stream.Write((byte) (subPalette | (data != null ? data[dataIndex] : 0)));
+
+                        if (mirrored)
+                            dataIndex--;
+                        else
+                            dataIndex++;
+                    }
+                }
+
+                if (flipped)
+                    ptr -= TILEMAP_WIDTH * sizeof(byte);
+                else
+                    ptr += TILEMAP_WIDTH * sizeof(byte);
+            }
+        }
+
+        private void LoadTilemap(Device device)
+        {
+            tilemap = new Texture(device, TILEMAP_WIDTH, TILEMAP_HEIGHT, 1, Usage.None, Format.L8, Pool.Managed);
+            DataRectangle rect = tilemap.LockRectangle(0, LockFlags.Discard);
+
             maps = new Map[0x400];
 
             uint map = core.pMaps;
-            /* I didn't write this function, but basically the above loses a lot of data because size of a WORD is max 65535 and pMaps is a DWORD */
             for (int i = 0; i < 0x400; i++)
             {
                 byte colisionByte = core.rom[core.pCollisions + i];
                 CollisionData collisionData = (CollisionData) colisionByte;
-                Map wmap = new Map(i, paletteTextures, collisionData);
+                Map wmap = new Map(i, collisionData);
 
                 uint tileData = core.ReadWord(map);
-                byte palette = (byte) ((tileData >> 10) & 7);
+                byte subPalette = (byte) ((tileData >> 6) & 0x70);
+                bool flipped = (tileData & 0x8000) != 0;
+                bool mirrored = (tileData & 0x4000) != 0;
+                bool upLayer = (tileData & 0x2000) != 0;
                 map += 2;
                 Tile tile = AddTile(device, tileData, true);
-                wmap.SetTile(0, 0, tile, palette, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                wmap.SetTile(0, 0, tile, subPalette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 0, 0, subPalette, flipped, mirrored);
 
                 tileData = core.ReadWord(map);
-                palette = (byte) ((tileData >> 10) & 7);
+                subPalette = (byte) ((tileData >> 6) & 0x70);
+                flipped = (tileData & 0x8000) != 0;
+                mirrored = (tileData & 0x4000) != 0;
+                upLayer = (tileData & 0x2000) != 0;
                 map += 2;
                 tile = AddTile(device, tileData, true);
-                wmap.SetTile(0, 1, tile, palette, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                wmap.SetTile(0, 1, tile, subPalette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 0, 1, subPalette, flipped, mirrored);
 
                 tileData = core.ReadWord(map);
-                palette = (byte) ((tileData >> 10) & 7);
+                subPalette = (byte) ((tileData >> 6) & 0x70);
+                flipped = (tileData & 0x8000) != 0;
+                mirrored = (tileData & 0x4000) != 0;
+                upLayer = (tileData & 0x2000) != 0;
                 map += 2;
                 tile = AddTile(device, tileData, true);
-                wmap.SetTile(1, 0, tile, palette, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                wmap.SetTile(1, 0, tile, subPalette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 1, 0, subPalette, flipped, mirrored);
 
                 tileData = core.ReadWord(map);
-                palette = (byte) ((tileData >> 10) & 7);
+                subPalette = (byte) ((tileData >> 6) & 0x70);
+                flipped = (tileData & 0x8000) != 0;
+                mirrored = (tileData & 0x4000) != 0;
+                upLayer = (tileData & 0x2000) != 0;
                 map += 2;
                 tile = AddTile(device, tileData, true);
-                wmap.SetTile(1, 1, tile, palette, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                wmap.SetTile(1, 1, tile, subPalette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 1, 1, subPalette, flipped, mirrored);
 
                 maps[i] = wmap.IsNull ? null : wmap;
             }
+
+            tilemap.UnlockRectangle(0);
         }
 
         private void LoadPalette(Device device)
         {
-            for (int i = 0; i < 8; i++)
-            {
-                Texture paletteTexture = new Texture(device, 16, 1, 1, Usage.Dynamic, Format.X8R8G8B8, Pool.Default);
+            palette = new Texture(device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
+            DataRectangle rect = palette.LockRectangle(0, LockFlags.Discard);
 
-                DataRectangle rect = paletteTexture.LockRectangle(0, LockFlags.Discard);
-                using (DataStream stream = new DataStream(rect.DataPointer, 16 * 1 * sizeof(int), true, true))
-                {
+            using (DataStream stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
+            {
+                for (int i = 0; i < 8; i++)
                     for (int j = 0; j < 16; j++)
                         stream.Write(new Color(Transform(core.palCache[(i << 4) | j], j != 0)).ToRgba());
+            }
+
+            palette.UnlockRectangle(0);
+        }
+
+        private void WriteTriangle(DataStream vbData, Vector2 r0, Vector2 r1, Vector2 r2, Vector2 t0, Vector2 t1, Vector2 t2, float z, Color vertexColor)
+        {
+            WriteVertex(vbData, r0.X, r0.Y, z, 1, vertexColor, t0.X, t0.Y);
+            WriteVertex(vbData, r1.X, r1.Y, z, 1, vertexColor, t1.X, t1.Y);
+            WriteVertex(vbData, r2.X, r2.Y, z, 1, vertexColor, t2.X, t2.Y);
+        }
+
+        private void WriteSquare(DataStream vbData, Vector2 vSource, Vector2 vDest, Color vertexColor, bool flipped, bool mirrored, bool upLayer)
+        {
+            if (vSource.X < 0 || vSource.X > 1 || vSource.Y < 0 || vSource.Y > 1)
+                throw new Exception();
+
+            float z = upLayer ? 1 : -1;
+
+            Vector2 r0 = new Vector2(vDest.X, vDest.Y);
+            Vector2 r1 = new Vector2(vDest.X + TILE_SIZE, vDest.Y);
+            Vector2 r2 = new Vector2(vDest.X + TILE_SIZE, vDest.Y - TILE_SIZE);
+            Vector2 r3 = new Vector2(vDest.X, vDest.Y - TILE_SIZE);
+
+            Vector2 t0 = new Vector2(vSource.X, vSource.Y);
+            Vector2 t1 = new Vector2(vSource.X + TILE_FRAC_SIZE_IN_TILEMAP, vSource.Y);
+            Vector2 t2 = new Vector2(vSource.X + TILE_FRAC_SIZE_IN_TILEMAP, vSource.Y + TILE_FRAC_SIZE_IN_TILEMAP);
+            Vector2 t3 = new Vector2(vSource.X, vSource.Y + TILE_FRAC_SIZE_IN_TILEMAP);
+
+            if (t0.X < 0 || t0.X > 1 || t0.Y < 0 || t0.Y > 1)
+                throw new Exception();
+
+            if (t1.X < 0 || t1.X > 1 || t1.Y < 0 || t1.Y > 1)
+                throw new Exception();
+
+            if (t2.X < 0 || t2.X > 1 || t2.Y < 0 || t2.Y > 1)
+                throw new Exception();
+
+            if (t3.X < 0 || t3.X > 1 || t3.Y < 0 || t3.Y > 1)
+                throw new Exception();
+
+            /*if (flipped)
+            {
+                if (mirrored)
+                {
+                    WriteTriangle(vbData, r0, r1, r2, t2, t3, t0, z, vertexColor);
+                    WriteTriangle(vbData, r0, r2, r3, t2, t0, t1, z, vertexColor);
+                }
+                else
+                {
+                    WriteTriangle(vbData, r0, r1, r2, t3, t2, t1, z, vertexColor);
+                    WriteTriangle(vbData, r0, r2, r3, t3, t1, t0, z, vertexColor);
+                }
+            }
+            else if (mirrored)
+            {
+                WriteTriangle(vbData, r0, r1, r2, t1, t0, t3, z, vertexColor);
+                WriteTriangle(vbData, r0, r2, r3, t1, t3, t2, z, vertexColor);
+            }
+            else*/
+            {
+                WriteTriangle(vbData, r0, r1, r2, t0, t1, t2, z, vertexColor);
+                WriteTriangle(vbData, r0, r2, r3, t0, t2, t3, z, vertexColor);
+            }
+        }
+
+        private void TessellateTiles(Device device, VertexBuffer vb)
+        {
+            DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, LockFlags.None);
+
+            for (int row = 0; row < MAPS_PER_ROW_IN_IMAGE; row++)
+                for (int col = 0; col < MAPS_PER_COL_IN_IMAGE; col++)
+                {
+                    int mapIndex = MAPS_PER_COL_IN_IMAGE * row + col;
+                    Map map = maps[mapIndex];
+                    Vector2 mapPos = new Vector2(col * MAP_SIZE, -row * MAP_SIZE);
+
+                    if (map != null)
+                    {
+                        for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP; tileRow++)
+                            for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP; tileCol++)
+                            {
+                                Tile tile = map.tiles[tileRow, tileCol];
+                                Vector2 tilePos = new Vector2(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
+
+                                if (tile != null)
+                                {
+                                    Vector2 tilemapPos = new Vector2((float) ((mapIndex % 32) * MAP_SIZE + tileCol * TILE_SIZE) / TILEMAP_WIDTH, (float) ((mapIndex / 32) * MAP_SIZE + tileRow * TILE_SIZE) / TILEMAP_HEIGHT);
+                                    WriteSquare(vbData, tilemapPos, tilePos, new Color(map.subPalette[tileRow, tileCol], 0, 0, 0), map.flipped[tileRow, tileCol], map.mirrored[tileRow, tileCol], map.upLayer[tileRow, tileCol]);
+                                }
+                                else
+                                    WriteSquare(vbData, Vector2.Zero, tilePos, new Color(map.subPalette[tileRow, tileCol], 0, 0, 0), map.flipped[tileRow, tileCol], map.mirrored[tileRow, tileCol], map.upLayer[tileRow, tileCol]);
+                            }
+                    }
+                    else
+                    {
+                        for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP; tileRow++)
+                            for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP; tileCol++)
+                            {
+                                Vector2 tilePos = new Vector2(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
+                                WriteSquare(vbData, Vector2.Zero, tilePos, new Color(0, 0, 0, 0), false, false, false);
+                            }
+                    }
                 }
 
-                paletteTexture.UnlockRectangle(0);
+            vb.Unlock();
+        }
 
-                paletteTextures[i] = paletteTexture;
-            }
+        private void RenderAllMaps(Device device, VertexBuffer vb, RectangleF rDest)
+        {
+            device.SetStreamSource(0, vb, 0, VERTEX_SIZE);
+
+            float x = rDest.Left - SCREEN_WIDTH * 0.5f;
+            float y = -rDest.Top + SCREEN_HEIGHT * 0.5f;
+
+            //Matrix matScaling = Matrix.Scaling(rDest.Width, rDest.Height, 1);
+            Matrix matScaling = Matrix.Scaling(1, 1, 1);
+            Matrix matTranslation = Matrix.Translation(x, y, 0);
+            Matrix matTransform = matScaling * matTranslation;
+
+            device.SetTransform(TransformState.World, matTransform);
+            device.SetTexture(0, tilemap);
+            device.SetTexture(1, palette);
+            device.DrawPrimitives(PrimitiveType.TriangleList, 0, 2 * MAPS_PER_COL_IN_IMAGE * SIDE_TILES_PER_MAP * MAPS_PER_ROW_IN_IMAGE * SIDE_TILES_PER_MAP);
         }
 
         private void RenderAllMaps(Device device, VertexBuffer vb)
         {
-            for (int row = 0; row < 64; row++)
-                for (int col = 0; col < 16; col++)
-                {
-                    int index = 16 * row + col;
-                    Map map = maps[index];
-                    if (map == null)
-                        continue;
-
-                    int x = MAP_SIZE * col;
-                    int y = MAP_SIZE * row;
-
-                    map.PaintDownLayer(device, vb, x, y);
-                    map.PaintUpLayer(device, vb, x, y);
-                }
+            RenderAllMaps(device, vb, new RectangleF(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT));
         }
-
-        /*private void LoadMap(int x, int y, ushort index, bool background = false)
-        {
-            if (index < maps.Length)
-            {
-                Map map = maps[index];
-                if (map != null)
-                    world.SetMap(new Vector(x * MAP_SIZE, y * MAP_SIZE), map, background);
-            }
-        }
-
-        private void LoadSceneEx(int x, int y, ushort index, bool background = false)
-        {
-            x <<= 4;
-            y <<= 4;
-            uint pmap = (uint) (index << 8);
-            for (int iy = 0; iy < 16; iy++)
-                for (int ix = 0; ix < 16; ix++)
-                {
-                    LoadMap(x + ix, y + iy, core.mapping[pmap], background);
-                    pmap++;
-                }
-        }
-
-        public void LoadToWorld(bool background = false)
-        {
-            world.BeginUpdate();
-            world.Resize(core.levelHeight, core.levelWidth, background);
-            RefreshMapCache();
-
-            uint tmpLayout = 0;
-            for (int y = 0; y < core.levelHeight; y++)
-                for (int x = 0; x < core.levelWidth; x++)
-                    LoadSceneEx(x, y, core.sceneLayout[tmpLayout++], background);
-
-            world.EndUpdate();
-        }*/
 
         public void Run()
         {
-            const int width = 16 * MAP_SIZE;
-            const int height = 16 * MAP_SIZE;
-
             var form = new RenderForm("SharpDX - MiniCube Direct3D9 Sample")
             {
-                ClientSize = new Size(width, height)
+                ClientSize = new System.Drawing.Size(SCREEN_WIDTH * SCREEN_SCALE, SCREEN_HEIGHT * SCREEN_SCALE)
             };
 
             // Creates the Device
             var direct3D = new Direct3D();
-            var device = new Device(direct3D, 0, DeviceType.Hardware, form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, new PresentParameters(width, height));
+            var device = new Device(direct3D, 0, DeviceType.Hardware, form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, new PresentParameters(SCREEN_WIDTH, SCREEN_HEIGHT));
 
-            //Texture tex = Texture.FromFile(device, "Gator_Stage_Floor_Block.png");
-            //Texture paletteTexture = Texture.FromFile(device, "color_map.dds");
-            
-            Texture paletteTexture = new Texture(device, 256, 1, 1, Usage.Dynamic, Format.X8R8G8B8, Pool.Default);
-            DataRectangle rect = paletteTexture.LockRectangle(0, LockFlags.Discard);
-            using (DataStream stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
-            {
-                stream.Write(new Color(0, 0, 33, 255).ToBgra()); // 0
-                stream.Write(new Color(0, 57, 173, 255).ToBgra()); // 1
-                stream.Write(new Color(0, 107, 189, 255).ToBgra()); // 2
-                stream.Write(new Color(0, 222, 239, 255).ToBgra()); // 3
-                stream.Write(new Color(198, 181, 198, 255).ToBgra()); // 4
-                stream.Write(new Color(41, 33, 41, 255).ToBgra()); // 5
-                stream.Write(new Color(16, 8, 16, 255).ToBgra()); // 6
-                stream.Write(new Color(255, 33, 255, 255).ToBgra()); // 7
-                stream.Write(new Color(132, 16, 0, 255).ToBgra()); // 8
-                stream.Write(new Color(99, 33, 0, 255).ToBgra()); // 9
-                stream.Write(new Color(66, 24, 0, 255).ToBgra()); // 10
-                stream.Write(new Color(16, 24, 0, 255).ToBgra()); // 11
-                stream.Write(new Color(24, 16, 24, 255).ToBgra()); // 12
-                stream.Write(new Color(33, 24, 33, 255).ToBgra()); // 13
-                stream.Write(new Color(115, 82, 115, 255).ToBgra()); // 14
-                stream.Write(new Color(57, 41, 57, 255).ToBgra()); // 15
+            ShaderBytecode function;
 
-                for (int i = 16; i < 256; i++)
-                    stream.Write(new Color(0, 0, 0, 255).ToBgra());
-            }
+            //function = new ShaderBytecode(VERTEX_SHADER_BYTECODE);
+            //VertexShader vShader = new VertexShader(device, function);
 
-            paletteTexture.UnlockRectangle(0);
+            function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
+            PixelShader pShader = new PixelShader(device, function);
 
-            Texture tex = new Texture(device, 32, 32, 1, Usage.Dynamic, Format.X8R8G8B8, Pool.Default);
-            rect = tex.LockRectangle(0, LockFlags.Discard);
+            device.VertexShader = null;
+            device.PixelShader = pShader;
+            device.VertexFormat = D3DFVF_TLVERTEX;
 
-            using (DataStream stream = new DataStream(rect.DataPointer, 32 * 32 * sizeof(int), true, true))
-            {
-                for (int i = 0; i < bytes.Length; i++)
-                    stream.Write(new Color((int) bytes[i], 0, 0, 255).ToBgra());
-            }
+            Texture texture = Texture.FromFile(device, "Gator_Stage_Floor_Block.png");
 
-            tex.UnlockRectangle(0);
+            VertexBuffer vb = new VertexBuffer(device, VERTEX_SIZE * 2 * 3 * MAPS_PER_COL_IN_IMAGE * SIDE_TILES_PER_MAP * MAPS_PER_ROW_IN_IMAGE * SIDE_TILES_PER_MAP, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
+            //VertexBuffer vb = new VertexBuffer(device, VERTEX_SIZE * 4, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
 
-            Sprite sprite = new Sprite(device);
-            // to resize/rotate/position sprite.Transform = some 4x4 affine transform matrix (SharpDX.Matrix)
-
-            ShaderBytecode function = new ShaderBytecode(g_ps20_main);
-            PixelShader shader = new PixelShader(device, function);
+            device.SetRenderState(RenderState.Lighting, false);
+            device.SetRenderState(RenderState.AlphaBlendEnable, true);
+            device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
+            device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
+            device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.Modulate);
 
             core = new MMXCore();
             core.LoadNewRom(Assembly.GetExecutingAssembly().GetManifestResourceStream("D3D9Test.roms." + ROM_NAME + ".smc"));
@@ -671,29 +795,19 @@ namespace D3D9Test
                 core.LoadFont();
                 core.LoadProperties();
 
-                core.SetLevel((ushort) LEVEL, 0);
+                core.SetLevel(LEVEL, 0);
                 core.LoadLevel();
+
+                core.LoadBackground();
 
                 core.UpdateVRAMCache();
 
-                LoadPalette(device);
-                RefreshMapCache(device);
+                LoadPalette(device);                
+                LoadTilemap(device);
+                TessellateTiles(device, vb); 
             }
 
-            device.VertexShader = null;
-            device.PixelShader = shader;
-            device.VertexFormat = D3DFVF_TLVERTEX;
-
-            const int vSize = 28;
-            VertexBuffer vb = new VertexBuffer(device, vSize * 4, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
-
-            device.SetStreamSource(0, vb, 0, vSize);
-
-            device.SetRenderState(RenderState.Lighting, false);
-            device.SetRenderState(RenderState.AlphaBlendEnable, true);
-            device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
-            device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
-            device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.Modulate);           
+            //SetupQuad(vb, false, false, false);
 
             // Use clock
             var clock = new Stopwatch();
@@ -706,10 +820,19 @@ namespace D3D9Test
                 device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
                 device.BeginScene();
 
-                device.SetTexture(1, paletteTexture);
-                //BlitD3D(device, vb, tex, new SharpDX.Rectangle(64, 64, 128, 128), Color4.White, 0);
-                
+                Matrix orthoLH = Matrix.OrthoLH(SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f, 10.0f);
+                device.SetTransform(TransformState.Projection, orthoLH);
+                device.SetTransform(TransformState.World, Matrix.Identity);
+                device.SetTransform(TransformState.View, Matrix.Identity);
+
+                /*Matrix lastTransform = device.GetTransform(TransformState.World);
+                Matrix transform = Matrix.Translation(new Vector3(2, 2, 0));
+                device.SetTransform(TransformState.World, transform);*/
+
                 RenderAllMaps(device, vb);
+                //BlitD3D(device, vb, tilemap, palette, new Rectangle(0, 0, TILEMAP_WIDTH, TILEMAP_HEIGHT), Color.White, false, false, false);
+
+                //device.SetTransform(TransformState.World, lastTransform);
 
                 device.EndScene();
                 device.Present();

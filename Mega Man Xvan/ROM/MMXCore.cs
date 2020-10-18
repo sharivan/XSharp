@@ -1,17 +1,19 @@
-﻿using MMX.Engine;
-using SharpDX;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using SharpDX.Direct2D1;
+
+using SharpDX;
+using SharpDX.Direct3D9;
+
+using MMX.Math;
+using MMX.Geometry;
+using MMX.Engine;
+
+using MMXBox = MMX.Geometry.Box;
 
 using static MMX.Engine.Consts;
-using MMX.Geometry;
-using MMX.Math;
-using System.Diagnostics;
-using SharpDX.DXGI;
 
 namespace MMX.ROM
 {
@@ -327,6 +329,27 @@ namespace MMX.ROM
                 FixedSingle x = ReadWord(checkpointInfoTable[point].maxX) + 256;
                 FixedSingle y = ReadWord(checkpointInfoTable[point].maxY) + 224;
                 return new Vector(x, y);
+            }
+        }
+
+        public int Point
+        {
+            get
+            {
+                return point;
+            }
+
+            set
+            {
+                point = (ushort) value;
+            }
+        }
+
+        public int CheckpointCount
+        {
+            get
+            {
+                return (int) numCheckpoints;
             }
         }
 
@@ -2885,54 +2908,78 @@ namespace MMX.ROM
             return !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
         }
 
-        private Tile AddTile(World world, uint tile, CollisionData collisionData = CollisionData.NONE, bool transparent = false)
+        private Tile AddTile(World world, uint tile, bool transparent = false)
         {
-            Color[] customPalette;
-            byte[] imageData = new byte[TILE_SIZE * TILE_SIZE * sizeof(int)];
+            uint image = (tile & 0x3FF) << 6;
+
+            byte[] imageData = new byte[TILE_SIZE * TILE_SIZE * sizeof(byte)];
             bool notNull = false;
             using (MemoryStream ms = new MemoryStream(imageData))
             {
                 using (BinaryWriter writter = new BinaryWriter(ms))
                 {
-                    byte palette = (byte) ((tile >> 6) & 0x70);
-                    uint image = (tile & 0x3FF) << 6;
-
-                    customPalette = new Color[16];
-                    for (int i = 0; i < 16; i++)
-                    {
-                        Color color = new Color(Transform(palCache[i | palette], true));
-                        customPalette[i] = color;
-                    }
-
-                    for (int i = 0; i < 0x40; i++, image++)
-                    {
-                        var v = vramCache[image];
-                        bool notTransparent = v != 0 || !transparent;
-                        var color = Transform(palCache[v | palette], notTransparent);
-                        notNull |= notTransparent;
-                        writter.Write(color);
-                    }
-
-                    /*for (int i = 0; i < 0x40; i++, image++)
+                    for (int i = 0; i < TILE_SIZE * TILE_SIZE; i++, image++)
                     {
                         var v = vramCache[image];
                         bool notTransparent = v != 0 || !transparent;
                         notNull |= notTransparent;
                         writter.Write(v);
-                    }*/
+                    }
                 }
             }
 
             if (!notNull)
                 return null;
 
-            //Tile wtile = world.AddTile(imageData, customPalette);
             Tile wtile = world.AddTile(imageData);
             return wtile;
         }
 
-        private void RefreshMapCache(World world)
+        private static void WriteTile(DataRectangle tilemapRect, byte[] data, int mapIndex, int tileRow, int tileCol, int subPalette, bool flipped, bool mirrored)
         {
+            int mapRow = mapIndex / 32;
+            int mapCol = mapIndex % 32;
+
+            IntPtr ptr = tilemapRect.DataPointer;
+            ptr += mapCol * MAP_SIZE * sizeof(byte);
+            ptr += World.TILEMAP_WIDTH * mapRow * MAP_SIZE * sizeof(byte);
+            ptr += TILE_SIZE * tileCol * sizeof(byte);
+            ptr += World.TILEMAP_WIDTH * TILE_SIZE * tileRow * sizeof(byte);
+
+            if (flipped)
+                ptr += World.TILEMAP_WIDTH * (TILE_SIZE - 1) * sizeof(byte);
+
+            for (int row = 0; row < TILE_SIZE; row++)
+            {
+                int dataIndex = row * TILE_SIZE;
+                if (mirrored)
+                    dataIndex += TILE_SIZE - 1;
+
+                using (DataStream stream = new DataStream(ptr, TILE_SIZE * sizeof(byte), true, true))
+                {
+                    for (int col = 0; col < TILE_SIZE; col++)
+                    {
+                        stream.Write((byte) ((subPalette << 4) | (data != null ? data[dataIndex] : 0)));
+
+                        if (mirrored)
+                            dataIndex--;
+                        else
+                            dataIndex++;
+                    }
+                }
+
+                if (flipped)
+                    ptr -= World.TILEMAP_WIDTH * sizeof(byte);
+                else
+                    ptr += World.TILEMAP_WIDTH * sizeof(byte);
+            }
+        }
+
+        internal void RefreshMapCache(World world, bool background = false)
+        {
+            Texture tilemap = new Texture(world.Device, World.TILEMAP_WIDTH, World.TILEMAP_HEIGHT, 1, Usage.None, Format.L8, Pool.Managed);
+            DataRectangle rect = tilemap.LockRectangle(0, LockFlags.Discard);
+
             maps = new Map[0x400];
 
             uint map = pMaps;
@@ -2944,27 +2991,55 @@ namespace MMX.ROM
                 Map wmap = world.AddMap(collisionData);
 
                 uint tileData = ReadWord(map);
+                byte palette = (byte) ((tileData >> 10) & 7);
+                byte subPalette = (byte) ((tileData >> 10) & 7);
+                bool flipped = (tileData & 0x8000) != 0;
+                bool mirrored = (tileData & 0x4000) != 0;
+                bool upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                Tile tile = AddTile(world, tileData, collisionData, true);
-                wmap.SetTile(new Vector(0, 0), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                Tile tile = AddTile(world, tileData, true);
+                wmap.SetTile(new Vector(0, 0), tile, palette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 0, 0, palette, flipped, mirrored);
 
                 tileData = ReadWord(map);
+                palette = (byte) ((tileData >> 10) & 7);
+                flipped = (tileData & 0x8000) != 0;
+                mirrored = (tileData & 0x4000) != 0;
+                upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                tile = AddTile(world, tileData, collisionData, true);
-                wmap.SetTile(new Vector(TILE_SIZE, 0), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                tile = AddTile(world, tileData, true);
+                wmap.SetTile(new Vector(TILE_SIZE, 0), tile, palette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 0, 1, palette, flipped, mirrored);
 
                 tileData = ReadWord(map);
+                palette = (byte) ((tileData >> 10) & 7);
+                flipped = (tileData & 0x8000) != 0;
+                mirrored = (tileData & 0x4000) != 0;
+                upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                tile = AddTile(world, tileData, collisionData, true);
-                wmap.SetTile(new Vector(0, TILE_SIZE), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                tile = AddTile(world, tileData, true);
+                wmap.SetTile(new Vector(0, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 1, 0, palette, flipped, mirrored);
 
                 tileData = ReadWord(map);
+                palette = (byte) ((tileData >> 10) & 7);
+                flipped = (tileData & 0x8000) != 0;
+                mirrored = (tileData & 0x4000) != 0;
+                upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                tile = AddTile(world, tileData, collisionData, true);
-                wmap.SetTile(new Vector(TILE_SIZE, TILE_SIZE), tile, (tileData & 0x8000) != 0, (tileData & 0x4000) != 0, (tileData & 0x2000) != 0);
+                tile = AddTile(world, tileData, true);
+                wmap.SetTile(new Vector(TILE_SIZE, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 1, 1, palette, flipped, mirrored);
 
                 maps[i] = wmap.IsNull ? null : wmap;
             }
+
+            tilemap.UnlockRectangle(0);
+
+            if (background)
+                world.backgroundTilemap = tilemap;
+            else
+                world.foregroundTilemap = tilemap;
         }
 
         private void LoadMap(World world, int x, int y, ushort index, bool background = false)
@@ -3018,30 +3093,54 @@ namespace MMX.ROM
                 }
         }
 
+        internal void LoadPalette(World world, bool background = false)
+        {
+            Texture palette = new Texture(world.Device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
+            DataRectangle rect = palette.LockRectangle(0, LockFlags.Discard);
+
+            using (DataStream stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
+            {
+                for (int i = 0; i < 16; i++)
+                    for (int j = 0; j < 16; j++)
+                        stream.Write(new Color(Transform(palCache[(i << 4) | j], j != 0)).ToRgba());
+            }
+
+            palette.UnlockRectangle(0);
+
+            if (background)
+                world.BackgroundPalette = palette;
+            else
+                world.ForegroundPalette = palette;
+        }
+
         public void LoadToWorld(World world, bool background = false)
         {
-            world.BeginUpdate();
+            LoadPalette(world, background);
+
             world.Resize(levelHeight, levelWidth, background);
-            RefreshMapCache(world);
+
+            if (!background)
+                RefreshMapCache(world, background);
 
             uint tmpLayout = 0;
             for (int y = 0; y < levelHeight; y++)
                 for (int x = 0; x < levelWidth; x++)
                     LoadSceneEx(world, x, y, sceneLayout[tmpLayout++], background);
-
-            world.EndUpdate();
         }
 
         public void LoadTriggers(GameEngine engine)
         {
-            foreach (CheckPointInfo info in checkpointInfoTable)
+            for (int point = 0; point < checkpointInfoTable.Count; point++)
             {
+                CheckPointInfo info = checkpointInfoTable[point];
+
                 uint minX = ReadWord(info.minX);
                 uint minY = ReadWord(info.minY);
                 uint maxX = ReadWord(info.maxX);
                 uint maxY = ReadWord(info.maxY);
                 engine.AddCheckpoint(
-                    new Box(minX, minY, maxX - minX + SCREEN_WIDTH, maxY - minY + SCREEN_HEIGHT),
+                    point,
+                    new MMXBox(minX, minY, maxX - minX + SCREEN_WIDTH, maxY - minY + SCREEN_HEIGHT),
                     new Vector(ReadWord(info.chX), ReadWord(info.chY)),
                     new Vector(ReadWord(info.camX), ReadWord(info.camY)),
                     new Vector(ReadWord(info.bkgX), ReadWord(info.bkgY)),
@@ -3076,14 +3175,14 @@ namespace MMX.ROM
                         int top = ReadWord(pBase);
                         pBase += 2;
 
-                        Box boudingBox = new Box(left, top, right - left, bottom - top);
+                        MMXBox boudingBox = new MMXBox(left, top, right - left, bottom - top);
 
                         uint lockNum = 0;
 
                         List<Vector> extensions = new List<Vector>();
                         while (((expandedROM && expandedROMVersion >= 4) ? ReadWord(pBase) : rom[pBase]) != 0)
                         {
-                            Box lockBox = boudingBox;
+                            MMXBox lockBox = boudingBox;
                             ushort camOffset = 0;
                             ushort camValue = 0;
 

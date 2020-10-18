@@ -1,12 +1,7 @@
 ﻿using MMX.Geometry;
 using MMX.Math;
-using SharpDX.Direct2D1;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using SharpDX;
 
 namespace MMX.Engine
 {
@@ -113,15 +108,11 @@ namespace MMX.Engine
         public static readonly FixedSingle RESPAWN_TIME = 1; // Tempo de respawn do bomberman em segundos
         public static readonly int STAGE_COUNT = 7; // Número de estágios que o jogo deverá ter, também representa o número de texturas diferentes usadas pelos blocos (hard e softs) e pelo fundo do jogo
         public static readonly Vector DEFAULT_DRAW_ORIGIN = Vector.NULL_VECTOR; // Origem (coordenadas) padrão da renderização do jogo
-        public static readonly FixedSingle DEFAULT_DRAW_SCALE = 4; // Escala padrão de renderização do jogo
+        public static readonly FixedSingle DEFAULT_DRAW_SCALE = 1; // Escala padrão de renderização do jogo
         public static readonly FixedSingle DEFAULT_CLIENT_WIDTH = DEFAULT_DRAW_SCALE * SCREEN_WIDTH; // Tamanho padrão da largura do retângulo do jogo
         public static readonly FixedSingle DEFAULT_CLIENT_HEIGHT = DEFAULT_DRAW_SCALE * SCREEN_HEIGHT; // Tamanho padrão da altura do retângulo do jogo
         public static readonly Vector DEFAULT_CLIENT_SIZE = new Vector(DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
         public static readonly Box DEFAULT_CLIENT_BOX = new Box(DEFAULT_DRAW_ORIGIN.X, DEFAULT_DRAW_ORIGIN.Y, DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
-        public static readonly InterpolationMode IMAGE_INTERPOLATION_MODE = InterpolationMode.NearestNeighbor;
-        public static readonly BitmapInterpolationMode BITMAP_INTERPOLATION_MODE = BitmapInterpolationMode.NearestNeighbor;       
-        public static readonly AntialiasMode ANTIALIAS_MODE = AntialiasMode.Aliased;
-        public static readonly TextAntialiasMode TEXT_ANTIALIAS_MODE = TextAntialiasMode.Cleartype;
         public const bool VSYNC = false;
 
         // Debug
@@ -139,6 +130,66 @@ namespace MMX.Engine
         public const bool DEBUG_SHOW_TRIGGERS = false;
         public const bool DEBUG_SHOW_CAMERA_TRIGGER_EXTENSIONS = false;
         public const bool DEBUG_DUMP_ROM_MEMORY = false;
+
+        public static readonly Color[] X1_NORMAL_PALETTE = new Color[]
+        {
+            Color.Transparent, // 0
+            new Color(224, 224, 224, 255), // 1
+            new Color(232, 224, 64, 255), // 2
+            new Color(240, 64, 16, 255), // 3
+            new Color(120, 216, 240, 255), // 4
+            new Color(80, 160, 240, 255), // 5
+            new Color(24, 88, 176, 255), // 6
+            new Color(0, 128, 248, 255), // 7
+            new Color(0, 64, 240, 255), // 8
+            new Color(32, 48, 128, 255), // 9
+            new Color(248, 176, 128, 255), // 10
+            new Color(184, 96, 72, 255), // 11
+            new Color(128, 64, 32, 255), // 12
+            new Color(240, 240, 240, 255), // 13
+            new Color(152, 152, 152, 255), // 14
+            new Color(24, 24, 24, 255) // 15
+        };
+
+        public static readonly Color[] CHARGE_LEVEL_1_PALETTE = new Color[]
+        {
+            Color.Transparent, // 0
+            new Color(248, 248, 248, 255), // 1
+            new Color(232, 224, 64, 255), // 2
+            new Color(240, 104, 192, 255), // 3
+            new Color(160, 240, 240, 255), // 4
+            new Color(80, 216, 240, 255), // 5
+            new Color(24, 128, 224, 255), // 6
+            new Color(0, 184, 248, 255), // 7
+            new Color(0, 144, 240, 255), // 8
+            new Color(32, 104, 240, 255), // 9
+            new Color(248, 176, 128, 255), // 10
+            new Color(184, 96, 72, 255), // 11
+            new Color(128, 64, 32, 255), // 12
+            new Color(248, 248, 248, 255), // 13
+            new Color(176, 176, 176, 255), // 14
+            new Color(24, 80, 224, 255) // 15
+        };
+
+        public static readonly Color[] CHARGE_LEVEL_2_PALETTE = new Color[]
+        {
+            Color.Transparent, // 0
+            new Color(248, 248, 248, 255), // 1
+            new Color(232, 224, 64, 255), // 2
+            new Color(240, 104, 192, 255), // 3
+            new Color(224, 224, 248, 255), // 4
+            new Color(200, 176, 248, 255), // 5
+            new Color(152, 136, 240, 255), // 6
+            new Color(176, 168, 248, 255), // 7
+            new Color(176, 136, 248, 255), // 8
+            new Color(136, 112, 232, 255), // 9
+            new Color(248, 176, 128, 255), // 10
+            new Color(184, 96, 72, 255), // 11
+            new Color(128, 64, 32, 255), // 12
+            new Color(248, 248, 248, 255), // 13
+            new Color(176, 176, 176, 255), // 14
+            new Color(144, 0, 216, 255) // 15
+        };
 
         // Startup
         public const bool LOAD_ROM = true;

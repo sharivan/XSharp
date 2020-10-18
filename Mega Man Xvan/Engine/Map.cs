@@ -1,13 +1,12 @@
-﻿using MMX.Geometry;
-using MMX.Math;
+﻿using System;
 
 using SharpDX;
-using SharpDX.Direct2D1;
-using SharpDX.DirectWrite;
-using SharpDX.Mathematics.Interop;
-using SharpDX.Direct2D1.Effects;
+using SharpDX.Direct3D9;
 
-using System;
+using MMX.Geometry;
+using MMX.Math;
+
+using MMXBox = MMX.Geometry.Box;
 
 using static MMX.Engine.Consts;
 
@@ -20,6 +19,7 @@ namespace MMX.Engine
         private CollisionData collisionData;
 
         internal Tile[,] tiles;
+        internal int[,] palette;
         internal bool[,] flipped;
         internal bool[,] mirrored;
         internal bool[,] upLayer;
@@ -89,113 +89,36 @@ namespace MMX.Engine
             this.collisionData = collisionData;
 
             tiles = new Tile[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
+            palette = new int[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
             flipped = new bool[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
             mirrored = new bool[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
             upLayer = new bool[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
         }
 
-        internal Map(World world, int id, Color color, CollisionData collisionData = CollisionData.NONE, bool flipped = false, bool mirrored = false, bool upLayer = false) :
-            this(world, id, collisionData)
+        /*internal void Render(MMXBox box, Vector offset, bool background)
         {
-            for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
-                for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
-                {
-                    Tile tile = world.AddTile(color);
-                    tiles[row, col] = tile;
-                    this.flipped[row, col] = flipped;
-                    this.mirrored[row, col] = mirrored;
-                    this.upLayer[row, col] = upLayer;
-                }
-        }
+            MMXBox mapBox = new MMXBox(offset.X, offset.Y, MAP_SIZE, MAP_SIZE);
+            MMXBox intersection = (box & mapBox) - offset;
 
-        /*internal Map(World world, int id, Color[,] pixels, CollisionData collisionData = CollisionData.NONE, bool flipped = false, bool mirrored = false, bool upLayer = false) :
-            this(world, id, pixels, Point.Zero, collisionData, flipped, mirrored, upLayer)
-        {
-        }*/
+            Cell start = World.GetBlockCellFromPos(intersection.LeftTop);
+            Cell end = World.GetBlockCellFromPos(intersection.RightBottom);
 
-        /*internal Map(World world, int id, Color[,] pixels, Point offset, CollisionData collisionData = CollisionData.NONE, bool flipped = false, bool mirrored = false, bool upLayer = false) :
-            this(world, id, collisionData)
-        {
-            for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
-                for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
-                {
-                    Tile tile = world.AddTile(pixels, new Point(offset.X + col * TILE_SIZE, offset.Y + row * TILE_SIZE));
-                    tiles[row, col] = tile;
-                    this.flipped[row, col] = flipped;
-                    this.mirrored[row, col] = mirrored;
-                    this.upLayer[row, col] = upLayer;
-                }
-        }*/
-
-        internal Map(World world, int id, Bitmap source, CollisionData collisionData = CollisionData.NONE, bool flipped = false, bool mirrored = false, bool upLayer = false) :
-            this(world, id, source, Point.Zero, collisionData, flipped, mirrored, upLayer)
-        {
-        }
-
-        internal Map(World world, int id, Bitmap source, Point offset, CollisionData collisionData = CollisionData.NONE, bool flipped = false, bool mirrored = false, bool upLayer = false) :
-            this(world, id, collisionData)
-        {
-            for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
-                for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
-                {
-                    Tile tile = world.AddTile(source, new Point(offset.X + col * TILE_SIZE, offset.Y + row * TILE_SIZE));
-                    tiles[row, col] = tile;
-                    this.flipped[row, col] = flipped;
-                    this.mirrored[row, col] = mirrored;
-                    this.upLayer[row, col] = upLayer;
-                }
-        }
-
-        private void PaintTile(RenderTarget target, Tile tile, FixedSingle x, FixedSingle y, bool flipped, bool mirrored)
-        {
-            Vector2 center = new Vector2((float) x + TILE_SIZE / 2, (float) y + TILE_SIZE / 2);
-            RectangleF dst = new RectangleF((float) x, (float) y, TILE_SIZE, TILE_SIZE);
-            RectangleF src = new RectangleF(0, 0, TILE_SIZE, TILE_SIZE);
-
-            var lastTransform = target.Transform;
-
-            if (flipped)
+            for (int col = start.Col; col <= end.Col + 1; col++)
             {
-                if (mirrored)
-                    target.Transform *= Matrix3x2.Scaling(-1, -1, center);
-                else
-                    target.Transform *= Matrix3x2.Scaling(1, -1, center);
-            
+                if (col < 0 || col >= SIDE_TILES_PER_MAP)
+                    continue;
+
+                for (int row = start.Row; row <= end.Row + 1; row++)
+                {
+                    if (row < 0 || row >= SIDE_TILES_PER_MAP)
+                        continue;
+
+                    Vector tileLT = new Vector(col * TILE_SIZE, row * TILE_SIZE);
+                    Tile tile = tiles[row, col];
+                    if (tile != null)
+                        PaintTile(tile, offset.X + tileLT.X, offset.Y + tileLT.Y, palette[row, col], flipped[row, col], mirrored[row, col], upLayer[row, col], background);
+                }
             }
-            else if (mirrored)
-                target.Transform *= Matrix3x2.Scaling(-1, 1, center);
-
-            target.DrawBitmap(tile.target.Bitmap, dst, 1, BITMAP_INTERPOLATION_MODE, src);
-            //var effect = new BitmapSource(world.Engine.Context);
-            //target.DrawBitmap(tile.bitmap, dst, 1, BITMAP_INTERPOLATION_MODE, src);
-
-            //if (flipped || mirrored)
-            //{
-            target.Flush();
-                target.Transform = lastTransform;
-            //}
-        }
-
-        internal void PaintDownLayer(RenderTarget target, Vector offset)
-        {
-            for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
-                for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
-                {
-                    Tile tile = tiles[row, col];
-                    if (tile != null && !upLayer[row, col])
-                        PaintTile(target, tile, offset.X + col * TILE_SIZE, offset.Y + row * TILE_SIZE, flipped[row, col], mirrored[row, col]);
-                }
-        }
-
-        internal void PaintUpLayer(RenderTarget target, Vector offset)
-        {
-            for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
-                for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
-                {
-                    Tile tile = tiles[row, col];
-                    if (tile != null && upLayer[row, col])
-                        PaintTile(target, tile, offset.X + col * TILE_SIZE, offset.Y + row * TILE_SIZE, flipped[row, col], mirrored[row, col]);
-                }
 
             if (collisionData != CollisionData.NONE)
             {
@@ -254,7 +177,7 @@ namespace MMX.Engine
                     }
                 }
             }
-        }
+        }*/
 
         public Tile GetTileFrom(Vector pos)
         {
@@ -278,6 +201,7 @@ namespace MMX.Engine
                     if (tiles[row, col] == tile)
                     {
                         tiles[row, col] = null;
+                        palette[row, col] = -1;
                         flipped[row, col] = false;
                         mirrored[row, col] = false;
                         upLayer[row, col] = false;
@@ -290,39 +214,27 @@ namespace MMX.Engine
             return tiles[cell.Row, cell.Col];
         }
 
-        public void SetTile(Vector pos, Tile tile, bool flipped = false, bool mirrored = false, bool upLayer = false)
+        public void SetTile(Vector pos, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
         {
             Cell cell = World.GetTileCellFromPos(pos);
-            SetTile(cell, tile, flipped, mirrored, upLayer);
+            SetTile(cell, tile, palette, flipped, mirrored, upLayer);
         }
 
-        public void SetTile(int row, int col, Tile tile, bool flipped = false, bool mirrored = false, bool upLayer = false)
+        public void SetTile(int row, int col, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
         {
-            SetTile(new Cell(row, col), tile, flipped, mirrored, upLayer);
+            SetTile(new Cell(row, col), tile, palette, flipped, mirrored, upLayer);
         }
 
-        public void SetTile(Cell cell, Tile tile, bool flipped = false, bool mirrored = false, bool upLayer = false)
+        public void SetTile(Cell cell, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
         {
             tiles[cell.Row, cell.Col] = tile;
+            this.palette[cell.Row, cell.Col] = palette;
             this.flipped[cell.Row, cell.Col] = flipped;
             this.mirrored[cell.Row, cell.Col] = mirrored;
             this.upLayer[cell.Row, cell.Col] = upLayer;
         }
 
-        public void Fill(Bitmap source, Point offset, bool flipped = false, bool mirrored = false, bool upLayer = false)
-        {
-            for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
-                for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
-                {
-                    Tile tile = world.AddTile(source, new Point(offset.X + col * TILE_SIZE, offset.Y + row * TILE_SIZE));
-                    tiles[row, col] = tile;
-                    this.flipped[row, col] = flipped;
-                    this.mirrored[row, col] = mirrored;
-                    this.upLayer[row, col] = upLayer;
-                }
-        }
-
-        public void FillRectangle(Box box, Tile tile, bool flipped = false, bool mirrored = false, bool upLayer = false)
+        public void FillRectangle(MMXBox box, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
         {
             Vector boxLT = box.LeftTop;
             Vector boxSize = box.DiagonalVector;
@@ -334,7 +246,37 @@ namespace MMX.Engine
 
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetTile(new Vector((col + c) * TILE_SIZE, (row + r) * TILE_SIZE), tile, flipped, mirrored, upLayer);
+                    SetTile(new Vector((col + c) * TILE_SIZE, (row + r) * TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
+        }
+
+        internal void Tessellate(DataStream downLayerVBData, DataStream upLayerVBData, Vector pos)
+        {
+            for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
+                for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
+                {
+                    Vector tilePos = new Vector(pos.X + col * TILE_SIZE, pos.Y - row * TILE_SIZE);
+                    Tile tile = tiles[row, col];
+
+                    if (tile != null)
+                    {
+                        Vector tilemapPos = new Vector(((id % 32) * SIDE_TILES_PER_MAP + col) * World.TILE_FRAC_SIZE, ((id / 32) * SIDE_TILES_PER_MAP + row) * World.TILE_FRAC_SIZE);
+                        if (upLayer[row, col])
+                        {
+                            GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            GameEngine.WriteSquare(upLayerVBData, tilemapPos, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                        }
+                        else
+                        {
+                            GameEngine.WriteSquare(downLayerVBData, tilemapPos, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                        }
+                    }
+                    else
+                    {
+                        GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                        GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                    }
+                }
         }
     }
 }

@@ -1,12 +1,16 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using SharpDX;
-using SharpDX.Direct2D1;
-using SharpDX.DXGI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
+using MMX.Geometry;
+using MMX.Math;
+
+using SharpDX;
+using SharpDX.Direct3D9;
+
+using MMXBox = MMX.Geometry.Box;
+
 using static MMX.Engine.Consts;
+using System.IO;
 
 namespace MMX.Engine
 {
@@ -19,7 +23,7 @@ namespace MMX.Engine
             private List<Frame> frames;
             private int loopFromSequenceIndex;
             private Vector boudingBoxOriginOffset;
-            private Box collisionBox;
+            private MMXBox collisionBox;
 
             public SpriteSheet Sheet
             {
@@ -79,7 +83,7 @@ namespace MMX.Engine
                 }
             }
 
-            public Box CollisionBox
+            public MMXBox CollisionBox
             {
                 get
                 {
@@ -146,13 +150,13 @@ namespace MMX.Engine
                 if (loopPoint)
                     loopFromSequenceIndex = frames.Count;
 
-                Box boundingBox = new Box(bbLeft + bbOriginXOff + boudingBoxOriginOffset.X, bbTop + bbOriginYOff + boudingBoxOriginOffset.Y, bbLeft, bbTop, bbWidth, bbHeight);
+                MMXBox boundingBox = new MMXBox(bbLeft + bbOriginXOff + boudingBoxOriginOffset.X, bbTop + bbOriginYOff + boudingBoxOriginOffset.Y, bbLeft, bbTop, bbWidth, bbHeight);
                 Frame frame = sheet.AddFrame(boundingBox, collisionBox);
                 AddRepeated(frame, count);
                 return frame;
             }
 
-            public Frame AddFrame(Box boudingBox, Box collisionBox, int count = 1, bool loopPoint = false)
+            public Frame AddFrame(MMXBox boudingBox, MMXBox collisionBox, int count = 1, bool loopPoint = false)
             {
                 if (loopPoint)
                     loopFromSequenceIndex = frames.Count;
@@ -181,9 +185,9 @@ namespace MMX.Engine
         public class Frame
         {
             private int index;
-            private Box boundingBox;
-            private Box collisionBox;
-            private Bitmap bitmap;
+            private MMXBox boundingBox;
+            private MMXBox collisionBox;
+            private Texture bitmap;
             private bool precached;
 
             public int Index
@@ -194,7 +198,7 @@ namespace MMX.Engine
                 }
             }
 
-            public Box BoundingBox
+            public MMXBox BoundingBox
             {
                 get
                 {
@@ -202,7 +206,7 @@ namespace MMX.Engine
                 }
             }
 
-            public Box CollisionBox
+            public MMXBox CollisionBox
             {
                 get
                 {
@@ -210,7 +214,7 @@ namespace MMX.Engine
                 }
             }
 
-            public Bitmap Bitmap
+            public Texture Bitmap
             {
                 get
                 {
@@ -226,7 +230,7 @@ namespace MMX.Engine
                 }
             }
 
-            internal Frame(int index, Box boundingBox, Box collisionBox, Bitmap bitmap, bool precached)
+            internal Frame(int index, MMXBox boundingBox, MMXBox collisionBox, Texture bitmap, bool precached)
             {
                 this.index = index;
                 this.boundingBox = boundingBox;
@@ -239,17 +243,17 @@ namespace MMX.Engine
             {
                 var frame = obj as Frame;
                 return frame != null &&
-                       EqualityComparer<Box>.Default.Equals(boundingBox, frame.boundingBox) &&
-                       EqualityComparer<Box>.Default.Equals(collisionBox, frame.collisionBox) &&
-                       EqualityComparer<Bitmap>.Default.Equals(bitmap, frame.bitmap);
+                       EqualityComparer<MMXBox>.Default.Equals(boundingBox, frame.boundingBox) &&
+                       EqualityComparer<MMXBox>.Default.Equals(collisionBox, frame.collisionBox) &&
+                       EqualityComparer<Texture>.Default.Equals(bitmap, frame.bitmap);
             }
 
             public override int GetHashCode()
             {
                 var hashCode = -250932352;
-                hashCode = hashCode * -1521134295 + EqualityComparer<Box>.Default.GetHashCode(boundingBox);
-                hashCode = hashCode * -1521134295 + EqualityComparer<Box>.Default.GetHashCode(collisionBox);
-                hashCode = hashCode * -1521134295 + EqualityComparer<Bitmap>.Default.GetHashCode(bitmap);
+                hashCode = hashCode * -1521134295 + EqualityComparer<MMXBox>.Default.GetHashCode(boundingBox);
+                hashCode = hashCode * -1521134295 + EqualityComparer<MMXBox>.Default.GetHashCode(collisionBox);
+                hashCode = hashCode * -1521134295 + EqualityComparer<Texture>.Default.GetHashCode(bitmap);
                 return hashCode;
             }
 
@@ -263,7 +267,8 @@ namespace MMX.Engine
         private string name;
         private bool precache;
 
-        private Bitmap currentBitmap;
+        private Texture currentBitmap;
+        private Texture currentPalette;
         private bool disposeBitmap;
 
         private List<Frame> frames;
@@ -283,8 +288,6 @@ namespace MMX.Engine
             {
                 return name;
             }
-
-
         }
 
         public bool Precache
@@ -300,7 +303,7 @@ namespace MMX.Engine
             }
         }
 
-        public Bitmap CurrentBitmap
+        public Texture CurrentBitmap
         {
             get
             {
@@ -310,6 +313,19 @@ namespace MMX.Engine
             set
             {
                 currentBitmap = value;
+            }
+        }
+
+        public Texture CurrentPalette
+        {
+            get
+            {
+                return currentPalette;
+            }
+
+            set
+            {
+                currentPalette = value;
             }
         }
 
@@ -361,7 +377,7 @@ namespace MMX.Engine
             sequences = new Dictionary<string, FrameSequence>();
         }
 
-        public SpriteSheet(GameEngine engine, string name, Bitmap bitmap, bool disposeBitmap = false, bool precache = false) :
+        public SpriteSheet(GameEngine engine, string name, Texture bitmap, bool disposeBitmap = false, bool precache = false) :
             this(engine, name, precache)
         {
             currentBitmap = bitmap;
@@ -382,34 +398,110 @@ namespace MMX.Engine
 
         public Frame AddFrame(int x, int y, int width, int height, OriginPosition originPosition = OriginPosition.CENTER)
         {
-            Box boudingBox = new Box(x, y, width, height, originPosition);
+            MMXBox boudingBox = new MMXBox(x, y, width, height, originPosition);
             return AddFrame(boudingBox, boudingBox);
         }
 
-        public Frame AddFrame(Box boudingBox, Box collisionBox)
+        private uint NextHighestPowerOfTwo(uint v)
+        {
+            v--;
+            v |= v >> 1;
+            v |= v >> 2;
+            v |= v >> 4;
+            v |= v >> 8;
+            v |= v >> 16;
+            v++;
+
+            return v;
+        }
+
+        public Frame AddFrame(MMXBox boudingBox, MMXBox collisionBox)
         {
             Frame frame;
 
             if (precache)
             {
-                var size = new Size2((int) boudingBox.Width, (int) boudingBox.Height);
-                var sizef = new Size2F((float) boudingBox.Width, (float) boudingBox.Height);
-                var pixelFormat = new PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied);
-                var properties = new BitmapProperties(pixelFormat);
+                var description = currentBitmap.GetLevelDescription(0);
+                int srcWidth = description.Width;
+                int srcHeight = description.Height;
+                int srcX = (int) boudingBox.Left;
+                int srcY = (int) boudingBox.Top;
+                int width = (int) boudingBox.Width;
+                int height = (int) boudingBox.Height;
+                int width1 = (int) NextHighestPowerOfTwo((uint) width);
+                int height1 = (int) NextHighestPowerOfTwo((uint) height);
 
-                using (BitmapRenderTarget target = new BitmapRenderTarget(engine.Context, CompatibleRenderTargetOptions.None, sizef, size, pixelFormat))
+                Texture texture;
+                if (currentPalette == null)
                 {
-                    target.AntialiasMode = ANTIALIAS_MODE;
+                    texture = new Texture(engine.Device, width1, height1, 1, Usage.None, Format.A8R8G8B8, Pool.Default);
 
-                    target.BeginDraw();
-                    target.DrawBitmap(currentBitmap, new RectangleF(0, 0, sizef.Width, sizef.Height), 1, BITMAP_INTERPOLATION_MODE, GameEngine.ToRectangleF(boudingBox));
-                    target.Flush();
-                    target.EndDraw();
+                    Surface src = currentBitmap.GetSurfaceLevel(0);
+                    Surface dst = texture.GetSurfaceLevel(0);
 
-                    frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, collisionBox, target.Bitmap, true);
-                    frames.Add(frame);
-                    return frame;
+                    engine.Device.UpdateSurface(src, GameEngine.ToRectangleF(boudingBox), dst, new Point(0, 0));
                 }
+                else
+                {
+                    texture = new Texture(engine.Device, width1, height1, 1, Usage.None, Format.L8, Pool.Managed);
+
+                    DataRectangle srcRect = currentBitmap.LockRectangle(0, LockFlags.Discard);
+                    DataRectangle dstRect = texture.LockRectangle(0, LockFlags.Discard);
+
+                    using (DataStream dstDS = new DataStream(dstRect.DataPointer, width1 * height1 * sizeof(byte), true, true))
+                    {                        
+                        using (DataStream srcDS = new DataStream(srcRect.DataPointer, srcWidth * srcHeight * sizeof(int), true, true))
+                        {
+                            using (BinaryReader reader = new BinaryReader(srcDS))
+                            {
+                                for (int y = srcY; y < srcY + height; y++)
+                                {
+                                    for (int x = srcX; x < srcX + width; x++)
+                                    {
+                                        srcDS.Seek((y * srcRect.Pitch) + x * sizeof(int), SeekOrigin.Begin);
+                                        int bgra = reader.ReadInt32();
+                                        Color color = Color.FromBgra(bgra);
+                                        int index = GameEngine.LookupColor(currentPalette, color);
+                                        dstDS.Write((byte) (index != -1 ? index : 0));
+                                    }
+
+                                    for (int x = width; x < width1; x++)
+                                        dstDS.Write((byte) 0);
+                                }
+
+                                for (int y = height; y < height1; y++)
+                                {
+                                    for (int x = 0; x < width1; x++)
+                                        dstDS.Write((byte) 0);
+                                }
+                            }
+                        }
+                    }
+
+                    /*using (DataStream dstDS = new DataStream(dstRect.DataPointer, width * height * sizeof(byte), true, true))
+                    {
+                        using (DataStream srcDS = new DataStream(srcRect.DataPointer, width * height * sizeof(int), true, true))
+                        {
+                            using (BinaryReader reader = new BinaryReader(srcDS))
+                            {
+                                for (int y = 0; y < width * height; y++)
+                                {
+                                    int bgra = reader.ReadInt32();
+                                    Color color = Color.FromBgra(bgra);
+                                    int index = GameEngine.LookupColor(currentPalette, color);
+                                    dstDS.Write((byte) (index != -1 ? index : 0));
+                                }
+                            }
+                        }
+                    }*/
+
+                    currentBitmap.UnlockRectangle(0);
+                    texture.UnlockRectangle(0);
+                }
+
+                frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, collisionBox, texture, true);
+                frames.Add(frame);
+                return frame;
             }
 
             frame = new Frame(frames.Count, boudingBox, collisionBox, currentBitmap, false);

@@ -1,12 +1,14 @@
-﻿using MMX.Geometry;
-using MMX.Math;
+﻿using System;
+using System.IO;
 
 using SharpDX;
-using SharpDX.Direct2D1;
+using SharpDX.Direct3D9;
 using SharpDX.Mathematics.Interop;
 
-using System;
-using System.IO;
+using MMX.Geometry;
+using MMX.Math;
+
+using MMXBox = MMX.Geometry.Box;
 
 using static MMX.Engine.Consts;
 
@@ -32,7 +34,7 @@ namespace MMX.Engine
 
         private AnimationFrameEvent[] animationEvents;
 
-        public Box DrawBox
+        public MMXBox DrawBox
         {
             get
             {
@@ -224,26 +226,26 @@ namespace MMX.Engine
             }
         }
 
-        public Box CurrentFrameBoundingBox
+        public MMXBox CurrentFrameBoundingBox
         {
             get
             {
                 if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
-                    return Box.EMPTY_BOX;
+                    return MMXBox.EMPTY_BOX;
 
-                Box boundingBox = sequence[currentSequenceIndex].BoundingBox;
+                MMXBox boundingBox = sequence[currentSequenceIndex].BoundingBox;
                 return boundingBox;
             }
         }
 
-        public Box CurrentFrameCollisionBox
+        public MMXBox CurrentFrameCollisionBox
         {
             get
             {
                 if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
-                    return Box.EMPTY_BOX;
+                    return MMXBox.EMPTY_BOX;
 
-                Box collisionBox = sequence[currentSequenceIndex].CollisionBox;
+                MMXBox collisionBox = sequence[currentSequenceIndex].CollisionBox;
                 return collisionBox;
             }
         }
@@ -400,33 +402,32 @@ namespace MMX.Engine
                 return;
 
             var frame = sequence[currentSequenceIndex];
-            Box srcBox = frame.BoundingBox;
-            Bitmap bitmap = frame.Bitmap;
-            
-            Box drawBox = sprite.Origin + srcBox;
+            MMXBox srcBox = frame.BoundingBox;
+            Texture bitmap = frame.Bitmap;
+
+            MMXBox drawBox = sprite.Origin + srcBox;
             Vector2 center = sprite.Engine.WorldVectorToScreen(drawBox.Origin);
+            Vector3 center3 = new Vector3(center.X, center.Y, 0);
 
-            Matrix3x2 lastTransform = sprite.Engine.Context.Transform;
+            Matrix transform = Matrix.Identity;
 
-            Matrix3x2 transform = Matrix3x2.Translation(GameEngine.ToVector2(-sprite.Engine.World.Screen.LeftTop));
-
-            float drawScale = (float) sprite.Engine.DrawScale;
-            transform *= Matrix3x2.Scaling(drawScale);
+            float drawScale = (float) sprite.Engine.DrawScale;            
+            transform *= Matrix.Scaling(drawScale);
 
             if (rotation != FixedSingle.ZERO)
-                transform *= Matrix3x2.Rotation((float) rotation, center);
+                transform *= Matrix.Translation(-center3) * Matrix.RotationZ((float) rotation) * Matrix.Translation(center3);
 
             if (flipped)
             {
                 if (mirrored)
-                    transform *= Matrix3x2.Scaling(-1, -1, center);                   
+                    transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, -1, 1) * Matrix.Translation(center3);                   
                 else
-                    transform *= Matrix3x2.Scaling(1, -1, center);
+                    transform *= Matrix.Translation(-center3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(center3);
             }
             else if (mirrored)
-                transform *= Matrix3x2.Scaling(-1, 1, center);
+                transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(center3);
 
-            float brightness = 0;
+            /*float brightness = 0;
             float contrast = 1;
 
             float[][] ptsArray =
@@ -441,11 +442,9 @@ namespace MMX.Engine
             //var effect = new LookupTable3D(sprite.Engine.Context);
             //effect.SetInput(0, bitmap, true);
             //RawMatrix5x4 matrix = CreateRawMatrix5x4(ptsArray);
-            //effect.Matrix = matrix;
+            //effect.Matrix = matrix;*/
 
-            sprite.Engine.Context.Transform *= transform;
-            sprite.Engine.Context.DrawImage(bitmap, GameEngine.ToVector2(drawBox.LeftTop), IMAGE_INTERPOLATION_MODE, CompositeMode.SourceOver);
-            sprite.Engine.Context.Transform = lastTransform;
+            sprite.Engine.PaintTexture(bitmap, sprite.Palette, drawBox.LeftTop, transform);
         }
 
         public override string ToString()

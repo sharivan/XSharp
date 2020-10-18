@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
-
-using SharpDX.Direct2D1;
-using SharpDX.Direct3D;
-using SharpDX.Direct3D11;
-using SharpDX.DXGI;
-using SharpDX.Windows;
-using MMX.Engine;
 using System.Threading;
 
+using SharpDX.Direct3D9;
+using SharpDX.Windows;
+
+using MMX.Engine;
+
 using static MMX.Engine.Consts;
-using MMX.Math;
-using SharpDX;
 
 namespace Mega_Man_Xvan
 {
@@ -25,23 +21,6 @@ namespace Mega_Man_Xvan
             //    engine.UpdateScale();
         }
 
-        static private Rational Rationalize(FixedSingle number)
-        {
-            int intPart = (int) number;
-            int numerator = intPart;
-            int denominator = 1;
-            while (number != intPart)
-            {
-                number -= intPart;
-                number *= 10;
-                intPart = (int) number;
-                numerator = 10 * numerator + intPart;
-                denominator *= 10;
-            }
-
-            return new Rational(numerator, denominator);
-        }
-
         /// <summary>
         /// Ponto de entrada principal para o aplicativo.
         /// </summary>
@@ -49,70 +28,17 @@ namespace Mega_Man_Xvan
         static void Main()
         {
             var form = new RenderForm("Mega Man Xvan");
-            form.ClientSize = new System.Drawing.Size((int) DEFAULT_CLIENT_WIDTH, (int) DEFAULT_CLIENT_HEIGHT);
+            form.ClientSize = new System.Drawing.Size((int) DEFAULT_CLIENT_WIDTH * 4, (int) DEFAULT_CLIENT_HEIGHT * 4);
             form.Resize += new EventHandler(Form_Resize);
 
-            // SwapChain description
-            var desc = new SwapChainDescription()
-            {
-                BufferCount = 1,
-                ModeDescription =
-                                   new ModeDescription(form.ClientSize.Width, form.ClientSize.Height,
-                                                       Rationalize(TICKRATE), Format.B8G8R8A8_UNorm),
-                IsWindowed = true,
-                OutputHandle = form.Handle,
-                SampleDescription = new SampleDescription(1, 0),
-                SwapEffect = SwapEffect.Discard,
-                Usage = Usage.RenderTargetOutput
-            };
+            // Creates the Device
+            var direct3D = new Direct3D();
+            var device = new Device(direct3D, 0, DeviceType.Hardware, form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, new PresentParameters((int) DEFAULT_CLIENT_WIDTH, (int) DEFAULT_CLIENT_HEIGHT));
 
-            // Create Device and SwapChain
-            SharpDX.Direct3D11.Device.CreateWithSwapChain(
-                DriverType.Hardware,
-                DeviceCreationFlags.BgraSupport
-#if DEBUG
-                | DeviceCreationFlags.Debug
-#endif
-                ,
-                new SharpDX.Direct3D.FeatureLevel[] {
-                    SharpDX.Direct3D.FeatureLevel.Level_11_1,
-                    SharpDX.Direct3D.FeatureLevel.Level_11_0,
-                    SharpDX.Direct3D.FeatureLevel.Level_10_1,
-                    SharpDX.Direct3D.FeatureLevel.Level_10_0,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_3,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_2,
-                    SharpDX.Direct3D.FeatureLevel.Level_9_1 },
-                desc,
-                out SharpDX.Direct3D11.Device device,
-                out SwapChain swapChain);
-
-            var dxgiDevice = ComObject.As<SharpDX.DXGI.Device>(device.NativePointer);
-            var d2DDevice = new SharpDX.Direct2D1.Device(dxgiDevice);
-
-            var d2dFactory = d2DDevice.Factory;
-            var wicFactory = new SharpDX.WIC.ImagingFactory();
-            var dwFactory = new SharpDX.DirectWrite.Factory();
-
-            var parentFactory = swapChain.GetParent<SharpDX.DXGI.Factory>();
-            parentFactory.MakeWindowAssociation(form.Handle, WindowAssociationFlags.IgnoreAll);
-
-            // New RenderTargetView from the backbuffer
-            Texture2D backBuffer = SharpDX.Direct3D11.Resource.FromSwapChain<Texture2D>(swapChain, 0);
-            var renderView = new RenderTargetView(device, backBuffer);
-
-            Surface surface = backBuffer.QueryInterface<Surface>();
-
-            var d2DDeviceContext = new SharpDX.Direct2D1.DeviceContext(surface)
-            {
-                DotsPerInch = new Size2F(form.DeviceDpi, form.DeviceDpi),
-                TextAntialiasMode = TEXT_ANTIALIAS_MODE,
-                AntialiasMode = ANTIALIAS_MODE
-            };
+            engine = new GameEngine(form, device);
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-
-            engine = new GameEngine(form, d2dFactory, wicFactory, dwFactory, d2DDeviceContext);
 
             try
             {
@@ -128,7 +54,6 @@ namespace Mega_Man_Xvan
                 int fpsFrames = 0;
 
                 double maxTimeToWait = 1000D / TICKRATE;
-
 
                 // Main loop
                 RenderLoop.Run(form, () =>
@@ -154,16 +79,11 @@ namespace Mega_Man_Xvan
 
                     engine.Render();
 
-                    swapChain.Present(VSYNC ? 1 : 0, PresentFlags.None);
-
-                    if (!VSYNC)
-                    {
-                        // Determine the time it took to render the frame
-                        double deltaTime = 1000 * (clock.ElapsedTicks / clockFrequency - totalSeconds);
-                        int delta = (int) (maxTimeToWait - deltaTime);
-                        if (delta > 0)
-                            Thread.Sleep(delta);
-                    }
+                    // Determine the time it took to render the frame
+                    double deltaTime = 1000 * (clock.ElapsedTicks / clockFrequency - totalSeconds);
+                    int delta = (int) (maxTimeToWait - deltaTime);
+                    if (delta > 0)
+                        Thread.Sleep(delta);
                 });
 
                 #endregion
@@ -173,14 +93,8 @@ namespace Mega_Man_Xvan
                 engine.Dispose();
 
                 // Release all resources
-                renderView.Dispose();
-                backBuffer.Dispose();
-                d2DDevice.Dispose();
-                device.ImmediateContext.ClearState();
-                device.ImmediateContext.Flush();
                 device.Dispose();
-                swapChain.Dispose();
-                parentFactory.Dispose();
+                direct3D.Dispose();
             }
         }
     }
