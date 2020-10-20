@@ -1200,60 +1200,53 @@ namespace MMX.Geometry
         {
         }
 
-        public Box(FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height, OriginPosition originPosition)
+        public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height, OriginPosition originPosition)
         {
+            origin = new Vector(x, y);
+
             switch (originPosition)
             {
                 case OriginPosition.LEFT_TOP:
-                    origin = new Vector(left, top);
                     mins = Vector.NULL_VECTOR;
                     maxs = new Vector(width, height);
                     break;
 
                 case OriginPosition.LEFT_MIDDLE:
-                    origin = new Vector(left, top + height * FixedSingle.HALF);
                     mins = new Vector(0, -height * FixedSingle.HALF);
                     maxs = new Vector(width, height * FixedSingle.HALF);
                     break;
 
                 case OriginPosition.LEFT_BOTTOM:
-                    origin = new Vector(left, top + height);
                     mins = new Vector(0, -height);
                     maxs = new Vector(width, 0);
                     break;
 
                 case OriginPosition.MIDDLE_TOP:
-                    origin = new Vector(left + width * FixedSingle.HALF, top);
                     mins = new Vector(-width * FixedSingle.HALF, 0);
                     maxs = new Vector(width * FixedSingle.HALF, height);
                     break;
 
                 case OriginPosition.CENTER:
-                    origin = new Vector(left + width * FixedSingle.HALF, top + height * FixedSingle.HALF);
                     mins = new Vector(-width * FixedSingle.HALF, -height * FixedSingle.HALF);
                     maxs = new Vector(width * FixedSingle.HALF, height * FixedSingle.HALF);
                     break;
 
                 case OriginPosition.MIDDLE_BOTTOM:
-                    origin = new Vector(left + width * FixedSingle.HALF, top + height);
                     mins = new Vector(-width * FixedSingle.HALF, -height);
                     maxs = new Vector(width * FixedSingle.HALF, 0);
                     break;
 
                 case OriginPosition.RIGHT_TOP:
-                    origin = new Vector(left + width, top);
                     mins = new Vector(-width, 0);
                     maxs = new Vector(0, height);
                     break;
 
                 case OriginPosition.RIGHT_MIDDLE:
-                    origin = new Vector(left + width, top + height * FixedSingle.HALF);
                     mins = new Vector(-width, -height * FixedSingle.HALF);
                     maxs = new Vector(0, height * FixedSingle.HALF);
                     break;
 
                 case OriginPosition.RIGHT_BOTTOM:
-                    origin = new Vector(left + width, top + height);
                     mins = new Vector(-width, -height);
                     maxs = Vector.NULL_VECTOR;
                     break;

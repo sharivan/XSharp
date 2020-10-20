@@ -89,6 +89,13 @@ namespace MMX.Engine
         public const int SEMI_CHARGED_HITBOX_WIDTH_3 = 32;
         public const int SEMI_CHARGED_HITBOX_HEIGHT_3 = 18;
         public static readonly FixedSingle SEMI_CHARGED_INITIAL_SPEED = new FixedSingle(1536 / 256.0);
+        public static readonly FixedSingle CHARGED_SPEED = new FixedSingle(2048 / 256.0);
+        public const int CHARGED_HITBOX_WIDTH_1 = 26;
+        public const int CHARGED_HITBOX_HEIGHT_1 = 18;
+        public const int CHARGED_HITBOX_WIDTH_2 = 48;
+        public const int CHARGED_HITBOX_HEIGHT_2 = 36;
+        public const int CHARGING_EFFECT_HITBOX_SIZE = 52;
+        public static readonly Box CHARGING_EFFECT_HITBOX = new Box(Vector.NULL_VECTOR, new Vector(-CHARGING_EFFECT_HITBOX_SIZE / 2, -CHARGING_EFFECT_HITBOX_SIZE / 2), new Vector(CHARGING_EFFECT_HITBOX_SIZE / 2, CHARGING_EFFECT_HITBOX_SIZE / 2));
 
         // X
         public const int HITBOX_WIDTH = 12;
@@ -191,9 +198,19 @@ namespace MMX.Engine
             new Color(144, 0, 216, 255) // 15
         };
 
+        public static readonly Color[] CHARGE_EFFECT_PALETTE = new Color[]
+        {
+            Color.Transparent, // 0
+            new Color(136, 248, 248, 255), // 1
+            new Color(248, 224, 112, 255), // 2
+            new Color(248, 248, 248, 255), // 3
+            new Color(240, 176, 56, 255), // 4
+            new Color(240, 144, 96, 255) // 5
+        };
+
         // Startup
         public const bool LOAD_ROM = true;
-        public const string ROM_NAME = "Mega Man X (U) (V1.0) [!]";
+        public const string ROM_NAME = "Mega Man X (U) (V1.0) [!].smc";
         public const bool SKIP_MENU = false; // Defina como true se quiser que o jogo seja carregado diretamente sem passar pelo menu inicial
         public const bool SKIP_INTRO = false; // Defina como true se quiser que o menu inicial seja carregado sem exibir a intro
         public const int INITIAL_LEVEL = 8; // Defina aqui o número correspondente ao level que deseja que inicie assim que o jogo for carregado. Lembrando que 0 é o valor correspondente ao level 1.

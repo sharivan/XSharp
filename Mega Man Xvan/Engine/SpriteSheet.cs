@@ -402,19 +402,6 @@ namespace MMX.Engine
             return AddFrame(boudingBox, boudingBox);
         }
 
-        private uint NextHighestPowerOfTwo(uint v)
-        {
-            v--;
-            v |= v >> 1;
-            v |= v >> 2;
-            v |= v >> 4;
-            v |= v >> 8;
-            v |= v >> 16;
-            v++;
-
-            return v;
-        }
-
         public Frame AddFrame(MMXBox boudingBox, MMXBox collisionBox)
         {
             Frame frame;
@@ -428,13 +415,13 @@ namespace MMX.Engine
                 int srcY = (int) boudingBox.Top;
                 int width = (int) boudingBox.Width;
                 int height = (int) boudingBox.Height;
-                int width1 = (int) NextHighestPowerOfTwo((uint) width);
-                int height1 = (int) NextHighestPowerOfTwo((uint) height);
+                int width1 = (int) GameEngine.NextHighestPowerOfTwo((uint) width);
+                int height1 = (int) GameEngine.NextHighestPowerOfTwo((uint) height);
 
                 Texture texture;
                 if (currentPalette == null)
                 {
-                    texture = new Texture(engine.Device, width1, height1, 1, Usage.None, Format.A8R8G8B8, Pool.Default);
+                    texture = new Texture(engine.Device, width1, height1, 1, Usage.None, description.Format, Pool.Default);
 
                     Surface src = currentBitmap.GetSurfaceLevel(0);
                     Surface dst = texture.GetSurfaceLevel(0);

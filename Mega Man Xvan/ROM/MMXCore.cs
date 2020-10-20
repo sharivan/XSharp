@@ -286,6 +286,9 @@ namespace MMX.ROM
         {
             get
             {
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
                 FixedSingle x = ReadWord(checkpointInfoTable[point].bkgX);
                 FixedSingle y = ReadWord(checkpointInfoTable[point].bkgY);
                 return new Vector(x, y);
@@ -296,6 +299,9 @@ namespace MMX.ROM
         {
             get
             {
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
                 FixedSingle x = ReadWord(checkpointInfoTable[point].camX);
                 FixedSingle y = ReadWord(checkpointInfoTable[point].camY);
                 return new Vector(x, y);
@@ -306,6 +312,9 @@ namespace MMX.ROM
         {
             get
             {
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
                 FixedSingle x = ReadWord(checkpointInfoTable[point].chX);
                 FixedSingle y = ReadWord(checkpointInfoTable[point].chY);
                 return new Vector(x, y);
@@ -316,6 +325,9 @@ namespace MMX.ROM
         {
             get
             {
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
                 FixedSingle x = ReadWord(checkpointInfoTable[point].minX);
                 FixedSingle y = ReadWord(checkpointInfoTable[point].minY);
                 return new Vector(x, y);
@@ -326,8 +338,11 @@ namespace MMX.ROM
         {
             get
             {
-                FixedSingle x = ReadWord(checkpointInfoTable[point].maxX) + 256;
-                FixedSingle y = ReadWord(checkpointInfoTable[point].maxY) + 224;
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
+                FixedSingle x = ReadWord(checkpointInfoTable[point].maxX) + SCREEN_WIDTH;
+                FixedSingle y = ReadWord(checkpointInfoTable[point].maxY) + SCREEN_HEIGHT;
                 return new Vector(x, y);
             }
         }

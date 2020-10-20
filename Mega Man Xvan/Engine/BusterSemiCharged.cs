@@ -1,10 +1,11 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using MMX.Geometry;
+using MMX.Math;
 
 using static MMX.Engine.Consts;
 
@@ -120,7 +121,7 @@ namespace MMX.Engine
             hitting = false;
             currentAnimationIndex = -1;
 
-            vel = new Vector(Direction == Direction.LEFT ? -SEMI_CHARGED_INITIAL_SPEED : SEMI_CHARGED_INITIAL_SPEED, 0);
+            vel = Vector.NULL_VECTOR;         
 
             CurrentAnimationIndex = animationIndices[0];
             CurrentAnimation.StartFromBegin();
@@ -191,6 +192,18 @@ namespace MMX.Engine
             if (animation.Index == animationIndices[0])
             {
                 firing = false;
+                
+                if (Direction == Direction.LEFT)
+                {
+                    Origin += 14 * Vector.LEFT_VECTOR;
+                    vel = SEMI_CHARGED_INITIAL_SPEED * Vector.LEFT_VECTOR;
+                }
+                else
+                {
+                    Origin += 14 * Vector.RIGHT_VECTOR;
+                    vel = SEMI_CHARGED_INITIAL_SPEED * Vector.RIGHT_VECTOR;
+                }                
+
                 CurrentAnimationIndex = animationIndices[1];
                 CurrentAnimation.StartFromBegin();
             }

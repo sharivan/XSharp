@@ -26,6 +26,7 @@ namespace MMX.Engine
         private bool visible; // Indica se a animação será visivel (se ela será renderizada ou não)
         private bool animating; // Indica se a animação será dinâmica ou estática
         private FixedSingle rotation;
+        private FixedSingle scale;
         private bool mirrored;
         private bool flipped;       
 
@@ -72,6 +73,8 @@ namespace MMX.Engine
             this.flipped = flipped;
             this.rotation = rotation;
 
+            scale = 1;
+
             currentSequenceIndex = initialSequenceIndex; // Define o frame atual para o frame inicial
             animationEndFired = false;
 
@@ -83,9 +86,10 @@ namespace MMX.Engine
         {
             writer.Write(index);
             writer.Write(visible);
-            writer.Write(animating);
+            writer.Write(animating);       
 
             rotation.Write(writer);
+            scale.Write(writer);
             writer.Write(flipped);
             writer.Write(mirrored);
 
@@ -100,6 +104,7 @@ namespace MMX.Engine
             animating = reader.ReadBoolean();
 
             rotation = new FixedSingle(reader);
+            scale = new FixedSingle(reader);
             flipped = reader.ReadBoolean();
             mirrored = reader.ReadBoolean();
 
@@ -200,6 +205,7 @@ namespace MMX.Engine
             {
                 return initialSequenceIndex;
             }
+
             set
             {
                 initialSequenceIndex = value;
@@ -215,6 +221,7 @@ namespace MMX.Engine
             {
                 return currentSequenceIndex;
             }
+
             set
             {
                 if (value >= sequence.Count)
@@ -303,6 +310,19 @@ namespace MMX.Engine
             set
             {
                 rotation = value;
+            }
+        }
+
+        public FixedSingle Scale
+        {
+            get
+            {
+                return scale;
+            }
+
+            set
+            {
+                scale = value;
             }
         }
 
@@ -417,6 +437,9 @@ namespace MMX.Engine
             if (rotation != FixedSingle.ZERO)
                 transform *= Matrix.Translation(-center3) * Matrix.RotationZ((float) rotation) * Matrix.Translation(center3);
 
+            if (scale != FixedSingle.ONE)
+                transform *= Matrix.Translation(-center3) * Matrix.Scaling((float) scale) * Matrix.Translation(center3);
+
             if (flipped)
             {
                 if (mirrored)
@@ -444,12 +467,12 @@ namespace MMX.Engine
             //RawMatrix5x4 matrix = CreateRawMatrix5x4(ptsArray);
             //effect.Matrix = matrix;*/
 
-            sprite.Engine.PaintTexture(bitmap, sprite.Palette, drawBox.LeftTop, transform);
+            sprite.Engine.RenderTexture(bitmap, sprite.Palette, drawBox.LeftTop, transform);
         }
 
         public override string ToString()
         {
-            return sequence.Name + (rotation != 0 ? " rotated " + rotation : "") + (mirrored ? " left" : " right") + (flipped ? " down" : " up");
+            return sequence.Name + (rotation != 0 ? " rotated " + rotation : "") + (scale != 0 ? " scaleed " + scale : "") + (mirrored ? " left" : " right") + (flipped ? " down" : " up");
         }
     }
 }

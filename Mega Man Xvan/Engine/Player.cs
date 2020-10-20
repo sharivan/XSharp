@@ -65,6 +65,7 @@ namespace MMX.Engine
         private bool charging;
         private int chargingFrameCounter;
         internal bool shootingCharged;
+        private ChargingEffect chargingEffect;
 
         /// <summary>
         /// Cria um novo Bomberman
@@ -1433,7 +1434,7 @@ namespace MMX.Engine
                     }
                     else
                     {
-                        if (!shooting && !charging && !shootingCharged)
+                        if (!shooting && !charging && !shootingCharged && shots < MAX_SHOTS)
                         {
                             charging = true;
                             chargingFrameCounter = 0;
@@ -1442,13 +1443,19 @@ namespace MMX.Engine
                         if (charging)
                         {
                             chargingFrameCounter++;
-                            if (chargingFrameCounter >= 5)
+                            if (chargingFrameCounter >= 4)
                             {
-                                int frame = chargingFrameCounter - 5;
+                                int frame = chargingFrameCounter - 4;
                                 if ((frame & 2) == 0 || (frame & 2) == 1)
                                     Palette = engine.ChargeLevel1Palette;
                                 else
                                     Palette = engine.X1NormalPalette;
+
+                                if (chargingEffect == null)
+                                    chargingEffect = engine.StartChargeEffect(this);
+
+                                if (frame == 60)
+                                    chargingEffect.Level = 2;
                             }
                         }
                     }
@@ -1460,13 +1467,19 @@ namespace MMX.Engine
                     this.charging = false;                   
                     this.chargingFrameCounter = 0;
 
+                    Palette = engine.X1NormalPalette;
+
+                    if (chargingEffect != null)
+                    {
+                        chargingEffect.Kill();
+                        chargingEffect = null;
+                    }
+
                     if (charging && chargingFrameCounter >= 4 && shots < MAX_SHOTS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
                     {
                         shooting = true;
                         shootingCharged = true;
-                        shotFrameCounter = 0;
-
-                        Palette = engine.X1NormalPalette;
+                        shotFrameCounter = 0; 
 
                         if (OnLadderOnly)
                         {
@@ -1484,7 +1497,10 @@ namespace MMX.Engine
                         else
                             RefreshAnimation();
 
-                        ShootSemiCharged();
+                        if (chargingFrameCounter >= 60)
+                            ShootCharged();
+                        else
+                            ShootSemiCharged();
                     }
                 }
 
@@ -1560,6 +1576,18 @@ namespace MMX.Engine
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
             engine.ShootSemiCharged(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
+        }
+
+        public void ShootCharged()
+        {
+            shots++;
+
+            Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5);
+            Direction direction = Direction;
+            if (state == PlayerState.WALL_SLIDE)
+                direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
+
+            engine.ShootCharged(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
         }
 
         public Direction GetWallJumpDir()
