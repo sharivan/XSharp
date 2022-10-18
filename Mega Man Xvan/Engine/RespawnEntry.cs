@@ -1,47 +1,38 @@
-﻿using MMX.Math;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using MMX.Math;
+using MMX.Geometry;
+
 namespace MMX.Engine
 {
     internal class RespawnEntry
     {
-        private Player player; // Bomberman que será respawnado
-        private FixedSingle time; // Tempo que deverá se esperar para que o respawn ocorra
+        private Entity entity;
+        private Box box;
 
-        /// <summary>
-        /// Cria uma nova entrada de respawn
-        /// </summary>
-        /// <param name="bomberman">Bomberman que será respawnado</param>
-        /// <param name="time">Tempo que deverá se esperar para que o respawn ocorra</param>
-        public RespawnEntry(Player player, FixedSingle time)
+        public RespawnEntry(Entity entity, Box box)
         {
-            this.player = player;
-            this.time = time;
+            this.entity = entity;
+            this.box = box;
         }
 
-        /// <summary>
-        /// Bomberman que será respawnado
-        /// </summary>
-        public Player Player
+        public Entity Entity
         {
             get
             {
-                return player;
+                return entity;
             }
         }
 
-        /// <summary>
-        /// Tempo que deverá se esperar para que o respawn ocorra
-        /// </summary>
-        public FixedSingle Time
+        public Box Box
         {
             get
             {
-                return time;
+                return box;
             }
         }
     }

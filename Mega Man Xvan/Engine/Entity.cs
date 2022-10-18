@@ -18,7 +18,9 @@ namespace MMX.Engine
         private Vector lastOrigin;
         private List<Entity> touchingEntities;
         private List<Entity> childs;
+        protected bool alive;
         protected bool markedToRemove;
+        protected bool respawnable;
 
         public GameEngine Engine
         {
@@ -61,6 +63,12 @@ namespace MMX.Engine
 
             set
             {
+                if (parent == value)
+                    return;
+
+                if (value != null && value.IsParent(this))
+                    throw new ArgumentException("Cyclic parenting is not allowed.");
+
                 if (parent != null)
                     parent.childs.Remove(this);
 
@@ -92,6 +100,14 @@ namespace MMX.Engine
             }
         }
 
+        public bool Alive
+        {
+            get
+            {
+                return alive;
+            }
+        }
+
         /// <summary>
         /// Indica se este objeto foi marcado para remoção. Tal remoção só ocorrerá depois de serem processadas todas as interações físicas entre os elementos do jogo.
         /// </summary>
@@ -100,6 +116,14 @@ namespace MMX.Engine
             get
             {
                 return markedToRemove;
+            }
+        }
+
+        public bool Respawnable
+        {
+            get
+            {
+                return respawnable;
             }
         }
 
@@ -131,6 +155,23 @@ namespace MMX.Engine
                 child.Origin += delta;
         }
 
+        public bool IsParent(Entity entity)
+        {
+            if (entity == null)
+                return false;
+
+            Entity parent = this.parent;
+            while (parent != null)
+            {
+                if (parent == entity)
+                    return true;
+
+                parent = parent.parent;
+            }
+
+            return false;
+        }
+
         protected abstract Box GetBoundingBox();
 
         protected virtual void SetBoundingBox(Box boudingBox)
@@ -141,25 +182,29 @@ namespace MMX.Engine
         {
             origin = new Vector(reader);
             lastOrigin = new Vector(reader);
+            alive = reader.ReadBoolean();
             markedToRemove = reader.ReadBoolean();
+            respawnable = reader.ReadBoolean();
         }
 
         public virtual void SaveState(BinaryWriter writer)
         {
             origin.Write(writer);
             lastOrigin.Write(writer);
+            writer.Write(alive);
             writer.Write(markedToRemove);
+            writer.Write(respawnable);
         }
 
         public override string ToString()
         {
-            return "Object [" + origin + "]";
+            return "Entity [" + origin + "]";
         }
 
         public virtual void OnFrame()
         {
             // Se ele estiver marcado para remoção não há nada o que se fazer aqui
-            if (markedToRemove)
+            if (!alive || markedToRemove)
                 return;
 
             // Realiza o pré-pensamento do objeto. Nesta chamada verifica-se se deveremos continuar a processar as interações deste objeto com o jogo.
@@ -240,8 +285,46 @@ namespace MMX.Engine
         {
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
+            Kill();
+        }
+
+        public void Kill()
+        {
+            if (!alive || markedToRemove)
+                return;
+
+            markedToRemove = true;
+            engine.removedEntities.Add(this);
+
+            foreach (Entity child in childs)
+                child.parent = null;
+
+            childs.Clear();
+
+            alive = false;
+
+            OnDeath();
+        }
+
+        public virtual void Spawn()
+        {
+            alive = true;
+            markedToRemove = false;
+            engine.addedEntities.Add(this); // Adiciona este sprite a lista de sprites do engine
+        }
+
+        /// <summary>
+        /// Evento interno que é lançado sempre que o sprite for morto
+        /// </summary>
+        protected virtual void OnDeath()
+        {
+        }
+
+        protected virtual void OnVisible()
+        {
+
         }
     }
 }

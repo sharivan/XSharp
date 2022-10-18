@@ -10,6 +10,7 @@ using SharpDX.Direct3D9;
 using MMX.Math;
 using MMX.Geometry;
 using MMX.Engine;
+using MMX.Engine.World;
 
 using MMXBox = MMX.Geometry.Box;
 

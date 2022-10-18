@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
+using SharpDX.DirectSound;
 using SharpDX.IO;
 
 using Types;
@@ -15,10 +16,16 @@ using Types;
 using MMX.Math;
 using MMX.Geometry;
 using MMX.ROM;
+using MMX.Engine.World;
+using MMX.Engine.Weapons;
+using MMX.Engine.Enemies;
 
 using Device9 = SharpDX.Direct3D9.Device;
 using DXSprite = SharpDX.Direct3D9.Sprite;
 using MMXBox = MMX.Geometry.Box;
+using MMXWorld = MMX.Engine.World.World;
+using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
+using DSoundCooperativeLevel = SharpDX.DirectSound.CooperativeLevel;
 
 using static MMX.Engine.Consts;
 using System.Runtime.InteropServices;
@@ -120,7 +127,9 @@ namespace MMX.Engine
         private Line line;
         private Font font;
 
-        private World world;
+        private DirectSound sound;
+
+        private MMXWorld world;
         internal Partition<Entity> partition;
         private Player player;
         private long engineTime;
@@ -128,7 +137,7 @@ namespace MMX.Engine
         private List<Entity> entities;
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
-        private List<RespawnEntry> scheduleRespawns;
+        internal List<RespawnEntry> respawnableEntities;
         private int currentLevel;
         //private int enemyCount;
         private bool changeLevel;
@@ -154,6 +163,7 @@ namespace MMX.Engine
         private SpriteSheet xSpriteSheet;
         private SpriteSheet xWeaponsSpriteSheet;
         private SpriteSheet xEffectsSpriteSheet;
+        private SpriteSheet drillerSpriteSheet;
 
         private Texture x1NormalPalette;
         private Texture chargeLevel1Palette;
@@ -263,7 +273,7 @@ namespace MMX.Engine
             }
         }
 
-        public World World
+        public MMXWorld World
         {
             get
             {
@@ -512,7 +522,7 @@ namespace MMX.Engine
                 ParagraphAlignment = ParagraphAlignment.Center
             };*/
 
-            world = new World(this, 32, 32);
+            world = new MMXWorld(this, 32, 32);
             partition = new Partition<Entity>(world.BoundingBox, world.SceneRowCount, world.SceneColCount);
             cameraConstraintsBox = world.BoundingBox;
 
@@ -520,7 +530,7 @@ namespace MMX.Engine
             entities = new List<Entity>();
             addedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
-            scheduleRespawns = new List<RespawnEntry>();
+            respawnableEntities = new List<RespawnEntry>();
 
             loadingLevel = true;
 
@@ -540,6 +550,7 @@ namespace MMX.Engine
             xSpriteSheet = new SpriteSheet(this, "X", true, true);
             xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons", true, true);
             xEffectsSpriteSheet = new SpriteSheet(this, "X Effects", true, true);
+            drillerSpriteSheet = new SpriteSheet(this, "Driller", true, true);
 
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.sprites.X.X[small].png"))
             {
@@ -874,6 +885,40 @@ namespace MMX.Engine
 
             //xEffectsSpriteSheet.ReleaseCurrentBitmap();
 
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Mega_Man_Xvan.resources.sprites.Enemies.X2.mmx2-driller.png"))
+            {
+                var texture = CreateD2DBitmapFromStream(stream);
+                drillerSpriteSheet.CurrentBitmap = texture;
+            }
+
+            Vector drillerOffset = new Vector(11, 24);
+            MMXBox drilerHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-11, -24), new Vector(11, 0));
+
+            sequence = drillerSpriteSheet.AddFrameSquence("Idle");
+            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.CollisionBox = drilerHitbox;
+            sequence.AddFrame(0, 0, 4, 10, 35, 24, 1, true);
+
+            sequence = drillerSpriteSheet.AddFrameSquence("Jumping");
+            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.CollisionBox = drilerHitbox;
+            sequence.AddFrame(0, 0, 40, 13, 37, 21, 1);
+            sequence.AddFrame(0, 0, 78, 9, 35, 25, 1);
+            sequence.AddFrame(0, 0, 115, 4, 43, 30, 1);
+
+            sequence = drillerSpriteSheet.AddFrameSquence("Drilling");
+            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.CollisionBox = drilerHitbox;
+            sequence.AddFrame(0, 0, 160, 10, 48, 24, 1, true);
+            sequence.AddFrame(0, 0, 209, 9, 46, 25, 1);
+            sequence.AddFrame(0, 0, 256, 10, 48, 24, 1);
+            sequence.AddFrame(0, 0, 305, 9, 46, 25, 1);
+
+            drillerSpriteSheet.ReleaseCurrentBitmap();
+
+            sound = new DirectSound();
+            sound.SetCooperativeLevel(form.Handle, DSoundCooperativeLevel.Priority);
+
             if (LOAD_ROM)
             {
                 mmx = new MMXCore();
@@ -1110,7 +1155,7 @@ namespace MMX.Engine
             int length = width1 * height1;
 
             Texture result = new Texture(device, width1, height1, 1, Usage.None, Format.L8, Pool.Managed);
-            DataRectangle rect = result.LockRectangle(0, LockFlags.Discard);
+            DataRectangle rect = result.LockRectangle(0, D3D9LockFlags.Discard);
 
             ZeroDataRect(rect, length);
 
@@ -1148,7 +1193,7 @@ namespace MMX.Engine
 
         public static void SetupQuad(VertexBuffer vb)
         {
-            DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, LockFlags.None);
+            DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, D3D9LockFlags.None);
 
             WriteVertex(vbData, 0, 0, 0, 0);
             WriteVertex(vbData, 1, 0, 1, 0);
@@ -1627,23 +1672,12 @@ namespace MMX.Engine
 
             if (!loadingLevel)
             {
-                int count = scheduleRespawns.Count;
-
-                for (int i = 0; i < count; i++)
+                foreach (RespawnEntry entry in respawnableEntities)
                 {
-                    RespawnEntry entry = scheduleRespawns[i];
-
-                    if (GetEngineTime() >= entry.Time)
+                    if (!entry.Entity.Alive && (world.Screen.BoudingBox & entry.Box).Area > 0)
                     {
-                        scheduleRespawns.RemoveAt(i);
-                        i--;
-                        count--;
-
-                        string name = entry.Player.Name;
-                        int lives = entry.Player.Lives;
-
-                        SpawnPlayer();
-                        player.Lives = lives;
+                        entry.Entity.Origin = entry.Box.Origin;
+                        entry.Entity.Spawn();
                     }
                 }
 
@@ -1671,7 +1705,7 @@ namespace MMX.Engine
                         if (changeLevel)
                             break;
 
-                        if (!obj.MarkedToRemove)
+                        if (obj.Alive && !obj.MarkedToRemove)
                             obj.OnFrame();
                     }
 
@@ -1804,16 +1838,6 @@ namespace MMX.Engine
             //Invalidate();
         }
 
-        public void ScheduleRespawn(Player player)
-        {
-            ScheduleRespawn(player, RESPAWN_TIME);
-        }
-
-        public void ScheduleRespawn(Player player, FixedSingle time)
-        {
-            scheduleRespawns.Add(new RespawnEntry(player, GetEngineTime() + time));
-        }
-
         public void NextLevel()
         {
             changeLevel = true;
@@ -1881,6 +1905,8 @@ namespace MMX.Engine
                     player.Lives = oldPlayer.Lives;
                 }
 
+                AddDriller(new MMXBox(128, 1024, 50, 50, OriginPosition.CENTER));
+
                 loadingLevel = false;
             }
         }
@@ -1904,7 +1930,7 @@ namespace MMX.Engine
             entities.Clear();
             addedEntities.Clear();
             removedEntities.Clear();
-            scheduleRespawns.Clear();
+            respawnableEntities.Clear();
             partition.Clear();
 
             long currentMemoryUsage = GC.GetTotalMemory(true);
@@ -2104,7 +2130,7 @@ namespace MMX.Engine
                 if (drawX)
                 {
                     // Desenha o X
-                    player.Paint();
+                    player.Render();
                 }
 
                 if (drawSprites)
@@ -2113,13 +2139,13 @@ namespace MMX.Engine
                     List<Entity> objects = partition.Query(world.Screen.BoudingBox);
                     foreach (Entity obj in objects)
                     {
-                        if (obj.MarkedToRemove || obj.Equals(player))
+                        if (!obj.Alive || obj.MarkedToRemove || obj.Equals(player))
                             continue;
 
                         Sprite sprite = obj as Sprite;
                         if (sprite != null)
                         {
-                            sprite.Paint();
+                            sprite.Render();
 
                             /*if (drawCollisionBox)
                             {
@@ -2460,14 +2486,14 @@ namespace MMX.Engine
         public Checkpoint AddCheckpoint(int index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
         {
             Checkpoint checkpoint = new Checkpoint(this, index, boundingBox, characterPos, cameraPos, backgroundPos, forceBackground, scroll);
-            addedEntities.Add(checkpoint);
+            checkpoint.Spawn();
             return checkpoint;
         }
 
         public CameraLockTrigger AddCameraEventTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
         {
             CameraLockTrigger trigger = new CameraLockTrigger(this, boundingBox, extensions);
-            addedEntities.Add(trigger);
+            trigger.Spawn();
             return trigger;
         }
 
@@ -2526,6 +2552,13 @@ namespace MMX.Engine
             effect.Palette = chargingEffectPalette;
             effect.Spawn();
             return effect;
+        }
+
+        internal Driller AddDriller(MMXBox box)
+        {
+            Driller driller = new Driller(this, "Driller", box.Origin, drillerSpriteSheet);
+            respawnableEntities.Add(new RespawnEntry(driller, box));
+            return driller;
         }
 
         public static void WriteTriangle(DataStream vbData, Vector r0, Vector r1, Vector r2, Vector t0, Vector t1, Vector t2)
@@ -2606,7 +2639,7 @@ namespace MMX.Engine
                 throw new ArgumentException("Length of colors should up to 256.");
 
             Texture palette = new Texture(device, 256, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
-            DataRectangle rect = palette.LockRectangle(0, LockFlags.None);
+            DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.None);
 
             using (DataStream stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
             {
@@ -2628,7 +2661,7 @@ namespace MMX.Engine
 
         public static int LookupColor(Texture palette, Color color, int start, int count)
         {
-            DataRectangle rect = palette.LockRectangle(0, LockFlags.Discard);
+            DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
             try
             {
                 using (DataStream stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))

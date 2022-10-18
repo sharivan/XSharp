@@ -1,18 +1,21 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using MMX.Geometry;
+using MMX.Math;
+using MMX.Engine.World;
+
 using static MMX.Engine.Consts;
+using MMXWorld = MMX.Engine.World.World;
 
 namespace MMX.Engine
 {
     public class BoxCollider
     {
-        private World world;
+        private MMXWorld world;
         private Box box;
         private FixedSingle maskSize;
 
@@ -40,7 +43,7 @@ namespace MMX.Engine
         private bool upMaskComputed;
         private bool rightMaskComputed;
 
-        public World World
+        public MMXWorld World
         {
             get
             {
@@ -241,12 +244,12 @@ namespace MMX.Engine
         {
         }
 
-        public BoxCollider(World world, Box box) :
+        public BoxCollider(MMXWorld world, Box box) :
             this(world, box, MASK_SIZE)
         {
         }
 
-        public BoxCollider(World world, Box box, FixedSingle maskSize)
+        public BoxCollider(MMXWorld world, Box box, FixedSingle maskSize)
         {
             this.world = world;
             this.box = box;

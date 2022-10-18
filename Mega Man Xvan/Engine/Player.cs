@@ -1,11 +1,13 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using MMX.Geometry;
+using MMX.Math;
+using MMX.Engine.Weapons;
 
 using static MMX.Engine.Consts;
 
@@ -40,7 +42,6 @@ namespace MMX.Engine
         private Keys[] keyBuffer;
         protected bool death;
 
-        private int currentAnimationIndex;
         private int[,,] animationIndices;
 
         private bool jumped;
@@ -77,7 +78,7 @@ namespace MMX.Engine
         internal Player(GameEngine engine, string name, Vector origin, SpriteSheet sheet)
         // Dado o retângulo de desenho do Bomberman, o retângulo de colisão será a metade deste enquanto o de dano será um pouco menor ainda.
         // A posição do retângulo de colisão será aquela que ocupa a metade inferior do retângulo de desenho enquanto o retângulo de dano terá o mesmo centro que o retângulo de colisão.
-        : base(engine, name, origin, sheet, false, true)
+        : base(engine, name, origin, sheet, true)
         {
             CheckCollisionWithWorld = true;
 
@@ -108,8 +109,6 @@ namespace MMX.Engine
             writer.Write(lives);
             writer.Write(inputLocked);
             writer.Write(death);
-
-            writer.Write(currentAnimationIndex);
 
             writer.Write(jumped);
             writer.Write(jumpReleased);
@@ -142,8 +141,6 @@ namespace MMX.Engine
             lives = reader.ReadInt32();
             inputLocked = reader.ReadBoolean();
             death = reader.ReadBoolean();
-
-            currentAnimationIndex = reader.ReadInt32();
 
             jumped = reader.ReadBoolean();
             jumpReleased = reader.ReadBoolean();
@@ -495,46 +492,6 @@ namespace MMX.Engine
             }
         }
 
-        protected Animation CurrentAnimation
-        {
-            get
-            {
-                return GetAnimation(currentAnimationIndex);
-            }
-        }
-
-        protected int CurrentAnimationIndex
-        {
-            get
-            {
-                return currentAnimationIndex;
-            }
-            set
-            {
-                Animation animation = CurrentAnimation;
-                bool animating;
-                int animationFrame;
-                if (animation != null)
-                {
-                    animating = animation.Animating;
-                    animationFrame = animation.CurrentSequenceIndex;
-                    animation.Stop();
-                    animation.Visible = false;
-                }
-                else
-                {
-                    animating = false;
-                    animationFrame = -1;
-                }
-
-                currentAnimationIndex = value;
-                animation = CurrentAnimation;
-                animation.CurrentSequenceIndex = animationFrame != -1 ? animationFrame : 0;
-                animation.Animating = animating;
-                animation.Visible = true;
-            }
-        }
-
         public Direction Direction
         {
             get
@@ -855,8 +812,6 @@ namespace MMX.Engine
 
             lives = 2;
 
-            currentAnimationIndex = -1;
-
             ResetKeys();
 
             SetState(PlayerState.SPAWN, 0);
@@ -877,9 +832,9 @@ namespace MMX.Engine
 
             base.OnDeath(); // Chama o método OnDeath() da classe base.
 
-            if (lives > 0) // Se ele ainda possuir vidas,
-                engine.ScheduleRespawn(this); // respawna o Bomberman.
-            else
+            //if (lives > 0) // Se ele ainda possuir vidas,
+            //    engine.ScheduleRespawn(this); // respawna o Bomberman.
+            //else
                 engine.OnGameOver(); // Senão, Game Over!
         }
 

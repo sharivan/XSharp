@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using MMX.Engine.World;
+using MMXWorld = MMX.Engine.World.World;
+
 namespace MMX.Engine
 {
     public struct CollisionPlacement
@@ -33,13 +36,13 @@ namespace MMX.Engine
             this.placement = placement;
         }
 
-        internal CollisionPlacement(World world, CollisionFlags flag, Cell cell, Map map)
+        internal CollisionPlacement(MMXWorld world, CollisionFlags flag, Cell cell, Map map)
         {
             this.flag = flag;
             placement = new MapPlacement(world, cell, map);
         }
 
-        internal CollisionPlacement(World world, CollisionFlags flag, int row, int col, Map map)
+        internal CollisionPlacement(MMXWorld world, CollisionFlags flag, int row, int col, Map map)
         {
             this.flag = flag;
             placement = new MapPlacement(world, row, col, map);

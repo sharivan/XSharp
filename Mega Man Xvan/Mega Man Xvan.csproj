@@ -59,6 +59,9 @@
     <Reference Include="DynamicLua, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DynamicLua.1.1.2.0\lib\net40-Client\DynamicLua.dll</HintPath>
     </Reference>
+    <Reference Include="NAudio, Version=1.10.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.1.10.0\lib\net35\NAudio.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
@@ -87,40 +90,41 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Engine\Animation.cs" />
-    <Compile Include="Engine\Block.cs" />
-    <Compile Include="Engine\Boss.cs" />
+    <Compile Include="Engine\Enemies\Driller.cs" />
+    <Compile Include="Engine\World\Block.cs" />
+    <Compile Include="Engine\Enemies\Bosses\Boss.cs" />
     <Compile Include="Engine\BoxCollider.cs" />
-    <Compile Include="Engine\BusterCharged.cs" />
-    <Compile Include="Engine\BusterLemon.cs" />
-    <Compile Include="Engine\BusterSemiCharged.cs" />
-    <Compile Include="Engine\ChargingEffect.cs" />
+    <Compile Include="Engine\Weapons\BusterCharged.cs" />
+    <Compile Include="Engine\Weapons\BusterLemon.cs" />
+    <Compile Include="Engine\Weapons\BusterSemiCharged.cs" />
+    <Compile Include="Engine\Weapons\ChargingEffect.cs" />
     <Compile Include="Engine\CollisionPlacement.cs" />
     <Compile Include="Engine\CollisionResult.cs" />
     <Compile Include="Engine\CollisionData.cs" />
     <Compile Include="Engine\CollisionSide.cs" />
     <Compile Include="Engine\Consts.cs" />
     <Compile Include="Engine\Direction.cs" />
-    <Compile Include="Engine\Enemy.cs" />
-    <Compile Include="Engine\MapPlacement.cs" />
+    <Compile Include="Engine\Enemies\Enemy.cs" />
+    <Compile Include="Engine\World\MapPlacement.cs" />
     <Compile Include="Engine\Triggers.cs" />
     <Compile Include="Engine\GameEngine.cs" />
     <Compile Include="Engine\Keys.cs" />
-    <Compile Include="Engine\Map.cs" />
-    <Compile Include="Engine\Weapon.cs" />
+    <Compile Include="Engine\World\Map.cs" />
+    <Compile Include="Engine\Weapons\Weapon.cs" />
     <Compile Include="Math\FMath.cs" />
     <Compile Include="Math\Geometry2D.cs" />
     <Compile Include="Engine\Entity.cs" />
-    <Compile Include="Engine\Partition.cs" />
+    <Compile Include="Engine\World\Partition.cs" />
     <Compile Include="Engine\Player.cs" />
     <Compile Include="Engine\RespawnEntry.cs" />
-    <Compile Include="Engine\Scene.cs" />
-    <Compile Include="Engine\Screen.cs" />
+    <Compile Include="Engine\World\Scene.cs" />
+    <Compile Include="Engine\World\Screen.cs" />
     <Compile Include="Engine\Sprite.cs" />
     <Compile Include="Engine\SpriteSheet.cs" />
-    <Compile Include="Engine\Tile.cs" />
-    <Compile Include="Engine\Cell.cs" />
+    <Compile Include="Engine\World\Tile.cs" />
+    <Compile Include="Engine\World\Cell.cs" />
     <Compile Include="Engine\Utils.cs" />
-    <Compile Include="Engine\World.cs" />
+    <Compile Include="Engine\World\World.cs" />
     <Compile Include="GdiUtil.cs" />
     <Compile Include="Util\Graph2D.cs" />
     <Compile Include="Program.cs" />
@@ -160,7 +164,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="resources\sounds\" />
     <Folder Include="sstates\" />
   </ItemGroup>
   <ItemGroup>
@@ -195,6 +198,14 @@
     <None Include="PaletteShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="resources\sprites\Enemies\X2\mmx2-driller.png" />
+    <EmbeddedResource Include="resources\sounds\X\buster_reflect.wav" />
+    <EmbeddedResource Include="resources\sounds\X\charge.wav" />
+    <EmbeddedResource Include="resources\sounds\X\dash.wav" />
+    <EmbeddedResource Include="resources\sounds\X\jump.wav" />
+    <EmbeddedResource Include="resources\sounds\X\land.wav" />
+    <EmbeddedResource Include="resources\sounds\X\spawn.wav" />
+    <EmbeddedResource Include="resources\sounds\X\teleport.wav" />
     <Content Include="VertexShader.hlsl" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

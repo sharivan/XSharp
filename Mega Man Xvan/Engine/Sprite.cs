@@ -16,21 +16,17 @@ namespace MMX.Engine
     public abstract class Sprite : Entity, IDisposable
     {
         protected string name; // Nome da entidade
-        protected MMXBox lastDrawBox;
-        protected MMXBox drawBox; // Retângulo que delimita a àrea máxima de desenho do sprite
         protected List<Animation> animations; // Animações
-        private bool tiled; // Especifica se a imagem (ou a animação) desta entidade será desenhanda com preenchimento lado a lado dentro da área de desenho
         private bool directional;
         private Texture palette;
 
+        private int currentAnimationIndex;
         private float opacity; // Opacidade da imagem (ou animação). Usada para efeito de fading.
         protected bool solid; // Especifica se a entidade será solida ou não a outros elementos do jogo.
         private bool fading; // Especifica se o efeito de fading está ativo
         private bool fadingIn; // Se o efeito de fading estiver ativo, especifica se o tipo de fading em andamento é um fading in
         private int fadingTime; // Se o efeito de fading estiver ativo, especifica o tempo do fading
-        private int elapsed; // Se o efeito de fading estiver ativo, indica o tempo decorrido desde o início do fading
-        protected bool disposed; // Indica se os recursos associados a esta entidade foram liberados
-        private int drawCount; // Armazena a quantidade de pinturas feita pela entidade desde sua criação. Usado somente para depuração.
+        private int elapsed; // Se o efeito de fading estiver ativo, indica o tempo decorrido desde o início do fading       
         private bool checkCollisionWithSprites;
         private bool checkCollisionWithWorld;
 
@@ -58,16 +54,16 @@ namespace MMX.Engine
         /// <param name="engine">Engine</param>
         /// <param name="name">Nome da entidade</param>
         /// <param name="tiled">true se o desenho desta entidade será preenchido em sua área de pintura lado a lado</param>
-        protected Sprite(GameEngine engine, string name, Vector origin, SpriteSheet sheet, bool tiled = false, bool directional = false):
+        protected Sprite(GameEngine engine, string name, Vector origin, SpriteSheet sheet, bool directional = false):
             base(engine, origin)
         {
             this.name = name;
             this.sheet = sheet;
-            this.tiled = tiled;
             this.directional = directional;
 
             opacity = 1; // Opacidade 1 significa que não existe transparência (opacidade 1 = opacidade 100% = transparência 0%)
 
+            animations = new List<Animation>();
             collider = new BoxCollider(engine.World, CollisionBox);
         }
 
@@ -76,8 +72,6 @@ namespace MMX.Engine
             base.LoadState(reader);
 
             opacity = reader.ReadSingle();
-            lastDrawBox = new MMXBox(reader);
-            drawBox = new MMXBox(reader);
 
             int animationCount = reader.ReadInt32();
             for (int i = 0; i < animationCount; i++)
@@ -86,20 +80,18 @@ namespace MMX.Engine
                 animation.LoadState(reader);
             }
 
+            currentAnimationIndex = reader.ReadInt32();
             solid = reader.ReadBoolean();
             fading = reader.ReadBoolean();
             fadingIn = reader.ReadBoolean();
             fadingTime = reader.ReadInt32();
             elapsed = reader.ReadInt32();
-            disposed = reader.ReadBoolean();
-            drawCount = reader.ReadInt32();
             checkCollisionWithSprites = reader.ReadBoolean();
             checkCollisionWithWorld = reader.ReadBoolean();
 
             vel = new Vector(reader);
             noClip = reader.ReadBoolean();
-            moving = reader.ReadBoolean();
-            markedToRemove = reader.ReadBoolean();
+            moving = reader.ReadBoolean();            
             isStatic = reader.ReadBoolean();
             breakable = reader.ReadBoolean();
             health = reader.ReadInt32();
@@ -113,9 +105,8 @@ namespace MMX.Engine
         {
             base.SaveState(writer);
 
+            writer.Write(currentAnimationIndex);
             writer.Write(opacity);
-            lastDrawBox.Write(writer);
-            drawBox.Write(writer);
 
             if (animations != null)
             {
@@ -131,15 +122,12 @@ namespace MMX.Engine
             writer.Write(fadingIn);
             writer.Write(fadingTime);
             writer.Write(elapsed);
-            writer.Write(disposed);
-            writer.Write(drawCount);
             writer.Write(checkCollisionWithSprites);
             writer.Write(checkCollisionWithWorld);
 
             vel.Write(writer);
             writer.Write(noClip);
             writer.Write(moving);
-            writer.Write(markedToRemove);
             writer.Write(isStatic);
             writer.Write(breakable);
             writer.Write(health);
@@ -147,6 +135,46 @@ namespace MMX.Engine
             writer.Write(invincibilityTime);
             writer.Write(invincibleExpires);
             writer.Write(broke);
+        }
+
+        protected Animation CurrentAnimation
+        {
+            get
+            {
+                return GetAnimation(currentAnimationIndex);
+            }
+        }
+
+        protected int CurrentAnimationIndex
+        {
+            get
+            {
+                return currentAnimationIndex;
+            }
+            set
+            {
+                Animation animation = CurrentAnimation;
+                bool animating;
+                int animationFrame;
+                if (animation != null)
+                {
+                    animating = animation.Animating;
+                    animationFrame = animation.CurrentSequenceIndex;
+                    animation.Stop();
+                    animation.Visible = false;
+                }
+                else
+                {
+                    animating = false;
+                    animationFrame = -1;
+                }
+
+                currentAnimationIndex = value;
+                animation = CurrentAnimation;
+                animation.CurrentSequenceIndex = animationFrame != -1 ? animationFrame : 0;
+                animation.Animating = animating;
+                animation.Visible = true;
+            }
         }
 
         /// <summary>
@@ -372,39 +400,6 @@ namespace MMX.Engine
         }
 
         /// <summary>
-        /// Mata o sprite (sem quebra-la).
-        /// </summary>
-        public void Kill()
-        {
-            markedToRemove = true;
-            engine.removedEntities.Add(this);
-
-            OnDeath();
-        }
-
-        /// <summary>
-        /// Libera qualquer recurso associado a esta entidade.
-        /// Utilize este método somente quando este objeto não for mais utilizado.
-        /// </summary>
-        public override void Dispose()
-        {
-            if (!disposed)
-            {
-                animations.Clear();
-                disposed = true;
-            }
-
-            base.Dispose();
-        }
-
-        /// <summary>
-        /// Evento interno que é lançado sempre que o sprite for morto
-        /// </summary>
-        protected virtual void OnDeath()
-        {            
-        }
-
-        /// <summary>
         /// Evento interno que ocorrerá toda vez que uma animação estiver a ser criada.
         /// Seus parâmetros (exceto animationIndex) são passados por referencia de forma que eles podem ser alterados dentro do método e assim definir qual será o comportamento da animação antes que ela seja criada.
         /// </summary>
@@ -452,12 +447,11 @@ namespace MMX.Engine
         /// Spawna a entidade no jogo.
         /// Este método somente pode ser executado uma única vez após a entidade ser criada.
         /// </summary>
-        public virtual void Spawn()
+        public override void Spawn()
         {
-            drawCount = 0;
-            disposed = false;
-            solid = true;
-            animations = new List<Animation>();
+            base.Spawn();
+            
+            solid = true;            
 
             // Para cada ImageList definido no array de ImageLists passados previamente pelo construtor.
             Dictionary<string, SpriteSheet.FrameSequence>.Enumerator sequences = sheet.GetFrameSequenceEnumerator();
@@ -468,7 +462,7 @@ namespace MMX.Engine
                 SpriteSheet.FrameSequence sequence = pair.Value;
                 string frameSequenceName = sequence.Name;
                 int initialFrame = 0;
-                bool startVisible = true;
+                bool startVisible = false;
                 bool startOn = true;
                 bool add = true;
 
@@ -500,8 +494,7 @@ namespace MMX.Engine
             // Inicializa todos os campos
             vel = Vector.NULL_VECTOR;
             noClip = false;
-            moving = false;
-            markedToRemove = false;
+            moving = false;            
             isStatic = false;
             breakable = true;
             health = DEFAULT_HEALTH;
@@ -509,7 +502,7 @@ namespace MMX.Engine
             invincibilityTime = DEFAULT_INVINCIBLE_TIME;            
             broke = false;
 
-            engine.addedEntities.Add(this); // Adiciona este sprite a lista de sprites do engine
+            currentAnimationIndex = -1;
         }
 
         /// <summary>
@@ -670,7 +663,7 @@ namespace MMX.Engine
 
         protected override MMXBox GetBoundingBox()
         {
-            return CollisionBox;
+            return DrawBox;
         }
 
         private void MoveAlongSlope(BoxCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)
@@ -1023,31 +1016,7 @@ namespace MMX.Engine
         {
             get
             {
-                return Origin + drawBox;
-            }
-        }
-
-        public MMXBox LastDrawBox
-        {
-            get
-            {
-                return Origin + lastDrawBox;
-            }
-        }
-
-        /// <summary>
-        /// Especifica se o desenho da entidade será feito lado a lado preenchendo o retângulo de desenho
-        /// </summary>
-        public bool Tiled
-        {
-            get
-            {
-                return tiled;
-            }
-            set
-            {
-                tiled = value;
-                //engine.Repaint(this);
+                return CurrentAnimation != null ? CurrentAnimation.DrawBox : Origin + MMXBox.EMPTY_BOX;
             }
         }
 
@@ -1109,56 +1078,24 @@ namespace MMX.Engine
                 invincible = false;
             }
 
-            lastDrawBox = drawBox;
-            drawBox = MMXBox.EMPTY_BOX;
-
             // Processa cada animação
             foreach (Animation animation in animations)
-            {
-                if (animation.Visible)
-                    drawBox |= animation.CurrentFrameBoundingBox;
-
                 animation.OnFrame();
-
-                if (animation.Visible)
-                    drawBox |= animation.CurrentFrameBoundingBox;
-            }
         }
 
         /// <summary>
         /// Faz a repintura da entidade
         /// </summary>
         /// <param name="g">Objeto do tipo Graphics que provém as operações de desenho</param>
-        public virtual void Paint()
+        public virtual void Render()
         {
             // Se este objeto já foi disposto (todos seus recursos foram liberados) enão não há nada o que fazer por aqui
-            if (disposed)
+            if (!alive || markedToRemove)
                 return;
 
             // Realiza a repintura de cada animação
             foreach (Animation animation in animations)
                 animation.Render();
-
-            drawCount++; // Incrementa o número de desenhos feitos nesta entidade
-
-            /*if (DEBUG_SHOW_ENTITY_DRAW_COUNT)
-            {
-                System.Drawing.Font font = new System.Drawing.Font("Arial", 16 * engine.drawScale);
-                MMXBox drawBox = BoudingBox;
-                using (System.Drawing.Brush brush = new SolidBrush(Color.Yellow))
-                {
-                    MMXVector mins = drawBox.Origin + drawBox.Mins;
-                    string text = drawCount.ToString();
-                    System.Drawing.SizeF size = g.MeasureString(text, font);
-
-                    using (Pen pen = new Pen(Color.Blue, 2))
-                    {
-                        g.DrawRectangle(pen, (engine.drawOrigin + drawBox * engine.drawScale).ToRectangle());
-                    }
-
-                    g.DrawString(text, font, brush, engine.drawOrigin.X + (mins.X + (drawBox.Width - size.Width / engine.drawScale) / 2) * engine.drawScale, engine.drawOrigin.Y + (mins.Y + (drawBox.Height - size.Height / engine.drawScale) / 2) * engine.drawScale);
-                }
-            }*/
         }
 
         /// <summary>
@@ -1231,12 +1168,18 @@ namespace MMX.Engine
         public void Break()
         {
             // Verifica se ele já não está quebrado, está marcado para ser removido, se é quebrável e se a chamada ao evento OnBreak() retornou true (indicando que ele deverá ser quebrado)
-            if (!broke && !markedToRemove && breakable && OnBreak())
+            if (alive && !broke && !markedToRemove && breakable && OnBreak())
             {
                 broke = true; // Marca-o como quebrado
                 OnBroke(); // Notifica que ele foi quebrado
                 Kill(); // Mate-o!
             }
+        }
+
+        protected override void OnDeath()
+        {
+            animations.Clear();
+            base.OnDeath();
         }
     }
 }
