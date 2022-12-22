@@ -14,7 +14,7 @@ Some Pending Fixes:
 - Fix some X sprite animations.
 - Fix full charged X buster position.
 - Fix background position in some levels.
-- Fix camera transition in some levels.
+- Fix triggers and camera lock in some levels.
 
 Future additions:
 
@@ -22,3 +22,6 @@ Future additions:
 - Bosses.
 - Pause menu.
 - Weapons.
+- Demo recorder.
+- Embedded console.
+- Support for other render APIs like D3D11 and OpenGL.
