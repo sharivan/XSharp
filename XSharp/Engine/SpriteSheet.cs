@@ -8,8 +8,6 @@ using SharpDX;
 using SharpDX.Direct3D9;
 
 using MMXBox = MMX.Geometry.Box;
-
-using static MMX.Engine.Consts;
 using System.IO;
 
 namespace MMX.Engine

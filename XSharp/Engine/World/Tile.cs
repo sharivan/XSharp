@@ -1,16 +1,4 @@
-﻿using System;
-using System.IO;
-
-using SharpDX;
-using SharpDX.Direct3D9;
-
-using MMX.Math;
-using MMX.Geometry;
-
-using static MMX.Engine.Consts;
-using System.Runtime.InteropServices;
-
-namespace MMX.Engine.World
+﻿namespace MMX.Engine.World
 {
     public class Tile
     {

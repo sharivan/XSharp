@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using MMX.Math;
+﻿using MMX.Math;
 using MMX.Geometry;
-
-using static MMX.Engine.Consts;
 
 namespace MMX.Engine.Weapons
 {

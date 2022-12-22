@@ -9,7 +9,6 @@ using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
 using SharpDX.DirectSound;
-using SharpDX.IO;
 
 using Types;
 
@@ -29,7 +28,6 @@ using DSoundCooperativeLevel = SharpDX.DirectSound.CooperativeLevel;
 
 using static MMX.Engine.Consts;
 using System.Runtime.InteropServices;
-using static MMX.Engine.SpriteSheet;
 
 namespace MMX.Engine
 {

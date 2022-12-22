@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 using MMX.Geometry;
 using MMX.Math;
-using MMX.Engine.World;
 
 using static MMX.Engine.Consts;
 using MMXWorld = MMX.Engine.World.World;

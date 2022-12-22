@@ -1,4 +1,13 @@
-﻿using System;
+﻿/*
+ * The code below was taken from the MegaEDX v1.3 project. Such code was originally written in C++ which I translated to C#.
+ * 
+ * For more information, consult the original projects:
+
+    MegaEDX: https://github.com/Xeeynamo/MegaEdX
+    MegaEDX v1.3: https://github.com/rbrummett/megaedx_v1.3
+ */
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -157,7 +166,7 @@ namespace MMX.ROM
         internal static readonly uint[] p_maps = { 0x868E71, 0x8689D5, 0x868B00, 0x8081B3 };
         internal static readonly uint[] p_collis = { 0x868EE0, 0x868A44, 0x868B6F, 0 };
         /*const*/
-        internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
+internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
         internal static readonly uint[] p_palett = { 0x868133, 0x86817A, 0x868180, 0 };
         internal static readonly uint[] p_font = { 0x86F744, 0x86FA4C, 0x86F77D, 0 };
         internal static readonly uint[] p_unknow = { 0x86A1D5, 0, 0, 0 }; // Unknow

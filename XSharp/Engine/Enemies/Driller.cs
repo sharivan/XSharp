@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MMX.Geometry;
-using MMX.Math;
+﻿using MMX.Geometry;
 
 namespace MMX.Engine.Enemies
 {

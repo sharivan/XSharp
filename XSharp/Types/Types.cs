@@ -2,16 +2,14 @@
  * 
  * API contendo algumas classes que encapsulam funções úteis usadas pelo jogo
  * 
- */ 
+ */
 
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Types

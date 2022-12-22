@@ -1,16 +1,11 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.Mathematics.Interop;
-
-using MMX.Geometry;
 using MMX.Math;
 
 using MMXBox = MMX.Geometry.Box;
-
-using static MMX.Engine.Consts;
 
 namespace MMX.Engine
 {

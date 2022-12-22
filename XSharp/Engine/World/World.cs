@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-
-using SharpDX;
 using SharpDX.Direct3D9;
 
 using MMX.Geometry;

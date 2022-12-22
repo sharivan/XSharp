@@ -1,8 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿/*
+ * The code below was taken from the MegaEDX v1.3 project. Such code was originally written in C++ which I translated to C#.
+ * 
+ * For more information, consult the original projects:
+
+    MegaEDX: https://github.com/Xeeynamo/MegaEdX
+    MegaEDX v1.3: https://github.com/rbrummett/megaedx_v1.3
+ */
+
+using System;
 
 namespace MMX.ROM
 {

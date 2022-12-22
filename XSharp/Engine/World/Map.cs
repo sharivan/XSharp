@@ -1,10 +1,6 @@
-﻿using System;
-
-using SharpDX;
-using SharpDX.Direct3D9;
+﻿using SharpDX;
 
 using MMX.Geometry;
-using MMX.Math;
 
 using MMXBox = MMX.Geometry.Box;
 

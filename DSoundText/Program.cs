@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
 
 using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectSound;
-using SharpDX.Multimedia;
 using SharpDX.Windows;
 
 using DSLockFlags = SharpDX.DirectSound.LockFlags;
