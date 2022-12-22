@@ -9,13 +9,13 @@ namespace MMX.ROM
 {
     public class MegaEDCore : IDisposable
     {
-        internal byte[] rom; //giant 6mb block of memory used throughout the program
-        internal int romSize;
-        internal ushort dummyHeader;
+        protected byte[] rom; //giant 6mb block of memory used throughout the program
+        protected int romSize;
+        protected ushort dummyHeader;
 
-        internal MemoryStream ms;
-        internal BinaryReader reader;
-        internal BinaryWriter writter;
+        protected MemoryStream ms;
+        protected BinaryReader reader;
+        protected BinaryWriter writter;
 
         public MegaEDCore()
         {
@@ -43,10 +43,8 @@ namespace MMX.ROM
             if (fileName == null)
                 return false;
 
-            using (FileStream fs = File.Create(fileName))
-            {
-                return LoadNewRom(fs);
-            }
+            using FileStream fs = File.Create(fileName);
+            return LoadNewRom(fs);
         }
 
         public bool LoadNewRom(Stream stream)
@@ -76,10 +74,8 @@ namespace MMX.ROM
             if (fileName == null)
                 return false;
 
-            using (FileStream fs = File.Create(fileName))
-            {
-                return SaveRom(fs);
-            }
+            using FileStream fs = File.Create(fileName);
+            return SaveRom(fs);
         }
 
         public bool SaveRom(Stream stream)
@@ -112,104 +108,104 @@ namespace MMX.ROM
 
         public void Dispose() => FreeRom();
 
-        internal byte ReadByte(int address) => ReadByte((uint) address);
+        protected byte ReadByte(int address) => ReadByte((uint) address);
 
-        internal byte ReadByte(uint address)
+        protected byte ReadByte(uint address)
         {
             ms.Position = address;
             return reader.ReadByte();
         }
 
-        internal sbyte ReadSByte(int address) => ReadSByte((uint) address);
+        protected sbyte ReadSByte(int address) => ReadSByte((uint) address);
 
-        internal sbyte ReadSByte(uint address)
+        protected sbyte ReadSByte(uint address)
         {
             ms.Position = address;
             return reader.ReadSByte();
         }
 
-        internal short ReadShort(int address) => ReadShort((uint) address);
+        protected short ReadShort(int address) => ReadShort((uint) address);
 
-        internal short ReadShort(uint address)
+        protected short ReadShort(uint address)
         {
             ms.Position = address;
             return reader.ReadInt16();
         }
 
-        internal ushort ReadWord(int address) => ReadWord((uint) address);
+        protected ushort ReadWord(int address) => ReadWord((uint) address);
 
-        internal ushort ReadWord(uint address)
+        protected ushort ReadWord(uint address)
         {
             ms.Position = address;
             return reader.ReadUInt16();
         }
 
-        internal static ushort ReadWord(byte[] buf, uint address) => (ushort) (buf[address] & 0xff | (buf[address + 1] << 8) & 0xff00);
+        protected static ushort ReadWord(byte[] buf, uint address) => (ushort) (buf[address] & 0xff | (buf[address + 1] << 8) & 0xff00);
 
-        internal int ReadInt(int address) => ReadInt((uint) address);
+        protected int ReadInt(int address) => ReadInt((uint) address);
 
-        internal int ReadInt(uint address)
+        protected int ReadInt(uint address)
         {
             ms.Position = address;
             return reader.ReadInt32();
         }
 
-        internal uint ReadDWord(int address) => ReadDWord((uint) address);
+        protected uint ReadDWord(int address) => ReadDWord((uint) address);
 
-        internal uint ReadDWord(uint address)
+        protected uint ReadDWord(uint address)
         {
             ms.Position = address;
             return reader.ReadUInt32();
         }
 
-        internal string ReadASCIIString(int address, int count) => ReadASCIIString((uint) address, count);
+        protected string ReadASCIIString(int address, int count) => ReadASCIIString((uint) address, count);
 
-        internal string ReadASCIIString(uint address, int count)
+        protected string ReadASCIIString(uint address, int count)
         {
             ms.Position = address;
             byte[] resultBytes = reader.ReadBytes(count);
             return Encoding.ASCII.GetString(resultBytes);
         }
 
-        internal void WriteShort(int address, short value) => WriteShort((uint) address, value);
+        protected void WriteShort(int address, short value) => WriteShort((uint) address, value);
 
-        internal void WriteShort(uint address, short value)
+        protected void WriteShort(uint address, short value)
         {
             ms.Position = address;
             writter.Write(value);
         }
 
-        internal void WriteWord(int address, ushort value) => WriteWord((uint) address, value);
+        protected void WriteWord(int address, ushort value) => WriteWord((uint) address, value);
 
-        internal void WriteWord(uint address, ushort value)
+        protected void WriteWord(uint address, ushort value)
         {
             ms.Position = address;
             writter.Write(value);
         }
 
-        internal static void WriteWord(byte[] buf, uint address, ushort value)
+        protected static void WriteWord(byte[] buf, uint address, ushort value)
         {
             buf[address] = (byte) (value & 0xff);
             buf[address + 1] = (byte) ((value >> 8) & 0xff);
         }
 
-        internal void WriteInt(int address, int value) => WriteInt((uint) address, value);
+        protected void WriteInt(int address, int value) => WriteInt((uint) address, value);
 
-        internal void WriteInt(uint address, int value)
+        protected void WriteInt(uint address, int value)
         {
             ms.Position = address;
             writter.Write(value);
         }
 
-        internal void WriteDWord(int address, uint value) => WriteDWord((uint) address, value);
+        protected void WriteDWord(int address, uint value) => WriteDWord((uint) address, value);
 
-        internal void WriteDWord(uint address, uint value)
+        protected void WriteDWord(uint address, uint value)
         {
             ms.Position = address;
             writter.Write(value);
         }
 
-        internal static void WriteDWord(byte[] buf, uint address, uint value)
+        protected static void WriteDWord(byte[] buf, uint address, uint value)
         {
             buf[address] = (byte) (value & 0xff);
             buf[address + 1] = (byte) ((value >> 8) & 0xff);
@@ -217,22 +213,22 @@ namespace MMX.ROM
             buf[address + 3] = (byte) ((value >> 24) & 0xff);
         }
 
-        internal void WriteASCIIString(int address, string value) => WriteASCIIString((uint) address, value);
+        protected void WriteASCIIString(int address, string value) => WriteASCIIString((uint) address, value);
 
-        internal void WriteASCIIString(uint address, string value)
+        protected void WriteASCIIString(uint address, string value)
         {
             ms.Position = address;
             byte[] resultBytes = Encoding.ASCII.GetBytes(value);
             writter.Write(resultBytes);
         }
 
-        internal void Copy(int src, int dst, int count) => Copy((uint) src, (uint) dst, count);
+        protected void Copy(int src, int dst, int count) => Copy((uint) src, (uint) dst, count);
 
-        internal void Copy(uint src, uint dst, int count) => Array.Copy(rom, src, rom, dst, count);
+        protected void Copy(uint src, uint dst, int count) => Array.Copy(rom, src, rom, dst, count);
 
-        internal int Compare(int left, int right, int count) => Compare((uint) left, (uint) right, count);
+        protected int Compare(int left, int right, int count) => Compare((uint) left, (uint) right, count);
 
-        internal int Compare(uint left, uint right, int count)
+        protected int Compare(uint left, uint right, int count)
         {
             for (int i = 0; i < count; i++)
             {
@@ -246,11 +242,11 @@ namespace MMX.ROM
             return 0;
         }
 
-        internal void Fill(int address, int value, int count) => Fill((uint) address, value, count);
+        protected void Fill(int address, int value, int count) => Fill((uint) address, value, count);
 
-        internal void Fill(uint address, int value, int count) => Fill(rom, address, value, count);
+        protected void Fill(uint address, int value, int count) => Fill(rom, address, value, count);
 
-        internal static void Fill(byte[] buf, uint address, int value, int count)
+        protected static void Fill(byte[] buf, uint address, int value, int count)
         {
             for (int i = 0; i < count; i++)
                 buf[address + i] = (byte) value;

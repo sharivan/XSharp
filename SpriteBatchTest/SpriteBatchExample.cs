@@ -21,7 +21,7 @@ using System.Windows.Forms;
 using SharpDX.IO;
 using SharpDX.Mathematics.Interop;
 
-namespace Mega_Man_Xvan
+namespace XSharp
 {
     public class SpriteBatchExample
     {

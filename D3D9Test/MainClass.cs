@@ -99,6 +99,7 @@ namespace D3D9Test
             255, 255,   0,   0
         };
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0052:Remover membros particulares não lidos", Justification = "<Pendente>")]
         private static readonly byte[] EMPTY_TILE = new byte[]
         {
             0, 0, 0, 0, 0, 0, 0, 0,
@@ -123,7 +124,6 @@ namespace D3D9Test
         private const int VERTEX_SIZE = 24;
 
         private const int TILESET_WIDTH = 32 * TILE_SIZE;
-        private const int TILESET_HEIGHT = 32 * TILE_SIZE;
 
         private const float TILESET_SIZE = (float) TILE_SIZE / TILESET_WIDTH;
 
@@ -240,37 +240,19 @@ namespace D3D9Test
             ICE = 0xBB
         }
 
-        private struct Cell
+        private readonly struct Cell
         {
-            private int row;
-            private int col;
+            public int Row { get; }
 
-            public int Row
-            {
-                get
-                {
-                    return row;
-                }
-            }
-
-            public int Col
-            {
-                get
-                {
-                    return col;
-                }
-            }
+            public int Col { get; }
 
             public Cell(int row, int col)
             {
-                this.row = row;
-                this.col = col;
+                this.Row = row;
+                this.Col = col;
             }
 
-            public override int GetHashCode()
-            {
-                return 65536 * row + col;
-            }
+            public override int GetHashCode() => 65536 * Row + Col;
 
             public override bool Equals(object obj)
             {
@@ -280,14 +262,11 @@ namespace D3D9Test
                 if (!(obj is Cell))
                     return false;
 
-                Cell other = (Cell) obj;
-                return other.row == row && other.col == col;
+                var other = (Cell) obj;
+                return other.Row == Row && other.Col == Col;
             }
 
-            public override string ToString()
-            {
-                return row + "," + col;
-            }
+            public override string ToString() => Row + "," + Col;
         }
 
         private class Tile
@@ -313,8 +292,6 @@ namespace D3D9Test
             vbData.Write(x);
             vbData.Write(y);
             vbData.Write(1f);
-            //vbData.Write(rhw);
-            //vbData.Write(color.ToRgba());
             vbData.Write(0xffffffff);
             vbData.Write(u);
             vbData.Write(v);
@@ -369,8 +346,8 @@ namespace D3D9Test
             float x = rDest.Left - SCREEN_WIDTH * 0.5f;
             float y = -rDest.Top + SCREEN_HEIGHT * 0.5f;
 
-            Matrix matScaling = Matrix.Scaling(rDest.Width, rDest.Height, 1);
-            Matrix matTranslation = Matrix.Translation(x, y, 0);            
+            var matScaling = Matrix.Scaling(rDest.Width, rDest.Height, 1);
+            var matTranslation = Matrix.Translation(x, y, 0);            
             Matrix matTransform = matScaling * matTranslation;
 
             device.SetTransform(TransformState.World, matTransform);
@@ -396,15 +373,9 @@ namespace D3D9Test
 
             public Tile this[int row, int col]
             {
-                get
-                {
-                    return tiles[row, col];
-                }
+                get => tiles[row, col];
 
-                set
-                {
-                    tiles[row, col] = value;
-                }
+                set => tiles[row, col] = value;
             }
 
             public bool IsNull
@@ -451,10 +422,7 @@ namespace D3D9Test
                         }
             }
 
-            public void SetTile(int row, int col, Tile tile, int palette, bool flipped = false, bool mirrored = false, bool upLayer = false)
-            {
-                SetTile(new Cell(row, col), tile, palette, flipped, mirrored, upLayer);
-            }
+            public void SetTile(int row, int col, Tile tile, int palette, bool flipped = false, bool mirrored = false, bool upLayer = false) => SetTile(new Cell(row, col), tile, palette, flipped, mirrored, upLayer);
 
             public void SetTile(Cell cell, Tile tile, int subPalette, bool flipped = false, bool mirrored = false, bool upLayer = false)
             {
@@ -478,10 +446,7 @@ namespace D3D9Test
         private Texture palette;
         private Map[] maps;
 
-        private int Transform(int color, bool notTransparent)
-        {
-            return !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
-        }
+        private int Transform(int color, bool notTransparent) => !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
 
         private Tile AddTile(Device device, uint tile, bool transparent = false)
         {
@@ -490,9 +455,9 @@ namespace D3D9Test
 
             byte[] imageData = new byte[TILE_SIZE * TILE_SIZE * sizeof(byte)];
             bool notNull = false;
-            using (MemoryStream ms = new MemoryStream(imageData))
+            using (var ms = new MemoryStream(imageData))
             {
-                using (BinaryWriter writter = new BinaryWriter(ms))
+                using (var writter = new BinaryWriter(ms))
                 {
                     for (int i = 0; i < TILE_SIZE * TILE_SIZE; i++, image++)
                     {
@@ -507,7 +472,7 @@ namespace D3D9Test
             if (!notNull)
                 return null;
 
-            Tile wtile = new Tile(device, (int) tileNum, imageData);
+            var wtile = new Tile(device, (int) tileNum, imageData);
             return wtile;
         }
 
@@ -531,7 +496,7 @@ namespace D3D9Test
                 if (mirrored)
                     dataIndex += TILE_SIZE - 1;
 
-                using (DataStream stream = new DataStream(ptr, TILE_SIZE * sizeof(byte), true, true))
+                using (var stream = new DataStream(ptr, TILE_SIZE * sizeof(byte), true, true))
                 {
                     for (int col = 0; col < TILE_SIZE; col++)
                     {
@@ -562,8 +527,8 @@ namespace D3D9Test
             for (int i = 0; i < 0x400; i++)
             {
                 byte colisionByte = core.rom[core.pCollisions + i];
-                CollisionData collisionData = (CollisionData) colisionByte;
-                Map wmap = new Map(i, collisionData);
+                var collisionData = (CollisionData) colisionByte;
+                var wmap = new Map(i, collisionData);
 
                 uint tileData = core.ReadWord(map);
                 byte subPalette = (byte) ((tileData >> 6) & 0x70);
@@ -616,7 +581,7 @@ namespace D3D9Test
             palette = new Texture(device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
             DataRectangle rect = palette.LockRectangle(0, LockFlags.Discard);
 
-            using (DataStream stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
+            using (var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
             {
                 for (int i = 0; i < 8; i++)
                     for (int j = 0; j < 16; j++)
@@ -640,15 +605,15 @@ namespace D3D9Test
 
             float z = upLayer ? 1 : -1;
 
-            Vector2 r0 = new Vector2(vDest.X, vDest.Y);
-            Vector2 r1 = new Vector2(vDest.X + TILE_SIZE, vDest.Y);
-            Vector2 r2 = new Vector2(vDest.X + TILE_SIZE, vDest.Y - TILE_SIZE);
-            Vector2 r3 = new Vector2(vDest.X, vDest.Y - TILE_SIZE);
+            var r0 = new Vector2(vDest.X, vDest.Y);
+            var r1 = new Vector2(vDest.X + TILE_SIZE, vDest.Y);
+            var r2 = new Vector2(vDest.X + TILE_SIZE, vDest.Y - TILE_SIZE);
+            var r3 = new Vector2(vDest.X, vDest.Y - TILE_SIZE);
 
-            Vector2 t0 = new Vector2(vSource.X, vSource.Y);
-            Vector2 t1 = new Vector2(vSource.X + TILE_FRAC_SIZE_IN_TILEMAP, vSource.Y);
-            Vector2 t2 = new Vector2(vSource.X + TILE_FRAC_SIZE_IN_TILEMAP, vSource.Y + TILE_FRAC_SIZE_IN_TILEMAP);
-            Vector2 t3 = new Vector2(vSource.X, vSource.Y + TILE_FRAC_SIZE_IN_TILEMAP);
+            var t0 = new Vector2(vSource.X, vSource.Y);
+            var t1 = new Vector2(vSource.X + TILE_FRAC_SIZE_IN_TILEMAP, vSource.Y);
+            var t2 = new Vector2(vSource.X + TILE_FRAC_SIZE_IN_TILEMAP, vSource.Y + TILE_FRAC_SIZE_IN_TILEMAP);
+            var t3 = new Vector2(vSource.X, vSource.Y + TILE_FRAC_SIZE_IN_TILEMAP);
 
             if (t0.X < 0 || t0.X > 1 || t0.Y < 0 || t0.Y > 1)
                 throw new Exception();
@@ -696,7 +661,7 @@ namespace D3D9Test
                 {
                     int mapIndex = MAPS_PER_COL_IN_IMAGE * row + col;
                     Map map = maps[mapIndex];
-                    Vector2 mapPos = new Vector2(col * MAP_SIZE, -row * MAP_SIZE);
+                    var mapPos = new Vector2(col * MAP_SIZE, -row * MAP_SIZE);
 
                     if (map != null)
                     {
@@ -704,11 +669,11 @@ namespace D3D9Test
                             for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP; tileCol++)
                             {
                                 Tile tile = map.tiles[tileRow, tileCol];
-                                Vector2 tilePos = new Vector2(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
+                                var tilePos = new Vector2(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
 
                                 if (tile != null)
                                 {
-                                    Vector2 tilemapPos = new Vector2((float) ((mapIndex % 32) * MAP_SIZE + tileCol * TILE_SIZE) / TILEMAP_WIDTH, (float) ((mapIndex / 32) * MAP_SIZE + tileRow * TILE_SIZE) / TILEMAP_HEIGHT);
+                                    var tilemapPos = new Vector2((float) (mapIndex % 32 * MAP_SIZE + tileCol * TILE_SIZE) / TILEMAP_WIDTH, (float) (mapIndex / 32 * MAP_SIZE + tileRow * TILE_SIZE) / TILEMAP_HEIGHT);
                                     WriteSquare(vbData, tilemapPos, tilePos, new Color(map.subPalette[tileRow, tileCol], 0, 0, 0), map.flipped[tileRow, tileCol], map.mirrored[tileRow, tileCol], map.upLayer[tileRow, tileCol]);
                                 }
                                 else
@@ -720,7 +685,7 @@ namespace D3D9Test
                         for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP; tileRow++)
                             for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP; tileCol++)
                             {
-                                Vector2 tilePos = new Vector2(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
+                                var tilePos = new Vector2(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
                                 WriteSquare(vbData, Vector2.Zero, tilePos, new Color(0, 0, 0, 0), false, false, false);
                             }
                     }
@@ -737,8 +702,8 @@ namespace D3D9Test
             float y = -rDest.Top + SCREEN_HEIGHT * 0.5f;
 
             //Matrix matScaling = Matrix.Scaling(rDest.Width, rDest.Height, 1);
-            Matrix matScaling = Matrix.Scaling(1, 1, 1);
-            Matrix matTranslation = Matrix.Translation(x, y, 0);
+            var matScaling = Matrix.Scaling(1, 1, 1);
+            var matTranslation = Matrix.Translation(x, y, 0);
             Matrix matTransform = matScaling * matTranslation;
 
             device.SetTransform(TransformState.World, matTransform);
@@ -747,10 +712,7 @@ namespace D3D9Test
             device.DrawPrimitives(PrimitiveType.TriangleList, 0, 2 * MAPS_PER_COL_IN_IMAGE * SIDE_TILES_PER_MAP * MAPS_PER_ROW_IN_IMAGE * SIDE_TILES_PER_MAP);
         }
 
-        private void RenderAllMaps(Device device, VertexBuffer vb)
-        {
-            RenderAllMaps(device, vb, new RectangleF(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT));
-        }
+        private void RenderAllMaps(Device device, VertexBuffer vb) => RenderAllMaps(device, vb, new RectangleF(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT));
 
         public void Run()
         {
@@ -769,15 +731,15 @@ namespace D3D9Test
             //VertexShader vShader = new VertexShader(device, function);
 
             function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
-            PixelShader pShader = new PixelShader(device, function);
+            var pShader = new PixelShader(device, function);
 
             device.VertexShader = null;
             device.PixelShader = pShader;
             device.VertexFormat = D3DFVF_TLVERTEX;
 
-            Texture texture = Texture.FromFile(device, "Gator_Stage_Floor_Block.png");
+            var texture = Texture.FromFile(device, "Gator_Stage_Floor_Block.png");
 
-            VertexBuffer vb = new VertexBuffer(device, VERTEX_SIZE * 2 * 3 * MAPS_PER_COL_IN_IMAGE * SIDE_TILES_PER_MAP * MAPS_PER_ROW_IN_IMAGE * SIDE_TILES_PER_MAP, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
+            var vb = new VertexBuffer(device, VERTEX_SIZE * 2 * 3 * MAPS_PER_COL_IN_IMAGE * SIDE_TILES_PER_MAP * MAPS_PER_ROW_IN_IMAGE * SIDE_TILES_PER_MAP, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
             //VertexBuffer vb = new VertexBuffer(device, VERTEX_SIZE * 4, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
 
             device.SetRenderState(RenderState.Lighting, false);
@@ -820,7 +782,7 @@ namespace D3D9Test
                 device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
                 device.BeginScene();
 
-                Matrix orthoLH = Matrix.OrthoLH(SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f, 10.0f);
+                var orthoLH = Matrix.OrthoLH(SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f, 10.0f);
                 device.SetTransform(TransformState.Projection, orthoLH);
                 device.SetTransform(TransformState.World, Matrix.Identity);
                 device.SetTransform(TransformState.View, Matrix.Identity);

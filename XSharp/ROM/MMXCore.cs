@@ -4,6 +4,18 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
+using SharpDX;
+using SharpDX.Direct3D9;
+
+using MMX.Math;
+using MMX.Geometry;
+using MMX.Engine;
+using MMX.Engine.World;
+
+using MMXBox = MMX.Geometry.Box;
+
+using static MMX.Engine.Consts;
+
 namespace MMX.ROM
 {
     public struct STileInfo
@@ -172,23 +184,23 @@ namespace MMX.ROM
         internal static readonly uint[] p_bscenes = { 0x868FBE, 0x868B22, 0x868C4D, 0 };
         internal static readonly uint[] p_bblocks = { 0x86902D, 0x868B91, 0x868CBC, 0 };
 
-        internal byte type;
-        internal byte[] vram;
-        internal ushort[] mapping;
-        internal byte[] mappingBG;
-        internal byte[] sceneLayout;
+        private byte type;
+        private readonly byte[] vram;
+        private readonly ushort[] mapping;
+        private readonly byte[] mappingBG;
+        private readonly byte[] sceneLayout;
 
-        internal uint[] palettesOffset;
-        internal uint tileCmpPos;
-        internal ushort tileCmpDest;
-        internal ushort tileCmpSize;
-        internal ushort tileCmpRealSize;
-        internal uint tileDecPos;
-        internal ushort tileDecDest;
-        internal ushort tileDecSize;
+        private readonly uint[] palettesOffset;
+        private uint tileCmpPos;
+        private ushort tileCmpDest;
+        private ushort tileCmpSize;
+        private ushort tileCmpRealSize;
+        private uint tileDecPos;
+        private ushort tileDecDest;
+        private ushort tileDecSize;
 
         // checkpoints
-        internal List<CheckPointInfo> checkpointInfoTable;
+        private readonly List<CheckPointInfo> checkpointInfoTable;
 
         public void UpdateVRAMCache()
         {
@@ -197,79 +209,153 @@ namespace MMX.ROM
         }
 
         // graphics to palette
-        internal Dictionary<uint, uint> graphicsToPalette;
-        internal Dictionary<uint, uint> graphicsToAssembly;
+        private readonly Dictionary<uint, uint> graphicsToPalette;
+        private readonly Dictionary<uint, uint> graphicsToAssembly;
 
-        internal uint objLoadOffset;
-        internal uint tileLoadOffset;
-        internal uint palLoadOffset;
+        private uint objLoadOffset;
+        private uint tileLoadOffset;
+        private uint palLoadOffset;
 
-        internal ushort level;
-        internal ushort point;
-        internal byte levelWidth;
-        internal byte levelHeight;
-        internal byte sceneUsed;
-        internal uint pPalette;
-        internal uint pPalBase;
-        internal uint pLayout;
-        internal uint pScenes;
-        internal uint pBlocks;
-        internal uint pMaps;
-        internal uint pCollisions;
-        internal uint pEvents;
-        internal uint pBorders;
-        internal uint pLocks;
-        internal uint pProperties;
-        internal uint pGfx;
-        internal uint pGfxPos;
-        internal uint pGfxObj;
-        internal uint pGfxPal;
-        internal uint pSpriteAssembly;
-        internal uint[] pSpriteOffset;
-        internal uint pCapsulePos;
+        private ushort level;
+        private ushort point;
+        private byte levelWidth;
+        private byte levelHeight;
+        private byte sceneUsed;
+        private uint pPalette;
+        private uint pPalBase;
+        private uint pLayout;
+        private uint pScenes;
+        private uint pBlocks;
+        private uint pMaps;
+        private uint pCollisions;
+        private readonly uint pEvents;
+        private uint pBorders;
+        private uint pLocks;
+        private readonly uint pProperties;
+        private uint pGfx;
+        private readonly uint pGfxPos;
+        private uint pGfxObj;
+        private uint pGfxPal;
+        private uint pSpriteAssembly;
+        private readonly uint[] pSpriteOffset;
+        private uint pCapsulePos;
 
-        internal uint numLevels;
-        internal uint numTiles;
-        internal uint numMaps;
-        internal uint numBlocks;
-        internal uint numDecs;
-        internal uint numCheckpoints;
-        internal uint numGfxIds;
+        private uint numLevels;
+        private uint numTiles;
+        private uint numMaps;
+        private uint numBlocks;
+        private uint numDecs;
+        private uint numCheckpoints;
+        private readonly uint numGfxIds;
 
-        internal uint tileDecStart;
-        internal uint tileDecEnd;
+        private uint tileDecStart;
+        private uint tileDecEnd;
 
-        internal bool sortOk;
+        private bool sortOk;
 
         // ROM expansion
-        internal static readonly string expandedROMString = "EXPANDED ROM ";
-        internal static readonly ushort expandedROMVersion;
-        internal static readonly uint expandedROMHeaderSize;
-        internal static readonly uint expandedROMTrampolineOffset;
+        private static readonly string expandedROMString = "EXPANDED ROM ";
+        private static readonly ushort expandedROMVersion;
+        private static readonly uint expandedROMHeaderSize;
+        private static readonly uint expandedROMTrampolineOffset;
 
-        internal uint eventBank;
-        internal uint checkpointBank;
-        internal uint lockBank;
-        internal bool expandedROM;
-        internal uint expandedVersion;
-        internal uint expandedLayoutSize;
-        internal uint expandedEventSize;
-        internal uint expandedSceneSize;
-        internal uint expandedCheckpointSize;
-        internal uint expandedLayoutScenes;
+        private uint eventBank;
+        private uint checkpointBank;
+        private uint lockBank;
+        private bool expandedROM;
+        private uint expandedVersion;
+        private uint expandedLayoutSize;
+        private uint expandedEventSize;
+        private readonly uint expandedSceneSize;
+        private uint expandedCheckpointSize;
+        private uint expandedLayoutScenes;
 
         // Events
-        internal List<EventInfo>[] eventTable;
+        private readonly List<EventInfo>[] eventTable;
 
         // Properties
-        internal PropertyInfo[] propertyTable;
+        private readonly PropertyInfo[] propertyTable;
 
         // SPRITE
-        internal HashSet<uint> spriteUpdate;
+        private readonly HashSet<uint> spriteUpdate;
 
         // FONT
-        internal ushort[] fontPalCache;
-        internal byte[] fontCache;
+        private readonly ushort[] fontPalCache;
+        private readonly byte[] fontCache;
+
+        public Vector BackgroundPos
+        {
+            get
+            {
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
+                FixedSingle x = ReadWord(checkpointInfoTable[point].bkgX);
+                FixedSingle y = ReadWord(checkpointInfoTable[point].bkgY);
+                return new Vector(x, y);
+            }
+        }
+
+        public Vector CameraPos
+        {
+            get
+            {
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
+                FixedSingle x = ReadWord(checkpointInfoTable[point].camX);
+                FixedSingle y = ReadWord(checkpointInfoTable[point].camY);
+                return new Vector(x, y);
+            }
+        }
+
+        public Vector CharacterPos
+        {
+            get
+            {
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
+                FixedSingle x = ReadWord(checkpointInfoTable[point].chX);
+                FixedSingle y = ReadWord(checkpointInfoTable[point].chY);
+                return new Vector(x, y);
+            }
+        }
+
+        public Vector MinCharacterPos
+        {
+            get
+            {
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
+                FixedSingle x = ReadWord(checkpointInfoTable[point].minX);
+                FixedSingle y = ReadWord(checkpointInfoTable[point].minY);
+                return new Vector(x, y);
+            }
+        }
+
+        public Vector MaxCharacterPos
+        {
+            get
+            {
+                if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
+                    return Vector.NULL_VECTOR;
+
+                FixedSingle x = ReadWord(checkpointInfoTable[point].maxX) + SCREEN_WIDTH;
+                FixedSingle y = ReadWord(checkpointInfoTable[point].maxY) + SCREEN_HEIGHT;
+                return new Vector(x, y);
+            }
+        }
+
+        public int Point
+        {
+            get => point;
+
+            set => point = (ushort) value;
+        }
+
+        public int CheckpointCount => (int) numCheckpoints;
 
         public MMXCore()
         {
@@ -309,8 +395,8 @@ namespace MMX.ROM
             uint headerTitleInt4 = header.GetTitleUInt(4);
             ushort headerTitleShort8 = header.GetTitleUShort(8);
 
-            if (headerTitleInt0 == 0x4147454D || headerTitleInt0 == 0x6167654D || headerTitleInt0 == 0x4B434F52)
-                if (headerTitleInt4 == 0x204E414D || headerTitleInt4 == 0x206E616D || headerTitleInt4 == 0x264E414D)
+            if (headerTitleInt0 is 0x4147454D or 0x6167654D or 0x4B434F52)
+                if (headerTitleInt4 is 0x204E414D or 0x206E616D or 0x264E414D)
                 {
                     switch (headerTitleShort8)
                     {
@@ -578,8 +664,8 @@ namespace MMX.ROM
                     if (type == 2)
                     {
                         // temporary fix for the boss sprites that have assembly information that is off by 0x20 or 0x40.
-                        tile -= (uint) ((assemblyNum == 0x61 || assemblyNum == 0x92) ? 0x20 :
-                            (assemblyNum == 0x68 || assemblyNum == 0x79 || assemblyNum == 0xae) ? 0x40 :
+                        tile -= (uint) ((assemblyNum is 0x61 or 0x92) ? 0x20 :
+                            (assemblyNum is 0x68 or 0x79 or 0xae) ? 0x40 :
                             0x0);
                         tile &= 0xFF;
                     }
@@ -1985,7 +2071,8 @@ namespace MMX.ROM
             }*/
             expandedLayoutScenes = 0x40;
 
-            /*if (DEBUG_DUMP_ROM_MEMORY)
+#pragma warning disable CS0162 // Código inacessível detectado
+            if (DEBUG_DUMP_ROM_MEMORY)
             {
                 string sFileName = "C:\\Users\\miste\\Documents\\Projects\\c#\\vc#\\XSharp\\XSharp\\resources\\roms\\" + ROM_NAME + ".smc";
                 int pos = sFileName.LastIndexOf('.');
@@ -2025,7 +2112,8 @@ namespace MMX.ROM
                     WriteDump("fontCache", writer, fontCache, 0, fontCache.Length);
                     writer.Flush();
                 }
-            }*/
+            }
+#pragma warning restore CS0162 // Código inacessível detectado
         }
 
         internal void LoadBackground(bool skipLayout = false)
@@ -2238,7 +2326,7 @@ namespace MMX.ROM
                         {
                             index = (uint) (e.eventSubId & 0x7F);
 
-                            if (e.eventId == 0x6 || e.eventId == 0xE)
+                            if (e.eventId is 0x6 or 0xE)
                             {
                                 ushort offset = SReadWord(0xC14A3E + 2 * level);
                                 index = SReadByte((uint) (0xC14A3E + offset + 2 * index));
@@ -2286,7 +2374,7 @@ namespace MMX.ROM
                     // find the JSR
                     for (uint j = 0; j < 10; ++j)
                     {
-                        if (rom[func] == 0xFC || rom[func] == 0x7C)
+                        if (rom[func] is 0xFC or 0x7C)
                         {
                             break;
                         }
@@ -2294,7 +2382,7 @@ namespace MMX.ROM
                         ++func;
                     }
 
-                    if (rom[func] != 0xFC && rom[func] != 0x7C)
+                    if (rom[func] is not 0xFC and not 0x7C)
                     {
                         continue;
                     }
@@ -2360,7 +2448,7 @@ namespace MMX.ROM
                                 //workQueue.push_back(std::make_tuple(currentFunc + 1, depth, j + 1));
                                 break;
                             }
-                            else if (rom[currentFunc] == 0x60 || rom[currentFunc] == 0x6B)
+                            else if (rom[currentFunc] is 0x60 or 0x6B)
                             {
                                 // RTS or RTL
                                 workQueue.PopFirst();
@@ -2701,6 +2789,7 @@ namespace MMX.ROM
             }
             else
             {
+
                 // decompress the scene to map data
                 byte[] mapRam = new byte[0x10000];
 
@@ -2810,6 +2899,348 @@ namespace MMX.ROM
 
         }
 
+        private Map[] maps;
+
+        private byte Expand(int i) => (byte) (i * 256.0f / 32.0f);
+
+        private int Transform(int color, bool notTransparent) =>
+            //return !transparent ? 0 : (int) (Expand(color & 0x1F) | (Expand((color & 0x3E0) >> 5) << 8) | (Expand((color & 0x7C00) >> 10) << 16) | 0xFF000000);
+            !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
+
+        private Tile AddTile(World world, uint tile, bool transparent = false)
+        {
+            uint image = (tile & 0x3FF) << 6;
+
+            byte[] imageData = new byte[TILE_SIZE * TILE_SIZE * sizeof(byte)];
+            bool notNull = false;
+            using (var ms = new MemoryStream(imageData))
+            {
+                using var writter = new BinaryWriter(ms);
+                for (int i = 0; i < TILE_SIZE * TILE_SIZE; i++, image++)
+                {
+                    var v = vramCache[image];
+                    bool notTransparent = v != 0 || !transparent;
+                    notNull |= notTransparent;
+                    writter.Write(v);
+                }
+            }
+
+            if (!notNull)
+                return null;
+
+            Tile wtile = world.AddTile(imageData);
+            return wtile;
+        }
+
+        private static void WriteTile(DataRectangle tilemapRect, byte[] data, int mapIndex, int tileRow, int tileCol, int subPalette, bool flipped, bool mirrored)
+        {
+            int mapRow = mapIndex / 32;
+            int mapCol = mapIndex % 32;
+
+            IntPtr ptr = tilemapRect.DataPointer;
+            ptr += mapCol * MAP_SIZE * sizeof(byte);
+            ptr += World.TILEMAP_WIDTH * mapRow * MAP_SIZE * sizeof(byte);
+            ptr += TILE_SIZE * tileCol * sizeof(byte);
+            ptr += World.TILEMAP_WIDTH * TILE_SIZE * tileRow * sizeof(byte);
+
+            if (flipped)
+                ptr += World.TILEMAP_WIDTH * (TILE_SIZE - 1) * sizeof(byte);
+
+            for (int row = 0; row < TILE_SIZE; row++)
+            {
+                int dataIndex = row * TILE_SIZE;
+                if (mirrored)
+                    dataIndex += TILE_SIZE - 1;
+
+                using (var stream = new DataStream(ptr, TILE_SIZE * sizeof(byte), true, true))
+                {
+                    for (int col = 0; col < TILE_SIZE; col++)
+                    {
+                        stream.Write((byte) ((subPalette << 4) | (data != null ? data[dataIndex] : 0)));
+
+                        if (mirrored)
+                            dataIndex--;
+                        else
+                            dataIndex++;
+                    }
+                }
+
+                if (flipped)
+                    ptr -= World.TILEMAP_WIDTH * sizeof(byte);
+                else
+                    ptr += World.TILEMAP_WIDTH * sizeof(byte);
+            }
+        }
+
+        internal void RefreshMapCache(World world, bool background = false)
+        {
+            var tilemap = new Texture(world.Device, World.TILEMAP_WIDTH, World.TILEMAP_HEIGHT, 1, Usage.None, Format.L8, Pool.Managed);
+            DataRectangle rect = tilemap.LockRectangle(0, LockFlags.Discard);
+
+            maps = new Map[0x400];
+
+            uint map = pMaps;
+            /* I didn't write this function, but basically the above loses a lot of data because size of a WORD is max 65535 and pMaps is a DWORD */
+            for (int i = 0; i < 0x400; i++)
+            {
+                byte colisionByte = rom[pCollisions + i];
+                var collisionData = (CollisionData) colisionByte;
+                Map wmap = world.AddMap(collisionData);
+
+                uint tileData = ReadWord(map);
+                byte palette = (byte) ((tileData >> 10) & 7);
+                byte subPalette = (byte) ((tileData >> 10) & 7);
+                bool flipped = (tileData & 0x8000) != 0;
+                bool mirrored = (tileData & 0x4000) != 0;
+                bool upLayer = (tileData & 0x2000) != 0;
+                map += 2;
+                Tile tile = AddTile(world, tileData, true);
+                wmap.SetTile(new Vector(0, 0), tile, palette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 0, 0, palette, flipped, mirrored);
+
+                tileData = ReadWord(map);
+                palette = (byte) ((tileData >> 10) & 7);
+                flipped = (tileData & 0x8000) != 0;
+                mirrored = (tileData & 0x4000) != 0;
+                upLayer = (tileData & 0x2000) != 0;
+                map += 2;
+                tile = AddTile(world, tileData, true);
+                wmap.SetTile(new Vector(TILE_SIZE, 0), tile, palette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 0, 1, palette, flipped, mirrored);
+
+                tileData = ReadWord(map);
+                palette = (byte) ((tileData >> 10) & 7);
+                flipped = (tileData & 0x8000) != 0;
+                mirrored = (tileData & 0x4000) != 0;
+                upLayer = (tileData & 0x2000) != 0;
+                map += 2;
+                tile = AddTile(world, tileData, true);
+                wmap.SetTile(new Vector(0, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 1, 0, palette, flipped, mirrored);
+
+                tileData = ReadWord(map);
+                palette = (byte) ((tileData >> 10) & 7);
+                flipped = (tileData & 0x8000) != 0;
+                mirrored = (tileData & 0x4000) != 0;
+                upLayer = (tileData & 0x2000) != 0;
+                map += 2;
+                tile = AddTile(world, tileData, true);
+                wmap.SetTile(new Vector(TILE_SIZE, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
+                WriteTile(rect, tile?.data, i, 1, 1, palette, flipped, mirrored);
+
+                maps[i] = wmap.IsNull ? null : wmap;
+            }
+
+            tilemap.UnlockRectangle(0);
+
+            if (background)
+                world.backgroundTilemap = tilemap;
+            else
+                world.foregroundTilemap = tilemap;
+        }
+
+        private void LoadMap(World world, int x, int y, ushort index, bool background = false)
+        {
+            if (index < maps.Length)
+            {
+                Map map = maps[index];
+                if (map != null)
+                    world.SetMap(new Vector(x * MAP_SIZE, y * MAP_SIZE), map, background);
+            }
+        }
+
+        private void LoadBlock(World world, int x, int y, ushort index)
+        {
+            uint pmap = (uint) (pBlocks + index * 4);
+            x <<= 1;
+            y <<= 1;
+            LoadMap(world, x + 0, y + 0, ReadWord(pmap));
+            pmap += 2;
+            LoadMap(world, x + 1, y + 0, ReadWord(pmap));
+            pmap += 2;
+            LoadMap(world, x + 0, y + 1, ReadWord(pmap));
+            pmap += 2;
+            LoadMap(world, x + 1, y + 1, ReadWord(pmap));
+            pmap += 2;
+        }
+
+        private void LoadScene(World world, int x, int y, ushort index)
+        {
+            x <<= 3;
+            y <<= 3;
+            uint pblock = (uint) (pScenes + (index << 6));
+            for (int iy = 0; iy < 8; iy++)
+                for (int ix = 0; ix < 8; ix++)
+                {
+                    LoadBlock(world, x + ix, y + iy, ReadWord(pblock));
+                    pblock += 2;
+                }
+        }
+
+        private void LoadSceneEx(World world, int x, int y, ushort index, bool background = false)
+        {
+            x <<= 4;
+            y <<= 4;
+            uint pmap = (uint) (index << 8);
+            for (int iy = 0; iy < 16; iy++)
+                for (int ix = 0; ix < 16; ix++)
+                {
+                    LoadMap(world, x + ix, y + iy, mapping[pmap], background);
+                    pmap++;
+                }
+        }
+
+        internal void LoadPalette(World world, bool background = false)
+        {
+            var palette = new Texture(world.Device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
+            DataRectangle rect = palette.LockRectangle(0, LockFlags.Discard);
+
+            using (var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
+            {
+                for (int i = 0; i < 16; i++)
+                    for (int j = 0; j < 16; j++)
+                        stream.Write(new Color(Transform(palCache[(i << 4) | j], j != 0)).ToRgba());
+            }
+
+            palette.UnlockRectangle(0);
+
+            if (background)
+                world.BackgroundPalette = palette;
+            else
+                world.ForegroundPalette = palette;
+        }
+
+        public void LoadToWorld(World world, bool background = false)
+        {
+            LoadPalette(world, background);
+
+            world.Resize(levelHeight, levelWidth, background);
+
+            if (!background)
+                RefreshMapCache(world, background);
+
+            uint tmpLayout = 0;
+            for (int y = 0; y < levelHeight; y++)
+                for (int x = 0; x < levelWidth; x++)
+                    LoadSceneEx(world, x, y, sceneLayout[tmpLayout++], background);
+        }
+
+        public void LoadTriggers(GameEngine engine)
+        {
+            for (int point = 0; point < checkpointInfoTable.Count; point++)
+            {
+                CheckPointInfo info = checkpointInfoTable[point];
+
+                uint minX = ReadWord(info.minX);
+                uint minY = ReadWord(info.minY);
+                uint maxX = ReadWord(info.maxX);
+                uint maxY = ReadWord(info.maxY);
+                engine.AddCheckpoint(
+                    point,
+                    new MMXBox(minX, minY, maxX - minX + SCREEN_WIDTH, maxY - minY + SCREEN_HEIGHT),
+                    new Vector(ReadWord(info.chX), ReadWord(info.chY)),
+                    new Vector(ReadWord(info.camX), ReadWord(info.camY)),
+                    new Vector(ReadWord(info.bkgX), ReadWord(info.bkgY)),
+                    new Vector(ReadShort(info.forceX), ReadShort(info.forceY)),
+                    ReadByte(info.scroll)
+                    );
+            }
+
+            foreach (List<EventInfo> list in eventTable)
+            {
+                foreach (EventInfo info in list)
+                {
+                    if (info.type == 2 && info.eventId == 0)
+                    {
+                        uint pBase;
+                        if (expandedROM && expandedROMVersion >= 4)
+                        {
+                            pBase = Snes2pc((int) (lockBank << 16) | (0x8000 + level * 0x800 + info.eventSubId * 0x20));
+                        }
+                        else
+                        {
+                            var borderOffset = ReadWord((int) (Snes2pc(pBorders) + 2 * info.eventSubId));
+                            pBase = Snes2pc(borderOffset | ((pBorders >> 16) << 16));
+                        }
+
+                        int right = ReadWord(pBase);
+                        pBase += 2;
+                        int left = ReadWord(pBase);
+                        pBase += 2;
+                        int bottom = ReadWord(pBase);
+                        pBase += 2;
+                        int top = ReadWord(pBase);
+                        pBase += 2;
+
+                        var boudingBox = new MMXBox(left, top, right - left, bottom - top);
+
+                        uint lockNum = 0;
+
+                        var extensions = new List<Vector>();
+                        while (((expandedROM && expandedROMVersion >= 4) ? ReadWord(pBase) : rom[pBase]) != 0)
+                        {
+                            MMXBox lockBox = boudingBox;
+                            ushort camOffset = 0;
+                            ushort camValue = 0;
+
+                            if (expandedROM && expandedROMVersion >= 4)
+                            {
+                                camOffset = ReadWord(pBase);
+                                pBase += 2;
+                                camValue = ReadWord(pBase);
+                                pBase += 2;
+                            }
+                            else
+                            {
+                                ushort offset = (ushort) ((rom[pBase] - 1) << 2);
+                                camOffset = ReadWord(pLocks + offset + 0x0);
+                                camValue = ReadWord(pLocks + offset + 0x2);
+                                pBase++;
+                            }
+
+                            int lockX0 = (left + right) / 2;
+                            int lockY0 = (top + bottom) / 2;
+
+                            int lockLeft = lockX0;
+                            int lockTop = lockY0;
+                            int lockRight = lockX0;
+                            int lockBottom = lockY0;
+
+                            if (type > 0) camOffset -= 0x10;
+
+                            if (camOffset is 0x1E5E or 0x1E6E or 0x1E68 or 0x1E60)
+                            {
+                                if (camOffset == 0x1E5E)
+                                {
+                                    lockLeft = camValue;
+                                }
+                                else if (camOffset == 0x1E6E)
+                                {
+                                    lockBottom = camValue + SCREEN_HEIGHT;
+                                }
+                                else if (camOffset == 0x1E68)
+                                {
+                                    lockTop = camValue;
+                                }
+                                else if (camOffset == 0x1E60)
+                                {
+                                    lockRight = camValue + SCREEN_WIDTH;
+                                }
+                            }
+
+                            int lockX = lockLeft < lockX0 ? lockLeft : lockRight;
+                            int lockY = lockTop < lockY0 ? lockTop : lockBottom;
+
+                            extensions.Add(new Vector(lockX - lockX0, lockY - lockY0));
+                            lockNum++;
+                        }
+
+                        engine.AddCameraEventTrigger(boudingBox, extensions);
+                    }
+                }
+            }
+        }
+
         private static readonly char[] UHEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
         private static readonly char[] LHEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
@@ -2884,7 +3315,7 @@ namespace MMX.ROM
                 {
                     if (k >= k1)
                         break;
-                    if (buf[k] >= 32 && buf[k] <= 126)
+                    if (buf[k] is >= 32 and <= 126)
                         line += (char) buf[k];
                     else
                         line += ".";

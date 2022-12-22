@@ -38,7 +38,7 @@ namespace DSoundText
             var d3d = new Direct3D();
             var device = new Device(d3d, 0, DeviceType.Hardware, form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, new PresentParameters(SCREEN_WIDTH, SCREEN_HEIGHT));
 
-            DirectSound ds = new DirectSound();
+            var ds = new DirectSound();
 
             // Set Cooperative Level to PRIORITY (priority level can call the SetFormat and Compact methods)
             //
@@ -60,15 +60,15 @@ namespace DSoundText
             Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("DSoundText.resources.x.wav");
             //PlaySoundAsync(ds, stream);
 
-            WaveFileReader reader = new WaveFileReader(stream);
+            var reader = new WaveFileReader(stream);
             byte[] buffer = new byte[reader.Length];
             int read = reader.Read(buffer, 0, buffer.Length);
             short[] sampleBuffer = new short[read / 2];
             Buffer.BlockCopy(buffer, 0, sampleBuffer, 0, read);
 
-            SharpDX.Multimedia.WaveFormat format = new SharpDX.Multimedia.WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.BitsPerSample, reader.WaveFormat.Channels);
+            var format = new SharpDX.Multimedia.WaveFormat(reader.WaveFormat.SampleRate, reader.WaveFormat.BitsPerSample, reader.WaveFormat.Channels);
 
-            SoundBufferDescription desc2 = new SoundBufferDescription
+            var desc2 = new SoundBufferDescription
             {
                 Format = format,
                 Flags = BufferFlags.GlobalFocus,
@@ -76,22 +76,20 @@ namespace DSoundText
                 BufferBytes = buffer.Length
             };
 
-            SecondarySoundBuffer sBuffer1 = new SecondarySoundBuffer(ds, desc2);
+            var sBuffer1 = new SecondarySoundBuffer(ds, desc2);
             byte[] bytes = new byte[desc2.BufferBytes];
-            int offset = 0;
 
             //sBuffer1.Write(buffer, 0, desc2.BufferBytes, 0, DSLockFlags.None);
             sBuffer1.Write(buffer, 0, DSLockFlags.None);
             sBuffer1.Play(0, PlayFlags.None);
-            bool playing = true;
 
             #region Render loop
 
             // Create Clock and FPS counters
-            Stopwatch clock = new Stopwatch();
+            var clock = new Stopwatch();
             double clockFrequency = Stopwatch.Frequency;
             clock.Start();
-            Stopwatch fpsTimer = new Stopwatch();
+            var fpsTimer = new Stopwatch();
             fpsTimer.Start();
             double fps = 0.0;
             int fpsFrames = 0;
@@ -113,7 +111,7 @@ namespace DSoundText
                     fps = 1000.0 * fpsFrames / fpsTimer.ElapsedMilliseconds;
 
                     // Update window title with FPS once every second
-                    form.Text = string.Format("Mega Man Xvan - FPS: {0:F2} ({1:F2}ms/frame)", fps, (float) fpsTimer.ElapsedMilliseconds / fpsFrames);
+                    form.Text = string.Format("X# - FPS: {0:F2} ({1:F2}ms/frame)", fps, (float) fpsTimer.ElapsedMilliseconds / fpsFrames);
 
                     // Restart the FPS counter
                     fpsTimer.Reset();
@@ -155,27 +153,27 @@ namespace DSoundText
 
         private static void PlaySoundAsync(DirectSound ds, Stream stream)
         {
-            SharpDX.Multimedia.WaveFormat format = new SharpDX.Multimedia.WaveFormat(32000, 16, 1);
+            var format = new SharpDX.Multimedia.WaveFormat(32000, 16, 1);
 
-            SoundBufferDescription desc = new SoundBufferDescription
+            var desc = new SoundBufferDescription
             {
                 Format = format,
                 Flags = BufferFlags.GlobalFocus,
                 BufferBytes = 8 * format.AverageBytesPerSecond
             };
 
-            PrimarySoundBuffer pBuffer = new PrimarySoundBuffer(ds, desc);
+            var pBuffer = new PrimarySoundBuffer(ds, desc);
 
-            SoundBufferDescription desc2 = new SoundBufferDescription
+            var desc2 = new SoundBufferDescription
             {
                 Format = format,
                 Flags = BufferFlags.GlobalFocus | BufferFlags.ControlPositionNotify | BufferFlags.GetCurrentPosition2,
                 BufferBytes = 8 * format.AverageBytesPerSecond
             };
 
-            SecondarySoundBuffer sBuffer1 = new SecondarySoundBuffer(ds, desc2);
+            var sBuffer1 = new SecondarySoundBuffer(ds, desc2);
 
-            NotificationPosition[] notifications = new NotificationPosition[2];
+            var notifications = new NotificationPosition[2];
             notifications[0] = new NotificationPosition();
             notifications[1] = new NotificationPosition();
 
@@ -189,7 +187,7 @@ namespace DSoundText
             byte[] bytes1 = new byte[desc2.BufferBytes / 2];
             byte[] bytes2 = new byte[desc2.BufferBytes];
 
-            Thread fillBuffer = new Thread(() => {
+            var fillBuffer = new Thread(() => {
                 //int readNumber = 1;
                 int bytesRead;
 

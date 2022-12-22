@@ -70,39 +70,31 @@ namespace MMX.ROM
 
         internal ushort GetTitleUShort(int offset)
         {
-            using (var ms = new MemoryStream(titleBytes))
-            {
-                using (var reader = new BinaryReader(ms))
-                {
-                    ms.Position = offset;
-                    return reader.ReadUInt16();
-                }
-            }
+            using var ms = new MemoryStream(titleBytes);
+            using var reader = new BinaryReader(ms);
+            ms.Position = offset;
+            return reader.ReadUInt16();
         }
 
         internal uint GetTitleUInt(int offset)
         {
-            using (var ms = new MemoryStream(titleBytes))
-            {
-                using (var reader = new BinaryReader(ms))
-                {
-                    ms.Position = offset;
-                    return reader.ReadUInt32();
-                }
-            }
+            using var ms = new MemoryStream(titleBytes);
+            using var reader = new BinaryReader(ms);
+            ms.Position = offset;
+            return reader.ReadUInt32();
         }
     };
 
     public class SNESCore : MegaEDCore
     {
-        internal ushort dumpHeader;
-        internal SNESHeader header;
-        internal ushort[] palCache;
-        internal ushort[] palSpriteCache;
-        internal byte[] vramCache;
-        internal byte[] spriteCache;
+        protected ushort dumpHeader;
+        protected SNESHeader header;
+        protected ushort[] palCache;
+        protected ushort[] palSpriteCache;
+        protected byte[] vramCache;
+        protected byte[] spriteCache;
 
-        internal static bool hirom;
+        private static bool hirom;
 
         public SNESCore()
         {

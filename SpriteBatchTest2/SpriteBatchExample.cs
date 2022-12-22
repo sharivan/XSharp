@@ -13,7 +13,7 @@ using System;
 using SharpDX.IO;
 using SharpDX.Mathematics.Interop;
 
-namespace Mega_Man_Xvan
+namespace XSharp
 {
     public class SpriteBatchExample
     {
@@ -42,17 +42,17 @@ namespace Mega_Man_Xvan
 
         ~SpriteBatchExample()
         {
-            safeDispose(ref d3d11Device);
-            safeDispose(ref swapChain);
-            safeDispose(ref dxgiFactory);
-            safeDispose(ref d2dFactory);
-            safeDispose(ref d2dFactory4);
-            safeDispose(ref dxgiDevice);
-            safeDispose(ref d2dDevice3);
-            safeDispose(ref d2dDeviceContext3);
-            safeDispose(ref sourceImage);
-            safeDispose(ref spriteBatch);
-            safeDispose(ref d2dTarget);
+            SafeDispose(ref d3d11Device);
+            SafeDispose(ref swapChain);
+            SafeDispose(ref dxgiFactory);
+            SafeDispose(ref d2dFactory);
+            SafeDispose(ref d2dFactory4);
+            SafeDispose(ref dxgiDevice);
+            SafeDispose(ref d2dDevice3);
+            SafeDispose(ref d2dDeviceContext3);
+            SafeDispose(ref sourceImage);
+            SafeDispose(ref spriteBatch);
+            SafeDispose(ref d2dTarget);
         }
 
         public void Run()
@@ -102,7 +102,7 @@ namespace Mega_Man_Xvan
             #endregion
 
             #region create drawing input
-            sourceImage = createD2DBitmap(@"C:\Users\miste\Documents\Projects\c#\vc#\Mega Man Xvan\Mega Man Xvan\resources\tiles\Gator_Stage_Floor_Block.png", d2dDeviceContext3);
+            sourceImage = CreateD2DBitmap(@"C:\Users\miste\Documents\Projects\c#\vc#\XSharp\XSharp\resources\tiles\Gator_Stage_Floor_Block.png", d2dDeviceContext3);
 
             spriteBatch = new SpriteBatch(d2dDeviceContext3);
 
@@ -188,7 +188,7 @@ namespace Mega_Man_Xvan
             #endregion
         }
 
-        void safeDispose<T>(ref T disposable) where T : class, IDisposable
+        void SafeDispose<T>(ref T disposable) where T : class, IDisposable
         {
             if (disposable != null)
             {
@@ -197,7 +197,7 @@ namespace Mega_Man_Xvan
             }
         }
 
-        Bitmap1 createD2DBitmap(string filePath, _d2d.DeviceContext deviceContext)
+        Bitmap1 CreateD2DBitmap(string filePath, _d2d.DeviceContext deviceContext)
         {
             var imagingFactory = new _wic.ImagingFactory();
 
