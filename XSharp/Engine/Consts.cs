@@ -210,7 +210,7 @@ namespace MMX.Engine
 
         // Startup
         public const bool LOAD_ROM = true;
-        public const string ROM_NAME = "Mega Man X (U) (V1.0) [!].smc";
+        public const string ROM_NAME = "ShittyDash.mmx";
         public const bool SKIP_MENU = false; // Defina como true se quiser que o jogo seja carregado diretamente sem passar pelo menu inicial
         public const bool SKIP_INTRO = false; // Defina como true se quiser que o menu inicial seja carregado sem exibir a intro
         public const int INITIAL_LEVEL = 8; // Defina aqui o número correspondente ao level que deseja que inicie assim que o jogo for carregado. Lembrando que 0 é o valor correspondente ao level 1.

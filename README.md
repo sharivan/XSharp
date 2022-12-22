@@ -9,6 +9,13 @@ Modifications currently in progress:
 - More types of enemies.
 - Armors.
 
+Some Pending Fixes:
+
+- Fix some X sprite animations.
+- Fix full charged X buster position.
+- Fix background position in some levels.
+- Fix camera transition in some levels.
+
 Future additions:
 
 - Map editor.

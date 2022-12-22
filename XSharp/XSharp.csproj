@@ -182,15 +182,15 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="resources\roms\Mega Man X %28U%29 %28V1.0%29 [!].smc" />
-    <EmbeddedResource Include="resources\roms\Mega Man X 2 %28U%29 [!].smc" />
-    <EmbeddedResource Include="resources\roms\Mega Man X 3 %28U%29 [!].smc" />
-    <EmbeddedResource Include="resources\roms\Rockman &amp; Forte %28Japan%29.sfc" />
+    <EmbeddedResource Include="resources\roms\ShittyDash.mmx" />
+    <EmbeddedResource Include="resources\roms\BestGame.mmx" />
+    <EmbeddedResource Include="resources\roms\ZeroIsJegue.mmx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="resources\maps\" />
     <Folder Include="sstates\" />
   </ItemGroup>
   <ItemGroup>
