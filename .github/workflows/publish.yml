@@ -11,17 +11,10 @@ env:
   DOTNET_VERSION: '6.0.x'
   
 jobs:
-  release:
-    name: Release
-    strategy:
-      matrix:
-        kind: ['windows']
-        include:
-          - kind: windows
-            os: windows-latest
-            target: win-x64
-            
-    runs-on: ${{ matrix.os }}
+  build:
+    name: Build
+    runs-on: windows-latest
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v3
