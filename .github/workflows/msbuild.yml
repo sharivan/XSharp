@@ -53,9 +53,9 @@ jobs:
         dir
         cd XSharp
         dir
-        cd XSharp
+        cd bin
         dir
-        cd XSharp
+        cd Release
         dir
         cd ${{env.SOLUCTION_FILE_PATH}}
         dir
