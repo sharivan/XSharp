@@ -49,6 +49,7 @@ jobs:
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: |
         msbuild /m /p:AllowUnsafeBlocks=true /p:Configuration=${{env.BUILD_CONFIGURATION}} /verbosity:minimal /p:NoWarn=1591 ${{env.SOLUCTION_FILE_PATH}}
+        echo ${{env.SOLUCTION_FILE_PATH}}
         dir
         cd XSharp
         dir
