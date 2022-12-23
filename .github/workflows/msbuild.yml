@@ -1,8 +1,9 @@
 name: MSBuild
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*.*.*"
 
 env:
   # Path to the solution file relative to the root of the project.
@@ -14,10 +15,11 @@ env:
   BUILD_CONFIGURATION: Release
 
 permissions:
-  contents: read
+  contents: write
+  discussions: write
 
 jobs:
-  release:
+  build:
     name: Release
     strategy:
       matrix:
@@ -29,7 +31,8 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
@@ -59,7 +62,3 @@ jobs:
         
     - name: Publish
       uses: softprops/action-gh-release@v1
-      with:
-        files: "XSharp*"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
