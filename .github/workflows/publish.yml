@@ -33,42 +33,6 @@ jobs:
 
       - name: Install dependencies
         run: dotnet restore
-        
-      - name: Add SharpDX Package
-        run: |
-           dotnet add package SharpDX --version 4.2.0.0
-           git commit -a -m "Bump to ${{ github.event.head_commit.message }}" -m "Version <githubusername_orgname>/<nuget_package_repo_name>@${{ needs.PublishPackages.outputs.sha7 }}"
-           git push
-           
-      - name: Add SharpDX.Desktop Package
-        run: |
-           dotnet add package SharpDX.Desktop --version 4.2.0.0
-           git commit -a -m "Bump to ${{ github.event.head_commit.message }}" -m "Version <githubusername_orgname>/<nuget_package_repo_name>@${{ needs.PublishPackages.outputs.sha7 }}"
-           git push
-           
-      - name: Add SharpDX.Direct3D9 Package
-        run: |
-           dotnet add package SharpDX.Direct3D9 --version 4.2.0.0
-           git commit -a -m "Bump to ${{ github.event.head_commit.message }}" -m "Version <githubusername_orgname>/<nuget_package_repo_name>@${{ needs.PublishPackages.outputs.sha7 }}"
-           git push
-           
-      - name: Add SharpDX.DirectInput Package
-        run: |
-           dotnet add package SharpDX.DirectInput --version 4.2.0.0
-           git commit -a -m "Bump to ${{ github.event.head_commit.message }}" -m "Version <githubusername_orgname>/<nuget_package_repo_name>@${{ needs.PublishPackages.outputs.sha7 }}"
-           git push
-           
-      - name: Add SharpDX.DirectSound Package
-        run: |
-           dotnet add package SharpDX.DirectSound --version 4.2.0.0
-           git commit -a -m "Bump to ${{ github.event.head_commit.message }}" -m "Version <githubusername_orgname>/<nuget_package_repo_name>@${{ needs.PublishPackages.outputs.sha7 }}"
-           git push
-           
-      - name: Add SharpDX.Mathematics Package
-        run: |
-           dotnet add package SharpDX.Mathematics --version 4.2.0.0
-           git commit -a -m "Bump to ${{ github.event.head_commit.message }}" -m "Version <githubusername_orgname>/<nuget_package_repo_name>@${{ needs.PublishPackages.outputs.sha7 }}"
-           git push
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
