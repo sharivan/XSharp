@@ -37,3 +37,10 @@ jobs:
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:AllowUnsafeBlocks=true /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUCTION_FILE_PATH}}
+
+    - name: Publish
+      uses: softprops/action-gh-release@v1
+      with:
+        files: "XSharp*"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
