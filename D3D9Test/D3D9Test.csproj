@@ -64,6 +64,11 @@
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net461\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="System.Windows.Forms" />
+    
+    <PackageReference Include="SharpDX" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Desktop" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Direct3D9" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Mathematics" Version="4.2.0.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainClass.cs" />
