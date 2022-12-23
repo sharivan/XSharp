@@ -102,6 +102,14 @@
     <Reference Include="SharpDX.Mathematics, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.Mathematics.4.2.0\lib\net45\SharpDX.Mathematics.dll</HintPath>
     </Reference>
+    
+    <PackageReference Include="SharpDX" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Desktop" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Direct3D9" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.DirectInput" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.DirectSound" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Mathematics" Version="4.2.0.0" />
+    
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
