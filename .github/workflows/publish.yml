@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  release:
-    name: Release
+  build:
+    name: XSharp-Release
     strategy:
       matrix:
         kind: ['linux', 'windows', 'macOS']
