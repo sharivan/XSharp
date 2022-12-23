@@ -23,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -89,7 +90,6 @@
       <HintPath>..\packages\System.Security.Principal.Windows.5.0.0\lib\net461\System.Security.Principal.Windows.dll</HintPath>
     </Reference>
     <Reference Include="System.Windows.Forms" />
-    
     <PackageReference Include="NAudio" Version="2.1.0.0" />
     <PackageReference Include="NAudio.Asio" Version="2.1.0.0" />
     <PackageReference Include="NAudio.Core" Version="2.1.0.0" />
@@ -97,7 +97,6 @@
     <PackageReference Include="NAudio.Wasapi" Version="2.1.0.0" />
     <PackageReference Include="NAudio.WinForms" Version="2.1.0.0" />
     <PackageReference Include="NAudio.WinMM" Version="2.1.0.0" />
-    
     <PackageReference Include="SharpDX" Version="4.2.0.0" />
     <PackageReference Include="SharpDX.Desktop" Version="4.2.0.0" />
     <PackageReference Include="SharpDX.Direct3D9" Version="4.2.0.0" />
