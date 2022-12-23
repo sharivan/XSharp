@@ -47,7 +47,17 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:AllowUnsafeBlocks=true /p:Configuration=${{env.BUILD_CONFIGURATION}} /verbosity:minimal /p:NoWarn=1591 ${{env.SOLUCTION_FILE_PATH}}
+      run: |
+        msbuild /m /p:AllowUnsafeBlocks=true /p:Configuration=${{env.BUILD_CONFIGURATION}} /verbosity:minimal /p:NoWarn=1591 ${{env.SOLUCTION_FILE_PATH}}
+        dir
+        cd XSharp
+        dir
+        cd XSharp
+        dir
+        cd XSharp
+        dir
+        cd ${{env.SOLUCTION_FILE_PATH}}
+        dir
       
     - name: Upload Build
       uses: actions/upload-artifact@v2
