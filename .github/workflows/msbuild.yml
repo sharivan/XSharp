@@ -17,8 +17,16 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    runs-on: windows-latest
+  release:
+    name: Release
+    strategy:
+      matrix:
+        kind: ['windows']
+        include:
+          - kind: windows
+            os: windows-latest
+            target: win-x64
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
