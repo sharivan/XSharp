@@ -1,8 +1,10 @@
 name: Publish
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   release:
@@ -23,12 +25,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 4.8.1
+          
+      - name: Install dependencies
+        run: dotnet restore
 
       - name: Build
         shell: bash
@@ -46,6 +51,7 @@ jobs:
           fi
           # Delete output directory
           rm -r "$release_name"
+          
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
