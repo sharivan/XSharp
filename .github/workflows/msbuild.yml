@@ -41,7 +41,7 @@ jobs:
     - name: Upload build to XSharp.github.io
       if: github.repository == 'XSharp/XSharp' && github.ref == 'refs/heads/master'
       run: |
-        7z a LiveSplitDevBuild.zip .\XSharp\bin\Release\*
+        7z a XSharpDevBuild.zip .\XSharp\bin\Release\*
         git config --global user.email "action@github.com"
         git config --global user.name "GitHub Action"
         git clone -q --branch master --single-branch "https://github.com/XSharp/XSharp.github.io.git"
