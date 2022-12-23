@@ -1,10 +1,12 @@
 name: MSBuild
 
 on:
-  push:
-    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
+  push:
+    branches:
+      - 'master'
+    tags:
+      - '*'
 
 env:
   # Path to the solution file relative to the root of the project.
@@ -27,6 +29,8 @@ jobs:
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
+      with:
+        msbuild-architecture: x64
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
