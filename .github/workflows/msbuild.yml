@@ -52,6 +52,7 @@ jobs:
     - name: Publish
       uses: softprops/action-gh-release@v1
       with:
-        files: "XSharp*"
+        files: |
+          "${{env.GITHUB_WORKSPACE}}/*"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
