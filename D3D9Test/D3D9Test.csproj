@@ -40,9 +40,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-    <EmbeddedResource Include="roms\Mega Man X %28U%29 %28V1.0%29 [!].smc" />
-    <EmbeddedResource Include="roms\Mega Man X 2 %28U%29 [!].smc" />
-    <EmbeddedResource Include="roms\Mega Man X 3 %28U%29 [!].smc" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
@@ -64,7 +61,6 @@
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net461\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="System.Windows.Forms" />
-    
     <PackageReference Include="SharpDX" Version="4.2.0.0" />
     <PackageReference Include="SharpDX.Desktop" Version="4.2.0.0" />
     <PackageReference Include="SharpDX.Direct3D9" Version="4.2.0.0" />
