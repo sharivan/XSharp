@@ -48,11 +48,17 @@ jobs:
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:AllowUnsafeBlocks=true /p:Configuration=${{env.BUILD_CONFIGURATION}} /verbosity:minimal /p:NoWarn=1591 ${{env.SOLUCTION_FILE_PATH}}
+      
+    - name: Upload Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: Release
+        path: ${{env.SOLUCTION_FILE_PATH}}\XSharp\bin\Release ${{env.GITHUB_WORKSPACE}}/XSharp/bin/Release
         
     - name: Publish
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          "${{env.GITHUB_WORKSPACE}}/XSharp/bin/Release/*"
+          "${{env.SOLUCTION_FILE_PATH}}/XSharp/bin/Release/*"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
