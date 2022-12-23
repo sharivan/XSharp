@@ -47,18 +47,7 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: |
-        msbuild /m /p:AllowUnsafeBlocks=true /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUCTION_FILE_PATH}}
-
-        # Pack files
-        if [ "${{ matrix.target }}" == "win-x64" ]; then
-          # Pack to zip for Windows
-          7z a -tzip "${release_name}.zip" "./${release_name}/*"
-        else
-        tar czvf "${release_name}.tar.gz" "$release_name"
-        fi
-        # Delete output directory
-        rm -r "$release_name"
+      run: msbuild /m /p:AllowUnsafeBlocks=true /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUCTION_FILE_PATH}}
         
     - name: Publish
       uses: softprops/action-gh-release@v1
