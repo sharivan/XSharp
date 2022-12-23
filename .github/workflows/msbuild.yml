@@ -38,8 +38,17 @@ jobs:
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:AllowUnsafeBlocks=true /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUCTION_FILE_PATH}}
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v1.0.0
-      with:
-        name: published_webapp
-        path: bin\Release\Publish
+    - name: Upload build to XSharp.github.io
+      if: github.repository == 'XSharp/XSharp' && github.ref == 'refs/heads/master'
+      run: |
+        7z a LiveSplitDevBuild.zip .\XSharp\bin\Release\*
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
+        git clone -q --branch master --single-branch "https://github.com/XSharp/XSharp.github.io.git"
+        cd XSharp.github.io
+        git checkout -q --orphan artifacts
+        git reset
+        mv ../XSharpDevBuild.zip . -force
+        git add XSharpDevBuild.zip
+        git commit -m "Add Development Build"
+        git push -q --force https://action:${{ secrets.DEV_BUILD_UPLOAD }}@github.com/XSharp/XSharp.github.io.git
