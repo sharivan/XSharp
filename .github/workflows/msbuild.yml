@@ -57,14 +57,16 @@ jobs:
         dir
         cd Release
         dir
-        cd ${{env.SOLUCTION_FILE_PATH}}
+        cd ..
+        cd ..
+        cd ..
         dir
       
     - name: Upload Build
       uses: actions/upload-artifact@v2
       with:
         name: Release
-        path: ${{env.SOLUCTION_FILE_PATH}}\XSharp\bin\Release ${{env.GITHUB_WORKSPACE}}/XSharp/bin/Release
+        path: XSharp\bin\Release ${{env.GITHUB_WORKSPACE}}/XSharp/bin/Release
         
     - name: Publish
       uses: softprops/action-gh-release@v1
