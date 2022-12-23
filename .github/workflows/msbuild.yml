@@ -3,7 +3,7 @@ name: MSBuild
 on:
   push:
     tags:
-      - "v*.*.*"
+      - '*'
 
 env:
   # Path to the solution file relative to the root of the project.
@@ -57,12 +57,14 @@ jobs:
         
     - name: Pack Build
       run: |
-        7z a XSharpDevBuild.zip .\XSharp\bin\Release\*
+        tag=$(git describe --tags --abbrev=0)
+        release_name="XSharp-$tag-${{ matrix.target }}"
+        7z a ${{ release_name }}.zip .\XSharp\bin\Release\*
         
     - name: Publish
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          XSharpDevBuild.zip
+          ${{ release_name }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
