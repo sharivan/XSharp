@@ -1,9 +1,15 @@
-name: Publish
+name: build and test
 
 on:
-  release:
-    types: [published]
-
+  push:
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+    - 'README.md'
+    
+env:
+  DOTNET_VERSION: '6.0.x'
+  
 jobs:
   release:
     name: Release
@@ -25,30 +31,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup dotnet
+      - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install dependencies
+        run: dotnet restore
 
       - name: Build
-        shell: bash
-        run: |
-          tag=$(git describe --tags --abbrev=0)
-          release_name="XSharp-$tag-${{ matrix.target }}"
-          # Build everything
-          dotnet publish XSharp/XSharp.csproj --framework netcoreapp6.0.x --runtime "${{ matrix.target }}" -c Release -o "$release_name"
-          # Pack files
-          if [ "${{ matrix.target }}" == "win-x64" ]; then
-            # Pack to zip for Windows
-            7z a -tzip "${release_name}.zip" "./${release_name}/*"
-          else
-          tar czvf "${release_name}.tar.gz" "$release_name"
-          fi
-          # Delete output directory
-          rm -r "$release_name"
-      - name: Publish
-        uses: softprops/action-gh-release@v1
-        with:
-          files: "XSharp*"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal
