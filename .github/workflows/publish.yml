@@ -23,12 +23,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '3.1.x'
+          dotnet-version: '6.0.x'
 
       - name: Build
         shell: bash
@@ -36,7 +36,7 @@ jobs:
           tag=$(git describe --tags --abbrev=0)
           release_name="XSharp-$tag-${{ matrix.target }}"
           # Build everything
-          dotnet publish XSharp/XSharp.csproj --framework netcoreapp4.8.1 --runtime "${{ matrix.target }}" -c Release -o "$release_name"
+          dotnet publish XSharp/XSharp.csproj --framework netcoreapp6.0.x --runtime "${{ matrix.target }}" -c Release -o "$release_name"
           # Pack files
           if [ "${{ matrix.target }}" == "win-x64" ]; then
             # Pack to zip for Windows
