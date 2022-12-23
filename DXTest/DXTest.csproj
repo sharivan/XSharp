@@ -66,6 +66,12 @@
     <Reference Include="UIAutomationProvider" />
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
+    
+    <PackageReference Include="SharpDX" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Direct2D1" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Direct3D9" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.DXGI" Version="4.2.0.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FrmDXTest.cs">
