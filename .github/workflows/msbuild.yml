@@ -56,15 +56,12 @@ jobs:
         path: XSharp\bin\Release
         
     - name: Pack Build
-      run: |
-        tag=$(git describe --tags --abbrev=0)
-        release_name="XSharp-$tag-${{ matrix.target }}"
-        7z a ${{ release_name }}.zip .\XSharp\bin\Release\*
+      run: 7z a ${{ github.ref_name }}.zip .\XSharp\bin\Release\*
         
     - name: Publish
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ${{ release_name }}.zip
+          ${{ github.ref_name }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
