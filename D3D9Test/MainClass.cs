@@ -116,7 +116,7 @@ namespace D3D9Test
         private const int MAP_SIZE = 2 * TILE_SIZE;
         private const int SIDE_TILES_PER_MAP = 2;
 
-        private static readonly string ROM_NAME = "Mega Man X (U) (V1.0) [!]";
+        private static readonly string ROM_NAME = "ShittyDash.mmx";
         private const int LEVEL = 0;
 
         //private const VertexFormat D3DFVF_TLVERTEX = VertexFormat.PositionRhw | VertexFormat.Diffuse | VertexFormat.Texture1;
@@ -716,7 +716,7 @@ namespace D3D9Test
 
         public void Run()
         {
-            var form = new RenderForm("SharpDX - MiniCube Direct3D9 Sample")
+            var form = new RenderForm("D3D9 Test")
             {
                 ClientSize = new System.Drawing.Size(SCREEN_WIDTH * SCREEN_SCALE, SCREEN_HEIGHT * SCREEN_SCALE)
             };
@@ -749,7 +749,7 @@ namespace D3D9Test
             device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.Modulate);
 
             core = new MMXCore();
-            core.LoadNewRom(Assembly.GetExecutingAssembly().GetManifestResourceStream("D3D9Test.roms." + ROM_NAME + ".smc"));
+            core.LoadNewRom(Assembly.GetExecutingAssembly().GetManifestResourceStream("D3D9Test.roms." + ROM_NAME));
             core.Init();
 
             if (core.CheckROM() != 0)

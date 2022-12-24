@@ -466,10 +466,10 @@ namespace Types
         /// <param name="resourceName">Caminho do recurso associado ao audio</param>
         public void Add(string soundName, string resourceName)
         {
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\" + System.AppDomain.CurrentDomain.FriendlyName + "\\Resources\\Sounds";
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\" + AppDomain.CurrentDomain.FriendlyName + "\\Resources\\Sounds";
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
-            string sound_path = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\" + System.AppDomain.CurrentDomain.FriendlyName + "\\Resources\\Sounds\\" + resourceName;
+            string sound_path = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\" + AppDomain.CurrentDomain.FriendlyName + "\\Resources\\Sounds\\" + resourceName;
 
             if (!File.Exists(sound_path))
             {

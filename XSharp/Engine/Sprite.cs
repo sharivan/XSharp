@@ -47,7 +47,7 @@ namespace MMX.Engine
         /// <param name="engine">Engine</param>
         /// <param name="name">Nome da entidade</param>
         /// <param name="tiled">true se o desenho desta entidade será preenchido em sua área de pintura lado a lado</param>
-        protected Sprite(GameEngine engine, string name, Vector origin, SpriteSheet sheet, bool directional = false):
+        protected Sprite(GameEngine engine, string name, Vector origin, SpriteSheet sheet, bool directional = false) :
             base(engine, origin)
         {
             this.name = name;
@@ -84,7 +84,7 @@ namespace MMX.Engine
 
             vel = new Vector(reader);
             NoClip = reader.ReadBoolean();
-            moving = reader.ReadBoolean();            
+            moving = reader.ReadBoolean();
             isStatic = reader.ReadBoolean();
             breakable = reader.ReadBoolean();
             health = reader.ReadInt32();
@@ -166,8 +166,11 @@ namespace MMX.Engine
         /// </summary>
         public bool Static => isStatic;
 
-        public bool NoClip { get;
-            set; }
+        public bool NoClip
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Indica se este sprite ainda está se movendo desde a última interação física com os demais sprites do jogo
@@ -222,11 +225,17 @@ namespace MMX.Engine
 
         public FixedSingle TerminalDownwardSpeed => GetTerminalDownwardSpeed();
 
-        public bool CheckCollisionWithSprites { get;
-            set; }
+        public bool CheckCollisionWithSprites
+        {
+            get;
+            set;
+        }
 
-        public bool CheckCollisionWithWorld { get;
-            set; }
+        public bool CheckCollisionWithWorld
+        {
+            get;
+            set;
+        }
 
         public bool BlockedUp => !NoClip && collider.BlockedUp;
 
@@ -242,11 +251,17 @@ namespace MMX.Engine
 
         public RightTriangle LandedSlope => collider.LandedSlope;
 
-        public bool CanGoOutOfMapBounds { get;
-            set; }
+        public bool CanGoOutOfMapBounds
+        {
+            get;
+            set;
+        }
 
-        public Texture Palette { get;
-            set; }
+        public Texture Palette
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Evento interno que ocorrerá toda vez que uma animação estiver a ser criada.
@@ -296,8 +311,8 @@ namespace MMX.Engine
         public override void Spawn()
         {
             base.Spawn();
-            
-            solid = true;            
+
+            solid = true;
 
             // Para cada ImageList definido no array de ImageLists passados previamente pelo construtor.
             Dictionary<string, SpriteSheet.FrameSequence>.Enumerator sequences = sheet.GetFrameSequenceEnumerator();
@@ -340,12 +355,12 @@ namespace MMX.Engine
             // Inicializa todos os campos
             vel = Vector.NULL_VECTOR;
             NoClip = false;
-            moving = false;            
+            moving = false;
             isStatic = false;
             breakable = true;
             health = DEFAULT_HEALTH;
             invincible = false;
-            invincibilityTime = DEFAULT_INVINCIBLE_TIME;            
+            invincibilityTime = DEFAULT_INVINCIBLE_TIME;
             broke = false;
 
             currentAnimationIndex = -1;
@@ -504,9 +519,9 @@ namespace MMX.Engine
             int dxs = dx.Signal;
             bool goingDown = dxs == slopeSign;
 
-            var dy = (FixedSingle) (((FixedDouble) slope.VCathetus * dx / slope.HCathetus).Abs * dxs * slopeSign);            
+            var dy = (FixedSingle) (((FixedDouble) slope.VCathetus * dx / slope.HCathetus).Abs * dxs * slopeSign);
             var delta = new Vector(dx, dy);
-            collider.MoveContactSolid(delta, dx.Abs, (goingDown ? Direction.NONE : Direction.UP) | (dxs > 0 ? Direction.RIGHT : Direction.LEFT) , CollisionFlags.SLOPE);
+            collider.MoveContactSolid(delta, dx.Abs, (goingDown ? Direction.NONE : Direction.UP) | (dxs > 0 ? Direction.RIGHT : Direction.LEFT), CollisionFlags.SLOPE);
 
             if (gravity)
                 collider.MoveContactFloor(TILE_SIZE / 2 * QUERY_MAX_DISTANCE);
@@ -530,10 +545,10 @@ namespace MMX.Engine
 
             //if (wasLanded)
             //{
-                if (collider.Landed)
-                    collider.AdjustOnTheFloor(TILE_SIZE / 2 * QUERY_MAX_DISTANCE);
-                else if (gravity && wasLanded)
-                    collider.TryMoveContactSlope(TILE_SIZE / 2 * QUERY_MAX_DISTANCE);
+            if (collider.Landed)
+                collider.AdjustOnTheFloor(TILE_SIZE / 2 * QUERY_MAX_DISTANCE);
+            else if (gravity && wasLanded)
+                collider.TryMoveContactSlope(TILE_SIZE / 2 * QUERY_MAX_DISTANCE);
             //}
 
             MMXBox union = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
@@ -830,8 +845,11 @@ namespace MMX.Engine
         /// <summary>
         /// Especifica a opacidade da entidade, podendo ser utilizado para causar efeito de transparência
         /// </summary>
-        public float Opacity { get;
-            set; }
+        public float Opacity
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Animação correspondente a um determinado índice

@@ -13,10 +13,15 @@ namespace MMX.Engine
 
         public event TriggerEvent TriggerEvent;
 
-        public bool Enabled { get;
-            set; }
+        public bool Enabled
+        {
+            get;
+            set;
+        }
 
-        public uint Triggers { get;
+        public uint Triggers
+        {
+            get;
             private set;
         }
 
@@ -111,20 +116,35 @@ namespace MMX.Engine
 
     public class Checkpoint : AbstractTrigger
     {
-        public int Point { get; }
+        public int Point
+        {
+            get;
+        }
 
-        public Vector CharacterPos { get; }
+        public Vector CharacterPos
+        {
+            get;
+        }
 
-        public Vector CameraPos { get; }
+        public Vector CameraPos
+        {
+            get;
+        }
 
-        public Vector BackgroundPos { get; }
+        public Vector BackgroundPos
+        {
+            get;
+        }
 
         public Vector ForceBackground
         {
             get;
         }
 
-        public uint Scroll { get; }
+        public uint Scroll
+        {
+            get;
+        }
 
         public Checkpoint(GameEngine engine, int point, Box boudingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll) :
             base(engine, boudingBox)

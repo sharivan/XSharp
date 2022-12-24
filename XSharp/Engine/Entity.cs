@@ -51,7 +51,13 @@ namespace MMX.Engine
             }
         }
 
-        public Vector LastOrigin { get;
+        public IEnumerable<Entity> TouchingEntities => touchingEntities;
+
+        public IEnumerable<Entity> Childs => childs;
+
+        public Vector LastOrigin
+        {
+            get;
             private set;
         }
 
@@ -81,6 +87,10 @@ namespace MMX.Engine
             touchingEntities = new List<Entity>();
             childs = new List<Entity>();
         }
+
+        public bool IsTouching(Entity other) => touchingEntities.Contains(other);
+
+        public bool Contains(Entity other) => childs.Contains(other);
 
         protected virtual void SetOrigin(Vector origin)
         {

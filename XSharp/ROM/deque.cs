@@ -130,12 +130,12 @@ namespace MMX.ROM
         {
             for (int i = frontDeleted; i < front.Count; i++)
             {
-                if (Object.Equals(front[i], item)) return true;
+                if (Equals(front[i], item)) return true;
             }
 
             for (int i = backDeleted; i < back.Count; i++)
             {
-                if (Object.Equals(back[i], item)) return true;
+                if (Equals(back[i], item)) return true;
             }
 
             return false;

@@ -102,7 +102,7 @@ namespace XSharp
             #endregion
 
             #region create drawing input
-            sourceImage = CreateD2DBitmap(@"C:\Users\miste\Documents\Projects\c#\vc#\XSharp\XSharp\resources\tiles\Gator_Stage_Floor_Block.png", d2dDeviceContext3);
+            sourceImage = CreateD2DBitmap(@"resources\tiles\Gator_Stage_Floor_Block.png", d2dDeviceContext3);
 
             spriteBatch = new SpriteBatch(d2dDeviceContext3);
 
@@ -145,7 +145,7 @@ namespace XSharp
                 d2dTarget = null;
             }
 
-            using (var backBuffer = Texture2D.FromSwapChain<Texture2D>(swapChain, 0))
+            using (var backBuffer = _d3d11.Resource.FromSwapChain<Texture2D>(swapChain, 0))
             {
                 using (var surface = backBuffer.QueryInterface<Surface>())
                 {

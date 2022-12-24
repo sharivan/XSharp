@@ -132,12 +132,23 @@ namespace MMX.Engine
         public const bool DEBUG_HIGHLIGHT_TOUCHING_MAPS = false;
         public const bool DEBUG_HIGHLIGHT_POINTED_TILES = false;
         public const bool DEBUG_DRAW_PLAYER_ORIGIN_AXIS = false;
-        public const bool DEBUG_SHOW_INFO_TEXT = true;
+        public const bool DEBUG_SHOW_INFO_TEXT = false;
         public const bool DEBUG_DRAW_CHECKPOINT = false;
         public const bool DEBUG_SHOW_TRIGGERS = false;
         public const bool DEBUG_SHOW_CAMERA_TRIGGER_EXTENSIONS = false;
         public const bool DEBUG_DUMP_ROM_MEMORY = false;
 
+        public static readonly Color HITBOX_COLOR = Color.FromRgba(0x8000ff00);
+        public static readonly Color HITBOX_BORDER_COLOR = Color.Green;
+        public static readonly Color DOWN_COLLIDER_COLOR = Color.Green;
+        public static readonly Color UP_COLLIDER_COLOR = Color.Blue;
+        public static readonly Color LEFT_COLLIDER_COLOR = Color.Red;
+        public static readonly Color RIGHT_COLLIDER_COLOR = Color.Yellow;
+        public static readonly Color TRIGGER_BORDER_BOX_COLOR = Color.Green;
+        public static readonly Color TRIGGER_BOX_COLOR = Color.FromRgba(0x8000ff00);
+        public static readonly Color CAMERA_LOCK_COLOR = Color.Yellow;
+
+        // Palettes
         public static readonly Color[] X1_NORMAL_PALETTE = new Color[]
         {
             Color.Transparent, // 0

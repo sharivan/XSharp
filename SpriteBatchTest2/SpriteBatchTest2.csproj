@@ -89,5 +89,10 @@
     <PackageReference Include="SharpDX.DXGI" Version="4.2.0.0" />
     <PackageReference Include="SharpDX.Mathematics" Version="4.2.0.0" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\tiles\Gator_Stage_Floor_Block.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

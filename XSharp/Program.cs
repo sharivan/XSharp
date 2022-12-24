@@ -34,7 +34,7 @@ namespace XSharp
 
             // Creates the Device
             var direct3D = new Direct3D();
-            var device = new Device(direct3D, 0, DeviceType.Hardware, form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, new PresentParameters((int) DEFAULT_CLIENT_WIDTH, (int) DEFAULT_CLIENT_HEIGHT));
+            var device = new Device(direct3D, 0, DeviceType.Hardware, form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, new PresentParameters((int) DEFAULT_CLIENT_WIDTH * 4, (int) DEFAULT_CLIENT_HEIGHT * 4));
 
             engine = new GameEngine(form, device);
 
@@ -42,7 +42,6 @@ namespace XSharp
             {
                 // Main loop
                 RenderLoop.Run(form, engine.Render);
-                Thread.Sleep(4);
             }
             finally
             {
