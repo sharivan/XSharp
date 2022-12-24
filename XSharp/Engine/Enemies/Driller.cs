@@ -11,7 +11,9 @@ namespace MMX.Engine.Enemies
             JUMPING = 2
         }
 
-        public DrillerState State { get;
+        public DrillerState State
+        {
+            get;
             private set;
         }
 

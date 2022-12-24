@@ -161,7 +161,9 @@ namespace MMX.Engine
 
         protected override void OnHealthChanged(FixedSingle health) => engine.RepaintHP(); // Notifica o engine que o HP do caracter foi alterado para que seja redesenhado.
 
-        public bool Shooting { get;
+        public bool Shooting
+        {
+            get;
             private set;
         }
 
@@ -421,7 +423,7 @@ namespace MMX.Engine
             //if (lives > 0) // Se ele ainda possuir vidas,
             //    engine.ScheduleRespawn(this); // respawna o Bomberman.
             //else
-                engine.OnGameOver(); // Senão, Game Over!
+            engine.OnGameOver(); // Senão, Game Over!
         }
 
         private void TryMoveLeft(bool standOnly = false)
@@ -995,7 +997,7 @@ namespace MMX.Engine
                 {
                     bool charging = this.charging;
                     int chargingFrameCounter = this.chargingFrameCounter;
-                    this.charging = false;                   
+                    this.charging = false;
                     this.chargingFrameCounter = 0;
 
                     Palette = engine.X1NormalPalette;
@@ -1010,7 +1012,7 @@ namespace MMX.Engine
                     {
                         Shooting = true;
                         shootingCharged = true;
-                        shotFrameCounter = 0; 
+                        shotFrameCounter = 0;
 
                         if (OnLadderOnly)
                         {
@@ -1211,7 +1213,7 @@ namespace MMX.Engine
 
                 if (checkShooting && animationIndices[(int) state, 1, 1] == index)
                     return true;
-            }       
+            }
 
             return false;
         }
@@ -1324,68 +1326,132 @@ namespace MMX.Engine
             startOn = false; // Por padrão, a animação de um jogador começa parada.
             startVisible = false;
 
-            if (frameSequenceName == "Spawn")
-                SetAnimationIndex(PlayerState.SPAWN, animationIndex, false, false);
-            else if (frameSequenceName == "SpawnEnd")
-                SetAnimationIndex(PlayerState.SPAWN_END, animationIndex, false, false);
-            else if (frameSequenceName == "Stand")
-                SetAnimationIndex(PlayerState.STAND, animationIndex, true, false);
-            else if (frameSequenceName == "Shooting")
-                SetAnimationIndex(PlayerState.STAND, animationIndex, true, true);
-            else if (frameSequenceName == "PreWalking")
-                SetAnimationIndex(PlayerState.PRE_WALK, animationIndex, true, false);
-            else if (frameSequenceName == "Walking")
-                SetAnimationIndex(PlayerState.WALK, animationIndex, true, false);
-            else if (frameSequenceName == "ShootWalking")
-                SetAnimationIndex(PlayerState.WALK, animationIndex, true, true);
-            else if (frameSequenceName == "Jumping")
-                SetAnimationIndex(PlayerState.JUMP, animationIndex, true, false);
-            else if (frameSequenceName == "ShootJumping")
-                SetAnimationIndex(PlayerState.JUMP, animationIndex, true, true);
-            else if (frameSequenceName == "GoingUp")
-                SetAnimationIndex(PlayerState.GOING_UP, animationIndex, true, false);
-            else if (frameSequenceName == "ShootGoingUp")
-                SetAnimationIndex(PlayerState.GOING_UP, animationIndex, true, true);
-            else if (frameSequenceName == "Falling")
-                SetAnimationIndex(PlayerState.FALL, animationIndex, true, false);
-            else if (frameSequenceName == "ShootFalling")
-                SetAnimationIndex(PlayerState.FALL, animationIndex, true, true);
-            else if (frameSequenceName == "Landing")
-                SetAnimationIndex(PlayerState.LAND, animationIndex, true, false);
-            else if (frameSequenceName == "ShootLanding")
-                SetAnimationIndex(PlayerState.LAND, animationIndex, true, true);
-            else if (frameSequenceName == "PreDashing")
-                SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, true, false);
-            else if (frameSequenceName == "ShootPreDashing")
-                SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, true, true);
-            else if (frameSequenceName == "Dashing")
-                SetAnimationIndex(PlayerState.DASH, animationIndex, true, false);
-            else if (frameSequenceName == "ShootDashing")
-                SetAnimationIndex(PlayerState.DASH, animationIndex, true, true);
-            else if (frameSequenceName == "PostDashing")
-                SetAnimationIndex(PlayerState.POST_DASH, animationIndex, true, false);
-            else if (frameSequenceName == "ShootPostDashing")
-                SetAnimationIndex(PlayerState.POST_DASH, animationIndex, true, true);
-            else if (frameSequenceName == "WallSliding")
-                SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, true, false);
-            else if (frameSequenceName == "ShootWallSliding")
-                SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, true, true);
-            else if (frameSequenceName == "WallJumping")
-                SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, true, false);
-            else if (frameSequenceName == "ShootWallJumping")
-                SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, true, true);
-            else if (frameSequenceName == "PreLadderClimbing")
-                SetAnimationIndex(PlayerState.PRE_LADDER_CLIMB, animationIndex, true, false);
-            else if (frameSequenceName == "LadderMoving")
-                SetAnimationIndex(PlayerState.LADDER, animationIndex, true, false);
-            else if (frameSequenceName == "ShootLadder")
-                SetAnimationIndex(PlayerState.LADDER, animationIndex, true, true);
-            else if (frameSequenceName == "TopLadderClimbing")
-                SetAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animationIndex, true, false);
-            else if (frameSequenceName == "TopLadderDescending")
-                SetAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animationIndex, true, false);
-            else
-                add = false;
+            switch (frameSequenceName)
+            {
+                case "Spawn":
+                    SetAnimationIndex(PlayerState.SPAWN, animationIndex, false, false);
+                    break;
+
+                case "SpawnEnd":
+                    SetAnimationIndex(PlayerState.SPAWN_END, animationIndex, false, false);
+                    break;
+
+                case "Stand":
+                    SetAnimationIndex(PlayerState.STAND, animationIndex, true, false);
+                    break;
+
+                case "Shooting":
+                    SetAnimationIndex(PlayerState.STAND, animationIndex, true, true);
+                    break;
+
+                case "PreWalking":
+                    SetAnimationIndex(PlayerState.PRE_WALK, animationIndex, true, false);
+                    break;
+
+                case "Walking":
+                    SetAnimationIndex(PlayerState.WALK, animationIndex, true, false);
+                    break;
+
+                case "ShootWalking":
+                    SetAnimationIndex(PlayerState.WALK, animationIndex, true, true);
+                    break;
+
+                case "Jumping":
+                    SetAnimationIndex(PlayerState.JUMP, animationIndex, true, false);
+                    break;
+
+                case "ShootJumping":
+                    SetAnimationIndex(PlayerState.JUMP, animationIndex, true, true);
+                    break;
+
+                case "GoingUp":
+                    SetAnimationIndex(PlayerState.GOING_UP, animationIndex, true, false);
+                    break;
+
+                case "ShootGoingUp":
+                    SetAnimationIndex(PlayerState.GOING_UP, animationIndex, true, true);
+                    break;
+
+                case "Falling":
+                    SetAnimationIndex(PlayerState.FALL, animationIndex, true, false);
+                    break;
+
+                case "ShootFalling":
+                    SetAnimationIndex(PlayerState.FALL, animationIndex, true, true);
+                    break;
+
+                case "Landing":
+                    SetAnimationIndex(PlayerState.LAND, animationIndex, true, false);
+                    break;
+
+                case "ShootLanding":
+                    SetAnimationIndex(PlayerState.LAND, animationIndex, true, true);
+                    break;
+
+                case "PreDashing":
+                    SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, true, false);
+                    break;
+
+                case "ShootPreDashing":
+                    SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, true, true);
+                    break;
+
+                case "Dashing":
+                    SetAnimationIndex(PlayerState.DASH, animationIndex, true, false);
+                    break;
+
+                case "ShootDashing":
+                    SetAnimationIndex(PlayerState.DASH, animationIndex, true, true);
+                    break;
+
+                case "PostDashing":
+                    SetAnimationIndex(PlayerState.POST_DASH, animationIndex, true, false);
+                    break;
+
+                case "ShootPostDashing":
+                    SetAnimationIndex(PlayerState.POST_DASH, animationIndex, true, true);
+                    break;
+
+                case "WallSliding":
+                    SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, true, false);
+                    break;
+
+                case "ShootWallSliding":
+                    SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, true, true);
+                    break;
+
+                case "WallJumping":
+                    SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, true, false);
+                    break;
+
+                case "ShootWallJumping":
+                    SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, true, true);
+                    break;
+
+                case "PreLadderClimbing":
+                    SetAnimationIndex(PlayerState.PRE_LADDER_CLIMB, animationIndex, true, false);
+                    break;
+
+                case "LadderMoving":
+                    SetAnimationIndex(PlayerState.LADDER, animationIndex, true, false);
+                    break;
+
+                case "ShootLadder":
+                    SetAnimationIndex(PlayerState.LADDER, animationIndex, true, true);
+                    break;
+
+                case "TopLadderClimbing":
+                    SetAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animationIndex, true, false);
+                    break;
+
+                case "TopLadderDescending":
+                    SetAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animationIndex, true, false);
+                    break;
+
+                default:
+                    add = false;
+                    break;
+            }
         }
 
         public override FixedSingle GetGravity() => wallJumpStarted && wallJumpFrameCounter <= 2 || OnLadder ? (FixedSingle) 0 : base.GetGravity();

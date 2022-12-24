@@ -147,6 +147,7 @@ namespace MMX.Engine
         public static readonly Color TRIGGER_BORDER_BOX_COLOR = Color.Green;
         public static readonly Color TRIGGER_BOX_COLOR = Color.FromRgba(0x8000ff00);
         public static readonly Color CAMERA_LOCK_COLOR = Color.Yellow;
+        public static readonly Color TOUCHING_MAP_COLOR = Color.Blue;
 
         // Palettes
         public static readonly Color[] X1_NORMAL_PALETTE = new Color[]

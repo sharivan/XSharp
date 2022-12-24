@@ -10,6 +10,7 @@ using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
 using SharpDX.DirectSound;
+using SharpDX.Mathematics.Interop;
 
 using Types;
 
@@ -118,7 +119,9 @@ namespace MMX.Engine
         };
         private readonly DXSprite sprite;
         private readonly Line line;
-        private readonly Font font;
+        private readonly Font infoFont;
+        private readonly Font coordsTextFont;
+        private readonly Font highlightMapTextFont;
         private readonly Texture hitboxTexture;
 
         private readonly DirectSound sound;
@@ -353,7 +356,35 @@ namespace MMX.Engine
                 Quality = FontQuality.ClearType,
                 Weight = FontWeight.Bold
             };
-            font = new Font(device, fontDescription);
+            infoFont = new Font(device, fontDescription);
+
+            fontDescription = new FontDescription()
+            {
+                Height = 24,
+                Italic = false,
+                CharacterSet = FontCharacterSet.Ansi,
+                FaceName = "Arial",
+                MipLevels = 0,
+                OutputPrecision = FontPrecision.TrueType,
+                PitchAndFamily = FontPitchAndFamily.Default,
+                Quality = FontQuality.ClearType,
+                Weight = FontWeight.Bold
+            };
+            coordsTextFont = new Font(device, fontDescription);
+
+            fontDescription = new FontDescription()
+            {
+                Height = 24,
+                Italic = false,
+                CharacterSet = FontCharacterSet.Ansi,
+                FaceName = "Arial",
+                MipLevels = 0,
+                OutputPrecision = FontPrecision.TrueType,
+                PitchAndFamily = FontPitchAndFamily.Default,
+                Quality = FontQuality.ClearType,
+                Weight = FontWeight.Bold
+            };
+            highlightMapTextFont = new Font(device, fontDescription);
 
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.hitbox.png"))
             {
@@ -1388,17 +1419,6 @@ namespace MMX.Engine
                 else
                     wasPressingToggleShowTriggerCameraLook = false;
 
-                /*if (state.IsPressed(Key.D0))
-                {
-                    if (!wasPressingToggleDrawX)
-                    {
-                        wasPressingToggleDrawX = true;
-                        drawX = !drawX;
-                    }
-                }
-                else
-                    wasPressingToggleDrawX = false;*/
-
                 if (state.IsPressed(Key.F1))
                 {
                     if (!wasPressingToggleDrawBackground)
@@ -1634,10 +1654,9 @@ namespace MMX.Engine
         {
             paused = true;
             PlaySound("pause");
-            //Invalidate();
         }
 
-        public void ContinueGame() => paused = false;//Invalidate();
+        public void ContinueGame() => paused = false;
 
         public void NextLevel()
         {
@@ -1645,7 +1664,7 @@ namespace MMX.Engine
             levelToChange = currentLevel + 1;
         }
 
-        internal void OnGameOver() => gameOver = true;//nextGameOverThink = engineTime + GAME_OVER_PANEL_SHOW_DELAY;
+        internal void OnGameOver() => gameOver = true;
 
         private void SpawnPlayer()
         {
@@ -1704,7 +1723,7 @@ namespace MMX.Engine
                     Player.Lives = oldPlayer.Lives;
                 }
 
-                AddDriller(new MMXBox(128, 1024, 50, 50, OriginPosition.CENTER));
+                AddDriller(new MMXBox(160, 1024, 50, 50, OriginPosition.CENTER));
 
                 loadingLevel = false;
             }
@@ -1761,33 +1780,13 @@ namespace MMX.Engine
             drawBox = new MMXBox(drawOrigin.X, drawOrigin.Y, width, height);
         }
 
-        /*private void DrawLine(FixedSingle x1, FixedSingle y1, FixedSingle x2, FixedSingle y2, SolidColorBrush brush)
-        {
-            context.DrawLine(WorldVectorToScreen(x1, y1), WorldVectorToScreen(x2, y2), brush);
-        }
-
-        private void DrawLine(FixedSingle x1, FixedSingle y1, FixedSingle x2, FixedSingle y2, SolidColorBrush brush, float strokeWidth)
-        {
-            context.DrawLine(WorldVectorToScreen(x1, y1), WorldVectorToScreen(x2, y2), brush, strokeWidth);
-        }
-
-        private void DrawLine(Vector v1, Vector v2, SolidColorBrush brush)
-        {
-            context.DrawLine(WorldVectorToScreen(v1), WorldVectorToScreen(v2), brush);
-        }
-
-        private void DrawLine(Vector v1, Vector v2, SolidColorBrush brush, float strokeWidth)
-        {
-            context.DrawLine(WorldVectorToScreen(v1), WorldVectorToScreen(v2), brush, strokeWidth);
-        }
-
         private void DrawSlopeMap(MMXBox box, RightTriangle triangle, float strokeWidth)
         {
             Vector tv1 = triangle.Origin;
             Vector tv2 = triangle.HCathetusVertex;
             Vector tv3 = triangle.VCathetusVertex;
 
-            DrawLine(tv2, tv3, touchingMapBrush, strokeWidth);
+            DrawLine(tv2, tv3, strokeWidth, TOUCHING_MAP_COLOR);
 
             FixedSingle h = tv1.Y - box.Top;
             FixedSingle H = MAP_SIZE - h;
@@ -1795,47 +1794,47 @@ namespace MMX.Engine
             {
                 if (triangle.HCathetusVector.X < 0)
                 {
-                    DrawLine(tv2, box.LeftBottom, touchingMapBrush, strokeWidth);
-                    DrawLine(tv3, box.RightBottom, touchingMapBrush, strokeWidth);
+                    DrawLine(tv2, box.LeftBottom, strokeWidth, TOUCHING_MAP_COLOR);
+                    DrawLine(tv3, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
                 }
                 else
                 {
-                    DrawLine(tv3, box.LeftBottom, touchingMapBrush, strokeWidth);
-                    DrawLine(tv2, box.RightBottom, touchingMapBrush, strokeWidth);
+                    DrawLine(tv3, box.LeftBottom, strokeWidth, TOUCHING_MAP_COLOR);
+                    DrawLine(tv2, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
                 }
 
-                DrawLine(box.LeftBottom, box.RightBottom, touchingMapBrush, strokeWidth);
+                DrawLine(box.LeftBottom, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
             }
             else
             {
-                DrawLine(tv3, tv1, touchingMapBrush, strokeWidth);
-                DrawLine(tv1, tv2, touchingMapBrush, strokeWidth);
+                DrawLine(tv3, tv1, strokeWidth, TOUCHING_MAP_COLOR);
+                DrawLine(tv1, tv2, strokeWidth, TOUCHING_MAP_COLOR);
             }
         }
 
         private void DrawHighlightMap(int row, int col, CollisionData collisionData)
         {
-            MMXBox mapBox = World.GetMapBoundingBox(row, col);
-            if (World.IsSolidBlock(collisionData))
-                context.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
-            else if (World.IsSlope(collisionData))
+            MMXBox mapBox = MMXWorld.GetMapBoundingBox(row, col);
+            if (MMXWorld.IsSolidBlock(collisionData))
+                DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
+            else if (MMXWorld.IsSlope(collisionData))
             {
-                RightTriangle st = World.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
+                RightTriangle st = MMXWorld.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
                 DrawSlopeMap(mapBox, st, 4);
             }
         }
 
         private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, MMXBox collisionBox, bool ignoreSlopes = false)
         {
-            MMXBox halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
-            MMXBox halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
+            var halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
+            var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
 
-            MMXBox mapBox = World.GetMapBoundingBox(row, col);
-            if (World.IsSolidBlock(collisionData) && (mapBox & collisionBox).Area > 0)
-                context.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
-            else if (!ignoreSlopes && World.IsSlope(collisionData))
+            MMXBox mapBox = MMXWorld.GetMapBoundingBox(row, col);
+            if (MMXWorld.IsSolidBlock(collisionData) && (mapBox & collisionBox).Area > 0)
+                DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
+            else if (!ignoreSlopes && MMXWorld.IsSlope(collisionData))
             {
-                RightTriangle st = World.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
+                RightTriangle st = MMXWorld.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
                 Vector hv = st.HCathetusVector;
                 if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, true) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, true))
                     DrawSlopeMap(mapBox, st, 4);
@@ -1844,8 +1843,8 @@ namespace MMX.Engine
 
         private void CheckAndDrawTouchingMaps(MMXBox collisionBox, bool ignoreSlopes = false)
         {
-            Cell start = World.GetMapCellFromPos(collisionBox.LeftTop);
-            Cell end = World.GetMapCellFromPos(collisionBox.RightBottom);
+            Cell start = MMXWorld.GetMapCellFromPos(collisionBox.LeftTop);
+            Cell end = MMXWorld.GetMapCellFromPos(collisionBox.RightBottom);
 
             int startRow = start.Row;
             int startCol = start.Col;
@@ -1853,14 +1852,14 @@ namespace MMX.Engine
             if (startRow < 0)
                 startRow = 0;
 
-            if (startRow >= world.MapRowCount)
-                startRow = world.MapRowCount - 1;
+            if (startRow >= World.MapRowCount)
+                startRow = World.MapRowCount - 1;
 
             if (startCol < 0)
                 startCol = 0;
 
-            if (startCol >= world.MapColCount)
-                startCol = world.MapColCount - 1;
+            if (startCol >= World.MapColCount)
+                startCol = World.MapColCount - 1;
 
             int endRow = end.Row;
             int endCol = end.Col;
@@ -1868,24 +1867,29 @@ namespace MMX.Engine
             if (endRow < 0)
                 endRow = 0;
 
-            if (endRow >= world.MapRowCount)
-                endRow = world.MapRowCount - 1;
+            if (endRow >= World.MapRowCount)
+                endRow = World.MapRowCount - 1;
 
             if (endCol < 0)
                 endCol = 0;
 
-            if (endCol >= world.MapColCount)
-                endCol = world.MapColCount - 1;
+            if (endCol >= World.MapColCount)
+                endCol = World.MapColCount - 1;
 
             for (int row = startRow; row <= endRow; row++)
                 for (int col = startCol; col <= endCol; col++)
                 {
-                    Vector v = new Vector(col * MAP_SIZE, row * MAP_SIZE);
-                    Map map = world.GetMapFrom(v);
+                    var v = new Vector(col * MAP_SIZE, row * MAP_SIZE);
+                    Map map = World.GetMapFrom(v);
                     if (map != null)
                         CheckAndDrawTouchingMap(row, col, map.CollisionData, collisionBox, ignoreSlopes);
                 }
-        }*/
+        }
+
+        public void DrawLine(Vector from, Vector to, float width, Color color)
+        {
+            DrawLine(WorldVectorToScreen(from), WorldVectorToScreen(to), width, color);
+        }
 
         public void DrawLine(Vector2 from, Vector2 to, float width, Color color)
         {
@@ -1899,6 +1903,11 @@ namespace MMX.Engine
             line.End();
         }
 
+        public void DrawRectangle(MMXBox box, float borderWith, Color color)
+        {
+            DrawRectangle(WorldBoxToScreen(box), borderWith, color);
+        }
+
         public void DrawRectangle(RectangleF rect, float borderWith, Color color)
         {
             rect = new RectangleF(rect.X * 4, rect.Y * 4, rect.Width * 4, rect.Height * 4);
@@ -1908,6 +1917,11 @@ namespace MMX.Engine
             line.Begin();
             line.Draw(new Vector2[] { rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft, rect.TopLeft }, color);
             line.End();
+        }
+
+        public void FillRectangle(MMXBox box, Color color)
+        {
+            FillRectangle(WorldBoxToScreen(box), color);
         }
 
         public void FillRectangle(RectangleF rect, Color color)
@@ -1930,6 +1944,27 @@ namespace MMX.Engine
             sprite.Transform = matTransform;
 
             sprite.Draw(hitboxTexture, color);
+            sprite.End();
+        }
+
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color)
+        {
+            DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color);
+        }
+
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, RawMatrix transform, Color color)
+        {
+            sprite.Begin();
+
+            Device.VertexShader = null;
+            Device.PixelShader = null;
+
+            Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
+            Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+            sprite.Transform = transform;
+
+            var fontDimension = font.MeasureText(sprite, text, drawRect, drawFlags);
+            font.DrawText(sprite, text, fontDimension, drawFlags, color);
             sprite.End();
         }
 
@@ -1970,9 +2005,6 @@ namespace MMX.Engine
 
             if (World != null)
             {
-                //Vector screenLT = world.Screen.LeftTop;
-                //device.Viewport = new Viewport((int) screenLT.X, (int) screenLT.Y, (int) world.Screen.Width, (int) world.Screen.Height);
-
                 if (drawBackground)
                 {
                     World.RenderBackground(false);
@@ -2045,7 +2077,7 @@ namespace MMX.Engine
                     World.RenderForeground(true);
                 }
 
-                /*if (drawTouchingMapBounds)
+                if (drawTouchingMapBounds)
                 {
                     MMXBox collisionBox = Player.CollisionBox;
 
@@ -2053,7 +2085,7 @@ namespace MMX.Engine
                     CheckAndDrawTouchingMaps(collisionBox + Vector.UP_VECTOR);
                     CheckAndDrawTouchingMaps(collisionBox + Vector.RIGHT_VECTOR, true);
                     CheckAndDrawTouchingMaps(collisionBox + Vector.DOWN_VECTOR);
-                }*/
+                }
 
                 if (drawCollisionBox)
                 {
@@ -2072,48 +2104,48 @@ namespace MMX.Engine
                     FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
                 }
 
-                /*if (drawHighlightedPointingTiles)
+                if (drawHighlightedPointingTiles)
                 {
                     System.Drawing.Point cursorPos = Form.PointToClient(Cursor.Position);
-                    Vector v = ScreenPointToVector(cursorPos.X, cursorPos.Y);
-                    context.DrawText(string.Format("Mouse Pos: X: {0} Y: {1}", v.X, v.Y), highlightMapTextFormat, new RectangleF(0, 0, 400, 50), touchingMapBrush);
+                    Vector v = ScreenPointToVector(cursorPos.X / 4, cursorPos.Y / 4);
+                    DrawText($"Mouse Pos: X: {v.X} Y: {v.Y}", highlightMapTextFont, new RectangleF(0, 0, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
                     Scene scene = World.GetSceneFrom(v, false);
                     if (scene != null)
                     {
-                        Cell sceneCell = World.GetSceneCellFromPos(v);
-                        MMXBox sceneBox = World.GetSceneBoundingBox(sceneCell);
-                        context.DrawRectangle(WorldBoxToScreen(sceneBox), touchingMapBrush, 4);
-                        context.DrawText(string.Format("Scene: ID: {0} Row: {1} Col: {2}", scene.ID, sceneCell.Row, sceneCell.Col), highlightMapTextFormat, new RectangleF(0, 50, 400, 50), touchingMapBrush);
+                        Cell sceneCell = MMXWorld.GetSceneCellFromPos(v);
+                        MMXBox sceneBox = MMXWorld.GetSceneBoundingBox(sceneCell);
+                        DrawRectangle(WorldBoxToScreen(sceneBox), 4, TOUCHING_MAP_COLOR);
+                        DrawText($"Scene: ID: {scene.ID} Row: {sceneCell.Row} Col: {sceneCell.Col}", highlightMapTextFont, new RectangleF(0, 50, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
                         Block block = World.GetBlockFrom(v, false);
                         if (block != null)
                         {
-                            Cell blockCell = World.GetBlockCellFromPos(v);
-                            MMXBox blockBox = World.GetBlockBoundingBox(blockCell);
-                            context.DrawRectangle(WorldBoxToScreen(blockBox), touchingMapBrush, 4);
-                            context.DrawText(string.Format("Block: ID: {0} Row: {1} Col: {2}", block.ID, blockCell.Row, blockCell.Col), highlightMapTextFormat, new RectangleF(0, 100, 400, 50), touchingMapBrush);
+                            Cell blockCell = MMXWorld.GetBlockCellFromPos(v);
+                            MMXBox blockBox = MMXWorld.GetBlockBoundingBox(blockCell);
+                            DrawRectangle(WorldBoxToScreen(blockBox), 4, TOUCHING_MAP_COLOR);
+                            DrawText($"Block: ID: {block.ID} Row: {blockCell.Row} Col: {blockCell.Col}", highlightMapTextFont, new RectangleF(0, 100, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
                             Map map = World.GetMapFrom(v, false);
                             if (map != null)
                             {
-                                Cell mapCell = World.GetMapCellFromPos(v);
-                                MMXBox mapBox = World.GetMapBoundingBox(mapCell);
-                                context.DrawRectangle(WorldBoxToScreen(mapBox), touchingMapBrush, 4);
-                                context.DrawText(string.Format("Map: ID: {0} Row: {1} Col: {2}", map.ID, mapCell.Row, mapCell.Col), highlightMapTextFormat, new RectangleF(0, 150, 400, 50), touchingMapBrush);
+                                Cell mapCell = MMXWorld.GetMapCellFromPos(v);
+                                MMXBox mapBox = MMXWorld.GetMapBoundingBox(mapCell);
+                                DrawRectangle(WorldBoxToScreen(mapBox), 4, TOUCHING_MAP_COLOR);
+                                DrawText($"Map: ID: {map.ID} Row: {mapCell.Row} Col: {mapCell.Col}", highlightMapTextFont, new RectangleF(0, 150, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
                                 Tile tile = World.GetTileFrom(v, false);
                                 if (tile != null)
                                 {
-                                    Cell tileCell = World.GetTileCellFromPos(v);
-                                    MMXBox tileBox = World.GetTileBoundingBox(tileCell);
-                                    context.DrawRectangle(WorldBoxToScreen(tileBox), touchingMapBrush, 4);
-                                    context.DrawText(string.Format("Tile: ID: {0} Row: {1} Col: {2}", tile.ID, tileCell.Row, tileCell.Col), highlightMapTextFormat, new RectangleF(0, 200, 400, 50), touchingMapBrush);
+                                    Cell tileCell = MMXWorld.GetTileCellFromPos(v);
+                                    MMXBox tileBox = MMXWorld.GetTileBoundingBox(tileCell);
+                                    DrawRectangle(WorldBoxToScreen(tileBox), 4, TOUCHING_MAP_COLOR);
+                                    DrawText($"Tile: ID: {tile.ID} Row: {tileCell.Row} Col: {tileCell.Col}", highlightMapTextFont, new RectangleF(0, 200, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
                                 }
                             }
                         }
                     }
-                }*/
+                }
 
                 RectangleF drawRect = RenderRectangle;
 
@@ -2138,19 +2170,7 @@ namespace MMX.Engine
                 if (showInfoText)
                 {
                     string text = $"X: {(float) Player.Origin.X * 256} Y: {((float) Player.Origin.Y - 17) * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256} Checkpoint: {(currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
-                    sprite.Begin();
-
-                    Device.VertexShader = null;
-                    Device.PixelShader = null;
-
-                    Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
-                    Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
-
-                    sprite.Transform = Matrix.Identity;
-
-                    var fontDimension = font.MeasureText(sprite, text, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left);
-                    font.DrawText(sprite, text, fontDimension, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.Yellow);
-                    sprite.End();
+                    DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.Yellow);
                 }
             }
 

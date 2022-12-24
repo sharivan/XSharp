@@ -64,6 +64,7 @@ namespace MMX.Engine
         {
             base.LoadState(reader);
 
+            currentAnimationIndex = reader.ReadInt32();
             Opacity = reader.ReadSingle();
 
             int animationCount = reader.ReadInt32();
@@ -73,7 +74,6 @@ namespace MMX.Engine
                 animation.LoadState(reader);
             }
 
-            currentAnimationIndex = reader.ReadInt32();
             solid = reader.ReadBoolean();
             fading = reader.ReadBoolean();
             fadingIn = reader.ReadBoolean();
