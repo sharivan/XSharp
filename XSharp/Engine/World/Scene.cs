@@ -31,8 +31,8 @@ namespace MMX.Engine.World
 
         internal Scene(World world, int id)
         {
-            this.World = world;
-            this.ID = id;
+            World = world;
+            ID = id;
 
             blocks = new Block[SIDE_BLOCKS_PER_SCENE, SIDE_BLOCKS_PER_SCENE];
             downLayerVB = new VertexBuffer(world.Device, GameEngine.VERTEX_SIZE * 3 * PRIMITIVE_COUNT, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);

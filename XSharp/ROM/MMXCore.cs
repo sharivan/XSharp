@@ -166,7 +166,7 @@ namespace MMX.ROM
         internal static readonly uint[] p_maps = { 0x868E71, 0x8689D5, 0x868B00, 0x8081B3 };
         internal static readonly uint[] p_collis = { 0x868EE0, 0x868A44, 0x868B6F, 0 };
         /*const*/
-internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
+        internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
         internal static readonly uint[] p_palett = { 0x868133, 0x86817A, 0x868180, 0 };
         internal static readonly uint[] p_font = { 0x86F744, 0x86FA4C, 0x86F77D, 0 };
         internal static readonly uint[] p_unknow = { 0x86A1D5, 0, 0, 0 }; // Unknow
@@ -224,9 +224,6 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
         private uint objLoadOffset;
         private uint tileLoadOffset;
         private uint palLoadOffset;
-
-        private ushort level;
-        private ushort point;
         private byte levelWidth;
         private byte levelHeight;
         private byte sceneUsed;
@@ -292,6 +289,12 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
         private readonly ushort[] fontPalCache;
         private readonly byte[] fontCache;
 
+        public ushort Level
+        {
+            get;
+            private set;
+        }
+
         public Vector BackgroundPos
         {
             get
@@ -299,8 +302,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
                     return Vector.NULL_VECTOR;
 
-                FixedSingle x = ReadWord(checkpointInfoTable[point].bkgX);
-                FixedSingle y = ReadWord(checkpointInfoTable[point].bkgY);
+                FixedSingle x = ReadWord(checkpointInfoTable[Point].bkgX);
+                FixedSingle y = ReadWord(checkpointInfoTable[Point].bkgY);
                 return new Vector(x, y);
             }
         }
@@ -312,8 +315,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
                     return Vector.NULL_VECTOR;
 
-                FixedSingle x = ReadWord(checkpointInfoTable[point].camX);
-                FixedSingle y = ReadWord(checkpointInfoTable[point].camY);
+                FixedSingle x = ReadWord(checkpointInfoTable[Point].camX);
+                FixedSingle y = ReadWord(checkpointInfoTable[Point].camY);
                 return new Vector(x, y);
             }
         }
@@ -325,8 +328,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
                     return Vector.NULL_VECTOR;
 
-                FixedSingle x = ReadWord(checkpointInfoTable[point].chX);
-                FixedSingle y = ReadWord(checkpointInfoTable[point].chY);
+                FixedSingle x = ReadWord(checkpointInfoTable[Point].chX);
+                FixedSingle y = ReadWord(checkpointInfoTable[Point].chY);
                 return new Vector(x, y);
             }
         }
@@ -338,8 +341,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
                     return Vector.NULL_VECTOR;
 
-                FixedSingle x = ReadWord(checkpointInfoTable[point].minX);
-                FixedSingle y = ReadWord(checkpointInfoTable[point].minY);
+                FixedSingle x = ReadWord(checkpointInfoTable[Point].minX);
+                FixedSingle y = ReadWord(checkpointInfoTable[Point].minY);
                 return new Vector(x, y);
             }
         }
@@ -351,17 +354,16 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
                     return Vector.NULL_VECTOR;
 
-                FixedSingle x = ReadWord(checkpointInfoTable[point].maxX) + SCREEN_WIDTH;
-                FixedSingle y = ReadWord(checkpointInfoTable[point].maxY) + SCREEN_HEIGHT;
+                FixedSingle x = ReadWord(checkpointInfoTable[Point].maxX) + SCREEN_WIDTH;
+                FixedSingle y = ReadWord(checkpointInfoTable[Point].maxY) + SCREEN_HEIGHT;
                 return new Vector(x, y);
             }
         }
 
-        public int Point
+        public ushort Point
         {
-            get => point;
-
-            set => point = (ushort) value;
+            get;
+            set;
         }
 
         public int CheckpointCount => (int) numCheckpoints;
@@ -557,22 +559,22 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
         internal uint GetCheckPointPointer(uint p) =>
             //notice the bitwise operations
-            Snes2pc((int) (((p_checkp[type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[type] + SReadWord((uint) (p_checkp[type] + level * 2)) + p * 2)));
+            Snes2pc((int) (((p_checkp[type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[type] + SReadWord((uint) (p_checkp[type] + Level * 2)) + p * 2)));
 
-        internal uint GetCheckPointBasePointer() => Snes2pc((int) (((p_checkp[type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[type] + SReadWord((uint) (p_checkp[type] + level * 2)) + 0 * 2)));
+        internal uint GetCheckPointBasePointer() => Snes2pc((int) (((p_checkp[type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[type] + SReadWord((uint) (p_checkp[type] + Level * 2)) + 0 * 2)));
 
         private static readonly ushort[,] origEventSize = { { 0x2c8,0x211,0x250,0x4b3,0x2ea,0x32c,0x2e2,0x260,0x2d2,0x37f,0x254,0x2b2,0x27,0 },
                                         { 0x235,0x4a7,0x338,0x489,0x310,0x382,0x3b6,0x3da,0x45c,0x303,0x212,0x30f,0xbd,0 },
                                         { 0x2f1,0x3b4,0x3a7,0x3d9,0x3da,0x455,0x3c9,0x405,0x33b,0x22b,0x3cb,0x2ba,0x274,0xe6 } };
 
         //unsigned GetEventSize();
-        internal uint GetOrigEventSize() => expandedROM ? expandedEventSize : origEventSize[type, level];
+        internal uint GetOrigEventSize() => expandedROM ? expandedEventSize : origEventSize[type, Level];
 
         private static readonly ushort[,] origLayoutSize = { { 0x12, 0x32, 0x38, 0x64, 0x22, 0x3a, 0x1e, 0x6a, 0x2a, 0x3c, 0x22, 0x1a, 0x00 },
                                         { 0x8c, 0x3e, 0x38, 0x40, 0x42, 0x5c, 0x2a, 0x4e, 0x5e, 0x5a, 0x16, 0x5a, 0x00 },
                                         { 0x4c, 0x4c, 0x38, 0x42, 0x60, 0x54, 0x4e, 0x52, 0x30, 0x2e, 0x4e, 0x46, 0x22 } };
 
-        internal uint GetOrigLayoutSize() => expandedROM ? expandedLayoutSize : origLayoutSize[type, level];
+        internal uint GetOrigLayoutSize() => expandedROM ? expandedLayoutSize : origLayoutSize[type, Level];
 
         internal System.Drawing.Rectangle GetBoundingBox(ref EventInfo e)
         {
@@ -587,7 +589,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                     uint b = 0;
                     if (expandedROM && expandedROMVersion >= 4)
                     {
-                        b = Snes2pc((int) ((int) (lockBank << 16) | (0x8000 + level * 0x800 + e.eventSubId * 0x20)));
+                        b = Snes2pc((int) ((int) (lockBank << 16) | (0x8000 + Level * 0x800 + e.eventSubId * 0x20)));
                     }
                     else
                     {
@@ -694,10 +696,14 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                         int right = boundingBox.Right;
                         int bottom = boundingBox.Bottom;
 
-                        if (screenX < left) left = screenX;
-                        if (right < screenX + 8) right = screenX + 8;
-                        if (screenY < top) top = screenY;
-                        if (bottom < screenY + 8) bottom = screenY + 8;
+                        if (screenX < left)
+                            left = screenX;
+                        if (right < screenX + 8)
+                            right = screenX + 8;
+                        if (screenY < top)
+                            top = screenY;
+                        if (bottom < screenY + 8)
+                            bottom = screenY + 8;
 
                         boundingBox = new System.Drawing.Rectangle(left, top, right - left, bottom - top);
                     }
@@ -726,34 +732,34 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             switch (type)
             {
                 case 0:
-                    {
-                        ok &= header.romSize == 0xB;
-                        ok &= romSize == 0x180000;
-                        break;
-                    }
+                {
+                    ok &= header.romSize == 0xB;
+                    ok &= romSize == 0x180000;
+                    break;
+                }
                 case 1:
-                    {
-                        ok &= header.romSize == 0xB;
-                        ok &= romSize == 0x180000 || romSize == 0x200000 && Compare(0x100000, 0x180000, 0x80000) == 0;
-                        break;
-                    }
+                {
+                    ok &= header.romSize == 0xB;
+                    ok &= romSize == 0x180000 || romSize == 0x200000 && Compare(0x100000, 0x180000, 0x80000) == 0;
+                    break;
+                }
                 case 2:
-                    {
-                        ok &= header.romSize == 0xB;
-                        ok &= romSize == 0x200000;
-                        break;
-                    }
+                {
+                    ok &= header.romSize == 0xB;
+                    ok &= romSize == 0x200000;
+                    break;
+                }
                 case 3:
-                    {
-                        ok &= header.romSize == 0xC;
-                        ok &= romSize == 0x400000;
-                        break;
-                    }
+                {
+                    ok &= header.romSize == 0xC;
+                    ok &= romSize == 0x400000;
+                    break;
+                }
                 default:
-                    {
-                        ok = false;
-                        break;
-                    }
+                {
+                    ok = false;
+                    break;
+                }
             }
 
             if (type < 3)
@@ -787,7 +793,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                         uint layout = levelLayout;
 
                         uint count;
-                        for (count = 3; rom[layout + count] != 0xFF; ++count) ;
+                        for (count = 3; rom[layout + count] != 0xFF; ++count)
+                            ;
                         count++;
 
                         if (count <= 0x800)
@@ -814,7 +821,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                         uint layout = levelLayout;
 
                         uint count;
-                        for (count = 3; rom[layout + count] != 0xFF; ++count) ;
+                        for (count = 3; rom[layout + count] != 0xFF; ++count)
+                            ;
                         count++;
 
                         if (count <= 0x800)
@@ -1022,7 +1030,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                         var levelLayout = Snes2pc((int) SReadDWord((uint) (p_layout[type] + i * 3)));
                         uint s = rom[levelLayout + 2];
                         // overwrite the layout data
-                        for (uint l = levelLayout + 3; rom[l] != 0xFF; l++) rom[l] = 0xFF;
+                        for (uint l = levelLayout + 3; rom[l] != 0xFF; l++)
+                            rom[l] = 0xFF;
 
                         Array.Copy(rom, addr, rom, Snes2pc((int) (p_layout[type] + i * 3)), 3);
                     }
@@ -1035,7 +1044,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                         var levelLayout = Snes2pc((int) SReadDWord((uint) (p_blayout[type] + i * 3)));
                         uint s = rom[levelLayout + 2];
                         // overwrite the layout data
-                        for (uint l = levelLayout + 3; rom[l] != 0xFF; l++) rom[l] = 0xFF;
+                        for (uint l = levelLayout + 3; rom[l] != 0xFF; l++)
+                            rom[l] = 0xFF;
 
                         Array.Copy(rom, addr, rom, Snes2pc((int) (p_blayout[type] + i * 3)), 3);
                     }
@@ -1684,7 +1694,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
             if (type < 3)
             {
-                uint pConfigGfx = Snes2pc(SReadWord((uint) (p_gfxcfg[type] + level * 2 + 4)) | 0x86 << 16);
+                uint pConfigGfx = Snes2pc(SReadWord((uint) (p_gfxcfg[type] + Level * 2 + 4)) | 0x86 << 16);
                 byte gfxID = rom[pConfigGfx];
                 tileCmpSize = ReadWord(pConfigGfx + 1);
                 tileCmpDest = (ushort) ((ReadWord(pConfigGfx + 3) << 1) - 0x2000);
@@ -1694,7 +1704,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             else
             {
                 // FIXME: 0x14 offset needs to be per level.  destination needs to be source based
-                uint pConfigGfx = Snes2pc(SReadWord(p_gfxcfg[type] + SReadByte(0x80824A + level) | 0x80 << 16));
+                uint pConfigGfx = Snes2pc(SReadWord(p_gfxcfg[type] + SReadByte(0x80824A + Level) | 0x80 << 16));
                 byte gfxID = rom[pConfigGfx];
                 tileCmpSize = ReadWord(pConfigGfx + 1); //SReadWord(p_gfxpos[type] + gfxID * 5 + 3);
                 tileCmpDest = (ushort) ((ReadWord(pConfigGfx + 3) << 1) - 0x2000);
@@ -1712,7 +1722,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
         internal void LoadTiles()
         {
-            byte tileSelect = (byte) (rom[checkpointInfoTable[point].tileLoad] + tileLoadOffset);
+            byte tileSelect = (byte) (rom[checkpointInfoTable[Point].tileLoad] + tileLoadOffset);
 
             uint tileOffset = (uint) ((type == 0) ? 0x321D5
                 : (type == 1) ? 0x31D6A
@@ -1724,7 +1734,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             numDecs = 0;
             for (int i = 0; i < 0x40; ++i)
             {
-                int tbaseIndex = ReadWord((uint) (tileOffset + level * 2)) + i * 2;
+                int tbaseIndex = ReadWord((uint) (tileOffset + Level * 2)) + i * 2;
                 int tmainIndex = ReadWord((uint) (tileOffset + tbaseIndex));
 
                 numDecs++;
@@ -1761,11 +1771,12 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             // Is it right to start from 1 all the time?  Or do we need to check 0, too?
             for (int i = 0; i <= tileSelect; ++i)
             {
-                int baseIndex = ReadWord((uint) (tileOffset + level * 2)) + i * 2;
+                int baseIndex = ReadWord((uint) (tileOffset + Level * 2)) + i * 2;
                 int mainIndex = ReadWord((uint) (tileOffset + baseIndex));
 
                 tileDecSize = ReadWord((uint) (tileOffset + mainIndex));
-                if (tileDecSize == 0) continue;
+                if (tileDecSize == 0)
+                    continue;
                 tileDecDest = (ushort) ((ReadWord((uint) (tileOffset + mainIndex + 2)) << 1) - 0x2000);
                 uint addr = ReadDWord((uint) (tileOffset + mainIndex + 4)) & 0xFFFFFF;
                 tileDecPos = Snes2pc(addr);
@@ -1961,8 +1972,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
         internal void SetLevel(ushort iLevel, ushort iPoint)
         {
-            level = iLevel;
-            point = iPoint;
+            Level = iLevel;
+            Point = iPoint;
 
             tileCmpSize = 0;
             tileDecSize = 0;
@@ -2000,7 +2011,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             LoadGraphicsChange();
 
             //MessageBox(hWID[0], "Init Pointers", "Test", MB_ICONERROR);
-            ushort pLevel = (ushort) (level * 3);
+            ushort pLevel = (ushort) (Level * 3);
             if (type < 3)
             {
                 pLayout = Snes2pc(SReadDWord(p_layout[type] + pLevel));
@@ -2008,8 +2019,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             }
             else
             {
-                pLayout = Snes2pc(0xC50000 | SReadWord((uint) (p_layout[type] + level * 2)));
-                pScenes = Snes2pc(SReadDWord(p_scenes[type] + level));
+                pLayout = Snes2pc(0xC50000 | SReadWord((uint) (p_layout[type] + Level * 2)));
+                pScenes = Snes2pc(SReadDWord(p_scenes[type] + Level));
             }
 
             pBlocks = Snes2pc(SReadDWord(p_blocks[type] + pLevel));
@@ -2018,7 +2029,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
             sortOk = true;
 
-            if (type == 1 && (level == 10 || level == 11))
+            if (type == 1 && (Level == 10 || Level == 11))
             {
                 // x-hunters level 10 and 11 share a compressed tile set so the map will get screwed up
                 // if we sort one and didn't rewrite the map for both levels
@@ -2026,7 +2037,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             }
 
             //MessageBox(hWID[0], "SetNumThings", "Test", MB_ICONERROR);
-            if (level < numLevels - 1)
+            if (Level < numLevels - 1)
             {
                 // This is a hack to figure out the approximate number of tiles, maps, and blocks.
                 // it assumes the level data is stored consecutively in memory.  If it isn't we may
@@ -2034,7 +2045,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 // doesn't corrupt this memory.  Ideally, we would read a count.  Another hack
                 // would read all the scenes to find the highest numbered block used, etc, to get
                 // an approximate number.
-                ushort pNextLevel = (ushort) ((level + 1) * 3);
+                ushort pNextLevel = (ushort) ((Level + 1) * 3);
                 numTiles = (uint) ((0x200 + tileCmpSize) / 0x20);
                 numBlocks = (Snes2pc(SReadDWord(p_blocks[type] + pNextLevel)) - pBlocks) / 0x8;
                 numMaps = (Snes2pc(SReadDWord(p_maps[type] + pNextLevel)) - pMaps) / 0x8;
@@ -2103,7 +2114,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 else
                     sFileName = sFileName.Substring(0, pos) + "[";
 
-                sFileName += level;
+                sFileName += Level;
                 sFileName += "].txt";
 
                 using (StreamWriter writer = File.CreateText(sFileName))
@@ -2127,9 +2138,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
         internal void LoadBackground(bool skipLayout = false)
         {
-            //backgrounds never load correctly during program run-time but load fine in emulation
-
-            ushort pLevel = (ushort) (level * 3);
+            ushort pLevel = (ushort) (Level * 3);
             if (type < 3)
             {
                 pLayout = Snes2pc(SReadDWord(p_blayout[type] + pLevel));
@@ -2157,7 +2166,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             pPalBase = Snes2pc(p_palett[type]);
             if (type < 3)
             {
-                uint configPointer = Snes2pc(SReadWord((uint) (p_palett[type] + level * 2 + 0x60)) | 0x860000);
+                uint configPointer = Snes2pc(SReadWord((uint) (p_palett[type] + Level * 2 + 0x60)) | 0x860000);
                 byte colorsToLoad = rom[configPointer++];
                 pPalette = type == 2 ? Snes2pc(ReadWord(configPointer++) | 0x8C0000) : Snes2pc(ReadWord(configPointer++) | 0x850000);
 
@@ -2169,7 +2178,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             else
             {
                 var indices = new List<uint>(new uint[] { 0x124, 0x0, 0x1E, 0x1B2, 0xA, 0x104 });
-                if (level >= 0)
+                if (Level >= 0)
                 {
                     //indices.clear();
                     //indices.push_back(0x17C);
@@ -2177,7 +2186,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                     //indices.push_back(2 * WORD(SReadWord(0x808AA6 + 2 * (level - 1))));
                     //indices.push_back(2 * WORD(SReadByte(0x808A8E + 1 * (level - 1))));
                     //indices.push_back(0x0);
-                    indices.Add((uint) (2 * (ushort) SReadByte(0x80823D + level)));
+                    indices.Add((uint) (2 * (ushort) SReadByte(0x80823D + Level)));
                     //indices.push_back(2 * WORD(SReadByte(0x808A8E + 1 * (level - 1))));
                 }
 
@@ -2189,7 +2198,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                     ushort palOffset = ReadWord(Snes2pc(0x810000 + offset + 1));
                     ushort dst = rom[Snes2pc(0x810000 + offset + 3)];
 
-                    if (dst + colorsToLoad > 0x100) continue;
+                    if (dst + colorsToLoad > 0x100)
+                        continue;
 
                     uint pPalette = Snes2pc(0xC50000 | palOffset);
                     for (int i = 0; i < colorsToLoad; i++)
@@ -2205,9 +2215,11 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
             Array.Copy(vrambase, 0, vram, 0, 0x200);
 
-            if (type < 3) LoadPaletteDynamic();
+            if (type < 3)
+                LoadPaletteDynamic();
             LoadGFXs();
-            if (type < 3) LoadTiles();
+            if (type < 3)
+                LoadTiles();
 
             for (int i = 0; i < 0x400; i++)
                 Tile4bpp2raw(vram, i << 5, vramCache, i << 6);
@@ -2218,18 +2230,22 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             pBorders = 0;
             pLocks = 0;
 
-            if (p_events[type] == 0) return;
+            if (p_events[type] == 0)
+                return;
 
             foreach (var eventList in eventTable)
                 eventList.Clear();
 
             if (type < 3)
             {
-                if (p_borders[type] != 0) pBorders = SReadWord((uint) (p_borders[type] + level * 2)) | ((p_borders[type] >> 16) << 16);
-                if (p_locks[type] != 0) pLocks = Snes2pc(p_locks[type]);
-                if (p_capsulepos[type] != 0) pCapsulePos = Snes2pc(p_capsulepos[type]);
+                if (p_borders[type] != 0)
+                    pBorders = SReadWord((uint) (p_borders[type] + Level * 2)) | ((p_borders[type] >> 16) << 16);
+                if (p_locks[type] != 0)
+                    pLocks = Snes2pc(p_locks[type]);
+                if (p_capsulepos[type] != 0)
+                    pCapsulePos = Snes2pc(p_capsulepos[type]);
 
-                uint pEvents = Snes2pc(SReadWord((uint) ((expandedROM ? ((eventBank << 16) | 0xFFE0) : p_events[type]) + level * 2)) | (eventBank << 16));
+                uint pEvents = Snes2pc(SReadWord((uint) ((expandedROM ? ((eventBank << 16) | 0xFFE0) : p_events[type]) + Level * 2)) | (eventBank << 16));
                 uint pevent = pEvents;
                 uint oldpevent = pevent;
 
@@ -2265,7 +2281,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
                         e.eventSubId = rom[pevent++];
                         //temp fix for mmx1/mmx2 to show heart tank graphics
-                        if (e.type == 0x0 && e.eventId == 0xB) e.eventSubId = 0x4;
+                        if (e.type == 0x0 && e.eventId == 0xB)
+                            e.eventSubId = 0x4;
 
                         e.xpos = ReadWord(pevent);
                         pevent += 2;
@@ -2284,7 +2301,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             }
             else
             {
-                uint levelAddr = Snes2pc(SReadWord((uint) (p_events[type] + level * 2)) | (eventBank << 16));
+                uint levelAddr = Snes2pc(SReadWord((uint) (p_events[type] + Level * 2)) | (eventBank << 16));
                 uint blockId = 0;
 
                 var workQueue = new Deque<uint>(new uint[] { 0x0 });
@@ -2337,7 +2354,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
                             if (e.eventId is 0x6 or 0xE)
                             {
-                                ushort offset = SReadWord(0xC14A3E + 2 * level);
+                                ushort offset = SReadWord(0xC14A3E + 2 * Level);
                                 index = SReadByte((uint) (0xC14A3E + offset + 2 * index));
                             }
 
@@ -2354,7 +2371,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
         internal void LoadProperties()
         {
-            if (p_properties[type] == 0) return;
+            if (p_properties[type] == 0)
+                return;
 
             if (type != 2)
             {
@@ -2518,7 +2536,10 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             }
             //numCheckpoints = subIds.size() + 1;
 
-            if (expandedROM && expandedVersion >= 3) { numCheckpoints = expandedCheckpointSize; }
+            if (expandedROM && expandedVersion >= 3)
+            {
+                numCheckpoints = expandedCheckpointSize;
+            }
 
             checkpointInfoTable.Clear();
 
@@ -2531,13 +2552,14 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
                 if (expandedCheckpointSize > 0)
                 {
-                    ci.offset = Snes2pc((uint) (p_checkp[type] + SReadWord((uint) (p_checkp[type] + level * 2)) + i * 2));
+                    ci.offset = Snes2pc((uint) (p_checkp[type] + SReadWord((uint) (p_checkp[type] + Level * 2)) + i * 2));
                 }
 
                 ci.objLoad = ptr++; // LPBYTE(ptr++);
                 ci.tileLoad = ptr++;
                 ci.palLoad = ptr++;
-                if (type > 0) ci.byte0 = ptr++;
+                if (type > 0)
+                    ci.byte0 = ptr++;
                 ci.chX = ptr++;
                 ptr++;
                 ci.chY = ptr++;
@@ -2564,8 +2586,10 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 ptr++;
                 ci.scroll = ptr++;
                 ci.telDwn = ptr++;
-                if (type > 0) ci.byte1 = ptr++;
-                if (type > 1) ci.byte2 = ptr++;
+                if (type > 0)
+                    ci.byte1 = ptr++;
+                if (type > 1)
+                    ci.byte2 = ptr++;
 
                 checkpointInfoTable.Add(ci);
             }
@@ -2588,13 +2612,14 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
         internal uint SaveEvents(bool sizeOnly = false)
         {
-            if (p_events[type] == 0) return 0;
+            if (p_events[type] == 0)
+                return 0;
 
             uint size = 0;
 
             if (type < 3)
             {
-                uint pEvents = Snes2pc(SReadWord((uint) ((expandedROM ? ((eventBank << 16) | 0xFFE0) : p_events[type]) + level * 2)) | (eventBank << 16));
+                uint pEvents = Snes2pc(SReadWord((uint) ((expandedROM ? ((eventBank << 16) | 0xFFE0) : p_events[type]) + Level * 2)) | (eventBank << 16));
                 uint pevent = pEvents;
 
                 uint blockId = 0;
@@ -2640,8 +2665,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                             {
                                 // update the capsule position
                                 // skip sigma boss levels for now
-                                WriteDWord((uint) (pCapsulePos + level * 4 + 0), e.xpos);
-                                WriteDWord((uint) (pCapsulePos + level * 4 + 2), e.ypos);
+                                WriteDWord((uint) (pCapsulePos + Level * 4 + 0), e.xpos);
+                                WriteDWord((uint) (pCapsulePos + Level * 4 + 2), e.ypos);
                             }
                         }
 
@@ -2692,7 +2717,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             //tempsceneLayout matches sceneLayout after for loop
             for (int y = 0; y < levelHeight; y++)
             {
-                if (oldWidth > levelWidth && y >= 1) i += oldWidth - levelWidth;
+                if (oldWidth > levelWidth && y >= 1)
+                    i += oldWidth - levelWidth;
 
                 for (int x = 0; x < levelWidth; x++)
                 {
@@ -2707,7 +2733,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                     count++;
                 sceneLayout[i] = *(playout + i + 3);
             }*/
-            if (type == 1 && level == 7 && !expandedROM)
+            if (type == 1 && Level == 7 && !expandedROM)
                 special_case = true;
 
             uint size = (uint) CompressionCore.LayoutRLE(levelWidth, levelHeight, rom, (int) tempSceneUsed, tempSceneLayout, 0, rom, (int) playout, sizeOnly, special_case);
@@ -2732,8 +2758,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                            : (type == 1) ? 0x31DD1
                            : 0x32172);
 
-            ushort iLevel = (ushort) (level & 0xFF);
-            byte palSelect = (byte) (rom[checkpointInfoTable[point].palLoad] + palLoadOffset);
+            ushort iLevel = (ushort) (Level & 0xFF);
+            byte palSelect = (byte) (rom[checkpointInfoTable[Point].palLoad] + palLoadOffset);
             for (uint i = 0; i <= palSelect; ++i)
             {
                 int baseIndex = (int) (ReadWord((uint) (paletteOffset + iLevel * 2)) + i * 2);
@@ -2802,7 +2828,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 // decompress the scene to map data
                 byte[] mapRam = new byte[0x10000];
 
-                byte idx = rom[Snes2pc(p_scenes[type] + level)];
+                byte idx = rom[Snes2pc(p_scenes[type] + Level)];
                 ushort offset = ReadWord(Snes2pc(0x808158 + idx));
                 uint pConfigGfx = Snes2pc(0x800000 | offset);
                 byte gfxID = rom[pConfigGfx];
@@ -2897,7 +2923,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                         byte scene = rom[playout++];
                         sceneLayout[writeIndex++] = scene;
 
-                        if (scene + 1 > sceneUsed) sceneUsed = (byte) (scene + 1);
+                        if (scene + 1 > sceneUsed)
+                            sceneUsed = (byte) (scene + 1);
                     }
                 }
             }
@@ -2916,7 +2943,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             //return !transparent ? 0 : (int) (Expand(color & 0x1F) | (Expand((color & 0x3E0) >> 5) << 8) | (Expand((color & 0x7C00) >> 10) << 16) | 0xFF000000);
             !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
 
-        private Tile AddTile(World world, uint tile, bool transparent = false)
+        private Tile AddTile(World world, uint tile, bool transparent = false, bool background = false)
         {
             uint image = (tile & 0x3FF) << 6;
 
@@ -2937,7 +2964,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             if (!notNull)
                 return null;
 
-            Tile wtile = world.AddTile(imageData);
+            Tile wtile = world.AddTile(imageData, background);
             return wtile;
         }
 
@@ -2994,7 +3021,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             {
                 byte colisionByte = rom[pCollisions + i];
                 var collisionData = (CollisionData) colisionByte;
-                Map wmap = world.AddMap(collisionData);
+                Map wmap = world.AddMap(collisionData, background);
 
                 uint tileData = ReadWord(map);
                 byte palette = (byte) ((tileData >> 10) & 7);
@@ -3003,7 +3030,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 bool mirrored = (tileData & 0x4000) != 0;
                 bool upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                Tile tile = AddTile(world, tileData, true);
+                Tile tile = AddTile(world, tileData, true, background);
                 wmap.SetTile(new Vector(0, 0), tile, palette, flipped, mirrored, upLayer);
                 WriteTile(rect, tile?.data, i, 0, 0, palette, flipped, mirrored);
 
@@ -3013,7 +3040,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 mirrored = (tileData & 0x4000) != 0;
                 upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                tile = AddTile(world, tileData, true);
+                tile = AddTile(world, tileData, true, background);
                 wmap.SetTile(new Vector(TILE_SIZE, 0), tile, palette, flipped, mirrored, upLayer);
                 WriteTile(rect, tile?.data, i, 0, 1, palette, flipped, mirrored);
 
@@ -3023,7 +3050,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 mirrored = (tileData & 0x4000) != 0;
                 upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                tile = AddTile(world, tileData, true);
+                tile = AddTile(world, tileData, true, background);
                 wmap.SetTile(new Vector(0, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
                 WriteTile(rect, tile?.data, i, 1, 0, palette, flipped, mirrored);
 
@@ -3033,7 +3060,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                 mirrored = (tileData & 0x4000) != 0;
                 upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                tile = AddTile(world, tileData, true);
+                tile = AddTile(world, tileData, true, background);
                 wmap.SetTile(new Vector(TILE_SIZE, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
                 WriteTile(rect, tile?.data, i, 1, 1, palette, flipped, mirrored);
 
@@ -3058,22 +3085,22 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             }
         }
 
-        private void LoadBlock(World world, int x, int y, ushort index)
+        private void LoadBlock(World world, int x, int y, ushort index, bool background = false)
         {
             uint pmap = (uint) (pBlocks + index * 4);
             x <<= 1;
             y <<= 1;
-            LoadMap(world, x + 0, y + 0, ReadWord(pmap));
+            LoadMap(world, x + 0, y + 0, ReadWord(pmap), background);
             pmap += 2;
-            LoadMap(world, x + 1, y + 0, ReadWord(pmap));
+            LoadMap(world, x + 1, y + 0, ReadWord(pmap), background);
             pmap += 2;
-            LoadMap(world, x + 0, y + 1, ReadWord(pmap));
+            LoadMap(world, x + 0, y + 1, ReadWord(pmap), background);
             pmap += 2;
-            LoadMap(world, x + 1, y + 1, ReadWord(pmap));
+            LoadMap(world, x + 1, y + 1, ReadWord(pmap), background);
             pmap += 2;
         }
 
-        private void LoadScene(World world, int x, int y, ushort index)
+        private void LoadScene(World world, int x, int y, ushort index, bool background = false)
         {
             x <<= 3;
             y <<= 3;
@@ -3081,7 +3108,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
             for (int iy = 0; iy < 8; iy++)
                 for (int ix = 0; ix < 8; ix++)
                 {
-                    LoadBlock(world, x + ix, y + iy, ReadWord(pblock));
+                    LoadBlock(world, x + ix, y + iy, ReadWord(pblock), background);
                     pblock += 2;
                 }
         }
@@ -3125,8 +3152,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
 
             world.Resize(levelHeight, levelWidth, background);
 
-            if (!background)
-                RefreshMapCache(world, background);
+            RefreshMapCache(world, background);
 
             uint tmpLayout = 0;
             for (int y = 0; y < levelHeight; y++)
@@ -3164,7 +3190,7 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                         uint pBase;
                         if (expandedROM && expandedROMVersion >= 4)
                         {
-                            pBase = Snes2pc((int) (lockBank << 16) | (0x8000 + level * 0x800 + info.eventSubId * 0x20));
+                            pBase = Snes2pc((int) (lockBank << 16) | (0x8000 + Level * 0x800 + info.eventSubId * 0x20));
                         }
                         else
                         {
@@ -3215,7 +3241,8 @@ internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
                             int lockRight = lockX0;
                             int lockBottom = lockY0;
 
-                            if (type > 0) camOffset -= 0x10;
+                            if (type > 0)
+                                camOffset -= 0x10;
 
                             if (camOffset is 0x1E5E or 0x1E6E or 0x1E68 or 0x1E60)
                             {

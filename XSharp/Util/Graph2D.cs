@@ -21,8 +21,8 @@ namespace MMX.Util
         /// <param name="col">Coluna</param>
         public Graph2DCoords(int row, int col)
         {
-            this.Row = row;
-            this.Col = col;
+            Row = row;
+            Col = col;
         }
 
         /// <summary>
@@ -195,8 +195,8 @@ namespace MMX.Util
         /// <param name="fetch">Preenchimento</param>
         public Graph2D(int rowCount, int colCount, bool fetch = true)
         {
-            this.RowCount = rowCount;
-            this.ColCount = colCount;
+            RowCount = rowCount;
+            ColCount = colCount;
 
             nodes = new Node[colCount, rowCount];
 

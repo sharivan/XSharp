@@ -47,16 +47,16 @@ namespace MMX.Engine
         /// <param name="loop">Especifica se a animação estará em looping ou não</param>
         public Animation(Sprite sprite, int index, SpriteSheet sheet, string frameSequenceName, FixedSingle rotation, int initialSequenceIndex = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
         {
-            this.Sprite = sprite;
-            this.Index = index;
-            this.Sheet = sheet;
+            Sprite = sprite;
+            Index = index;
+            Sheet = sheet;
             sequence = sheet.GetFrameSequence(frameSequenceName);
-            this.InitialSequenceIndex = initialSequenceIndex;
+            InitialSequenceIndex = initialSequenceIndex;
             Visible = startVisible;
             animating = startOn;
-            this.Mirrored = mirrored;
-            this.Flipped = flipped;
-            this.Rotation = rotation;
+            Mirrored = mirrored;
+            Flipped = flipped;
+            Rotation = rotation;
 
             Scale = 1;
 

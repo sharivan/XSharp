@@ -48,9 +48,9 @@ namespace MMX.Engine.World
 
         internal Map(World world, int id, CollisionData collisionData = CollisionData.NONE)
         {
-            this.World = world;
-            this.ID = id;
-            this.CollisionData = collisionData;
+            World = world;
+            ID = id;
+            CollisionData = collisionData;
 
             tiles = new Tile[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
             palette = new int[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];

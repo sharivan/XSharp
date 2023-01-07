@@ -25,8 +25,8 @@ namespace MMX.Engine.World
 
         internal Block(World world, int id)
         {
-            this.World = world;
-            this.ID = id;
+            World = world;
+            ID = id;
 
             maps = new Map[SIDE_MAPS_PER_BLOCK, SIDE_MAPS_PER_BLOCK];
         }

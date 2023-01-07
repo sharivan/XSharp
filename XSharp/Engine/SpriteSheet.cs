@@ -37,9 +37,9 @@ namespace MMX.Engine
 
             internal FrameSequence(SpriteSheet sheet, string name, int loopFromSequenceIndex = -1)
             {
-                this.Sheet = sheet;
-                this.Name = name;
-                this.LoopFromSequenceIndex = loopFromSequenceIndex;
+                Sheet = sheet;
+                Name = name;
+                LoopFromSequenceIndex = loopFromSequenceIndex;
 
                 frames = new List<Frame>();
             }
@@ -128,11 +128,11 @@ namespace MMX.Engine
 
             internal Frame(int index, MMXBox boundingBox, MMXBox collisionBox, Texture bitmap, bool precached)
             {
-                this.Index = index;
-                this.BoundingBox = boundingBox;
-                this.CollisionBox = collisionBox;
-                this.Bitmap = bitmap;
-                this.Precached = precached;
+                Index = index;
+                BoundingBox = boundingBox;
+                CollisionBox = collisionBox;
+                Bitmap = bitmap;
+                Precached = precached;
             }
 
             public override bool Equals(object obj) => obj is Frame frame &&
@@ -185,10 +185,10 @@ namespace MMX.Engine
 
         public SpriteSheet(GameEngine engine, string name, bool disposeBitmap = false, bool precache = false)
         {
-            this.Engine = engine;
-            this.Name = name;
-            this.Precache = precache;
-            this.DisposeBitmap = disposeBitmap;
+            Engine = engine;
+            Name = name;
+            Precache = precache;
+            DisposeBitmap = disposeBitmap;
 
             frames = new List<Frame>();
             sequences = new Dictionary<string, FrameSequence>();
@@ -198,7 +198,7 @@ namespace MMX.Engine
             this(engine, name, precache)
         {
             CurrentBitmap = bitmap;
-            this.DisposeBitmap = disposeBitmap;
+            DisposeBitmap = disposeBitmap;
         }
 
         public SpriteSheet(GameEngine engine, string name, string imageFileName, bool precache = false) :

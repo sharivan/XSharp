@@ -212,10 +212,6 @@ namespace MMX.Engine
 
             if (world != null)
             {
-                leftMaskComputed = false;
-                upMaskComputed = false;
-                rightMaskComputed = false;
-
                 DownMaskFlags = world.ComputedLandedState(box, downCollisionPlacements, out landedSlope, maskSize, CollisionFlags.NONE);
                 if (DownMaskFlags == CollisionFlags.SLOPE)
                 {
@@ -232,9 +228,13 @@ namespace MMX.Engine
                 else
                     wasLandedOnSlope = false;*/
 
-                //upMaskFlags = world.GetCollisionFlags(upCollider, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
-                //leftMaskFlags = world.GetCollisionFlags(leftCollider, leftCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.LEFT_WALL);
-                //rightMaskFlags = world.GetCollisionFlags(rightCollider, rightCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.RIGHT_WALL);
+                upMaskFlags = world.GetCollisionFlags(UpCollider, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                leftMaskFlags = world.GetCollisionFlags(LeftCollider, leftCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.LEFT_WALL);
+                rightMaskFlags = world.GetCollisionFlags(RightCollider, rightCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.RIGHT_WALL);
+
+                leftMaskComputed = true;
+                upMaskComputed = true;
+                rightMaskComputed = true;
             }
             else
             {

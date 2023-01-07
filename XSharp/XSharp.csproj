@@ -56,6 +56,9 @@
     <StartupObject>XSharp.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="System.Configuration.ConfigurationManager">
+      <Version>7.0.0</Version>
+    </PackageReference>
     <Reference Include="DynamicLua, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DynamicLua.1.1.2.0\lib\net40-Client\DynamicLua.dll</HintPath>
     </Reference>
@@ -132,7 +135,7 @@
     <Compile Include="Engine\Weapons\BusterSemiCharged.cs" />
     <Compile Include="Engine\Weapons\ChargingEffect.cs" />
     <Compile Include="Engine\CollisionPlacement.cs" />
-    <Compile Include="Engine\CollisionResult.cs" />
+    <Compile Include="Engine\CollisionFlags.cs" />
     <Compile Include="Engine\CollisionData.cs" />
     <Compile Include="Engine\CollisionSide.cs" />
     <Compile Include="Engine\Consts.cs" />

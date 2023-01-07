@@ -22,7 +22,7 @@ namespace MMX.ROM
 
         public int Count => front.Count + back.Count - frontDeleted - backDeleted;
 
-        public bool IsEmpty => this.Count == 0;
+        public bool IsEmpty => Count == 0;
 
         public IEnumerable<T> Reversed
         {
@@ -106,7 +106,7 @@ namespace MMX.ROM
         {
             if (range != null)
             {
-                foreach (T item in range) this.AddFirst(item);
+                foreach (T item in range) AddFirst(item);
             }
         }
 
@@ -114,7 +114,7 @@ namespace MMX.ROM
         {
             if (range != null)
             {
-                foreach (T item in range) this.AddLast(item);
+                foreach (T item in range) AddLast(item);
             }
         }
 
@@ -145,7 +145,7 @@ namespace MMX.ROM
         {
             if (array == null) throw new ArgumentNullException("Array cannot be null");
             if (index < 0) throw new ArgumentOutOfRangeException("Index cannot be negative");
-            if (array.Length < index + this.Count) throw new ArgumentException("Index is invalid");
+            if (array.Length < index + Count) throw new ArgumentException("Index is invalid");
             int i = index;
 
             foreach (T item in this)
@@ -227,9 +227,9 @@ namespace MMX.ROM
 
         public T[] ToArray()
         {
-            if (this.Count == 0) return new T[0];
-            var result = new T[this.Count];
-            this.CopyTo(result, 0);
+            if (Count == 0) return new T[0];
+            var result = new T[Count];
+            CopyTo(result, 0);
             return result;
         }
 
@@ -253,9 +253,9 @@ namespace MMX.ROM
 
         public bool TryPeekFirst(out T item)
         {
-            if (!this.IsEmpty)
+            if (!IsEmpty)
             {
-                item = this.PeekFirst();
+                item = PeekFirst();
                 return true;
             }
 
@@ -265,9 +265,9 @@ namespace MMX.ROM
 
         public bool TryPeekLast(out T item)
         {
-            if (!this.IsEmpty)
+            if (!IsEmpty)
             {
-                item = this.PeekLast();
+                item = PeekLast();
                 return true;
             }
 
@@ -277,9 +277,9 @@ namespace MMX.ROM
 
         public bool TryPopFirst(out T item)
         {
-            if (!this.IsEmpty)
+            if (!IsEmpty)
             {
-                item = this.PopFirst();
+                item = PopFirst();
                 return true;
             }
 
@@ -289,9 +289,9 @@ namespace MMX.ROM
 
         public bool TryPopLast(out T item)
         {
-            if (!this.IsEmpty)
+            if (!IsEmpty)
             {
-                item = this.PopLast();
+                item = PopLast();
                 return true;
             }
 
@@ -307,9 +307,9 @@ namespace MMX.ROM
 
         // explicit method implementations
 
-        void ICollection.CopyTo(Array array, int index) => this.CopyTo((T[]) array, index);
+        void ICollection.CopyTo(Array array, int index) => CopyTo((T[]) array, index);
 
-        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
     class DequeTest

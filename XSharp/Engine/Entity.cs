@@ -68,6 +68,8 @@ namespace MMX.Engine
             set => SetBoundingBox(value);
         }
 
+        public Box HitBox => GetHitBox();
+
         public bool Alive => alive;
 
         /// <summary>
@@ -77,7 +79,7 @@ namespace MMX.Engine
 
         public bool Respawnable => respawnable;
 
-        public bool Offscreen => (BoundingBox & engine.World.Screen.BoudingBox).Area == 0;
+        public bool Offscreen => (BoundingBox & engine.World.Screen.BoundingBox).Area == 0;
 
         protected Entity(GameEngine engine, Vector origin)
         {
@@ -122,6 +124,8 @@ namespace MMX.Engine
 
         protected abstract Box GetBoundingBox();
 
+        protected virtual Box GetHitBox() => GetBoundingBox();
+
         protected virtual void SetBoundingBox(Box boudingBox)
         {
         }
@@ -160,7 +164,7 @@ namespace MMX.Engine
 
             PostThink(); // Realiza o pós-pensamento do objeto
 
-            List<Entity> touching = engine.partition.Query(BoundingBox, this, childs);
+            List<Entity> touching = engine.partition.Query(HitBox, this, childs);
 
             // Processa a lista global de objetos que anteriormente estavam tocando esta entidade no frame anterior
             int count = touchingEntities.Count;

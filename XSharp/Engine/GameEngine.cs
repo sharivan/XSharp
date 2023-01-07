@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Configuration;
 
 using SharpDX;
 using SharpDX.Direct3D9;
@@ -21,6 +22,7 @@ using MMX.Engine.World;
 using MMX.Engine.Weapons;
 using MMX.Engine.Enemies;
 
+using Configuration = System.Configuration.Configuration;
 using Device9 = SharpDX.Direct3D9.Device;
 using DXSprite = SharpDX.Direct3D9.Sprite;
 using MMXBox = MMX.Geometry.Box;
@@ -29,9 +31,171 @@ using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using DSoundCooperativeLevel = SharpDX.DirectSound.CooperativeLevel;
 
 using static MMX.Engine.Consts;
+using static System.Collections.Specialized.BitVector32;
 
 namespace MMX.Engine
 {
+    public sealed class ProgramConfiguratinSection : ConfigurationSection
+    {
+        public ProgramConfiguratinSection()
+        {
+        }
+
+        [ConfigurationProperty("left",
+            DefaultValue = -1,
+            IsRequired = false
+            )]
+        public int Left
+        {
+            get => (int) this["left"];
+
+            set => this["left"] = value;
+        }
+
+        [ConfigurationProperty("top",
+            DefaultValue = -1,
+            IsRequired = false
+            )]
+        public int Top
+        {
+            get => (int) this["top"];
+
+            set => this["top"] = value;
+        }
+
+        [ConfigurationProperty("width",
+            DefaultValue = -1,
+            IsRequired = false
+            )]
+        public int Width
+        {
+            get => (int) this["width"];
+
+            set => this["width"] = value;
+        }
+
+        [ConfigurationProperty("height",
+            DefaultValue = -1,
+            IsRequired = false
+            )]
+        public int Height
+        {
+            get => (int) this["height"];
+
+            set => this["height"] = value;
+        }
+
+        [ConfigurationProperty("drawCollisionBox",
+            DefaultValue = DEBUG_DRAW_COLLISION_BOX,
+            IsRequired = false
+            )]
+        public bool DrawCollisionBox
+        {
+            get => (bool) this["drawCollisionBox"];
+
+            set => this["drawCollisionBox"] = value;
+        }
+
+        [ConfigurationProperty("showColliders",
+            DefaultValue = DEBUG_SHOW_COLLIDERS,
+            IsRequired = false
+            )]
+        public bool ShowColliders
+        {
+            get => (bool) this["showColliders"];
+
+            set => this["showColliders"] = value;
+        }
+
+        [ConfigurationProperty("drawMapBounds",
+            DefaultValue = DEBUG_DRAW_MAP_BOUNDS,
+            IsRequired = false
+            )]
+        public bool DrawMapBounds
+        {
+            get => (bool) this["drawMapBounds"];
+
+            set => this["drawMapBounds"] = value;
+        }
+
+        [ConfigurationProperty("drawTouchingMapBounds",
+            DefaultValue = DEBUG_HIGHLIGHT_TOUCHING_MAPS,
+            IsRequired = false
+            )]
+        public bool DrawTouchingMapBounds
+        {
+            get => (bool) this["drawTouchingMapBounds"];
+
+            set => this["drawTouchingMapBounds"] = value;
+        }
+
+        [ConfigurationProperty("drawHighlightedPointingTiles",
+            DefaultValue = DEBUG_HIGHLIGHT_POINTED_TILES,
+            IsRequired = false
+            )]
+        public bool DrawHighlightedPointingTiles
+        {
+            get => (bool) this["drawHighlightedPointingTiles"];
+
+            set => this["drawHighlightedPointingTiles"] = value;
+        }
+
+        [ConfigurationProperty("drawPlayerOriginAxis",
+            DefaultValue = DEBUG_DRAW_PLAYER_ORIGIN_AXIS,
+            IsRequired = false
+            )]
+        public bool DrawPlayerOriginAxis
+        {
+            get => (bool) this["drawPlayerOriginAxis"];
+
+            set => this["drawPlayerOriginAxis"] = value;
+        }
+
+        [ConfigurationProperty("showInfoText",
+            DefaultValue = DEBUG_SHOW_INFO_TEXT,
+            IsRequired = false
+            )]
+        public bool ShowInfoText
+        {
+            get => (bool) this["showInfoText"];
+
+            set => this["showInfoText"] = value;
+        }
+
+        [ConfigurationProperty("showCheckpointBounds",
+            DefaultValue = DEBUG_DRAW_CHECKPOINT,
+            IsRequired = false
+            )]
+        public bool ShowCheckpointBounds
+        {
+            get => (bool) this["showCheckpointBounds"];
+
+            set => this["showCheckpointBounds"] = value;
+        }
+
+        [ConfigurationProperty("showTriggerBounds",
+            DefaultValue = DEBUG_SHOW_TRIGGERS,
+            IsRequired = false
+            )]
+        public bool ShowTriggerBounds
+        {
+            get => (bool) this["showTriggerBounds"];
+
+            set => this["showTriggerBounds"] = value;
+        }
+        [ConfigurationProperty("showTriggerCameraLook",
+            DefaultValue = DEBUG_SHOW_CAMERA_TRIGGER_EXTENSIONS,
+            IsRequired = false
+            )]
+        public bool ShowTriggerCameraLook
+        {
+            get => (bool) this["showTriggerCameraLook"];
+
+            set => this["showTriggerCameraLook"] = value;
+        }
+
+    }
+
     public class GameEngine : IDisposable
     {
         public const VertexFormat D3DFVF_TLVERTEX = VertexFormat.Position | VertexFormat.Diffuse | VertexFormat.Texture1;
@@ -132,10 +296,10 @@ namespace MMX.Engine
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
         internal List<RespawnEntry> respawnableEntities;
-        private int currentLevel;
+        private ushort currentLevel;
         //private int enemyCount;
         private bool changeLevel;
-        private int levelToChange;
+        private ushort levelToChange;
         private bool gameOver;
         private string currentStageMusic;
         private bool loadingLevel;
@@ -303,10 +467,12 @@ namespace MMX.Engine
 
                     if (romLoaded)
                     {
-                        mmx.SetLevel(INITIAL_LEVEL, (ushort) currentCheckpoint.Point);
+                        mmx.SetLevel(mmx.Level, (ushort) currentCheckpoint.Point);
                         mmx.LoadTilesAndPalettes();
                         mmx.LoadPalette(World, false);
+                        mmx.LoadPalette(World, true);
                         mmx.RefreshMapCache(World, false);
+                        mmx.RefreshMapCache(World, true);
                     }
                 }
             }
@@ -417,31 +583,6 @@ namespace MMX.Engine
                 joystick.Properties.BufferSize = 2048;
                 joystick.Acquire();
             }
-
-            /*screenBoxBrush = new SolidColorBrush(context, new Color4(1, 1, 0, 0.5F));
-            hitBoxBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 0.5F));
-            hitBoxBorderBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 1));
-            touchingMapBrush = new SolidColorBrush(context, new Color4(0, 0, 1, 1));
-            playerOriginBrush = new SolidColorBrush(context, new Color4(0, 1, 1, 1));
-            coordsTextBrush = new SolidColorBrush(context, new Color4(1, 1, 1, 1));
-            checkpointBoxBrush = new SolidColorBrush(context, new Color4(1, 0.5F, 0, 1));
-            triggerBoxBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 1));
-            cameraEventExtensionBrush = new SolidColorBrush(context, new Color4(1, 1, 0, 1));
-            downColliderBrush = new SolidColorBrush(context, new Color4(0, 1, 0, 1));
-            upColliderBrush = new SolidColorBrush(context, new Color4(0, 0, 1, 1));
-            leftColliderBrush = new SolidColorBrush(context, new Color4(1, 0, 0, 1));
-            rightColliderBrush = new SolidColorBrush(context, new Color4(1, 1, 0, 1));
-
-            coordsTextFormat = new TextFormat(dwFactory, "Arial", 24)
-            {
-                TextAlignment = DWTextAlignment.Leading,
-                ParagraphAlignment = ParagraphAlignment.Center
-            };
-            highlightMapTextFormat = new TextFormat(dwFactory, "Arial", 24)
-            {
-                TextAlignment = DWTextAlignment.Leading,
-                ParagraphAlignment = ParagraphAlignment.Center
-            };*/
 
             World = new MMXWorld(this, 32, 32);
             partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
@@ -804,8 +945,6 @@ namespace MMX.Engine
             sequence = xEffectsSpriteSheet.AddFrameSquence("ChargingLevel2");
             AddChargingEffectFrames(sequence, 2);
 
-            //xEffectsSpriteSheet.ReleaseCurrentBitmap();
-
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-driller.png"))
             {
                 var texture = CreateD2DBitmapFromStream(stream);
@@ -858,6 +997,25 @@ namespace MMX.Engine
 
             if (romLoaded)
                 mmx.UpdateVRAMCache();
+
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
+            {
+                section = new ProgramConfiguratinSection();
+                config.Sections.Add("ProgramConfiguratinSection", section);
+                config.Save();
+            }
+
+            drawCollisionBox = section.DrawCollisionBox;
+            showColliders = section.ShowColliders;
+            drawMapBounds = section.DrawMapBounds;
+            drawTouchingMapBounds = section.DrawTouchingMapBounds;
+            drawHighlightedPointingTiles = section.DrawHighlightedPointingTiles;
+            drawPlayerOriginAxis = section.DrawPlayerOriginAxis;
+            showInfoText = section.ShowInfoText;
+            showCheckpointBounds = section.ShowCheckpointBounds;
+            showTriggerBounds = section.ShowTriggerBounds;
+            showTriggerCameraLook = section.ShowTriggerCameraLook;
         }
 
         private void AddChargingEffectFrames(SpriteSheet.FrameSequence sequence, int level)
@@ -1541,7 +1699,7 @@ namespace MMX.Engine
             {
                 foreach (RespawnEntry entry in respawnableEntities)
                 {
-                    if (!entry.Entity.Alive && (World.Screen.BoudingBox & entry.Box).Area > 0)
+                    if (!entry.Entity.Alive && (World.Screen.BoundingBox & entry.Box).Area > 0)
                     {
                         entry.Entity.Origin = entry.Box.Origin;
                         entry.Entity.Spawn();
@@ -1661,7 +1819,7 @@ namespace MMX.Engine
         public void NextLevel()
         {
             changeLevel = true;
-            levelToChange = currentLevel + 1;
+            levelToChange = (ushort) (currentLevel + 1);
         }
 
         internal void OnGameOver() => gameOver = true;
@@ -1692,7 +1850,7 @@ namespace MMX.Engine
             World.Screen.FocusOn = Player;
         }
 
-        public void LoadLevel(int level)
+        public void LoadLevel(ushort level)
         {
             paused = false;
             lock (this)
@@ -1705,10 +1863,12 @@ namespace MMX.Engine
 
                 if (romLoaded)
                 {
-                    mmx.SetLevel((ushort) level, 0);
+                    mmx.SetLevel(level, 0);
+
                     mmx.LoadLevel();
-                    mmx.LoadToWorld(World);
                     mmx.LoadTriggers(this);
+                    mmx.LoadToWorld(World, false);
+
                     mmx.LoadBackground();
                     mmx.LoadToWorld(World, true);
                 }
@@ -2025,7 +2185,25 @@ namespace MMX.Engine
                 if (drawSprites)
                 {
                     // Render sprites
-                    List<Entity> objects = partition.Query(World.Screen.BoudingBox);
+                    List<Entity> objects = partition.Query(World.Screen.BoundingBox);
+                    foreach (Entity obj in objects)
+                    {
+                        if (!obj.Alive || obj.MarkedToRemove || obj.Equals(Player))
+                            continue;
+
+                        if (obj is not Sprite sprite)
+                            continue;
+
+                        sprite.Render();
+                    }
+                }
+
+                if (drawUpLayer)
+                    World.RenderForeground(true);
+
+                if (drawSprites && (drawCollisionBox || showTriggerBounds))
+                {
+                    List<Entity> objects = partition.Query(World.BoundingBox);
                     foreach (Entity obj in objects)
                     {
                         if (!obj.Alive || obj.MarkedToRemove || obj.Equals(Player))
@@ -2033,18 +2211,12 @@ namespace MMX.Engine
 
                         switch (obj)
                         {
-                            case Sprite sprite:
+                            case Sprite sprite when drawCollisionBox:
                             {
-                                sprite.Render();
-
-                                if (drawCollisionBox)
-                                {
-                                    MMXBox collisionBox = sprite.CollisionBox;
-                                    var rect = WorldBoxToScreen(collisionBox);
-                                    DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
-                                    FillRectangle(rect, HITBOX_COLOR);
-                                }
-
+                                MMXBox collisionBox = sprite.CollisionBox;
+                                var rect = WorldBoxToScreen(collisionBox);
+                                DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
+                                FillRectangle(rect, HITBOX_COLOR);
                                 break;
                             }
 
@@ -2059,22 +2231,14 @@ namespace MMX.Engine
                                 if (showTriggerCameraLook && trigger is CameraLockTrigger camTrigger)
                                 {
                                     Vector extensionOrigin = camTrigger.ExtensionOrigin;
-                                    for (int i = 0; i < camTrigger.ExtensionCount; i++)
-                                    {
-                                        Vector extension = camTrigger.GetExtension(i);
+                                    foreach (var extension in camTrigger.Extensions)
                                         DrawLine(WorldVectorToScreen(extensionOrigin), WorldVectorToScreen(extensionOrigin + extension), 4, CAMERA_LOCK_COLOR);
-                                    }
                                 }
 
                                 break;
                             }
                         }
                     }
-                }
-
-                if (drawUpLayer)
-                {
-                    World.RenderForeground(true);
                 }
 
                 if (drawTouchingMapBounds)
@@ -2181,12 +2345,29 @@ namespace MMX.Engine
         public void Dispose()
         {
             World.Dispose();
-
             Player?.Dispose();
-
             mmx?.Dispose();
-
             xSpriteSheet.Dispose();
+
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
+            {
+                section = new ProgramConfiguratinSection();
+                config.Sections.Add("ProgramConfiguratinSection", section);
+            }
+
+            section.DrawCollisionBox = drawCollisionBox;
+            section.ShowColliders = showColliders;
+            section.DrawMapBounds = drawMapBounds;
+            section.DrawTouchingMapBounds = drawTouchingMapBounds;
+            section.DrawHighlightedPointingTiles = drawHighlightedPointingTiles;
+            section.DrawPlayerOriginAxis = drawPlayerOriginAxis;
+            section.ShowInfoText = showInfoText;
+            section.ShowCheckpointBounds = showCheckpointBounds;
+            section.ShowTriggerBounds = showTriggerBounds;
+            section.ShowTriggerCameraLook = showTriggerCameraLook;
+
+            config.Save();
         }
 
         /*public MMXVector CheckCollisionWithTiles(MMXBox collisionBox, MMXVector dir, CollisionFlags ignore = CollisionFlags.NONE)

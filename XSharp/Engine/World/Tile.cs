@@ -22,8 +22,8 @@
 
         internal Tile(World world, int id, byte[] data)
         {
-            this.World = world;
-            this.ID = id;
+            World = world;
+            ID = id;
             this.data = data;
         }
     }

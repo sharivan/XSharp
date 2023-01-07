@@ -10,8 +10,8 @@ namespace MMX.Engine.Weapons
 
         protected Weapon(GameEngine engine, Sprite shooter, string name, Vector origin, Direction direction, SpriteSheet sheet) : base(engine, name, origin, sheet, true)
         {
-            this.Shooter = shooter;
-            this.Direction = direction;
+            Shooter = shooter;
+            Direction = direction;
 
             CanGoOutOfMapBounds = true;
         }

@@ -37,7 +37,7 @@ namespace MMX.Math
 
         public int Signal => RawValue == 0 ? 0 : RawValue > 0 ? 1 : -1;
 
-        private FixedSingle(int rawValue) => this.RawValue = rawValue;
+        private FixedSingle(int rawValue) => RawValue = rawValue;
 
         public FixedSingle(float value) => RawValue = (int) (value * FIXED_DIVISOR);
 
@@ -179,7 +179,7 @@ namespace MMX.Math
 
         public int Signal => RawValue == 0 ? 0 : RawValue > 0 ? 1 : -1;
 
-        private FixedDouble(long rawValue) => this.RawValue = rawValue;
+        private FixedDouble(long rawValue) => RawValue = rawValue;
 
         public FixedDouble(float value) => RawValue = (long) (value * FIXED_DIVISOR);
 
@@ -321,10 +321,10 @@ namespace MMX.Math
 
         private Interval(FixedSingle min, bool closedLeft, FixedSingle max, bool closedRight)
         {
-            this.Min = min;
-            this.IsClosedLeft = closedLeft;
+            Min = min;
+            IsClosedLeft = closedLeft;
             this.max = max;
-            this.IsClosedRight = closedRight;
+            IsClosedRight = closedRight;
         }
 
         public override bool Equals(object obj)

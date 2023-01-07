@@ -157,7 +157,7 @@ namespace MMX.Engine
 
         protected override Box GetCollisionBox() => Dashing
                 ? new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3))
-                : new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
+                : new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 4));
 
         protected override void OnHealthChanged(FixedSingle health) => engine.RepaintHP(); // Notifica o engine que o HP do caracter foi alterado para que seja redesenhado.
 
@@ -579,10 +579,10 @@ namespace MMX.Engine
 
                     bool mirrored = false;
                     Direction direction = PressingLeft ? Direction.LEFT : PressingRight ? Direction.RIGHT : Direction.NONE;
-                    if (direction != Direction.NONE && direction != this.Direction)
+                    if (direction != Direction.NONE && direction != Direction)
                     {
                         mirrored = true;
-                        this.Direction = direction;
+                        Direction = direction;
                         RefreshAnimation();
                     }
 
