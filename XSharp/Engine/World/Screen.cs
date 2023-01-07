@@ -18,9 +18,9 @@ namespace MMX.Engine.World
 
         internal Screen(World world, FixedSingle width, FixedSingle height)
         {
-            this.World = world;
-            this.Width = width;
-            this.Height = height;
+            World = world;
+            Width = width;
+            Height = height;
 
             lastCenter = Vector.NULL_VECTOR;
             center = new Vector(width / 2, height / 2);
@@ -30,7 +30,7 @@ namespace MMX.Engine.World
 
         internal Screen(World world, Screen other)
         {
-            this.World = world;
+            World = world;
             Width = other.Width;
             Height = other.Height;
 
@@ -110,7 +110,7 @@ namespace MMX.Engine.World
 
         public Vector SizeVector => new(Width, Height);
 
-        public Box BoudingBox
+        public Box BoundingBox
         {
             get
             {
@@ -155,7 +155,7 @@ namespace MMX.Engine.World
 
         public void StopMoving() => moveDistance = 0;
 
-        public Box VisibleBox(Box box) => BoudingBox & box;
+        public Box VisibleBox(Box box) => BoundingBox & box;
 
         public bool IsVisible(Box box) => VisibleBox(box).Area > 0;
 

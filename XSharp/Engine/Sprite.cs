@@ -506,6 +506,8 @@ namespace MMX.Engine
             return result;
         }
 
+        protected override MMXBox GetHitBox() => CollisionBox;
+
         public MMXBox CollisionBox => Origin + GetCollisionBox();
 
         protected abstract MMXBox GetCollisionBox();

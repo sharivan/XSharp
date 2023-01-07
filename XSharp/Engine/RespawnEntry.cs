@@ -6,8 +6,8 @@ namespace MMX.Engine
     {
         public RespawnEntry(Entity entity, Box box)
         {
-            this.Entity = entity;
-            this.Box = box;
+            Entity = entity;
+            Box = box;
         }
 
         public Entity Entity { get; }

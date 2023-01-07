@@ -248,8 +248,8 @@ namespace D3D9Test
 
             public Cell(int row, int col)
             {
-                this.Row = row;
-                this.Col = col;
+                Row = row;
+                Col = col;
             }
 
             public override int GetHashCode() => 65536 * Row + Col;

@@ -85,6 +85,8 @@ namespace MMX.Engine
     {
         private readonly List<Vector> extensions;
 
+        public IEnumerable<Vector> Extensions => extensions;
+
         public Vector ExtensionOrigin => BoundingBox.Center;
 
         public int ExtensionCount => extensions.Count;
@@ -149,12 +151,12 @@ namespace MMX.Engine
         public Checkpoint(GameEngine engine, int point, Box boudingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll) :
             base(engine, boudingBox)
         {
-            this.Point = point;
-            this.CharacterPos = characterPos;
-            this.CameraPos = cameraPos;
-            this.BackgroundPos = backgroundPos;
-            this.ForceBackground = forceBackground;
-            this.Scroll = scroll;
+            Point = point;
+            CharacterPos = characterPos;
+            CameraPos = cameraPos;
+            BackgroundPos = backgroundPos;
+            ForceBackground = forceBackground;
+            Scroll = scroll;
         }
 
         internal void UpdateBoudingBox()

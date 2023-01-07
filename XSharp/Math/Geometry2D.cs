@@ -185,14 +185,14 @@ namespace MMX.Geometry
         {
             get
             {
-                if (this.X == 0)
-                    return this.Y.Abs;
+                if (X == 0)
+                    return Y.Abs;
 
-                if (this.Y == 0)
-                    return this.X.Abs;
+                if (Y == 0)
+                    return X.Abs;
 
-                FixedDouble x = this.X;
-                FixedDouble y = this.Y;
+                FixedDouble x = X;
+                FixedDouble y = Y;
                 return System.Math.Sqrt(x * x + y * y);
             }
         }
@@ -215,8 +215,8 @@ namespace MMX.Geometry
         /// <param name="y">Coordenada y</param>
         public Vector(FixedSingle x, FixedSingle y)
         {
-            this.X = x;
-            this.Y = y;
+            X = x;
+            Y = y;
         }
 
         public Vector(BinaryReader reader)
@@ -264,8 +264,8 @@ namespace MMX.Geometry
         /// <returns>O vetor rotacionado</returns>
         public Vector Rotate(FixedSingle angle)
         {
-            FixedDouble x = this.X;
-            FixedDouble y = this.Y;
+            FixedDouble x = X;
+            FixedDouble y = Y;
             var a = (FixedDouble) angle;
 
             FixedDouble cos = a.Cos();
@@ -350,6 +350,10 @@ namespace MMX.Geometry
             FixedDouble dy = Y - vec.Y;
             return System.Math.Sqrt(dx * dx + dy * dy);
         }
+
+        public Vector Scale(FixedSingle scaleX, FixedSingle scaleY) => new Vector(scaleX * X, scaleY * Y);
+
+        public Vector ScaleInverse(FixedSingle scaleX, FixedSingle scaleY) => new Vector(X / scaleX, Y / scaleY);
 
         public GeometryType Type => type;
 
@@ -441,8 +445,8 @@ namespace MMX.Geometry
         /// <param name="end">Ponto final do segmento</param>
         public LineSegment(Vector start, Vector end)
         {
-            this.Start = start;
-            this.End = end;
+            Start = start;
+            End = end;
         }
 
         /// <summary>
@@ -924,7 +928,7 @@ namespace MMX.Geometry
         /// <param name="origin">origem do retângulo</param>
         public Box(Vector origin)
         {
-            this.Origin = origin;
+            Origin = origin;
             Mins = Vector.NULL_VECTOR;
             Maxs = Vector.NULL_VECTOR;
         }
@@ -937,9 +941,9 @@ namespace MMX.Geometry
         /// <param name="maxs">Máximos</param>
         public Box(Vector origin, Vector mins, Vector maxs)
         {
-            this.Origin = origin;
-            this.Mins = mins;
-            this.Maxs = maxs;
+            Origin = origin;
+            Mins = mins;
+            Maxs = maxs;
         }
 
         public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height) :
@@ -1005,7 +1009,7 @@ namespace MMX.Geometry
 
         public Box(Vector origin, FixedSingle width, FixedSingle height)
         {
-            this.Origin = origin;
+            Origin = origin;
             Mins = Vector.NULL_VECTOR;
             Maxs = new Vector(width, height);
         }
@@ -1044,9 +1048,9 @@ namespace MMX.Geometry
         /// <returns>Retângulo truncado</returns>
         public Box Truncate()
         {
-            Vector mins = Origin + this.Mins;
+            Vector mins = Origin + Mins;
             mins = new Vector(mins.X.Floor(), mins.Y.Floor());
-            Vector maxs = Origin + this.Maxs;
+            Vector maxs = Origin + Maxs;
             maxs = new Vector(maxs.X.Floor(), maxs.Y.Floor());
             return new Box(mins, Vector.NULL_VECTOR, maxs - mins);
         }
@@ -1706,7 +1710,7 @@ namespace MMX.Geometry
 
         public RightTriangle(Vector origin, FixedSingle hCathetus, FixedSingle vCathetus)
         {
-            this.Origin = origin;
+            Origin = origin;
             this.hCathetus = hCathetus;
             this.vCathetus = vCathetus;
         }

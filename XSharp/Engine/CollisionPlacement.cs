@@ -11,19 +11,19 @@ namespace MMX.Engine
 
         internal CollisionPlacement(CollisionFlags flag, MapPlacement placement)
         {
-            this.Flag = flag;
-            this.Placement = placement;
+            Flag = flag;
+            Placement = placement;
         }
 
         internal CollisionPlacement(MMXWorld world, CollisionFlags flag, Cell cell, Map map)
         {
-            this.Flag = flag;
+            Flag = flag;
             Placement = new MapPlacement(world, cell, map);
         }
 
         internal CollisionPlacement(MMXWorld world, CollisionFlags flag, int row, int col, Map map)
         {
-            this.Flag = flag;
+            Flag = flag;
             Placement = new MapPlacement(world, row, col, map);
         }
     }

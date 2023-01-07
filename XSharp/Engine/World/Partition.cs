@@ -63,7 +63,7 @@ namespace MMX.Engine.World
                     if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
                         continue;
 
-                    Box intersection = value.BoundingBox & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
+                    Box intersection = value.HitBox & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
 
                     if (intersection.Area > 0 && !result.Contains(value)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                         result.Add(value); // adiciona esta entidade à lista
@@ -76,7 +76,7 @@ namespace MMX.Engine.World
             /// <param name="value">Entidade a ser atualizada nesta célula</param>
             public void Update(U value)
             {
-                Box intersection = value.BoundingBox & box; // Calcula a interecção
+                Box intersection = value.HitBox & box; // Calcula a interecção
                 bool intersectionNull = intersection.Area == 0;
 
                 if (!intersectionNull && !values.Contains(value)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
@@ -148,7 +148,7 @@ namespace MMX.Engine.World
         /// <param name="item">Entidade a ser adicionada</param>
         public void Insert(T item)
         {
-            Box box = item.BoundingBox;
+            Box box = item.HitBox;
 
             // Calcula os mínimos e máximos absolutos do retângulo que delimita esta partição
             Vector origin = this.box.Origin;

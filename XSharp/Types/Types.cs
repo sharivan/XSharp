@@ -242,8 +242,8 @@ namespace Types
         /// <returns>true se o audio foi carregado, false caso contrário</returns>
         public bool Load(string fileName, string alias)
         {
-            this.FileName = fileName;
-            this.Alias = alias;
+            FileName = fileName;
+            Alias = alias;
 
             Stop();
             Close();
@@ -569,9 +569,9 @@ namespace Types
         /// <param name="score">Pontuação atingida por ele antes de morrer</param>
         public RankEntry(string name, int level, int score)
         {
-            this.Name = name;
-            this.Level = level;
-            this.Score = score;
+            Name = name;
+            Level = level;
+            Score = score;
         }
 
         /// <summary>
@@ -678,14 +678,14 @@ namespace Types
         /// <param name="pause">Tecla de pausar o jogo</param>
         public KeyBinding(Keys left, Keys up, Keys right, Keys down, Keys dropBomb, Keys kick, Keys detonate, Keys pause)
         {
-            this.Left = left;
-            this.Up = up;
-            this.Right = right;
-            this.Down = down;
-            this.DropBomb = dropBomb;
-            this.Kick = kick;
-            this.Detonate = detonate;
-            this.Pause = pause;
+            Left = left;
+            Up = up;
+            Right = right;
+            Down = down;
+            DropBomb = dropBomb;
+            Kick = kick;
+            Detonate = detonate;
+            Pause = pause;
         }
 
         /// <summary>

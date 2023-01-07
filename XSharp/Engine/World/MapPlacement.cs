@@ -31,8 +31,8 @@ namespace MMX.Engine.World
 
         internal MapPlacement(World world, Cell cell, Map map)
         {
-            this.World = world;
-            this.Cell = cell;
+            World = world;
+            Cell = cell;
             this.map = map;
         }
     }

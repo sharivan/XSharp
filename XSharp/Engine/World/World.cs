@@ -8,6 +8,8 @@ using MMX.Math;
 using MMXBox = MMX.Geometry.Box;
 
 using static MMX.Engine.Consts;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrayNotify;
+using System.Windows.Forms;
 
 namespace MMX.Engine.World
 {
@@ -24,9 +26,13 @@ namespace MMX.Engine.World
         private int backgroundSceneColCount;
 
         private readonly List<Tile> tileList;
+        private readonly List<Tile> backgroundTileList;
         private readonly List<Map> mapList;
+        private readonly List<Map> backgroundMapList;
         private readonly List<Block> blockList;
+        private readonly List<Block> backgroundBlockList;
         private readonly List<Scene> sceneList;
+        private readonly List<Scene> backgroundSceneList;
 
         private Scene[,] scenes;
         private Scene[,] backgroundScenes;
@@ -40,25 +46,32 @@ namespace MMX.Engine.World
 
         internal World(GameEngine engine, int sceneRowCount, int sceneColCount, int backgroundSceneRowCount, int backgroundSceneColCount)
         {
-            this.Engine = engine;
+            Engine = engine;
 
-            this.SceneRowCount = sceneRowCount;
-            this.SceneColCount = sceneColCount;
+            SceneRowCount = sceneRowCount;
+            SceneColCount = sceneColCount;
             this.backgroundSceneRowCount = backgroundSceneRowCount;
             this.backgroundSceneColCount = backgroundSceneColCount;
 
             Screen = new Screen(this, SCREEN_WIDTH, SCREEN_HEIGHT);
 
             tileList = new List<Tile>();
+            backgroundTileList = new List<Tile>();
             mapList = new List<Map>();
+            backgroundMapList = new List<Map>();
             blockList = new List<Block>();
+            backgroundBlockList = new List<Block>();
             sceneList = new List<Scene>();
+            backgroundSceneList = new List<Scene>();
 
             scenes = new Scene[sceneRowCount, sceneColCount];
             backgroundScenes = new Scene[backgroundSceneRowCount, backgroundSceneColCount];
         }
 
-        public GameEngine Engine { get; }
+        public GameEngine Engine
+        {
+            get;
+        }
 
         public Device Device => Engine.Device;
 
@@ -82,11 +95,15 @@ namespace MMX.Engine.World
 
         public int BlockColCount => Width / BLOCK_SIZE;
 
-        public int SceneRowCount { get;
+        public int SceneRowCount
+        {
+            get;
             private set;
         }
 
-        public int SceneColCount { get;
+        public int SceneColCount
+        {
+            get;
             private set;
         }
 
@@ -98,53 +115,91 @@ namespace MMX.Engine.World
 
         public Vector LayoutBackgroundtSize => new(backgroundSceneRowCount, backgroundSceneColCount);
 
-        public Screen Screen { get; }
-
-        public Texture ForegroundPalette { get;
-            set; }
-
-        public Texture BackgroundPalette { get;
-            set; }
-
-        public Tile AddTile()
+        public Screen Screen
         {
-            var result = new Tile(this, tileList.Count);
-            tileList.Add(result);
+            get;
+        }
+
+        public Texture ForegroundPalette
+        {
+            get;
+            set;
+        }
+
+        public Texture BackgroundPalette
+        {
+            get;
+            set;
+        }
+
+        public Tile AddTile(bool background = false)
+        {
+            int id = background ? backgroundTileList.Count : tileList.Count;
+            var result = new Tile(this, id);
+
+            if (background)
+                backgroundTileList.Add(result);
+            else
+                tileList.Add(result);
+
             return result;
         }
 
-        public Tile AddTile(byte[] source)
+        public Tile AddTile(byte[] source, bool background = false)
         {
-            var result = new Tile(this, tileList.Count, source);
-            tileList.Add(result);
+            int id = background ? backgroundTileList.Count : tileList.Count;
+            var result = new Tile(this, id, source);
+
+            if (background)
+                backgroundTileList.Add(result);
+            else
+                tileList.Add(result);
+
             return result;
         }
 
-        public Map AddMap(CollisionData collisionData = CollisionData.NONE)
+        public Map AddMap(CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
-            var result = new Map(this, mapList.Count, collisionData);
-            mapList.Add(result);
+            int id = background ? backgroundMapList.Count : mapList.Count;
+            var result = new Map(this, id, collisionData);
+
+            if (background)
+                backgroundMapList.Add(result);
+            else
+                mapList.Add(result);
+
             return result;
         }
 
-        public Block AddBlock()
+        public Block AddBlock(bool background = false)
         {
-            var result = new Block(this, blockList.Count);
-            blockList.Add(result);
+            int id = background ? backgroundBlockList.Count : blockList.Count;
+            var result = new Block(this, id);
+
+            if (background)
+                backgroundBlockList.Add(result);
+            else
+                blockList.Add(result);
+
             return result;
         }
 
-        public Scene AddScene()
+        public Scene AddScene(bool background = false)
         {
-            var result = new Scene(this, sceneList.Count);
+            int id = background ? backgroundSceneList.Count : sceneList.Count;
+            var result = new Scene(this, id);
 
-            sceneList.Add(result);
+            if (background)
+                backgroundSceneList.Add(result);
+            else
+                sceneList.Add(result);
+
             return result;
         }
 
         public Scene AddScene(int row, int col, bool background = false)
         {
-            Scene result = AddScene();
+            Scene result = AddScene(background);
 
             if (background)
                 backgroundScenes[row, col] = result;
@@ -156,7 +211,7 @@ namespace MMX.Engine.World
 
         public Scene AddScene(Vector pos, bool background = false)
         {
-            Scene result = AddScene();
+            Scene result = AddScene(background);
 
             Cell cell = GetSceneCellFromPos(pos);
 
@@ -170,7 +225,7 @@ namespace MMX.Engine.World
 
         public Map AddMap(Vector pos, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
-            Map result = AddMap(collisionData);
+            Map result = AddMap(collisionData, background);
             SetMap(pos, result, background);
             return result;
         }
@@ -203,35 +258,112 @@ namespace MMX.Engine.World
                 scenes[cell.Row, cell.Col] = scene;
         }
 
-        public Tile GetTileByID(int id) => id < 0 || id >= tileList.Count ? null : tileList[id];
+        public Tile GetTileByID(int id, bool background = false)
+        {
+            if (background)
+            {
+                if (id < 0 || id >= backgroundTileList.Count)
+                    return null;
 
-        public Map GetMapByID(int id) => id < 0 || id >= mapList.Count ? null : mapList[id];
+                return backgroundTileList[id];
+            }
 
-        public Block GetBlockByID(int id) => id < 0 || id >= blockList.Count ? null : blockList[id];
+            if (id < 0 || id >= tileList.Count)
+                return null;
 
-        public Scene GetSceneByID(int id) => id < 0 || id >= sceneList.Count ? null : sceneList[id];
+            return tileList[id];
+        }
+
+        public Map GetMapByID(int id, bool background = false)
+        {
+            if (background)
+            {
+                if (id < 0 || id >= backgroundMapList.Count)
+                    return null;
+
+                return backgroundMapList[id];
+            }
+
+            if (id < 0 || id >= mapList.Count)
+                return null;
+
+            return mapList[id];
+        }
+
+        public Block GetBlockByID(int id, bool background = false)
+        {
+            if (background)
+            {
+                if (id < 0 || id >= backgroundBlockList.Count)
+                    return null;
+
+                return backgroundBlockList[id];
+            }
+
+            if (id < 0 || id >= blockList.Count)
+                return null;
+
+            return blockList[id];
+        }
+
+        public Scene GetSceneByID(int id, bool background = false)
+        {
+            if (background)
+            {
+                if (id < 0 || id >= backgroundSceneList.Count)
+                    return null;
+
+                return backgroundSceneList[id];
+            }
+
+            if (id < 0 || id >= sceneList.Count)
+                return null;
+
+            return sceneList[id];
+        }
 
         public void RemoveTile(Tile tile)
         {
+            if (tile == null)
+                return;
+
             tileList.Remove(tile);
+            backgroundTileList.Remove(tile);
 
             foreach (Map map in mapList)
+                map.RemoveTile(tile);
+
+            foreach (Map map in backgroundMapList)
                 map.RemoveTile(tile);
         }
 
         public void RemoveMap(Map map)
         {
+            if (map == null)
+                return;
+
             mapList.Remove(map);
+            backgroundMapList.Remove(map);
 
             foreach (Block block in blockList)
+                block.RemoveMap(map);
+
+            foreach (Block block in backgroundBlockList)
                 block.RemoveMap(map);
         }
 
         public void RemoveBlock(Block block)
         {
+            if (block == null)
+                return;
+
             blockList.Remove(block);
+            backgroundBlockList.Remove(block);
 
             foreach (Scene scene in sceneList)
+                scene.RemoveBlock(block);
+
+            foreach (Scene scene in backgroundSceneList)
                 scene.RemoveBlock(block);
         }
 
@@ -241,6 +373,7 @@ namespace MMX.Engine.World
                 return;
 
             sceneList.Remove(scene);
+            backgroundSceneList.Remove(scene);
 
             for (int col = 0; col < SceneColCount; col++)
                 for (int row = 0; row < SceneRowCount; row++)
@@ -312,13 +445,20 @@ namespace MMX.Engine.World
                     backgroundScenes[row, col] = null;
 
             tileList.Clear();
+            backgroundTileList.Clear();
             blockList.Clear();
+            backgroundBlockList.Clear();
             mapList.Clear();
+            backgroundMapList.Clear();
 
             foreach (Scene scene in sceneList)
                 scene.Dispose();
 
+            foreach (Scene scene in backgroundSceneList)
+                scene.Dispose();
+
             sceneList.Clear();
+            backgroundSceneList.Clear();
         }
 
         public void FillRectangle(MMXBox box, Map map, bool background = false)
@@ -374,9 +514,7 @@ namespace MMX.Engine.World
             if (checkpoint == null)
                 return;
 
-            Device device = Device;
-
-            MMXBox screenBox = Screen.BoudingBox;
+            MMXBox screenBox = Screen.BoundingBox;
             Vector screenLT = Screen.LeftTop;
 
             Vector backgroundPos = checkpoint.BackgroundPos;
@@ -390,15 +528,21 @@ namespace MMX.Engine.World
             var screenDelta = new Vector(factorX * (screenLT.X - checkpointPos.X), checkpoint.Scroll != 0 ? factorY * (screenLT.Y - checkpointPos.Y) : 0);
             backgroundBox &= screenBox - delta - screenDelta;
 
-            Cell start = GetSceneCellFromPos(backgroundBox.LeftTop);
-            Cell end = GetSceneCellFromPos(backgroundBox.RightBottom);
+            //Vector screenLT = Screen.LeftTop;
+            Vector screenRB = Screen.RightBottom;
 
-            for (int col = start.Col; col <= end.Col + 1; col++)
+            Cell start = GetSceneCellFromPos(screenLT.Scale(factorX, factorY).RoundToFloor());
+            Cell end = GetSceneCellFromPos(screenRB.Scale(factorX, factorY).RoundToCeil());
+
+            //Cell start = GetSceneCellFromPos(backgroundBox.LeftTop);
+            //Cell end = GetSceneCellFromPos(backgroundBox.RightBottom);
+
+            for (int col = start.Col - 1; col <= end.Col + 1; col++)
             {
                 if (col < 0 || col >= backgroundSceneColCount)
                     continue;
 
-                for (int row = start.Row; row <= end.Row + 1; row++)
+                for (int row = start.Row - 1; row <= end.Row + 1; row++)
                 {
                     if (row < 0 || row >= backgroundSceneRowCount)
                         continue;
@@ -408,7 +552,7 @@ namespace MMX.Engine.World
                     if (scene != null)
                     {
                         MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                        Engine.RenderVertexBuffer(upLayer ? scene.upLayerVB : scene.downLayerVB, GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, foregroundTilemap, ForegroundPalette, sceneBox + delta + screenDelta);
+                        Engine.RenderVertexBuffer(upLayer ? scene.upLayerVB : scene.downLayerVB, GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, backgroundTilemap, BackgroundPalette, sceneBox + delta + screenDelta);
                     }
                 }
             }
@@ -416,14 +560,11 @@ namespace MMX.Engine.World
 
         public void RenderForeground(bool upLayer)
         {
-            MMXBox screenBox = Screen.BoudingBox;
             Vector screenLT = Screen.LeftTop;
             Vector screenRB = Screen.RightBottom;
 
             Cell start = GetSceneCellFromPos(screenLT);
             Cell end = GetSceneCellFromPos(screenRB);
-
-            Device device = Device;
 
             for (int col = start.Col; col <= end.Col + 1; col++)
             {
@@ -930,7 +1071,8 @@ return false;*/
                 {
                     placements?.AddRange(bottomPlacementsDisplacedHalfLeft);
 
-                    return bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER; ;
+                    return bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
+                    ;
                 }
 
                 if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
@@ -1208,6 +1350,9 @@ return false;*/
         internal void Tessellate()
         {
             foreach (Scene scene in sceneList)
+                scene.Tessellate();
+
+            foreach (Scene scene in backgroundSceneList)
                 scene.Tessellate();
         }
     }
