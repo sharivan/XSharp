@@ -456,7 +456,7 @@ namespace MMX.Engine
             {
                 if (!Jumping && !GoingUp)
                 {
-                    if (BlockedLeft)
+                    if (BlockedLeft && GetWallJumpDir() == Direction.LEFT)
                     {
                         if (!WallSliding)
                         {
@@ -502,7 +502,7 @@ namespace MMX.Engine
             {
                 if (!Jumping && !GoingUp)
                 {
-                    if (BlockedRight)
+                    if (BlockedRight && GetWallJumpDir() == Direction.RIGHT)
                     {
                         if (!WallSliding)
                         {
@@ -625,7 +625,7 @@ namespace MMX.Engine
                                 }
                                 else if (!Landed)
                                 {
-                                    if (BlockedLeft && !Jumping && !GoingUp)
+                                    if (BlockedLeft && !Jumping && !GoingUp && GetWallJumpDir() == Direction.LEFT)
                                     {
                                         if (!WallSliding)
                                         {
@@ -663,7 +663,7 @@ namespace MMX.Engine
                                 }
                                 else if (!Landed)
                                 {
-                                    if (BlockedRight && !Jumping && !GoingUp)
+                                    if (BlockedRight && !Jumping && !GoingUp && GetWallJumpDir() == Direction.RIGHT)
                                     {
                                         if (!WallSliding)
                                         {
@@ -1120,11 +1120,11 @@ namespace MMX.Engine
             }
 
             Box collisionBox = Origin + GetCollisionBox().ClipTop(-2).ClipBottom(2 + (slopeSign == 1 ? vclip : 0)) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.LEFT_VECTOR;
-            if (engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE, true, CollisionSide.LEFT_WALL).HasFlag(CollisionFlags.BLOCK))
+            if (engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.LEFT_WALL).HasFlag(CollisionFlags.BLOCK))
                 return Direction.LEFT;
 
             collisionBox = Origin + GetCollisionBox().ClipTop(-2).ClipBottom(2 + (slopeSign == -1 ? vclip : 0)) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.RIGHT_VECTOR;
-            return engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE, true, CollisionSide.RIGHT_WALL).HasFlag(CollisionFlags.BLOCK)
+            return engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.RIGHT_WALL).HasFlag(CollisionFlags.BLOCK)
                 ? Direction.RIGHT
                 : Direction.NONE;
         }

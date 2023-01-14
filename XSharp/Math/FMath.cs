@@ -17,11 +17,14 @@ namespace MMX.Math
         public static readonly FixedSingle HALF = new(0.5);
         public static readonly FixedSingle ONE = new(1D);
         public static readonly FixedSingle TWO = new(2D);
-        public static readonly FixedSingle MIN_VALUE = new(Int32.MinValue);
+        public static readonly FixedSingle MIN_VALUE = new(int.MinValue);
         public static readonly FixedSingle MIN_POSITIVE_VALUE = new(1);
-        public static readonly FixedSingle MAX_VALUE = new(Int32.MaxValue);
+        public static readonly FixedSingle MAX_VALUE = new(int.MaxValue);
 
-        public int RawValue { get; }
+        public int RawValue
+        {
+            get;
+        }
 
         public int IntValue => RawValue >> FIXED_BITS_COUNT;
 
@@ -123,7 +126,7 @@ namespace MMX.Math
 
         public static FixedSingle operator -(FixedSingle left, FixedSingle right) => new(left.RawValue - right.RawValue);
 
-        public static FixedSingle operator *(FixedSingle left, FixedSingle right) => new((int) (((long) left.RawValue * (long) right.RawValue) >> FIXED_BITS_COUNT));
+        public static FixedSingle operator *(FixedSingle left, FixedSingle right) => new((int) ((left.RawValue * (long) right.RawValue) >> FIXED_BITS_COUNT));
 
         public static FixedSingle operator /(FixedSingle left, FixedSingle right) => new((int) (((long) left.RawValue << FIXED_BITS_COUNT) / right.RawValue));
 
@@ -157,11 +160,14 @@ namespace MMX.Math
         public static readonly FixedDouble HALF = new(0.5);
         public static readonly FixedDouble ONE = new(1D);
         public static readonly FixedDouble TWO = new(2D);
-        public static readonly FixedDouble MIN_VALUE = new(Int64.MinValue);
+        public static readonly FixedDouble MIN_VALUE = new(long.MinValue);
         public static readonly FixedDouble MIN_POSITIVE_VALUE = new(1L);
-        public static readonly FixedDouble MAX_VALUE = new(Int64.MaxValue);
+        public static readonly FixedDouble MAX_VALUE = new(long.MaxValue);
 
-        public long RawValue { get; }
+        public long RawValue
+        {
+            get;
+        }
 
         public int IntValue => (int) (RawValue >> FIXED_BITS_COUNT);
 
@@ -297,33 +303,46 @@ namespace MMX.Math
     public readonly struct Interval
     {
         public static readonly Interval EMPTY = MakeOpenInterval(0, 0);
-        private readonly FixedSingle max;
 
-        public FixedSingle Min { get; }
+        public FixedSingle Min
+        {
+            get;
+        }
+
+        public FixedSingle Max
+        {
+            get;
+        }
 
         public bool IsOpenLeft => !IsClosedLeft;
 
-        public bool IsClosedLeft { get; }
+        public bool IsClosedLeft
+        {
+            get;
+        }
 
         public bool IsOpenRight => !IsClosedRight;
 
-        public bool IsClosedRight { get; }
+        public bool IsClosedRight
+        {
+            get;
+        }
 
         public bool IsClosed => IsClosedLeft && IsClosedRight;
 
         public bool IsOpen => !IsClosedLeft && !IsClosedRight;
 
-        public bool IsEmpty => IsClosed ? Min > max : Min >= max;
+        public bool IsEmpty => IsClosed ? Min > Max : Min >= Max;
 
-        public bool IsPoint => IsClosed && Min == max;
+        public bool IsPoint => IsClosed && Min == Max;
 
-        public FixedSingle Length => max - Min;
+        public FixedSingle Length => Max - Min;
 
         private Interval(FixedSingle min, bool closedLeft, FixedSingle max, bool closedRight)
         {
             Min = min;
             IsClosedLeft = closedLeft;
-            this.max = max;
+            Max = max;
             IsClosedRight = closedRight;
         }
 
@@ -336,19 +355,23 @@ namespace MMX.Math
             return Equals(interval);
         }
 
+        private bool CheckMin(FixedSingle element) => IsClosedLeft ? Min <= element : Min < element;
+
+        private bool CheckMax(FixedSingle element) => IsClosedRight ? element <= Max : element < Max;
+
         public bool Equals(Interval other) => IsEmpty && other.IsEmpty
-|| Min == other.Min && IsClosedLeft == other.IsClosedLeft && max == other.max && IsClosedRight == other.IsClosedRight;
+                || Min == other.Min && IsClosedLeft == other.IsClosedLeft && Max == other.Max && IsClosedRight == other.IsClosedRight;
 
-        public bool Contains(FixedSingle element, bool inclusive = true) => !inclusive
-                ? Min < element && element < max
-                : IsClosedLeft ? Min > element : Min < element && !(IsClosedRight ? element > max : element >= max);
+        public bool Contains(FixedSingle element, bool includeBounds = true) => !includeBounds
+                ? Min < element && element < Max
+                : CheckMin(element) && CheckMax(element);
 
-        public bool Contains(Interval interval, bool inclusive = true) => interval.IsEmpty
-                ? inclusive || !IsEmpty
-                : !inclusive
-                ? Min < interval.Min && interval.max < max
+        public bool Contains(Interval interval, bool includeBounds = true) => interval.IsEmpty
+                ? includeBounds || !IsEmpty
+                : !includeBounds
+                ? Min < interval.Min && interval.Max < Max
                 : IsClosedLeft ? Min > interval.Min : interval.IsClosedLeft ? Min >= interval.Min : Min <= interval.Min
-&& !(IsClosedRight ? interval.max > max : interval.IsClosedRight ? interval.max >= max : interval.max > max);
+                && !(IsClosedRight ? interval.Max > Max : interval.IsClosedRight ? interval.Max >= Max : interval.Max > Max);
 
         public Interval Intersection(Interval other)
         {
@@ -375,19 +398,19 @@ namespace MMX.Math
 
             FixedSingle newMax;
             bool newClosedRight;
-            if (max < other.max)
+            if (Max < other.Max)
             {
-                newMax = max;
+                newMax = Max;
                 newClosedRight = IsClosedRight;
             }
-            else if (max > other.max)
+            else if (Max > other.Max)
             {
-                newMax = other.max;
+                newMax = other.Max;
                 newClosedRight = other.IsClosedRight;
             }
             else
             {
-                newMax = max;
+                newMax = Max;
                 newClosedRight = IsClosedRight && other.IsClosedRight;
             }
 
@@ -402,7 +425,7 @@ namespace MMX.Math
 
         public static Interval MakeSemiOpenRightInterval(FixedSingle v1, FixedSingle v2) => new(FixedSingle.Min(v1, v2), true, FixedSingle.Max(v1, v2), false);
 
-        public override string ToString() => IsEmpty ? "{}" : (IsClosedLeft ? "[" : "(") + Min + ", " + max + (IsClosedRight ? "]" : ")");
+        public override string ToString() => IsEmpty ? "{}" : (IsClosedLeft ? "[" : "(") + Min + ", " + Max + (IsClosedRight ? "]" : ")");
 
         public override int GetHashCode()
         {
@@ -410,7 +433,7 @@ namespace MMX.Math
             hashCode = hashCode * -1521134295 + base.GetHashCode();
             hashCode = hashCode * -1521134295 + EqualityComparer<FixedSingle>.Default.GetHashCode(Min);
             hashCode = hashCode * -1521134295 + IsClosedLeft.GetHashCode();
-            hashCode = hashCode * -1521134295 + EqualityComparer<FixedSingle>.Default.GetHashCode(max);
+            hashCode = hashCode * -1521134295 + EqualityComparer<FixedSingle>.Default.GetHashCode(Max);
             hashCode = hashCode * -1521134295 + IsClosedRight.GetHashCode();
             return hashCode;
         }

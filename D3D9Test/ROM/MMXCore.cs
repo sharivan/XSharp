@@ -492,7 +492,7 @@ namespace MMX.ROM
                     uint b = 0;
                     if (expandedROM && expandedROMVersion >= 4)
                     {
-                        b = Snes2pc((int) ((int) (lockBank << 16) | (0x8000 + level * 0x800 + e.eventSubId * 0x20)));
+                        b = Snes2pc((int) (lockBank << 16) | (0x8000 + level * 0x800 + e.eventSubId * 0x20));
                     }
                     else
                     {
@@ -543,12 +543,12 @@ namespace MMX.ROM
                     assemblyNum = 0x38;
                 }
 
-                uint mapAddr = ReadDWord(Snes2pc((int) ReadDWord((uint) (pSpriteAssembly + assemblyNum * 3))) + 0);
+                uint mapAddr = ReadDWord(Snes2pc((int) ReadDWord(pSpriteAssembly + assemblyNum * 3)) + 0);
 
                 uint baseMap = Snes2pc((int) mapAddr);
                 byte tileCnt = rom[baseMap++];
 
-                var boundingBox = new System.Drawing.Rectangle(0, 0, UInt16.MaxValue, UInt16.MaxValue);
+                var boundingBox = new System.Drawing.Rectangle(0, 0, ushort.MaxValue, ushort.MaxValue);
 
                 for (int i = 0; i < tileCnt; ++i)
                 {
@@ -586,7 +586,7 @@ namespace MMX.ROM
 
                     bool largeSprite = (info & 0x20) != 0;
 
-                    for (int j = 0; j < (largeSprite ? (uint) 4 : (uint) 1); ++j)
+                    for (int j = 0; j < (largeSprite ? 4 : (uint) 1); ++j)
                     {
                         int xposOffset = j % 2 * 8;
                         int yposOffset = j / 2 * 8;
@@ -988,12 +988,12 @@ namespace MMX.ROM
                         WriteWord(Snes2pc(0x80DD8C), (ushort) (offsetAddr & 0xFFFF));
 
                         // swap LD and PLB so LD uses correct bank
-                        WriteWord(Snes2pc(0x80DD83), (ushort) 0xAEAD);
-                        WriteWord(Snes2pc(0x80DD85), (ushort) 0xAB1F);
+                        WriteWord(Snes2pc(0x80DD83), 0xAEAD);
+                        WriteWord(Snes2pc(0x80DD85), 0xAB1F);
 
                         // store the bank in the 3rd B for long LD
                         WriteWord(Snes2pc(0x80DF2E), (ushort) (0xA9 | (eventBank << 8)));
-                        WriteWord(Snes2pc(0x80DF30), (ushort) 0x1A85);
+                        WriteWord(Snes2pc(0x80DF30), 0x1A85);
 
                         // NOP the push/pull of the bank register 
                         rom[Snes2pc(0x80DF43)] = 0xEA;
@@ -1020,10 +1020,10 @@ namespace MMX.ROM
                     for (int i = 0; i < numLevels; ++i)
                     {
                         ushort pLevel = (ushort) (i * 3);
-                        var sceneLayout = Snes2pc((int) SReadDWord((uint) (p_scenes[type] + pLevel)));
+                        var sceneLayout = Snes2pc((int) SReadDWord(p_scenes[type] + pLevel));
                         uint layout = sceneLayout;
 
-                        var levelLayout = Snes2pc((int) SReadDWord((uint) (p_layout[type] + pLevel)));
+                        var levelLayout = Snes2pc((int) SReadDWord(p_layout[type] + pLevel));
                         uint s = rom[levelLayout + 2];
 
                         // overwrite the scene data
@@ -1102,9 +1102,9 @@ namespace MMX.ROM
                         // add back RTS
                         rom[Snes2pc(0x80FF26)] = 0x60;
                         // change all instances of JMP
-                        WriteWord(Snes2pc(0x809DA4), (ushort) 0xFF00);
-                        WriteWord(Snes2pc(0x80E602), (ushort) 0xFF00);
-                        WriteWord(Snes2pc(0x80E679), (ushort) 0xFF00);
+                        WriteWord(Snes2pc(0x809DA4), 0xFF00);
+                        WriteWord(Snes2pc(0x80E602), 0xFF00);
+                        WriteWord(Snes2pc(0x80E679), 0xFF00);
                         //*LPWORD(rom + snes2pc(0x80E681)) = 0xFF00;
 
                         // revert bank + RTL
@@ -1112,37 +1112,37 @@ namespace MMX.ROM
                         // fix other functions
                         //1
                         // revert bank + JMP + RTS
-                        WriteWord(Snes2pc(0x80FF27), (ushort) (0xA9 | (0x06 << 8)));
+                        WriteWord(Snes2pc(0x80FF27), 0xA9 | (0x06 << 8));
                         rom[Snes2pc(0x80FF29)] = 0x48;
                         rom[Snes2pc(0x80FF2A)] = 0xAB;
                         // JSR
                         rom[Snes2pc(0x80FF2B)] = 0x20;
-                        WriteWord(Snes2pc(0x80FF2C), (ushort) 0xB117);
+                        WriteWord(Snes2pc(0x80FF2C), 0xB117);
                         // RTS
                         rom[Snes2pc(0x80FF2E)] = 0x60;
                         // FIX JMP
-                        WriteWord(Snes2pc(0x809DD1), (ushort) 0xFF27);
+                        WriteWord(Snes2pc(0x809DD1), 0xFF27);
 
                         //2
                         // revert bank + JMP + RTS
                         rom[Snes2pc(0x80FF2F)] = 0xE2;
                         rom[Snes2pc(0x80FF30)] = 0x20;
-                        WriteWord(Snes2pc(0x80FF31), (ushort) (0xA9 | (0x06 << 8)));
+                        WriteWord(Snes2pc(0x80FF31), 0xA9 | (0x06 << 8));
                         rom[Snes2pc(0x80FF33)] = 0x48;
                         rom[Snes2pc(0x80FF34)] = 0xAB;
                         rom[Snes2pc(0x80FF35)] = 0xC2;
                         rom[Snes2pc(0x80FF36)] = 0x20;
                         // JSL
-                        WriteDWord(Snes2pc(0x80FF37), (uint) 0x0180E322);
+                        WriteDWord(Snes2pc(0x80FF37), 0x0180E322);
                         // RTS
                         rom[Snes2pc(0x80FF3B)] = 0x60;
                         // FIX JMP
-                        WriteDWord(Snes2pc(0x80E66D), (uint) 0xEAFF2F20);
+                        WriteDWord(Snes2pc(0x80E66D), 0xEAFF2F20);
 
                         //3
                         rom[Snes2pc(0x80E68C)] = 0xE2;
                         rom[Snes2pc(0x80E68D)] = 0x20;
-                        WriteWord(Snes2pc(0x80E68E), (ushort) (0xA9 | (0x06 << 8)));
+                        WriteWord(Snes2pc(0x80E68E), 0xA9 | (0x06 << 8));
                         rom[Snes2pc(0x80E690)] = 0x48;
                         rom[Snes2pc(0x80E691)] = 0xAB;
                         rom[Snes2pc(0x80E692)] = 0xC2;
@@ -1163,50 +1163,50 @@ namespace MMX.ROM
                         // add back RTS
                         rom[Snes2pc(0x80FF26)] = 0x60;
                         // change all instances of JMP
-                        WriteWord(Snes2pc(0x809D79), (ushort) 0xFF00);
-                        WriteWord(Snes2pc(0x80E5ED), (ushort) 0xFF00);
-                        WriteWord(Snes2pc(0x80E661), (ushort) 0xFF00);
-                        WriteWord(Snes2pc(0x80E681), (ushort) 0xFF00);
+                        WriteWord(Snes2pc(0x809D79), 0xFF00);
+                        WriteWord(Snes2pc(0x80E5ED), 0xFF00);
+                        WriteWord(Snes2pc(0x80E661), 0xFF00);
+                        WriteWord(Snes2pc(0x80E681), 0xFF00);
 
                         // revert bank + RTL
 
                         // fix other functions
                         //1
                         // revert bank + JMP + RTS
-                        WriteWord(Snes2pc(0x80FF27), (ushort) (0xA9 | (0x06 << 8)));
+                        WriteWord(Snes2pc(0x80FF27), 0xA9 | (0x06 << 8));
                         rom[Snes2pc(0x80FF29)] = 0x48;
                         rom[Snes2pc(0x80FF2A)] = 0xAB;
                         // JSR
                         rom[Snes2pc(0x80FF2B)] = 0x20;
-                        WriteWord(Snes2pc(0x80FF2C), (ushort) 0xADD3);
+                        WriteWord(Snes2pc(0x80FF2C), 0xADD3);
                         // RTS
                         rom[Snes2pc(0x80FF2E)] = 0x60;
                         // FIX JMP
-                        WriteWord(Snes2pc(0x809DA7), (ushort) 0xFF27);
+                        WriteWord(Snes2pc(0x809DA7), 0xFF27);
 
                         //2
                         // revert bank + JMP + RTS
                         rom[Snes2pc(0x80FF2F)] = 0xE2;
                         rom[Snes2pc(0x80FF30)] = 0x20;
-                        WriteWord(Snes2pc(0x80FF31), (ushort) (0xA9 | (0x06 << 8)));
+                        WriteWord(Snes2pc(0x80FF31), 0xA9 | (0x06 << 8));
                         rom[Snes2pc(0x80FF33)] = 0x48;
                         rom[Snes2pc(0x80FF34)] = 0xAB;
                         rom[Snes2pc(0x80FF35)] = 0xC2;
                         rom[Snes2pc(0x80FF36)] = 0x20;
                         // JSL
-                        WriteDWord(Snes2pc(0x80FF37), (uint) 0x01820B22);
+                        WriteDWord(Snes2pc(0x80FF37), 0x01820B22);
                         // RTS
                         rom[Snes2pc(0x80FF3B)] = 0x60;
                         // FIX JMP
-                        WriteDWord(Snes2pc(0x80E655), (uint) 0xEAFF2F20);
+                        WriteDWord(Snes2pc(0x80E655), 0xEAFF2F20);
 
                         //3
-                        WriteWord(Snes2pc(0x80E679), (ushort) (0x80 | (0x13 << 8)));
+                        WriteWord(Snes2pc(0x80E679), 0x80 | (0x13 << 8));
 
                         //4
                         rom[Snes2pc(0x80E68E)] = 0xE2;
                         rom[Snes2pc(0x80E68F)] = 0x20;
-                        WriteWord(Snes2pc(0x80E690), (ushort) (0xA9 | (0x06 << 8)));
+                        WriteWord(Snes2pc(0x80E690), 0xA9 | (0x06 << 8));
                         rom[Snes2pc(0x80E692)] = 0x48;
                         rom[Snes2pc(0x80E693)] = 0xAB;
                         rom[Snes2pc(0x80E694)] = 0xC2;
@@ -1227,50 +1227,50 @@ namespace MMX.ROM
                         // add back RTS
                         rom[Snes2pc(0x80FF26)] = 0x60;
                         // change all instances of JMP
-                        WriteWord(Snes2pc(0x80A1E5), (ushort) 0xFF00);
-                        WriteWord(Snes2pc(0x80E558), (ushort) 0xFF00);
-                        WriteWord(Snes2pc(0x80E5D2), (ushort) 0xFF00);
-                        WriteWord(Snes2pc(0x80E5F2), (ushort) 0xFF00);
+                        WriteWord(Snes2pc(0x80A1E5), 0xFF00);
+                        WriteWord(Snes2pc(0x80E558), 0xFF00);
+                        WriteWord(Snes2pc(0x80E5D2), 0xFF00);
+                        WriteWord(Snes2pc(0x80E5F2), 0xFF00);
 
                         // revert bank + RTL
 
                         // fix other functions
                         //1
                         // revert bank + JMP + RTS
-                        WriteWord(Snes2pc(0x80FF27), (ushort) (0xA9 | (0x06 << 8)));
+                        WriteWord(Snes2pc(0x80FF27), 0xA9 | (0x06 << 8));
                         rom[Snes2pc(0x80FF29)] = 0x48;
                         rom[Snes2pc(0x80FF2A)] = 0xAB;
                         // JSR
                         rom[Snes2pc(0x80FF2B)] = 0x20;
-                        WriteWord(Snes2pc(0x80FF2C), (ushort) 0xB297);
+                        WriteWord(Snes2pc(0x80FF2C), 0xB297);
                         // RTS
                         rom[Snes2pc(0x80FF2E)] = 0x60;
                         // FIX JMP
-                        WriteWord(Snes2pc(0x80A213), (ushort) 0xFF27);
+                        WriteWord(Snes2pc(0x80A213), 0xFF27);
 
                         //2
                         // revert bank + JMP + RTS
                         rom[Snes2pc(0x80FF2F)] = 0xE2;
                         rom[Snes2pc(0x80FF30)] = 0x20;
-                        WriteWord(Snes2pc(0x80FF31), (ushort) (0xA9 | (0x06 << 8)));
+                        WriteWord(Snes2pc(0x80FF31), 0xA9 | (0x06 << 8));
                         rom[Snes2pc(0x80FF33)] = 0x48;
                         rom[Snes2pc(0x80FF34)] = 0xAB;
                         rom[Snes2pc(0x80FF35)] = 0xC2;
                         rom[Snes2pc(0x80FF36)] = 0x20;
                         // JSL
-                        WriteDWord(Snes2pc(0x80FF37), (uint) 0x01827C22);
+                        WriteDWord(Snes2pc(0x80FF37), 0x01827C22);
                         // RTS
                         rom[Snes2pc(0x80FF3B)] = 0x60;
                         // FIX JMP
-                        WriteDWord(Snes2pc(0x80E5C6), (uint) 0xEAFF2F20);
+                        WriteDWord(Snes2pc(0x80E5C6), 0xEAFF2F20);
 
                         //3
-                        WriteWord(Snes2pc(0x80E5EA), (ushort) (0x80 | (0x13 << 8)));
+                        WriteWord(Snes2pc(0x80E5EA), 0x80 | (0x13 << 8));
 
                         //4
                         rom[Snes2pc(0x80E5FF)] = 0xE2;
                         rom[Snes2pc(0x80E600)] = 0x20;
-                        WriteWord(Snes2pc(0x80E601), (ushort) (0xA9 | (0x06 << 8)));
+                        WriteWord(Snes2pc(0x80E601), 0xA9 | (0x06 << 8));
                         rom[Snes2pc(0x80E603)] = 0x48;
                         rom[Snes2pc(0x80E604)] = 0xAB;
                         rom[Snes2pc(0x80E605)] = 0xC2;
@@ -1332,9 +1332,9 @@ namespace MMX.ROM
                                 ushort camOffset = ReadWord(pLocks + offset + 0x0);
                                 ushort camValue = ReadWord(pLocks + offset + 0x2);
 
-                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + 0x8 + newOffset), (ushort) camOffset);
+                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + 0x8 + newOffset), camOffset);
                                 newOffset += 2;
-                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + 0x8 + newOffset), (ushort) camValue);
+                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + 0x8 + newOffset), camValue);
                                 newOffset += 2;
 
                                 b++;
@@ -1342,7 +1342,7 @@ namespace MMX.ROM
 
                             for (; newOffset < 0x18; newOffset += 2)
                             {
-                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + 0x8 + newOffset), (ushort) 0x0);
+                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + 0x8 + newOffset), 0x0);
                             }
                         }
                     }
@@ -1610,7 +1610,7 @@ namespace MMX.ROM
 
         private class TileSortComparator : IComparer<STileInfo>
         {
-            public int Compare(STileInfo a, STileInfo b) => (int) a.value - (int) b.value;
+            public int Compare(STileInfo a, STileInfo b) => a.value - b.value;
         }
 
         private static readonly IComparer<STileInfo> TileSortComparer = new TileSortComparator();
@@ -1857,7 +1857,7 @@ namespace MMX.ROM
                     {
                         uint tileOffset = (uint) (pMaps + (i << 3) + j * 2);
                         uint tile = (uint) (rom[tileOffset] & 0x3FF);
-                        rom[tileOffset] &= (byte) (~0x3FF & 0xff);
+                        rom[tileOffset] &= ~0x3FF & 0xff;
                         rom[tileOffset] |= (byte) (tileRemap[tile] & 0x3FF);
                     }
                 }
@@ -2080,7 +2080,7 @@ namespace MMX.ROM
                     //indices.push_back(2 * WORD(SReadWord(0x808AA6 + 2 * (level - 1))));
                     //indices.push_back(2 * WORD(SReadByte(0x808A8E + 1 * (level - 1))));
                     //indices.push_back(0x0);
-                    indices.Add((uint) (2 * (ushort) SReadByte(0x80823D + level)));
+                    indices.Add((uint) (2 * SReadByte(0x80823D + level)));
                     //indices.push_back(2 * WORD(SReadByte(0x808A8E + 1 * (level - 1))));
                 }
 
@@ -2537,7 +2537,7 @@ namespace MMX.ROM
                             pevent += 2;
 
                             // clear the end bit
-                            rom[pevent - 1] &= (byte) (~0x80 & 0xff);
+                            rom[pevent - 1] &= ~0x80 & 0xff;
 
                             if (pCapsulePos != 0 && e.type == 0x3 && e.eventId == 0x4D)
                             {
@@ -2599,7 +2599,7 @@ namespace MMX.ROM
 
                 for (int x = 0; x < levelWidth; x++)
                 {
-                    tempSceneLayout[y * levelWidth + x] = (byte) ((x >= (int) oldWidth || y >= (int) oldHeight) ? 0 : (int) sceneLayout[i++]);
+                    tempSceneLayout[y * levelWidth + x] = (byte) ((x >= (int) oldWidth || y >= (int) oldHeight) ? 0 : sceneLayout[i++]);
                 }
             }
 
@@ -2831,7 +2831,7 @@ namespace MMX.ROM
                 n >>= 4;
             }
 
-            return new String(buf);
+            return new string(buf);
         }
 
         private static void WriteDump(string prefix, TextWriter writer, byte[] buf, int off, int len)
@@ -2868,7 +2868,7 @@ namespace MMX.ROM
             int l = 0;
             while (k < k1)
             {
-                String line = prefix + "+" + IntToHex(l * 16, 6) + " ";
+                string line = prefix + "+" + IntToHex(l * 16, 6) + " ";
                 int k0 = k;
                 for (int j = 0; j < 16; j++)
                     if (k < k1)

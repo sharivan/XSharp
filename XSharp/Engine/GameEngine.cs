@@ -32,6 +32,7 @@ using DSoundCooperativeLevel = SharpDX.DirectSound.CooperativeLevel;
 
 using static MMX.Engine.Consts;
 using static System.Collections.Specialized.BitVector32;
+using System.Reflection.Emit;
 
 namespace MMX.Engine
 {
@@ -292,6 +293,7 @@ namespace MMX.Engine
         internal Partition<Entity> partition;
         private long engineTime;
         private readonly Random random;
+        private List<Checkpoint> checkpoints;
         private readonly List<Entity> entities;
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
@@ -312,8 +314,8 @@ namespace MMX.Engine
         private long lastCurrentMemoryUsage;
         private MMXBox drawBox;
         private Checkpoint currentCheckpoint;
-        internal Vector extensionOrigin;
-        internal List<Vector> extensions;
+        internal Vector cameraConstraintOrigin;
+        internal List<Vector> cameraConstraints;
         internal MMXBox cameraConstraintsBox;
 
         private readonly SpriteSheet xSpriteSheet;
@@ -393,35 +395,49 @@ namespace MMX.Engine
         private bool showTriggerCameraLook = DEBUG_SHOW_CAMERA_TRIGGER_EXTENSIONS;
 
         // Create Clock and FPS counters
-        private Stopwatch clock = new Stopwatch();
-        private double clockFrequency = Stopwatch.Frequency;
-        private Stopwatch fpsTimer = new Stopwatch();
+        private readonly Stopwatch clock = new();
+        private readonly double clockFrequency = Stopwatch.Frequency;
+        private readonly Stopwatch fpsTimer = new();
         private int fpsFrames = 0;
         private double nextTick = 0;
-        private double tick = 1000D / TICKRATE;
+        private readonly double tick = 1000D / TICKRATE;
 
-        public Form Form { get; }
+        public Form Form
+        {
+            get;
+        }
 
-        public Device9 Device { get; }
+        public Device9 Device
+        {
+            get;
+        }
 
-        public VertexBuffer VertexBuffer { get; }
+        public VertexBuffer VertexBuffer
+        {
+            get;
+        }
 
         public RectangleF RenderRectangle => ToRectangleF(drawBox);
 
-        public MMXWorld World { get; }
+        public MMXWorld World
+        {
+            get;
+        }
 
-        public Player Player { get;
+        public Player Player
+        {
+            get;
             private set;
         }
 
         public Vector ExtensionOrigin
         {
-            get => extensionOrigin;
+            get => cameraConstraintOrigin;
 
-            set => extensionOrigin = value;
+            set => cameraConstraintOrigin = value;
         }
 
-        public int ExtensionCount => extensions.Count;
+        public int ExtensionCount => cameraConstraints.Count;
 
         public Vector MinCameraPos => noCameraConstraints ? World.BoundingBox.LeftTop : cameraConstraintsBox.LeftTop;
 
@@ -440,20 +456,41 @@ namespace MMX.Engine
             }
         }
 
-        public FixedSingle DrawScale { get;
-            set; }
+        public FixedSingle DrawScale
+        {
+            get;
+            set;
+        }
 
-        public VertexShader VertexShader { get; }
+        public VertexShader VertexShader
+        {
+            get;
+        }
 
-        public PixelShader PixelShader { get; }
+        public PixelShader PixelShader
+        {
+            get;
+        }
 
-        public Texture X1NormalPalette { get; }
+        public Texture X1NormalPalette
+        {
+            get;
+        }
 
-        public Texture ChargeLevel1Palette { get; }
+        public Texture ChargeLevel1Palette
+        {
+            get;
+        }
 
-        public Texture ChargeLevel2Palette { get; }
+        public Texture ChargeLevel2Palette
+        {
+            get;
+        }
 
-        public Texture ChargingEffectPalette { get; }
+        public Texture ChargingEffectPalette
+        {
+            get;
+        }
 
         public Checkpoint CurrentCheckpoint
         {
@@ -464,10 +501,11 @@ namespace MMX.Engine
                 if (currentCheckpoint != value)
                 {
                     currentCheckpoint = value;
+                    cameraConstraintsBox = currentCheckpoint.BoundingBox;
 
                     if (romLoaded)
                     {
-                        mmx.SetLevel(mmx.Level, (ushort) currentCheckpoint.Point);
+                        mmx.SetLevel(mmx.Level, currentCheckpoint.Point);
                         mmx.LoadTilesAndPalettes();
                         mmx.LoadPalette(World, false);
                         mmx.LoadPalette(World, true);
@@ -475,6 +513,51 @@ namespace MMX.Engine
                         mmx.RefreshMapCache(World, true);
                     }
                 }
+            }
+        }
+
+        public uint ObjectTile
+        {
+            get => mmx.ObjLoadOffset;
+
+            set
+            {
+                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, value, mmx.TileLoadOffset, mmx.PalLoadOffset);
+                mmx.LoadTilesAndPalettes();
+                mmx.LoadPalette(World, false);
+                mmx.LoadPalette(World, true);
+                mmx.RefreshMapCache(World, false);
+                mmx.RefreshMapCache(World, true);
+            }
+        }
+
+        public uint BackgroundTile
+        {
+            get => mmx.TileLoadOffset;
+
+            set
+            {
+                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoadOffset, value, mmx.PalLoadOffset);
+                mmx.LoadTilesAndPalettes();
+                mmx.LoadPalette(World, false);
+                mmx.LoadPalette(World, true);
+                mmx.RefreshMapCache(World, false);
+                mmx.RefreshMapCache(World, true);
+            }
+        }
+
+        public uint Palette
+        {
+            get => mmx.PalLoadOffset;
+
+            set
+            {
+                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoadOffset, mmx.TileLoadOffset, value);
+                mmx.LoadTilesAndPalettes();
+                mmx.LoadPalette(World, false);
+                mmx.LoadPalette(World, true);
+                mmx.RefreshMapCache(World, false);
+                mmx.RefreshMapCache(World, true);
             }
         }
 
@@ -561,7 +644,7 @@ namespace MMX.Engine
 
             noCameraConstraints = NO_CAMERA_CONSTRAINTS;
 
-            extensions = new List<Vector>();
+            cameraConstraints = new List<Vector>();
 
             directInput = new DirectInput();
 
@@ -589,6 +672,7 @@ namespace MMX.Engine
             cameraConstraintsBox = World.BoundingBox;
 
             random = new Random();
+            checkpoints = new List<Checkpoint>();
             entities = new List<Entity>();
             addedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
@@ -727,7 +811,7 @@ namespace MMX.Engine
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
-            sequence.AddFrame(5-3, 6, 341, 150, 31, 42);
+            sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42);
 
             sequence = xSpriteSheet.AddFrameSquence("Landing");
             sequence.BoudingBoxOriginOffset = normalOffset;
@@ -781,9 +865,9 @@ namespace MMX.Engine
             sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding", 11);
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(5, 2-3, 158, 200, 31, 39, 5);
-            sequence.AddFrame(9+5, 7, 201, 196, 32, 43, 6);
-            sequence.AddFrame(9+4, 8, 240, 196, 32, 42);
+            sequence.AddFrame(5, 2 - 3, 158, 200, 31, 39, 5);
+            sequence.AddFrame(9 + 5, 7, 201, 196, 32, 43, 6);
+            sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42);
 
             sequence = xSpriteSheet.AddFrameSquence("WallJumping");
             sequence.BoudingBoxOriginOffset = normalOffset;
@@ -937,8 +1021,8 @@ namespace MMX.Engine
                 xEffectsSpriteSheet.CurrentBitmap = texture;
             }
 
-            xEffectsSpriteSheet.Precache = false;    
-            
+            xEffectsSpriteSheet.Precache = false;
+
             sequence = xEffectsSpriteSheet.AddFrameSquence("ChargingLevel1");
             AddChargingEffectFrames(sequence, 1);
 
@@ -1082,7 +1166,7 @@ namespace MMX.Engine
         private static readonly byte[] EMPTY_TEXTURE_DATA = new byte[4096];
 
         private static void ZeroDataRect(DataRectangle dataRect, int length)
-        {           
+        {
             int remaining = length;
             IntPtr ptr = dataRect.DataPointer;
             while (remaining > 0)
@@ -1848,6 +1932,9 @@ namespace MMX.Engine
             Player.Spawn();
 
             World.Screen.FocusOn = Player;
+
+            if (checkpoints.Count > 0)
+                CurrentCheckpoint = checkpoints[0];
         }
 
         public void LoadLevel(ushort level)
@@ -1903,6 +1990,7 @@ namespace MMX.Engine
                 sprite?.Dispose();
             }
 
+            checkpoints.Clear();
             entities.Clear();
             addedEntities.Clear();
             removedEntities.Clear();
@@ -2046,10 +2134,7 @@ namespace MMX.Engine
                 }
         }
 
-        public void DrawLine(Vector from, Vector to, float width, Color color)
-        {
-            DrawLine(WorldVectorToScreen(from), WorldVectorToScreen(to), width, color);
-        }
+        public void DrawLine(Vector from, Vector to, float width, Color color) => DrawLine(WorldVectorToScreen(from), WorldVectorToScreen(to), width, color);
 
         public void DrawLine(Vector2 from, Vector2 to, float width, Color color)
         {
@@ -2063,10 +2148,7 @@ namespace MMX.Engine
             line.End();
         }
 
-        public void DrawRectangle(MMXBox box, float borderWith, Color color)
-        {
-            DrawRectangle(WorldBoxToScreen(box), borderWith, color);
-        }
+        public void DrawRectangle(MMXBox box, float borderWith, Color color) => DrawRectangle(WorldBoxToScreen(box), borderWith, color);
 
         public void DrawRectangle(RectangleF rect, float borderWith, Color color)
         {
@@ -2079,10 +2161,7 @@ namespace MMX.Engine
             line.End();
         }
 
-        public void FillRectangle(MMXBox box, Color color)
-        {
-            FillRectangle(WorldBoxToScreen(box), color);
-        }
+        public void FillRectangle(MMXBox box, Color color) => FillRectangle(WorldBoxToScreen(box), color);
 
         public void FillRectangle(RectangleF rect, Color color)
         {
@@ -2107,10 +2186,7 @@ namespace MMX.Engine
             sprite.End();
         }
 
-        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color)
-        {
-            DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color);
-        }
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color) => DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color);
 
         public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, RawMatrix transform, Color color)
         {
@@ -2185,7 +2261,7 @@ namespace MMX.Engine
                 if (drawSprites)
                 {
                     // Render sprites
-                    List<Entity> objects = partition.Query(World.Screen.BoundingBox);
+                    List<Entity> objects = partition.Query(World.Screen.BoundingBox, BoxKind.BOUDINGBOX);
                     foreach (Entity obj in objects)
                     {
                         if (!obj.Alive || obj.MarkedToRemove || obj.Equals(Player))
@@ -2203,7 +2279,7 @@ namespace MMX.Engine
 
                 if (drawSprites && (drawCollisionBox || showTriggerBounds))
                 {
-                    List<Entity> objects = partition.Query(World.BoundingBox);
+                    List<Entity> objects = partition.Query(World.BoundingBox, BoxKind.BOUDINGBOX);
                     foreach (Entity obj in objects)
                     {
                         if (!obj.Alive || obj.MarkedToRemove || obj.Equals(Player))
@@ -2220,21 +2296,53 @@ namespace MMX.Engine
                                 break;
                             }
 
-                            case AbstractTrigger trigger when showTriggerBounds:
+                            case CameraLockTrigger cameraLockTrigger when showTriggerBounds:
                             {
-                                var rect = WorldBoxToScreen(trigger.BoundingBox);
+                                var rect = WorldBoxToScreen(cameraLockTrigger.HitBox);
 
-                                if (Player.IsTouching(trigger))
+                                if (Player.IsTouching(cameraLockTrigger) && Player.GetVector(VectorKind.PLAYER_ORIGIN) <= cameraLockTrigger.HitBox)
                                     FillRectangle(rect, TRIGGER_BOX_COLOR);
 
                                 DrawRectangle(rect, 4, TRIGGER_BORDER_BOX_COLOR);
-                                if (showTriggerCameraLook && trigger is CameraLockTrigger camTrigger)
+                                if (showTriggerCameraLook)
                                 {
-                                    Vector extensionOrigin = camTrigger.ExtensionOrigin;
-                                    foreach (var extension in camTrigger.Extensions)
-                                        DrawLine(WorldVectorToScreen(extensionOrigin), WorldVectorToScreen(extensionOrigin + extension), 4, CAMERA_LOCK_COLOR);
+                                    Vector constraintOrigin = cameraLockTrigger.ConstraintOrigin;
+                                    foreach (var constraint in cameraLockTrigger.Constraints)
+                                        DrawLine(WorldVectorToScreen(constraintOrigin), WorldVectorToScreen(constraintOrigin + constraint), 4, CAMERA_LOCK_COLOR);
                                 }
 
+                                break;
+                            }
+
+                            case ChangeDynamicPropertyTrigger changeDynamicPropertyTrigger when showTriggerBounds:
+                            {
+                                var box = changeDynamicPropertyTrigger.BoundingBox;
+                                var origin = box.Origin;
+                                var mins = box.Mins;
+                                var maxs = box.Maxs;
+                                switch (changeDynamicPropertyTrigger.Orientation)
+                                {
+                                    case SplitterTriggerOrientation.HORIZONTAL:
+                                        DrawLine(new Vector(origin.X + mins.X, origin.Y), new Vector(origin.X + maxs.X, origin.Y), 4, Color.Purple);
+                                        break;
+
+                                    case SplitterTriggerOrientation.VERTICAL:
+                                        DrawLine(new Vector(origin.X, origin.Y + mins.Y), new Vector(origin.X, origin.Y + maxs.Y), 4, Color.Purple);
+                                        break;
+
+                                }
+                                
+                                break;
+                            }
+
+                            case CheckpointTrigger checkpointTrigger when showTriggerBounds:
+                            {
+                                var rect = WorldBoxToScreen(checkpointTrigger.HitBox);
+
+                                if (Player.IsTouching(checkpointTrigger) && Player.GetVector(VectorKind.PLAYER_ORIGIN) <= checkpointTrigger.HitBox)
+                                    FillRectangle(rect, CHECKPOINT_TRIGGER_BOX_COLOR);
+
+                                DrawRectangle(rect, 4, CHECKPOINT_TRIGGER_BORDER_BOX_COLOR);
                                 break;
                             }
                         }
@@ -2318,13 +2426,13 @@ namespace MMX.Engine
 
                 if (drawPlayerOriginAxis)
                 {
-                    Vector2 v = WorldVectorToScreen(Player.Origin);
+                    Vector2 v = WorldVectorToScreen(Player.GetVector(VectorKind.PLAYER_ORIGIN));
 
                     line.Width = 2;
 
-                    line.Begin();                  
+                    line.Begin();
                     line.Draw(new Vector2[] { 4 * new Vector2(v.X, v.Y - SCREEN_HEIGHT), 4 * new Vector2(v.X, v.Y + SCREEN_HEIGHT) }, Color.Blue);
-                    line.Draw(new Vector2[] { 4 * new Vector2(v.X - SCREEN_WIDTH, v.Y - 17), 4 * new Vector2(v.X + SCREEN_WIDTH, v.Y - 17) }, Color.Blue);
+                    line.Draw(new Vector2[] { 4 * new Vector2(v.X - SCREEN_WIDTH, v.Y), 4 * new Vector2(v.X + SCREEN_WIDTH, v.Y) }, Color.Blue);
                     line.End();
                 }
 
@@ -2489,37 +2597,81 @@ namespace MMX.Engine
             }
         }
 
-        public Checkpoint AddCheckpoint(int index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
+        public ChangeDynamicPropertyTrigger AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, uint forward, uint backward, SplitterTriggerOrientation orientation)
+        {
+            var trigger = new ChangeDynamicPropertyTrigger(this, new MMXBox(origin, new Vector(-128, -112), new Vector(128, 112)), prop, forward, backward, orientation);
+            trigger.Spawn();
+            return trigger;
+        }
+
+        public Checkpoint AddCheckpoint(ushort index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
         {
             var checkpoint = new Checkpoint(this, index, boundingBox, characterPos, cameraPos, backgroundPos, forceBackground, scroll);
+            checkpoints.Add(checkpoint);
             checkpoint.Spawn();
             return checkpoint;
         }
 
-        public CameraLockTrigger AddCameraEventTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
+        public CheckpointTrigger AddCheckpointTrigger(ushort index, Vector origin)
+        {
+            var trigger = new CheckpointTrigger(this, new MMXBox(origin, new Vector(0, -112), new Vector(128, 112)), checkpoints[index]);
+            trigger.Spawn();
+            return trigger;
+        }
+
+        public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
         {
             var trigger = new CameraLockTrigger(this, boundingBox, extensions);
             trigger.Spawn();
             return trigger;
         }
 
-        public void SetExtensions(Vector origin, IEnumerable<Vector> extensions)
+        internal void UpdateCameraConstraintsBox()
         {
-            extensionOrigin = origin;
+            MMXBox boundingBox = cameraConstraintsBox;
+            FixedSingle minX = boundingBox.Left;
+            FixedSingle minY = boundingBox.Top;
+            FixedSingle maxX = boundingBox.Right;
+            FixedSingle maxY = boundingBox.Bottom;
 
-            this.extensions.Clear();
-            this.extensions.AddRange(extensions);
+            foreach (Vector constraint in cameraConstraints)
+            {
+                if (constraint.Y == 0)
+                {
+                    if (constraint.X < 0)
+                        minX = cameraConstraintOrigin.X + constraint.X;
+                    else
+                        maxX = cameraConstraintOrigin.X + constraint.X;
+                }
+                else if (constraint.X == 0)
+                {
+                    if (constraint.Y < 0)
+                        minY = cameraConstraintOrigin.Y + constraint.Y;
+                    else
+                        maxY = cameraConstraintOrigin.Y + constraint.Y;
+                }
+            }
 
-            currentCheckpoint?.UpdateBoudingBox();
+            cameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
         }
 
-        public void AddExtension(Vector extension) => extensions.Add(extension);
+        public void SetCameraConstraints(Vector origin, IEnumerable<Vector> extensions)
+        {
+            cameraConstraintOrigin = origin;
 
-        public Vector GetExtension(int index) => extensions[index];
+            cameraConstraints.Clear();
+            cameraConstraints.AddRange(extensions);
 
-        public bool ContainsExtension(Vector extension) => extensions.Contains(extension);
+            UpdateCameraConstraintsBox();
+        }
 
-        public void ClearExtensions() => extensions.Clear();
+        public void AddConstraint(Vector constraint) => cameraConstraints.Add(constraint);
+
+        public Vector GetConstraint(int index) => cameraConstraints[index];
+
+        public bool ContainsConstraint(Vector constraint) => cameraConstraints.Contains(constraint);
+
+        public void ClearConstraints() => cameraConstraints.Clear();
 
         internal void ShootLemon(Player shooter, Vector origin, Direction direction, bool dashLemon)
         {

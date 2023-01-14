@@ -146,6 +146,8 @@ namespace MMX.Engine
         public static readonly Color RIGHT_COLLIDER_COLOR = Color.Yellow;
         public static readonly Color TRIGGER_BORDER_BOX_COLOR = Color.Green;
         public static readonly Color TRIGGER_BOX_COLOR = Color.FromRgba(0x8000ff00);
+        public static readonly Color CHECKPOINT_TRIGGER_BORDER_BOX_COLOR = Color.LightSeaGreen;
+        public static readonly Color CHECKPOINT_TRIGGER_BOX_COLOR = Color.FromRgba(0x8000ff00);
         public static readonly Color CAMERA_LOCK_COLOR = Color.Yellow;
         public static readonly Color TOUCHING_MAP_COLOR = Color.Blue;
 

@@ -51,7 +51,7 @@ namespace MMX.ROM
             if (stream == null)
                 return false;
 
-            if (stream.Length > Int32.MaxValue)
+            if (stream.Length > int.MaxValue)
                 return false;
 
             FreeRom();

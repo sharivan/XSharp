@@ -5,6 +5,24 @@ using System.IO;
 
 namespace MMX.Engine
 {
+    public enum VectorKind
+    {
+        NONE = 0,
+        ORIGIN = 1,
+        PLAYER_ORIGIN = 2,
+        BOUDINGBOX_CENTER = 4,
+        HITBOX_CENTER = 8,
+        ALL = 255
+    }
+
+    public enum BoxKind
+    {
+        NONE = 0,
+        BOUDINGBOX = 1,
+        HITBOX = 2,
+        ALL = 255
+    }
+
     public abstract class Entity : IDisposable
     {
         protected GameEngine engine;
@@ -122,6 +140,15 @@ namespace MMX.Engine
             return false;
         }
 
+        public Vector GetVector(VectorKind kind) => kind switch
+        {
+            VectorKind.ORIGIN => origin,
+            VectorKind.PLAYER_ORIGIN => origin - new Vector(0, 17),
+            VectorKind.BOUDINGBOX_CENTER => BoundingBox.Center,
+            VectorKind.HITBOX_CENTER => HitBox.Center,
+            _ => Vector.NULL_VECTOR
+        };
+
         protected abstract Box GetBoundingBox();
 
         protected virtual Box GetHitBox() => GetBoundingBox();
@@ -129,6 +156,13 @@ namespace MMX.Engine
         protected virtual void SetBoundingBox(Box boudingBox)
         {
         }
+
+        public Box GetBox(BoxKind kind) => kind switch
+        {
+            BoxKind.BOUDINGBOX => GetBoundingBox(),
+            BoxKind.HITBOX => GetHitBox(),
+            _ => Box.EMPTY_BOX,
+        };
 
         public virtual void LoadState(BinaryReader reader)
         {
@@ -164,7 +198,7 @@ namespace MMX.Engine
 
             PostThink(); // Realiza o pós-pensamento do objeto
 
-            List<Entity> touching = engine.partition.Query(HitBox, this, childs);
+            List<Entity> touching = engine.partition.Query(HitBox, this, childs, BoxKind.HITBOX);
 
             // Processa a lista global de objetos que anteriormente estavam tocando esta entidade no frame anterior
             int count = touchingEntities.Count;

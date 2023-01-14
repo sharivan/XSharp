@@ -1,15 +1,21 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+
+using MMX.Geometry;
 
 namespace MMX.Engine
 {
     public delegate void TriggerEvent(Entity obj);
 
+    public enum TouchingKind
+    {
+        VECTOR,
+        BOX
+    }
+
     public abstract class AbstractTrigger : Entity
     {
         private Box boundingBox;
-        protected uint maxTriggers;
+        private List<Entity> triggereds;
 
         public event TriggerEvent TriggerEvent;
 
@@ -22,32 +28,95 @@ namespace MMX.Engine
         public uint Triggers
         {
             get;
-            private set;
+            protected set;
         }
 
-        public bool Once => maxTriggers == 1;
+        public TouchingKind TouchingKind
+        {
+            get;
+            set;
+        }
 
-        public uint MaxTriggers => maxTriggers;
+        public VectorKind VectorKind
+        {
+            get;
+            set;
+        }
 
-        protected AbstractTrigger(GameEngine engine, Box boundingBox) :
+        public bool Once => MaxTriggers == 1;
+
+        public uint MaxTriggers
+        {
+            get;
+            protected set;
+        }
+
+        protected AbstractTrigger(GameEngine engine, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN) :
             base(engine, boundingBox.Origin)
         {
             this.boundingBox = boundingBox - boundingBox.Origin;
 
             Enabled = true;
-            maxTriggers = uint.MaxValue;
+            MaxTriggers = uint.MaxValue;
+            TouchingKind = touchingKind;
+            VectorKind = vectorKind;
+
+            triggereds = new List<Entity>();
         }
 
         protected override void OnStartTouch(Entity obj)
         {
-            if (Enabled && Triggers < maxTriggers)
+            base.OnStartTouch(obj);
+
+            if (Enabled && Triggers < MaxTriggers)
             {
-                Triggers++;
-                DoTrigger(obj);
+                switch (TouchingKind)
+                {
+                    case TouchingKind.VECTOR:
+                    {
+                        Vector v = obj.GetVector(VectorKind);
+                        if (v <= HitBox)
+                        {
+                            triggereds.Add(obj);
+                            Triggers++;
+                            OnTrigger(obj);
+                        }
+
+                        break;
+                    }
+
+                    case TouchingKind.BOX:
+                    {
+                        Triggers++;
+                        OnTrigger(obj);
+                        break;
+                    }
+                }
             }
         }
 
-        protected virtual void DoTrigger(Entity obj) => TriggerEvent?.Invoke(obj);
+        protected override void OnTouching(Entity obj)
+        {
+            base.OnTouching(obj);
+
+            if (Enabled && Triggers < MaxTriggers && TouchingKind == TouchingKind.VECTOR && !triggereds.Contains(obj))
+            {
+                Vector v = obj.GetVector(VectorKind);
+                if (v <= HitBox)
+                {
+                    triggereds.Add(obj);
+                    Triggers++;
+                    OnTrigger(obj);
+                }
+            }
+        }
+
+        protected override void OnEndTouch(Entity obj)
+        {
+            triggereds.Remove(obj);
+        }
+
+        protected virtual void OnTrigger(Entity obj) => TriggerEvent?.Invoke(obj);
 
         protected override Box GetBoundingBox() => Origin + boundingBox;
 
@@ -63,160 +132,236 @@ namespace MMX.Engine
         public new bool Once
         {
             get => base.Once;
-
-            set => maxTriggers = value ? 1 : uint.MaxValue;
+            set => MaxTriggers = value ? 1 : uint.MaxValue;
         }
 
         public new uint MaxTriggers
         {
             get => base.MaxTriggers;
-
-            set => maxTriggers = value;
+            set => base.MaxTriggers = value;
         }
 
-        public Trigger(GameEngine engine, Box boudingBox) :
-            base(engine, boudingBox)
+        public Trigger(GameEngine engine, Box boudingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN) :
+            base(engine, boudingBox, touchingKind, vectorKind)
         {
-            uint i = MaxTriggers;
+        }
+    }
+
+    public enum SplitterTriggerOrientation
+    {
+        HORIZONTAL,
+        VERTICAL
+    }
+
+    public enum SplitterTriggerSide
+    {
+        LEFT,
+        RIGHT,
+        UP,
+        DOWN
+    }
+
+    public delegate void SplitterTriggerEventHandler(SplitterTrigger source, Entity target, SplitterTriggerSide side);
+
+    public class SplitterTrigger : AbstractTrigger
+    {
+        public event SplitterTriggerEventHandler LineTriggerEvent;
+
+        public SplitterTriggerOrientation Orientation
+        {
+            get; set;
+        }
+
+        public SplitterTrigger(GameEngine engine, Box box, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL, VectorKind vectorKind = VectorKind.ORIGIN) :
+            base(engine, box, TouchingKind.VECTOR, vectorKind) => Orientation = orientation;
+
+        protected virtual void DoSplitterTriggerEvent(Entity target, SplitterTriggerSide side) => LineTriggerEvent?.Invoke(this, target, side);
+
+        protected override void OnTouching(Entity obj)
+        {
+            base.OnTouching(obj);
+
+            if (!Enabled)
+                return;
+
+            Vector targetOrigin = obj.Origin;
+            Vector targetLastOrigin = obj.LastOrigin;
+
+            switch (Orientation)
+            {
+                case SplitterTriggerOrientation.HORIZONTAL:
+                    if (targetOrigin.Y < Origin.Y && targetLastOrigin.Y >= Origin.Y)
+                        DoSplitterTriggerEvent(obj, SplitterTriggerSide.UP);
+                    else if (targetOrigin.Y >= Origin.Y && targetLastOrigin.Y < Origin.Y)
+                        DoSplitterTriggerEvent(obj, SplitterTriggerSide.DOWN);
+
+                    break;
+
+                case SplitterTriggerOrientation.VERTICAL:
+                    if (targetOrigin.X < Origin.X && targetLastOrigin.X >= Origin.X)
+                        DoSplitterTriggerEvent(obj, SplitterTriggerSide.LEFT);
+                    else if (targetOrigin.X >= Origin.X && targetLastOrigin.X < Origin.X)
+                        DoSplitterTriggerEvent(obj, SplitterTriggerSide.RIGHT);
+
+                    break;
+            }
+        }
+    }
+
+    public enum DynamicProperty
+    {
+        OBJECT_TILE,
+        BACKGROUND_TILE,
+        PALETTE
+    }
+
+    public class ChangeDynamicPropertyTrigger : SplitterTrigger
+    {
+        public DynamicProperty Property
+        {
+            get; set;
+        }
+
+        public uint Forward
+        {
+            get; set;
+        }
+
+        public uint Backward
+        {
+            get; set;
+        }
+
+        public ChangeDynamicPropertyTrigger(GameEngine engine, Box box, DynamicProperty prop, uint forward, uint backward, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL) : base(engine, box, orientation, VectorKind.PLAYER_ORIGIN)
+        {
+            Property = prop;
+            Forward = forward;
+            Backward = backward;
+        }
+
+        private void ChangeProperty(uint value)
+        {
+            switch (Property)
+            {
+                case DynamicProperty.OBJECT_TILE:
+                    Engine.ObjectTile = value;
+                    break;
+
+                case DynamicProperty.BACKGROUND_TILE:
+                    Engine.BackgroundTile = value;
+                    break;
+
+                case DynamicProperty.PALETTE:
+                    Engine.Palette = value;
+                    break;
+            }
+        }
+
+        protected override void DoSplitterTriggerEvent(Entity obj, SplitterTriggerSide side)
+        {
+            base.DoSplitterTriggerEvent(obj, side);
+
+            if (obj is not Player)
+                return;
+
+            switch (Orientation)
+            {
+                case SplitterTriggerOrientation.HORIZONTAL:
+                    switch (side)
+                    {
+                        case SplitterTriggerSide.UP:
+                            ChangeProperty(Backward);
+                            break;
+
+                        case SplitterTriggerSide.DOWN:
+                            ChangeProperty(Forward);
+                            break;
+                    }
+
+                    break;
+
+                case SplitterTriggerOrientation.VERTICAL:
+                    switch (side)
+                    {
+                        case SplitterTriggerSide.LEFT:
+                            ChangeProperty(Backward);
+                            break;
+
+                        case SplitterTriggerSide.RIGHT:
+                            ChangeProperty(Forward);
+                            break;
+                    }
+
+                    break;
+            }
+        }
+    }
+
+    public class CheckpointTrigger : AbstractTrigger
+    {
+        public Checkpoint Checkpoint
+        {
+            get;
+            set;
+        }
+
+        public bool Triggered
+        {
+            get;
+            private set;
+        }
+
+        public CheckpointTrigger(GameEngine engine, Box box, Checkpoint checkpoint) :
+            base(engine, box, TouchingKind.VECTOR, VectorKind.PLAYER_ORIGIN)
+        {
+            Checkpoint = checkpoint;
+            Triggered = false;
+        }
+
+        protected override void OnTrigger(Entity obj)
+        {
+            base.OnTrigger(obj);
+
+            if (!Triggered && obj is Player)
+            {
+                Engine.CurrentCheckpoint = Checkpoint;
+                Triggered = true;
+            }
         }
     }
 
     public class CameraLockTrigger : AbstractTrigger
     {
-        private readonly List<Vector> extensions;
+        private readonly List<Vector> constraints;
 
-        public IEnumerable<Vector> Extensions => extensions;
+        public IEnumerable<Vector> Constraints => constraints;
 
-        public Vector ExtensionOrigin => BoundingBox.Center;
+        public Vector ConstraintOrigin => BoundingBox.Center;
 
-        public int ExtensionCount => extensions.Count;
+        public int ConstraintCount => constraints.Count;
 
         public CameraLockTrigger(GameEngine engine, Box boudingBox) :
-            base(engine, boudingBox) => extensions = new List<Vector>();
+            base(engine, boudingBox, TouchingKind.VECTOR, VectorKind.PLAYER_ORIGIN) => constraints = new List<Vector>();
 
-        public CameraLockTrigger(GameEngine engine, Box boudingBox, IEnumerable<Vector> extensions) :
-            base(engine, boudingBox) => this.extensions = new List<Vector>(extensions);
+        public CameraLockTrigger(GameEngine engine, Box boudingBox, IEnumerable<Vector> constraints) :
+            base(engine, boudingBox, TouchingKind.VECTOR, VectorKind.PLAYER_ORIGIN) => this.constraints = new List<Vector>(constraints);
 
-        protected override void DoTrigger(Entity obj)
+        protected override void OnTrigger(Entity obj)
         {
-            base.DoTrigger(obj);
+            base.OnTrigger(obj);
 
             if (obj is not Player)
                 return;
 
-            engine.SetExtensions(ExtensionOrigin, extensions);
+            engine.SetCameraConstraints(ConstraintOrigin, constraints);
         }
 
-        public void AddExtension(Vector extension) => extensions.Add(extension);
+        public void AddConstraint(Vector constraint) => constraints.Add(constraint);
 
-        public Vector GetExtension(int index) => extensions[index];
+        public Vector GetConstraint(int index) => constraints[index];
 
-        public bool ContainsExtension(Vector extension) => extensions.Contains(extension);
+        public bool ContainsConstraint(Vector constraint) => constraints.Contains(constraint);
 
-        public void ClearExtensions() => extensions.Clear();
-    }
-
-    public class Checkpoint : AbstractTrigger
-    {
-        public int Point
-        {
-            get;
-        }
-
-        public Vector CharacterPos
-        {
-            get;
-        }
-
-        public Vector CameraPos
-        {
-            get;
-        }
-
-        public Vector BackgroundPos
-        {
-            get;
-        }
-
-        public Vector ForceBackground
-        {
-            get;
-        }
-
-        public uint Scroll
-        {
-            get;
-        }
-
-        public Checkpoint(GameEngine engine, int point, Box boudingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll) :
-            base(engine, boudingBox)
-        {
-            Point = point;
-            CharacterPos = characterPos;
-            CameraPos = cameraPos;
-            BackgroundPos = backgroundPos;
-            ForceBackground = forceBackground;
-            Scroll = scroll;
-        }
-
-        internal void UpdateBoudingBox()
-        {
-            Box boundingBox = engine.cameraConstraintsBox;
-            FixedSingle minX = boundingBox.Left;
-            FixedSingle minY = boundingBox.Top;
-            FixedSingle maxX = boundingBox.Right;
-            FixedSingle maxY = boundingBox.Bottom;
-
-            foreach (Vector extension in engine.extensions)
-            {
-                if (extension.Y == 0)
-                {
-                    if (extension.X < 0)
-                        minX = engine.extensionOrigin.X + extension.X;
-                    else
-                        maxX = engine.extensionOrigin.X + extension.X;
-                }
-                else if (extension.X == 0)
-                {
-                    if (extension.Y < 0)
-                        minY = engine.extensionOrigin.Y + extension.Y;
-                    else
-                        maxY = engine.extensionOrigin.Y + extension.Y;
-                }
-            }
-
-            engine.cameraConstraintsBox = new Box(minX, minY, maxX - minX, maxY - minY);
-        }
-
-        protected override void DoTrigger(Entity obj)
-        {
-            base.DoTrigger(obj);
-
-            if (engine.CurrentCheckpoint == this)
-                return;
-
-            if (obj is not Player)
-                return;
-
-            if (engine.CurrentCheckpoint == null)
-                engine.cameraConstraintsBox = BoundingBox;
-            else
-                engine.cameraConstraintsBox |= BoundingBox;
-
-            engine.CurrentCheckpoint = this;
-
-            UpdateBoudingBox();
-
-            //Enabled = false;
-        }
-
-        protected override void OnEndTouch(Entity obj)
-        {
-            if (obj is not Player)
-                return;
-
-            //if (engine.currentCheckpoint == this)
-            //    engine.currentCheckpoint = null;
-        }
+        public void ClearConstraints() => constraints.Clear();
     }
 }

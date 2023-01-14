@@ -5,7 +5,7 @@ using static MMX.Engine.Consts;
 
 namespace MMX.Engine.World
 {
-    public class Screen
+    public class Camera
     {
         private Vector lastCenter;
         private Vector center;
@@ -16,7 +16,7 @@ namespace MMX.Engine.World
         private Vector moveTo;
         private Vector vel;
 
-        internal Screen(World world, FixedSingle width, FixedSingle height)
+        internal Camera(World world, FixedSingle width, FixedSingle height)
         {
             World = world;
             Width = width;
@@ -28,7 +28,7 @@ namespace MMX.Engine.World
             focusOn = null;           
         }
 
-        internal Screen(World world, Screen other)
+        internal Camera(World world, Camera other)
         {
             World = world;
             Width = other.Width;

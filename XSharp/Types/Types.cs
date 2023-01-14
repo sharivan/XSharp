@@ -142,13 +142,13 @@ namespace Types
     public class MciPlayer : IDisposable
     {
         [DllImport("winmm.dll")]
-        private static extern Int32 mciSendString(string command, StringBuilder buffer, int bufferSize, IntPtr hwndCallback);
+        private static extern int mciSendString(string command, StringBuilder buffer, int bufferSize, IntPtr hwndCallback);
 
         [DllImport("winmm.dll")]
-        private static extern Int32 mciGetErrorString(Int32 errCode, StringBuilder errMsg, Int32 buflen);
+        private static extern int mciGetErrorString(int errCode, StringBuilder errMsg, int buflen);
 
         [DllImport("winmm.dll")]
-        private static extern Int32 mciGetDeviceID(string lpszDevice);
+        private static extern int mciGetDeviceID(string lpszDevice);
 
         private bool paused; // Flag que indica se a música foi pausada
 

@@ -126,6 +126,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Engine\Animation.cs" />
+    <Compile Include="Engine\Checkpoint.cs" />
     <Compile Include="Engine\Enemies\Driller.cs" />
     <Compile Include="Engine\World\Block.cs" />
     <Compile Include="Engine\Enemies\Bosses\Boss.cs" />
@@ -154,7 +155,7 @@
     <Compile Include="Engine\Player.cs" />
     <Compile Include="Engine\RespawnEntry.cs" />
     <Compile Include="Engine\World\Scene.cs" />
-    <Compile Include="Engine\World\Screen.cs" />
+    <Compile Include="Engine\World\Camera.cs" />
     <Compile Include="Engine\Sprite.cs" />
     <Compile Include="Engine\SpriteSheet.cs" />
     <Compile Include="Engine\World\Tile.cs" />

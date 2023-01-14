@@ -46,7 +46,7 @@ namespace MMX.Engine.World
             }
         }
 
-        internal Map(World world, int id, CollisionData collisionData = CollisionData.NONE)
+        internal Map(World world, int id, CollisionData collisionData = CollisionData.BACKGROUND)
         {
             World = world;
             ID = id;

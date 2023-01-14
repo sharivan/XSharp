@@ -53,7 +53,7 @@ namespace MMX.Engine.World
             this.backgroundSceneRowCount = backgroundSceneRowCount;
             this.backgroundSceneColCount = backgroundSceneColCount;
 
-            Screen = new Screen(this, SCREEN_WIDTH, SCREEN_HEIGHT);
+            Screen = new Camera(this, SCREEN_WIDTH, SCREEN_HEIGHT);
 
             tileList = new List<Tile>();
             backgroundTileList = new List<Tile>();
@@ -115,7 +115,7 @@ namespace MMX.Engine.World
 
         public Vector LayoutBackgroundtSize => new(backgroundSceneRowCount, backgroundSceneColCount);
 
-        public Screen Screen
+        public Camera Screen
         {
             get;
         }
@@ -158,7 +158,7 @@ namespace MMX.Engine.World
             return result;
         }
 
-        public Map AddMap(CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public Map AddMap(CollisionData collisionData = CollisionData.BACKGROUND, bool background = false)
         {
             int id = background ? backgroundMapList.Count : mapList.Count;
             var result = new Map(this, id, collisionData);
@@ -223,7 +223,7 @@ namespace MMX.Engine.World
             return result;
         }
 
-        public Map AddMap(Vector pos, CollisionData collisionData = CollisionData.NONE, bool background = false)
+        public Map AddMap(Vector pos, CollisionData collisionData = CollisionData.BACKGROUND, bool background = false)
         {
             Map result = AddMap(collisionData, background);
             SetMap(pos, result, background);
@@ -258,69 +258,21 @@ namespace MMX.Engine.World
                 scenes[cell.Row, cell.Col] = scene;
         }
 
-        public Tile GetTileByID(int id, bool background = false)
-        {
-            if (background)
-            {
-                if (id < 0 || id >= backgroundTileList.Count)
-                    return null;
+        public Tile GetTileByID(int id, bool background = false) => background
+                ? id < 0 || id >= backgroundTileList.Count ? null : backgroundTileList[id]
+                : id < 0 || id >= tileList.Count ? null : tileList[id];
 
-                return backgroundTileList[id];
-            }
+        public Map GetMapByID(int id, bool background = false) => background
+                ? id < 0 || id >= backgroundMapList.Count ? null : backgroundMapList[id]
+                : id < 0 || id >= mapList.Count ? null : mapList[id];
 
-            if (id < 0 || id >= tileList.Count)
-                return null;
+        public Block GetBlockByID(int id, bool background = false) => background
+                ? id < 0 || id >= backgroundBlockList.Count ? null : backgroundBlockList[id]
+                : id < 0 || id >= blockList.Count ? null : blockList[id];
 
-            return tileList[id];
-        }
-
-        public Map GetMapByID(int id, bool background = false)
-        {
-            if (background)
-            {
-                if (id < 0 || id >= backgroundMapList.Count)
-                    return null;
-
-                return backgroundMapList[id];
-            }
-
-            if (id < 0 || id >= mapList.Count)
-                return null;
-
-            return mapList[id];
-        }
-
-        public Block GetBlockByID(int id, bool background = false)
-        {
-            if (background)
-            {
-                if (id < 0 || id >= backgroundBlockList.Count)
-                    return null;
-
-                return backgroundBlockList[id];
-            }
-
-            if (id < 0 || id >= blockList.Count)
-                return null;
-
-            return blockList[id];
-        }
-
-        public Scene GetSceneByID(int id, bool background = false)
-        {
-            if (background)
-            {
-                if (id < 0 || id >= backgroundSceneList.Count)
-                    return null;
-
-                return backgroundSceneList[id];
-            }
-
-            if (id < 0 || id >= sceneList.Count)
-                return null;
-
-            return sceneList[id];
-        }
+        public Scene GetSceneByID(int id, bool background = false) => background
+                ? id < 0 || id >= backgroundSceneList.Count ? null : backgroundSceneList[id]
+                : id < 0 || id >= sceneList.Count ? null : sceneList[id];
 
         public void RemoveTile(Tile tile)
         {
@@ -519,20 +471,23 @@ namespace MMX.Engine.World
 
             Vector backgroundPos = checkpoint.BackgroundPos;
             MMXBox checkpointBox = checkpoint.BoundingBox;
-            Vector checkpointPos = checkpointBox.LeftTop;
-            FixedSingle factorX = (float) BackgroundWidth / Width;
-            FixedSingle factorY = (float) BackgroundHeight / Height;
+            Vector checkpointPos = checkpointBox.Origin;
+            //FixedSingle factor = checkpoint.ForceBackground.Y / backgroundPos.Y;
+            FixedSingle factorX = /*(float) BackgroundWidth * Width*/ 0.5;
+            FixedSingle factorY = /*(float) BackgroundHeight / Height*/ 0.5;
 
-            Vector delta = checkpointPos - backgroundPos;
-            var backgroundBox = new MMXBox(backgroundPos.X, backgroundPos.Y, checkpointBox.Width, checkpointBox.Height);
-            var screenDelta = new Vector(factorX * (screenLT.X - checkpointPos.X), checkpoint.Scroll != 0 ? factorY * (screenLT.Y - checkpointPos.Y) : 0);
-            backgroundBox &= screenBox - delta - screenDelta;
+            Vector delta = (checkpointPos - backgroundPos).Scale(16, 1);
+            //var backgroundBox = new MMXBox(backgroundPos.X, backgroundPos.Y, checkpointBox.Width, checkpointBox.Height);
+            var screenDelta = (screenLT - checkpointPos).Scale(factorX, factorY);
+            //backgroundBox &= screenBox - delta - screenDelta;
 
-            //Vector screenLT = Screen.LeftTop;
             Vector screenRB = Screen.RightBottom;
 
-            Cell start = GetSceneCellFromPos(screenLT.Scale(factorX, factorY).RoundToFloor());
-            Cell end = GetSceneCellFromPos(screenRB.Scale(factorX, factorY).RoundToCeil());
+            Cell start = new(0, 0);
+            Cell end = new(backgroundSceneRowCount, backgroundSceneColCount);
+
+            //Cell start = GetSceneCellFromPos(screenLT.Scale(factorX, factorY).RoundToFloor());
+            //Cell end = GetSceneCellFromPos(screenRB.Scale(factorX, factorY).RoundToCeil());
 
             //Cell start = GetSceneCellFromPos(backgroundBox.LeftTop);
             //Cell end = GetSceneCellFromPos(backgroundBox.RightBottom);
@@ -693,25 +648,28 @@ namespace MMX.Engine.World
 
         public static bool IsSolidBlock(CollisionData collisionData) => collisionData switch
         {
+            CollisionData.MUD => true,
+            CollisionData.TOP_MUD => true,
             CollisionData.LAVA => true,
-            CollisionData.UNKNOW34 => true,
-            CollisionData.UNKNOW35 => true,
+            CollisionData.SOLID2 => true,
+            CollisionData.SOLID3 => true,
             CollisionData.UNCLIMBABLE_SOLID => true,
-            CollisionData.LEFT_TREADMILL => true,
-            CollisionData.RIGHT_TREADMILL => true,
+            CollisionData.LEFT_CONVEYOR => true,
+            CollisionData.RIGHT_CONVEYOR => true,
             CollisionData.UP_SLOPE_BASE => true,
             CollisionData.DOWN_SLOPE_BASE => true,
             CollisionData.SOLID => true,
             CollisionData.BREAKABLE => true,
             CollisionData.NON_LETHAL_SPIKE => true,
             CollisionData.LETHAL_SPIKE => true,
-            CollisionData.ICE => true,
+            CollisionData.SLIPPERY_SLOPE_BASE => true,
+            CollisionData.SLIPPERY => true,
             _ => false,
         };
 
         public static bool IsSlope(CollisionData collisionData) => collisionData is >= CollisionData.SLOPE_16_8 and <= CollisionData.SLOPE_0_4 or
-                >= CollisionData.LEFT_TREADMILL_SLOPE_16_12 and <= CollisionData.RIGHT_TREADMILL_SLOPE_0_4 or
-                >= CollisionData.ICE_SLOPE_16_12 and <= CollisionData.ICE_SLOPE_0_4;
+                >= CollisionData.LEFT_CONVEYOR_SLOPE_16_12 and <= CollisionData.RIGHT_CONVEYOR_SLOPE_0_4 or
+                >= CollisionData.SLIPPERY_SLOPE_16_8 and <= CollisionData.SLIPPERY_SLOPE_0_4;
 
         internal static RightTriangle MakeSlopeTriangle(int left, int right) => left < right
                 ? new RightTriangle(new Vector(0, right), MAP_SIZE, left - right)
@@ -731,22 +689,30 @@ namespace MMX.Engine.World
             CollisionData.SLOPE_8_12 => MakeSlopeTriangle(8, 12),
             CollisionData.SLOPE_4_8 => MakeSlopeTriangle(4, 8),
             CollisionData.SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-            CollisionData.LEFT_TREADMILL_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-            CollisionData.LEFT_TREADMILL_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-            CollisionData.LEFT_TREADMILL_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-            CollisionData.LEFT_TREADMILL_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-            CollisionData.RIGHT_TREADMILL_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-            CollisionData.RIGHT_TREADMILL_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-            CollisionData.RIGHT_TREADMILL_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-            CollisionData.RIGHT_TREADMILL_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-            CollisionData.ICE_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-            CollisionData.ICE_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-            CollisionData.ICE_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-            CollisionData.ICE_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-            CollisionData.ICE_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-            CollisionData.ICE_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-            CollisionData.ICE_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-            CollisionData.ICE_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
+
+            CollisionData.LEFT_CONVEYOR_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
+            CollisionData.LEFT_CONVEYOR_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
+            CollisionData.LEFT_CONVEYOR_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
+            CollisionData.LEFT_CONVEYOR_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
+
+            CollisionData.RIGHT_CONVEYOR_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
+            CollisionData.RIGHT_CONVEYOR_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
+            CollisionData.RIGHT_CONVEYOR_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
+            CollisionData.RIGHT_CONVEYOR_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
+
+            CollisionData.SLIPPERY_SLOPE_16_8 => MakeSlopeTriangle(16, 8),
+            CollisionData.SLIPPERY_SLOPE_8_0 => MakeSlopeTriangle(8, 0),
+            CollisionData.SLIPPERY_SLOPE_8_16 => MakeSlopeTriangle(8, 16),
+            CollisionData.SLIPPERY_SLOPE_0_8 => MakeSlopeTriangle(0, 8),
+            CollisionData.SLIPPERY_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
+            CollisionData.SLIPPERY_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
+            CollisionData.SLIPPERY_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
+            CollisionData.SLIPPERY_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
+            CollisionData.SLIPPERY_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
+            CollisionData.SLIPPERY_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
+            CollisionData.SLIPPERY_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
+            CollisionData.SLIPPERY_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
+
             _ => RightTriangle.EMPTY,
         };
 
@@ -844,14 +810,24 @@ return false;*/
                         MMXBox mapBox = GetMapBoundingBox(row, col);
                         CollisionData collisionData = map.CollisionData;
 
-                        if (collisionData == CollisionData.NONE || (mapBox & collisionBox).Area == 0)
+                        if (collisionData == CollisionData.BACKGROUND || (mapBox & collisionBox).Area == 0)
                             continue;
 
                         if (!ignore.HasFlag(CollisionFlags.BLOCK) && IsSolidBlock(collisionData) && HasIntersection(collisionBox, mapBox, side))
                         {
-                            placements?.Add(new CollisionPlacement(this, CollisionFlags.BLOCK, row, col, map));
-
-                            result |= CollisionFlags.BLOCK;
+                            if (collisionData == CollisionData.UNCLIMBABLE_SOLID)
+                            {
+                                if (!ignore.HasFlag(CollisionFlags.UNCLIMBABLE))
+                                {
+                                    placements?.Add(new CollisionPlacement(this, CollisionFlags.BLOCK, row, col, map));
+                                    result |= CollisionFlags.BLOCK | CollisionFlags.UNCLIMBABLE;
+                                }
+                            }
+                            else
+                            {
+                                placements?.Add(new CollisionPlacement(this, CollisionFlags.BLOCK, row, col, map));
+                                result |= CollisionFlags.BLOCK;
+                            }
                         }
                         else if (!ignore.HasFlag(CollisionFlags.LADDER) && collisionData == CollisionData.LADDER && HasIntersection(collisionBox, mapBox, side))
                         {

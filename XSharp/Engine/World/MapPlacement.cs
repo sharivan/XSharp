@@ -22,7 +22,7 @@ namespace MMX.Engine.World
 
         public RightTriangle SlopeTriangle => World.MakeSlopeTriangle(CollisionData) + LeftTop;
 
-        public CollisionData CollisionData => map != null ? map.CollisionData : CollisionData.NONE;
+        public CollisionData CollisionData => map != null ? map.CollisionData : CollisionData.BACKGROUND;
 
         internal MapPlacement(World world, int row, int col, Map map) :
             this(world, new Cell(row, col), map)

@@ -303,7 +303,7 @@ namespace MMX.ROM
 
         bool ICollection.IsSynchronized => false;
 
-        object ICollection.SyncRoot => (ICollection) this;
+        object ICollection.SyncRoot => this;
 
         // explicit method implementations
 

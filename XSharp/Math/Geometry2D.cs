@@ -30,7 +30,7 @@ namespace MMX.Geometry
             get;
         }
 
-        FixedSingle Area
+        FixedDouble Area
         {
             get;
         }
@@ -42,7 +42,7 @@ namespace MMX.Geometry
 
         public FixedSingle Length => FixedSingle.ZERO;
 
-        public FixedSingle Area => FixedSingle.ZERO;
+        public FixedDouble Area => FixedDouble.ZERO;
 
         public GeometryType Type => type;
     }
@@ -65,7 +65,7 @@ namespace MMX.Geometry
 
         public FixedSingle Length => throw new NotImplementedException();
 
-        public FixedSingle Area => throw new NotImplementedException();
+        public FixedDouble Area => throw new NotImplementedException();
 
         /// <summary>
         /// Quantidade de partes disjuntas contidas na união
@@ -206,7 +206,7 @@ namespace MMX.Geometry
 
         public Vector YVector => new(0, Y);
 
-        public FixedSingle Area => FixedSingle.ZERO;
+        public FixedDouble Area => FixedDouble.ZERO;
 
         /// <summary>
         /// Cria um vetor a partir de duas coordenadas
@@ -351,9 +351,9 @@ namespace MMX.Geometry
             return System.Math.Sqrt(dx * dx + dy * dy);
         }
 
-        public Vector Scale(FixedSingle scaleX, FixedSingle scaleY) => new Vector(scaleX * X, scaleY * Y);
+        public Vector Scale(FixedSingle scaleX, FixedSingle scaleY) => new(scaleX * X, scaleY * Y);
 
-        public Vector ScaleInverse(FixedSingle scaleX, FixedSingle scaleY) => new Vector(X / scaleX, Y / scaleY);
+        public Vector ScaleInverse(FixedSingle scaleX, FixedSingle scaleY) => new(X / scaleX, Y / scaleY);
 
         public GeometryType Type => type;
 
@@ -656,7 +656,7 @@ namespace MMX.Geometry
 
         public GeometryType Type => type;
 
-        public FixedSingle Area => FixedSingle.ZERO;
+        public FixedDouble Area => FixedDouble.ZERO;
 
         /// <summary>
         /// Verifica se o vetor v está a direita do seguimento de reta s
@@ -1190,7 +1190,7 @@ namespace MMX.Geometry
         /// Área do retângulo
         /// </summary>
         /// <returns></returns>
-        public FixedSingle Area => Width * Height;
+        public FixedDouble Area => (FixedDouble) Width * (FixedDouble) Height;
 
         /// <summary>
         /// Escala o retângulo para a esquerda
@@ -1371,13 +1371,13 @@ namespace MMX.Geometry
             Vector lt2 = box2.LeftTop;
             Vector rb2 = box2.RightBottom;
 
-            var minX = FixedSingle.Min(lt1.X, lt2.X);
-            var maxX = FixedSingle.Max(rb1.X, rb2.X);
+            var left = FixedSingle.Min(lt1.X, lt2.X);
+            var right = FixedSingle.Max(rb1.X, rb2.X);
 
-            var minY = FixedSingle.Min(lt1.Y, lt2.Y);
-            var maxY = FixedSingle.Max(rb1.Y, rb2.Y);
+            var top = FixedSingle.Min(lt1.Y, lt2.Y);
+            var bottom = FixedSingle.Max(rb1.Y, rb2.Y);
 
-            return new Box(new Vector(box1.Mins.X <= box1.Maxs.X ? minX : maxX, box1.Mins.Y <= box1.Maxs.Y ? minY : maxY), box1.Mins.X <= box1.Maxs.X ? maxX - minX : minX - maxX, box1.Mins.Y <= box1.Maxs.Y ? maxY - minY : minY - maxY);
+            return new Box(new Vector(box1.Mins.X <= box1.Maxs.X ? left : right, box1.Mins.Y <= box1.Maxs.Y ? top : bottom), box1.Mins.X <= box1.Maxs.X ? right - left : left - right, box1.Mins.Y <= box1.Maxs.Y ? bottom - top : top - bottom);
         }
 
         /// <summary>
@@ -1394,16 +1394,16 @@ namespace MMX.Geometry
             Vector lt2 = box2.LeftTop;
             Vector rb2 = box2.RightBottom;
 
-            var minX = FixedSingle.Max(lt1.X, lt2.X);
-            var maxX = FixedSingle.Min(rb1.X, rb2.X);
+            var left = FixedSingle.Max(lt1.X, lt2.X);
+            var right = FixedSingle.Min(rb1.X, rb2.X);
 
-            if (maxX < minX)
+            if (right < left)
                 return EMPTY_BOX;
 
-            var minY = FixedSingle.Max(lt1.Y, lt2.Y);
-            var maxY = FixedSingle.Min(rb1.Y, rb2.Y);
+            var top = FixedSingle.Max(lt1.Y, lt2.Y);
+            var bottom = FixedSingle.Min(rb1.Y, rb2.Y);
 
-            return maxY < minY ? EMPTY_BOX : new Box(new Vector(minX, minY), Vector.NULL_VECTOR, new Vector(maxX - minX, maxY - minY));
+            return bottom < top ? EMPTY_BOX : new Box(new Vector(left, top), Vector.NULL_VECTOR, new Vector(right - left, bottom - top));
         }
 
         public static LineSegment operator &(Box box, LineSegment line)
@@ -1719,7 +1719,7 @@ namespace MMX.Geometry
 
         public RightTriangle Negate() => new(-Origin, -hCathetus, -vCathetus);
 
-        public FixedSingle Area => FixedSingle.HALF * HCathetus * VCathetus;
+        public FixedDouble Area => FixedDouble.HALF * (FixedDouble) HCathetus * (FixedDouble) VCathetus;
 
         public Vector GetNormal(RightTriangleSide side)
         {
