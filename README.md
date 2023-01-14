@@ -53,6 +53,7 @@ Some Pending Fixes:
 - Fix ladders.
 - Fix background position in some levels.
 - Fix triggers and camera lock in some levels.
+- Add documentation.
 
 Future additions:
 
