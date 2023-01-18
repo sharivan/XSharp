@@ -259,12 +259,7 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
-/D3D11Test/D3D11Test.csproj
-/D3D11Test/Program.cs
-/D3D11Test/PaletteShader.hlsl
-/D3D11Test/ROM/SNESCore.cs
-/D3D11Test/ROM/MMXCore.cs
-/D3D11Test/ROM/MegaEDCore.cs
-/D3D11Test/ROM/deque.cs
-/D3D11Test/ROM/CompressionCore.cs
-/D3D11Test/roms/ShittyDash.mmx
+/D3D11Test/*
+/DXTest/*
+/SpriteBatchTest/*
+/SpriteBatchTest2/*
