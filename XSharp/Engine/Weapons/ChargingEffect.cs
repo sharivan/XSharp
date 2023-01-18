@@ -9,6 +9,8 @@ namespace MMX.Engine.Weapons
         private int level;
         private readonly int[] animationIndices;
 
+        private bool soundPlayed;
+
         public ChargingEffect(GameEngine engine, string name, Player charger, int spriteSheetIndex) : base(engine, name, charger.CollisionBox.Center, spriteSheetIndex)
         {
             Parent = charger;
@@ -47,6 +49,23 @@ namespace MMX.Engine.Weapons
             level = 1;
             CurrentAnimationIndex = animationIndices[0];
             CurrentAnimation.StartFromBegin();
+        }
+
+        protected override void Think()
+        {
+            if (!soundPlayed)
+            {
+                Engine.PlaySound(3);
+                soundPlayed = true;
+            }
+
+            base.Think();
+        }
+
+        protected override void OnDeath()
+        {
+            Engine.StopSound(3);
+            base.OnDeath();
         }
 
         protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)

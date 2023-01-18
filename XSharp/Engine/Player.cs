@@ -61,6 +61,8 @@ namespace MMX.Engine
         internal bool shootingCharged;
         private ChargingEffect chargingEffect;
 
+        private bool spawnSoundPlayed;
+
         /// <summary>
         /// Cria um novo Bomberman
         /// </summary>
@@ -377,6 +379,8 @@ namespace MMX.Engine
 
             if (!spawing)
             {
+                PlaySound(6);
+
                 if (PressingLeft)
                     TryMoveLeft();
                 else if (PressingRight)
@@ -384,7 +388,7 @@ namespace MMX.Engine
                 else
                 {
                     vel = Vector.NULL_VECTOR;
-                    SetState(PlayerState.LAND, 0);
+                    SetState(PlayerState.LAND, 0);                    
                 }
             }
             else
@@ -560,6 +564,14 @@ namespace MMX.Engine
             return INITIAL_UPWARD_SPEED_FROM_JUMP;
         }
 
+        internal void PlaySound(int index)
+        {
+            if (index == 5)
+                Engine.StopSound(4);
+
+            Engine.PlaySound(index);
+        }
+
         protected override void Think()
         {
             if (Engine.Paused)
@@ -571,6 +583,12 @@ namespace MMX.Engine
             {
                 if (Spawning && !CheckCollisionWithWorld)
                 {
+                    if (!spawnSoundPlayed)
+                    {
+                        PlaySound(7);
+                        spawnSoundPlayed = true;
+                    }
+
                     if (Engine.CurrentCheckpoint != null)
                     {
                         if (GetVector(VectorKind.PLAYER_ORIGIN).Y >= Engine.CurrentCheckpoint.BoundingBox.Top + SCREEN_HEIGHT / 2)
@@ -816,6 +834,7 @@ namespace MMX.Engine
                                         dashFrameCounter = 0;
                                         vel = new Vector(Direction == Direction.LEFT ? -DASH_SPEED : DASH_SPEED, vel.Y);
                                         SetState(PlayerState.PRE_DASH, 0);
+                                        PlaySound(4);
                                     }
                                 }
                                 else if (!Landed && !WallJumping && !WallSliding && !OnLadder)
@@ -874,6 +893,7 @@ namespace MMX.Engine
                                 jumped = true;
                                 vel = (hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
                                 SetState(PlayerState.JUMP, 0);
+                                PlaySound(5);
                             }
                             else if (vel.Y < 0)
                                 vel = vel.XVector;
@@ -913,6 +933,7 @@ namespace MMX.Engine
                             jumped = true;
                             vel = Vector.NULL_VECTOR;
                             SetState(PlayerState.WALL_JUMP, 0);
+                            PlaySound(5);
                         }
                     }
 

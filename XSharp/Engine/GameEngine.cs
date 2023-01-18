@@ -33,6 +33,7 @@ using MMXWorld = MMX.Engine.World.World;
 using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using ResultCode = SharpDX.Direct3D9.ResultCode;
 using DeviceType = SharpDX.Direct3D9.DeviceType;
+using MMX.Engine.Sound;
 
 namespace MMX.Engine
 {
@@ -282,7 +283,11 @@ namespace MMX.Engine
         private Texture foregroundPalette;
         private Texture backgroundPalette;
 
-        private readonly DirectSound sound;
+        private List<SpriteSheet> spriteSheets;
+        private List<Texture> palettes;
+
+        private List<SoundPlayer> sounds;
+
         internal Partition<Entity> partition;
         private long engineTime;
         private readonly Random random;
@@ -309,9 +314,6 @@ namespace MMX.Engine
         internal Vector cameraConstraintOrigin;
         internal List<Vector> cameraConstraints;
         internal MMXBox cameraConstraintsBox;
-
-        private List<SpriteSheet> spriteSheets;
-        private List<Texture> palettes;
 
         private bool frameAdvance;
         private readonly bool recording;
@@ -414,7 +416,6 @@ namespace MMX.Engine
         public Vector ExtensionOrigin
         {
             get => cameraConstraintOrigin;
-
             set => cameraConstraintOrigin = value;
         }
 
@@ -609,6 +610,8 @@ namespace MMX.Engine
             spriteSheets = new List<SpriteSheet>();
             palettes = new List<Texture>();
 
+            sounds = new List<SoundPlayer>();
+
             presentationParams = new PresentParameters
             {
                 Windowed = true,
@@ -627,6 +630,70 @@ namespace MMX.Engine
             noCameraConstraints = NO_CAMERA_CONSTRAINTS;
 
             cameraConstraints = new List<Vector>();
+
+            // 0
+            var sound = new SoundPlayer(@"resources\sounds\mmx\01 - MMX - X Regular Shot.wav", SoundPlayer.SoundFormat.WAVE)
+            {
+                Volume = 0.25f
+            };
+
+            sounds.Add(sound);
+
+            // 1
+            sound = new SoundPlayer(@"resources\sounds\mmx2\X Semi Charged Shot.wav", SoundPlayer.SoundFormat.WAVE)
+            {
+                Volume = 1f
+            };
+
+            sounds.Add(sound);
+
+            // 2
+            sound = new SoundPlayer(@"resources\sounds\mmx\02 - MMX - X Charge Shot.wav", SoundPlayer.SoundFormat.WAVE)
+            {
+                Volume = 0.25f
+            };
+
+            sounds.Add(sound);
+
+            // 3
+            sound = new SoundPlayer(@"resources\sounds\mmx\04 - MMX - X Charge.wav", SoundPlayer.SoundFormat.WAVE, 3.350, 1.585)
+            {
+                Volume = 0.25f
+            };
+
+            sounds.Add(sound);
+
+            // 4
+            sound = new SoundPlayer(@"resources\sounds\mmx\07 - MMX - X Dash.wav", SoundPlayer.SoundFormat.WAVE)
+            {
+                Volume = 0.25f
+            };
+
+            sounds.Add(sound);
+
+            // 5
+            sound = new SoundPlayer(@"resources\sounds\mmx\08 - MMX - X Jump.wav", SoundPlayer.SoundFormat.WAVE)
+            {
+                Volume = 0.25f
+            };
+
+            sounds.Add(sound);
+
+            // 6
+            sound = new SoundPlayer(@"resources\sounds\mmx\09 - MMX - X Land.wav", SoundPlayer.SoundFormat.WAVE)
+            {
+                Volume = 0.25f
+            };
+
+            sounds.Add(sound);
+
+            // 7
+            sound = new SoundPlayer(@"resources\sounds\mmx\17 - MMX - X Fade In.wav", SoundPlayer.SoundFormat.WAVE)
+            {
+                Volume = 0.25f
+            };
+
+            sounds.Add(sound);
 
             directInput = new DirectInput();
 
@@ -2617,6 +2684,11 @@ namespace MMX.Engine
 
         public void Dispose()
         {
+            foreach (var sound in sounds)
+                DisposeResource(sound);
+
+            sounds.Clear();
+
             DisposeResource(World);
             DisposeResource(Player);
             DisposeResource(mmx);
@@ -2848,7 +2920,7 @@ namespace MMX.Engine
         internal void ShootLemon(Player shooter, Vector origin, Direction direction, bool dashLemon)
         {
             var lemon = new BusterLemon(this, shooter, "X Buster Lemon", origin, direction, dashLemon, 1);
-            lemon.Spawn();
+            lemon.Spawn();            
         }
 
         internal void ShootSemiCharged(Player shooter, Vector origin, Direction direction)
@@ -3018,5 +3090,9 @@ namespace MMX.Engine
 
         internal SpriteSheet GetSpriteSheet(int spriteSheetIndex) => spriteSheets[spriteSheetIndex];
         internal Texture GetPalette(int paletteIndex) => paletteIndex >= 0 && paletteIndex < palettes.Count ? palettes[paletteIndex] : null;
+
+        public void PlaySound(int index) => sounds[index].Play();
+
+        public void StopSound(int index) => sounds[index].Stop();
     }
 }

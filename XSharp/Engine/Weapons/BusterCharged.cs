@@ -9,6 +9,8 @@ namespace MMX.Engine.Weapons
     {
         private readonly int[] animationIndices;
 
+        private bool soundPlayed;
+
         new public Player Shooter => (Player) base.Shooter;
 
         public bool Firing { get;
@@ -73,6 +75,17 @@ namespace MMX.Engine.Weapons
                 CurrentAnimationIndex = animationIndices[2];
                 CurrentAnimation.StartFromBegin();
             }
+        }
+
+        protected override void Think()
+        {
+            if (!soundPlayed)
+            {
+                Engine.PlaySound(2);
+                soundPlayed = true;
+            }
+
+            base.Think();
         }
 
         protected override void OnDeath()

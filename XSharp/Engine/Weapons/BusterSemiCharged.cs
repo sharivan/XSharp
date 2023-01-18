@@ -9,6 +9,8 @@ namespace MMX.Engine.Weapons
     {
         private readonly int[] animationIndices;
 
+        private bool soundPlayed;
+
         new public Player Shooter => (Player) base.Shooter;
 
         public bool Firing { get;
@@ -57,6 +59,12 @@ namespace MMX.Engine.Weapons
         {
             if (!Firing && !Exploding && !Hitting)
             {
+                if (!soundPlayed)
+                {
+                    Engine.PlaySound(1);
+                    soundPlayed = true;
+                }
+
                 vel += new Vector(vel.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
                 if (vel.X.Abs > LEMON_TERMINAL_SPEED)
                     vel = new Vector(vel.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, vel.Y);
