@@ -10,8 +10,9 @@ using SharpDX.Direct3D9;
 using SharpDX.DirectSound;
 using SharpDX.Windows;
 
-using DSLockFlags = SharpDX.DirectSound.LockFlags;
 using NAudio.Wave;
+
+using DSLockFlags = SharpDX.DirectSound.LockFlags;
 
 namespace DSoundText
 {
@@ -52,7 +53,7 @@ namespace DSoundText
             // Play the PrimarySound Buffer
             primarySoundBuffer.Play(0, PlayFlags.Looping);
 
-            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("DSoundText.resources.sounds.mmx.05 - MMX - X Charge + Shot.wav");
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("DSoundText.resources.sounds.mmx.04 - MMX - X Charge.wav");
             //PlaySoundAsync(ds, stream);
 
             var reader = new WaveFileReader(stream);
@@ -66,17 +67,17 @@ namespace DSoundText
             var desc2 = new SoundBufferDescription
             {
                 Format = format,
-                Flags = BufferFlags.GlobalFocus,
-                //BufferBytes = format.AverageBytesPerSecond
-                BufferBytes = buffer.Length
+                Flags = BufferFlags.GetCurrentPosition2 | BufferFlags.ControlPositionNotify | BufferFlags.GlobalFocus | BufferFlags.ControlVolume | BufferFlags.StickyFocus,
+                BufferBytes = 100000,
+                AlgorithmFor3D = Guid.Empty
             };
 
             var sBuffer1 = new SecondarySoundBuffer(ds, desc2);
             byte[] bytes = new byte[desc2.BufferBytes];
 
             //sBuffer1.Write(buffer, 0, desc2.BufferBytes, 0, DSLockFlags.None);
-            sBuffer1.Write(buffer, 0, DSLockFlags.None);
-            sBuffer1.Play(0, PlayFlags.None);
+            //sBuffer1.Write(buffer, 0, DSLockFlags.None);
+            //sBuffer1.Play(0, PlayFlags.None);
 
             #region Render loop
 
@@ -91,7 +92,7 @@ namespace DSoundText
 
             double maxTimeToWait = 1000D / TICKRATE;
 
-            sBuffer1.Play(0, PlayFlags.None);
+            int startIndex = 0;
 
             // Main loop
             RenderLoop.Run(form, () =>
@@ -117,6 +118,19 @@ namespace DSoundText
 
                 device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
                 device.BeginScene();
+
+                if (startIndex < 300000)
+                {
+                    sBuffer1.Write(buffer, startIndex, 100000, 0, DSLockFlags.None);
+                    sBuffer1.Play(0, PlayFlags.None);
+                    startIndex += 100000;
+                }
+                else if (startIndex == 300000)
+                {
+                    sBuffer1.Write(buffer, 300000, 100000, 0, DSLockFlags.None);
+                    sBuffer1.Play(0, PlayFlags.Looping);
+                    startIndex += 100000;
+                }
 
                 device.EndScene();
                 device.Present();
@@ -182,7 +196,8 @@ namespace DSoundText
             byte[] bytes1 = new byte[desc2.BufferBytes / 2];
             byte[] bytes2 = new byte[desc2.BufferBytes];
 
-            var fillBuffer = new Thread(() => {
+            var fillBuffer = new Thread(() =>
+            {
                 //int readNumber = 1;
                 int bytesRead;
 

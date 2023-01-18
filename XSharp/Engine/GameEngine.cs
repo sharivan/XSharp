@@ -2520,8 +2520,8 @@ namespace MMX.Engine
 
                 if (drawCollisionBox)
                 {
-                    MMXBox collisionBox = Player.CollisionBox;
-                    var rect = WorldBoxToScreen(collisionBox);
+                    MMXBox hitbox = Player.HitBox;
+                    var rect = WorldBoxToScreen(hitbox);
                     DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
                     FillRectangle(rect, HITBOX_COLOR);
                 }

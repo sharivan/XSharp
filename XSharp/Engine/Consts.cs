@@ -55,16 +55,16 @@ namespace MMX.Engine
         // Tempos são mensurados em frames, velocidades são mensuradas em pixels por frame enquanto acelerações em pixels por frame ao quadrado.
         public static readonly FixedSingle GRAVITY = 0.25;
         public static readonly FixedSingle TERMINAL_DOWNWARD_SPEED = 5.75;
-        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_JUMP = new((1363 + 0 * 64) / 256.0);
-        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = new((1417 + 1 * 64) / 256.0);
-        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2 = new((1505 + 1 * 64) / 256.0);
-        public static readonly FixedSingle LADDER_CLIMB_SPEED = new(376 / 256.0);
+        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_JUMP = (1363 + 0 * 64) / 256.0;
+        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = (1417 + 1 * 64) / 256.0;
+        public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2 = (1505 + 1 * 64) / 256.0;
+        public static readonly FixedSingle LADDER_CLIMB_SPEED = 376 / 256.0;
         public static readonly FixedSingle WALL_SLIDE_SPEED = 2;
         public static readonly FixedSingle PRE_WALKING_SPEED = 1;
-        public static readonly FixedSingle WALKING_SPEED = new(376 / 256.0);
-        public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_1 = new(408 / 256.0);
-        public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_2 = new(456 / 256.0);
-        public static readonly FixedSingle DASH_SPEED = new(885 / 256.0);
+        public static readonly FixedSingle WALKING_SPEED = 376 / 256.0;
+        public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_1 = 408 / 256.0;
+        public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_2 = 456 / 256.0;
+        public static readonly FixedSingle DASH_SPEED = 885 / 256.0;
         public const int DASH_DURATION = 30;
         public const int WALL_JUMP_DURATION = 9;
         public const int SHOT_DURATION = 16;
@@ -78,32 +78,32 @@ namespace MMX.Engine
         public const int MAX_SHOTS = 3;
         public const int LEMON_HITBOX_WIDTH = 8;
         public const int LEMON_HITBOX_HEIGHT = 8;
-        public static readonly FixedSingle LEMON_INITIAL_SPEED = new(1024 / 256.0);
-        public static readonly FixedSingle LEMON_ACCELERATION = new(64 / 256.0);
-        public static readonly FixedSingle LEMON_TERMINAL_SPEED = new(1536 / 256.0);
-        public static readonly FixedSingle LEMON_REFLECTION_VSPEED = new(-768 / 256.0);        
+        public static readonly FixedSingle LEMON_INITIAL_SPEED = 1024 / 256.0;
+        public static readonly FixedSingle LEMON_ACCELERATION = 64 / 256.0;
+        public static readonly FixedSingle LEMON_TERMINAL_SPEED = 1536 / 256.0;
+        public static readonly FixedSingle LEMON_REFLECTION_VSPEED = -768 / 256.0;        
         public const int SEMI_CHARGED_HITBOX_WIDTH_1 = 18;
         public const int SEMI_CHARGED_HITBOX_HEIGHT_1 = 18;
         public const int SEMI_CHARGED_HITBOX_WIDTH_2 = 26;
         public const int SEMI_CHARGED_HITBOX_HEIGHT_2 = 26;
         public const int SEMI_CHARGED_HITBOX_WIDTH_3 = 32;
         public const int SEMI_CHARGED_HITBOX_HEIGHT_3 = 18;
-        public static readonly FixedSingle SEMI_CHARGED_INITIAL_SPEED = new(1536 / 256.0);
-        public static readonly FixedSingle CHARGED_SPEED = new(2048 / 256.0);
+        public static readonly FixedSingle SEMI_CHARGED_INITIAL_SPEED = 1536 / 256.0;
+        public static readonly FixedSingle CHARGED_SPEED = 2048 / 256.0;
         public const int CHARGED_HITBOX_WIDTH_1 = 26;
         public const int CHARGED_HITBOX_HEIGHT_1 = 18;
         public const int CHARGED_HITBOX_WIDTH_2 = 48;
         public const int CHARGED_HITBOX_HEIGHT_2 = 36;
         public const int CHARGING_EFFECT_HITBOX_SIZE = 52;
-        public static readonly Box CHARGING_EFFECT_HITBOX = new(Vector.NULL_VECTOR, new Vector(-CHARGING_EFFECT_HITBOX_SIZE / 2, -CHARGING_EFFECT_HITBOX_SIZE / 2), new Vector(CHARGING_EFFECT_HITBOX_SIZE / 2, CHARGING_EFFECT_HITBOX_SIZE / 2));
+        public static readonly Box CHARGING_EFFECT_HITBOX = (Vector.NULL_VECTOR, (-CHARGING_EFFECT_HITBOX_SIZE / 2, -CHARGING_EFFECT_HITBOX_SIZE / 2), (CHARGING_EFFECT_HITBOX_SIZE / 2, CHARGING_EFFECT_HITBOX_SIZE / 2));
 
         // X
         public const int HITBOX_WIDTH = 12;
         public const int HITBOX_HEIGHT = 28;
-        public static readonly Vector HITBOX_SIZE = new(HITBOX_WIDTH, HITBOX_HEIGHT);
+        public static readonly Vector HITBOX_SIZE = (HITBOX_WIDTH, HITBOX_HEIGHT);
         public const int DASHING_HITBOX_WIDTH = 12;
         public const int DASHING_HITBOX_HEIGHT = 16;
-        public static readonly Vector DASHING_HITBOX_SIZE = new(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT);
+        public static readonly Vector DASHING_HITBOX_SIZE = (DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT);
         public const int INPUT_MOVEMENT_LATENCY = 1;
         //public const int INPUT_SHOT_LATENCY = 2;
         public static readonly FixedSingle LADDER_BOX_VCLIP = 18;
@@ -118,8 +118,8 @@ namespace MMX.Engine
         public static readonly FixedSingle DEFAULT_DRAW_SCALE = 1; // Escala padrão de renderização do jogo
         public static readonly FixedSingle DEFAULT_CLIENT_WIDTH = DEFAULT_DRAW_SCALE * SCREEN_WIDTH; // Tamanho padrão da largura do retângulo do jogo
         public static readonly FixedSingle DEFAULT_CLIENT_HEIGHT = DEFAULT_DRAW_SCALE * SCREEN_HEIGHT; // Tamanho padrão da altura do retângulo do jogo
-        public static readonly Vector DEFAULT_CLIENT_SIZE = new(DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
-        public static readonly Box DEFAULT_CLIENT_BOX = new(DEFAULT_DRAW_ORIGIN.X, DEFAULT_DRAW_ORIGIN.Y, DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
+        public static readonly Vector DEFAULT_CLIENT_SIZE = (DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
+        public static readonly Box DEFAULT_CLIENT_BOX = (DEFAULT_DRAW_ORIGIN.X, DEFAULT_DRAW_ORIGIN.Y, DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
         public const bool VSYNC = false;
 
         // Debug

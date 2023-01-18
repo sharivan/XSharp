@@ -155,9 +155,11 @@ namespace MMX.Engine
             shotFrameCounter = reader.ReadInt32();
         }
 
-        protected override Box GetCollisionBox() => Dashing
-                ? new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3))
-                : new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 4));
+        protected override Box GetCollisionBox() => ((-(HITBOX_WIDTH - 2) * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, (HITBOX_WIDTH - 2, HITBOX_HEIGHT + 4));
+
+        protected override Box GetHitBox() => new Box(Dashing
+                ? (Vector.NULL_VECTOR, (-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT * 0.5), (DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT * 0.5))
+                : (Vector.NULL_VECTOR, (-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT * 0.5), (HITBOX_WIDTH * 0.5, HITBOX_HEIGHT * 0.5))) + GetVector(VectorKind.PLAYER_ORIGIN);
 
         public bool Shooting
         {
@@ -858,27 +860,31 @@ namespace MMX.Engine
                         jumpReleased = false;
                         if (Landed)
                         {
+                            bool hspeedNull = false;
+                            if (PressingDash)
+                                baseHSpeed = DASH_SPEED;
+                            else if (baseHSpeed == PRE_WALKING_SPEED)
+                            {
+                                baseHSpeed = WALKING_SPEED;
+                                hspeedNull = true;
+                            }
+
                             if (!BlockedUp)
                             {
-                                bool hspeedNull = false;
-                                if (PressingDash)
-                                    baseHSpeed = DASH_SPEED;
-                                else if (baseHSpeed == PRE_WALKING_SPEED)
-                                {
-                                    baseHSpeed = WALKING_SPEED;
-                                    hspeedNull = true;
-                                }
-
                                 jumped = true;
-                                vel = new Vector(hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
+                                vel = (hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
                                 SetState(PlayerState.JUMP, 0);
                             }
+                            else if (vel.Y < 0)
+                                vel = vel.XVector;
                         }
                         else if (OnLadder)
                         {
                             vel = Vector.NULL_VECTOR;
                             SetAirStateAnimation();
                         }
+                        else if (BlockedUp && vel.Y < 0)
+                            vel = vel.XVector;
                     }
                     else if (WasPressingJump && !PressingJump)
                     {
@@ -889,12 +895,12 @@ namespace MMX.Engine
                             if (jumped && !Landed && !WallSliding && vel.Y < 0)
                             {
                                 jumped = false;
-                                vel = new Vector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, 0);
+                                vel = vel.XVector;
                             }
                         }
                     }
 
-                    if ((!jumped || vel.Y >= 0) && !Landed && (!WallJumping || wallJumpFrameCounter < 4) && !OnLadder && !GetLastKeys(2).HasFlag(Keys.JUMP) && GetKeys(2).HasFlag(Keys.JUMP))
+                    if ((!jumped || vel.Y >= 0.25) && !Landed && !BlockedUp && (!WallJumping || wallJumpFrameCounter < 4) && !OnLadder && !GetLastKeys(2).HasFlag(Keys.JUMP) && GetKeys(2).HasFlag(Keys.JUMP))
                     {
                         Direction wallJumpDir = GetWallJumpDir();
                         if (wallJumpDir != Direction.NONE)
@@ -1131,11 +1137,11 @@ namespace MMX.Engine
                 slopeSign = 0;
             }
 
-            Box collisionBox = Origin + GetCollisionBox().ClipTop(-2).ClipBottom(2 + (slopeSign == 1 ? vclip : 0)) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.LEFT_VECTOR;
+            Box collisionBox = Collider.LeftCollider.ExtendLeftFixed(8).ClipTop(-2);
             if (Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.LEFT_WALL).HasFlag(CollisionFlags.BLOCK))
                 return Direction.LEFT;
 
-            collisionBox = Origin + GetCollisionBox().ClipTop(-2).ClipBottom(2 + (slopeSign == -1 ? vclip : 0)) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.RIGHT_VECTOR;
+            collisionBox = Collider.RightCollider.ExtendRightFixed(8).ClipTop(-2);
             return Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.RIGHT_WALL).HasFlag(CollisionFlags.BLOCK)
                 ? Direction.RIGHT
                 : Direction.NONE;

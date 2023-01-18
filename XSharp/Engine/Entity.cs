@@ -162,8 +162,8 @@ namespace MMX.Engine
 
         public Box GetBox(BoxKind kind) => kind switch
         {
-            BoxKind.BOUDINGBOX => GetBoundingBox(),
-            BoxKind.HITBOX => GetHitBox(),
+            BoxKind.BOUDINGBOX => BoundingBox,
+            BoxKind.HITBOX => HitBox,
             _ => Box.EMPTY_BOX,
         };
 

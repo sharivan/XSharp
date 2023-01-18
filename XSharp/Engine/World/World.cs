@@ -463,25 +463,30 @@ namespace MMX.Engine.World
             Vector screenRB = Camera.RightBottom;
             Vector backgroundPos = checkpoint.BackgroundPos;
 
-            Vector screenDelta = checkpoint.Scroll == 0xe ? Vector.NULL_VECTOR : (screenLT + checkpoint.CameraPos).Scale(0.5f) - backgroundPos;
+            Vector screenDelta = (checkpoint.Scroll & 0x2) != 0 ? Vector.NULL_VECTOR : (screenLT + checkpoint.CameraPos).Scale(0.5f) - backgroundPos;
 
             Cell start = GetSceneCellFromPos(screenLT - screenDelta);
             Cell end = GetSceneCellFromPos(screenRB - screenDelta);
 
             for (int col = start.Col; col <= end.Col + 1; col++)
             {
-                if (col < 0 || col >= backgroundSceneColCount)
+                if (col < 0)
                     continue;
+
+                if ((checkpoint.Scroll & 0x10) == 0 && col >= backgroundSceneColCount)
+                    continue;
+
+                int bkgCol = (checkpoint.Scroll & 0x10) != 0 ? col % 2 : col;
 
                 for (int row = start.Row; row <= end.Row + 1; row++)
                 {
                     if (row < 0 || row >= backgroundSceneRowCount)
                         continue;
 
-                    Scene scene = backgroundScenes[row, col];
+                    Scene scene = backgroundScenes[row, bkgCol];
                     if (scene != null)
                     {
-                        var sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
+                        Vector sceneLT = (col * SCENE_SIZE, row * SCENE_SIZE);
                         MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
                         Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, BackgroundTilemap, BackgroundPalette, sceneBox + screenDelta);
                     }

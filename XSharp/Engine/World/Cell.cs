@@ -12,6 +12,8 @@
             Col = col;
         }
 
+        public Cell((int, int) tuple) : this(tuple.Item1, tuple.Item2) {}
+
         public override int GetHashCode() => 65536 * Row + Col;
 
         public override bool Equals(object obj)
@@ -27,5 +29,9 @@
         }
 
         public override string ToString() => Row + "," + Col;
+
+        public static implicit operator Cell((int, int) tuple) => new(tuple.Item1, tuple.Item2);
+
+        public static implicit operator (int, int)(Cell cell) => (cell.Row, cell.Col);
     }
 }

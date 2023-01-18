@@ -219,6 +219,8 @@ namespace MMX.Geometry
             Y = y;
         }
 
+        public Vector((FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2) { }
+
         public Vector(BinaryReader reader)
         {
             X = new FixedSingle(reader);
@@ -431,6 +433,10 @@ namespace MMX.Geometry
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>true se os vetores forem diferentes, false caso contrário</returns>
         public static bool operator !=(Vector vec1, Vector vec2) => vec1.X != vec2.X || vec1.Y != vec2.Y;
+
+        public static implicit operator (FixedSingle, FixedSingle)(Vector vec) => (vec.X, vec.Y);
+
+        public static implicit operator Vector((FixedSingle, FixedSingle) tuple) => new(tuple.Item1, tuple.Item2);
     }
 
     /// <summary>
@@ -950,10 +956,14 @@ namespace MMX.Geometry
             Maxs = maxs;
         }
 
+        public Box((Vector, Vector, Vector) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3) {}
+
         public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height) :
             this(new Vector(x, y), width, height)
         {
         }
+
+        public Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4) { }
 
         public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height, OriginPosition originPosition)
         {
@@ -1018,6 +1028,8 @@ namespace MMX.Geometry
             Maxs = new Vector(width, height);
         }
 
+        public Box((Vector, FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3) { }
+
         public Box(FixedSingle x, FixedSingle y, FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height)
         {
             Origin = new Vector(x, y);
@@ -1025,12 +1037,16 @@ namespace MMX.Geometry
             Maxs = new Vector(left + width - x, top + height - y);
         }
 
+        public Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4, tuple.Item5, tuple.Item6) { }
+
         public Box(Vector v1, Vector v2)
         {
             Origin = v1;
             Mins = Vector.NULL_VECTOR;
             Maxs = v2 - v1;
         }
+
+        public Box((Vector, Vector) tuple) : this(tuple.Item1, tuple.Item2) { }
 
         public Box(BinaryReader reader)
         {
@@ -1204,8 +1220,10 @@ namespace MMX.Geometry
         public Box ScaleLeft(FixedSingle alpha)
         {
             FixedSingle width = Width;
-            return new Box(LeftTop + alpha * (width - 1) * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, new Vector(alpha * width, Height));
+            return new Box(LeftTop + alpha * width * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, new Vector(alpha * width, Height));
         }
+
+        public Box ExtendLeftFixed(FixedSingle fixedWidth) => new(LeftTop + fixedWidth * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, new Vector(fixedWidth, Height));
 
         public Box ClipLeft(FixedSingle clip) => new(Origin, new Vector(Mins.X + clip, Mins.Y), Maxs);
 
@@ -1217,6 +1235,8 @@ namespace MMX.Geometry
         public Box ScaleRight(FixedSingle alpha) => new(LeftTop, Vector.NULL_VECTOR, new Vector(alpha * Width, Height));
 
         public Box ClipRight(FixedSingle clip) => new(Origin, Mins, new Vector(Maxs.X - clip, Maxs.Y));
+
+        public Box ExtendRightFixed(FixedSingle fixedWidth) => new(LeftTop, Vector.NULL_VECTOR, new Vector(fixedWidth, Height));
 
         /// <summary>
         /// Escala o retângulo para cima
@@ -1664,6 +1684,26 @@ namespace MMX.Geometry
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se forem diferentes, false caso contrário</returns>
         public static bool operator !=(Box box1, Box box2) => !(box1 == box2);
+
+        public static implicit operator Box((Vector, Vector, Vector) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3);
+
+        public static implicit operator Box((Vector, FixedSingle, FixedSingle) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3);
+
+        public static implicit operator Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4);
+
+        public static implicit operator Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4, tuple.Item5, tuple.Item6);
+
+        public static implicit operator Box((Vector, Vector) tuple) => new(tuple.Item1, tuple.Item2);
+
+        public static implicit operator (Vector, Vector, Vector)(Box box) => (box.Origin, box.Mins, box.Maxs);
+
+        public static implicit operator (Vector, FixedSingle, FixedSingle)(Box box) => (box.LeftTop, box.Width, box.Height);
+
+        public static implicit operator (FixedSingle, FixedSingle, FixedSingle, FixedSingle)(Box box) => (box.Left, box.Top, box.Width, box.Height);
+
+        public static implicit operator (FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle)(Box box) => (box.Origin.X, box.Origin.Y, box.Left, box.Top, box.Width, box.Height);
+
+        public static implicit operator (Vector, Vector)(Box box) => (box.Origin + box.Mins, box.Origin + box.Maxs);
     }
 
     public enum RightTriangleSide
