@@ -8,7 +8,7 @@ namespace MMX.Engine.Weapons
 
         public Direction Direction { get; }
 
-        protected Weapon(GameEngine engine, Sprite shooter, string name, Vector origin, Direction direction, SpriteSheet sheet) : base(engine, name, origin, sheet, true)
+        protected Weapon(GameEngine engine, Sprite shooter, string name, Vector origin, Direction direction, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex, true)
         {
             Shooter = shooter;
             Direction = direction;

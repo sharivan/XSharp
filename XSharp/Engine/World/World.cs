@@ -8,7 +8,6 @@ using MMX.Math;
 using MMXBox = MMX.Geometry.Box;
 
 using static MMX.Engine.Consts;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrayNotify;
 using System.Windows.Forms;
 
 namespace MMX.Engine.World
@@ -18,7 +17,7 @@ namespace MMX.Engine.World
         public const int TILEMAP_WIDTH = 32 * MAP_SIZE;
         public const int TILEMAP_HEIGHT = 32 * MAP_SIZE;
 
-        public const float TILE_FRAC_SIZE = 1f / 64;// (float) TILE_SIZE / TILEMAP_WIDTH;
+        public const float TILE_FRAC_SIZE = 1f / 64;
 
         public static readonly Vector TILE_SIZE_VECTOR = new(TILE_SIZE, TILE_SIZE);
         public static readonly Vector TILE_FRAC_SIZE_VECTOR = new(TILE_FRAC_SIZE, TILE_FRAC_SIZE);
@@ -36,8 +35,6 @@ namespace MMX.Engine.World
 
         private Scene[,] scenes;
         private Scene[,] backgroundScenes;
-        internal Texture foregroundTilemap;
-        internal Texture backgroundTilemap;
 
         internal World(GameEngine engine, int sceneRowCount, int sceneColCount) :
             this(engine, sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
@@ -53,7 +50,7 @@ namespace MMX.Engine.World
             this.backgroundSceneRowCount = backgroundSceneRowCount;
             this.backgroundSceneColCount = backgroundSceneColCount;
 
-            Screen = new Camera(this, SCREEN_WIDTH, SCREEN_HEIGHT);
+            Camera = new Camera(this, SCREEN_WIDTH, SCREEN_HEIGHT);
 
             tileList = new List<Tile>();
             backgroundTileList = new List<Tile>();
@@ -115,22 +112,18 @@ namespace MMX.Engine.World
 
         public Vector LayoutBackgroundtSize => new(backgroundSceneRowCount, backgroundSceneColCount);
 
-        public Camera Screen
+        public Camera Camera
         {
             get;
         }
 
-        public Texture ForegroundPalette
-        {
-            get;
-            set;
-        }
+        public Texture ForegroundPalette => Engine.ForegroundPalette;
 
-        public Texture BackgroundPalette
-        {
-            get;
-            set;
-        }
+        public Texture BackgroundPalette => Engine.BackgroundPalette;
+
+        public Texture ForegroundTilemap => Engine.ForegroundTilemap;
+
+        public Texture BackgroundTilemap => Engine.BackgroundTilemap;
 
         public Tile AddTile(bool background = false)
         {
@@ -460,63 +453,46 @@ namespace MMX.Engine.World
 
         public void Dispose() => Clear();
 
-        public void RenderBackground(bool upLayer)
+        public void RenderBackground(int layer)
         {
             Checkpoint checkpoint = Engine.CurrentCheckpoint;
             if (checkpoint == null)
                 return;
 
-            MMXBox screenBox = Screen.BoundingBox;
-            Vector screenLT = Screen.LeftTop;
-
+            Vector screenLT = Camera.LeftTop;
+            Vector screenRB = Camera.RightBottom;
             Vector backgroundPos = checkpoint.BackgroundPos;
-            MMXBox checkpointBox = checkpoint.BoundingBox;
-            Vector checkpointPos = checkpointBox.Origin;
-            //FixedSingle factor = checkpoint.ForceBackground.Y / backgroundPos.Y;
-            FixedSingle factorX = /*(float) BackgroundWidth * Width*/ 0.5;
-            FixedSingle factorY = /*(float) BackgroundHeight / Height*/ 0.5;
 
-            Vector delta = (checkpointPos - backgroundPos).Scale(16, 1);
-            //var backgroundBox = new MMXBox(backgroundPos.X, backgroundPos.Y, checkpointBox.Width, checkpointBox.Height);
-            var screenDelta = (screenLT - checkpointPos).Scale(factorX, factorY);
-            //backgroundBox &= screenBox - delta - screenDelta;
+            Vector screenDelta = checkpoint.Scroll == 0xe ? Vector.NULL_VECTOR : (screenLT + checkpoint.CameraPos).Scale(0.5f) - backgroundPos;
 
-            Vector screenRB = Screen.RightBottom;
+            Cell start = GetSceneCellFromPos(screenLT - screenDelta);
+            Cell end = GetSceneCellFromPos(screenRB - screenDelta);
 
-            Cell start = new(0, 0);
-            Cell end = new(backgroundSceneRowCount, backgroundSceneColCount);
-
-            //Cell start = GetSceneCellFromPos(screenLT.Scale(factorX, factorY).RoundToFloor());
-            //Cell end = GetSceneCellFromPos(screenRB.Scale(factorX, factorY).RoundToCeil());
-
-            //Cell start = GetSceneCellFromPos(backgroundBox.LeftTop);
-            //Cell end = GetSceneCellFromPos(backgroundBox.RightBottom);
-
-            for (int col = start.Col - 1; col <= end.Col + 1; col++)
+            for (int col = start.Col; col <= end.Col + 1; col++)
             {
                 if (col < 0 || col >= backgroundSceneColCount)
                     continue;
 
-                for (int row = start.Row - 1; row <= end.Row + 1; row++)
+                for (int row = start.Row; row <= end.Row + 1; row++)
                 {
                     if (row < 0 || row >= backgroundSceneRowCount)
                         continue;
 
-                    var sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
                     Scene scene = backgroundScenes[row, col];
                     if (scene != null)
                     {
+                        var sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
                         MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                        Engine.RenderVertexBuffer(upLayer ? scene.upLayerVB : scene.downLayerVB, GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, backgroundTilemap, BackgroundPalette, sceneBox + delta + screenDelta);
+                        Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, BackgroundTilemap, BackgroundPalette, sceneBox + screenDelta);
                     }
                 }
             }
         }
 
-        public void RenderForeground(bool upLayer)
+        public void RenderForeground(int layer)
         {
-            Vector screenLT = Screen.LeftTop;
-            Vector screenRB = Screen.RightBottom;
+            Vector screenLT = Camera.LeftTop;
+            Vector screenRB = Camera.RightBottom;
 
             Cell start = GetSceneCellFromPos(screenLT);
             Cell end = GetSceneCellFromPos(screenRB);
@@ -531,15 +507,18 @@ namespace MMX.Engine.World
                     if (row < 0 || row >= SceneRowCount)
                         continue;
 
-                    var sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
                     Scene scene = scenes[row, col];
                     if (scene != null)
-                        Engine.RenderVertexBuffer(upLayer ? scene.upLayerVB : scene.downLayerVB, GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, foregroundTilemap, ForegroundPalette, new MMXBox(sceneLT.X, sceneLT.Y, SCENE_SIZE, SCENE_SIZE));
+                    {
+                        var sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
+                        MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
+                        Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, ForegroundTilemap, ForegroundPalette, sceneBox);
+                    }
                 }
             }
         }
 
-        public void OnFrame() => Screen.OnFrame();
+        public void OnFrame() => Camera.OnFrame();
 
         public static Cell GetTileCellFromPos(Vector pos)
         {
@@ -740,7 +719,7 @@ return true;
 
 return false;*/
 
-            (box1 & box2).Area > 0;
+            (box1 & box2).IsValid();
 
         private bool HasIntersection(MMXBox box, RightTriangle slope, CollisionSide side) =>
             /*if (side.HasFlag(CollisionSide.FLOOR) && (box & slope.HypotenuseLine).Length > 0)
@@ -810,7 +789,7 @@ return false;*/
                         MMXBox mapBox = GetMapBoundingBox(row, col);
                         CollisionData collisionData = map.CollisionData;
 
-                        if (collisionData == CollisionData.BACKGROUND || (mapBox & collisionBox).Area == 0)
+                        if (collisionData == CollisionData.BACKGROUND || !(mapBox & collisionBox).IsValid())
                             continue;
 
                         if (!ignore.HasFlag(CollisionFlags.BLOCK) && IsSolidBlock(collisionData) && HasIntersection(collisionBox, mapBox, side))
@@ -1330,6 +1309,15 @@ return false;*/
 
             foreach (Scene scene in backgroundSceneList)
                 scene.Tessellate();
+        }
+
+        internal void OnDisposeDevice()
+        {
+            foreach (Scene scene in sceneList)
+                scene.OnDisposeDevice();
+
+            foreach (Scene scene in backgroundSceneList)
+                scene.OnDisposeDevice();
         }
     }
 }

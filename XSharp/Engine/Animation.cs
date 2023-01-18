@@ -13,7 +13,7 @@ namespace MMX.Engine
 
     public class Animation
     {
-        private readonly SpriteSheet.FrameSequence sequence;
+        private SpriteSheet.FrameSequence sequence;
         private bool animating; // Indica se a animação será dinâmica ou estática
         private int currentSequenceIndex; // Quadro atual
         private bool animationEndFired; // Indica se o evento OnAnimationEnd da entidade associada a esta animação foi chamado desde que a animação foi completada
@@ -29,8 +29,8 @@ namespace MMX.Engine
             }
         }
 
-        public Animation(Sprite sprite, int index, SpriteSheet sheet, string frameSequenceName, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false) :
-            this(sprite, index, sheet, frameSequenceName, FixedSingle.ZERO, initialFrame, startVisible, startOn, mirrored, flipped)
+        public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false) :
+            this(sprite, index, spriteSheetIndex, frameSequenceName, FixedSingle.ZERO, initialFrame, startVisible, startOn, mirrored, flipped)
         {
         }
 
@@ -45,12 +45,14 @@ namespace MMX.Engine
         /// <param name="startVisible">Especifica se a animação iniciará visível ou não</param>
         /// <param name="startOn">Especifica se a animação começará ativa ou não</param>
         /// <param name="loop">Especifica se a animação estará em looping ou não</param>
-        public Animation(Sprite sprite, int index, SpriteSheet sheet, string frameSequenceName, FixedSingle rotation, int initialSequenceIndex = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+        public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, FixedSingle rotation, int initialSequenceIndex = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
         {
             Sprite = sprite;
             Index = index;
-            Sheet = sheet;
-            sequence = sheet.GetFrameSequence(frameSequenceName);
+            SpriteSheetIndex = spriteSheetIndex;
+            FrameSequenceName = frameSequenceName;
+
+            sequence = Sheet.GetFrameSequence(frameSequenceName);
             InitialSequenceIndex = initialSequenceIndex;
             Visible = startVisible;
             animating = startOn;
@@ -71,7 +73,7 @@ namespace MMX.Engine
         {
             writer.Write(Index);
             writer.Write(Visible);
-            writer.Write(animating);       
+            writer.Write(animating);
 
             Rotation.Write(writer);
             Scale.Write(writer);
@@ -131,24 +133,42 @@ namespace MMX.Engine
         /// <summary>
         /// Entidade possuidora da animação
         /// </summary>
-        public Sprite Sprite { get; }
+        public Sprite Sprite
+        {
+            get;
+        }
 
-        public int Index { get;
+        public int SpriteSheetIndex
+        {
+            get;
+            private set;
+        }
+
+        public string FrameSequenceName
+        {
+            get;
+            private set;
+        }
+
+        public int Index
+        {
+            get;
             private set;
         }
 
         /// <summary>
         /// ImageList usado para gerar a animação (cada elemento do ImageList é um frame desta animação)
         /// </summary>
-        public SpriteSheet Sheet { get; }
-
-        public string FrameSequenceName => sequence.Name;
+        public SpriteSheet Sheet => Sprite.Engine.GetSpriteSheet(SpriteSheetIndex);
 
         /// <summary>
         /// Frame inicial da animação
         /// </summary>
-        public int InitialSequenceIndex { get;
-            set; }
+        public int InitialSequenceIndex
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Frame atual da animação
@@ -160,7 +180,6 @@ namespace MMX.Engine
             set
             {
                 currentSequenceIndex = value >= sequence.Count ? sequence.Count - 1 : value;
-
                 animationEndFired = false;
             }
         }
@@ -192,8 +211,11 @@ namespace MMX.Engine
         /// <summary>
         /// Visibilidade da animação (true se está visível, false caso contrário)
         /// </summary>
-        public bool Visible { get;
-            set; }
+        public bool Visible
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// true se a animação está sendo executada, false caso contrário
@@ -213,17 +235,29 @@ namespace MMX.Engine
 
         public int LoopFromFrame => sequence.LoopFromSequenceIndex;
 
-        public FixedSingle Rotation { get;
-            set; }
+        public FixedSingle Rotation
+        {
+            get;
+            set;
+        }
 
-        public FixedSingle Scale { get;
-            set; }
+        public FixedSingle Scale
+        {
+            get;
+            set;
+        }
 
-        public bool Flipped { get;
-            set; }
+        public bool Flipped
+        {
+            get;
+            set;
+        }
 
-        public bool Mirrored { get;
-            set; }
+        public bool Mirrored
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Evento a ser executado a cada frame (tick) do engine
@@ -255,35 +289,6 @@ namespace MMX.Engine
             }
         }
 
-        private static RawMatrix5x4 CreateRawMatrix5x4(float[][] values)
-        {
-            var result = new RawMatrix5x4
-            {
-                M11 = values[0][0],
-                M12 = values[0][1],
-                M13 = values[0][2],
-                M14 = values[0][3],
-                M21 = values[1][0],
-                M22 = values[1][1],
-                M23 = values[1][2],
-                M24 = values[1][3],
-                M31 = values[2][0],
-                M32 = values[2][1],
-                M33 = values[2][2],
-                M34 = values[2][3],
-                M41 = values[3][0],
-                M42 = values[3][1],
-                M43 = values[3][2],
-                M44 = values[3][3],
-                M51 = values[4][0],
-                M52 = values[4][1],
-                M53 = values[4][2],
-                M54 = values[4][3]
-            };
-
-            return result;
-        }
-
         /// <summary>
         /// Realiza a pintura da animação
         /// </summary>
@@ -296,7 +301,7 @@ namespace MMX.Engine
 
             var frame = sequence[currentSequenceIndex];
             MMXBox srcBox = frame.BoundingBox;
-            Texture bitmap = frame.Bitmap;
+            Texture texture = frame.Texture;
 
             MMXBox drawBox = Sprite.Origin + srcBox;
             Vector2 center = Sprite.Engine.WorldVectorToScreen(drawBox.Origin);
@@ -304,7 +309,7 @@ namespace MMX.Engine
 
             Matrix transform = Matrix.Identity;
 
-            float drawScale = (float) Sprite.Engine.DrawScale;            
+            float drawScale = (float) Sprite.Engine.DrawScale;
             transform *= Matrix.Scaling(drawScale);
 
             if (Rotation != FixedSingle.ZERO)
@@ -316,32 +321,17 @@ namespace MMX.Engine
             if (Flipped)
             {
                 if (Mirrored)
-                    transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, -1, 1) * Matrix.Translation(center3);                   
+                    transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, -1, 1) * Matrix.Translation(center3);
                 else
                     transform *= Matrix.Translation(-center3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(center3);
             }
             else if (Mirrored)
                 transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(center3);
 
-            /*float brightness = 0;
-            float contrast = 1;
-
-            float[][] ptsArray =
-            {
-                new float[] {contrast, 0, 0, 0}, // scale red
-                new float[] {0, contrast, 0, 0}, // scale green
-                new float[] {0, 0, contrast, 0}, // scale blue
-                new float[] {0, 0, 0, 1}, // scale alpha
-                new float[] {brightness, brightness, brightness, 0}
-            };
-
-            //var effect = new LookupTable3D(sprite.Engine.Context);
-            //effect.SetInput(0, bitmap, true);
-            //RawMatrix5x4 matrix = CreateRawMatrix5x4(ptsArray);
-            //effect.Matrix = matrix;*/
-
-            Sprite.Engine.RenderTexture(bitmap, Sprite.Palette, drawBox.LeftTop, transform);
+            Sprite.Engine.RenderTexture(texture, Sprite.Palette, drawBox.LeftTop, transform);
         }
+
+        internal void OnDeviceReset() => sequence = Sheet.GetFrameSequence(FrameSequenceName);
 
         public override string ToString() => sequence.Name + (Rotation != 0 ? " rotated " + Rotation : "") + (Scale != 0 ? " scaleed " + Scale : "") + (Mirrored ? " left" : " right") + (Flipped ? " down" : " up");
     }

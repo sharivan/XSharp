@@ -4,14 +4,19 @@
     {
         internal byte[] data;
 
-        public World World { get; }
+        public World World
+        {
+            get;
+        }
 
-        public int ID { get; }
+        public int ID
+        {
+            get;
+        }
 
         public byte[] Data
         {
             get => data;
-
             set => data = value;
         }
 

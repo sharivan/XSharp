@@ -107,44 +107,369 @@
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\buster_reflect.wav">
+    <EmbeddedResource Include="resources\sounds\buster_reflect.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\charge.wav">
+    <EmbeddedResource Include="resources\sounds\charge.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\dash.wav">
+    <EmbeddedResource Include="resources\sounds\dash.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\jump.wav">
+    <EmbeddedResource Include="resources\sounds\jump.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\land.wav">
+    <EmbeddedResource Include="resources\sounds\land.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\spawn.wav">
+    <EmbeddedResource Include="resources\sounds\spawn.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\teleport.wav">
+    <EmbeddedResource Include="resources\sounds\teleport.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\x.wav">
+    <EmbeddedResource Include="resources\sounds\x.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="resources\sounds\mmx\01 - MMX - X Regular Shot.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\02 - MMX - X Charge Shot.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\03 - MMX - X Super Charge Shot.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\04 - MMX - X Charge.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\05 - MMX - X Charge + Shot.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\06 - MMX - X Charge + Super Shot.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\07 - MMX - X Dash.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\08 - MMX - X Jump.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\09 - MMX - X Land.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\10 - MMX - X Hurt.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\100 - MMX - Robot Suit %284%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\101 - MMX - Robot Suit %285%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\102 - MMX - Robot Suit %286%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\103 - MMX - Robot Suit %287%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\104 - MMX - Rocks %281%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\105 - MMX - Rocks %282%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\106 - MMX - Rocks %283%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\107 - MMX - Sigma Dog.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\108 - MMX - Sigma Teleport.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\109 - MMX - Spring 1.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\11 - MMX - X Die.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\110 - MMX - Spring 2.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\111 - MMX - Stage Cursor Move.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\112 - MMX - Submarine 1.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\113 - MMX - Submarine 2.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\114 - MMX - Text Letter.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\115 - MMX - Underwater Bubble.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\116 - MMX - Underwater Sound.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\117 - MMX - Unknown %281%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\118 - MMX - Unknown %282%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\119 - MMX - Unknown %283%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\12 - MMX - X Life Gain.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\120 - MMX - unknown %284%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\121 - MMX - Wing Flap %281%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\122 - MMX - Wing Flap %282%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\123 - MMX - Wing Flap %283%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\124 - MMX - Wing Flap %284%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\125 - MMX - Wing Flap %285%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\13 - MMX - X Extra Life.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\15 - MMX - X Powerup Infuse.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\17 - MMX - X Fade In.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\18 - MMX - X Fade Out.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\19 - MMX - X Boomerang Cutter 1.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\20 - MMX - X Boomerang Cutter 2.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\21 - MMX - X Chameleon Sting.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\22 - MMX - X Chameleon Sting %28Charged%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\23 - MMX - X Electric Spark.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\24 - MMX - X Fire Wave.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\25 - MMX - X Homing Torpedo.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\26 - MMX - X Rolling Shield.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\27 - MMX - X Rolling Shiled %28Charged%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\28 - MMX - X Storm Tornado.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\29 - MMX - Enemy Helmet Hit.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\30 - MMX - Small Hit.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\31 - MMX - Big Hit.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\32 - MMX - Energy Tank Health.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\33 - MMX - Energy Tank Full.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\34 - MMX - Ice.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\35 - MMX - Ice Freeze.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\36 - MMX - Ice Break.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\37 - MMX - Alert 1.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\38 - MMX - Alert 2.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\39 - MMX - Armadillo Charge.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\40 - MMX - Armadillo Laser.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\41 - MMX - Spark Mandrill Punch.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\42 - MMX - Beam Pulse.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\43 - MMX - Beep %281%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\44 - MMX - Beep %282%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\45 - MMX - Beep %283%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\46 - MMX - Beep %284%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\47 - MMX - Beep %285%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\48 - MMX - Boomer Kuwanger Teleport.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\49 - MMX - Boss Door Close.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\50 - MMX - Bulldozer .wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\51 - MMX - Can%27t Exit.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\53 - MMX - Door Open.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\54 - MMX - Eagle%27s Tornado.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\55 - MMX - Electric Bolt.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\56 - MMX - Enemy Die %281%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\57 - MMX - Enemy Die %282%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\58 - MMX - Enemy Die %283%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\59 - MMX - Enemy Die %284%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\60 - MMX - Enemy Missle Fire.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\61 - MMX - Enemy Motor 1 .wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\62 - MMX - Enemy Motor 2.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\63 - MMX - Enemy Motor 3.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\64 - MMX - Enemy Sound %2801%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\65 - MMX - Enemy Sound %2802%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\66 - MMX - Enemy Sound %2803%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\67 - MMX - Enemy Sound %2804%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\68 - MMX - Enemy Sound %2805%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\69 - MMX - Enemy Sound %2806%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\70 - MMX - Enemy Sound %2807%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\71 - MMX - Enemy Sound %2808%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\72 - MMX - Enemy Sound %2809%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\73 - MMX - Enemy Sound %2810%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\74 - MMX - Enemy Sound %2811%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\75 - MMX - Enemy Sound %2812%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\76 - MMX - Flame Mammoth.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\77 - MMX - Heavy Machine %281%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\78 - MMX - Heavy Machine %282%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\79 - MMX - Heavy Machine %283%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\80 - MMX - Heavy Machine %284%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\81 - MMX - Heavy Machine %285%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\82 - MMX - Heavy Machine %286%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\83 - MMX - Heavy Machine %287%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\84 - MMX - Heavy Machine %288%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\85 - MMX - Intro Data Screen.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\86 - MMX - Mechanical Hum 1.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\87 - MMX - Mechanical Hum 2.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\88 - MMX - Mechanical Hum 3.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\89 - MMX - Misc. dash, jump, move %281%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\90 - MMX - Misc. dash, jump, move %282%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\91 - MMX - Misc. dash, jump, move %283%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\92 - MMX - Misc. dash, jump, move %284%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\93 - MMX - Misc. dash, jump, move %285%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\94 - MMX - Misc. dash, jump, move %286%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\95 - MMX - Misc. dash, jump, move %287%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\96 - MMX - Octopus Drain.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\97 - MMX - Robot Suit %281%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\98 - MMX - Robot Suit %282%29.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx\99 - MMX - Robot Suit %283%29.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00008.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00009.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00010.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00011.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00012.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00013.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00014.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00015.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00016.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00017.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00018.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00019.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00020.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00021.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00022.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00023.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00024.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00025.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00026.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00027.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00028.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00029.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00030.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00031.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00032.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00033.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00034.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00035.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00036.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00037.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00038.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00039.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00040.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00041.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00042.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00043.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00044.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00045.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00046.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00047.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00048.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00049.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00050.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00051.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00052.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00053.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00054.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00055.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00056.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00057.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00058.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00059.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00060.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00061.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00062.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00063.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00064.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00065.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00066.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00067.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00068.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00069.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00070.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00071.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00072.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00073.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00074.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00075.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00076.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00077.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00078.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00079.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00080.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00081.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00082.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00083.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00084.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00085.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00086.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00087.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00088.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00089.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00090.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00091.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00092.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00093.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00094.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00095.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00096.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00097.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00098.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00099.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00100.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00101.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00102.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00103.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00104.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00105.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00106.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00107.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00108.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00109.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00110.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00111.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00112.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00113.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00114.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00115.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00116.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00117.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00118.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00119.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00120.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00121.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00122.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00123.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00124.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00125.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00126.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00127.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00128.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00129.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00130.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00131.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00132.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00133.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00134.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00135.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00136.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00137.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00138.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00139.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00140.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00141.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00142.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00143.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00144.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00145.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00146.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00147.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00148.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00149.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00150.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00151.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00152.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00153.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00154.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00155.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00156.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00157.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00158.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00159.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00160.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00161.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00162.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00163.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00164.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00165.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00166.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00167.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00168.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00169.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00170.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00171.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00172.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00173.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00174.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00175.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00176.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00177.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00178.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00179.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00180.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00181.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00182.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00183.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00184.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00185.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00186.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00187.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00188.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00189.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00190.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00191.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00192.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00193.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00194.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00195.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00196.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00197.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00198.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00199.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00200.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00201.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00202.wav" />
+    <EmbeddedResource Include="resources\sounds\mmx2\MMX2_SE_00203.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -16,17 +16,25 @@ namespace MMX.Engine.World
         internal bool[,] mirrored;
         internal bool[,] upLayer;
 
-        public World World { get; }
+        public World World
+        {
+            get;
+        }
 
-        public int ID { get; }
+        public int ID
+        {
+            get;
+        }
 
-        public CollisionData CollisionData { get;
-            set; }
+        public CollisionData CollisionData
+        {
+            get;
+            set;
+        }
 
         public Tile this[int row, int col]
         {
             get => tiles[row, col];
-
             set => tiles[row, col] = value;
         }
 

@@ -52,7 +52,7 @@ namespace DSoundText
             // Play the PrimarySound Buffer
             primarySoundBuffer.Play(0, PlayFlags.Looping);
 
-            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("DSoundText.resources.x.wav");
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("DSoundText.resources.sounds.mmx.05 - MMX - X Charge + Shot.wav");
             //PlaySoundAsync(ds, stream);
 
             var reader = new WaveFileReader(stream);

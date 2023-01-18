@@ -7,6 +7,7 @@ using SharpDX.Windows;
 using MMX.Engine;
 
 using static MMX.Engine.Consts;
+using System.Windows.Forms;
 
 namespace XSharp
 {
@@ -20,6 +21,11 @@ namespace XSharp
             //    engine.UpdateScale();
         }
 
+        static private void Form_Closing(object sender, EventArgs e)
+        {
+            engine.Running = false;
+        }
+
         /// <summary>
         /// Ponto de entrada principal para o aplicativo.
         /// </summary>
@@ -30,26 +36,18 @@ namespace XSharp
             {
                 ClientSize = new System.Drawing.Size((int) DEFAULT_CLIENT_WIDTH * 4, (int) DEFAULT_CLIENT_HEIGHT * 4)
             };
+
             form.Resize += new EventHandler(Form_Resize);
+            form.FormClosing += new FormClosingEventHandler(Form_Closing);
 
-            // Creates the Device
-            var direct3D = new Direct3D();
-            var device = new Device(direct3D, 0, DeviceType.Hardware, form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, new PresentParameters((int) DEFAULT_CLIENT_WIDTH * 4, (int) DEFAULT_CLIENT_HEIGHT * 4));
-
-            engine = new GameEngine(form, device);
-
+            engine = new GameEngine(form);
             try
             {
-                // Main loop
-                RenderLoop.Run(form, engine.Render);
+                engine.Run();
             }
             finally
             {
                 engine.Dispose();
-
-                // Release all resources
-                device.Dispose();
-                direct3D.Dispose();
             }
         }
     }

@@ -68,12 +68,12 @@ namespace MMX.Engine
         /// <param name="name">Nome do Bomberman</param>
         /// <param name="box">Retângulo de desenho do Bomberman</param>
         /// <param name="imageLists">Array de lista de imagens que serão usadas na animação do Bomberman</param>
-        internal Player(GameEngine engine, string name, Vector origin, SpriteSheet sheet)
+        internal Player(GameEngine engine, string name, Vector origin, int spriteSheetIndex)
         // Dado o retângulo de desenho do Bomberman, o retângulo de colisão será a metade deste enquanto o de dano será um pouco menor ainda.
         // A posição do retângulo de colisão será aquela que ocupa a metade inferior do retângulo de desenho enquanto o retângulo de dano terá o mesmo centro que o retângulo de colisão.
-        : base(engine, name, origin, sheet, true)
+        : base(engine, name, origin, spriteSheetIndex, true)
         {
-            CheckCollisionWithWorld = true;
+            CheckCollisionWithWorld = false;
 
             baseHSpeed = WALKING_SPEED;
 
@@ -159,8 +159,6 @@ namespace MMX.Engine
                 ? new Box(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3))
                 : new Box(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 4));
 
-        protected override void OnHealthChanged(FixedSingle health) => engine.RepaintHP(); // Notifica o engine que o HP do caracter foi alterado para que seja redesenhado.
-
         public bool Shooting
         {
             get;
@@ -213,6 +211,8 @@ namespace MMX.Engine
 
         public bool WalkingRightOnly => state == PlayerState.WALK && stateDirection == Direction.RIGHT;
 
+        public bool Spawning => state == PlayerState.SPAWN;
+
         public bool Standing => state == PlayerState.STAND;
 
         public bool PreLadderClimbing => state == PlayerState.PRE_LADDER_CLIMB;
@@ -253,7 +253,6 @@ namespace MMX.Engine
             set
             {
                 lives = value;
-                engine.RepaintLives();
             }
         }
 
@@ -397,7 +396,7 @@ namespace MMX.Engine
             base.Spawn();
 
             spawing = true;
-
+            vel = TERMINAL_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
             lives = 2;
 
             ResetKeys();
@@ -416,14 +415,14 @@ namespace MMX.Engine
             // Toda vez que o bomberman morre,
             Lives--; // decrementa sua quantidade de vidas.
 
-            engine.PlaySound("TIME_UP"); // Toca o som de morte do Bomberman.
+            Engine.PlaySound("TIME_UP"); // Toca o som de morte do Bomberman.
 
             base.OnDeath(); // Chama o método OnDeath() da classe base.
 
             //if (lives > 0) // Se ele ainda possuir vidas,
             //    engine.ScheduleRespawn(this); // respawna o Bomberman.
             //else
-            engine.OnGameOver(); // Senão, Game Over!
+            Engine.OnGameOver(); // Senão, Game Over!
         }
 
         private void TryMoveLeft(bool standOnly = false)
@@ -561,13 +560,26 @@ namespace MMX.Engine
 
         protected override void Think()
         {
-            if (engine.Paused)
+            if (Engine.Paused)
             {
                 if (PressingStart && !WasPressingStart)
-                    engine.ContinueGame();
+                    Engine.ContinueGame();
             }
             else
             {
+                if (Spawning && !CheckCollisionWithWorld)
+                {
+                    if (Engine.CurrentCheckpoint != null)
+                    {
+                        if (GetVector(VectorKind.PLAYER_ORIGIN).Y >= Engine.CurrentCheckpoint.BoundingBox.Top + SCREEN_HEIGHT / 2)
+                            CheckCollisionWithWorld = true;
+                    }
+                    else
+                        CheckCollisionWithWorld = true;
+                }
+                else
+                    CheckCollisionWithWorld = true;
+
                 skipPhysics = Standing;
 
                 if (NoClip)
@@ -710,7 +722,7 @@ namespace MMX.Engine
                                 {
                                     collider.Box = CollisionBox;
                                     Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
-                                    CollisionFlags flags = engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                                    CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
                                     if (flags.HasFlag(CollisionFlags.TOP_LADDER))
                                     {
                                         if (!TopLadderClimbing && !TopLadderDescending)
@@ -727,7 +739,7 @@ namespace MMX.Engine
                             {
                                 collider.Box = CollisionBox;
                                 Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
-                                CollisionFlags flags = engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                                CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
                                 if (flags.HasFlag(CollisionFlags.LADDER))
                                 {
                                     vel = Vector.NULL_VECTOR;
@@ -749,7 +761,7 @@ namespace MMX.Engine
                                 {
                                     collider.Box = CollisionBox;
                                     Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
-                                    CollisionFlags flags = engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                                    CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
                                     if (!flags.HasFlag(CollisionFlags.LADDER))
                                     {
                                         if (Landed)
@@ -983,9 +995,9 @@ namespace MMX.Engine
                             if (chargingFrameCounter >= 4)
                             {
                                 int frame = chargingFrameCounter - 4;
-                                Palette = (frame & 2) is 0 or 1 ? engine.ChargeLevel1Palette : engine.X1NormalPalette;
+                                PaletteIndex = (frame & 2) is 0 or 1 ? 1 : 0;
 
-                                chargingEffect ??= engine.StartChargeEffect(this);
+                                chargingEffect ??= Engine.StartChargeEffect(this);
 
                                 if (frame == 60)
                                     chargingEffect.Level = 2;
@@ -1000,7 +1012,7 @@ namespace MMX.Engine
                     this.charging = false;
                     this.chargingFrameCounter = 0;
 
-                    Palette = engine.X1NormalPalette;
+                    PaletteIndex = 0;
 
                     if (chargingEffect != null)
                     {
@@ -1048,7 +1060,7 @@ namespace MMX.Engine
                 }
 
                 if (PressingStart && !WasPressingStart)
-                    engine.PauseGame();
+                    Engine.PauseGame();
             }
 
             base.Think();
@@ -1075,7 +1087,7 @@ namespace MMX.Engine
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            engine.ShootLemon(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction, baseHSpeed == DASH_SPEED);
+            Engine.ShootLemon(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction, baseHSpeed == DASH_SPEED);
         }
 
         public void ShootSemiCharged()
@@ -1087,7 +1099,7 @@ namespace MMX.Engine
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            engine.ShootSemiCharged(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
+            Engine.ShootSemiCharged(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
         }
 
         public void ShootCharged()
@@ -1099,7 +1111,7 @@ namespace MMX.Engine
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            engine.ShootCharged(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
+            Engine.ShootCharged(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
         }
 
         public Direction GetWallJumpDir()
@@ -1120,11 +1132,11 @@ namespace MMX.Engine
             }
 
             Box collisionBox = Origin + GetCollisionBox().ClipTop(-2).ClipBottom(2 + (slopeSign == 1 ? vclip : 0)) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.LEFT_VECTOR;
-            if (engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.LEFT_WALL).HasFlag(CollisionFlags.BLOCK))
+            if (Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.LEFT_WALL).HasFlag(CollisionFlags.BLOCK))
                 return Direction.LEFT;
 
             collisionBox = Origin + GetCollisionBox().ClipTop(-2).ClipBottom(2 + (slopeSign == -1 ? vclip : 0)) + WALL_MAX_DISTANCE_TO_WALL_JUMP * Vector.RIGHT_VECTOR;
-            return engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.RIGHT_WALL).HasFlag(CollisionFlags.BLOCK)
+            return Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.RIGHT_WALL).HasFlag(CollisionFlags.BLOCK)
                 ? Direction.RIGHT
                 : Direction.NONE;
         }

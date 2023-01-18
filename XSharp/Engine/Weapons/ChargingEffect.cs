@@ -9,7 +9,7 @@ namespace MMX.Engine.Weapons
         private int level;
         private readonly int[] animationIndices;
 
-        public ChargingEffect(GameEngine engine, string name, Player charger, SpriteSheet sheet) : base(engine, name, charger.CollisionBox.Center, sheet)
+        public ChargingEffect(GameEngine engine, string name, Player charger, int spriteSheetIndex) : base(engine, name, charger.CollisionBox.Center, spriteSheetIndex)
         {
             Parent = charger;
 

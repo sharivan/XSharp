@@ -6,14 +6,14 @@ using System.Reflection;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Configuration;
+using System.Threading;
 
 using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
 using SharpDX.DirectSound;
 using SharpDX.Mathematics.Interop;
-
-using Types;
+using SharpDX.Windows;
 
 using MMX.Math;
 using MMX.Geometry;
@@ -22,17 +22,17 @@ using MMX.Engine.World;
 using MMX.Engine.Weapons;
 using MMX.Engine.Enemies;
 
+using static MMX.Engine.Consts;
+using static MMX.Engine.World.World;
+
 using Configuration = System.Configuration.Configuration;
 using Device9 = SharpDX.Direct3D9.Device;
 using DXSprite = SharpDX.Direct3D9.Sprite;
 using MMXBox = MMX.Geometry.Box;
 using MMXWorld = MMX.Engine.World.World;
 using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
-using DSoundCooperativeLevel = SharpDX.DirectSound.CooperativeLevel;
-
-using static MMX.Engine.Consts;
-using static System.Collections.Specialized.BitVector32;
-using System.Reflection.Emit;
+using ResultCode = SharpDX.Direct3D9.ResultCode;
+using DeviceType = SharpDX.Direct3D9.DeviceType;
 
 namespace MMX.Engine
 {
@@ -49,7 +49,6 @@ namespace MMX.Engine
         public int Left
         {
             get => (int) this["left"];
-
             set => this["left"] = value;
         }
 
@@ -71,7 +70,6 @@ namespace MMX.Engine
         public int Width
         {
             get => (int) this["width"];
-
             set => this["width"] = value;
         }
 
@@ -82,7 +80,6 @@ namespace MMX.Engine
         public int Height
         {
             get => (int) this["height"];
-
             set => this["height"] = value;
         }
 
@@ -93,7 +90,6 @@ namespace MMX.Engine
         public bool DrawCollisionBox
         {
             get => (bool) this["drawCollisionBox"];
-
             set => this["drawCollisionBox"] = value;
         }
 
@@ -104,7 +100,6 @@ namespace MMX.Engine
         public bool ShowColliders
         {
             get => (bool) this["showColliders"];
-
             set => this["showColliders"] = value;
         }
 
@@ -115,7 +110,6 @@ namespace MMX.Engine
         public bool DrawMapBounds
         {
             get => (bool) this["drawMapBounds"];
-
             set => this["drawMapBounds"] = value;
         }
 
@@ -126,7 +120,6 @@ namespace MMX.Engine
         public bool DrawTouchingMapBounds
         {
             get => (bool) this["drawTouchingMapBounds"];
-
             set => this["drawTouchingMapBounds"] = value;
         }
 
@@ -137,7 +130,6 @@ namespace MMX.Engine
         public bool DrawHighlightedPointingTiles
         {
             get => (bool) this["drawHighlightedPointingTiles"];
-
             set => this["drawHighlightedPointingTiles"] = value;
         }
 
@@ -148,7 +140,6 @@ namespace MMX.Engine
         public bool DrawPlayerOriginAxis
         {
             get => (bool) this["drawPlayerOriginAxis"];
-
             set => this["drawPlayerOriginAxis"] = value;
         }
 
@@ -159,7 +150,6 @@ namespace MMX.Engine
         public bool ShowInfoText
         {
             get => (bool) this["showInfoText"];
-
             set => this["showInfoText"] = value;
         }
 
@@ -170,7 +160,6 @@ namespace MMX.Engine
         public bool ShowCheckpointBounds
         {
             get => (bool) this["showCheckpointBounds"];
-
             set => this["showCheckpointBounds"] = value;
         }
 
@@ -181,7 +170,6 @@ namespace MMX.Engine
         public bool ShowTriggerBounds
         {
             get => (bool) this["showTriggerBounds"];
-
             set => this["showTriggerBounds"] = value;
         }
         [ConfigurationProperty("showTriggerCameraLook",
@@ -191,7 +179,6 @@ namespace MMX.Engine
         public bool ShowTriggerCameraLook
         {
             get => (bool) this["showTriggerCameraLook"];
-
             set => this["showTriggerCameraLook"] = value;
         }
 
@@ -282,12 +269,18 @@ namespace MMX.Engine
              15, 128,   0,   0, 228, 128,
             255, 255,   0,   0
         };
-        private readonly DXSprite sprite;
-        private readonly Line line;
-        private readonly Font infoFont;
-        private readonly Font coordsTextFont;
-        private readonly Font highlightMapTextFont;
-        private readonly Texture hitboxTexture;
+
+        private PresentParameters presentationParams;
+        private DXSprite sprite;
+        private Line line;
+        private Font infoFont;
+        private Font coordsTextFont;
+        private Font highlightMapTextFont;
+        private Texture hitboxTexture;
+        private Texture foregroundTilemap;
+        private Texture backgroundTilemap;
+        private Texture foregroundPalette;
+        private Texture backgroundPalette;
 
         private readonly DirectSound sound;
         internal Partition<Entity> partition;
@@ -297,7 +290,7 @@ namespace MMX.Engine
         private readonly List<Entity> entities;
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
-        internal List<RespawnEntry> respawnableEntities;
+        internal List<(Entity entity, MMXBox box)> respawnableEntities;
         private ushort currentLevel;
         //private int enemyCount;
         private bool changeLevel;
@@ -306,11 +299,10 @@ namespace MMX.Engine
         private string currentStageMusic;
         private bool loadingLevel;
         private bool paused;
-        private bool noCameraConstraints;
+        internal bool noCameraConstraints;
 
         private int currentSaveSlot;
 
-        private readonly SoundCollection sounds;
         private long lastCurrentMemoryUsage;
         private MMXBox drawBox;
         private Checkpoint currentCheckpoint;
@@ -318,27 +310,8 @@ namespace MMX.Engine
         internal List<Vector> cameraConstraints;
         internal MMXBox cameraConstraintsBox;
 
-        private readonly SpriteSheet xSpriteSheet;
-        private readonly SpriteSheet xWeaponsSpriteSheet;
-        private readonly SpriteSheet xEffectsSpriteSheet;
-        private readonly SpriteSheet drillerSpriteSheet;
-
-        /*private SolidColorBrush screenBoxBrush;
-        private SolidColorBrush hitBoxBrush;
-        private SolidColorBrush hitBoxBorderBrush;
-        private SolidColorBrush touchingMapBrush;
-        private SolidColorBrush playerOriginBrush;
-        private SolidColorBrush coordsTextBrush;
-        private SolidColorBrush checkpointBoxBrush;
-        private SolidColorBrush triggerBoxBrush;
-        private SolidColorBrush cameraEventExtensionBrush;
-        private SolidColorBrush downColliderBrush;
-        private SolidColorBrush upColliderBrush;
-        private SolidColorBrush leftColliderBrush;
-        private SolidColorBrush rightColliderBrush;
-
-        private TextFormat coordsTextFormat;
-        private TextFormat highlightMapTextFormat;*/
+        private List<SpriteSheet> spriteSheets;
+        private List<Texture> palettes;
 
         private bool frameAdvance;
         private readonly bool recording;
@@ -407,14 +380,22 @@ namespace MMX.Engine
             get;
         }
 
+        public Direct3D Direct3D
+        {
+            get;
+            private set;
+        }
+
         public Device9 Device
         {
             get;
+            private set;
         }
 
         public VertexBuffer VertexBuffer
         {
             get;
+            private set;
         }
 
         public RectangleF RenderRectangle => ToRectangleF(drawBox);
@@ -465,182 +446,183 @@ namespace MMX.Engine
         public VertexShader VertexShader
         {
             get;
+            private set;
         }
 
         public PixelShader PixelShader
         {
             get;
+            private set;
         }
 
-        public Texture X1NormalPalette
-        {
-            get;
-        }
+        public Texture X1NormalPalette => GetPalette(0);
 
-        public Texture ChargeLevel1Palette
-        {
-            get;
-        }
+        public Texture ChargeLevel1Palette => GetPalette(1);
 
-        public Texture ChargeLevel2Palette
-        {
-            get;
-        }
+        public Texture ChargeLevel2Palette => GetPalette(2);
 
-        public Texture ChargingEffectPalette
-        {
-            get;
-        }
+        public Texture ChargingEffectPalette => GetPalette(3);
 
         public Checkpoint CurrentCheckpoint
         {
             get => currentCheckpoint;
+            set => SetCheckpoint(value);
+        }
 
+        internal Texture ForegroundTilemap
+        {
+            get => foregroundTilemap;
             set
             {
-                if (currentCheckpoint != value)
+                if (foregroundTilemap != value)
                 {
-                    currentCheckpoint = value;
-                    cameraConstraintsBox = currentCheckpoint.BoundingBox;
-
-                    if (romLoaded)
-                    {
-                        mmx.SetLevel(mmx.Level, currentCheckpoint.Point);
-                        mmx.LoadTilesAndPalettes();
-                        mmx.LoadPalette(World, false);
-                        mmx.LoadPalette(World, true);
-                        mmx.RefreshMapCache(World, false);
-                        mmx.RefreshMapCache(World, true);
-                    }
+                    DisposeResource(foregroundTilemap);
+                    foregroundTilemap = value;
                 }
             }
         }
 
-        public uint ObjectTile
+        internal Texture BackgroundTilemap
         {
-            get => mmx.ObjLoadOffset;
-
+            get => backgroundTilemap;
             set
             {
-                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, value, mmx.TileLoadOffset, mmx.PalLoadOffset);
-                mmx.LoadTilesAndPalettes();
-                mmx.LoadPalette(World, false);
-                mmx.LoadPalette(World, true);
-                mmx.RefreshMapCache(World, false);
-                mmx.RefreshMapCache(World, true);
+                if (backgroundTilemap != value)
+                {
+                    DisposeResource(backgroundTilemap);
+                    backgroundTilemap = value;
+                }
             }
         }
 
-        public uint BackgroundTile
+        internal Texture ForegroundPalette
         {
-            get => mmx.TileLoadOffset;
-
+            get => foregroundPalette;
             set
             {
-                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoadOffset, value, mmx.PalLoadOffset);
-                mmx.LoadTilesAndPalettes();
-                mmx.LoadPalette(World, false);
-                mmx.LoadPalette(World, true);
-                mmx.RefreshMapCache(World, false);
-                mmx.RefreshMapCache(World, true);
+                if (foregroundPalette != value)
+                {
+                    DisposeResource(foregroundPalette);
+                    foregroundPalette = value;
+                }
             }
         }
 
-        public uint Palette
+        internal Texture BackgroundPalette
         {
-            get => mmx.PalLoadOffset;
-
+            get => backgroundPalette;
             set
             {
-                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoadOffset, mmx.TileLoadOffset, value);
-                mmx.LoadTilesAndPalettes();
-                mmx.LoadPalette(World, false);
-                mmx.LoadPalette(World, true);
-                mmx.RefreshMapCache(World, false);
-                mmx.RefreshMapCache(World, true);
+                if (backgroundPalette != value)
+                {
+                    DisposeResource(backgroundPalette);
+                    backgroundPalette = value;
+                }
             }
         }
 
-        public GameEngine(Form form, Device9 device)
+        public void SetCheckpoint(Checkpoint value, int objectTile = -1, int backgroundTile = -1, int palette = -1)
+        {
+            if (currentCheckpoint != value)
+            {
+                currentCheckpoint = value;
+                if (currentCheckpoint != null)
+                {
+                    cameraConstraintsBox = currentCheckpoint.BoundingBox;
+                    //World.Camera.SmoothOnNextMove = true;
+                    //World.Camera.SmoothSpeed = WALKING_SPEED;
+
+                    if (romLoaded)
+                    {
+                        mmx.SetLevel(mmx.Level, currentCheckpoint.Point, objectTile, backgroundTile, palette);
+                        mmx.LoadTilesAndPalettes();
+                        mmx.LoadPalette(this, false);
+                        mmx.LoadPalette(this, true);
+                        mmx.RefreshMapCache(this, false);
+                        mmx.RefreshMapCache(this, true);
+                    }
+                }
+                else
+                    cameraConstraintsBox = World.BoundingBox;
+            }
+        }
+
+        public int ObjectTile
+        {
+            get => mmx.ObjLoad;
+
+            set
+            {
+                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, value, mmx.TileLoad, mmx.PalLoad);
+                mmx.LoadTilesAndPalettes();
+                mmx.LoadPalette(this, false);
+                mmx.LoadPalette(this, true);
+                mmx.RefreshMapCache(this, false);
+                mmx.RefreshMapCache(this, true);
+            }
+        }
+
+        public int BackgroundTile
+        {
+            get => mmx.TileLoad;
+
+            set
+            {
+                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoad, value, mmx.PalLoad);
+                mmx.LoadTilesAndPalettes();
+                mmx.LoadPalette(this, false);
+                mmx.LoadPalette(this, true);
+                mmx.RefreshMapCache(this, false);
+                mmx.RefreshMapCache(this, true);
+            }
+        }
+
+        public int Palette
+        {
+            get => mmx.PalLoad;
+
+            set
+            {
+                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, value);
+                mmx.LoadTilesAndPalettes();
+                mmx.LoadPalette(this, false);
+                mmx.LoadPalette(this, true);
+                mmx.RefreshMapCache(this, false);
+                mmx.RefreshMapCache(this, true);
+            }
+        }
+
+        public bool Running
+        {
+            get;
+            internal set;
+        }
+        public IReadOnlyList<Checkpoint> Checkpoints => checkpoints;
+
+        public GameEngine(Form form)
         {
             Form = form;
-            Device = device;
 
             clock.Start();
             fpsTimer.Start();
 
-            var function = new ShaderBytecode(VERTEX_SHADER_BYTECODE);
-            VertexShader = new VertexShader(device, function);
+            spriteSheets = new List<SpriteSheet>();
+            palettes = new List<Texture>();
 
-            function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
-            PixelShader = new PixelShader(device, function);
-
-            device.VertexShader = null;
-            device.PixelShader = null;
-            device.VertexFormat = D3DFVF_TLVERTEX;
-
-            VertexBuffer = new VertexBuffer(device, VERTEX_SIZE * 4, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
-
-            device.SetRenderState(RenderState.ZEnable, false);
-            device.SetRenderState(RenderState.Lighting, false);
-            device.SetRenderState(RenderState.AlphaBlendEnable, true);
-            device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
-            device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
-            device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.Modulate);
-            device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-            device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-            sprite = new DXSprite(device);
-            line = new Line(device);
-
-            var fontDescription = new FontDescription()
+            presentationParams = new PresentParameters
             {
-                Height = 36,
-                Italic = false,
-                CharacterSet = FontCharacterSet.Ansi,
-                FaceName = "Arial",
-                MipLevels = 0,
-                OutputPrecision = FontPrecision.TrueType,
-                PitchAndFamily = FontPitchAndFamily.Default,
-                Quality = FontQuality.ClearType,
-                Weight = FontWeight.Bold
+                Windowed = true,
+                SwapEffect = SwapEffect.Discard,
+                PresentationInterval = PresentInterval.One,
+                AutoDepthStencilFormat = Format.D16,
+                EnableAutoDepthStencil = true,
+                BackBufferFormat = Format.X8R8G8B8,
+                BackBufferHeight = Form.ClientSize.Height,
+                BackBufferWidth = Form.ClientSize.Width
             };
-            infoFont = new Font(device, fontDescription);
 
-            fontDescription = new FontDescription()
-            {
-                Height = 24,
-                Italic = false,
-                CharacterSet = FontCharacterSet.Ansi,
-                FaceName = "Arial",
-                MipLevels = 0,
-                OutputPrecision = FontPrecision.TrueType,
-                PitchAndFamily = FontPitchAndFamily.Default,
-                Quality = FontQuality.ClearType,
-                Weight = FontWeight.Bold
-            };
-            coordsTextFont = new Font(device, fontDescription);
-
-            fontDescription = new FontDescription()
-            {
-                Height = 24,
-                Italic = false,
-                CharacterSet = FontCharacterSet.Ansi,
-                FaceName = "Arial",
-                MipLevels = 0,
-                OutputPrecision = FontPrecision.TrueType,
-                PitchAndFamily = FontPitchAndFamily.Default,
-                Quality = FontQuality.ClearType,
-                Weight = FontWeight.Bold
-            };
-            highlightMapTextFont = new Font(device, fontDescription);
-
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.hitbox.png"))
-            {
-                hitboxTexture = Texture.FromStream(device, stream);
-            }
-
-            SetupQuad(VertexBuffer);
+            Direct3D = new Direct3D();
+            ResetDevice();
 
             noCameraConstraints = NO_CAMERA_CONSTRAINTS;
 
@@ -676,392 +658,15 @@ namespace MMX.Engine
             entities = new List<Entity>();
             addedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
-            respawnableEntities = new List<RespawnEntry>();
+            respawnableEntities = new List<(Entity, MMXBox)>();
 
             loadingLevel = true;
 
             DrawScale = DEFAULT_DRAW_SCALE;
             UpdateScale();
 
-            var normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3);
-            var normalCollisionBox = new MMXBox(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
-            var dashingOffset = new Vector(DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT + 3);
-            var dashingCollisionBox = new MMXBox(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
-
-            X1NormalPalette = CreatePalette(X1_NORMAL_PALETTE);
-            ChargeLevel1Palette = CreatePalette(CHARGE_LEVEL_1_PALETTE);
-            ChargeLevel2Palette = CreatePalette(CHARGE_LEVEL_2_PALETTE);
-            ChargingEffectPalette = CreatePalette(CHARGE_EFFECT_PALETTE);
-
-            xSpriteSheet = new SpriteSheet(this, "X", true, true);
-            xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons", true, true);
-            xEffectsSpriteSheet = new SpriteSheet(this, "X Effects", true, true);
-            drillerSpriteSheet = new SpriteSheet(this, "Driller", true, true);
-
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.X[small].png"))
-            {
-                var newBitmap = CreateD2DBitmapFromStream(stream);
-                xSpriteSheet.CurrentBitmap = newBitmap;
-            }
-
-            xSpriteSheet.CurrentPalette = X1NormalPalette;
-
-            var sequence = xSpriteSheet.AddFrameSquence("Spawn");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(-4, 25, 5, 15, 8, 48);
-
-            sequence = xSpriteSheet.AddFrameSquence("SpawnEnd");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(-4, 32, 5, 15, 8, 48);
-            sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
-            sequence.AddFrame(8, 11, 46, 21, 30, 42);
-            sequence.AddFrame(8, 8, 84, 24, 30, 39);
-            sequence.AddFrame(8, 5, 120, 27, 30, 36);
-            sequence.AddFrame(8, 4, 156, 28, 30, 34);
-            sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
-
-            sequence = xSpriteSheet.AddFrameSquence("Stand", 0);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(9, 3, 226, 29, 30, 34, 80);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 295, 29, 30, 34, 8);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 226, 29, 30, 34, 48);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 226, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-
-            sequence = xSpriteSheet.AddFrameSquence("Shooting", 4);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(9, 3, 365, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 402, 29, 29, 34, 12);
-
-            sequence = xSpriteSheet.AddFrameSquence("PreWalking");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(8, 3, 5, 67, 30, 34, 5);
-
-            sequence = xSpriteSheet.AddFrameSquence("Walking", 0);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 3, 50, 67, 20, 34);
-            sequence.AddFrame(3, 4, 75, 67, 23, 35, 2);
-            sequence.AddFrame(7, 3, 105, 68, 32, 34, 3);
-            sequence.AddFrame(10, 2, 145, 68, 34, 33, 3);
-            sequence.AddFrame(5, 2, 190, 68, 26, 33, 3);
-            sequence.AddFrame(3, 3, 222, 67, 22, 34, 2);
-            sequence.AddFrame(5, 4, 248, 67, 25, 35, 2);
-            sequence.AddFrame(5, 3, 280, 67, 30, 34, 3);
-            sequence.AddFrame(8, 2, 318, 68, 34, 33, 3);
-            sequence.AddFrame(7, 2, 359, 68, 29, 33, 3);
-            sequence.AddFrame(1, 3, 50, 67, 20, 34);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootWalking", 0);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 3, 41, 107, 29, 34);
-            sequence.AddFrame(3, 4, 76, 107, 32, 35, 2);
-            sequence.AddFrame(7, 3, 115, 108, 35, 34, 3);
-            sequence.AddFrame(10, 2, 159, 108, 38, 33, 3);
-            sequence.AddFrame(5, 2, 204, 108, 34, 33, 3);
-            sequence.AddFrame(3, 3, 246, 107, 31, 34, 2);
-            sequence.AddFrame(5, 4, 284, 107, 33, 35, 2);
-            sequence.AddFrame(5, 3, 326, 107, 35, 34, 3);
-            sequence.AddFrame(8, 2, 369, 108, 37, 33, 3);
-            sequence.AddFrame(7, 2, 413, 108, 35, 33, 3);
-            sequence.AddFrame(1, 3, 41, 107, 29, 34);
-
-            sequence = xSpriteSheet.AddFrameSquence("Jumping");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 0, 6, 148, 25, 37, 3);
-            sequence.AddFrame(-5, 1, 37, 148, 15, 41);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootJumping");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 0, 201, 148, 29, 37, 3);
-            sequence.AddFrame(-5, 1, 240, 148, 24, 41);
-
-            sequence = xSpriteSheet.AddFrameSquence("GoingUp", 0);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(-1, 5, 56, 146, 19, 46);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp", 0);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(-1, 5, 271, 146, 27, 46);
-
-            sequence = xSpriteSheet.AddFrameSquence("Falling", 4);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 5, 80, 150, 23, 41, 4);
-            sequence.AddFrame(5, 6, 108, 150, 27, 42);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootFalling", 4);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
-            sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42);
-
-            sequence = xSpriteSheet.AddFrameSquence("Landing");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 2, 139, 151, 24, 38, 2);
-            sequence.AddFrame(8, 1, 166, 153, 30, 32, 2);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootLanding");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 2, 378, 151, 30, 38, 2);
-            sequence.AddFrame(8, 1, 413, 153, 36, 32, 2);
-
-            sequence = xSpriteSheet.AddFrameSquence("PreDashing");
-            sequence.BoudingBoxOriginOffset = dashingOffset;
-            sequence.CollisionBox = dashingCollisionBox;
-            sequence.AddFrame(4, 12, 4, 335, 28, 31, 3);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootPreDashing");
-            sequence.BoudingBoxOriginOffset = dashingOffset;
-            sequence.CollisionBox = dashingCollisionBox;
-            sequence.AddFrame(4, 12, 76, 335, 37, 31, 3);
-
-            sequence = xSpriteSheet.AddFrameSquence("Dashing", 0);
-            sequence.BoudingBoxOriginOffset = dashingOffset;
-            sequence.CollisionBox = dashingCollisionBox;
-            sequence.AddFrame(14, 7, 34, 341, 38, 26);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootDashing", 0);
-            sequence.BoudingBoxOriginOffset = dashingOffset;
-            sequence.CollisionBox = dashingCollisionBox;
-            sequence.AddFrame(14, 7, 115, 341, 48, 26);
-
-            sequence = xSpriteSheet.AddFrameSquence("PostDashing");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(5, 0, 4, 335, 28, 31, 8);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootPostDashing");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(5, 0, 76, 335, 37, 31, 8);
-
-            sequence = xSpriteSheet.AddFrameSquence("WallSliding", 11);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(5, 5, 5, 197, 25, 42, 5);
-            sequence.AddFrame(9, 7, 33, 196, 27, 43, 6);
-            sequence.AddFrame(9, 8, 64, 196, 28, 42);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding", 11);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(5, 2 - 3, 158, 200, 31, 39, 5);
-            sequence.AddFrame(9 + 5, 7, 201, 196, 32, 43, 6);
-            sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42);
-
-            sequence = xSpriteSheet.AddFrameSquence("WallJumping");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(7, 2, 95, 199, 30, 39, 3);
-            sequence.AddFrame(5, 10, 128, 195, 27, 44);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootWallJumping");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(7, 1, 276, 200, 31, 38, 3);
-            sequence.AddFrame(5, 5, 315, 200, 32, 39);
-
-            sequence = xSpriteSheet.AddFrameSquence("PreLadderClimbing");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(3, 4, 7, 267, 21, 36, 8);
-
-            sequence = xSpriteSheet.AddFrameSquence("LadderMoving", 0);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(2, 10, 111, 261, 18, 49, 8);
-            sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
-            sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
-            sequence.AddFrame(5, 14, 36, 261, 18, 49, 8);
-            sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
-            sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
-
-            sequence = xSpriteSheet.AddFrameSquence("ShootLadder", 0);
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(5, 14, 137, 261, 26, 48, 16);
-
-            sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
-            sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
-
-            sequence = xSpriteSheet.AddFrameSquence("TopLadderDescending");
-            sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
-            sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
-
-            xSpriteSheet.ReleaseCurrentBitmap();
-
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Weapons.png"))
-            {
-                var texture = CreateD2DBitmapFromStream(stream);
-                xWeaponsSpriteSheet.CurrentBitmap = texture;
-            }
-
-            var lemonCollisionBox = new MMXBox(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShot", 0);
-            sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
-            sequence.CollisionBox = lemonCollisionBox;
-            sequence.AddFrame(5, -1, 123, 253, 8, 6);
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShotExplode");
-            sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
-            sequence.CollisionBox = lemonCollisionBox;
-            sequence.AddFrame(2, 1, 137, 250, 12, 12, 4);
-            sequence.AddFrame(2, 2, 154, 249, 13, 13, 2);
-            sequence.AddFrame(3, 3, 172, 248, 15, 15);
-
-            var semiChargedShotCollisionBox1 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5));
-            var semiChargedShotCollisionBox2 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5));
-            var semiChargedShotCollisionBox3 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5));
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotFiring");
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
-            sequence.CollisionBox = semiChargedShotCollisionBox1;
-            sequence.AddFrame(-5, 3, 128, 563, 14, 14);
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
-            sequence.CollisionBox = semiChargedShotCollisionBox2;
-            sequence.AddFrame(-9, -6, 128, 563, 14, 14);
-            sequence.AddFrame(-9, -1, 147, 558, 24, 24);
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
-            sequence.CollisionBox = semiChargedShotCollisionBox3;
-            sequence.AddFrame(-11, 3, 147, 558, 24, 24);
-            sequence.AddFrame(-11, -3, 176, 564, 28, 12);
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShot");
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
-            sequence.CollisionBox = semiChargedShotCollisionBox3;
-            sequence.AddFrame(3, -3, 176, 564, 28, 12);
-            sequence.AddFrame(3, -5, 210, 566, 32, 8, 3);
-            sequence.AddFrame(9, -5, 210, 566, 32, 8);
-            sequence.AddFrame(7, -1, 379, 562, 38, 16);
-            sequence.AddFrame(9, -3, 333, 564, 38, 12, 1, true); // loop point
-            sequence.AddFrame(8, 1, 292, 559, 36, 22, 2);
-            sequence.AddFrame(9, -3, 333, 564, 38, 12);
-            sequence.AddFrame(7, -1, 379, 562, 38, 16, 2);
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotHit");
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
-            sequence.CollisionBox = semiChargedShotCollisionBox2;
-            sequence.AddFrame(-9, -6, 424, 563, 14, 14);
-            sequence.AddFrame(-9, -1, 443, 558, 24, 24);
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotExplode");
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
-            sequence.AddFrame(487, 273, 16, 16);
-            sequence.AddFrame(507, 269, 24, 24);
-            sequence.AddFrame(535, 273, 16, 16);
-            sequence.AddFrame(555, 270, 22, 22);
-            sequence.AddFrame(581, 269, 24, 24);
-            sequence.AddFrame(609, 269, 24, 24);
-
-            var chargedShotCollisionBox1 = new MMXBox(Vector.NULL_VECTOR, new Vector(-CHARGED_HITBOX_WIDTH_1 * 0.5, -CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(CHARGED_HITBOX_WIDTH_1 * 0.5, CHARGED_HITBOX_HEIGHT_1 * 0.5));
-            var chargedShotCollisionBox2 = new MMXBox(Vector.NULL_VECTOR, new Vector(-CHARGED_HITBOX_WIDTH_2 * 0.5, -CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(CHARGED_HITBOX_WIDTH_2 * 0.5, CHARGED_HITBOX_HEIGHT_2 * 0.5));
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotFiring");
-            sequence.BoudingBoxOriginOffset = chargedShotCollisionBox1.Maxs;
-            sequence.CollisionBox = chargedShotCollisionBox1;
-            sequence.AddFrame(-3, 1, 144, 440, 14, 20);
-            sequence.AddFrame(-2, -1, 170, 321, 23, 16, 3);
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
-            sequence.CollisionBox = chargedShotCollisionBox2;
-            sequence.AddFrame(-25, -10, 170, 321, 23, 16, 3);
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShot", 0);
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
-            sequence.CollisionBox = semiChargedShotCollisionBox2;
-            sequence.AddFrame(7, -2, 164, 433, 47, 32, 2, true);
-            sequence.AddFrame(2, -2, 216, 433, 40, 32, 2);
-            sequence.AddFrame(9, -2, 261, 432, 46, 32, 2);
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotHit");
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
-            sequence.CollisionBox = semiChargedShotCollisionBox2;
-            sequence.AddFrame(26, -8, 315, 438, 14, 20, 2);
-            sequence.AddFrame(25, -4, 336, 434, 24, 28, 2);
-            sequence.AddFrame(26, -8, 315, 438, 14, 20, 4);
-
-            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotExplode");
-            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
-            sequence.AddFrame(368, 434, 28, 28);
-            sequence.AddFrame(400, 435, 26, 26);
-            sequence.AddFrame(430, 434, 28, 28);
-            sequence.AddFrame(462, 433, 30, 30);
-            sequence.AddFrame(496, 432, 32, 32);
-            sequence.AddFrame(532, 432, 32, 32);
-
-            xWeaponsSpriteSheet.ReleaseCurrentBitmap();
-
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Effects.png"))
-            {
-                var texture = CreateD2DBitmapFromStream(stream);
-                xEffectsSpriteSheet.CurrentBitmap = texture;
-            }
-
-            xEffectsSpriteSheet.Precache = false;
-
-            sequence = xEffectsSpriteSheet.AddFrameSquence("ChargingLevel1");
-            AddChargingEffectFrames(sequence, 1);
-
-            sequence = xEffectsSpriteSheet.AddFrameSquence("ChargingLevel2");
-            AddChargingEffectFrames(sequence, 2);
-
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-driller.png"))
-            {
-                var texture = CreateD2DBitmapFromStream(stream);
-                drillerSpriteSheet.CurrentBitmap = texture;
-            }
-
-            var drillerOffset = new Vector(11, 24);
-            var drilerHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-11, -24), new Vector(11, 0));
-
-            sequence = drillerSpriteSheet.AddFrameSquence("Idle");
-            sequence.BoudingBoxOriginOffset = drillerOffset;
-            sequence.CollisionBox = drilerHitbox;
-            sequence.AddFrame(0, 0, 4, 10, 35, 24, 1, true);
-
-            sequence = drillerSpriteSheet.AddFrameSquence("Jumping");
-            sequence.BoudingBoxOriginOffset = drillerOffset;
-            sequence.CollisionBox = drilerHitbox;
-            sequence.AddFrame(0, 0, 40, 13, 37, 21, 1);
-            sequence.AddFrame(0, 0, 78, 9, 35, 25, 1);
-            sequence.AddFrame(0, 0, 115, 4, 43, 30, 1);
-
-            sequence = drillerSpriteSheet.AddFrameSquence("Drilling");
-            sequence.BoudingBoxOriginOffset = drillerOffset;
-            sequence.CollisionBox = drilerHitbox;
-            sequence.AddFrame(0, 0, 160, 10, 48, 24, 1, true);
-            sequence.AddFrame(0, 0, 209, 9, 46, 25, 1);
-            sequence.AddFrame(0, 0, 256, 10, 48, 24, 1);
-            sequence.AddFrame(0, 0, 305, 9, 46, 25, 1);
-
-            drillerSpriteSheet.ReleaseCurrentBitmap();
-
-            sound = new DirectSound();
-            sound.SetCooperativeLevel(form.Handle, DSoundCooperativeLevel.Priority);
+            //sound = new DirectSound();
+            //sound.SetCooperativeLevel(form.Handle, DSoundCooperativeLevel.Priority);
 
             if (LOAD_ROM)
             {
@@ -1100,53 +705,55 @@ namespace MMX.Engine
             showCheckpointBounds = section.ShowCheckpointBounds;
             showTriggerBounds = section.ShowTriggerBounds;
             showTriggerCameraLook = section.ShowTriggerCameraLook;
+
+            Running = true;
         }
 
         private void AddChargingEffectFrames(SpriteSheet.FrameSequence sequence, int level)
         {
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(27, 2), new Vector(27, 46) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 2), new Vector(27, 46) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, true, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(27, 3), new Vector(27, 45), new Vector(5, 24), new Vector(49, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 3), new Vector(27, 45), new Vector(5, 24), new Vector(49, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(6, 24), new Vector(27, 5), new Vector(27, 44), new Vector(48, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(6, 24), new Vector(27, 5), new Vector(27, 44), new Vector(48, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(7, 24), new Vector(11, 40), new Vector(43, 8), new Vector(47, 24), new Vector(27, 43), new Vector(28, 6) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 24), new Vector(11, 40), new Vector(43, 8), new Vector(47, 24), new Vector(27, 43), new Vector(28, 6) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(8, 24), new Vector(12, 39), new Vector(42, 9), new Vector(46, 24), new Vector(27, 42), new Vector(28, 7) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 24), new Vector(12, 39), new Vector(42, 9), new Vector(46, 24), new Vector(27, 42), new Vector(28, 7) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(11, 8), new Vector(13, 38), new Vector(41, 10), new Vector(43, 40), new Vector(10, 25), new Vector(27, 41), new Vector(27, 7), new Vector(44, 23) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 1, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(11, 8), new Vector(13, 38), new Vector(41, 10), new Vector(43, 40), new Vector(10, 25), new Vector(27, 41), new Vector(27, 7), new Vector(44, 23) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 1, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(12, 9), new Vector(14, 37), new Vector(40, 11), new Vector(42, 39), new Vector(11, 25), new Vector(28, 9), new Vector(43, 23) }, new bool[] { true, true, true, true, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(12, 9), new Vector(14, 37), new Vector(40, 11), new Vector(42, 39), new Vector(11, 25), new Vector(28, 9), new Vector(43, 23) }, new bool[] { true, true, true, true, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(13, 10), new Vector(19, 44), new Vector(35, 4), new Vector(41, 38), new Vector(12, 25), new Vector(16, 36), new Vector(39, 13), new Vector(43, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(13, 10), new Vector(19, 44), new Vector(35, 4), new Vector(41, 38), new Vector(12, 25), new Vector(16, 36), new Vector(39, 13), new Vector(43, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(14, 11), new Vector(19, 43), new Vector(35, 5), new Vector(40, 37), new Vector(13, 25), new Vector(17, 35), new Vector(38, 14), new Vector(42, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(14, 11), new Vector(19, 43), new Vector(35, 5), new Vector(40, 37), new Vector(13, 25), new Vector(17, 35), new Vector(38, 14), new Vector(42, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(7, 16), new Vector(20, 42), new Vector(34, 6), new Vector(47, 32), new Vector(16, 13), new Vector(18, 34), new Vector(37, 15), new Vector(39, 36) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 16), new Vector(20, 42), new Vector(34, 6), new Vector(47, 32), new Vector(16, 13), new Vector(18, 34), new Vector(37, 15), new Vector(39, 36) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(8, 16), new Vector(20, 41), new Vector(34, 7), new Vector(46, 32), new Vector(17, 4), new Vector(19, 33), new Vector(36, 16), new Vector(38, 35) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 16), new Vector(20, 41), new Vector(34, 7), new Vector(46, 32), new Vector(17, 4), new Vector(19, 33), new Vector(36, 16), new Vector(38, 35) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(9, 16), new Vector(19, 4), new Vector(24, 40), new Vector(33, 8), new Vector(35, 44), new Vector(45, 31), new Vector(18, 15), new Vector(37, 34) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(9, 16), new Vector(19, 4), new Vector(24, 40), new Vector(33, 8), new Vector(35, 44), new Vector(45, 31), new Vector(18, 15), new Vector(37, 34) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(10, 17), new Vector(19, 5), new Vector(21, 39), new Vector(39, 9), new Vector(35, 43), new Vector(44, 30), new Vector(19, 16), new Vector(36, 33) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(10, 17), new Vector(19, 5), new Vector(21, 39), new Vector(39, 9), new Vector(35, 43), new Vector(44, 30), new Vector(19, 16), new Vector(36, 33) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(7, 32), new Vector(47, 16), new Vector(12, 18), new Vector(21, 7), new Vector(22, 38), new Vector(33, 11), new Vector(35, 43), new Vector(44, 31) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 32), new Vector(47, 16), new Vector(12, 18), new Vector(21, 7), new Vector(22, 38), new Vector(33, 11), new Vector(35, 43), new Vector(44, 31) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(8, 32), new Vector(46, 16), new Vector(13, 19), new Vector(20, 8), new Vector(22, 37), new Vector(33, 12), new Vector(36, 42), new Vector(43, 30) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 32), new Vector(46, 16), new Vector(13, 19), new Vector(20, 8), new Vector(22, 37), new Vector(33, 12), new Vector(36, 42), new Vector(43, 30) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(21, 8), new Vector(33, 40), new Vector(10, 32), new Vector(14, 19), new Vector(42, 30), new Vector(46, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(21, 8), new Vector(33, 40), new Vector(10, 32), new Vector(14, 19), new Vector(42, 30), new Vector(46, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(21, 9), new Vector(33, 39), new Vector(11, 32), new Vector(15, 20), new Vector(41, 29), new Vector(45, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(21, 9), new Vector(33, 39), new Vector(11, 32), new Vector(15, 20), new Vector(41, 29), new Vector(45, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(11, 29), new Vector(43, 17), new Vector(23, 10) }, new bool[] { true, true, false }, new int[] { 1, 1, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(11, 29), new Vector(43, 17), new Vector(23, 10) }, new bool[] { true, true, false }, new int[] { 1, 1, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(13, 30), new Vector(42, 19) }, new bool[] { true, true }, new int[] { 1, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(13, 30), new Vector(42, 19) }, new bool[] { true, true }, new int[] { 1, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(14, 29), new Vector(41, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(14, 29), new Vector(41, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(15, 29), new Vector(40, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(15, 29), new Vector(40, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentBitmap = CreateChargingTexture(new Vector[] { new Vector(27, 1), new Vector(27, 47) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 1), new Vector(27, 47) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
         }
 
@@ -1318,13 +925,13 @@ namespace MMX.Engine
             return result;
         }
 
-        public Texture CreateD2DBitmapFromFile(string filePath)
+        public Texture CreateImageTextureFromFile(string filePath)
         {
             var result = Texture.FromFile(Device, filePath, Usage.None, Pool.SystemMemory);
             return result;
         }
 
-        public Texture CreateD2DBitmapFromStream(Stream stream)
+        public Texture CreateImageTextureFromStream(Stream stream)
         {
             var result = Texture.FromStream(Device, stream, Usage.None, Pool.SystemMemory);
             return result;
@@ -1332,8 +939,8 @@ namespace MMX.Engine
 
         private static void WriteVertex(DataStream vbData, float x, float y, float u, float v)
         {
-            vbData.Write(x);
-            vbData.Write(y);
+            vbData.Write(x - 0 * 0.5f);
+            vbData.Write(y - 0 * 0.5f);
             vbData.Write(0f);
             vbData.Write(0xffffffff);
             vbData.Write(u);
@@ -1781,22 +1388,22 @@ namespace MMX.Engine
 
             if (!loadingLevel)
             {
-                foreach (RespawnEntry entry in respawnableEntities)
+                foreach (var entry in respawnableEntities)
                 {
-                    if (!entry.Entity.Alive && (World.Screen.BoundingBox & entry.Box).Area > 0)
+                    if (!entry.entity.Alive && (World.Camera.BoundingBox & entry.box).IsValid())
                     {
-                        entry.Entity.Origin = entry.Box.Origin;
-                        entry.Entity.Spawn();
+                        entry.entity.Origin = entry.box.Origin;
+                        entry.entity.Spawn();
                     }
                 }
 
                 if (addedEntities.Count > 0)
                 {
-                    foreach (Entity added in addedEntities)
+                    foreach (var added in addedEntities)
                     {
                         entities.Add(added);
                         partition.Insert(added);
-                        added.index = entities.Count - 1;
+                        added.Index = entities.Count - 1;
                     }
 
                     addedEntities.Clear();
@@ -1808,23 +1415,23 @@ namespace MMX.Engine
                     Player.OnFrame();
                 else
                 {
-                    foreach (Entity obj in entities)
+                    foreach (var entity in entities)
                     {
                         if (changeLevel)
                             break;
 
-                        if (obj.Alive && !obj.MarkedToRemove)
-                            obj.OnFrame();
+                        if (entity.Alive && !entity.MarkedToRemove)
+                            entity.OnFrame();
                     }
 
                     if (removedEntities.Count > 0)
                     {
-                        foreach (Entity removed in removedEntities)
+                        foreach (var removed in removedEntities)
                         {
                             entities.Remove(removed);
                             partition.Remove(removed);
 
-                            removed.Dispose();
+                            DisposeResource(removed);
                         }
 
                         removedEntities.Clear();
@@ -1854,35 +1461,27 @@ namespace MMX.Engine
 
         public static RectangleF ToRectangleF(MMXBox box) => new((float) box.Left, (float) box.Top, (float) box.Width, (float) box.Height);
 
-        public Vector2 WorldVectorToScreen(Vector v) => ToVector2((v - World.Screen.LeftTop) * DrawScale + drawBox.Origin);
+        public Vector2 WorldVectorToScreen(Vector v) => ToVector2((v - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
 
         public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y) => WorldVectorToScreen(new Vector(x, y));
 
         public Vector ScreenPointToVector(int x, int y) => ScreenPointToVector(new Point(x, y));
 
-        public Vector ScreenPointToVector(Point p) => (new Vector(p.X, p.Y) - drawBox.Origin) / DrawScale + World.Screen.LeftTop;
+        public Vector ScreenPointToVector(Point p) => (new Vector(p.X, p.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
 
-        public Vector ScreenVector2ToWorld(Vector2 v) => (new Vector(v.X, v.Y) - drawBox.Origin) / DrawScale + World.Screen.LeftTop;
+        public Vector ScreenVector2ToWorld(Vector2 v) => (new Vector(v.X, v.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
 
-        public RectangleF WorldBoxToScreen(MMXBox box) => ToRectangleF((box.LeftTopOrigin() - World.Screen.LeftTop) * DrawScale + drawBox.Origin);
+        public RectangleF WorldBoxToScreen(MMXBox box) => ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
 
         public long GetEngineTime() => engineTime;
 
-        internal void RepaintHP()
+        public void PlaySound(string soundName, bool loop = false)
         {
-            //Invalidate(TransformBox(DEFAULT_HEART_BOX), false);
-            //Update();
         }
 
-        internal void RepaintLives()
+        public void StopSound(string soundName)
         {
-            //Invalidate(TransformBox(DEFAULT_LIVES_BOX), false);
-            //Update();
         }
-
-        public void PlaySound(string soundName, bool loop = false) => sounds?.Play(soundName, loop);
-
-        public void StopSound(string soundName) => sounds?.Stop(soundName);
 
         public void TogglePauseGame()
         {
@@ -1892,11 +1491,7 @@ namespace MMX.Engine
                 PauseGame();
         }
 
-        public void PauseGame()
-        {
-            paused = true;
-            PlaySound("pause");
-        }
+        public void PauseGame() => paused = true;
 
         public void ContinueGame() => paused = false;
 
@@ -1923,15 +1518,16 @@ namespace MMX.Engine
                 cameraPos = new Vector(SCREEN_WIDTH * 0.5f, 0);
             }
 
-            World.Screen.LeftTop = cameraPos;
+            World.Camera.LeftTop = cameraPos;
 
-            Player = new Player(this, "X", spawnPos, xSpriteSheet)
+            Player = new Player(this, "X", spawnPos, 0)
             {
-                Palette = X1NormalPalette
+                PaletteIndex = 0
             };
+
             Player.Spawn();
 
-            World.Screen.FocusOn = Player;
+            World.Camera.FocusOn = Player;
 
             if (checkpoints.Count > 0)
                 CurrentCheckpoint = checkpoints[0];
@@ -1954,10 +1550,10 @@ namespace MMX.Engine
 
                     mmx.LoadLevel();
                     mmx.LoadTriggers(this);
-                    mmx.LoadToWorld(World, false);
+                    mmx.LoadToWorld(this, false);
 
                     mmx.LoadBackground();
-                    mmx.LoadToWorld(World, true);
+                    mmx.LoadToWorld(this, true);
                 }
 
                 World.Tessellate();
@@ -1978,17 +1574,13 @@ namespace MMX.Engine
 
         private void UnloadLevel()
         {
-            foreach (Entity obj in addedEntities)
-            {
-                var sprite = obj as Sprite;
-                sprite?.Dispose();
-            }
+            foreach (var entity in addedEntities)
+                if (entity is Sprite sprite)
+                    DisposeResource(sprite);
 
-            foreach (Entity obj in entities)
-            {
-                var sprite = obj as Sprite;
-                sprite?.Dispose();
-            }
+            foreach (var entity in entities)
+                if (entity is Sprite sprite)
+                    DisposeResource(sprite);
 
             checkpoints.Clear();
             entities.Clear();
@@ -2062,12 +1654,12 @@ namespace MMX.Engine
 
         private void DrawHighlightMap(int row, int col, CollisionData collisionData)
         {
-            MMXBox mapBox = MMXWorld.GetMapBoundingBox(row, col);
-            if (MMXWorld.IsSolidBlock(collisionData))
+            MMXBox mapBox = GetMapBoundingBox(row, col);
+            if (IsSolidBlock(collisionData))
                 DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
-            else if (MMXWorld.IsSlope(collisionData))
+            else if (IsSlope(collisionData))
             {
-                RightTriangle st = MMXWorld.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
+                RightTriangle st = MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
                 DrawSlopeMap(mapBox, st, 4);
             }
         }
@@ -2077,12 +1669,12 @@ namespace MMX.Engine
             var halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
             var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
 
-            MMXBox mapBox = MMXWorld.GetMapBoundingBox(row, col);
-            if (MMXWorld.IsSolidBlock(collisionData) && (mapBox & collisionBox).Area > 0)
+            MMXBox mapBox = GetMapBoundingBox(row, col);
+            if (IsSolidBlock(collisionData) && (mapBox & collisionBox).IsValid())
                 DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
-            else if (!ignoreSlopes && MMXWorld.IsSlope(collisionData))
+            else if (!ignoreSlopes && IsSlope(collisionData))
             {
-                RightTriangle st = MMXWorld.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
+                RightTriangle st = MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
                 Vector hv = st.HCathetusVector;
                 if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, true) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, true))
                     DrawSlopeMap(mapBox, st, 4);
@@ -2091,8 +1683,8 @@ namespace MMX.Engine
 
         private void CheckAndDrawTouchingMaps(MMXBox collisionBox, bool ignoreSlopes = false)
         {
-            Cell start = MMXWorld.GetMapCellFromPos(collisionBox.LeftTop);
-            Cell end = MMXWorld.GetMapCellFromPos(collisionBox.RightBottom);
+            Cell start = GetMapCellFromPos(collisionBox.LeftTop);
+            Cell end = GetMapCellFromPos(collisionBox.RightBottom);
 
             int startRow = start.Row;
             int startCol = start.Col;
@@ -2204,6 +1796,572 @@ namespace MMX.Engine
             sprite.End();
         }
 
+        private void ResetDevice()
+        {
+            try
+            {
+                DisposeDevice();
+
+                // Creates the Device
+                var device = new Device9(Direct3D, 0, DeviceType.Hardware, Form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
+                Device = device;
+
+                var function = new ShaderBytecode(VERTEX_SHADER_BYTECODE);
+                VertexShader = new VertexShader(device, function);
+
+                function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
+                PixelShader = new PixelShader(device, function);
+
+                device.VertexShader = null;
+                device.PixelShader = null;
+                device.VertexFormat = D3DFVF_TLVERTEX;
+
+                VertexBuffer = new VertexBuffer(device, VERTEX_SIZE * 4, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
+
+                device.SetRenderState(RenderState.ZEnable, false);
+                device.SetRenderState(RenderState.Lighting, false);
+                device.SetRenderState(RenderState.AlphaBlendEnable, true);
+                device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
+                device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
+                device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.Modulate);
+                device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+                device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+                sprite = new DXSprite(device);
+                line = new Line(device);
+
+                var fontDescription = new FontDescription()
+                {
+                    Height = 36,
+                    Italic = false,
+                    CharacterSet = FontCharacterSet.Ansi,
+                    FaceName = "Arial",
+                    MipLevels = 0,
+                    OutputPrecision = FontPrecision.TrueType,
+                    PitchAndFamily = FontPitchAndFamily.Default,
+                    Quality = FontQuality.ClearType,
+                    Weight = FontWeight.Bold
+                };
+
+                infoFont = new Font(device, fontDescription);
+
+                fontDescription = new FontDescription()
+                {
+                    Height = 24,
+                    Italic = false,
+                    CharacterSet = FontCharacterSet.Ansi,
+                    FaceName = "Arial",
+                    MipLevels = 0,
+                    OutputPrecision = FontPrecision.TrueType,
+                    PitchAndFamily = FontPitchAndFamily.Default,
+                    Quality = FontQuality.ClearType,
+                    Weight = FontWeight.Bold
+                };
+
+                coordsTextFont = new Font(device, fontDescription);
+
+                fontDescription = new FontDescription()
+                {
+                    Height = 24,
+                    Italic = false,
+                    CharacterSet = FontCharacterSet.Ansi,
+                    FaceName = "Arial",
+                    MipLevels = 0,
+                    OutputPrecision = FontPrecision.TrueType,
+                    PitchAndFamily = FontPitchAndFamily.Default,
+                    Quality = FontQuality.ClearType,
+                    Weight = FontWeight.Bold
+                };
+
+                highlightMapTextFont = new Font(device, fontDescription);
+
+                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.hitbox.png"))
+                {
+                    hitboxTexture = Texture.FromStream(device, stream);
+                }
+
+                SetupQuad(VertexBuffer);
+
+                var x1NormalPalette = CreatePalette(X1_NORMAL_PALETTE);
+                palettes.Add(x1NormalPalette);
+
+                var chargeLevel1Palette = CreatePalette(CHARGE_LEVEL_1_PALETTE);
+                palettes.Add(chargeLevel1Palette);
+
+                var chargeLevel2Palette = CreatePalette(CHARGE_LEVEL_2_PALETTE);
+                palettes.Add(chargeLevel2Palette);
+
+                var chargingEffectPalette = CreatePalette(CHARGE_EFFECT_PALETTE);
+                palettes.Add(chargingEffectPalette);
+
+                var normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3);
+                var normalCollisionBox = new MMXBox(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
+                var dashingOffset = new Vector(DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT + 3);
+                var dashingCollisionBox = new MMXBox(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
+
+                var xSpriteSheet = new SpriteSheet(this, "X", true, true);
+                spriteSheets.Add(xSpriteSheet);
+
+                var xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons", true, true);
+                spriteSheets.Add(xWeaponsSpriteSheet);
+
+                var xEffectsSpriteSheet = new SpriteSheet(this, "X Effects", true, true);
+                spriteSheets.Add(xEffectsSpriteSheet);
+
+                var drillerSpriteSheet = new SpriteSheet(this, "Driller", true, true);
+                spriteSheets.Add(drillerSpriteSheet);
+
+                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.X[small].png"))
+                {
+                    var texture = CreateImageTextureFromStream(stream);
+                    xSpriteSheet.CurrentTexture = texture;
+                }
+               
+                xSpriteSheet.CurrentPalette = X1NormalPalette;
+
+                var sequence = xSpriteSheet.AddFrameSquence("Spawn");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(-4, 25, 5, 15, 8, 48);
+
+                sequence = xSpriteSheet.AddFrameSquence("SpawnEnd");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(-4, 32, 5, 15, 8, 48);
+                sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
+                sequence.AddFrame(8, 11, 46, 21, 30, 42);
+                sequence.AddFrame(8, 8, 84, 24, 30, 39);
+                sequence.AddFrame(8, 5, 120, 27, 30, 36);
+                sequence.AddFrame(8, 4, 156, 28, 30, 34);
+                sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
+
+                sequence = xSpriteSheet.AddFrameSquence("Stand", 0);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(9, 3, 226, 29, 30, 34, 80);
+                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+                sequence.AddFrame(9, 3, 295, 29, 30, 34, 8);
+                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+                sequence.AddFrame(9, 3, 226, 29, 30, 34, 48);
+                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+                sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
+                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+                sequence.AddFrame(9, 3, 226, 29, 30, 34, 4);
+                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+                sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
+                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+
+                sequence = xSpriteSheet.AddFrameSquence("Shooting", 4);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(9, 3, 365, 29, 30, 34, 4);
+                sequence.AddFrame(9, 3, 402, 29, 29, 34, 12);
+
+                sequence = xSpriteSheet.AddFrameSquence("PreWalking");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(8, 3, 5, 67, 30, 34, 5);
+
+                sequence = xSpriteSheet.AddFrameSquence("Walking", 0);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(1, 3, 50, 67, 20, 34);
+                sequence.AddFrame(3, 4, 75, 67, 23, 35, 2);
+                sequence.AddFrame(7, 3, 105, 68, 32, 34, 3);
+                sequence.AddFrame(10, 2, 145, 68, 34, 33, 3);
+                sequence.AddFrame(5, 2, 190, 68, 26, 33, 3);
+                sequence.AddFrame(3, 3, 222, 67, 22, 34, 2);
+                sequence.AddFrame(5, 4, 248, 67, 25, 35, 2);
+                sequence.AddFrame(5, 3, 280, 67, 30, 34, 3);
+                sequence.AddFrame(8, 2, 318, 68, 34, 33, 3);
+                sequence.AddFrame(7, 2, 359, 68, 29, 33, 3);
+                sequence.AddFrame(1, 3, 50, 67, 20, 34);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootWalking", 0);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(1, 3, 41, 107, 29, 34);
+                sequence.AddFrame(3, 4, 76, 107, 32, 35, 2);
+                sequence.AddFrame(7, 3, 115, 108, 35, 34, 3);
+                sequence.AddFrame(10, 2, 159, 108, 38, 33, 3);
+                sequence.AddFrame(5, 2, 204, 108, 34, 33, 3);
+                sequence.AddFrame(3, 3, 246, 107, 31, 34, 2);
+                sequence.AddFrame(5, 4, 284, 107, 33, 35, 2);
+                sequence.AddFrame(5, 3, 326, 107, 35, 34, 3);
+                sequence.AddFrame(8, 2, 369, 108, 37, 33, 3);
+                sequence.AddFrame(7, 2, 413, 108, 35, 33, 3);
+                sequence.AddFrame(1, 3, 41, 107, 29, 34);
+
+                sequence = xSpriteSheet.AddFrameSquence("Jumping");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(1, 0, 6, 148, 25, 37, 3);
+                sequence.AddFrame(-5, 1, 37, 148, 15, 41);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootJumping");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(1, 0, 201, 148, 29, 37, 3);
+                sequence.AddFrame(-5, 1, 240, 148, 24, 41);
+
+                sequence = xSpriteSheet.AddFrameSquence("GoingUp", 0);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(-1, 5, 56, 146, 19, 46);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp", 0);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(-1, 5, 271, 146, 27, 46);
+
+                sequence = xSpriteSheet.AddFrameSquence("Falling", 4);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(1, 5, 80, 150, 23, 41, 4);
+                sequence.AddFrame(5, 6, 108, 150, 27, 42);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootFalling", 4);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
+                sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42);
+
+                sequence = xSpriteSheet.AddFrameSquence("Landing");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(1, 2, 139, 151, 24, 38, 2);
+                sequence.AddFrame(8, 1, 166, 153, 30, 32, 2);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootLanding");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(1, 2, 378, 151, 30, 38, 2);
+                sequence.AddFrame(8, 1, 413, 153, 36, 32, 2);
+
+                sequence = xSpriteSheet.AddFrameSquence("PreDashing");
+                sequence.BoudingBoxOriginOffset = dashingOffset;
+                sequence.CollisionBox = dashingCollisionBox;
+                sequence.AddFrame(4, 12, 4, 335, 28, 31, 3);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootPreDashing");
+                sequence.BoudingBoxOriginOffset = dashingOffset;
+                sequence.CollisionBox = dashingCollisionBox;
+                sequence.AddFrame(4, 12, 76, 335, 37, 31, 3);
+
+                sequence = xSpriteSheet.AddFrameSquence("Dashing", 0);
+                sequence.BoudingBoxOriginOffset = dashingOffset;
+                sequence.CollisionBox = dashingCollisionBox;
+                sequence.AddFrame(14, 7, 34, 341, 38, 26);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootDashing", 0);
+                sequence.BoudingBoxOriginOffset = dashingOffset;
+                sequence.CollisionBox = dashingCollisionBox;
+                sequence.AddFrame(14, 7, 115, 341, 48, 26);
+
+                sequence = xSpriteSheet.AddFrameSquence("PostDashing");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(5, 0, 4, 335, 28, 31, 8);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootPostDashing");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(5, 0, 76, 335, 37, 31, 8);
+
+                sequence = xSpriteSheet.AddFrameSquence("WallSliding", 11);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(5, 5, 5, 197, 25, 42, 5);
+                sequence.AddFrame(9, 7, 33, 196, 27, 43, 6);
+                sequence.AddFrame(9, 8, 64, 196, 28, 42);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding", 11);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(5, 2 - 3, 158, 200, 31, 39, 5);
+                sequence.AddFrame(9 + 5, 7, 201, 196, 32, 43, 6);
+                sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42);
+
+                sequence = xSpriteSheet.AddFrameSquence("WallJumping");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(7, 2, 95, 199, 30, 39, 3);
+                sequence.AddFrame(5, 10, 128, 195, 27, 44);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootWallJumping");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(7, 1, 276, 200, 31, 38, 3);
+                sequence.AddFrame(5, 5, 315, 200, 32, 39);
+
+                sequence = xSpriteSheet.AddFrameSquence("PreLadderClimbing");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(3, 4, 7, 267, 21, 36, 8);
+
+                sequence = xSpriteSheet.AddFrameSquence("LadderMoving", 0);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(2, 10, 111, 261, 18, 49, 8);
+                sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
+                sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
+                sequence.AddFrame(5, 14, 36, 261, 18, 49, 8);
+                sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
+                sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
+
+                sequence = xSpriteSheet.AddFrameSquence("ShootLadder", 0);
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(5, 14, 137, 261, 26, 48, 16);
+
+                sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
+                sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
+
+                sequence = xSpriteSheet.AddFrameSquence("TopLadderDescending");
+                sequence.BoudingBoxOriginOffset = normalOffset;
+                sequence.CollisionBox = normalCollisionBox;
+                sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
+                sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
+
+                xSpriteSheet.ReleaseCurrentTexture();
+
+                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Weapons.png"))
+                {
+                    var texture = CreateImageTextureFromStream(stream);
+                    xWeaponsSpriteSheet.CurrentTexture = texture;
+                }
+
+                var lemonCollisionBox = new MMXBox(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShot", 0);
+                sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
+                sequence.CollisionBox = lemonCollisionBox;
+                sequence.AddFrame(5, -1, 123, 253, 8, 6);
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShotExplode");
+                sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
+                sequence.CollisionBox = lemonCollisionBox;
+                sequence.AddFrame(2, 1, 137, 250, 12, 12, 4);
+                sequence.AddFrame(2, 2, 154, 249, 13, 13, 2);
+                sequence.AddFrame(3, 3, 172, 248, 15, 15);
+
+                var semiChargedShotCollisionBox1 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5));
+                var semiChargedShotCollisionBox2 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5));
+                var semiChargedShotCollisionBox3 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5));
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotFiring");
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+                sequence.CollisionBox = semiChargedShotCollisionBox1;
+                sequence.AddFrame(-5, 3, 128, 563, 14, 14);
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+                sequence.CollisionBox = semiChargedShotCollisionBox2;
+                sequence.AddFrame(-9, -6, 128, 563, 14, 14);
+                sequence.AddFrame(-9, -1, 147, 558, 24, 24);
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
+                sequence.CollisionBox = semiChargedShotCollisionBox3;
+                sequence.AddFrame(-11, 3, 147, 558, 24, 24);
+                sequence.AddFrame(-11, -3, 176, 564, 28, 12);
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShot");
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
+                sequence.CollisionBox = semiChargedShotCollisionBox3;
+                sequence.AddFrame(3, -3, 176, 564, 28, 12);
+                sequence.AddFrame(3, -5, 210, 566, 32, 8, 3);
+                sequence.AddFrame(9, -5, 210, 566, 32, 8);
+                sequence.AddFrame(7, -1, 379, 562, 38, 16);
+                sequence.AddFrame(9, -3, 333, 564, 38, 12, 1, true); // loop point
+                sequence.AddFrame(8, 1, 292, 559, 36, 22, 2);
+                sequence.AddFrame(9, -3, 333, 564, 38, 12);
+                sequence.AddFrame(7, -1, 379, 562, 38, 16, 2);
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotHit");
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+                sequence.CollisionBox = semiChargedShotCollisionBox2;
+                sequence.AddFrame(-9, -6, 424, 563, 14, 14);
+                sequence.AddFrame(-9, -1, 443, 558, 24, 24);
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotExplode");
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+                sequence.AddFrame(487, 273, 16, 16);
+                sequence.AddFrame(507, 269, 24, 24);
+                sequence.AddFrame(535, 273, 16, 16);
+                sequence.AddFrame(555, 270, 22, 22);
+                sequence.AddFrame(581, 269, 24, 24);
+                sequence.AddFrame(609, 269, 24, 24);
+
+                var chargedShotCollisionBox1 = new MMXBox(Vector.NULL_VECTOR, new Vector(-CHARGED_HITBOX_WIDTH_1 * 0.5, -CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(CHARGED_HITBOX_WIDTH_1 * 0.5, CHARGED_HITBOX_HEIGHT_1 * 0.5));
+                var chargedShotCollisionBox2 = new MMXBox(Vector.NULL_VECTOR, new Vector(-CHARGED_HITBOX_WIDTH_2 * 0.5, -CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(CHARGED_HITBOX_WIDTH_2 * 0.5, CHARGED_HITBOX_HEIGHT_2 * 0.5));
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotFiring");
+                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox1.Maxs;
+                sequence.CollisionBox = chargedShotCollisionBox1;
+                sequence.AddFrame(-3, 1, 144, 440, 14, 20);
+                sequence.AddFrame(-2, -1, 170, 321, 23, 16, 3);
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+                sequence.CollisionBox = chargedShotCollisionBox2;
+                sequence.AddFrame(-25, -10, 170, 321, 23, 16, 3);
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShot", 0);
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+                sequence.CollisionBox = semiChargedShotCollisionBox2;
+                sequence.AddFrame(7, -2, 164, 433, 47, 32, 2, true);
+                sequence.AddFrame(2, -2, 216, 433, 40, 32, 2);
+                sequence.AddFrame(9, -2, 261, 432, 46, 32, 2);
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotHit");
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+                sequence.CollisionBox = semiChargedShotCollisionBox2;
+                sequence.AddFrame(26, -8, 315, 438, 14, 20, 2);
+                sequence.AddFrame(25, -4, 336, 434, 24, 28, 2);
+                sequence.AddFrame(26, -8, 315, 438, 14, 20, 4);
+
+                sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotExplode");
+                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+                sequence.AddFrame(368, 434, 28, 28);
+                sequence.AddFrame(400, 435, 26, 26);
+                sequence.AddFrame(430, 434, 28, 28);
+                sequence.AddFrame(462, 433, 30, 30);
+                sequence.AddFrame(496, 432, 32, 32);
+                sequence.AddFrame(532, 432, 32, 32);
+
+                xWeaponsSpriteSheet.ReleaseCurrentTexture();
+
+                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Effects.png"))
+                {
+                    var texture = CreateImageTextureFromStream(stream);
+                    xEffectsSpriteSheet.CurrentTexture = texture;
+                }
+
+                xEffectsSpriteSheet.Precache = false;
+
+                sequence = xEffectsSpriteSheet.AddFrameSquence("ChargingLevel1");
+                AddChargingEffectFrames(sequence, 1);
+
+                sequence = xEffectsSpriteSheet.AddFrameSquence("ChargingLevel2");
+                AddChargingEffectFrames(sequence, 2);
+
+                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-driller.png"))
+                {
+                    var texture = CreateImageTextureFromStream(stream);
+                    drillerSpriteSheet.CurrentTexture = texture;
+                }
+
+                var drillerOffset = new Vector(11, 24);
+                var drilerHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-11, -24), new Vector(11, 0));
+
+                sequence = drillerSpriteSheet.AddFrameSquence("Idle");
+                sequence.BoudingBoxOriginOffset = drillerOffset;
+                sequence.CollisionBox = drilerHitbox;
+                sequence.AddFrame(0, 0, 4, 10, 35, 24, 1, true);
+
+                sequence = drillerSpriteSheet.AddFrameSquence("Jumping");
+                sequence.BoudingBoxOriginOffset = drillerOffset;
+                sequence.CollisionBox = drilerHitbox;
+                sequence.AddFrame(0, 0, 40, 13, 37, 21, 1);
+                sequence.AddFrame(0, 0, 78, 9, 35, 25, 1);
+                sequence.AddFrame(0, 0, 115, 4, 43, 30, 1);
+
+                sequence = drillerSpriteSheet.AddFrameSquence("Drilling");
+                sequence.BoudingBoxOriginOffset = drillerOffset;
+                sequence.CollisionBox = drilerHitbox;
+                sequence.AddFrame(0, 0, 160, 10, 48, 24, 1, true);
+                sequence.AddFrame(0, 0, 209, 9, 46, 25, 1);
+                sequence.AddFrame(0, 0, 256, 10, 48, 24, 1);
+                sequence.AddFrame(0, 0, 305, 9, 46, 25, 1);
+
+                drillerSpriteSheet.ReleaseCurrentTexture();
+
+                if (romLoaded)
+                {
+                    mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, mmx.PalLoad);
+                    mmx.LoadTilesAndPalettes();
+                    mmx.LoadPalette(this, false);
+                    mmx.LoadPalette(this, true);
+                    mmx.RefreshMapCache(this, false);
+                    mmx.RefreshMapCache(this, true);
+
+                    World.Tessellate();
+                }
+
+                if (entities != null)
+                    foreach (var entity in entities)
+                        if (entity is Sprite sprite)
+                            sprite.OnDeviceReset();
+            }
+            catch (SharpDXException)
+            {
+                Thread.Sleep(50);
+            }
+            catch (Exception)
+            {
+                Running = false;
+            }
+        }
+
+        private static void DisposeResource(IDisposable resource)
+        {
+            try
+            {
+                resource?.Dispose();
+            }
+            catch { }
+        }
+
+        private void DisposeDevice()
+        {
+            foreach (var spriteSheet in spriteSheets)
+                DisposeResource(spriteSheet);
+
+            foreach (var palette in palettes)
+                DisposeResource(palette);
+
+            spriteSheets.Clear();
+            palettes.Clear();
+
+            World?.OnDisposeDevice();
+
+            DisposeResource(hitboxTexture);
+            DisposeResource(foregroundTilemap);
+            DisposeResource(backgroundTilemap);
+            DisposeResource(foregroundPalette);
+            DisposeResource(VertexShader);
+            DisposeResource(PixelShader);
+            DisposeResource(sprite);
+            DisposeResource(line);
+            DisposeResource(infoFont);
+            DisposeResource(coordsTextFont);
+            DisposeResource(highlightMapTextFont);
+            DisposeResource(VertexBuffer);
+            DisposeResource(Device);
+
+            Device = null;
+        }
+
+        private bool BeginScene()
+        {
+            var hr = Device.TestCooperativeLevel();
+            if (hr.Success)
+            {
+                Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
+                Device.BeginScene();
+                return true;
+            }
+
+            if (hr == ResultCode.DeviceLost)
+                return false;
+
+            if (hr == ResultCode.DeviceNotReset)
+            {
+                ResetDevice();
+                return false;
+            }
+
+            Running = false;
+            throw new Exception($"Exiting process due device error: {hr} ({hr.Code})");
+        }
+
         public void Render()
         {
             // Time in milliseconds
@@ -2231,8 +2389,11 @@ namespace MMX.Engine
             }
             #endregion
 
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
-            Device.BeginScene();
+            if (Device == null)
+                return;
+
+            if (!BeginScene())
+                return;
 
             var orthoLH = Matrix.OrthoLH(SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f, 10.0f);
             Device.SetTransform(TransformState.Projection, orthoLH);
@@ -2243,14 +2404,12 @@ namespace MMX.Engine
             {
                 if (drawBackground)
                 {
-                    World.RenderBackground(false);
-                    World.RenderBackground(true);
+                    World.RenderBackground(0);
+                    World.RenderBackground(1);
                 }
 
                 if (drawDownLayer)
-                {
-                    World.RenderForeground(false);
-                }
+                    World.RenderForeground(0);
 
                 if (drawX)
                 {
@@ -2261,7 +2420,7 @@ namespace MMX.Engine
                 if (drawSprites)
                 {
                     // Render sprites
-                    List<Entity> objects = partition.Query(World.Screen.BoundingBox, BoxKind.BOUDINGBOX);
+                    List<Entity> objects = partition.Query(World.Camera.BoundingBox, BoxKind.BOUDINGBOX);
                     foreach (Entity obj in objects)
                     {
                         if (!obj.Alive || obj.MarkedToRemove || obj.Equals(Player))
@@ -2273,9 +2432,6 @@ namespace MMX.Engine
                         sprite.Render();
                     }
                 }
-
-                if (drawUpLayer)
-                    World.RenderForeground(true);
 
                 if (drawSprites && (drawCollisionBox || showTriggerBounds))
                 {
@@ -2331,11 +2487,11 @@ namespace MMX.Engine
                                         break;
 
                                 }
-                                
+
                                 break;
                             }
 
-                            case CheckpointTrigger checkpointTrigger when showTriggerBounds:
+                            case CheckpointTriggerOnce checkpointTrigger when showTriggerBounds:
                             {
                                 var rect = WorldBoxToScreen(checkpointTrigger.HitBox);
 
@@ -2348,6 +2504,9 @@ namespace MMX.Engine
                         }
                     }
                 }
+
+                if (drawUpLayer)
+                    World.RenderForeground(1);
 
                 if (drawTouchingMapBounds)
                 {
@@ -2385,32 +2544,32 @@ namespace MMX.Engine
                     Scene scene = World.GetSceneFrom(v, false);
                     if (scene != null)
                     {
-                        Cell sceneCell = MMXWorld.GetSceneCellFromPos(v);
-                        MMXBox sceneBox = MMXWorld.GetSceneBoundingBox(sceneCell);
+                        Cell sceneCell = GetSceneCellFromPos(v);
+                        MMXBox sceneBox = GetSceneBoundingBox(sceneCell);
                         DrawRectangle(WorldBoxToScreen(sceneBox), 4, TOUCHING_MAP_COLOR);
                         DrawText($"Scene: ID: {scene.ID} Row: {sceneCell.Row} Col: {sceneCell.Col}", highlightMapTextFont, new RectangleF(0, 50, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
                         Block block = World.GetBlockFrom(v, false);
                         if (block != null)
                         {
-                            Cell blockCell = MMXWorld.GetBlockCellFromPos(v);
-                            MMXBox blockBox = MMXWorld.GetBlockBoundingBox(blockCell);
+                            Cell blockCell = GetBlockCellFromPos(v);
+                            MMXBox blockBox = GetBlockBoundingBox(blockCell);
                             DrawRectangle(WorldBoxToScreen(blockBox), 4, TOUCHING_MAP_COLOR);
                             DrawText($"Block: ID: {block.ID} Row: {blockCell.Row} Col: {blockCell.Col}", highlightMapTextFont, new RectangleF(0, 100, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
                             Map map = World.GetMapFrom(v, false);
                             if (map != null)
                             {
-                                Cell mapCell = MMXWorld.GetMapCellFromPos(v);
-                                MMXBox mapBox = MMXWorld.GetMapBoundingBox(mapCell);
+                                Cell mapCell = GetMapCellFromPos(v);
+                                MMXBox mapBox = GetMapBoundingBox(mapCell);
                                 DrawRectangle(WorldBoxToScreen(mapBox), 4, TOUCHING_MAP_COLOR);
                                 DrawText($"Map: ID: {map.ID} Row: {mapCell.Row} Col: {mapCell.Col}", highlightMapTextFont, new RectangleF(0, 150, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
                                 Tile tile = World.GetTileFrom(v, false);
                                 if (tile != null)
                                 {
-                                    Cell tileCell = MMXWorld.GetTileCellFromPos(v);
-                                    MMXBox tileBox = MMXWorld.GetTileBoundingBox(tileCell);
+                                    Cell tileCell = GetTileCellFromPos(v);
+                                    MMXBox tileBox = GetTileBoundingBox(tileCell);
                                     DrawRectangle(WorldBoxToScreen(tileBox), 4, TOUCHING_MAP_COLOR);
                                     DrawText($"Tile: ID: {tile.ID} Row: {tileCell.Row} Col: {tileCell.Col}", highlightMapTextFont, new RectangleF(0, 200, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
                                 }
@@ -2446,16 +2605,23 @@ namespace MMX.Engine
                 }
             }
 
-            Device.EndScene();
-            Device.Present();
+            try
+            {
+                Device.EndScene();
+                Device.Present();
+            }
+            catch (SharpDXException)
+            {
+            }
         }
 
         public void Dispose()
         {
-            World.Dispose();
-            Player?.Dispose();
-            mmx?.Dispose();
-            xSpriteSheet.Dispose();
+            DisposeResource(World);
+            DisposeResource(Player);
+            DisposeResource(mmx);
+            DisposeDevice();
+            DisposeResource(Direct3D);
 
             Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
             if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
@@ -2532,8 +2698,8 @@ namespace MMX.Engine
             writer.Write(currentStageMusic ?? "");
             writer.Write(paused);
 
-            World.Screen.Center.Write(writer);
-            writer.Write(World.Screen.FocusOn.Index);
+            World.Camera.Center.Write(writer);
+            writer.Write(World.Camera.FocusOn.Index);
 
             Player?.SaveState(writer);
         }
@@ -2560,9 +2726,9 @@ namespace MMX.Engine
 
             paused = reader.ReadBoolean();
 
-            World.Screen.Center = new Vector(reader);
+            World.Camera.Center = new Vector(reader);
             int focusedObjectIndex = reader.ReadInt32();
-            World.Screen.FocusOn = entities[focusedObjectIndex];
+            World.Camera.FocusOn = entities[focusedObjectIndex];
 
             Player?.LoadState(reader);
         }
@@ -2597,9 +2763,9 @@ namespace MMX.Engine
             }
         }
 
-        public ChangeDynamicPropertyTrigger AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, uint forward, uint backward, SplitterTriggerOrientation orientation)
+        public ChangeDynamicPropertyTrigger AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation)
         {
-            var trigger = new ChangeDynamicPropertyTrigger(this, new MMXBox(origin, new Vector(-128, -112), new Vector(128, 112)), prop, forward, backward, orientation);
+            var trigger = new ChangeDynamicPropertyTrigger(this, new MMXBox(origin, new Vector(-SCREEN_WIDTH / 2, -SCREEN_HEIGHT / 2), new Vector(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)), prop, forward, backward, orientation);
             trigger.Spawn();
             return trigger;
         }
@@ -2612,9 +2778,9 @@ namespace MMX.Engine
             return checkpoint;
         }
 
-        public CheckpointTrigger AddCheckpointTrigger(ushort index, Vector origin)
+        public CheckpointTriggerOnce AddCheckpointTrigger(ushort index, Vector origin)
         {
-            var trigger = new CheckpointTrigger(this, new MMXBox(origin, new Vector(0, -112), new Vector(128, 112)), checkpoints[index]);
+            var trigger = new CheckpointTriggerOnce(this, new MMXBox(origin, new Vector(0, -SCREEN_HEIGHT / 2), new Vector(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)), checkpoints[index]);
             trigger.Spawn();
             return trigger;
         }
@@ -2653,6 +2819,12 @@ namespace MMX.Engine
             }
 
             cameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
+
+            if ((Player.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR - World.Camera.Center).Length > STEP_SIZE)
+            {
+                World.Camera.SmoothOnNextMove = true;
+                World.Camera.SmoothSpeed = NO_CLIP_SPEED;
+            }
         }
 
         public void SetCameraConstraints(Vector origin, IEnumerable<Vector> extensions)
@@ -2675,36 +2847,37 @@ namespace MMX.Engine
 
         internal void ShootLemon(Player shooter, Vector origin, Direction direction, bool dashLemon)
         {
-            var lemon = new BusterLemon(this, shooter, "X Buster Lemon", origin, direction, dashLemon, xWeaponsSpriteSheet);
+            var lemon = new BusterLemon(this, shooter, "X Buster Lemon", origin, direction, dashLemon, 1);
             lemon.Spawn();
         }
 
         internal void ShootSemiCharged(Player shooter, Vector origin, Direction direction)
         {
-            var semiCharged = new BusterSemiCharged(this, shooter, "X Buster Semi Charged", origin, direction, xWeaponsSpriteSheet);
+            var semiCharged = new BusterSemiCharged(this, shooter, "X Buster Semi Charged", origin, direction, 1);
             semiCharged.Spawn();
         }
 
         internal void ShootCharged(Player shooter, Vector origin, Direction direction)
         {
-            var semiCharged = new BusterCharged(this, shooter, "X Buster Charged", origin, direction, xWeaponsSpriteSheet);
+            var semiCharged = new BusterCharged(this, shooter, "X Buster Charged", origin, direction, 1);
             semiCharged.Spawn();
         }
 
         internal ChargingEffect StartChargeEffect(Player player)
         {
-            var effect = new ChargingEffect(this, "X Charging Effect", player, xEffectsSpriteSheet)
+            var effect = new ChargingEffect(this, "X Charging Effect", player, 2)
             {
-                Palette = ChargingEffectPalette
+                PaletteIndex = 3
             };
+
             effect.Spawn();
             return effect;
         }
 
         internal Driller AddDriller(MMXBox box)
         {
-            var driller = new Driller(this, "Driller", box.Origin, drillerSpriteSheet);
-            respawnableEntities.Add(new RespawnEntry(driller, box));
+            var driller = new Driller(this, "Driller", box.Origin, 3);
+            respawnableEntities.Add((driller, box));
             return driller;
         }
 
@@ -2752,8 +2925,8 @@ namespace MMX.Engine
 
             RectangleF rDest = WorldBoxToScreen(box);
 
-            float x = rDest.Left - (float) World.Screen.Width * 0.5f;
-            float y = -rDest.Top + (float) World.Screen.Height * 0.5f;
+            float x = rDest.Left - (float) World.Camera.Width * 0.5f;
+            float y = -rDest.Top + (float) World.Camera.Height * 0.5f;
 
             var matScaling = Matrix.Scaling(1, 1, 1);
             var matTranslation = Matrix.Translation(x, y, 1);
@@ -2825,5 +2998,25 @@ namespace MMX.Engine
 
             return -1;
         }
+
+        public void Run()
+        {
+            while (Running)
+            {
+                try
+                {
+                    // Main loop
+                    RenderLoop.Run(Form, Render);
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message);
+                    Running = false;
+                }
+            }
+        }
+
+        internal SpriteSheet GetSpriteSheet(int spriteSheetIndex) => spriteSheets[spriteSheetIndex];
+        internal Texture GetPalette(int paletteIndex) => paletteIndex >= 0 && paletteIndex < palettes.Count ? palettes[paletteIndex] : null;
     }
 }

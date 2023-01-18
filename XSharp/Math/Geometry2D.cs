@@ -353,7 +353,11 @@ namespace MMX.Geometry
 
         public Vector Scale(FixedSingle scaleX, FixedSingle scaleY) => new(scaleX * X, scaleY * Y);
 
+        public Vector Scale(FixedSingle scale) => Scale(scale, scale);
+
         public Vector ScaleInverse(FixedSingle scaleX, FixedSingle scaleY) => new(X / scaleX, Y / scaleY);
+
+        public Vector ScaleInverse(FixedSingle divisor) => ScaleInverse(divisor, divisor);
 
         public GeometryType Type => type;
 
@@ -1292,6 +1296,24 @@ namespace MMX.Geometry
 
         public Box HalfBottom() => new(Origin, new Vector(Mins.X, (Mins.Y + Maxs.Y) * FixedSingle.HALF), Maxs);
 
+        public bool IsValid() => Width > 0 && Height > 0;
+
+        public Box Scale(Vector center, FixedSingle scaleX, FixedSingle scaleY) => new((Origin - center).Scale(scaleX, scaleY) + center, Mins.Scale(scaleX, scaleY), Maxs.Scale(scaleX, scaleY));
+
+        public Box Scale(Vector center, FixedSingle scale) => Scale(center, scale, scale);
+
+        public Box Scale(FixedSingle scaleX, FixedSingle scaleY) => Scale(Vector.NULL_VECTOR, scaleX, scaleY);
+
+        public Box Scale(FixedSingle scale) => Scale(Vector.NULL_VECTOR, scale, scale);
+
+        public Box ScaleInverse(Vector center, FixedSingle divisorX, FixedSingle divisorY) => new((Origin - center).ScaleInverse(divisorX, divisorY) + center, Mins.ScaleInverse(divisorX, divisorY), Maxs.ScaleInverse(divisorX, divisorY));
+
+        public Box ScaleInverse(Vector center, FixedSingle divisor) => ScaleInverse(center, divisor, divisor);
+
+        public Box ScaleInverse(FixedSingle divisorX, FixedSingle divisorY) => ScaleInverse(Vector.NULL_VECTOR, divisorX, divisorY);
+
+        public Box ScaleInverse(FixedSingle divisor) => ScaleInverse(Vector.NULL_VECTOR, divisor, divisor);
+
         public GeometryType Type => type;
 
         public FixedSingle Length => FixedSingle.TWO * (Width + Height);
@@ -1786,10 +1808,10 @@ namespace MMX.Geometry
         public bool HasIntersectionWith(Box box, bool excludeHypotenuse = false)
         {
             Box intersection = box & WrappingBox;
-            return intersection.Area != 0
-&& (Contains(intersection.LeftTop, true, excludeHypotenuse)
-|| Contains(intersection.LeftBottom, true, excludeHypotenuse)
-|| Contains(intersection.RightTop, true, excludeHypotenuse) || Contains(intersection.RightBottom, false, excludeHypotenuse));
+            return intersection.IsValid()
+            && (Contains(intersection.LeftTop, true, excludeHypotenuse)
+            || Contains(intersection.LeftBottom, true, excludeHypotenuse)
+            || Contains(intersection.RightTop, true, excludeHypotenuse) || Contains(intersection.RightBottom, false, excludeHypotenuse));
         }
 
         public override string ToString() => "[" + Origin + " : " + hCathetus + " : " + vCathetus + "]";

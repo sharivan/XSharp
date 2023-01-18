@@ -15,9 +15,7 @@ namespace MMX.Engine
 {
     public abstract class Sprite : Entity, IDisposable
     {
-        protected string name; // Nome da entidade
         protected List<Animation> animations; // Animações
-        private readonly bool directional;
         private int currentAnimationIndex;
         protected bool solid; // Especifica se a entidade será solida ou não a outros elementos do jogo.
         private bool fading; // Especifica se o efeito de fading está ativo
@@ -26,8 +24,6 @@ namespace MMX.Engine
         private int elapsed; // Se o efeito de fading estiver ativo, indica o tempo decorrido desde o início do fading       
 
         protected BoxCollider collider;
-
-        internal SpriteSheet sheet; // Sprite sheet a ser usado na animação deste sprite
 
         protected Vector vel; // Velocidade
         protected bool moving; // Indica se o sprite está continuou se movendo desde a última iteração física com os demais elementos do jogo
@@ -41,19 +37,40 @@ namespace MMX.Engine
 
         protected bool skipPhysics;
 
+        public string Name
+        {
+            get;
+            private set;
+        }
+
+        public int SpriteSheetIndex
+        {
+            get;
+            private set;
+        }
+
+        public bool Directional
+        {
+            get;
+            private set;
+        }
+
+        public SpriteSheet Sheet => Engine.GetSpriteSheet(SpriteSheetIndex);
+
         /// <summary>
         /// Cria uma nova entidade
         /// </summary>
         /// <param name="engine">Engine</param>
         /// <param name="name">Nome da entidade</param>
         /// <param name="tiled">true se o desenho desta entidade será preenchido em sua área de pintura lado a lado</param>
-        protected Sprite(GameEngine engine, string name, Vector origin, SpriteSheet sheet, bool directional = false) :
+        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false) :
             base(engine, origin)
         {
-            this.name = name;
-            this.sheet = sheet;
-            this.directional = directional;
+            Name = name;
+            SpriteSheetIndex = spriteSheetIndex;
+            Directional = directional;
 
+            PaletteIndex = -1;
             Opacity = 1; // Opacidade 1 significa que não existe transparência (opacidade 1 = opacidade 100% = transparência 0%)
 
             animations = new List<Animation>();
@@ -257,11 +274,13 @@ namespace MMX.Engine
             set;
         }
 
-        public Texture Palette
+        public int PaletteIndex
         {
             get;
             set;
         }
+
+        public Texture Palette => Engine.GetPalette(PaletteIndex);
 
         /// <summary>
         /// Evento interno que ocorrerá toda vez que uma animação estiver a ser criada.
@@ -278,7 +297,7 @@ namespace MMX.Engine
         {
         }
 
-        public override string ToString() => "Sprite [" + name + ", " + Origin + "]";
+        public override string ToString() => "Sprite [" + Name + ", " + Origin + "]";
 
         /// <summary>
         /// Aplica um efeito de fade in
@@ -315,7 +334,7 @@ namespace MMX.Engine
             solid = true;
 
             // Para cada ImageList definido no array de ImageLists passados previamente pelo construtor.
-            Dictionary<string, SpriteSheet.FrameSequence>.Enumerator sequences = sheet.GetFrameSequenceEnumerator();
+            Dictionary<string, SpriteSheet.FrameSequence>.Enumerator sequences = Sheet.GetFrameSequenceEnumerator();
             int animationIndex = 0;
             while (sequences.MoveNext())
             {
@@ -329,24 +348,24 @@ namespace MMX.Engine
 
                 // Chama o evento OnCreateAnimation() passando os como parâmetros os dados da animação a ser criada.
                 // O evento OnCreateAnimation() poderá ou não redefinir os dados da animação.
-                OnCreateAnimation(animationIndex, sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
+                OnCreateAnimation(animationIndex, Sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
 
                 if (add)
                 {
                     if (frameSequenceName != sequence.Name)
-                        sequence = sheet.GetFrameSequence(frameSequenceName);
+                        sequence = Sheet.GetFrameSequence(frameSequenceName);
 
                     // Cria-se a animação com os dados retornados de OnCreateAnimation().
-                    if (directional)
+                    if (Directional)
                     {
-                        animations.Add(new Animation(this, animationIndex, sheet, frameSequenceName, initialFrame, startVisible, startOn));
+                        animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn));
                         animationIndex++;
-                        animations.Add(new Animation(this, animationIndex, sheet, frameSequenceName, initialFrame, startVisible, startOn, true, false));
+                        animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn, true, false));
                         animationIndex++;
                     }
                     else
                     {
-                        animations.Add(new Animation(this, animationIndex, sheet, frameSequenceName, initialFrame, startVisible, startOn));
+                        animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn));
                         animationIndex++;
                     }
                 }
@@ -419,7 +438,7 @@ namespace MMX.Engine
 
             MMXBox intersection = /*victim.hitBox &*/ region; // Calcula a intesecção com a área de dano da vítima e a região dada
 
-            if (intersection.Area == 0) // Se a intersecção for vazia, não aplica o dano
+            if (!intersection.IsValid()) // Se a intersecção for vazia, não aplica o dano
                 return;
 
             //if (damage > maxDamage) // Verifica se o dano aplicado é maior que o máximo de dano permitido pela vítima
@@ -453,7 +472,7 @@ namespace MMX.Engine
         public void MakeInvincible(int time = 0)
         {
             invincible = true; // Marca o sprite como invencível
-            invincibleExpires = engine.GetEngineTime() + (time <= 0 ? invincibilityTime : time); // Calcula o tempo em que a invencibilidade irá acabar
+            invincibleExpires = Engine.GetEngineTime() + (time <= 0 ? invincibilityTime : time); // Calcula o tempo em que a invencibilidade irá acabar
         }
 
         /// <summary>
@@ -554,7 +573,7 @@ namespace MMX.Engine
             //}
 
             MMXBox union = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
-            CollisionFlags collisionFlags = engine.GetCollisionFlags(union, CollisionFlags.NONE, true, deltaX > 0 ? CollisionSide.RIGHT_WALL : deltaX < 0 ? CollisionSide.LEFT_WALL : CollisionSide.NONE);
+            CollisionFlags collisionFlags = Engine.GetCollisionFlags(union, CollisionFlags.NONE, true, deltaX > 0 ? CollisionSide.RIGHT_WALL : deltaX < 0 ? CollisionSide.LEFT_WALL : CollisionSide.NONE);
 
             if (collisionFlags == CollisionFlags.NONE)
             {
@@ -600,7 +619,7 @@ namespace MMX.Engine
                             }
                         }
                     }
-                    else if (engine.GetCollisionFlags(collider.DownCollider, CollisionFlags.NONE, false, CollisionSide.FLOOR).HasFlag(CollisionFlags.SLOPE))
+                    else if (Engine.GetCollisionFlags(collider.DownCollider, CollisionFlags.NONE, false, CollisionSide.FLOOR).HasFlag(CollisionFlags.SLOPE))
                         collider.MoveContactFloor();
                 }
             }
@@ -653,7 +672,7 @@ namespace MMX.Engine
             }
         }
 
-        private bool IsTouchingASlope(MMXBox box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE) => engine.ComputedLandedState(box, out slope, maskSize, ignore) == CollisionFlags.SLOPE;
+        private bool IsTouchingASlope(MMXBox box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE) => Engine.ComputedLandedState(box, out slope, maskSize, ignore) == CollisionFlags.SLOPE;
 
         /// <summary>
         /// Realiza as interações físicas deste sprite com os demais elementos do jogo.
@@ -675,7 +694,6 @@ namespace MMX.Engine
                 {
                     // Se for...
                     StopMoving(); // notifica que o movimento parou
-                                  //engine.Repaint(this); // Notifica o engine que deverá ser feita este sprite deverá ser redesenhado
                 }
 
                 Vector delta = !isStatic && !vel.IsNull ? vel : Vector.NULL_VECTOR;
@@ -715,7 +733,7 @@ namespace MMX.Engine
                             if (dy.Y > 0)
                             {
                                 MMXBox union = lastDownCollider | collider.DownCollider;
-                                if (engine.GetCollisionFlags(union, CollisionFlags.NONE, true, CollisionSide.FLOOR) != CollisionFlags.NONE)
+                                if (Engine.GetCollisionFlags(union, CollisionFlags.NONE, true, CollisionSide.FLOOR) != CollisionFlags.NONE)
                                 {
                                     collider.Box = lastBox;
                                     collider.MoveContactFloor(dy.Y.Ceil());
@@ -724,7 +742,7 @@ namespace MMX.Engine
                             else
                             {
                                 MMXBox union = lastUpCollider | collider.UpCollider;
-                                if (engine.GetCollisionFlags(union, CollisionFlags.NONE, true, CollisionSide.CEIL) != CollisionFlags.NONE)
+                                if (Engine.GetCollisionFlags(union, CollisionFlags.NONE, true, CollisionSide.CEIL) != CollisionFlags.NONE)
                                 {
                                     collider.Box = lastBox;
                                     collider.MoveContactSolid(dy, (-dy.Y).Ceil(), Direction.UP);
@@ -748,25 +766,31 @@ namespace MMX.Engine
 
                     if (!CanGoOutOfMapBounds)
                     {
+                        MMXBox limit = Engine.World.BoundingBox;
+                        if (!Engine.noCameraConstraints)
+                            limit &= Engine.cameraConstraintsBox.ClipTop(-2 * HITBOX_HEIGHT).ClipBottom(-2 * HITBOX_HEIGHT);
+
                         MMXBox collisionBox = newOrigin + GetCollisionBox();
 
                         FixedSingle minX = collisionBox.Left;
-                        if (minX < 0)
-                            x -= minX;
+                        FixedSingle limitLeft = limit.Left;
+                        if (minX < limitLeft)
+                            x -= minX - limitLeft;
 
                         FixedSingle minY = collisionBox.Top;
-                        if (minY < 0)
-                            y -= minY;
-
-                        int worldWidth = engine.World.Width;
+                        FixedSingle limitTop = limit.Top;
+                        if (minY < limitTop)
+                            y -= minY - limitTop;
+                        
                         FixedSingle maxX = collisionBox.Right;
-                        if (maxX > worldWidth)
-                            x += worldWidth - maxX;
+                        FixedSingle limitRight = limit.Right;
+                        if (maxX > limitRight)
+                            x += limitRight - maxX;
 
                         FixedSingle maxY = collisionBox.Bottom;
-                        int worldHeight = engine.World.Height;
-                        if (maxY > worldHeight)
-                            y += worldHeight - maxY;
+                        FixedSingle limitBottom = limit.Bottom;
+                        if (maxY > limitBottom)
+                            y += limitBottom - maxY;
                     }
 
                     Origin = new Vector(x, y);
@@ -789,7 +813,7 @@ namespace MMX.Engine
                             vel = new Vector(vel.X, terminalDownwardSpeed);
                     }
 
-                    if (collider.Landed && vel.Y > 0)
+                    if (CheckCollisionWithWorld && collider.Landed && vel.Y > 0)
                         vel = vel.XVector;
                 }
             }
@@ -797,17 +821,20 @@ namespace MMX.Engine
             if (!Landed && vel.Y > gravity && vel.Y < 2 * gravity)
                 vel = new Vector(vel.X, gravity);
 
-            if (BlockedUp && !lastBlockedUp)
-                OnBlockedUp();
+            if (CheckCollisionWithWorld)
+            {
+                if (BlockedUp && !lastBlockedUp)
+                    OnBlockedUp();
 
-            if (BlockedLeft && !lastBlockedLeft)
-                OnBlockedLeft();
+                if (BlockedLeft && !lastBlockedLeft)
+                    OnBlockedLeft();
 
-            if (BlockedRight && !lastBlockedRight)
-                OnBlockedRight();
+                if (BlockedRight && !lastBlockedRight)
+                    OnBlockedRight();
 
-            if (Landed && !lastLanded)
-                OnLanded();
+                if (Landed && !lastLanded)
+                    OnLanded();
+            }
         }
 
         public virtual FixedSingle GetGravity() => GRAVITY;
@@ -836,11 +863,6 @@ namespace MMX.Engine
         /// <param name="sprite">Sprite a ser verificado</param>
         /// <returns>true se a colisão deverá ocorrer, false caso contrário</returns>
         protected bool CollisionCheck(Sprite sprite) => ShouldCollide(sprite) || sprite.ShouldCollide(this);
-
-        /// <summary>
-        /// Nome da entidade
-        /// </summary>
-        public string Name => name;
 
         public MMXBox DrawBox => CurrentAnimation != null ? CurrentAnimation.DrawBox : Origin + MMXBox.EMPTY_BOX;
 
@@ -872,7 +894,7 @@ namespace MMX.Engine
         protected override void Think()
         {
             // Se ele não for estático, processa as interações físicas deste sprite com os outros elementos do jogo
-            if (!isStatic && !engine.Paused)
+            if (!isStatic && !Engine.Paused)
                 DoPhysics();
         }
 
@@ -880,11 +902,11 @@ namespace MMX.Engine
         {
             base.PostThink();
 
-            if (engine.Paused)
+            if (Engine.Paused)
                 return;
 
             // Se ele estiver invencível, continue gerando o efeito de pisca pisca
-            if (invincible && engine.GetEngineTime() >= invincibleExpires)
+            if (invincible && Engine.GetEngineTime() >= invincibleExpires)
             {
                 invincible = false;
             }
@@ -988,6 +1010,12 @@ namespace MMX.Engine
         {
             animations.Clear();
             base.OnDeath();
+        }
+
+        internal void OnDeviceReset()
+        {
+            foreach (var animation in animations)
+                animation.OnDeviceReset();
         }
     }
 }

@@ -21,9 +21,9 @@ using MMX.Geometry;
 using MMX.Engine;
 using MMX.Engine.World;
 
-using MMXBox = MMX.Geometry.Box;
-
 using static MMX.Engine.Consts;
+
+using MMXBox = MMX.Geometry.Box;
 
 namespace MMX.ROM
 {
@@ -250,6 +250,10 @@ namespace MMX.ROM
         private uint numCheckpoints;
         private readonly uint numGfxIds;
 
+        private int objLoad;
+        private int tileLoad;
+        private int palLoad;
+
         private uint tileDecStart;
         private uint tileDecEnd;
 
@@ -364,22 +368,22 @@ namespace MMX.ROM
 
         public int CheckpointCount => (int) numCheckpoints;
 
-        public uint ObjLoadOffset
+        public int ObjLoad
         {
-            get;
-            set;
+            get => checkpointInfoTable.Count == 0 || objLoad >= 0 ? objLoad : rom[checkpointInfoTable[Point].objLoad];
+            set => objLoad = value;
         }
 
-        public uint TileLoadOffset
+        public int TileLoad
         {
-            get;
-            set;
+            get => checkpointInfoTable.Count == 0 || tileLoad >= 0 ? tileLoad : rom[checkpointInfoTable[Point].tileLoad];
+            set => tileLoad = value;
         }
 
-        public uint PalLoadOffset
+        public int PalLoad
         {
-            get;
-            set;
+            get => checkpointInfoTable.Count == 0 || palLoad >= 0 ? palLoad : rom[checkpointInfoTable[Point].palLoad];
+            set => palLoad = value;
         }
 
         public MMXCore()
@@ -1740,7 +1744,7 @@ namespace MMX.ROM
 
         internal void LoadTiles()
         {
-            byte tileSelect = (byte) (rom[checkpointInfoTable[Point].tileLoad] + TileLoadOffset);
+            byte tileSelect = (byte) TileLoad;
 
             uint tileOffset = (uint) ((type == 0) ? 0x321D5
                 : (type == 1) ? 0x31D6A
@@ -1988,7 +1992,7 @@ namespace MMX.ROM
             }
         }
 
-        internal void SetLevel(ushort iLevel, ushort iPoint, uint objLoadOffset = 0, uint tileLoadOffset = 0, uint palLoadOffset = 0)
+        internal void SetLevel(ushort iLevel, ushort iPoint, int objLoad = -1, int tileLoad = -1, int palLoad = -1)
         {
             Level = iLevel;
             Point = iPoint;
@@ -1996,9 +2000,9 @@ namespace MMX.ROM
             tileCmpSize = 0;
             tileDecSize = 0;
 
-            ObjLoadOffset = objLoadOffset;
-            TileLoadOffset = tileLoadOffset;
-            PalLoadOffset = palLoadOffset;
+            ObjLoad = objLoad;
+            TileLoad = tileLoad;
+            PalLoad = palLoad;
         }
 
         internal void LoadLevel(bool skipEvent = false, bool skipLayout = false)
@@ -2552,18 +2556,15 @@ namespace MMX.ROM
                         subIds.Add(checkpoint1);
 
                         if (numCheckpoints < checkpoint1 + 1)
-                        {
                             numCheckpoints = checkpoint1 + 1;
-                        }
                     }
                 }
             }
+
             //numCheckpoints = subIds.size() + 1;
 
             if (expandedROM && expandedVersion >= 3)
-            {
                 numCheckpoints = expandedCheckpointSize;
-            }
 
             checkpointInfoTable.Clear();
 
@@ -2787,7 +2788,7 @@ namespace MMX.ROM
                            : 0x32172);
 
             ushort iLevel = (ushort) (Level & 0xFF);
-            byte palSelect = (byte) (rom[checkpointInfoTable[Point].palLoad] + PalLoadOffset);
+            byte palSelect = (byte) PalLoad;
             for (uint i = 0; i <= palSelect; ++i)
             {
                 int baseIndex = (int) (ReadWord((uint) (paletteOffset + iLevel * 2)) + i * 2);
@@ -2988,8 +2989,8 @@ namespace MMX.ROM
                 }
             }
 
-            if (!notNull)
-                return null;
+            //if (!notNull)
+            //    return null;
 
             Tile wtile = world.AddTile(imageData, background);
             return wtile;
@@ -3035,9 +3036,9 @@ namespace MMX.ROM
             }
         }
 
-        internal void RefreshMapCache(World world, bool background = false)
+        internal void RefreshMapCache(GameEngine engine, bool background = false)
         {
-            var tilemap = new Texture(world.Device, World.TILEMAP_WIDTH, World.TILEMAP_HEIGHT, 1, Usage.None, Format.L8, Pool.Managed);
+            var tilemap = new Texture(engine.Device, World.TILEMAP_WIDTH, World.TILEMAP_HEIGHT, 1, Usage.None, Format.L8, Pool.Managed);
             DataRectangle rect = tilemap.LockRectangle(0, LockFlags.Discard);
 
             maps = new Map[0x400];
@@ -3048,7 +3049,7 @@ namespace MMX.ROM
             {
                 byte colisionByte = rom[pCollisions + i];
                 var collisionData = (CollisionData) colisionByte;
-                Map wmap = world.AddMap(collisionData, background);
+                Map wmap = engine.World.AddMap(collisionData, background);
 
                 uint tileData = ReadWord(map);
                 byte palette = (byte) ((tileData >> 10) & 7);
@@ -3057,7 +3058,7 @@ namespace MMX.ROM
                 bool mirrored = (tileData & 0x4000) != 0;
                 bool upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                Tile tile = AddTile(world, tileData, true, background);
+                Tile tile = AddTile(engine.World, tileData, true, background);
                 wmap.SetTile(new Vector(0, 0), tile, palette, flipped, mirrored, upLayer);
                 WriteTile(rect, tile?.data, i, 0, 0, palette, flipped, mirrored);
 
@@ -3067,7 +3068,7 @@ namespace MMX.ROM
                 mirrored = (tileData & 0x4000) != 0;
                 upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                tile = AddTile(world, tileData, true, background);
+                tile = AddTile(engine.World, tileData, true, background);
                 wmap.SetTile(new Vector(TILE_SIZE, 0), tile, palette, flipped, mirrored, upLayer);
                 WriteTile(rect, tile?.data, i, 0, 1, palette, flipped, mirrored);
 
@@ -3077,7 +3078,7 @@ namespace MMX.ROM
                 mirrored = (tileData & 0x4000) != 0;
                 upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                tile = AddTile(world, tileData, true, background);
+                tile = AddTile(engine.World, tileData, true, background);
                 wmap.SetTile(new Vector(0, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
                 WriteTile(rect, tile?.data, i, 1, 0, palette, flipped, mirrored);
 
@@ -3087,7 +3088,7 @@ namespace MMX.ROM
                 mirrored = (tileData & 0x4000) != 0;
                 upLayer = (tileData & 0x2000) != 0;
                 map += 2;
-                tile = AddTile(world, tileData, true, background);
+                tile = AddTile(engine.World, tileData, true, background);
                 wmap.SetTile(new Vector(TILE_SIZE, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
                 WriteTile(rect, tile?.data, i, 1, 1, palette, flipped, mirrored);
 
@@ -3097,9 +3098,9 @@ namespace MMX.ROM
             tilemap.UnlockRectangle(0);
 
             if (background)
-                world.backgroundTilemap = tilemap;
+                engine.BackgroundTilemap = tilemap;
             else
-                world.foregroundTilemap = tilemap;
+                engine.ForegroundTilemap = tilemap;
         }
 
         private void LoadMap(World world, int x, int y, ushort index, bool background = false)
@@ -3153,9 +3154,9 @@ namespace MMX.ROM
                 }
         }
 
-        internal void LoadPalette(World world, bool background = false)
+        internal void LoadPalette(GameEngine engine, bool background = false)
         {
-            var palette = new Texture(world.Device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
+            var palette = new Texture(engine.Device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
             DataRectangle rect = palette.LockRectangle(0, LockFlags.Discard);
 
             using (var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
@@ -3168,23 +3169,23 @@ namespace MMX.ROM
             palette.UnlockRectangle(0);
 
             if (background)
-                world.BackgroundPalette = palette;
+                engine.BackgroundPalette = palette;
             else
-                world.ForegroundPalette = palette;
+                engine.ForegroundPalette = palette;
         }
 
-        public void LoadToWorld(World world, bool background = false)
+        public void LoadToWorld(GameEngine engine, bool background = false)
         {
-            LoadPalette(world, background);
+            LoadPalette(engine, background);
 
-            world.Resize(levelHeight, levelWidth, background);
+            engine.World.Resize(levelHeight, levelWidth, background);
 
-            RefreshMapCache(world, background);
+            RefreshMapCache(engine, background);
 
             uint tmpLayout = 0;
             for (int y = 0; y < levelHeight; y++)
                 for (int x = 0; x < levelWidth; x++)
-                    LoadSceneEx(world, x, y, sceneLayout[tmpLayout++], background);
+                    LoadSceneEx(engine.World, x, y, sceneLayout[tmpLayout++], background);
         }
 
         public void LoadTriggers(GameEngine engine)
@@ -3306,45 +3307,46 @@ namespace MMX.ROM
                                 break;
                             }
 
+                            case 0x02:
                             case 0x0B: // checkpoint trigger
                             {
-                                engine.AddCheckpointTrigger((ushort) (info.eventSubId & 0xF), new Vector(info.xpos, info.ypos));
+                                engine.AddCheckpointTrigger((ushort) (info.eventSubId & 0xf), new Vector(info.xpos, info.ypos));
                                 break;
                             }
 
                             case 0x15: // dynamic change object/enemy tiles (vertical)
                             {
-                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, (uint) (info.eventSubId & 0xf), (uint) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.VERTICAL);
+                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.VERTICAL);
                                 break;
                             }
 
                             case 0x16: // dynamic change background tiles tiles (vertical)
                             {
-                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, (uint) (info.eventSubId & 0xf), (uint) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.VERTICAL);
+                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.VERTICAL);
                                 break;
                             }
 
                             case 0x17: // dynamic change palette (vertical)
                             {
-                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.PALETTE, (uint) (info.eventSubId & 0xf), (uint) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.VERTICAL);
+                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.PALETTE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.VERTICAL);
                                 break;
                             }
 
                             case 0x18: // dynamic change object/enemy tiles (horizontal)
                             {
-                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, (uint) (info.eventSubId & 0xf), (uint) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.HORIZONTAL);
+                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.HORIZONTAL);
                                 break;
                             }
 
                             case 0x19: // dynamic change background tiles tiles (horizontal)
                             {
-                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, (uint) (info.eventSubId & 0xf), (uint) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.HORIZONTAL);
+                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.HORIZONTAL);
                                 break;
                             }
 
                             case 0x1A: // dynamic change palette (horizontal)
                             {
-                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.PALETTE, (uint) (info.eventSubId & 0xf), (uint) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.HORIZONTAL);
+                                engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.PALETTE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.HORIZONTAL);
                                 break;
                             }
                         }

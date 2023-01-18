@@ -23,8 +23,8 @@ namespace MMX.Engine.Weapons
             private set;
         }
 
-        internal BusterCharged(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, SpriteSheet sheet) :
-            base(engine, shooter, name, origin, direction, sheet)
+        internal BusterCharged(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, int spriteSheetIndex) :
+            base(engine, shooter, name, origin, direction, spriteSheetIndex)
         {
             CheckCollisionWithWorld = false;
 

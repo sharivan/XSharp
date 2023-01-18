@@ -76,7 +76,7 @@ namespace MMX.Engine.World
 
                         Box intersection = value.GetBox(k) & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
 
-                        if (intersection.Area > 0 && !result.Contains(value)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                        if (intersection.IsValid() && !result.Contains(value)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                             result.Add(value); // adiciona esta entidade à lista
                     }
                 }
@@ -97,7 +97,7 @@ namespace MMX.Engine.World
                     BoxKind k = (BoxKind) (1 << i);
 
                     Box intersection = value.GetBox(k) & box; // Calcula a interecção
-                    bool intersectionNull = intersection.Area == 0;
+                    bool intersectionNull = !intersection.IsValid();
 
                     if (!intersectionNull && !list.Contains(value)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
                         list.Add(value); // então adiciona-a em sua lista de entidades
@@ -233,7 +233,7 @@ namespace MMX.Engine.World
                         var box1 = new Box(new Vector(lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
                         Box intersection = box1 & box; // Calcula a intesecção
 
-                        if (intersection.Area == 0) // Se a intesecção for vazia, não precisa adicionar a entidade a célula
+                        if (!intersection.IsValid()) // Se a intesecção for vazia, não precisa adicionar a entidade a célula
                             continue;
 
                         if (cells[col, row] == null) // Verifica se a célula já foi criada antes, caso não tenha sido ainda então a cria
@@ -377,7 +377,7 @@ namespace MMX.Engine.World
                             var box1 = new Box(new Vector(lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
                             Box intersection = box1 & box; // Calcula a intersecção desta célula com o retângulo de desenho atual da entidade
 
-                            if (intersection.Area == 0) // Se ela for vazia, não há nada o que fazer nesta célula
+                            if (!intersection.IsValid()) // Se ela for vazia, não há nada o que fazer nesta célula
                                 continue;
 
                             // Senão...

@@ -27,6 +27,6 @@ namespace MMX.Engine.Enemies
             CurrentAnimationIndex = 0;
         }
 
-        public Driller(GameEngine engine, string name, Vector origin, SpriteSheet sheet) : base(engine, name, origin, sheet) => Health = 2;
+        public Driller(GameEngine engine, string name, Vector origin, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex) => Health = 2;
     }
 }

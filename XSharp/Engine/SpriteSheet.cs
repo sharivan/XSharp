@@ -18,22 +18,37 @@ namespace MMX.Engine
         {
             private readonly List<Frame> frames;
 
-            public SpriteSheet Sheet { get; }
+            public SpriteSheet Sheet
+            {
+                get;
+            }
 
-            public string Name { get; }
+            public string Name
+            {
+                get;
+            }
 
             public Frame this[int index] => frames[index];
 
             public int Count => frames.Count;
 
-            public int LoopFromSequenceIndex { get;
-                set; }
+            public int LoopFromSequenceIndex
+            {
+                get;
+                set;
+            }
 
-            public Vector BoudingBoxOriginOffset { get;
-                set; }
+            public Vector BoudingBoxOriginOffset
+            {
+                get;
+                set;
+            }
 
-            public MMXBox CollisionBox { get;
-                set; }
+            public MMXBox CollisionBox
+            {
+                get;
+                set;
+            }
 
             internal FrameSequence(SpriteSheet sheet, string name, int loopFromSequenceIndex = -1)
             {
@@ -110,7 +125,10 @@ namespace MMX.Engine
 
         public class Frame
         {
-            public int Index { get; }
+            public int Index
+            {
+                get;
+            }
 
             public MMXBox BoundingBox
             {
@@ -122,30 +140,36 @@ namespace MMX.Engine
                 get;
             }
 
-            public Texture Bitmap { get; }
+            public Texture Texture
+            {
+                get;
+            }
 
-            public bool Precached { get; }
+            public bool Precached
+            {
+                get;
+            }
 
-            internal Frame(int index, MMXBox boundingBox, MMXBox collisionBox, Texture bitmap, bool precached)
+            internal Frame(int index, MMXBox boundingBox, MMXBox collisionBox, Texture texture, bool precached)
             {
                 Index = index;
                 BoundingBox = boundingBox;
                 CollisionBox = collisionBox;
-                Bitmap = bitmap;
+                Texture = texture;
                 Precached = precached;
             }
 
             public override bool Equals(object obj) => obj is Frame frame &&
                        EqualityComparer<MMXBox>.Default.Equals(BoundingBox, frame.BoundingBox) &&
                        EqualityComparer<MMXBox>.Default.Equals(CollisionBox, frame.CollisionBox) &&
-                       EqualityComparer<Texture>.Default.Equals(Bitmap, frame.Bitmap);
+                       EqualityComparer<Texture>.Default.Equals(Texture, frame.Texture);
 
             public override int GetHashCode()
             {
                 var hashCode = -250932352;
                 hashCode = hashCode * -1521134295 + EqualityComparer<MMXBox>.Default.GetHashCode(BoundingBox);
                 hashCode = hashCode * -1521134295 + EqualityComparer<MMXBox>.Default.GetHashCode(CollisionBox);
-                hashCode = hashCode * -1521134295 + EqualityComparer<Texture>.Default.GetHashCode(Bitmap);
+                hashCode = hashCode * -1521134295 + EqualityComparer<Texture>.Default.GetHashCode(Texture);
                 return hashCode;
             }
 
@@ -155,60 +179,78 @@ namespace MMX.Engine
         private readonly List<Frame> frames;
         private readonly Dictionary<string, FrameSequence> sequences;
 
-        public GameEngine Engine { get; }
-
-        public string Name { get; }
-
-        public bool Precache { get;
-            set; }
-
-        public Texture CurrentBitmap { get;
-            set; }
-
-        public Texture CurrentPalette { get;
-            set; }
-
-        public bool DisposeBitmap { get;
-            set; }
-
-        public void ReleaseCurrentBitmap()
+        public GameEngine Engine
         {
-            if (DisposeBitmap && CurrentBitmap != null)
-                CurrentBitmap.Dispose();
+            get;
+        }
 
-            CurrentBitmap = null;
+        public string Name
+        {
+            get;
+        }
+
+        public bool Precache
+        {
+            get;
+            set;
+        }
+
+        public Texture CurrentTexture
+        {
+            get;
+            set;
+        }
+
+        public Texture CurrentPalette
+        {
+            get;
+            set;
+        }
+
+        public bool DisposeTexture
+        {
+            get;
+            set;
+        }
+
+        public void ReleaseCurrentTexture()
+        {
+            if (DisposeTexture && CurrentTexture != null)
+                CurrentTexture.Dispose();
+
+            CurrentTexture = null;
         }
 
         public int FrameCount => frames.Count;
 
         public int FrameSequenceCount => sequences.Count;
 
-        public SpriteSheet(GameEngine engine, string name, bool disposeBitmap = false, bool precache = false)
+        public SpriteSheet(GameEngine engine, string name, bool disposeTexture = false, bool precache = false)
         {
             Engine = engine;
             Name = name;
             Precache = precache;
-            DisposeBitmap = disposeBitmap;
+            DisposeTexture = disposeTexture;
 
             frames = new List<Frame>();
             sequences = new Dictionary<string, FrameSequence>();
         }
 
-        public SpriteSheet(GameEngine engine, string name, Texture bitmap, bool disposeBitmap = false, bool precache = false) :
+        public SpriteSheet(GameEngine engine, string name, Texture texture, bool disposeTexture = false, bool precache = false) :
             this(engine, name, precache)
         {
-            CurrentBitmap = bitmap;
-            DisposeBitmap = disposeBitmap;
+            CurrentTexture = texture;
+            DisposeTexture = disposeTexture;
         }
 
         public SpriteSheet(GameEngine engine, string name, string imageFileName, bool precache = false) :
             this(engine, name, precache)
         {
-            DisposeBitmap = true;
+            DisposeTexture = true;
             LoadFromFile(imageFileName);
         }
 
-        public void LoadFromFile(string imageFileName) => CurrentBitmap = Engine.CreateD2DBitmapFromFile(imageFileName);
+        public void LoadFromFile(string imageFileName) => CurrentTexture = Engine.CreateImageTextureFromFile(imageFileName);
 
         public Frame AddFrame(int x, int y, int width, int height, OriginPosition originPosition = OriginPosition.CENTER)
         {
@@ -222,7 +264,7 @@ namespace MMX.Engine
 
             if (Precache)
             {
-                var description = CurrentBitmap.GetLevelDescription(0);
+                var description = CurrentTexture.GetLevelDescription(0);
                 int srcWidth = description.Width;
                 int srcHeight = description.Height;
                 int srcX = (int) boudingBox.Left;
@@ -237,7 +279,7 @@ namespace MMX.Engine
                 {
                     texture = new Texture(Engine.Device, width1, height1, 1, Usage.None, description.Format, Pool.Default);
 
-                    Surface src = CurrentBitmap.GetSurfaceLevel(0);
+                    Surface src = CurrentTexture.GetSurfaceLevel(0);
                     Surface dst = texture.GetSurfaceLevel(0);
 
                     Engine.Device.UpdateSurface(src, GameEngine.ToRectangleF(boudingBox), dst, new Point(0, 0));
@@ -246,7 +288,7 @@ namespace MMX.Engine
                 {
                     texture = new Texture(Engine.Device, width1, height1, 1, Usage.None, Format.L8, Pool.Managed);
 
-                    DataRectangle srcRect = CurrentBitmap.LockRectangle(0, LockFlags.Discard);
+                    DataRectangle srcRect = CurrentTexture.LockRectangle(0, LockFlags.Discard);
                     DataRectangle dstRect = texture.LockRectangle(0, LockFlags.Discard);
 
                     using (var dstDS = new DataStream(dstRect.DataPointer, width1 * height1 * sizeof(byte), true, true))
@@ -275,24 +317,7 @@ namespace MMX.Engine
                         }
                     }
 
-                    /*using (DataStream dstDS = new DataStream(dstRect.DataPointer, width * height * sizeof(byte), true, true))
-                    {
-                        using (DataStream srcDS = new DataStream(srcRect.DataPointer, width * height * sizeof(int), true, true))
-                        {
-                            using (BinaryReader reader = new BinaryReader(srcDS))
-                            {
-                                for (int y = 0; y < width * height; y++)
-                                {
-                                    int bgra = reader.ReadInt32();
-                                    Color color = Color.FromBgra(bgra);
-                                    int index = GameEngine.LookupColor(currentPalette, color);
-                                    dstDS.Write((byte) (index != -1 ? index : 0));
-                                }
-                            }
-                        }
-                    }*/
-
-                    CurrentBitmap.UnlockRectangle(0);
+                    CurrentTexture.UnlockRectangle(0);
                     texture.UnlockRectangle(0);
                 }
 
@@ -301,7 +326,7 @@ namespace MMX.Engine
                 return frame;
             }
 
-            frame = new Frame(frames.Count, boudingBox, collisionBox, CurrentBitmap, false);
+            frame = new Frame(frames.Count, boudingBox, collisionBox, CurrentTexture, false);
             frames.Add(frame);
             return frame;
         }
@@ -320,8 +345,8 @@ namespace MMX.Engine
         {
             foreach (var frame in frames)
             {
-                if (frame.Precached && frame.Bitmap != null)
-                    frame.Bitmap.Dispose();
+                if (frame.Precached && frame.Texture != null)
+                    frame.Texture.Dispose();
             }
 
             frames.Clear();
@@ -360,7 +385,7 @@ namespace MMX.Engine
         public void Dispose()
         {
             ClearFrames();
-            ReleaseCurrentBitmap();
+            ReleaseCurrentTexture();
         }
     }
 }

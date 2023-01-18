@@ -153,15 +153,13 @@ namespace MMX.Engine
         VERTICAL
     }
 
-    public enum SplitterTriggerSide
+    public enum SplitterTriggerDirection
     {
-        LEFT,
-        RIGHT,
-        UP,
-        DOWN
+        FORWARD,
+        BACKWARD
     }
 
-    public delegate void SplitterTriggerEventHandler(SplitterTrigger source, Entity target, SplitterTriggerSide side);
+    public delegate void SplitterTriggerEventHandler(SplitterTrigger source, Entity target, SplitterTriggerDirection direction);
 
     public class SplitterTrigger : AbstractTrigger
     {
@@ -175,7 +173,7 @@ namespace MMX.Engine
         public SplitterTrigger(GameEngine engine, Box box, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL, VectorKind vectorKind = VectorKind.ORIGIN) :
             base(engine, box, TouchingKind.VECTOR, vectorKind) => Orientation = orientation;
 
-        protected virtual void DoSplitterTriggerEvent(Entity target, SplitterTriggerSide side) => LineTriggerEvent?.Invoke(this, target, side);
+        protected virtual void OnSplitterTriggerEvent(Entity target, SplitterTriggerDirection side) => LineTriggerEvent?.Invoke(this, target, side);
 
         protected override void OnTouching(Entity obj)
         {
@@ -191,17 +189,17 @@ namespace MMX.Engine
             {
                 case SplitterTriggerOrientation.HORIZONTAL:
                     if (targetOrigin.Y < Origin.Y && targetLastOrigin.Y >= Origin.Y)
-                        DoSplitterTriggerEvent(obj, SplitterTriggerSide.UP);
+                        OnSplitterTriggerEvent(obj, SplitterTriggerDirection.BACKWARD);
                     else if (targetOrigin.Y >= Origin.Y && targetLastOrigin.Y < Origin.Y)
-                        DoSplitterTriggerEvent(obj, SplitterTriggerSide.DOWN);
+                        OnSplitterTriggerEvent(obj, SplitterTriggerDirection.FORWARD);
 
                     break;
 
                 case SplitterTriggerOrientation.VERTICAL:
                     if (targetOrigin.X < Origin.X && targetLastOrigin.X >= Origin.X)
-                        DoSplitterTriggerEvent(obj, SplitterTriggerSide.LEFT);
+                        OnSplitterTriggerEvent(obj, SplitterTriggerDirection.BACKWARD);
                     else if (targetOrigin.X >= Origin.X && targetLastOrigin.X < Origin.X)
-                        DoSplitterTriggerEvent(obj, SplitterTriggerSide.RIGHT);
+                        OnSplitterTriggerEvent(obj, SplitterTriggerDirection.FORWARD);
 
                     break;
             }
@@ -222,24 +220,24 @@ namespace MMX.Engine
             get; set;
         }
 
-        public uint Forward
+        public int Forward
         {
             get; set;
         }
 
-        public uint Backward
+        public int Backward
         {
             get; set;
         }
 
-        public ChangeDynamicPropertyTrigger(GameEngine engine, Box box, DynamicProperty prop, uint forward, uint backward, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL) : base(engine, box, orientation, VectorKind.PLAYER_ORIGIN)
+        public ChangeDynamicPropertyTrigger(GameEngine engine, Box box, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL) : base(engine, box, orientation, VectorKind.PLAYER_ORIGIN)
         {
             Property = prop;
             Forward = forward;
             Backward = backward;
         }
 
-        private void ChangeProperty(uint value)
+        private void ChangeProperty(int value)
         {
             switch (Property)
             {
@@ -257,47 +255,103 @@ namespace MMX.Engine
             }
         }
 
-        protected override void DoSplitterTriggerEvent(Entity obj, SplitterTriggerSide side)
+        protected override void OnSplitterTriggerEvent(Entity obj, SplitterTriggerDirection direction)
         {
-            base.DoSplitterTriggerEvent(obj, side);
+            base.OnSplitterTriggerEvent(obj, direction);
 
             if (obj is not Player)
                 return;
 
-            switch (Orientation)
+            switch (direction)
             {
-                case SplitterTriggerOrientation.HORIZONTAL:
-                    switch (side)
-                    {
-                        case SplitterTriggerSide.UP:
-                            ChangeProperty(Backward);
-                            break;
-
-                        case SplitterTriggerSide.DOWN:
-                            ChangeProperty(Forward);
-                            break;
-                    }
-
+                case SplitterTriggerDirection.BACKWARD:
+                    ChangeProperty(Backward);
                     break;
 
-                case SplitterTriggerOrientation.VERTICAL:
-                    switch (side)
-                    {
-                        case SplitterTriggerSide.LEFT:
-                            ChangeProperty(Backward);
-                            break;
-
-                        case SplitterTriggerSide.RIGHT:
-                            ChangeProperty(Forward);
-                            break;
-                    }
-
+                case SplitterTriggerDirection.FORWARD:
+                    ChangeProperty(Forward);
                     break;
             }
         }
     }
 
-    public class CheckpointTrigger : AbstractTrigger
+    public class CheckpointSplitterTrigger : SplitterTrigger
+    {
+        public Checkpoint Checkpoint
+        {
+            get;
+            set;
+        }
+
+        public SplitterTriggerDirection CheckpointDirection
+        {
+            get;
+            set;
+        }
+
+        public Checkpoint LastCheckpoint
+        {
+            get;
+            private set;
+        }
+
+        public Box LastCameraConstraintBox
+        {
+            get;
+            private set;
+        }
+
+        public int LastObjectTile
+        {
+            get;
+            private set;
+        }
+
+        public int LastBackgroundTile
+        {
+            get;
+            private set;
+        }
+
+        public int LastPalette
+        {
+            get;
+            private set;
+        }
+
+        public CheckpointSplitterTrigger(GameEngine engine, Box box, Checkpoint checkpoint, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL, SplitterTriggerDirection checkpointDirection = SplitterTriggerDirection.FORWARD) :
+            base(engine, box, orientation, VectorKind.PLAYER_ORIGIN)
+        {
+            Checkpoint = checkpoint;
+            CheckpointDirection = checkpointDirection;
+            LastCheckpoint = null;
+        }
+
+        protected override void OnSplitterTriggerEvent(Entity obj, SplitterTriggerDirection direction)
+        {
+            base.OnSplitterTriggerEvent(obj, direction);
+
+            if (obj is Player)
+            {
+                if (direction == CheckpointDirection)
+                {
+                    LastObjectTile = Engine.ObjectTile;
+                    LastBackgroundTile = Engine.BackgroundTile;
+                    LastPalette = Engine.Palette;
+                    LastCheckpoint = Engine.CurrentCheckpoint;
+                    LastCameraConstraintBox = Engine.cameraConstraintsBox;
+                    Engine.CurrentCheckpoint = Checkpoint;
+                }
+                else
+                {
+                    Engine.SetCheckpoint(LastCheckpoint, LastObjectTile, LastBackgroundTile, LastPalette);
+                    Engine.cameraConstraintsBox = LastCameraConstraintBox;
+                }
+            }
+        }
+    }
+
+    public class CheckpointTriggerOnce : Trigger
     {
         public Checkpoint Checkpoint
         {
@@ -311,11 +365,42 @@ namespace MMX.Engine
             private set;
         }
 
-        public CheckpointTrigger(GameEngine engine, Box box, Checkpoint checkpoint) :
+        public Checkpoint LastCheckpoint
+        {
+            get;
+            private set;
+        }
+
+        public Box LastCameraConstraintBox
+        {
+            get;
+            private set;
+        }
+
+        public int LastObjectTile
+        {
+            get;
+            private set;
+        }
+
+        public int LastBackgroundTile
+        {
+            get;
+            private set;
+        }
+
+        public int LastPalette
+        {
+            get;
+            private set;
+        }
+
+        public CheckpointTriggerOnce(GameEngine engine, Box box, Checkpoint checkpoint) :
             base(engine, box, TouchingKind.VECTOR, VectorKind.PLAYER_ORIGIN)
         {
             Checkpoint = checkpoint;
             Triggered = false;
+            LastCheckpoint = null;
         }
 
         protected override void OnTrigger(Entity obj)
@@ -324,8 +409,13 @@ namespace MMX.Engine
 
             if (!Triggered && obj is Player)
             {
-                Engine.CurrentCheckpoint = Checkpoint;
                 Triggered = true;
+                LastObjectTile = Engine.ObjectTile;
+                LastBackgroundTile = Engine.BackgroundTile;
+                LastPalette = Engine.Palette;
+                LastCheckpoint = Engine.CurrentCheckpoint;
+                LastCameraConstraintBox = Engine.cameraConstraintsBox;
+                Engine.CurrentCheckpoint = Checkpoint;
             }
         }
     }
@@ -353,7 +443,7 @@ namespace MMX.Engine
             if (obj is not Player)
                 return;
 
-            engine.SetCameraConstraints(ConstraintOrigin, constraints);
+            Engine.SetCameraConstraints(ConstraintOrigin, constraints);
         }
 
         public void AddConstraint(Vector constraint) => constraints.Add(constraint);

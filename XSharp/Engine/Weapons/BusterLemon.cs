@@ -16,8 +16,8 @@ namespace MMX.Engine.Weapons
 
         new public Player Shooter => (Player) base.Shooter;
 
-        internal BusterLemon(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, bool dashLemon, SpriteSheet sheet) :
-            base(engine, shooter, name, origin, direction, sheet)
+        internal BusterLemon(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, bool dashLemon, int spriteSheetIndex) :
+            base(engine, shooter, name, origin, direction, spriteSheetIndex)
         {
             this.dashLemon = dashLemon;
 

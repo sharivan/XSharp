@@ -25,8 +25,6 @@ namespace MMX.Engine
 
     public abstract class Entity : IDisposable
     {
-        protected GameEngine engine;
-        internal int index; // Posição deste objeto na lista de objetos do engine
         private Vector origin;
         private Entity parent;
         private readonly List<Entity> touchingEntities;
@@ -35,17 +33,23 @@ namespace MMX.Engine
         protected bool markedToRemove;
         protected bool respawnable;
 
-        public GameEngine Engine => engine;
+        public GameEngine Engine
+        {
+            get;
+        }
 
         /// <summary>
         /// Posição deste objeto na lista de objetos do engine
         /// </summary>
-        public int Index => index;
+        public int Index
+        {
+            get;
+            internal set;
+        }
 
         public Vector Origin
         {
             get => origin;
-
             set => SetOrigin(value);
         }
 
@@ -82,7 +86,6 @@ namespace MMX.Engine
         public Box BoundingBox
         {
             get => GetBoundingBox();
-
             set => SetBoundingBox(value);
         }
 
@@ -97,11 +100,11 @@ namespace MMX.Engine
 
         public bool Respawnable => respawnable;
 
-        public bool Offscreen => (BoundingBox & engine.World.Screen.BoundingBox).Area == 0;
+        public bool Offscreen => !(BoundingBox & Engine.World.Camera.BoundingBox).IsValid();
 
         protected Entity(GameEngine engine, Vector origin)
         {
-            this.engine = engine;
+            Engine = engine;
             this.origin = origin;
 
             touchingEntities = new List<Entity>();
@@ -116,7 +119,7 @@ namespace MMX.Engine
         {
             LastOrigin = this.origin;
             this.origin = origin;
-            engine.partition.Update(this);
+            Engine.partition.Update(this);
 
             Vector delta = origin - LastOrigin;
             foreach (Entity child in childs)
@@ -198,7 +201,7 @@ namespace MMX.Engine
 
             PostThink(); // Realiza o pós-pensamento do objeto
 
-            List<Entity> touching = engine.partition.Query(HitBox, this, childs, BoxKind.HITBOX);
+            List<Entity> touching = Engine.partition.Query(HitBox, this, childs, BoxKind.HITBOX);
 
             // Processa a lista global de objetos que anteriormente estavam tocando esta entidade no frame anterior
             int count = touchingEntities.Count;
@@ -273,7 +276,7 @@ namespace MMX.Engine
                 return;
 
             markedToRemove = true;
-            engine.removedEntities.Add(this);
+            Engine.removedEntities.Add(this);
 
             foreach (Entity child in childs)
                 child.parent = null;
@@ -289,7 +292,7 @@ namespace MMX.Engine
         {
             alive = true;
             markedToRemove = false;
-            engine.addedEntities.Add(this); // Adiciona este sprite a lista de sprites do engine
+            Engine.addedEntities.Add(this); // Adiciona este sprite a lista de sprites do engine
         }
 
         /// <summary>

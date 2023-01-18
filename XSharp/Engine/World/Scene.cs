@@ -15,17 +15,21 @@ namespace MMX.Engine.World
         public const int PRIMITIVE_COUNT = 2 * SIDE_BLOCKS_PER_SCENE * SIDE_MAPS_PER_BLOCK * SIDE_TILES_PER_MAP * SIDE_BLOCKS_PER_SCENE * SIDE_MAPS_PER_BLOCK * SIDE_TILES_PER_MAP;
         internal Block[,] blocks;
 
-        internal VertexBuffer downLayerVB;
-        internal VertexBuffer upLayerVB;
+        internal VertexBuffer[] layers;
 
-        public World World { get; }
+        public World World
+        {
+            get;
+        }
 
-        public int ID { get; }
+        public int ID
+        {
+            get;
+        }
 
         public Block this[int row, int col]
         {
             get => blocks[row, col];
-
             set => blocks[row, col] = value;
         }
 
@@ -35,8 +39,7 @@ namespace MMX.Engine.World
             ID = id;
 
             blocks = new Block[SIDE_BLOCKS_PER_SCENE, SIDE_BLOCKS_PER_SCENE];
-            downLayerVB = new VertexBuffer(world.Device, GameEngine.VERTEX_SIZE * 3 * PRIMITIVE_COUNT, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
-            upLayerVB = new VertexBuffer(world.Device, GameEngine.VERTEX_SIZE * 3 * PRIMITIVE_COUNT, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
+            layers = new VertexBuffer[3];
         }
 
         public Tile GetTileFrom(Vector pos)
@@ -136,8 +139,13 @@ namespace MMX.Engine.World
 
         internal void Tessellate()
         {
-            DataStream downLayerVBData = downLayerVB.Lock(0, 4 * GameEngine.VERTEX_SIZE, LockFlags.None);
-            DataStream upLayerVBData = upLayerVB.Lock(0, 4 * GameEngine.VERTEX_SIZE, LockFlags.None);
+            Dispose();
+
+            layers[0] = new VertexBuffer(World.Device, GameEngine.VERTEX_SIZE * 3 * PRIMITIVE_COUNT, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
+            layers[1] = new VertexBuffer(World.Device, GameEngine.VERTEX_SIZE * 3 * PRIMITIVE_COUNT, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
+
+            DataStream downLayerVBData = layers[0].Lock(0, 4 * GameEngine.VERTEX_SIZE, LockFlags.None);
+            DataStream upLayerVBData = layers[1].Lock(0, 4 * GameEngine.VERTEX_SIZE, LockFlags.None);
 
             for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
                 for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
@@ -159,23 +167,23 @@ namespace MMX.Engine.World
                     }
                 }
 
-            upLayerVB.Unlock();
-            downLayerVB.Unlock();
+            layers[0].Unlock();
+            layers[1].Unlock();
         }
 
         public void Dispose()
         {
-            if (downLayerVB != null)
-            {
-                downLayerVB.Dispose();
-                downLayerVB = null;
-            }
+            for (int i = 0; i < layers.Length; i++)
+                if (layers[i] != null)
+                {
+                    layers[i].Dispose();
+                    layers[i] = null;
+                }
+        }
 
-            if (upLayerVB != null)
-            {
-                upLayerVB.Dispose();
-                upLayerVB = null;
-            }
+        internal void OnDisposeDevice()
+        {
+            Dispose();
         }
     }
 }

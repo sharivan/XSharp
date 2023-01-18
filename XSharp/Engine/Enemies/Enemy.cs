@@ -8,7 +8,7 @@ namespace MMX.Engine.Enemies
 
         public int ContactDamage => contactDamage;
 
-        protected Enemy(GameEngine engine, string name, Vector origin, SpriteSheet sheet) : base(engine, name, origin, sheet, true)
+        protected Enemy(GameEngine engine, string name, Vector origin, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex, true)
         {
         }
 

@@ -1,6 +1,6 @@
 ﻿using MMX.Geometry;
 using MMX.Math;
-
+using System.Security.Cryptography;
 using static MMX.Engine.Consts;
 
 namespace MMX.Engine.World
@@ -13,7 +13,8 @@ namespace MMX.Engine.World
 
         private FixedSingle moveDistance;
         private FixedSingle moveStep;
-        private Vector moveTo;
+        private Vector moveToCenter;
+        private bool moveToFocus;
         private Vector vel;
 
         internal Camera(World world, FixedSingle width, FixedSingle height)
@@ -25,7 +26,11 @@ namespace MMX.Engine.World
             lastCenter = Vector.NULL_VECTOR;
             center = new Vector(width / 2, height / 2);
             vel = Vector.NULL_VECTOR;
-            focusOn = null;           
+            focusOn = null;
+            SmoothOnNextMove = false;
+            SmoothSpeed = DASH_SPEED;
+            moveToFocus = false;
+            MovingSpeed = 0;
         }
 
         internal Camera(World world, Camera other)
@@ -38,6 +43,10 @@ namespace MMX.Engine.World
             center = other.center;
             vel = other.vel;
             focusOn = other.focusOn;
+            SmoothOnNextMove = false;
+            SmoothSpeed = DASH_SPEED;
+            moveToFocus = false;
+            MovingSpeed = 0;
         }
 
         public World World { get; }
@@ -45,6 +54,24 @@ namespace MMX.Engine.World
         public FixedSingle Width { get; }
 
         public FixedSingle Height { get; }
+
+        public bool SmoothOnNextMove
+        {
+            get;
+            set;
+        }
+
+        public FixedSingle SmoothSpeed
+        {
+            get;
+            set;
+        }
+
+        public FixedSingle MovingSpeed
+        {
+            get;
+            private set;
+        }
 
         private void SetLeftTop(Vector v) => SetCenter(v.X + Width, v.Y + Height);
 
@@ -131,11 +158,11 @@ namespace MMX.Engine.World
 
         public bool Moving => moveDistance > STEP_SIZE;
 
-        public void MoveToLeftTop(Vector dest) => MoveToCenter(dest + SizeVector / 2, WALKING_SPEED);
+        public void MoveToLeftTop(Vector dest) => MoveToCenter(dest + SizeVector / 2, SmoothSpeed);
 
         public void MoveToLeftTop(Vector dest, FixedSingle speed) => MoveToCenter(dest + SizeVector / 2, speed);
 
-        public void MoveToCenter(Vector dest) => MoveToCenter(dest, WALKING_SPEED);
+        public void MoveToCenter(Vector dest) => MoveToCenter(dest, SmoothSpeed);
 
         public void MoveToCenter(Vector dest, FixedSingle speed)
         {
@@ -145,36 +172,128 @@ namespace MMX.Engine.World
             Vector delta = dest - center;
             FixedSingle moveDistance = delta.Length;
             if (moveDistance <= STEP_SIZE)
+            {
+                this.moveDistance = 0;
+                MovingSpeed = 0;
+                moveToCenter = Vector.NULL_VECTOR;
+                return;
+            }
+
+            MovingSpeed = speed;
+            this.moveDistance = moveDistance;
+            vel = delta * (speed / moveDistance);
+            moveStep = vel.Length;
+
+            this.moveDistance -= moveStep;
+            if (this.moveDistance <= STEP_SIZE)
+            {
+                SetCenter(dest);
+                this.moveDistance = 0;
+                MovingSpeed = 0;
+                moveToCenter = Vector.NULL_VECTOR;
+            }
+            else
+            {
+                Vector oldCenter = center;
+                Vector newCenter = center + vel;
+                SetCenter(newCenter);
+
+                if (center == oldCenter)
+                {
+                    this.moveDistance = 0;
+                    MovingSpeed = 0;
+                    moveToCenter = Vector.NULL_VECTOR;
+                }
+                else
+                    moveToCenter = dest;
+            }
+
+            moveToFocus = false;
+        }
+
+        public void MoveToFocus(FixedSingle speed)
+        {
+            if (speed <= STEP_SIZE || focusOn == null)
                 return;
 
+            Vector dest = focusOn.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR;
+            Vector delta = dest - center;
+            FixedSingle moveDistance = delta.Length;
+            if (moveDistance <= STEP_SIZE)
+            {
+                this.moveDistance = 0;
+                MovingSpeed = 0;
+                moveToCenter = Vector.NULL_VECTOR;
+                return;
+            }
+
+            MovingSpeed = speed;
             this.moveDistance = moveDistance;
-            vel = delta * speed / moveDistance;
+            vel = delta * (speed / moveDistance);
             moveStep = vel.Length;
-            moveTo = dest;
+
+            this.moveDistance -= moveStep;
+            if (this.moveDistance <= STEP_SIZE)
+            {
+                SetCenter(dest);
+                this.moveDistance = 0;
+                MovingSpeed = 0;
+                moveToCenter = Vector.NULL_VECTOR;
+            }
+            else
+            {
+                Vector oldCenter = center;
+                Vector newCenter = center + vel;
+                SetCenter(newCenter);
+
+                if (center == oldCenter)
+                {
+                    this.moveDistance = 0;
+                    MovingSpeed = 0;
+                    moveToCenter = Vector.NULL_VECTOR;
+                }
+                else
+                    moveToCenter = dest;
+            }
+
+            moveToFocus = true;
         }
 
         public void StopMoving() => moveDistance = 0;
 
         public Box VisibleBox(Box box) => BoundingBox & box;
 
-        public bool IsVisible(Box box) => VisibleBox(box).Area > 0;
+        public bool IsVisible(Box box) => VisibleBox(box).IsValid();
 
         public void OnFrame()
         {
             if (Moving)
             {
+                Vector oldCenter = center;
                 Vector newCenter = center + vel;
-                moveDistance -= moveStep;
-                if (moveDistance <= STEP_SIZE)
+                SetCenter(newCenter);
+
+                if (center == oldCenter)
                 {
-                    SetCenter(moveTo);
                     moveDistance = 0;
+                    MovingSpeed = 0;
+                    moveToFocus = false;
                 }
+                else if (moveToFocus)
+                    MoveToFocus(MovingSpeed);
                 else
-                    SetCenter(newCenter);
+                    MoveToCenter(moveToCenter, MovingSpeed);
             }
             else if (focusOn != null)
-                SetCenter(focusOn.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR);
+            {
+                if (SmoothOnNextMove)
+                {
+                    SmoothOnNextMove = false;
+                    MoveToFocus(SmoothSpeed);
+                }
+                else
+                    SetCenter(focusOn.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR);
+            }
 
             if (center != lastCenter)
                 lastCenter = center;

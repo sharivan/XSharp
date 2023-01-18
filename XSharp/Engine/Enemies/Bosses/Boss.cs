@@ -4,7 +4,7 @@ namespace MMX.Engine.Enemies.Bosses
 {
     public abstract class Boss : Enemy
     {
-        protected Boss(GameEngine engine, string name, Vector origin, SpriteSheet sheet) : base(engine, name, origin, sheet)
+        protected Boss(GameEngine engine, string name, Vector origin, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex)
         {
         }
     }
