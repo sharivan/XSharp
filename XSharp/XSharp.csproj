@@ -201,9 +201,15 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="resources\roms\ShittyDash.mmx" />
-    <EmbeddedResource Include="resources\roms\BestGame.mmx" />
-    <EmbeddedResource Include="resources\roms\ZeroIsJegue.mmx" />
+    <Content Include="resources\roms\ShittyDash.mmx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\roms\BestGame.mmx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\roms\ZeroIsJegue.mmx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

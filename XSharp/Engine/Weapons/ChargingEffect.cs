@@ -55,7 +55,7 @@ namespace MMX.Engine.Weapons
         {
             if (!soundPlayed)
             {
-                Engine.PlaySound(3);
+                Engine.PlaySound(2, 3, 3.350, 1.585);
                 soundPlayed = true;
             }
 
@@ -64,7 +64,7 @@ namespace MMX.Engine.Weapons
 
         protected override void OnDeath()
         {
-            Engine.StopSound(3);
+            Engine.StopSound(2, 3);
             base.OnDeath();
         }
 

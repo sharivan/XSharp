@@ -11,9 +11,10 @@ using System.Threading;
 using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
-using SharpDX.DirectSound;
 using SharpDX.Mathematics.Interop;
 using SharpDX.Windows;
+
+using NAudio.Wave;
 
 using MMX.Math;
 using MMX.Geometry;
@@ -21,6 +22,7 @@ using MMX.ROM;
 using MMX.Engine.World;
 using MMX.Engine.Weapons;
 using MMX.Engine.Enemies;
+using MMX.Engine.Sound;
 
 using static MMX.Engine.Consts;
 using static MMX.Engine.World.World;
@@ -33,7 +35,8 @@ using MMXWorld = MMX.Engine.World.World;
 using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using ResultCode = SharpDX.Direct3D9.ResultCode;
 using DeviceType = SharpDX.Direct3D9.DeviceType;
-using MMX.Engine.Sound;
+using SoundStream = MMX.Engine.Sound.SoundStream;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace MMX.Engine
 {
@@ -283,15 +286,16 @@ namespace MMX.Engine
         private Texture foregroundPalette;
         private Texture backgroundPalette;
 
-        private List<SpriteSheet> spriteSheets;
-        private List<Texture> palettes;
+        private readonly List<SpriteSheet> spriteSheets;
+        private readonly List<Texture> palettes;
 
-        private List<SoundPlayer> sounds;
+        private readonly List<WaveStream> soundStreams;
+        private readonly List<(WaveOutEvent player, SoundStream stream, bool initialized)> soundChannels;
 
         internal Partition<Entity> partition;
         private long engineTime;
         private readonly Random random;
-        private List<Checkpoint> checkpoints;
+        private readonly List<Checkpoint> checkpoints;
         private readonly List<Entity> entities;
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
@@ -610,7 +614,8 @@ namespace MMX.Engine
             spriteSheets = new List<SpriteSheet>();
             palettes = new List<Texture>();
 
-            sounds = new List<SoundPlayer>();
+            soundStreams = new List<WaveStream>();
+            soundChannels = new List<(WaveOutEvent, SoundStream, bool)>();
 
             presentationParams = new PresentParameters
             {
@@ -631,69 +636,49 @@ namespace MMX.Engine
 
             cameraConstraints = new List<Vector>();
 
-            // 0
-            var sound = new SoundPlayer(@"resources\sounds\mmx\01 - MMX - X Regular Shot.wav", SoundPlayer.SoundFormat.WAVE)
+            for (int i = 0; i < 4; i++)
             {
-                Volume = 0.25f
-            };
+                var player = new WaveOutEvent()
+                {
+                    Volume = 0.25f
+                };
 
-            sounds.Add(sound);
+                var ss = new SoundStream();
+               
+                soundChannels.Add((player, ss, false));
+            }
+
+            // 0
+            var stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\01 - MMX - X Regular Shot.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
 
             // 1
-            sound = new SoundPlayer(@"resources\sounds\mmx2\X Semi Charged Shot.wav", SoundPlayer.SoundFormat.WAVE)
-            {
-                Volume = 1f
-            };
-
-            sounds.Add(sound);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx2\X Semi Charged Shot.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
 
             // 2
-            sound = new SoundPlayer(@"resources\sounds\mmx\02 - MMX - X Charge Shot.wav", SoundPlayer.SoundFormat.WAVE)
-            {
-                Volume = 0.25f
-            };
-
-            sounds.Add(sound);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\02 - MMX - X Charge Shot.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
 
             // 3
-            sound = new SoundPlayer(@"resources\sounds\mmx\04 - MMX - X Charge.wav", SoundPlayer.SoundFormat.WAVE, 3.350, 1.585)
-            {
-                Volume = 0.25f
-            };
-
-            sounds.Add(sound);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\04 - MMX - X Charge.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
 
             // 4
-            sound = new SoundPlayer(@"resources\sounds\mmx\07 - MMX - X Dash.wav", SoundPlayer.SoundFormat.WAVE)
-            {
-                Volume = 0.25f
-            };
-
-            sounds.Add(sound);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\07 - MMX - X Dash.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
 
             // 5
-            sound = new SoundPlayer(@"resources\sounds\mmx\08 - MMX - X Jump.wav", SoundPlayer.SoundFormat.WAVE)
-            {
-                Volume = 0.25f
-            };
-
-            sounds.Add(sound);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\08 - MMX - X Jump.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
 
             // 6
-            sound = new SoundPlayer(@"resources\sounds\mmx\09 - MMX - X Land.wav", SoundPlayer.SoundFormat.WAVE)
-            {
-                Volume = 0.25f
-            };
-
-            sounds.Add(sound);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\09 - MMX - X Land.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
 
             // 7
-            sound = new SoundPlayer(@"resources\sounds\mmx\17 - MMX - X Fade In.wav", SoundPlayer.SoundFormat.WAVE)
-            {
-                Volume = 0.25f
-            };
-
-            sounds.Add(sound);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\17 - MMX - X Fade In.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
 
             directInput = new DirectInput();
 
@@ -732,13 +717,10 @@ namespace MMX.Engine
             DrawScale = DEFAULT_DRAW_SCALE;
             UpdateScale();
 
-            //sound = new DirectSound();
-            //sound.SetCooperativeLevel(form.Handle, DSoundCooperativeLevel.Priority);
-
             if (LOAD_ROM)
             {
                 mmx = new MMXCore();
-                mmx.LoadNewRom(Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.roms." + ROM_NAME));
+                mmx.LoadNewRom(@"resources\roms\" + ROM_NAME);
                 mmx.Init();
 
                 if (mmx.CheckROM() != 0)
@@ -2684,10 +2666,18 @@ namespace MMX.Engine
 
         public void Dispose()
         {
-            foreach (var sound in sounds)
-                DisposeResource(sound);
+            foreach (var (channel, stream, _) in soundChannels)
+            {
+                DisposeResource(stream);
+                DisposeResource(channel);
+            }
 
-            sounds.Clear();
+            soundChannels.Clear();
+
+            foreach (var stream in soundStreams)
+                DisposeResource(stream);
+
+            soundStreams.Clear();
 
             DisposeResource(World);
             DisposeResource(Player);
@@ -3091,8 +3081,40 @@ namespace MMX.Engine
         internal SpriteSheet GetSpriteSheet(int spriteSheetIndex) => spriteSheets[spriteSheetIndex];
         internal Texture GetPalette(int paletteIndex) => paletteIndex >= 0 && paletteIndex < palettes.Count ? palettes[paletteIndex] : null;
 
-        public void PlaySound(int index) => sounds[index].Play();
+        public void PlaySound(int channel, int index, double stopTime, double loopTime)
+        {
+            var stream = soundStreams[index];
+            var (player, ss, initialized) = soundChannels[channel];
 
-        public void StopSound(int index) => sounds[index].Stop();
+            stream.Position = 0;
+            ss.UpdateSource(stream, stopTime, loopTime);
+
+            if (!ss.Playing)
+            {
+                ss.Reset();
+                ss.Play();
+            }
+
+            if (!initialized)
+            {
+                player.Init(ss);
+                soundChannels[channel] = (player, ss, true);
+            }
+
+            player.Play();
+        }
+
+        public void PlaySound(int channel, int index, double loopTime) => PlaySound(channel, index, -1, loopTime);
+
+        public void PlaySound(int channel, int index) => PlaySound(channel, index, -1, -1);
+
+        public void StopSound(int channel, int index)
+        {
+            var stream = soundStreams[index];
+            var (_, ss, _) = soundChannels[channel];
+
+            if (ss.Source == stream)
+                ss.Stop();
+        }
     }
 }

@@ -260,7 +260,7 @@ namespace MMX.Engine
 
         public bool BlockedRight => !NoClip && collider.BlockedRight;
 
-        public bool Landed => !NoClip && collider.Landed /*&& vel.Y >= 0*/;
+        public bool Landed => !NoClip && collider.Landed && vel.Y >= 0;
 
         public bool LandedOnSlope => !NoClip && collider.LandedOnSlope;
 

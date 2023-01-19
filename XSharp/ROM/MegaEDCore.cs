@@ -49,7 +49,7 @@ namespace MMX.ROM
             if (fileName == null)
                 return false;
 
-            using FileStream fs = File.Create(fileName);
+            using FileStream fs = File.Open(fileName, FileMode.Open);
             return LoadNewRom(fs);
         }
 

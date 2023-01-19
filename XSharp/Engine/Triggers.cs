@@ -15,7 +15,7 @@ namespace MMX.Engine
     public abstract class AbstractTrigger : Entity
     {
         private Box boundingBox;
-        private List<Entity> triggereds;
+        private readonly List<Entity> triggereds;
 
         public event TriggerEvent TriggerEvent;
 

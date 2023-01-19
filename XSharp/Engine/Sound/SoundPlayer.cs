@@ -2,214 +2,151 @@
 using System.IO;
 
 using NAudio.Wave;
+using NAudio.Wave.Compression;
 
 namespace MMX.Engine.Sound
 {
-    public class SoundPlayer : IDisposable
+    public enum SoundFormat
     {
+        WAVE,
+        MP3
+    }
+
+    public static class WaveStreamUtil
+    {
+        public static WaveStream FromStream(Stream stream, SoundFormat format) => format switch
+        {
+            SoundFormat.WAVE => new WaveFileReader(stream),
+            SoundFormat.MP3 => new Mp3FileReader(stream),
+            _ => throw new ArgumentException($"Sound format is invalid: {format}"),
+        };
+
+        public static WaveStream FromFile(string waveFile, SoundFormat format) => format switch
+        {
+            SoundFormat.WAVE => new WaveFileReader(waveFile),
+            SoundFormat.MP3 => new Mp3FileReader(waveFile),
+            _ => throw new ArgumentException($"Sound format is invalid: {format}"),
+        };
+
+        public static long TimeToBytePosition(WaveStream stream, double time) => (long) (time * stream.WaveFormat.AverageBytesPerSecond);
+    }
+
+    /// <summary>
+    /// Stream for playback
+    /// </summary>
+    public class SoundStream : WaveStream
+    {
+        private WaveStream source;
+
+        public SoundStream() => Playing = false;
+
+        public SoundStream(WaveStream source, long stopPoint, long loopPoint)
+        {
+            UpdateSource(source, stopPoint, loopPoint);
+            Playing = true;
+        }
+
+        public SoundStream(WaveStream source, double stopTime, double loopTime) : this(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, loopTime) : -1) { }
+
+        public SoundStream(WaveStream source, long loopPoint) : this(source, -1, loopPoint) { }
+
+        public SoundStream(WaveStream source) : this(source, -1, -1) { }
+
         /// <summary>
-        /// Stream for looping playback
+        /// Return source stream's wave format
         /// </summary>
-        private class LoopStream : WaveStream
+        public override WaveFormat WaveFormat => source.WaveFormat;
+
+        public WaveStream Source
         {
-            public static long TimeToBytePosition(WaveStream stream, double time) => (long) (time * stream.WaveFormat.AverageBytesPerSecond);
-
-            /// <summary>
-            /// Creates a new Loop stream
-            /// </summary>
-            /// <param name="sourceStream">The stream to read from. Note: the Read method of this stream should return 0 when it reaches the end
-            /// or else we will not loop to the start again.</param>
-            public LoopStream(WaveStream sourceStream, long stopPoint, long loopPoint)
-            {
-                SourceStream = sourceStream;
-                StopPoint = stopPoint < 0 ? sourceStream.Length : stopPoint;
-                LoopPoint = loopPoint;
-
-                Playing = true;
-            }
-
-            public LoopStream(WaveStream source, double stopTime, double loopPointTime) : this(source, stopTime >= 0 ? TimeToBytePosition(source, stopTime) : source.Length, loopPointTime >= 0 ? TimeToBytePosition(source, loopPointTime) : -1) { }
-
-            public LoopStream(WaveStream sourceStream, long loopPoint) : this(sourceStream, -1, loopPoint) { }
-
-            public LoopStream(WaveStream source, double loopPointTime) : this(source, -1, loopPointTime >= 0 ? TimeToBytePosition(source, loopPointTime) : -1) { }
-
-            public LoopStream(WaveStream sourceStream) : this(sourceStream, -1, -1) { }
-
-            /// <summary>
-            /// Return source stream's wave format
-            /// </summary>
-            public override WaveFormat WaveFormat => SourceStream.WaveFormat;
-
-            public WaveStream SourceStream
-            {
-                get;
-                private set;
-            }
-
-            /// <summary>
-            /// LoopStream simply returns
-            /// </summary>
-            public override long Length => SourceStream.Length;
-
-            /// <summary>
-            /// LoopStream simply passes on positioning to source stream
-            /// </summary>
-            public override long Position
-            {
-                get => SourceStream.Position;
-                set => SourceStream.Position = value;
-            }
-
-            public long StopPoint
-            {
-                get;
-                set;
-            }
-
-            public long LoopPoint
-            {
-                get;
-                set;
-            }
-
-            public bool Looping => LoopPoint >= 0;
-
-            public bool Playing
-            {
-                get;
-                set;
-            }
-
-            public override int Read(byte[] buffer, int offset, int count)
-            {
-                if (!Playing)
-                    return 0;
-
-                int totalBytesRead = 0;
-                while (totalBytesRead < count)
-                {
-                    int bytesToRead = count - totalBytesRead;
-                    if (SourceStream.Position + bytesToRead > StopPoint)
-                        bytesToRead = (int) (StopPoint - SourceStream.Position);
-
-                    int bytesRead = SourceStream.Read(buffer, offset + totalBytesRead, bytesToRead);
-                    if (bytesRead == 0)
-                    {
-                        if (SourceStream.Position == 0 || !Looping)
-                        {
-                            // something wrong with the source stream
-                            break;
-                        }
-
-                        // loop
-                        SourceStream.Position = LoopPoint;
-                    }
-
-                    totalBytesRead += bytesRead;
-                }
-
-                return totalBytesRead;
-            }
-
-            public void Reset()
-            {
-                SourceStream.Position = 0;
-            }
-
-            public new void Dispose()
-            {
-                base.Dispose();
-                SourceStream.Dispose();
-            }
-
-            public void Play() => Playing = true;
-
-            public void Stop() => Playing = false;
+            get => source;
+            set => UpdateSource(value);
         }
 
-        public enum SoundFormat
+        /// <summary>
+        /// LoopStream simply returns
+        /// </summary>
+        public override long Length => source.Length;
+
+        /// <summary>
+        /// LoopStream simply passes on positioning to source stream
+        /// </summary>
+        public override long Position
         {
-            WAVE,
-            MP3
+            get => source.Position;
+            set => source.Position = value;
         }
 
-        private LoopStream loop;
-        private WaveOutEvent player;
-
-        public SoundFormat Format
+        public long StopPoint
         {
             get;
-            private set;
+            set;
         }
-        public float Volume
+
+        public long LoopPoint
         {
-            get => player.Volume;
-            set => player.Volume = value;
+            get;
+            set;
         }
 
-        private void Initialize(WaveStream stream, double stopTime, double loopTime)
-        {        
-            loop = new LoopStream(stream, stopTime, loopTime);
+        public bool Looping => LoopPoint >= 0;
 
-            player = new WaveOutEvent();
-            player.Init(loop);
-        }
-
-
-        public SoundPlayer(Stream stream, SoundFormat format, double stopTime, double loopTime)
+        public bool Playing
         {
-            Format = format;
+            get;
+            set;
+        }
 
-            WaveStream reader = format switch
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (!Playing)
+                return 0;
+
+            int totalBytesRead = 0;
+            while (totalBytesRead < count)
             {
-                SoundFormat.WAVE => new WaveFileReader(stream),
-                SoundFormat.MP3 => new Mp3FileReader(stream),
-                _ => throw new ArgumentException($"Sound format is invalid: {format}"),
-            };
+                int bytesToRead = count - totalBytesRead;
+                if (source.Position + bytesToRead > StopPoint)
+                    bytesToRead = (int) (StopPoint - source.Position);
 
-            Initialize(reader, stopTime, loopTime);
+                int bytesRead = source.Read(buffer, offset + totalBytesRead, bytesToRead);
+                if (bytesRead == 0)
+                {
+                    if (source.Position == 0 || !Looping)
+                    {
+                        // something wrong with the source stream
+                        break;
+                    }
+
+                    // loop
+                    source.Position = LoopPoint;
+                }
+
+                totalBytesRead += bytesRead;
+            }
+
+            return totalBytesRead;
         }
 
-        public SoundPlayer(Stream stream, SoundFormat format) : this(stream, format, -1, -1) { }
+        public void Reset() => source.Position = 0;
 
-        public SoundPlayer(Stream stream, SoundFormat format, double loopTime) : this(stream, format, -1, loopTime) { }
+        public void Play() => Playing = true;
 
-        public SoundPlayer(string fileName, SoundFormat format, double stopTime, double loopTime)
+        public void Stop() => Playing = false;
+
+        public void UpdateSource(WaveStream source, long stopPoint, long loopPoint)
         {
-            Format = format;
-
-            WaveStream reader = format switch
-            {
-                SoundFormat.WAVE => new WaveFileReader(fileName),
-                SoundFormat.MP3 => new Mp3FileReader(fileName),
-                _ => throw new ArgumentException($"Sound format is invalid: {format}"),
-            };
-
-            Initialize(reader, stopTime, loopTime);
+            this.source = source;
+            StopPoint = stopPoint >= 0 ? stopPoint : source.Length;
+            LoopPoint = loopPoint;
         }
 
-        public SoundPlayer(string fileName, SoundFormat format) : this(fileName, format, -1, -1) { }
+        public void UpdateSource(WaveStream source, long loopPoint) => UpdateSource(source, -1, loopPoint);
 
-        public SoundPlayer(string fileName, SoundFormat format, double loopTime) : this(fileName, format, -1, loopTime) { }
+        public void UpdateSource(WaveStream source) => UpdateSource(source, -1, -1);
 
-        public void Play()
-        {
-            loop.Reset();
-            loop.Play();
-            player.Play();
-        }
+        public void UpdateSource(WaveStream source, double stopTime, double loopTime) => UpdateSource(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, loopTime) : -1);
 
-        public void Stop()
-        {
-            loop.Stop();
-            player.Stop();
-        }
-
-        public void Dispose()
-        {
-            player.Dispose();
-            loop.Dispose();
-        }
+        public void UpdateSource(WaveStream source, double loopTime) => UpdateSource(source, -1, loopTime);
     }
 }

@@ -81,7 +81,7 @@ namespace MMX.Engine.Weapons
         {
             if (!soundPlayed)
             {
-                Engine.PlaySound(2);
+                Engine.PlaySound(1, 2);
                 soundPlayed = true;
             }
 

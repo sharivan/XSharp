@@ -467,6 +467,7 @@ namespace MMX.Engine
                         {
                             vel = Vector.NULL_VECTOR;
                             SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
+                            PlaySound(6);
                         }
                     }
                     else if (!WallJumping)
@@ -513,6 +514,7 @@ namespace MMX.Engine
                         {
                             vel = Vector.NULL_VECTOR;
                             SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
+                            PlaySound(6);
                         }
                     }
                     else if (!WallJumping)
@@ -564,13 +566,7 @@ namespace MMX.Engine
             return INITIAL_UPWARD_SPEED_FROM_JUMP;
         }
 
-        internal void PlaySound(int index)
-        {
-            if (index == 5)
-                Engine.StopSound(4);
-
-            Engine.PlaySound(index);
-        }
+        internal void PlaySound(int index) => Engine.PlaySound(0, index);
 
         protected override void Think()
         {
@@ -663,6 +659,7 @@ namespace MMX.Engine
                                         {
                                             vel = Vector.NULL_VECTOR;
                                             SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
+                                            PlaySound(6);
                                         }
                                         else if (!WallJumping)
                                             TryMoveLeft(mirrored);
@@ -701,6 +698,7 @@ namespace MMX.Engine
                                         {
                                             vel = Vector.NULL_VECTOR;
                                             SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
+                                            PlaySound(6);
                                         }
                                         else if (!WallJumping)
                                             TryMoveRight(mirrored);
@@ -877,7 +875,7 @@ namespace MMX.Engine
                     if (!WasPressingJump && PressingJump)
                     {
                         jumpReleased = false;
-                        if (Landed)
+                        if (collider.Landed)
                         {
                             bool hspeedNull = false;
                             if (PressingDash)
@@ -1143,21 +1141,6 @@ namespace MMX.Engine
 
         public Direction GetWallJumpDir()
         {
-            FixedSingle vclip;
-            int slopeSign;
-            if (LandedOnSlope)
-            {
-                RightTriangle slopeTriangle = LandedSlope;
-                FixedSingle h = slopeTriangle.HCathetusVector.X;
-                vclip = (slopeTriangle.VCathetusVector.Y * CollisionBox.Width / h).Abs;
-                slopeSign = h.Signal;
-            }
-            else
-            {
-                vclip = 0;
-                slopeSign = 0;
-            }
-
             Box collisionBox = Collider.LeftCollider.ExtendLeftFixed(8).ClipTop(-2);
             if (Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.LEFT_WALL).HasFlag(CollisionFlags.BLOCK))
                 return Direction.LEFT;
