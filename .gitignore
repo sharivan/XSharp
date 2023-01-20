@@ -263,3 +263,15 @@ D3D11Test/
 DXTest/
 SpriteBatchTest/
 SpriteBatchTest2/
+/DSoundText/DSoundText.csproj
+/DSoundText/Program.cs
+/DSoundText/packages.config
+/DSoundText/App.config
+/DSoundText/resources/sounds/x.wav
+/DSoundText/resources/sounds/teleport.wav
+/DSoundText/resources/sounds/spawn.wav
+/DSoundText/resources/sounds/land.wav
+/DSoundText/resources/sounds/jump.wav
+/DSoundText/resources/sounds/dash.wav
+/DSoundText/resources/sounds/charge.wav
+/DSoundText/resources/sounds/buster_reflect.wav
