@@ -2735,13 +2735,13 @@ namespace MMX.Engine
 
         public MMXBox MoveContactFloor(MMXBox box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE) => World.MoveContactFloor(box, out slope, maxDistance, maskSize, ignore);
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER) => World.GetCollisionFlags(collisionBox, ignore, preciseCollisionCheck, side);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetCollisionFlags(collisionBox, ignore, preciseCollisionCheck);
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER) => World.GetCollisionFlags(collisionBox, out slope, ignore, preciseCollisionCheck, side);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetCollisionFlags(collisionBox, out slope, ignore, preciseCollisionCheck);
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER) => World.GetCollisionFlags(collisionBox, placements, ignore, preciseCollisionCheck, side);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetCollisionFlags(collisionBox, placements, ignore, preciseCollisionCheck);
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER) => World.GetCollisionFlags(collisionBox, placements, out slope, ignore, preciseCollisionCheck, side);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetCollisionFlags(collisionBox, placements, out slope, ignore, preciseCollisionCheck);
 
         public CollisionFlags ComputedLandedState(MMXBox box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE) => World.ComputedLandedState(box, out slope, maskSize, ignore);
 

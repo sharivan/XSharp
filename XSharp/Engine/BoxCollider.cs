@@ -101,7 +101,7 @@ namespace MMX.Engine
                 if (!leftMaskComputed)
                 {
                     leftCollisionPlacements.Clear();
-                    leftMaskFlags = world.GetCollisionFlags(LeftCollider, leftCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.LEFT_WALL);
+                    leftMaskFlags = world.GetCollisionFlags(LeftCollider, leftCollisionPlacements, CollisionFlags.NONE, true);
                     leftMaskComputed = true;
                 }
 
@@ -118,7 +118,7 @@ namespace MMX.Engine
                 if (!upMaskComputed)
                 {
                     upCollisionPlacements.Clear();
-                    upMaskFlags = world.GetCollisionFlags(UpCollider, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                    upMaskFlags = world.GetCollisionFlags(UpCollider, upCollisionPlacements, CollisionFlags.NONE, true);
                     upMaskComputed = true;
                 }
 
@@ -135,7 +135,7 @@ namespace MMX.Engine
                 if (!rightMaskComputed)
                 {
                     rightCollisionPlacements.Clear();
-                    rightMaskFlags = world.GetCollisionFlags(RightCollider, rightCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.RIGHT_WALL);
+                    rightMaskFlags = world.GetCollisionFlags(RightCollider, rightCollisionPlacements, CollisionFlags.NONE, true);
                     rightMaskComputed = true;
                 }
 
@@ -158,7 +158,7 @@ namespace MMX.Engine
                 if (!innerMaskComputed)
                 {
                     innerCollisionPlacements.Clear();
-                    innerMaskFlags = world.GetCollisionFlags(box, innerCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.ALL);
+                    innerMaskFlags = world.GetCollisionFlags(box, innerCollisionPlacements, CollisionFlags.NONE, true);
                     innerMaskComputed = true;
                 }
 
@@ -247,10 +247,10 @@ namespace MMX.Engine
                     lastLandedSlope = landedSlope;
                 }
 
-                upMaskFlags = world.GetCollisionFlags(UpCollider, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
-                leftMaskFlags = world.GetCollisionFlags(LeftCollider, leftCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.LEFT_WALL);
-                rightMaskFlags = world.GetCollisionFlags(RightCollider, rightCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.RIGHT_WALL);
-                innerMaskFlags = world.GetCollisionFlags(box, innerCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.ALL);
+                upMaskFlags = world.GetCollisionFlags(UpCollider, upCollisionPlacements, CollisionFlags.NONE, true);
+                leftMaskFlags = world.GetCollisionFlags(LeftCollider, leftCollisionPlacements, CollisionFlags.NONE, true);
+                rightMaskFlags = world.GetCollisionFlags(RightCollider, rightCollisionPlacements, CollisionFlags.NONE, true);
+                innerMaskFlags = world.GetCollisionFlags(box, innerCollisionPlacements, CollisionFlags.NONE, true);
 
                 leftMaskComputed = true;
                 upMaskComputed = true;
@@ -290,7 +290,7 @@ namespace MMX.Engine
             if (dir.X > 0)
             {
                 newBox = masks.HasFlag(Direction.RIGHT)
-                    ? world.MoveUntilIntersect(RightCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE, CollisionSide.RIGHT_WALL)
+                    ? world.MoveUntilIntersect(RightCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE)
                     : RightCollider + dir;
 
                 delta1 = newBox.Origin - RightCollider.Origin;
@@ -298,7 +298,7 @@ namespace MMX.Engine
             else if (dir.X < 0)
             {
                 newBox = masks.HasFlag(Direction.LEFT)
-                    ? world.MoveUntilIntersect(LeftCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE, CollisionSide.LEFT_WALL)
+                    ? world.MoveUntilIntersect(LeftCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE)
                     : LeftCollider + dir;
 
                 delta1 = newBox.Origin - LeftCollider.Origin;
@@ -309,7 +309,7 @@ namespace MMX.Engine
             if (dir.Y > 0)
             {
                 newBox = masks.HasFlag(Direction.DOWN)
-                    ? world.MoveUntilIntersect(DownCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE, CollisionSide.FLOOR)
+                    ? world.MoveUntilIntersect(DownCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE)
                     : DownCollider + dir;
 
                 delta2 = newBox.Origin - DownCollider.Origin;
@@ -317,7 +317,7 @@ namespace MMX.Engine
             else if (dir.Y < 0)
             {
                 newBox = masks.HasFlag(Direction.UP)
-                    ? world.MoveUntilIntersect(UpCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE, CollisionSide.CEIL)
+                    ? world.MoveUntilIntersect(UpCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE)
                     : UpCollider + dir;
 
                 delta2 = newBox.Origin - UpCollider.Origin;

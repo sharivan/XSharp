@@ -157,7 +157,6 @@
     <Compile Include="Engine\CollisionPlacement.cs" />
     <Compile Include="Engine\CollisionFlags.cs" />
     <Compile Include="Engine\CollisionData.cs" />
-    <Compile Include="Engine\CollisionSide.cs" />
     <Compile Include="Engine\Consts.cs" />
     <Compile Include="Engine\Direction.cs" />
     <Compile Include="Engine\Entities\Enemies\Enemy.cs" />

@@ -38,9 +38,6 @@ namespace MMX.Engine.Entities
             get;
         }
 
-        /// <summary>
-        /// Posição deste objeto na lista de objetos do engine
-        /// </summary>
         public int Index
         {
             get;
@@ -91,9 +88,6 @@ namespace MMX.Engine.Entities
 
         public bool Alive => alive;
 
-        /// <summary>
-        /// Indica se este objeto foi marcado para remoção. Tal remoção só ocorrerá depois de serem processadas todas as interações físicas entre os elementos do jogo.
-        /// </summary>
         public bool MarkedToRemove => markedToRemove;
 
         public bool Respawnable => respawnable;
@@ -187,47 +181,42 @@ namespace MMX.Engine.Entities
 
         public virtual void OnFrame()
         {
-            // Se ele estiver marcado para remoção não há nada o que se fazer aqui
             if (!alive || markedToRemove)
                 return;
 
-            // Realiza o pré-pensamento do objeto. Nesta chamada verifica-se se deveremos continuar a processar as interações deste objeto com o jogo.
             if (!PreThink())
                 return;
 
-            Think(); // Realiza o pensamento do objeto, usado para implementação de inteligência artificial
+            Think();
 
-            PostThink(); // Realiza o pós-pensamento do objeto
+            PostThink();
 
             List<Entity> touching = Engine.partition.Query(HitBox, this, childs, BoxKind.HITBOX);
 
-            // Processa a lista global de objetos que anteriormente estavam tocando esta entidade no frame anterior
             int count = touchingEntities.Count;
             for (int i = 0; i < count; i++)
             {
-                // Se pra cada objeto desta lista
                 Entity obj = touchingEntities[i];
                 int index = touching.IndexOf(obj);
 
-                if (index == -1) // ele não estiver na lista de toques local (ou seja, não está mais tocando este objeto)
+                if (index == -1)
                 {
-                    touchingEntities.RemoveAt(i); // então remove-o da lista global
+                    touchingEntities.RemoveAt(i);
                     i--;
                     count--;
-                    OnEndTouch(obj); // e notifica que ele nao está mais tocando esta objeto
+                    OnEndTouch(obj);
                 }
-                else // Senão
+                else
                 {
-                    touching.RemoveAt(index); // Remove da lista local de toques
-                    OnTouching(obj); // Notifica que ele continua tocando este objeto
+                    touching.RemoveAt(index);
+                    OnTouching(obj);
                 }
             }
 
-            // Para cada objetos que sobrou na lista de toques local
             foreach (Entity obj in touching)
             {
-                touchingEntities.Add(obj); // Adiciona-o na lista global de toques
-                OnStartTouch(obj); // e notifique que ele começou a tocar este objeto
+                touchingEntities.Add(obj);
+                OnStartTouch(obj);
             }
         }
 
@@ -243,25 +232,12 @@ namespace MMX.Engine.Entities
         {
         }
 
-        /// <summary>
-        /// Evento interno que é chamado antes de ser processada as interações físicas deste objeto com os demais elementos do jogo.
-        /// Sobreponha este evento em suas casses descendentes se desejar controlar o comportamento deste objeto a cada frame do jogo.
-        /// </summary>
-        /// <returns>true se as interações físicas deverão ser processadas, false caso contrário</returns>
         protected virtual bool PreThink() => true;
 
-        /// <summary>
-        /// Evento interno que é chamado após as interações físicas deste objeto com os demais elementos do jogo forem feitas e sua posição e velocidade já tiver sido recalculadas.
-        /// Sobreponha este evento em suas classes descendentes para simular um quantum de pensamento de um objeto, muito útil para a implementação de inteligência artificial.
-        /// </summary>
         protected virtual void Think()
         {
         }
 
-        /// <summary>
-        /// Este evento interno é chamado após ocorrerem as interações físicas deste objeto com os demais elementos do jogo, realizada a chamada do evento Think() e feita a chamada do evento OnFrame() da classe Sprite.
-        /// Sobreponha este evento em suas classes descendentes se desejar realizar alguma operação final neste objeto antes do próximo tick do jogo.
-        /// </summary>
         protected virtual void PostThink()
         {
         }
@@ -290,12 +266,9 @@ namespace MMX.Engine.Entities
         {
             alive = true;
             markedToRemove = false;
-            Engine.addedEntities.Add(this); // Adiciona este sprite a lista de sprites do engine
+            Engine.addedEntities.Add(this);
         }
 
-        /// <summary>
-        /// Evento interno que é lançado sempre que o sprite for morto
-        /// </summary>
         protected virtual void OnDeath()
         {
         }

@@ -701,53 +701,17 @@ namespace MMX.Engine.World
             _ => RightTriangle.EMPTY,
         };
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER) => GetCollisionFlags(collisionBox, null, out RightTriangle slopeTriangle, ignore, preciseCollisionCheck, side);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox, null, out RightTriangle slopeTriangle, ignore, preciseCollisionCheck);
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER) => GetCollisionFlags(collisionBox, placements, out RightTriangle slopeTriangle, ignore, preciseCollisionCheck, side);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox, placements, out RightTriangle slopeTriangle, ignore, preciseCollisionCheck);
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER) => GetCollisionFlags(collisionBox, null, out slopeTriangle, ignore, preciseCollisionCheck, side);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox, null, out slopeTriangle, ignore, preciseCollisionCheck);
 
-        private bool HasIntersection(MMXBox box1, MMXBox box2, CollisionSide side) =>
-            /*if (side.HasFlag(CollisionSide.FLOOR) && (box1 & box2.TopSegment).Length > 0)
-return true;
+        private bool HasIntersection(MMXBox box1, MMXBox box2) => (box1 & box2).IsValid();
 
-if (side.HasFlag(CollisionSide.CEIL) && (box1 & box2.BottomSegment).Length > 0)
-return true;
+        private bool HasIntersection(MMXBox box, RightTriangle slope) => slope.HasIntersectionWith(box, true);
 
-if (side.HasFlag(CollisionSide.LEFT_WALL) && (box1 & box2.RightSegment).Length > 0)
-return true;
-
-if (side.HasFlag(CollisionSide.RIGHT_WALL) && (box1 & box2.LeftSegment).Length > 0)
-return true;
-
-if (side.HasFlag(CollisionSide.INNER) && (box1 & box2).Area > 0)
-return true;
-
-return false;*/
-
-            (box1 & box2).IsValid();
-
-        private bool HasIntersection(MMXBox box, RightTriangle slope, CollisionSide side) =>
-            /*if (side.HasFlag(CollisionSide.FLOOR) && (box & slope.HypotenuseLine).Length > 0)
-return true;
-
-if (side.HasFlag(CollisionSide.CEIL) && (box & slope.HCathetusLine).Length > 0)
-return true;
-
-if (side.HasFlag(CollisionSide.LEFT_WALL) && (box & (slope.HCathetusSign > 0 ? slope.VCathetusLine : slope.HypotenuseLine)).Length > 0)
-return true;
-
-if (side.HasFlag(CollisionSide.RIGHT_WALL) && (box & (slope.HCathetusSign < 0 ? slope.VCathetusLine : slope.HypotenuseLine)).Length > 0)
-return true;
-
-if (side.HasFlag(CollisionSide.INNER) && slope.HasIntersectionWith(box, true))
-return true;
-
-return false;*/
-
-            slope.HasIntersectionWith(box, true);
-
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true, CollisionSide side = CollisionSide.INNER)
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             slopeTriangle = RightTriangle.EMPTY;
 
@@ -798,7 +762,7 @@ return false;*/
                         if (collisionData == CollisionData.BACKGROUND || !(mapBox & collisionBox).IsValid())
                             continue;
 
-                        bool hasIntersection = HasIntersection(collisionBox, mapBox, side);
+                        bool hasIntersection = HasIntersection(collisionBox, mapBox);
                         if (IsSolidBlock(collisionData) && hasIntersection && !ignore.HasFlag(CollisionFlags.BLOCK))
                         {
                             if (collisionData == CollisionData.UNCLIMBABLE_SOLID)
@@ -844,7 +808,7 @@ return false;*/
                             RightTriangle st = MakeSlopeTriangle(collisionData) + v;
                             if (preciseCollisionCheck)
                             {
-                                if (HasIntersection(collisionBox, st, side))
+                                if (HasIntersection(collisionBox, st))
                                 {
                                     placements?.Add(new CollisionPlacement(this, CollisionFlags.BLOCK, row, col, map));
 
@@ -875,141 +839,6 @@ return false;*/
         private static readonly List<CollisionPlacement> bottomPlacementsDisplacedHalfLeft = new();
         private static readonly List<CollisionPlacement> bottomPlacementsDisplacedHalfRight = new();
 
-        /*public CollisionFlags ComputedLandedState(Box box, List<CollisionPlacement> placements, out RightTriangle slope, Fixed maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            slope = RightTriangle.EMPTY;
-
-            Box bottomMask = box.ClipTop(box.Height - maskSize);
-            Box bottomMaskDisplaced = bottomMask + maskSize * Vector.DOWN_VECTOR;
-
-            Box bottomMaskDisplacedHalfLeft = bottomMaskDisplaced.HalfLeft();
-            Box bottomMaskDisplacedHalfRight = bottomMaskDisplaced.HalfRight();
-
-            if (placements != null)
-            {
-                bottomPlacementsDisplacedHalfLeft.Clear();
-                bottomPlacementsDisplacedHalfRight.Clear();
-            }
-
-            CollisionFlags bottomLeftDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfLeft, bottomPlacementsDisplacedHalfLeft, out RightTriangle leftDisplaceSlope, ignore, true, CollisionSide.INNER);
-            CollisionFlags bottomRightDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfRight, bottomPlacementsDisplacedHalfRight, out RightTriangle rightDisplaceSlope, ignore, true, CollisionSide.INNER);
-
-            if (bottomLeftDisplacedCollisionFlags == CollisionFlags.NONE && bottomRightDisplacedCollisionFlags == CollisionFlags.NONE)
-                return CollisionFlags.NONE;
-
-            if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && !bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
-            {
-                if (bottomLeftDisplacedCollisionFlags == CollisionFlags.NONE && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
-                {
-                    if (placements != null)
-                        placements.AddRange(bottomPlacementsDisplacedHalfRight);
-
-                    return bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
-                }
-
-                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && bottomRightDisplacedCollisionFlags == CollisionFlags.NONE)
-                {
-                    if (placements != null)
-                        placements.AddRange(bottomPlacementsDisplacedHalfLeft);
-
-                    return bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER; ;
-                }
-
-                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
-                {
-                    if (placements != null)
-                    {
-                        placements.AddRange(bottomPlacementsDisplacedHalfLeft);
-                        placements.AddRange(bottomPlacementsDisplacedHalfRight);
-                    }
-
-                    return bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
-                }
-            }
-            else
-            {
-                Box bottomMaskHalfLeft = bottomMask.HalfLeft();
-                Box bottomMaskHalfRight = bottomMask.HalfRight();
-
-                CollisionFlags bottomLeftCollisionFlags = GetCollisionFlags(bottomMaskHalfLeft, out RightTriangle leftSlope, ignore, true, CollisionSide.INNER);
-                CollisionFlags bottomRightCollisionFlags = GetCollisionFlags(bottomMaskHalfRight, out RightTriangle rightSlope, ignore, true, CollisionSide.INNER);
-
-                if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
-                {
-                    if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK))
-                    {
-                        if (placements != null)
-                            placements.AddRange(bottomPlacementsDisplacedHalfLeft);
-
-                        return CollisionFlags.BLOCK;
-                    }
-
-                    if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER))
-                    {
-                        if (placements != null)
-                            placements.AddRange(bottomPlacementsDisplacedHalfLeft);
-
-                        return CollisionFlags.TOP_LADDER;
-                    }
-
-                    if (rightDisplaceSlope.HCathetusSign > 0)
-                    {
-                        if (placements != null)
-                            placements.AddRange(bottomPlacementsDisplacedHalfRight);
-
-                        slope = rightDisplaceSlope;
-                        return CollisionFlags.SLOPE;
-                    }
-
-                    return CollisionFlags.NONE;
-                }
-
-                if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && !bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
-                {
-                    if (bottomRightDisplacedCollisionFlags == CollisionFlags.BLOCK)
-                    {
-                        if (placements != null)
-                            placements.AddRange(bottomPlacementsDisplacedHalfRight);
-
-                        return CollisionFlags.BLOCK;
-                    }
-
-                    if (bottomRightDisplacedCollisionFlags == CollisionFlags.TOP_LADDER)
-                    {
-                        if (placements != null)
-                            placements.AddRange(bottomPlacementsDisplacedHalfRight);
-
-                        return CollisionFlags.TOP_LADDER;
-                    }
-
-                    if (leftDisplaceSlope.HCathetusSign < 0)
-                    {
-                        if (placements != null)
-                            placements.AddRange(bottomPlacementsDisplacedHalfLeft);
-
-                        slope = leftDisplaceSlope;
-                        return CollisionFlags.SLOPE;
-                    }
-
-                    return CollisionFlags.NONE;
-                }
-
-                if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
-                {
-                    if (placements != null)
-                    {
-                        placements.AddRange(bottomPlacementsDisplacedHalfLeft);
-                        placements.AddRange(bottomPlacementsDisplacedHalfRight);
-                    }
-
-                    slope = leftDisplaceSlope;
-                    return CollisionFlags.SLOPE;
-                }
-            }
-
-            return CollisionFlags.NONE;
-        }*/
-
         public CollisionFlags ComputedLandedState(MMXBox box, List<CollisionPlacement> placements, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
             slope = RightTriangle.EMPTY;
@@ -1026,8 +855,8 @@ return false;*/
                 bottomPlacementsDisplacedHalfRight.Clear();
             }
 
-            CollisionFlags bottomLeftDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfLeft, bottomPlacementsDisplacedHalfLeft, out RightTriangle leftDisplaceSlope, ignore, true, CollisionSide.INNER);
-            CollisionFlags bottomRightDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfRight, bottomPlacementsDisplacedHalfRight, out RightTriangle rightDisplaceSlope, ignore, true, CollisionSide.INNER);
+            CollisionFlags bottomLeftDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfLeft, bottomPlacementsDisplacedHalfLeft, out RightTriangle leftDisplaceSlope, ignore, true);
+            CollisionFlags bottomRightDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfRight, bottomPlacementsDisplacedHalfRight, out RightTriangle rightDisplaceSlope, ignore, true);
 
             if (!CanBlockTheMove(bottomLeftDisplacedCollisionFlags) && !CanBlockTheMove(bottomRightDisplacedCollisionFlags))
                 return CollisionFlags.NONE;
@@ -1065,8 +894,8 @@ return false;*/
                 MMXBox bottomMaskHalfLeft = bottomMask.HalfLeft();
                 MMXBox bottomMaskHalfRight = bottomMask.HalfRight();
 
-                CollisionFlags bottomLeftCollisionFlags = GetCollisionFlags(bottomMaskHalfLeft, out RightTriangle leftSlope, ignore, true, CollisionSide.INNER);
-                CollisionFlags bottomRightCollisionFlags = GetCollisionFlags(bottomMaskHalfRight, out RightTriangle rightSlope, ignore, true, CollisionSide.INNER);
+                CollisionFlags bottomLeftCollisionFlags = GetCollisionFlags(bottomMaskHalfLeft, out RightTriangle leftSlope, ignore, true);
+                CollisionFlags bottomRightCollisionFlags = GetCollisionFlags(bottomMaskHalfRight, out RightTriangle rightSlope, ignore, true);
 
                 if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
                 {
@@ -1223,69 +1052,20 @@ return false;*/
             return box;
         }
 
-        /*public Box MoveContactSolid(Box box, Vector dir, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveContactSolid(box, dir, out RightTriangle slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
+        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, CollisionFlags ignore = CollisionFlags.NONE) => MoveUntilIntersect(box, dir, null, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
 
-        public Box MoveContactSolid(Box box, Vector dir, Fixed maxDistance, Fixed maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveContactSolid(box, dir, out RightTriangle slope, maxDistance, maskSize, ignore);
-        }
-        public Box MoveContactSolid(Box box, Vector dir, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveContactSolid(box, dir, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
+        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE) => MoveUntilIntersect(box, dir, null, maxDistance, maskSize, ignore);
 
-        public Box MoveContactSolid(Box box, Vector dir, out RightTriangle slope, Fixed maxDistance, Fixed maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            slope = RightTriangle.EMPTY;
+        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE) => MoveUntilIntersect(box, dir, placements, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
 
-            Vector deltaDir = GetStepVector(dir);
-            Vector dx = deltaDir.XVector;
-            Vector dy = deltaDir.YVector;
-            Fixed step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs;
-            CollisionSide sideX = dir.X > 0 ? CollisionSide.RIGHT_WALL : dir.X < 0 ? CollisionSide.LEFT_WALL : CollisionSide.NONE;
-            for (Fixed distance = Fixed.ZERO; distance < maxDistance; distance += step, box += deltaDir)
-            {
-                if (GetCollisionFlags(box + dx, ignore, true, sideX) != CollisionFlags.NONE ||
-                    (dy.Y > 0 ? ComputedLandedState(box, out slope, maskSize, ignore) : GetCollisionFlags(box + dy, ignore, true, CollisionSide.CEIL)) != CollisionFlags.NONE)
-                    break;
-            }
-
-            return box;
-        }*/
-
-        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER) => MoveUntilIntersect(box, dir, null, QUERY_MAX_DISTANCE, MASK_SIZE, ignore, side);
-
-        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER) => MoveUntilIntersect(box, dir, null, maxDistance, maskSize, ignore, side);
-
-        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER) => MoveUntilIntersect(box, dir, placements, QUERY_MAX_DISTANCE, MASK_SIZE, ignore, side);
-
-        private CollisionSide GetCollisionSide(Vector dir)
-        {
-            CollisionSide result = CollisionSide.NONE;
-            if (dir.X > 0)
-                result |= CollisionSide.RIGHT_WALL;
-            else if (dir.X < 0)
-                result |= CollisionSide.LEFT_WALL;
-
-            if (dir.Y > 0)
-                result |= CollisionSide.FLOOR;
-            else if (dir.Y < 0)
-                result |= CollisionSide.CEIL;
-
-            return result;
-        }
-
-        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, List<CollisionPlacement> placements, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE, CollisionSide side = CollisionSide.INNER)
+        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, List<CollisionPlacement> placements, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
             Vector deltaDir = GetStepVector(dir);
-            FixedSingle step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs; // FixedSingle.Max(deltaDir.X.Abs, deltaDir.Y.Abs);
+            FixedSingle step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs;
             MMXBox lastBox = box;
             for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += step, box += deltaDir)
             {
-                if (CanBlockTheMove(GetCollisionFlags(box, placements, ignore, true, side)))
+                if (CanBlockTheMove(GetCollisionFlags(box, placements, ignore, true)))
                     break;
 
                 lastBox = box;
@@ -1305,21 +1085,17 @@ return false;*/
             FixedSingle x = dir.X;
             FixedSingle xm = x.Abs;
             FixedSingle y = dir.Y;
-            //FixedSingle ym = y.Abs;
-
-            //if (xm > ym)
-            //    return new Vector(x / ym * STEP_SIZE, y.Signal * STEP_SIZE);
 
             return new Vector(x.Signal * STEP_SIZE, y / xm * STEP_SIZE);
         }
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox + dir, ignore, preciseCollisionCheck, GetCollisionSide(dir));
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox + dir, ignore, preciseCollisionCheck);
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox + dir, out slopeTriangle, ignore, preciseCollisionCheck, GetCollisionSide(dir));
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox + dir, out slopeTriangle, ignore, preciseCollisionCheck);
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox + dir, placements, ignore, preciseCollisionCheck, GetCollisionSide(dir));
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox + dir, placements, ignore, preciseCollisionCheck);
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox + dir, placements, out slopeTriangle, ignore, preciseCollisionCheck, GetCollisionSide(dir));
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox + dir, placements, out slopeTriangle, ignore, preciseCollisionCheck);
 
         internal void Tessellate()
         {

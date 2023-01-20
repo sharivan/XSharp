@@ -33,7 +33,6 @@ namespace MMX.Engine.Entities
 
     public class Player : Sprite
     {
-        private int lives; // Quantidade de vidas.
         private bool inputLocked;
         private readonly Keys[] keyBuffer;
         protected bool death;
@@ -65,16 +64,7 @@ namespace MMX.Engine.Entities
 
         public bool CanWallJump => GetWallJumpDir() != Direction.NONE;
 
-        /// <summary>
-        /// Cria um novo Bomberman
-        /// </summary>
-        /// <param name="engine">Engine</param>
-        /// <param name="name">Nome do Bomberman</param>
-        /// <param name="box">Retângulo de desenho do Bomberman</param>
-        /// <param name="imageLists">Array de lista de imagens que serão usadas na animação do Bomberman</param>
         internal Player(GameEngine engine, string name, Vector origin, int spriteSheetIndex)
-        // Dado o retângulo de desenho do Bomberman, o retângulo de colisão será a metade deste enquanto o de dano será um pouco menor ainda.
-        // A posição do retângulo de colisão será aquela que ocupa a metade inferior do retângulo de desenho enquanto o retângulo de dano terá o mesmo centro que o retângulo de colisão.
         : base(engine, name, origin, spriteSheetIndex, true)
         {
             CheckCollisionWithWorld = false;
@@ -103,7 +93,7 @@ namespace MMX.Engine.Entities
             for (int i = 0; i < KEY_BUFFER_COUNT; i++)
                 writer.Write((int) keyBuffer[i]);
 
-            writer.Write(lives);
+            writer.Write(Lives);
             writer.Write(inputLocked);
             writer.Write(death);
 
@@ -135,7 +125,7 @@ namespace MMX.Engine.Entities
             for (int i = 0; i < count; i++)
                 keyBuffer[i] = (Keys) reader.ReadInt32();
 
-            lives = reader.ReadInt32();
+            Lives = reader.ReadInt32();
             inputLocked = reader.ReadBoolean();
             death = reader.ReadBoolean();
 
@@ -250,16 +240,10 @@ namespace MMX.Engine.Entities
             set => inputLocked = true;
         }
 
-        /// <summary>
-        /// Quantidade de vidas que o Bomberman possui.
-        /// </summary>
         public int Lives
         {
-            get => lives;
-            set
-            {
-                lives = value;
-            }
+            get;
+            set;
         }
 
         public Direction Direction { get; private set; } = Direction.RIGHT;
@@ -390,7 +374,7 @@ namespace MMX.Engine.Entities
                 else
                 {
                     vel = Vector.NULL_VECTOR;
-                    SetState(PlayerState.LAND, 0);                    
+                    SetState(PlayerState.LAND, 0);
                 }
             }
             else
@@ -405,7 +389,7 @@ namespace MMX.Engine.Entities
 
             spawing = true;
             vel = TERMINAL_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
-            lives = 2;
+            Lives = 2;
 
             ResetKeys();
 
@@ -420,17 +404,11 @@ namespace MMX.Engine.Entities
 
         protected override void OnDeath()
         {
-            // Toda vez que o bomberman morre,
-            Lives--; // decrementa sua quantidade de vidas.
+            Lives--;
 
-            Engine.PlaySound("TIME_UP"); // Toca o som de morte do Bomberman.
+            base.OnDeath();
 
-            base.OnDeath(); // Chama o método OnDeath() da classe base.
-
-            //if (lives > 0) // Se ele ainda possuir vidas,
-            //    engine.ScheduleRespawn(this); // respawna o Bomberman.
-            //else
-            Engine.OnGameOver(); // Senão, Game Over!
+            Engine.OnGameOver();
         }
 
         private void TryMoveLeft(bool standOnly = false)
@@ -742,7 +720,7 @@ namespace MMX.Engine.Entities
                                 {
                                     collider.Box = CollisionBox;
                                     Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
-                                    CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                                    CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true);
                                     if (flags.HasFlag(CollisionFlags.TOP_LADDER))
                                     {
                                         if (!TopLadderClimbing && !TopLadderDescending)
@@ -759,7 +737,7 @@ namespace MMX.Engine.Entities
                             {
                                 collider.Box = CollisionBox;
                                 Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
-                                CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                                CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true);
                                 if (flags.HasFlag(CollisionFlags.LADDER))
                                 {
                                     vel = Vector.NULL_VECTOR;
@@ -781,7 +759,7 @@ namespace MMX.Engine.Entities
                                 {
                                     collider.Box = CollisionBox;
                                     Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
-                                    CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true, CollisionSide.CEIL);
+                                    CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true);
                                     if (!flags.HasFlag(CollisionFlags.LADDER))
                                     {
                                         if (Landed)
@@ -1144,11 +1122,11 @@ namespace MMX.Engine.Entities
         public Direction GetWallJumpDir()
         {
             Box collisionBox = Collider.LeftCollider.ExtendLeftFixed(8).ClipTop(-2);
-            if (Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.LEFT_WALL).HasFlag(CollisionFlags.BLOCK))
+            if (Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true).HasFlag(CollisionFlags.BLOCK))
                 return Direction.LEFT;
 
             collisionBox = Collider.RightCollider.ExtendRightFixed(8).ClipTop(-2);
-            return Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true, CollisionSide.RIGHT_WALL).HasFlag(CollisionFlags.BLOCK)
+            return Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true).HasFlag(CollisionFlags.BLOCK)
                 ? Direction.RIGHT
                 : Direction.NONE;
         }
@@ -1169,35 +1147,6 @@ namespace MMX.Engine.Entities
                 SetState(PlayerState.GOING_UP, 0);
         }
 
-        /// <summary>
-        /// Obtém a primeira direção possível para um dado conjunto de teclas pressionadas.
-        /// </summary>
-        /// <param name="bits">Conjunto de bits que indicam quais teclas estão sendo pressionadas.</param>
-        /// <returns></returns>
-        private static Direction FirstDirection(int bits, bool leftRightOnly = true)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                int mask = 1 << i;
-
-                if ((bits & mask) != 0)
-                {
-                    Direction direction = Utils.IntToDirection(mask);
-                    if (leftRightOnly && direction != Direction.LEFT && direction != Direction.RIGHT)
-                        continue;
-
-                    return direction;
-                }
-            }
-
-            return Direction.NONE;
-        }
-
-        /// <summary>
-        /// Obtém o vetor unitário numa direção dada
-        /// </summary>
-        /// <param name="direction">Direção que o vetor derá ter</param>
-        /// <returns>Vetor unitário na direção de direction</returns>
         public static Vector GetVectorDir(Direction direction) => direction switch
         {
             Direction.LEFT => Vector.LEFT_VECTOR,
@@ -1207,10 +1156,6 @@ namespace MMX.Engine.Entities
             _ => Vector.NULL_VECTOR,
         };
 
-        /// <summary>
-        /// Atualiza o conjunto de teclas que estão sendo pressionadas.
-        /// </summary>
-        /// <param name="value">Conjunto de teclas pressionadas.</param>
         internal void PushKeys(Keys value)
         {
             if (spawing || death)
