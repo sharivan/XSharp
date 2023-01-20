@@ -20,8 +20,10 @@ using MMX.Math;
 using MMX.Geometry;
 using MMX.ROM;
 using MMX.Engine.World;
-using MMX.Engine.Weapons;
-using MMX.Engine.Enemies;
+using MMX.Engine.Entities;
+using MMX.Engine.Entities.Weapons;
+using MMX.Engine.Entities.Enemies;
+using MMX.Engine.Entities.Triggers;
 using MMX.Engine.Sound;
 
 using static MMX.Engine.Consts;
@@ -36,7 +38,7 @@ using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using ResultCode = SharpDX.Direct3D9.ResultCode;
 using DeviceType = SharpDX.Direct3D9.DeviceType;
 using SoundStream = MMX.Engine.Sound.SoundStream;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using Sprite = MMX.Engine.Entities.Sprite;
 
 namespace MMX.Engine
 {

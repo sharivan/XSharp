@@ -138,37 +138,43 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Engine\Animation.cs" />
-    <Compile Include="Engine\Checkpoint.cs" />
-    <Compile Include="Engine\Enemies\Driller.cs" />
+    <Compile Include="Engine\Entities\Checkpoint.cs" />
+    <Compile Include="Engine\Entities\Enemies\Driller.cs" />
+    <Compile Include="Engine\Entities\Triggers\CameraLockTrigger.cs" />
+    <Compile Include="Engine\Entities\Triggers\ChangeDynamicPropertyTrigger.cs" />
+    <Compile Include="Engine\Entities\Triggers\CheckpointSplitterTrigger.cs" />
+    <Compile Include="Engine\Entities\Triggers\CheckpointTriggerOnce.cs" />
+    <Compile Include="Engine\Entities\Triggers\SplitterTrigger.cs" />
+    <Compile Include="Engine\Entities\Triggers\Trigger.cs" />
     <Compile Include="Engine\Sound\SoundPlayer.cs" />
     <Compile Include="Engine\World\Block.cs" />
-    <Compile Include="Engine\Enemies\Bosses\Boss.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Boss.cs" />
     <Compile Include="Engine\BoxCollider.cs" />
-    <Compile Include="Engine\Weapons\BusterCharged.cs" />
-    <Compile Include="Engine\Weapons\BusterLemon.cs" />
-    <Compile Include="Engine\Weapons\BusterSemiCharged.cs" />
-    <Compile Include="Engine\Weapons\ChargingEffect.cs" />
+    <Compile Include="Engine\Entities\Weapons\BusterCharged.cs" />
+    <Compile Include="Engine\Entities\Weapons\BusterLemon.cs" />
+    <Compile Include="Engine\Entities\Weapons\BusterSemiCharged.cs" />
+    <Compile Include="Engine\Entities\Weapons\ChargingEffect.cs" />
     <Compile Include="Engine\CollisionPlacement.cs" />
     <Compile Include="Engine\CollisionFlags.cs" />
     <Compile Include="Engine\CollisionData.cs" />
     <Compile Include="Engine\CollisionSide.cs" />
     <Compile Include="Engine\Consts.cs" />
     <Compile Include="Engine\Direction.cs" />
-    <Compile Include="Engine\Enemies\Enemy.cs" />
+    <Compile Include="Engine\Entities\Enemies\Enemy.cs" />
     <Compile Include="Engine\World\MapPlacement.cs" />
-    <Compile Include="Engine\Triggers.cs" />
+    <Compile Include="Engine\Entities\Triggers\AbstractTriggeer.cs" />
     <Compile Include="Engine\GameEngine.cs" />
     <Compile Include="Engine\Keys.cs" />
     <Compile Include="Engine\World\Map.cs" />
-    <Compile Include="Engine\Weapons\Weapon.cs" />
+    <Compile Include="Engine\Entities\Weapons\Weapon.cs" />
     <Compile Include="Math\FMath.cs" />
     <Compile Include="Math\Geometry2D.cs" />
-    <Compile Include="Engine\Entity.cs" />
+    <Compile Include="Engine\Entities\Entity.cs" />
     <Compile Include="Engine\World\Partition.cs" />
-    <Compile Include="Engine\Player.cs" />
+    <Compile Include="Engine\Entities\Player.cs" />
     <Compile Include="Engine\World\Scene.cs" />
     <Compile Include="Engine\World\Camera.cs" />
-    <Compile Include="Engine\Sprite.cs" />
+    <Compile Include="Engine\Entities\Sprite.cs" />
     <Compile Include="Engine\SpriteSheet.cs" />
     <Compile Include="Engine\World\Tile.cs" />
     <Compile Include="Engine\World\Cell.cs" />
@@ -215,6 +221,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Engine\Entities\Armors\" />
+    <Folder Include="Engine\Entities\Logical\" />
+    <Folder Include="Engine\Entities\Misc\" />
     <Folder Include="resources\maps\" />
     <Folder Include="sstates\" />
   </ItemGroup>

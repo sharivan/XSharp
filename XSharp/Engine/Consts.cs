@@ -54,7 +54,9 @@ namespace MMX.Engine
 
         // Tempos são mensurados em frames, velocidades são mensuradas em pixels por frame enquanto acelerações em pixels por frame ao quadrado.
         public static readonly FixedSingle GRAVITY = 0.25;
+        public static readonly FixedSingle UNDERWATER_GRAVITY = 35 / 256.0;
         public static readonly FixedSingle TERMINAL_DOWNWARD_SPEED = 5.75;
+        public static readonly FixedSingle UNDERWATER_TERMINAL_DOWNWARD_SPEED = 805 / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_JUMP = (1363 + 0 * 64) / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = (1417 + 1 * 64) / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2 = (1505 + 1 * 64) / 256.0;

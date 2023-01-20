@@ -17,10 +17,13 @@ namespace MMX.Engine
         private CollisionFlags leftMaskFlags;
         private CollisionFlags upMaskFlags;
         private CollisionFlags rightMaskFlags;
+        private CollisionFlags innerMaskFlags;
+
         private readonly List<CollisionPlacement> leftCollisionPlacements;
         private readonly List<CollisionPlacement> upCollisionPlacements;
         private readonly List<CollisionPlacement> rightCollisionPlacements;
         private readonly List<CollisionPlacement> downCollisionPlacements;
+        private readonly List<CollisionPlacement> innerCollisionPlacements;
 
         private RightTriangle landedSlope;
 
@@ -30,6 +33,7 @@ namespace MMX.Engine
         private bool leftMaskComputed;
         private bool upMaskComputed;
         private bool rightMaskComputed;
+        private bool innerMaskComputed;
 
         public MMXWorld World
         {
@@ -97,7 +101,7 @@ namespace MMX.Engine
                 if (!leftMaskComputed)
                 {
                     leftCollisionPlacements.Clear();
-                    leftMaskFlags = world.GetCollisionFlags(LeftCollider, leftCollisionPlacements, CollisionFlags.NONE,true, CollisionSide.LEFT_WALL);
+                    leftMaskFlags = world.GetCollisionFlags(LeftCollider, leftCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.LEFT_WALL);
                     leftMaskComputed = true;
                 }
 
@@ -141,8 +145,25 @@ namespace MMX.Engine
 
         public bool Landed => LandedOnBlock || LandedOnSlope || LandedOnTopLadder;
 
-        public CollisionFlags DownMaskFlags { get;
+        public CollisionFlags DownMaskFlags
+        {
+            get;
             private set;
+        }
+
+        public CollisionFlags InnerMaskFlags
+        {
+            get
+            {
+                if (!innerMaskComputed)
+                {
+                    innerCollisionPlacements.Clear();
+                    innerMaskFlags = world.GetCollisionFlags(box, innerCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.ALL);
+                    innerMaskComputed = true;
+                }
+
+                return innerMaskFlags;
+            }
         }
 
         public bool LandedOnBlock => DownMaskFlags == CollisionFlags.BLOCK;
@@ -152,6 +173,10 @@ namespace MMX.Engine
         public bool LandedOnTopLadder => DownMaskFlags == CollisionFlags.TOP_LADDER;
 
         public RightTriangle LandedSlope => landedSlope;
+
+        public bool Underwater => (innerMaskFlags & CollisionFlags.WATER) != 0;
+
+        public bool TouchingWaterSurface => (innerMaskFlags & CollisionFlags.WATER_SURFACE) != 0;
 
         public BoxCollider(Box box) :
             this(null, box, MASK_SIZE)
@@ -178,6 +203,7 @@ namespace MMX.Engine
             upCollisionPlacements = new List<CollisionPlacement>();
             rightCollisionPlacements = new List<CollisionPlacement>();
             downCollisionPlacements = new List<CollisionPlacement>();
+            innerCollisionPlacements = new List<CollisionPlacement>();
 
             UpdateColliders();
         }
@@ -209,6 +235,7 @@ namespace MMX.Engine
             upCollisionPlacements.Clear();
             rightCollisionPlacements.Clear();
             downCollisionPlacements.Clear();
+            innerCollisionPlacements.Clear();
 
             if (world != null)
             {
@@ -219,34 +246,30 @@ namespace MMX.Engine
                     wasLandedOnSlope = true;
                     lastLandedSlope = landedSlope;
                 }
-                /*else if (world.GetCollisionFlags(downCollider, out RightTriangle slope, CollisionFlags.NONE, true, CollisionSide.FLOOR).HasFlag(CollisionFlags.SLOPE))
-                    ClipFromSlope(slope);
-                else if (wasLandedOnSlope && downMaskFlags == CollisionFlags.NONE)
-                {
-                    ClipFromSlope(lastLandedSlope);
-                }
-                else
-                    wasLandedOnSlope = false;*/
 
                 upMaskFlags = world.GetCollisionFlags(UpCollider, upCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.CEIL);
                 leftMaskFlags = world.GetCollisionFlags(LeftCollider, leftCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.LEFT_WALL);
                 rightMaskFlags = world.GetCollisionFlags(RightCollider, rightCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.RIGHT_WALL);
+                innerMaskFlags = world.GetCollisionFlags(box, innerCollisionPlacements, CollisionFlags.NONE, true, CollisionSide.ALL);
 
                 leftMaskComputed = true;
                 upMaskComputed = true;
                 rightMaskComputed = true;
+                innerMaskComputed = true;
             }
             else
             {
                 leftMaskComputed = true;
                 upMaskComputed = true;
                 rightMaskComputed = true;
+                innerMaskComputed = true;
                 wasLandedOnSlope = false;
 
                 leftMaskFlags = CollisionFlags.NONE;
                 upMaskFlags = CollisionFlags.NONE;
                 rightMaskFlags = CollisionFlags.NONE;
                 DownMaskFlags = CollisionFlags.NONE;
+                innerMaskFlags = CollisionFlags.NONE;
             }
         }
 
@@ -267,7 +290,7 @@ namespace MMX.Engine
             if (dir.X > 0)
             {
                 newBox = masks.HasFlag(Direction.RIGHT)
-                    ? world.MoveUntilIntersect(RightCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER, CollisionSide.RIGHT_WALL)
+                    ? world.MoveUntilIntersect(RightCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE, CollisionSide.RIGHT_WALL)
                     : RightCollider + dir;
 
                 delta1 = newBox.Origin - RightCollider.Origin;
@@ -275,7 +298,7 @@ namespace MMX.Engine
             else if (dir.X < 0)
             {
                 newBox = masks.HasFlag(Direction.LEFT)
-                    ? world.MoveUntilIntersect(LeftCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER, CollisionSide.LEFT_WALL)
+                    ? world.MoveUntilIntersect(LeftCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE, CollisionSide.LEFT_WALL)
                     : LeftCollider + dir;
 
                 delta1 = newBox.Origin - LeftCollider.Origin;
@@ -286,7 +309,7 @@ namespace MMX.Engine
             if (dir.Y > 0)
             {
                 newBox = masks.HasFlag(Direction.DOWN)
-                    ? world.MoveUntilIntersect(DownCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER, CollisionSide.FLOOR)
+                    ? world.MoveUntilIntersect(DownCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE, CollisionSide.FLOOR)
                     : DownCollider + dir;
 
                 delta2 = newBox.Origin - DownCollider.Origin;
@@ -294,7 +317,7 @@ namespace MMX.Engine
             else if (dir.Y < 0)
             {
                 newBox = masks.HasFlag(Direction.UP)
-                    ? world.MoveUntilIntersect(UpCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER, CollisionSide.CEIL)
+                    ? world.MoveUntilIntersect(UpCollider, dir, maxDistance, maskSize, ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE, CollisionSide.CEIL)
                     : UpCollider + dir;
 
                 delta2 = newBox.Origin - UpCollider.Origin;

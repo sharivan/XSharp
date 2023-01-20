@@ -416,7 +416,7 @@ namespace MMX.Geometry
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>Produto escalar entre os dois vetores</returns>
-        public static FixedSingle operator *(Vector vec1, Vector vec2) => vec1.X * vec2.X + vec1.Y * vec2.Y;
+        public static FixedDouble operator *(Vector vec1, Vector vec2) => (FixedDouble) vec1.X * (FixedDouble) vec2.X + (FixedDouble) vec1.Y * (FixedDouble) vec2.Y;
 
         /// <summary>
         /// Igualdade entre vetores

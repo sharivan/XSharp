@@ -2,10 +2,11 @@
 
 using SharpDX;
 using SharpDX.Direct3D9;
-using SharpDX.Mathematics.Interop;
+
 using MMX.Math;
 
 using MMXBox = MMX.Geometry.Box;
+using Sprite = MMX.Engine.Entities.Sprite;
 
 namespace MMX.Engine
 {

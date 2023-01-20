@@ -3,6 +3,8 @@
 using MMX.Geometry;
 using MMX.Math;
 
+using MMX.Engine.Entities;
+
 namespace MMX.Engine.World
 {
     /// <summary>

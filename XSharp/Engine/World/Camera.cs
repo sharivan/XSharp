@@ -1,6 +1,8 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using System.Security.Cryptography;
+﻿using MMX.Math;
+using MMX.Geometry;
+
+using MMX.Engine.Entities;
+
 using static MMX.Engine.Consts;
 
 namespace MMX.Engine.World
