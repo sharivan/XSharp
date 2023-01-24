@@ -950,8 +950,16 @@ namespace MMX.Engine.Entities
                         if (wallJumpFrameCounter > WALL_JUMP_DURATION)
                         {
                             WallJumping = false;
-                            jumping = false;
-                            Velocity = new Vector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, PressingJump && !Landed && !WallSliding && Velocity.Y < 0 ? Velocity.Y : 0);
+                            FixedSingle vy;
+                            if (!PressingJump)
+                            {
+                                jumping = false;
+                                vy = !Landed && !WallSliding && Velocity.Y < 0 ? 0 : Velocity.Y;
+                            }
+                            else
+                                vy = Velocity.Y;
+
+                            Velocity = new Vector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, vy);
                             SetState(PlayerState.GOING_UP, 0);
                         }
                         else if (wallJumpFrameCounter == 7)
