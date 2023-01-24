@@ -355,16 +355,18 @@ namespace MMX.Math
             return Equals(interval);
         }
 
-        private bool CheckMin(FixedSingle element) => IsClosedLeft ? Min <= element : Min < element;
+        private bool CheckMin(FixedSingle element, FixedSingle epslon) => IsClosedLeft ? Min + epslon <= element : Min + epslon < element;
 
-        private bool CheckMax(FixedSingle element) => IsClosedRight ? element <= Max : element < Max;
+        private bool CheckMax(FixedSingle element, FixedSingle epslon) => IsClosedRight ? element <= Max - epslon : element < Max - epslon;
 
         public bool Equals(Interval other) => IsEmpty && other.IsEmpty
                 || Min == other.Min && IsClosedLeft == other.IsClosedLeft && Max == other.Max && IsClosedRight == other.IsClosedRight;
 
-        public bool Contains(FixedSingle element, bool includeBounds = true) => !includeBounds
-                ? Min < element && element < Max
-                : CheckMin(element) && CheckMax(element);
+        public bool Contains(FixedSingle element, FixedSingle epslon, bool includeBounds = true) => !includeBounds
+                ? Min + epslon < element && element < Max - epslon
+                : CheckMin(element, epslon) && CheckMax(element, epslon);
+
+        public bool Contains(FixedSingle element, bool includeBounds = true) => Contains(element, 0, includeBounds);
 
         public bool Contains(Interval interval, bool includeBounds = true) => interval.IsEmpty
                 ? includeBounds || !IsEmpty

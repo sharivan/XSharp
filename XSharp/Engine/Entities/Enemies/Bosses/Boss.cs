@@ -1,7 +1,5 @@
 ﻿using MMX.Geometry;
 
-using MMX.Engine.Entities.Enemies;
-
 namespace MMX.Engine.Entities.Enemies.Bosses
 {
     public abstract class Boss : Enemy

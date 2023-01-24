@@ -438,7 +438,6 @@
     <Content Include="resources\sounds\mmx\97 - MMX - Robot Suit %281%29.wav" />
     <Content Include="resources\sounds\mmx\98 - MMX - Robot Suit %282%29.wav" />
     <Content Include="resources\sounds\mmx\99 - MMX - Robot Suit %283%29.wav" />
-    <Content Include="VertexShader.hlsl" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

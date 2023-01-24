@@ -26,7 +26,8 @@ namespace MMX.Engine.Entities
 
         protected BoxCollider collider;
 
-        protected Vector vel;
+        private Vector vel;
+        private Vector lastVel;
         protected bool moving;
         protected bool isStatic;
         protected bool breakable;
@@ -95,6 +96,7 @@ namespace MMX.Engine.Entities
             CheckCollisionWithWorld = reader.ReadBoolean();
 
             vel = new Vector(reader);
+            lastVel = new Vector(reader);
             NoClip = reader.ReadBoolean();
             moving = reader.ReadBoolean();
             isStatic = reader.ReadBoolean();
@@ -131,6 +133,7 @@ namespace MMX.Engine.Entities
             writer.Write(CheckCollisionWithWorld);
 
             vel.Write(writer);
+            lastVel.Write(writer);
             writer.Write(NoClip);
             writer.Write(moving);
             writer.Write(isStatic);
@@ -203,8 +206,14 @@ namespace MMX.Engine.Entities
         public Vector Velocity
         {
             get => vel;
-            set => vel = value;
+            set
+            {
+                lastVel = vel;
+                vel = value;
+            }
         }
+
+        public Vector LastVelocity => lastVel;
 
         public BoxCollider Collider
         {
@@ -237,7 +246,7 @@ namespace MMX.Engine.Entities
 
         public bool BlockedRight => !NoClip && collider.BlockedRight;
 
-        public bool Landed => !NoClip && collider.Landed && vel.Y >= 0;
+        public bool Landed => !NoClip && collider.Landed && Velocity.Y >= 0;
 
         public bool LandedOnSlope => !NoClip && collider.LandedOnSlope;
 
@@ -323,7 +332,7 @@ namespace MMX.Engine.Entities
                 }
             }
 
-            vel = Vector.NULL_VECTOR;
+            Velocity = Vector.NULL_VECTOR;
             NoClip = false;
             moving = false;
             isStatic = false;
@@ -357,7 +366,7 @@ namespace MMX.Engine.Entities
 
             MMXBox intersection = region;
 
-            if (!intersection.IsValid())
+            if (!intersection.IsValid(EPSLON))
                 return;
 
             if (!victim.invincible && victim.OnTakeDamage(this, region, ref damage))
@@ -552,11 +561,28 @@ namespace MMX.Engine.Entities
             FixedSingle gravity = Gravity;
             if (!skipPhysics)
             {
-                if (vel.IsNull && moving)
+                if (!NoClip && !isStatic)
+                {
+                    if (gravity != 0)
+                    {
+                        Velocity += gravity * Vector.DOWN_VECTOR;
+
+                        FixedSingle terminalDownwardSpeed = TerminalDownwardSpeed;
+                        if (Velocity.Y > terminalDownwardSpeed)
+                            Velocity = new Vector(Velocity.X, terminalDownwardSpeed);
+                    }
+
+                    if (CheckCollisionWithWorld && collider.Landed && Velocity.Y > 0)
+                        Velocity = Velocity.XVector;
+                }
+
+                if (!Landed && Velocity.Y > gravity && Velocity.Y < 2 * gravity)
+                    Velocity = new Vector(Velocity.X, gravity);
+
+                if (Velocity.IsNull && moving)
                     StopMoving();
 
-                Vector delta = !isStatic && !vel.IsNull ? vel : Vector.NULL_VECTOR;
-
+                Vector delta = !isStatic && !Velocity.IsNull ? Velocity : Vector.NULL_VECTOR;
                 if (!delta.IsNull)
                 {
                     if (!NoClip && CheckCollisionWithWorld)
@@ -656,25 +682,7 @@ namespace MMX.Engine.Entities
                 {
                     StopMoving();
                 }
-
-                if (!NoClip && !isStatic)
-                {
-                    if (gravity != 0)
-                    {
-                        vel += gravity * Vector.DOWN_VECTOR;
-
-                        FixedSingle terminalDownwardSpeed = TerminalDownwardSpeed;
-                        if (vel.Y > terminalDownwardSpeed)
-                            vel = new Vector(vel.X, terminalDownwardSpeed);
-                    }
-
-                    if (CheckCollisionWithWorld && collider.Landed && vel.Y > 0)
-                        vel = vel.XVector;
-                }
             }
-
-            if (!Landed && vel.Y > gravity && vel.Y < 2 * gravity)
-                vel = new Vector(vel.X, gravity);
 
             if (CheckCollisionWithWorld)
             {

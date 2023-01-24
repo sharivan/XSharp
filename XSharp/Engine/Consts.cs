@@ -22,6 +22,7 @@ namespace MMX.Engine
         public const int STEP_BIT_COUNT = 8;
         public const int STEP_COUNT = 1 << STEP_BIT_COUNT;
         public static readonly FixedSingle STEP_SIZE = FixedSingle.FromRawValue(1 << (FixedSingle.FIXED_BITS_COUNT - STEP_BIT_COUNT));
+        public static readonly FixedSingle EPSLON = 0;
         public static readonly FixedSingle MASK_SIZE = STEP_SIZE;
         public static readonly FixedSingle QUERY_MAX_DISTANCE = FixedSingle.ONE;
         public static readonly Vector STEP_LEFT_VECTOR = STEP_SIZE * Vector.LEFT_VECTOR;
@@ -49,9 +50,9 @@ namespace MMX.Engine
 
         // Times are measured in frames, velocity in pixel per frames and accelerations in pixels per frame squared.
         public static readonly FixedSingle GRAVITY = 0.25;
-        public static readonly FixedSingle UNDERWATER_GRAVITY = 35 / 256.0;
+        public static readonly FixedSingle UNDERWATER_GRAVITY = 33 / 256.0;
         public static readonly FixedSingle TERMINAL_DOWNWARD_SPEED = 5.75;
-        public static readonly FixedSingle UNDERWATER_TERMINAL_DOWNWARD_SPEED = 805 / 256.0;
+        public static readonly FixedSingle UNDERWATER_TERMINAL_DOWNWARD_SPEED = 737 / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_JUMP = (1363 + 0 * 64) / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = (1417 + 1 * 64) / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2 = (1505 + 1 * 64) / 256.0;
@@ -62,13 +63,17 @@ namespace MMX.Engine
         public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_1 = 408 / 256.0;
         public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_2 = 456 / 256.0;
         public static readonly FixedSingle DASH_SPEED = 885 / 256.0;
+        public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_X = -138 / 256.0;
+        public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_Y = -512 / 256.0;
+        public static readonly Vector INITIAL_DAMAGE_RECOIL_SPEED = (INITIAL_DAMAGE_RECOIL_SPEED_X, INITIAL_DAMAGE_RECOIL_SPEED_Y);
         public const int DASH_DURATION = 30;
-        public const int WALL_JUMP_DURATION = 9;
+        public const int WALL_JUMP_DURATION = 14;
         public const int SHOT_DURATION = 16;
+        public const int DAMAGE_RECOIL_DURATION = 32;
         public static readonly FixedSingle RIDE_ARMOR_DASH_SPEED = 4;
         public static readonly FixedSingle CHARGED_SPEED_BURNER_SPEED = 4.5;
         public static readonly FixedSingle RIDE_ARMOD_LUNGING_SPEED = 6;
-        public static readonly FixedSingle MOTORBIKE_TERMINAL_SPEED = 6;
+        public static readonly FixedSingle RIDE_CHASER_TERMINAL_SPEED = 6;
         public static readonly FixedSingle FALL_ANIMATION_MINIMAL_SPEED = 1.25;
         public static readonly FixedSingle NO_CLIP_SPEED = 6;
         public static readonly FixedSingle NO_CLIP_SPEED_BOOST = 2.5 * NO_CLIP_SPEED;
@@ -95,9 +100,15 @@ namespace MMX.Engine
         public static readonly Box CHARGING_EFFECT_HITBOX = (Vector.NULL_VECTOR, (-CHARGING_EFFECT_HITBOX_SIZE / 2, -CHARGING_EFFECT_HITBOX_SIZE / 2), (CHARGING_EFFECT_HITBOX_SIZE / 2, CHARGING_EFFECT_HITBOX_SIZE / 2));
 
         // X
+        public const int HITBOX_OFFSET_X = 0;
+        public const int HITBOX_OFFSET_Y = -1;
+        public static readonly Vector HITBOX_OFFSET = (HITBOX_OFFSET_X, HITBOX_OFFSET_Y);
         public const int HITBOX_WIDTH = 12;
         public const int HITBOX_HEIGHT = 28;
         public static readonly Vector HITBOX_SIZE = (HITBOX_WIDTH, HITBOX_HEIGHT);
+        public const int DASHING_HITBOX_OFFSET_X = 0;
+        public const int DASHING_HITBOX_OFFSET_Y = 5;
+        public static readonly Vector DASHING_HITBOX_OFFSET = (DASHING_HITBOX_OFFSET_X, DASHING_HITBOX_OFFSET_Y);
         public const int DASHING_HITBOX_WIDTH = 12;
         public const int DASHING_HITBOX_HEIGHT = 16;
         public static readonly Vector DASHING_HITBOX_SIZE = (DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT);

@@ -621,6 +621,7 @@ namespace MMX.Engine.World
         public static MMXBox GetMapBoundingBox(Cell pos) => new(pos.Col * MAP_SIZE, pos.Row * MAP_SIZE, MAP_SIZE, MAP_SIZE);
 
         public static MMXBox GetBlockBoundingBox(Cell pos) => new(pos.Col * BLOCK_SIZE, pos.Row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+
         public static MMXBox GetSceneBoundingBox(Cell pos) => new(pos.Col * SCENE_SIZE, pos.Row * SCENE_SIZE, SCENE_SIZE, SCENE_SIZE);
 
         public static MMXBox GetTileBoundingBoxFromPos(Vector pos) => GetTileBoundingBox(GetTileCellFromPos(pos));
@@ -707,9 +708,9 @@ namespace MMX.Engine.World
 
         public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => GetCollisionFlags(collisionBox, null, out slopeTriangle, ignore, preciseCollisionCheck);
 
-        private bool HasIntersection(MMXBox box1, MMXBox box2) => (box1 & box2).IsValid();
+        public static bool HasIntersection(MMXBox box1, MMXBox box2) => (box1 & box2).IsValid(EPSLON);
 
-        private bool HasIntersection(MMXBox box, RightTriangle slope) => slope.HasIntersectionWith(box, true);
+        public static bool HasIntersection(MMXBox box, RightTriangle slope) => slope.HasIntersectionWith(box, EPSLON, true);
 
         public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
@@ -759,7 +760,7 @@ namespace MMX.Engine.World
                         MMXBox mapBox = GetMapBoundingBox(row, col);
                         CollisionData collisionData = map.CollisionData;
 
-                        if (collisionData == CollisionData.BACKGROUND || !(mapBox & collisionBox).IsValid())
+                        if (collisionData == CollisionData.BACKGROUND || !HasIntersection(mapBox, collisionBox))
                             continue;
 
                         bool hasIntersection = HasIntersection(collisionBox, mapBox);
@@ -836,8 +837,8 @@ namespace MMX.Engine.World
 
         public CollisionFlags ComputedLandedState(MMXBox box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE) => ComputedLandedState(box, null, out slope, maskSize, ignore);
 
-        private static readonly List<CollisionPlacement> bottomPlacementsDisplacedHalfLeft = new();
-        private static readonly List<CollisionPlacement> bottomPlacementsDisplacedHalfRight = new();
+        private readonly List<CollisionPlacement> bottomPlacementsDisplacedHalfLeft = new();
+        private readonly List<CollisionPlacement> bottomPlacementsDisplacedHalfRight = new();
 
         public CollisionFlags ComputedLandedState(MMXBox box, List<CollisionPlacement> placements, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {

@@ -39,14 +39,13 @@ namespace MMX.Engine.Entities
 
         private readonly int[,,] animationIndices;
 
-        private bool jumped;
+        private bool jumping;
         private bool jumpReleased;
         private bool dashReleased;
 
         private FixedSingle baseHSpeed;
         private int dashFrameCounter;
         private bool spawing;
-        private bool wallJumpStarted;
         private int wallJumpFrameCounter;
 
         private bool wasBlockedLeft;
@@ -97,14 +96,14 @@ namespace MMX.Engine.Entities
             writer.Write(inputLocked);
             writer.Write(death);
 
-            writer.Write(jumped);
+            writer.Write(jumping);
             writer.Write(jumpReleased);
             writer.Write(dashReleased);
 
             baseHSpeed.Write(writer);
             writer.Write(dashFrameCounter);
             writer.Write(spawing);
-            writer.Write(wallJumpStarted);
+            writer.Write(WallJumping);
             writer.Write(wallJumpFrameCounter);
 
             writer.Write(wasBlockedLeft);
@@ -129,14 +128,14 @@ namespace MMX.Engine.Entities
             inputLocked = reader.ReadBoolean();
             death = reader.ReadBoolean();
 
-            jumped = reader.ReadBoolean();
+            jumping = reader.ReadBoolean();
             jumpReleased = reader.ReadBoolean();
             dashReleased = reader.ReadBoolean();
 
             baseHSpeed = new FixedSingle(reader);
             dashFrameCounter = reader.ReadInt32();
             spawing = reader.ReadBoolean();
-            wallJumpStarted = reader.ReadBoolean();
+            WallJumping = reader.ReadBoolean();
             wallJumpFrameCounter = reader.ReadInt32();
 
             wasBlockedLeft = reader.ReadBoolean();
@@ -149,11 +148,11 @@ namespace MMX.Engine.Entities
             shotFrameCounter = reader.ReadInt32();
         }
 
-        protected override Box GetCollisionBox() => ((-(HITBOX_WIDTH - 2) * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, (HITBOX_WIDTH - 2, HITBOX_HEIGHT + 4));
+        protected override Box GetCollisionBox() => ((-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, (HITBOX_WIDTH, HITBOX_HEIGHT + 4));
 
         protected override Box GetHitBox() => new Box(Dashing
-                ? (Vector.NULL_VECTOR, (-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT * 0.5), (DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT * 0.5))
-                : (Vector.NULL_VECTOR, (-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT * 0.5), (HITBOX_WIDTH * 0.5, HITBOX_HEIGHT * 0.5))) + GetVector(VectorKind.PLAYER_ORIGIN);
+                ? (DASHING_HITBOX_OFFSET, (-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT * 0.5), (DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT * 0.5))
+                : (HITBOX_OFFSET, (-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT * 0.5), (HITBOX_WIDTH * 0.5, HITBOX_HEIGHT * 0.5))) + GetVector(VectorKind.PLAYER_ORIGIN);
 
         public bool Shooting
         {
@@ -177,7 +176,11 @@ namespace MMX.Engine.Entities
 
         public bool WallSliding => state == PlayerState.WALL_SLIDE;
 
-        public bool WallJumping => state == PlayerState.WALL_JUMP;
+        public bool WallJumping
+        {
+            get;
+            private set;
+        }
 
         public bool WallJumpingToLeft => state == PlayerState.WALL_JUMP && stateDirection == Direction.LEFT;
 
@@ -221,11 +224,11 @@ namespace MMX.Engine.Entities
 
         public bool OnLadderOnly => state == PlayerState.LADDER;
 
-        public bool LadderMoving => vel.Y != 0 && OnLadder;
+        public bool LadderMoving => Velocity.Y != 0 && OnLadder;
 
-        public bool LadderClimbing => vel.Y < 0 && OnLadder;
+        public bool LadderClimbing => Velocity.Y < 0 && OnLadder;
 
-        public bool LadderDescending => vel.Y > 0 && OnLadder;
+        public bool LadderDescending => Velocity.Y > 0 && OnLadder;
 
         public Keys Keys => GetKeys(0);
 
@@ -326,23 +329,25 @@ namespace MMX.Engine.Entities
 
         protected override void OnBlockedUp()
         {
-            if (WallJumping && wallJumpFrameCounter >= 4)
+            if (WallJumping && wallJumpFrameCounter >= 7)
             {
-                vel = Vector.NULL_VECTOR;
-                wallJumpStarted = false;
+                Velocity = Vector.NULL_VECTOR;
+                WallJumping = false;
+                jumping = false;
                 SetAirStateAnimation(true);
             }
             else
-                vel = vel.XVector;
+                Velocity = Velocity.XVector;
         }
 
         protected override void OnBlockedLeft()
         {
             if (Landed)
                 SetState(PlayerState.STAND, 0);
-            else if (WallJumping && wallJumpFrameCounter >= 4)
+            else if (WallJumping && wallJumpFrameCounter >= 7)
             {
-                wallJumpStarted = false;
+                WallJumping = false;
+                jumping = false;
                 SetAirStateAnimation(true);
             }
         }
@@ -351,16 +356,17 @@ namespace MMX.Engine.Entities
         {
             if (Landed)
                 SetState(PlayerState.STAND, 0);
-            else if (WallJumping && wallJumpFrameCounter >= 4)
+            else if (WallJumping && wallJumpFrameCounter >= 7)
             {
-                wallJumpStarted = false;
+                WallJumping = false;
+                jumping = false;
                 SetAirStateAnimation(true);
             }
         }
 
         protected override void OnLanded()
         {
-            wallJumpStarted = false;
+            WallJumping = false;
             baseHSpeed = WALKING_SPEED;
 
             if (!spawing)
@@ -373,7 +379,7 @@ namespace MMX.Engine.Entities
                     TryMoveRight();
                 else
                 {
-                    vel = Vector.NULL_VECTOR;
+                    Velocity = Vector.NULL_VECTOR;
                     SetState(PlayerState.LAND, 0);
                 }
             }
@@ -388,7 +394,7 @@ namespace MMX.Engine.Entities
             base.Spawn();
 
             spawing = true;
-            vel = TERMINAL_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
+            Velocity = TERMINAL_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
             Lives = 2;
 
             ResetKeys();
@@ -413,7 +419,7 @@ namespace MMX.Engine.Entities
 
         private void TryMoveLeft(bool standOnly = false)
         {
-            vel = !standOnly && !BlockedLeft ? new Vector(-baseHSpeed, vel.Y) : new Vector(0, vel.Y);
+            Velocity = !standOnly && !BlockedLeft ? new Vector(-baseHSpeed, Velocity.Y) : new Vector(0, Velocity.Y);
 
             if (Landed)
             {
@@ -445,7 +451,7 @@ namespace MMX.Engine.Entities
                     {
                         if (!WallSliding)
                         {
-                            vel = Vector.NULL_VECTOR;
+                            Velocity = Vector.NULL_VECTOR;
                             SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
                             PlaySound(6);
                         }
@@ -460,7 +466,7 @@ namespace MMX.Engine.Entities
 
         private void TryMoveRight(bool standOnly = false)
         {
-            vel = !standOnly && !BlockedRight ? new Vector(baseHSpeed, vel.Y) : new Vector(0, vel.Y);
+            Velocity = !standOnly && !BlockedRight ? new Vector(baseHSpeed, Velocity.Y) : new Vector(0, Velocity.Y);
 
             if (Landed)
             {
@@ -492,7 +498,7 @@ namespace MMX.Engine.Entities
                     {
                         if (!WallSliding)
                         {
-                            vel = Vector.NULL_VECTOR;
+                            Velocity = Vector.NULL_VECTOR;
                             SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
                             PlaySound(6);
                         }
@@ -514,7 +520,7 @@ namespace MMX.Engine.Entities
 
         private FixedSingle GetWalkingSpeed()
         {
-            if (Walking && LandedOnSlope && LandedSlope.HCathetusSign == vel.X.Signal)
+            if (Walking && LandedOnSlope && LandedSlope.HCathetusSign == Velocity.X.Signal)
             {
                 RightTriangle slope = LandedSlope;
                 FixedSingle ratio = slope.HCathetus / slope.VCathetus;
@@ -595,7 +601,7 @@ namespace MMX.Engine.Entities
                     }
 
                     baseHSpeed = PressingDash ? NO_CLIP_SPEED_BOOST : NO_CLIP_SPEED;
-                    vel = new Vector(mirrored ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, PressingUp ? -baseHSpeed : PressingDown ? baseHSpeed : 0);
+                    Velocity = new Vector(mirrored ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, PressingUp ? -baseHSpeed : PressingDown ? baseHSpeed : 0);
                     SetAirStateAnimation();
                 }
                 else if (!spawing)
@@ -637,7 +643,7 @@ namespace MMX.Engine.Entities
                                     {
                                         if (!WallSliding)
                                         {
-                                            vel = Vector.NULL_VECTOR;
+                                            Velocity = Vector.NULL_VECTOR;
                                             SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
                                             PlaySound(6);
                                         }
@@ -676,7 +682,7 @@ namespace MMX.Engine.Entities
                                     {
                                         if (!WallSliding)
                                         {
-                                            vel = Vector.NULL_VECTOR;
+                                            Velocity = Vector.NULL_VECTOR;
                                             SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
                                             PlaySound(6);
                                         }
@@ -694,18 +700,16 @@ namespace MMX.Engine.Entities
                                     if (!Standing && !Dashing)
                                     {
                                         if (!WallJumping)
-                                            vel = new Vector(0, vel.Y);
+                                            Velocity = new Vector(0, Velocity.Y);
 
                                         if (!Landing && !PostDashing)
-                                        {
                                             SetState(PlayerState.STAND, 0);
-                                        }
                                     }
                                 }
                                 else
                                 {
                                     if (!WallJumping)
-                                        vel = new Vector(0, vel.Y);
+                                        Velocity = new Vector(0, Velocity.Y);
 
                                     SetAirStateAnimation();
                                 }
@@ -728,7 +732,7 @@ namespace MMX.Engine.Entities
                                     }
                                     else if (!TopLadderClimbing && !TopLadderDescending)
                                     {
-                                        vel = new Vector(0, -LADDER_CLIMB_SPEED);
+                                        Velocity = new Vector(0, -LADDER_CLIMB_SPEED);
                                         CurrentAnimation.Start();
                                     }
                                 }
@@ -740,7 +744,7 @@ namespace MMX.Engine.Entities
                                 CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true);
                                 if (flags.HasFlag(CollisionFlags.LADDER))
                                 {
-                                    vel = Vector.NULL_VECTOR;
+                                    Velocity = Vector.NULL_VECTOR;
 
                                     collider.Box = collisionBox;
                                     collider.AdjustOnTheLadder();
@@ -769,20 +773,20 @@ namespace MMX.Engine.Entities
                                         }
                                         else if (!TopLadderClimbing && !TopLadderDescending)
                                         {
-                                            vel = Vector.NULL_VECTOR;
+                                            Velocity = Vector.NULL_VECTOR;
                                             SetAirStateAnimation();
                                         }
                                     }
                                     else if (!TopLadderClimbing && !TopLadderDescending)
                                     {
-                                        vel = new Vector(0, LADDER_CLIMB_SPEED);
+                                        Velocity = new Vector(0, LADDER_CLIMB_SPEED);
                                         CurrentAnimation.Start();
                                     }
                                 }
                             }
                             else if (LandedOnTopLadder && !TopLadderDescending && !TopLadderClimbing)
                             {
-                                vel = Vector.NULL_VECTOR;
+                                Velocity = Vector.NULL_VECTOR;
 
                                 Box collisionBox = CollisionBox;
                                 collider.Box = collisionBox;
@@ -795,7 +799,7 @@ namespace MMX.Engine.Entities
                         }
                         else if (OnLadderOnly && (WasPressingUp || WasPressingDown))
                         {
-                            vel = Vector.NULL_VECTOR;
+                            Velocity = Vector.NULL_VECTOR;
                             CurrentAnimation.Stop();
                         }
 
@@ -810,7 +814,7 @@ namespace MMX.Engine.Entities
                                     {
                                         baseHSpeed = DASH_SPEED;
                                         dashFrameCounter = 0;
-                                        vel = new Vector(Direction == Direction.LEFT ? -DASH_SPEED : DASH_SPEED, vel.Y);
+                                        Velocity = new Vector(Direction == Direction.LEFT ? -DASH_SPEED : DASH_SPEED, Velocity.Y);
                                         SetState(PlayerState.PRE_DASH, 0);
                                         PlaySound(4);
                                     }
@@ -832,17 +836,17 @@ namespace MMX.Engine.Entities
                                         {
                                             if (PressingLeft && !BlockedLeft)
                                             {
-                                                vel = new Vector(-baseHSpeed, vel.Y);
+                                                Velocity = new Vector(-baseHSpeed, Velocity.Y);
                                                 SetState(PlayerState.WALK, 0);
                                             }
                                             else if (PressingRight && !BlockedRight)
                                             {
-                                                vel = new Vector(baseHSpeed, vel.Y);
+                                                Velocity = new Vector(baseHSpeed, Velocity.Y);
                                                 SetState(PlayerState.WALK, 0);
                                             }
                                             else
                                             {
-                                                vel = new Vector(0, vel.Y);
+                                                Velocity = new Vector(0, Velocity.Y);
                                                 SetState(PlayerState.POST_DASH, 0);
                                             }
                                         }
@@ -859,7 +863,10 @@ namespace MMX.Engine.Entities
                         {
                             bool hspeedNull = false;
                             if (PressingDash)
+                            {
+                                skipPhysics = true;
                                 baseHSpeed = DASH_SPEED;
+                            }
                             else if (baseHSpeed == PRE_WALKING_SPEED)
                             {
                                 baseHSpeed = WALKING_SPEED;
@@ -868,52 +875,50 @@ namespace MMX.Engine.Entities
 
                             if (!BlockedUp)
                             {
-                                jumped = true;
-                                vel = (hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
+                                jumping = true;
+                                Velocity = (hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
                                 SetState(PlayerState.JUMP, 0);
                                 PlaySound(5);
                             }
-                            else if (vel.Y < 0)
-                                vel = vel.XVector;
+                            else if (Velocity.Y < 0)
+                                Velocity = Velocity.XVector;
                         }
                         else if (OnLadder)
                         {
-                            vel = Vector.NULL_VECTOR;
+                            Velocity = Vector.NULL_VECTOR;
                             SetAirStateAnimation();
                         }
-                        else if (BlockedUp && vel.Y < 0)
-                            vel = vel.XVector;
-                    }
-                    else if (WasPressingJump && !PressingJump)
-                    {
-                        if (!jumpReleased)
+                        else if (BlockedUp && Velocity.Y < 0)
+                            Velocity = Velocity.XVector;
+                        else if (!WallJumping || wallJumpFrameCounter >= 3)
                         {
-                            jumpReleased = true;
-
-                            if (jumped && !Landed && !WallSliding && vel.Y < 0)
+                            Direction wallJumpDir = GetWallJumpDir();
+                            if (wallJumpDir != Direction.NONE)
                             {
-                                jumped = false;
-                                vel = vel.XVector;
+                                WallJumping = true;
+                                wallJumpFrameCounter = 0;
+                                Direction = wallJumpDir;
+                                baseHSpeed = PressingDash ? DASH_SPEED : WALKING_SPEED;
+
+                                jumping = true;
+                                Velocity = Vector.NULL_VECTOR;
                             }
                         }
                     }
-
-                    if ((!jumped || vel.Y >= 0.25) && !Landed && !BlockedUp && (!WallJumping || wallJumpFrameCounter < 4) && !OnLadder && !GetLastKeys(2).HasFlag(Keys.JUMP) && GetKeys(2).HasFlag(Keys.JUMP))
+                    else if (WasPressingJump && !PressingJump)
                     {
-                        Direction wallJumpDir = GetWallJumpDir();
-                        if (wallJumpDir != Direction.NONE)
-                        {
-                            wallJumpStarted = true;
-                            wallJumpFrameCounter = 0;
-                            Direction = wallJumpDir;
-                            baseHSpeed = PressingDash ? DASH_SPEED : WALKING_SPEED;
-
-                            jumped = true;
-                            vel = Vector.NULL_VECTOR;
-                            SetState(PlayerState.WALL_JUMP, 0);
-                            PlaySound(5);
-                        }
+                        //if (!jumpReleased)
+                        //{
+                            jumpReleased = true;
+                            if (!WallJumping && jumping && !Landed && !WallSliding && Velocity.Y < 0)
+                            {
+                                jumping = false;
+                                WallJumping = false;
+                                Velocity = Velocity.XVector;
+                            }
+                        //}
                     }
+
 
                     if (Dashing)
                     {
@@ -923,38 +928,47 @@ namespace MMX.Engine.Entities
                             baseHSpeed = WALKING_SPEED;
                             if (PressingLeft && !BlockedLeft)
                             {
-                                vel = new Vector(-baseHSpeed, vel.Y);
+                                Velocity = new Vector(-baseHSpeed, Velocity.Y);
                                 SetState(PlayerState.WALK, 0);
                             }
                             else if (PressingRight && !BlockedRight)
                             {
-                                vel = new Vector(baseHSpeed, vel.Y);
+                                Velocity = new Vector(baseHSpeed, Velocity.Y);
                                 SetState(PlayerState.WALK, 0);
                             }
                             else
                             {
-                                vel = new Vector(0, vel.Y);
+                                Velocity = Velocity.YVector;
                                 SetState(PlayerState.POST_DASH, 0);
                             }
                         }
                     }
 
-                    if (wallJumpStarted)
+                    if (WallJumping)
                     {
                         wallJumpFrameCounter++;
                         if (wallJumpFrameCounter > WALL_JUMP_DURATION)
                         {
-                            wallJumpStarted = false;
-                            vel = new Vector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, vel.Y);
+                            WallJumping = false;
+                            jumping = false;
+                            Velocity = new Vector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, PressingJump && !Landed && !WallSliding && Velocity.Y < 0 ? Velocity.Y : 0);
                             SetState(PlayerState.GOING_UP, 0);
                         }
-                        else if (wallJumpFrameCounter == 4)
+                        else if (wallJumpFrameCounter == 7)
                         {
                             baseHSpeed = PressingDash ? DASH_SPEED : WALKING_SPEED;
-                            vel = new Vector(WallJumpingToLeft ? baseHSpeed : -baseHSpeed, -INITIAL_UPWARD_SPEED_FROM_JUMP);
+                            Velocity = new Vector(WallJumpingToLeft ? baseHSpeed : -baseHSpeed, -INITIAL_UPWARD_SPEED_FROM_JUMP);
                         }
-                        else if (wallJumpFrameCounter < 4)
-                            vel = Vector.NULL_VECTOR;
+                        else if (wallJumpFrameCounter < 7)
+                        {
+                            if (wallJumpFrameCounter == 3)
+                            {
+                                SetState(PlayerState.WALL_JUMP, 0);
+                                PlaySound(5);
+                            }
+
+                            Velocity = Vector.NULL_VECTOR;
+                        }
                     }
                 }
 
@@ -969,7 +983,7 @@ namespace MMX.Engine.Entities
 
                             if (OnLadderOnly)
                             {
-                                vel = Vector.NULL_VECTOR;
+                                Velocity = Vector.NULL_VECTOR;
 
                                 if (PressingLeft)
                                     Direction = Direction.LEFT;
@@ -1033,7 +1047,7 @@ namespace MMX.Engine.Entities
 
                         if (OnLadderOnly)
                         {
-                            vel = Vector.NULL_VECTOR;
+                            Velocity = Vector.NULL_VECTOR;
 
                             if (PressingLeft)
                                 Direction = Direction.LEFT;
@@ -1133,7 +1147,7 @@ namespace MMX.Engine.Entities
 
         private void SetAirStateAnimation(bool forceGoingUp = false)
         {
-            if (vel.Y >= FALL_ANIMATION_MINIMAL_SPEED)
+            if (Velocity.Y >= FALL_ANIMATION_MINIMAL_SPEED)
             {
                 if (!Falling)
                 {
@@ -1232,9 +1246,9 @@ namespace MMX.Engine.Entities
                 SetState(PlayerState.LADDER, 0);
 
                 if (PressingUp)
-                    vel = new Vector(0, Shooting ? 0 : -LADDER_CLIMB_SPEED);
+                    Velocity = new Vector(0, Shooting ? 0 : -LADDER_CLIMB_SPEED);
                 else if (PressingDown)
-                    vel = new Vector(0, Shooting ? 0 : LADDER_CLIMB_SPEED);
+                    Velocity = new Vector(0, Shooting ? 0 : LADDER_CLIMB_SPEED);
                 else
                     CurrentAnimation.Stop();
 
@@ -1250,7 +1264,7 @@ namespace MMX.Engine.Entities
 
                 Origin = collider.Box.Origin + delta;
 
-                vel = Vector.NULL_VECTOR;
+                Velocity = Vector.NULL_VECTOR;
                 SetState(PlayerState.STAND, 0);
             }
             else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animation.Index, true, true))
@@ -1260,9 +1274,9 @@ namespace MMX.Engine.Entities
                 SetState(PlayerState.LADDER, 0);
 
                 if (PressingUp)
-                    vel = new Vector(0, Shooting ? 0 : -LADDER_CLIMB_SPEED);
+                    Velocity = new Vector(0, Shooting ? 0 : -LADDER_CLIMB_SPEED);
                 else if (PressingDown)
-                    vel = new Vector(0, Shooting ? 0 : LADDER_CLIMB_SPEED);
+                    Velocity = new Vector(0, Shooting ? 0 : LADDER_CLIMB_SPEED);
                 else
                     CurrentAnimation.Stop();
 
@@ -1423,6 +1437,6 @@ namespace MMX.Engine.Entities
             }
         }
 
-        public override FixedSingle GetGravity() => wallJumpStarted && wallJumpFrameCounter <= 2 || OnLadder ? (FixedSingle) 0 : base.GetGravity();
+        public override FixedSingle GetGravity() => WallJumping && wallJumpFrameCounter < 7 || OnLadder ? (FixedSingle) 0 : base.GetGravity();
     }
 }

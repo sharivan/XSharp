@@ -546,7 +546,7 @@ namespace MMX.Geometry
         /// </summary>
         /// <param name="v">Vetor a ser testado</param>
         /// <returns>true se o segmento contém o vetor, false caso contrário</returns>
-        public bool Contains(Vector v)
+        public bool Contains(Vector v, FixedSingle epslon)
         {
             if (Compare(v) != 0)
                 return false;
@@ -556,8 +556,10 @@ namespace MMX.Geometry
             var mY = FixedSingle.Min(Start.Y, End.Y);
             var MY = FixedSingle.Max(Start.Y, End.Y);
 
-            return mX <= v.X && v.X <= MX && mY <= v.Y && v.Y <= MY;
+            return mX + epslon <= v.X && v.X <= MX - epslon && mY + epslon <= v.Y && v.Y <= MY - epslon;
         }
+
+        public bool Contains(Vector v) => Contains(v, 0);
 
         /// <summary>
         /// Verifica se dois segmentos de reta são paralelos
@@ -579,7 +581,7 @@ namespace MMX.Geometry
         /// </summary>
         /// <param name="s">Segmento de reta a ser testado</param>
         /// <returns>A intersecção entre os dois segmentos caso ela exista, ou retorna conjunto vazio caso contrário</returns>
-        public GeometryType Intersection(LineSegment s, out Vector resultVector, out LineSegment resultLineSegment)
+        public GeometryType Intersection(LineSegment s, FixedSingle epslon, out Vector resultVector, out LineSegment resultLineSegment)
         {
             resultVector = Vector.NULL_VECTOR;
             resultLineSegment = NULL_SEGMENT;
@@ -635,6 +637,8 @@ namespace MMX.Geometry
             resultVector = v;
             return GeometryType.VECTOR;
         }
+
+        public GeometryType Intersection(LineSegment s, out Vector resultVector, out LineSegment resultLineSegment) => Intersection(s, 0, out resultVector, out resultLineSegment);
 
         public Box WrappingBox() => new(Start, Vector.NULL_VECTOR, End - Start);
 
@@ -1316,7 +1320,9 @@ namespace MMX.Geometry
 
         public Box HalfBottom() => new(Origin, new Vector(Mins.X, (Mins.Y + Maxs.Y) * FixedSingle.HALF), Maxs);
 
-        public bool IsValid() => Width > 0 && Height > 0;
+        public bool IsValid(FixedSingle epslon) => Width > epslon && Height > epslon;
+
+        public bool IsValid() => IsValid(0);
 
         public Box Scale(Vector center, FixedSingle scaleX, FixedSingle scaleY) => new((Origin - center).Scale(scaleX, scaleY) + center, Mins.Scale(scaleX, scaleY), Maxs.Scale(scaleX, scaleY));
 
@@ -1768,6 +1774,7 @@ namespace MMX.Geometry
         public Vector RightBottom => new(Right, Bottom);
 
         public int HCathetusSign => hCathetus.Signal;
+
         public int VCathetusSign => vCathetus.Signal;
 
         public RightTriangle(Vector origin, FixedSingle hCathetus, FixedSingle vCathetus)
@@ -1821,38 +1828,43 @@ namespace MMX.Geometry
             return !(has_neg && has_pos);
         }
 
-        public bool Contains(Vector v, bool inclusive = true, bool excludeHypotenuse = false)
+        public bool Contains(Vector v, FixedSingle epslon, bool excludeHypotenuse = false)
         {
             if (excludeHypotenuse)
             {
                 LineSegment hypotenuseLine = HypotenuseLine;
-                if (hypotenuseLine.Contains(v))
+                if (hypotenuseLine.Contains(v, epslon))
                     return false;
             }
 
             if (hCathetus == 0)
             {
                 var interval = Interval.MakeClosedInterval(Origin.Y, VCathetusVector.Y);
-                return interval.Contains(v.Y);
+                return interval.Contains(v.Y, epslon);
             }
 
             if (vCathetus == 0)
             {
                 var interval = Interval.MakeClosedInterval(Origin.X, VCathetusVector.X);
-                return interval.Contains(v.X);
+                return interval.Contains(v.X, epslon);
             }
 
-            return PointInTriangle(v, Origin, HCathetusVertex, VCathetusVertex);
+            return PointInTriangle(v, Origin, HCathetusVertex + (epslon, 0), VCathetusVertex + (0, epslon));
         }
 
-        public bool HasIntersectionWith(Box box, bool excludeHypotenuse = false)
+        public bool Contains(Vector v, bool excludeHypotenuse = false) => Contains(v, 0, excludeHypotenuse);
+
+        public bool HasIntersectionWith(Box box, FixedSingle epslon, bool excludeHypotenuse = false)
         {
             Box intersection = box & WrappingBox;
-            return intersection.IsValid()
-            && (Contains(intersection.LeftTop, true, excludeHypotenuse)
-            || Contains(intersection.LeftBottom, true, excludeHypotenuse)
-            || Contains(intersection.RightTop, true, excludeHypotenuse) || Contains(intersection.RightBottom, false, excludeHypotenuse));
+            return intersection.IsValid(epslon)
+            && (Contains(intersection.LeftTop, epslon, excludeHypotenuse)
+            || Contains(intersection.LeftBottom, epslon, excludeHypotenuse)
+            || Contains(intersection.RightTop, epslon, excludeHypotenuse) 
+            || Contains(intersection.RightBottom, epslon, excludeHypotenuse));
         }
+
+        public bool HasIntersectionWith(Box box, bool excludeHypotenuse = false) => HasIntersectionWith(box, 0, excludeHypotenuse);
 
         public override string ToString() => "[" + Origin + " : " + hCathetus + " : " + vCathetus + "]";
 

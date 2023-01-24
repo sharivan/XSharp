@@ -193,7 +193,7 @@ namespace MMX.Engine
     public class GameEngine : IDisposable
     {
         public const VertexFormat D3DFVF_TLVERTEX = VertexFormat.Position | VertexFormat.Diffuse | VertexFormat.Texture1;
-        public const int VERTEX_SIZE = 24;
+        public const int VERTEX_SIZE = 5 * sizeof(float) + sizeof(int);
 
         private static readonly byte[] VERTEX_SHADER_BYTECODE = new byte[]
         {
@@ -599,6 +599,12 @@ namespace MMX.Engine
             }
         }
 
+        public Color BackgroundColor
+        {
+            get;
+            set;
+        } = Color.Black;
+
         public bool Running
         {
             get;
@@ -646,7 +652,7 @@ namespace MMX.Engine
                 };
 
                 var ss = new SoundStream();
-               
+
                 soundChannels.Add((player, ss, false));
             }
 
@@ -745,6 +751,12 @@ namespace MMX.Engine
                 config.Sections.Add("ProgramConfiguratinSection", section);
                 config.Save();
             }
+
+            if (section.Left != -1)
+                Form.Left = section.Left;
+
+            if (section.Top != -1)
+                Form.Top = section.Top;
 
             drawCollisionBox = section.DrawCollisionBox;
             showColliders = section.ShowColliders;
@@ -1439,12 +1451,12 @@ namespace MMX.Engine
 
             if (!loadingLevel)
             {
-                foreach (var entry in respawnableEntities)
+                foreach (var (entity, box) in respawnableEntities)
                 {
-                    if (!entry.entity.Alive && (World.Camera.BoundingBox & entry.box).IsValid())
+                    if (!entity.Alive && HasIntersection(World.Camera.BoundingBox, box))
                     {
-                        entry.entity.Origin = entry.box.Origin;
-                        entry.entity.Spawn();
+                        entity.Origin = box.Origin;
+                        entity.Spawn();
                     }
                 }
 
@@ -1721,13 +1733,13 @@ namespace MMX.Engine
             var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
 
             MMXBox mapBox = GetMapBoundingBox(row, col);
-            if (IsSolidBlock(collisionData) && (mapBox & collisionBox).IsValid())
+            if (IsSolidBlock(collisionData) && HasIntersection(mapBox, collisionBox))
                 DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
             else if (!ignoreSlopes && IsSlope(collisionData))
             {
                 RightTriangle st = MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
                 Vector hv = st.HCathetusVector;
-                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, true) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, true))
+                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, EPSLON, true) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, EPSLON, true))
                     DrawSlopeMap(mapBox, st, 4);
             }
         }
@@ -1967,7 +1979,7 @@ namespace MMX.Engine
                     var texture = CreateImageTextureFromStream(stream);
                     xSpriteSheet.CurrentTexture = texture;
                 }
-               
+
                 xSpriteSheet.CurrentPalette = X1NormalPalette;
 
                 var sequence = xSpriteSheet.AddFrameSquence("Spawn");
@@ -2395,7 +2407,7 @@ namespace MMX.Engine
             var hr = Device.TestCooperativeLevel();
             if (hr.Success)
             {
-                Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
+                Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, BackgroundColor, 1.0f, 0);
                 Device.BeginScene();
                 return true;
             }
@@ -2694,6 +2706,8 @@ namespace MMX.Engine
                 config.Sections.Add("ProgramConfiguratinSection", section);
             }
 
+            section.Left = Form.Left;
+            section.Top = Form.Top;
             section.DrawCollisionBox = drawCollisionBox;
             section.ShowColliders = showColliders;
             section.DrawMapBounds = drawMapBounds;
@@ -2912,7 +2926,7 @@ namespace MMX.Engine
         internal void ShootLemon(Player shooter, Vector origin, Direction direction, bool dashLemon)
         {
             var lemon = new BusterLemon(this, shooter, "X Buster Lemon", origin, direction, dashLemon, 1);
-            lemon.Spawn();            
+            lemon.Spawn();
         }
 
         internal void ShootSemiCharged(Player shooter, Vector origin, Direction direction)
@@ -3061,6 +3075,39 @@ namespace MMX.Engine
             }
 
             return -1;
+        }
+
+        public static Color GetPaletteColor(Texture palette, int index)
+        {
+            DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
+            try
+            {
+                using var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true);
+                using var reader = new BinaryReader(stream);
+                stream.Position = index * sizeof(int);
+                int bgra = reader.ReadInt32();
+                var c = Color.FromBgra(bgra);
+                return c;
+            }
+            finally
+            {
+                palette.UnlockRectangle(0);
+            }
+        }
+
+        public static void SetPaletteColor(Texture palette, int index, Color color)
+        {
+            DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
+            try
+            {
+                using var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true);
+                stream.Position = index * sizeof(int);
+                stream.Write(color.ToBgra());
+            }
+            finally
+            {
+                palette.UnlockRectangle(0);
+            }
         }
 
         public void Run()

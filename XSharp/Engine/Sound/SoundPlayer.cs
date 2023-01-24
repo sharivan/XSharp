@@ -2,7 +2,6 @@
 using System.IO;
 
 using NAudio.Wave;
-using NAudio.Wave.Compression;
 
 namespace MMX.Engine.Sound
 {

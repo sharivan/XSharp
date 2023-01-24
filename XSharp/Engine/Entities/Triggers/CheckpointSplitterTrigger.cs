@@ -1,6 +1,4 @@
-﻿using MMX.Engine.Entities.Triggers;
-using MMX.Engine;
-using MMX.Geometry;
+﻿using MMX.Geometry;
 
 namespace MMX.Engine.Entities.Triggers
 {

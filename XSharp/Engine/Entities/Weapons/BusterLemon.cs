@@ -35,7 +35,7 @@ namespace MMX.Engine.Entities.Weapons
         {
             base.Spawn();
 
-            vel = new Vector(Direction == Direction.LEFT ? (dashLemon ? -LEMON_TERMINAL_SPEED : -LEMON_INITIAL_SPEED) : (dashLemon ? LEMON_TERMINAL_SPEED : LEMON_INITIAL_SPEED), 0);
+            Velocity = new Vector(Direction == Direction.LEFT ? (dashLemon ? -LEMON_TERMINAL_SPEED : -LEMON_INITIAL_SPEED) : (dashLemon ? LEMON_TERMINAL_SPEED : LEMON_INITIAL_SPEED), 0);
 
             CurrentAnimationIndex = animationIndices[0];
             CurrentAnimation.StartFromBegin();
@@ -53,9 +53,9 @@ namespace MMX.Engine.Entities.Weapons
                     soundPlayed = true;
                 }
 
-                vel += new Vector(vel.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
-                if (vel.X.Abs > LEMON_TERMINAL_SPEED)
-                    vel = new Vector(vel.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, vel.Y);
+                Velocity += new Vector(Velocity.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
+                if (Velocity.X.Abs > LEMON_TERMINAL_SPEED)
+                    Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
             }
 
             base.Think();
@@ -66,7 +66,7 @@ namespace MMX.Engine.Entities.Weapons
             if (!exploding)
             {
                 exploding = true;
-                vel = Vector.NULL_VECTOR;
+                Velocity = Vector.NULL_VECTOR;
                 CurrentAnimationIndex = animationIndices[1];
                 CurrentAnimation.StartFromBegin();
             }
@@ -77,7 +77,7 @@ namespace MMX.Engine.Entities.Weapons
             if (!reflected && !exploding)
             {
                 reflected = true;
-                vel = new Vector(-vel.X, LEMON_REFLECTION_VSPEED);
+                Velocity = new Vector(-Velocity.X, LEMON_REFLECTION_VSPEED);
             }
         }
 

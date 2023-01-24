@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Threading;
-
-using SharpDX.Direct3D9;
 using SharpDX.Windows;
 
 using MMX.Engine;
@@ -40,14 +37,19 @@ namespace XSharp
             form.Resize += new EventHandler(Form_Resize);
             form.FormClosing += new FormClosingEventHandler(Form_Closing);
 
-            engine = new GameEngine(form);
             try
             {
+                engine = new GameEngine(form);
                 engine.Run();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                Console.WriteLine(e.StackTrace);
             }
             finally
             {
-                engine.Dispose();
+                engine?.Dispose();
             }
         }
     }

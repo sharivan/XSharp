@@ -1,7 +1,11 @@
-﻿using MMX.Geometry;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+
+using MMX.Geometry;
+
+using static MMX.Engine.Consts;
+using static MMX.Engine.World.World;
 
 namespace MMX.Engine.Entities
 {
@@ -92,7 +96,7 @@ namespace MMX.Engine.Entities
 
         public bool Respawnable => respawnable;
 
-        public bool Offscreen => !(BoundingBox & Engine.World.Camera.BoundingBox).IsValid();
+        public bool Offscreen => !HasIntersection(BoundingBox, Engine.World.Camera.BoundingBox);
 
         protected Entity(GameEngine engine, Vector origin)
         {

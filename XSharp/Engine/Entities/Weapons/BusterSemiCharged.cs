@@ -49,7 +49,7 @@ namespace MMX.Engine.Entities.Weapons
             Exploding = false;
             Hitting = false;
 
-            vel = Vector.NULL_VECTOR;         
+            Velocity = Vector.NULL_VECTOR;         
 
             CurrentAnimationIndex = animationIndices[0];
             CurrentAnimation.StartFromBegin();
@@ -65,9 +65,9 @@ namespace MMX.Engine.Entities.Weapons
                     soundPlayed = true;
                 }
 
-                vel += new Vector(vel.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
-                if (vel.X.Abs > LEMON_TERMINAL_SPEED)
-                    vel = new Vector(vel.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, vel.Y);
+                Velocity += new Vector(Velocity.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
+                if (Velocity.X.Abs > LEMON_TERMINAL_SPEED)
+                    Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
             }
 
             base.Think();
@@ -78,7 +78,7 @@ namespace MMX.Engine.Entities.Weapons
             if (!Exploding)
             {
                 Exploding = true;
-                vel = Vector.NULL_VECTOR;
+                Velocity = Vector.NULL_VECTOR;
                 CurrentAnimationIndex = animationIndices[3];
                 CurrentAnimation.StartFromBegin();
             }
@@ -89,7 +89,7 @@ namespace MMX.Engine.Entities.Weapons
             if (!Hitting)
             {
                 Hitting = true;
-                vel = Vector.NULL_VECTOR;
+                Velocity = Vector.NULL_VECTOR;
                 CurrentAnimationIndex = animationIndices[2];
                 CurrentAnimation.StartFromBegin();
             }
@@ -130,12 +130,12 @@ namespace MMX.Engine.Entities.Weapons
                 if (Direction == Direction.LEFT)
                 {
                     Origin += 14 * Vector.LEFT_VECTOR;
-                    vel = SEMI_CHARGED_INITIAL_SPEED * Vector.LEFT_VECTOR;
+                    Velocity = SEMI_CHARGED_INITIAL_SPEED * Vector.LEFT_VECTOR;
                 }
                 else
                 {
                     Origin += 14 * Vector.RIGHT_VECTOR;
-                    vel = SEMI_CHARGED_INITIAL_SPEED * Vector.RIGHT_VECTOR;
+                    Velocity = SEMI_CHARGED_INITIAL_SPEED * Vector.RIGHT_VECTOR;
                 }                
 
                 CurrentAnimationIndex = animationIndices[1];

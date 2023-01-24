@@ -49,7 +49,7 @@ namespace MMX.Engine.Entities.Weapons
             Exploding = false;
             Hitting = false;
 
-            vel = Vector.NULL_VECTOR;
+            Velocity = Vector.NULL_VECTOR;
 
             CurrentAnimationIndex = animationIndices[0];
             CurrentAnimation.StartFromBegin();
@@ -60,7 +60,7 @@ namespace MMX.Engine.Entities.Weapons
             if (!Exploding)
             {
                 Exploding = true;
-                vel = Vector.NULL_VECTOR;
+                Velocity = Vector.NULL_VECTOR;
                 CurrentAnimationIndex = animationIndices[3];
                 CurrentAnimation.StartFromBegin();
             }
@@ -71,7 +71,7 @@ namespace MMX.Engine.Entities.Weapons
             if (!Hitting)
             {
                 Hitting = true;
-                vel = Vector.NULL_VECTOR;
+                Velocity = Vector.NULL_VECTOR;
                 CurrentAnimationIndex = animationIndices[2];
                 CurrentAnimation.StartFromBegin();
             }
@@ -123,12 +123,12 @@ namespace MMX.Engine.Entities.Weapons
                 if (Direction == Direction.LEFT)
                 {
                     //Origin += 14 * Vector.LEFT_VECTOR;
-                    vel = CHARGED_SPEED * Vector.LEFT_VECTOR;
+                    Velocity = CHARGED_SPEED * Vector.LEFT_VECTOR;
                 }
                 else
                 {
                     //Origin += 14 * Vector.RIGHT_VECTOR;
-                    vel = CHARGED_SPEED * Vector.RIGHT_VECTOR;
+                    Velocity = CHARGED_SPEED * Vector.RIGHT_VECTOR;
                 }
 
                 CurrentAnimationIndex = animationIndices[1];

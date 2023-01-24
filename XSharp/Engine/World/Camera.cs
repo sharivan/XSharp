@@ -265,7 +265,7 @@ namespace MMX.Engine.World
 
         public Box VisibleBox(Box box) => BoundingBox & box;
 
-        public bool IsVisible(Box box) => VisibleBox(box).IsValid();
+        public bool IsVisible(Box box) => VisibleBox(box).IsValid(EPSLON);
 
         public void OnFrame()
         {
