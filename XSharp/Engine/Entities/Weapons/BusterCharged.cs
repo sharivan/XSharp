@@ -1,4 +1,5 @@
-﻿using MMX.Geometry;
+﻿using MMX.Engine.Entities.Enemies;
+using MMX.Geometry;
 using MMX.Math;
 
 using static MMX.Engine.Consts;
@@ -41,9 +42,9 @@ namespace MMX.Engine.Entities.Weapons
             return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
         }
 
-        public override void Spawn()
+        public override void OnSpawn()
         {
-            base.Spawn();
+            base.OnSpawn();
 
             Firing = true;
             Exploding = false;
@@ -66,10 +67,19 @@ namespace MMX.Engine.Entities.Weapons
             }
         }
 
-        public void Hit()
+        public void Hit(Entity entity)
         {
             if (!Hitting)
             {
+                if (entity != null)
+                {
+                    Box otherHitbox = entity.HitBox;
+                    Vector center = HitBox.Center;
+                    FixedSingle x = Direction == Direction.RIGHT ? otherHitbox.Left : otherHitbox.Right;
+                    FixedSingle y = center.Y < otherHitbox.Top ? otherHitbox.Top : center.Y > otherHitbox.Bottom ? otherHitbox.Bottom : Origin.Y;
+                    Origin = (x, y);
+                }
+
                 Hitting = true;
                 Velocity = Vector.NULL_VECTOR;
                 CurrentAnimationIndex = animationIndices[2];
@@ -88,12 +98,12 @@ namespace MMX.Engine.Entities.Weapons
             base.Think();
         }
 
-        protected override void OnDeath()
+        public override void Dispose()
         {
             Shooter.shots--;
             Shooter.shootingCharged = false;
 
-            base.OnDeath();
+            base.Dispose();
         }
 
         protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
@@ -112,6 +122,14 @@ namespace MMX.Engine.Entities.Weapons
                 animationIndices[3] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
             else
                 add = false;
+        }
+
+        protected override void OnStartTouch(Entity entity)
+        {
+            if (entity is Enemy)
+                Hit(entity);
+
+            base.OnStartTouch(entity);
         }
 
         internal override void OnAnimationEnd(Animation animation)

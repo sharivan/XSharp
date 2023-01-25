@@ -40,7 +40,6 @@ namespace MMX.Engine.Entities
         private readonly int[,,] animationIndices;
 
         private bool jumping;
-        private bool jumpReleased;
         private bool dashReleased;
 
         private FixedSingle baseHSpeed;
@@ -63,8 +62,7 @@ namespace MMX.Engine.Entities
 
         public bool CanWallJump => GetWallJumpDir() != Direction.NONE;
 
-        internal Player(GameEngine engine, string name, Vector origin, int spriteSheetIndex)
-        : base(engine, name, origin, spriteSheetIndex, true)
+        internal Player(GameEngine engine, string name, Vector origin, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex, true)
         {
             CheckCollisionWithWorld = false;
 
@@ -80,8 +78,6 @@ namespace MMX.Engine.Entities
                 animationIndices[i, 1, 0] = -1;
                 animationIndices[i, 1, 1] = -1;
             }
-
-            jumpReleased = true;
         }
 
         public override void SaveState(BinaryWriter writer)
@@ -97,7 +93,6 @@ namespace MMX.Engine.Entities
             writer.Write(death);
 
             writer.Write(jumping);
-            writer.Write(jumpReleased);
             writer.Write(dashReleased);
 
             baseHSpeed.Write(writer);
@@ -129,7 +124,6 @@ namespace MMX.Engine.Entities
             death = reader.ReadBoolean();
 
             jumping = reader.ReadBoolean();
-            jumpReleased = reader.ReadBoolean();
             dashReleased = reader.ReadBoolean();
 
             baseHSpeed = new FixedSingle(reader);
@@ -248,8 +242,6 @@ namespace MMX.Engine.Entities
             get;
             set;
         }
-
-        public Direction Direction { get; private set; } = Direction.RIGHT;
 
         public bool PressingNothing => Keys == 0;
 
@@ -389,13 +381,14 @@ namespace MMX.Engine.Entities
 
         protected override FixedSingle GetTerminalDownwardSpeed() => WallSliding ? WALL_SLIDE_SPEED : base.GetTerminalDownwardSpeed();
 
-        public override void Spawn()
+        public override void OnSpawn()
         {
-            base.Spawn();
-
+            base.OnSpawn();
+            
             spawing = true;
             Velocity = TERMINAL_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
             Lives = 2;
+            Health = X_BASE_HEALTH;
 
             ResetKeys();
 
@@ -858,7 +851,6 @@ namespace MMX.Engine.Entities
 
                     if (!WasPressingJump && PressingJump)
                     {
-                        jumpReleased = false;
                         if (collider.Landed || collider.TouchingWaterSurface && !CanWallJump)
                         {
                             bool hspeedNull = false;
@@ -905,20 +897,12 @@ namespace MMX.Engine.Entities
                             }
                         }
                     }
-                    else if (WasPressingJump && !PressingJump)
+                    else if (WasPressingJump && !PressingJump && !WallJumping && jumping && !Landed && !WallSliding && Velocity.Y < 0)
                     {
-                        //if (!jumpReleased)
-                        //{
-                            jumpReleased = true;
-                            if (!WallJumping && jumping && !Landed && !WallSliding && Velocity.Y < 0)
-                            {
-                                jumping = false;
-                                WallJumping = false;
-                                Velocity = Velocity.XVector;
-                            }
-                        //}
+                        jumping = false;
+                        WallJumping = false;
+                        Velocity = Velocity.XVector;
                     }
-
 
                     if (Dashing)
                     {
@@ -1095,14 +1079,14 @@ namespace MMX.Engine.Entities
 
         private Vector GetShotOrigin() => state switch
         {
-            PlayerState.STAND or PlayerState.LAND => new Vector(9, 8),
-            PlayerState.WALK => new Vector(18, 6),
-            PlayerState.JUMP or PlayerState.WALL_JUMP or PlayerState.GOING_UP or PlayerState.FALL => new Vector(18, 7),
-            PlayerState.PRE_DASH => new Vector(21, -4),
-            PlayerState.DASH => new Vector(26, 0),
-            PlayerState.POST_DASH => new Vector(24, 8),
-            PlayerState.LADDER => new Vector(9, 5),
-            _ => new Vector(9, 8),
+            PlayerState.STAND or PlayerState.LAND => new Vector(9, 9),
+            PlayerState.WALK => new Vector(18, 8),
+            PlayerState.JUMP or PlayerState.WALL_JUMP or PlayerState.GOING_UP or PlayerState.FALL => new Vector(18, 9),
+            PlayerState.PRE_DASH => new Vector(21, -3),
+            PlayerState.DASH => new Vector(26, 1),
+            PlayerState.POST_DASH => new Vector(24, 9),
+            PlayerState.LADDER => new Vector(9, 6),
+            _ => new Vector(9, 9),
         };
 
         public void ShootLemon()
@@ -1114,7 +1098,7 @@ namespace MMX.Engine.Entities
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            Engine.ShootLemon(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction, baseHSpeed == DASH_SPEED);
+            Engine.ShootLemon(this, direction == Direction.RIGHT ? HitBox.RightTop + shotOrigin : HitBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction, baseHSpeed == DASH_SPEED);
         }
 
         public void ShootSemiCharged()
@@ -1126,7 +1110,7 @@ namespace MMX.Engine.Entities
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            Engine.ShootSemiCharged(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
+            Engine.ShootSemiCharged(this, direction == Direction.RIGHT ? HitBox.RightTop + shotOrigin : HitBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
         }
 
         public void ShootCharged()
@@ -1138,7 +1122,7 @@ namespace MMX.Engine.Entities
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            Engine.ShootCharged(this, direction == Direction.RIGHT ? CollisionBox.RightTop + shotOrigin : CollisionBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
+            Engine.ShootCharged(this, direction == Direction.RIGHT ? HitBox.RightTop + shotOrigin : HitBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
         }
 
         public Direction GetWallJumpDir()

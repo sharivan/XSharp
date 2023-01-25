@@ -17,6 +17,7 @@ namespace MMX.Engine
         private SpriteSheet.FrameSequence sequence;
         private bool animating; // Indica se a animação será dinâmica ou estática
         private int currentSequenceIndex; // Quadro atual
+        private int currentRenderSequenceIndex;
         private bool animationEndFired; // Indica se o evento OnAnimationEnd da entidade associada a esta animação foi chamado desde que a animação foi completada
 
         private readonly AnimationFrameEvent[] animationEvents;
@@ -25,7 +26,7 @@ namespace MMX.Engine
         {
             get
             {
-                var frame = sequence[currentSequenceIndex];
+                var frame = sequence[currentRenderSequenceIndex];
                 return Sprite.Origin + frame.BoundingBox;
             }
         }
@@ -63,7 +64,8 @@ namespace MMX.Engine
 
             Scale = 1;
 
-            currentSequenceIndex = initialSequenceIndex; // Define o frame atual para o frame inicial
+            currentSequenceIndex = initialSequenceIndex;
+            currentRenderSequenceIndex = currentSequenceIndex;
             animationEndFired = false;
 
             int count = sequence.Count;
@@ -113,7 +115,10 @@ namespace MMX.Engine
             animating = true;
 
             if (startIndex != -1)
+            {
                 currentSequenceIndex = InitialSequenceIndex + startIndex;
+                currentRenderSequenceIndex = currentSequenceIndex;
+            }
         }
 
         /// <summary>
@@ -129,7 +134,11 @@ namespace MMX.Engine
         /// <summary>
         /// Reseta a animação, definindo o quadro atual como o quadro inicial
         /// </summary>
-        public void Reset() => currentSequenceIndex = InitialSequenceIndex;
+        public void Reset()
+        {
+            currentSequenceIndex = InitialSequenceIndex;
+            currentRenderSequenceIndex = currentSequenceIndex;
+        }
 
         /// <summary>
         /// Entidade possuidora da animação
@@ -181,6 +190,7 @@ namespace MMX.Engine
             set
             {
                 currentSequenceIndex = value >= sequence.Count ? sequence.Count - 1 : value;
+                currentRenderSequenceIndex = currentSequenceIndex;
                 animationEndFired = false;
             }
         }
@@ -189,10 +199,10 @@ namespace MMX.Engine
         {
             get
             {
-                if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
+                if (currentRenderSequenceIndex < 0 || currentRenderSequenceIndex > sequence.Count)
                     return MMXBox.EMPTY_BOX;
 
-                MMXBox boundingBox = sequence[currentSequenceIndex].BoundingBox;
+                MMXBox boundingBox = sequence[currentRenderSequenceIndex].BoundingBox;
                 return boundingBox;
             }
         }
@@ -201,10 +211,10 @@ namespace MMX.Engine
         {
             get
             {
-                if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
+                if (currentRenderSequenceIndex < 0 || currentRenderSequenceIndex > sequence.Count)
                     return MMXBox.EMPTY_BOX;
 
-                MMXBox collisionBox = sequence[currentSequenceIndex].CollisionBox;
+                MMXBox collisionBox = sequence[currentRenderSequenceIndex].CollisionBox;
                 return collisionBox;
             }
         }
@@ -270,7 +280,7 @@ namespace MMX.Engine
                 return;
 
             animationEvents[currentSequenceIndex]?.Invoke(this, currentSequenceIndex);
-            currentSequenceIndex++;
+            currentRenderSequenceIndex = currentSequenceIndex++;
 
             if (currentSequenceIndex >= sequence.Count) // Se chegamos no final da animação
             {
@@ -300,7 +310,7 @@ namespace MMX.Engine
             if (!Visible || sequence.Count == 0)
                 return;
 
-            var frame = sequence[currentSequenceIndex];
+            var frame = sequence[currentRenderSequenceIndex];
             MMXBox srcBox = frame.BoundingBox;
             Texture texture = frame.Texture;
 

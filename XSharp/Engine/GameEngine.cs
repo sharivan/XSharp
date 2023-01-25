@@ -298,12 +298,15 @@ namespace MMX.Engine
         private long engineTime;
         private readonly Random random;
         private readonly List<Checkpoint> checkpoints;
-        private readonly List<Entity> entities;
+        private readonly Entity[] entities;
+        private int firstFreeEntityIndex;
+        private Entity firstEntity;
+        private Entity lastEntity;
+        private int entityCount;
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
         internal List<(Entity entity, MMXBox box)> respawnableEntities;
         private ushort currentLevel;
-        //private int enemyCount;
         private bool changeLevel;
         private ushort levelToChange;
         private bool gameOver;
@@ -462,14 +465,6 @@ namespace MMX.Engine
             private set;
         }
 
-        public Texture X1NormalPalette => GetPalette(0);
-
-        public Texture ChargeLevel1Palette => GetPalette(1);
-
-        public Texture ChargeLevel2Palette => GetPalette(2);
-
-        public Texture ChargingEffectPalette => GetPalette(3);
-
         public Checkpoint CurrentCheckpoint
         {
             get => currentCheckpoint;
@@ -536,8 +531,6 @@ namespace MMX.Engine
                 if (currentCheckpoint != null)
                 {
                     cameraConstraintsBox = currentCheckpoint.BoundingBox;
-                    //World.Camera.SmoothOnNextMove = true;
-                    //World.Camera.SmoothSpeed = WALKING_SPEED;
 
                     if (romLoaded)
                     {
@@ -688,6 +681,10 @@ namespace MMX.Engine
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\17 - MMX - X Fade In.wav", SoundFormat.WAVE);
             soundStreams.Add(stream);
 
+            // 8
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\30 - MMX - Small Hit.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
             directInput = new DirectInput();
 
             keyboard = new Keyboard(directInput);
@@ -715,10 +712,15 @@ namespace MMX.Engine
 
             random = new Random();
             checkpoints = new List<Checkpoint>();
-            entities = new List<Entity>();
+            entities = new Entity[MAX_ENTITIES];
             addedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
             respawnableEntities = new List<(Entity, MMXBox)>();
+
+            firstFreeEntityIndex = 0;
+            firstEntity = null;
+            lastEntity = null;
+            entityCount = 0;
 
             loadingLevel = true;
 
@@ -1079,6 +1081,68 @@ namespace MMX.Engine
             var description = texture.GetLevelDescription(0);
             RenderTexture(texture, palette, new MMXBox(x, y, description.Width, description.Height), transform);
         }
+
+        private void AddEntity(Entity entity)
+        {
+            if (entityCount == MAX_ENTITIES)
+                throw new IndexOutOfRangeException("Max entities reached the limit.");
+
+            if (lastEntity != null)
+                lastEntity.next = entity;
+
+            firstEntity ??= entity;
+            lastEntity = entity;
+            entity.previous = lastEntity;
+
+            entity.Index = firstFreeEntityIndex;
+            entities[firstFreeEntityIndex++] = entity;
+            entityCount++;
+
+            for (int i = firstFreeEntityIndex; i < MAX_ENTITIES; i++)
+                if (entities[i] == null)
+                {
+                    firstFreeEntityIndex = i;
+                    break;
+                }
+        }
+
+        private void RemoveEntity(int index)
+        {
+            var entity = entities[index];
+            var next = entity.next;
+            var previous = entity.previous;
+
+            if (next != null)
+                next.previous = previous;
+
+            if (previous != null)
+                previous.next = next;
+
+            if (entity == firstEntity)
+                firstEntity = next;
+
+            if (entity == lastEntity)
+                lastEntity = previous;
+
+            entities[index] = null;
+            entityCount--;
+
+            if (index < firstFreeEntityIndex)
+                firstFreeEntityIndex = index;
+        }
+
+        private void ClearEntities()
+        {
+            for (int i = 0; i < MAX_ENTITIES; i++)
+                entities[i] = null;
+
+            firstFreeEntityIndex = 0;
+            entityCount = 0;
+            firstEntity = null;
+            lastEntity = null;
+        }
+
+        private void RemoveEntity(Entity entity) => RemoveEntity(entity.Index);
 
         private void OnFrame()
         {
@@ -1464,9 +1528,10 @@ namespace MMX.Engine
                 {
                     foreach (var added in addedEntities)
                     {
-                        entities.Add(added);
-                        partition.Insert(added);
-                        added.Index = entities.Count - 1;
+                        AddEntity(added);
+                        added.OnSpawn();
+
+                        partition.Insert(added);                        
                     }
 
                     addedEntities.Clear();
@@ -1475,10 +1540,10 @@ namespace MMX.Engine
                 Player?.PushKeys(keys);
 
                 if (paused)
-                    Player.OnFrame();
+                    Player?.OnFrame();
                 else
                 {
-                    foreach (var entity in entities)
+                    for (var entity = firstEntity; entity != null; entity = entity.next)
                     {
                         if (changeLevel)
                             break;
@@ -1491,8 +1556,10 @@ namespace MMX.Engine
                     {
                         foreach (var removed in removedEntities)
                         {
-                            entities.Remove(removed);
+                            removed.Dispose();
+                            
                             partition.Remove(removed);
+                            RemoveEntity(removed);
 
                             DisposeResource(removed);
                         }
@@ -1641,12 +1708,12 @@ namespace MMX.Engine
                 if (entity is Sprite sprite)
                     DisposeResource(sprite);
 
-            foreach (var entity in entities)
+            for (var entity = firstEntity; entity != null; entity = entity.next)
                 if (entity is Sprite sprite)
                     DisposeResource(sprite);
 
             checkpoints.Clear();
-            entities.Clear();
+            ClearEntities();
             addedEntities.Clear();
             removedEntities.Clear();
             respawnableEntities.Clear();
@@ -1945,18 +2012,33 @@ namespace MMX.Engine
 
                 SetupQuad(VertexBuffer);
 
+                // Create palettes
+
+                // 0
                 var x1NormalPalette = CreatePalette(X1_NORMAL_PALETTE);
                 palettes.Add(x1NormalPalette);
 
+                // 1
                 var chargeLevel1Palette = CreatePalette(CHARGE_LEVEL_1_PALETTE);
                 palettes.Add(chargeLevel1Palette);
 
+                // 2
                 var chargeLevel2Palette = CreatePalette(CHARGE_LEVEL_2_PALETTE);
                 palettes.Add(chargeLevel2Palette);
 
+                // 3
                 var chargingEffectPalette = CreatePalette(CHARGE_EFFECT_PALETTE);
                 palettes.Add(chargingEffectPalette);
 
+                // 4
+                var flashingPalette = CreatePalette(FLASHING_PALETTE);
+                palettes.Add(flashingPalette);
+
+                // 5
+                var drillerPalette = CreatePalette(DRILLER_PALETTE);
+                palettes.Add(drillerPalette);
+
+                // Create sprite sheets
                 var normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3);
                 var normalCollisionBox = new MMXBox(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
                 var dashingOffset = new Vector(DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT + 3);
@@ -1974,13 +2056,16 @@ namespace MMX.Engine
                 var drillerSpriteSheet = new SpriteSheet(this, "Driller", true, true);
                 spriteSheets.Add(drillerSpriteSheet);
 
+                // Setup frame sequences (animations)
+
+                // X
                 using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.X[small].png"))
                 {
                     var texture = CreateImageTextureFromStream(stream);
                     xSpriteSheet.CurrentTexture = texture;
                 }
 
-                xSpriteSheet.CurrentPalette = X1NormalPalette;
+                xSpriteSheet.CurrentPalette = x1NormalPalette;
 
                 var sequence = xSpriteSheet.AddFrameSquence("Spawn");
                 sequence.BoudingBoxOriginOffset = normalOffset;
@@ -2190,6 +2275,7 @@ namespace MMX.Engine
 
                 xSpriteSheet.ReleaseCurrentTexture();
 
+                // X weapons
                 using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Weapons.png"))
                 {
                     var texture = CreateImageTextureFromStream(stream);
@@ -2217,7 +2303,7 @@ namespace MMX.Engine
                 sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotFiring");
                 sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
                 sequence.CollisionBox = semiChargedShotCollisionBox1;
-                sequence.AddFrame(-5, 3, 128, 563, 14, 14);
+                sequence.AddFrame(-5, -2, 128, 563, 14, 14);
                 sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
                 sequence.CollisionBox = semiChargedShotCollisionBox2;
                 sequence.AddFrame(-9, -6, 128, 563, 14, 14);
@@ -2242,8 +2328,9 @@ namespace MMX.Engine
                 sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotHit");
                 sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
                 sequence.CollisionBox = semiChargedShotCollisionBox2;
-                sequence.AddFrame(-9, -6, 424, 563, 14, 14);
-                sequence.AddFrame(-9, -1, 443, 558, 24, 24);
+                sequence.AddFrame(-9, -6, 424, 563, 14, 14, 2);
+                sequence.AddFrame(-9, -1, 443, 558, 24, 24, 4);
+                sequence.AddFrame(-9, -6, 424, 563, 14, 14, 4);
 
                 sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotExplode");
                 sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
@@ -2262,26 +2349,26 @@ namespace MMX.Engine
                 sequence.CollisionBox = chargedShotCollisionBox1;
                 sequence.AddFrame(-3, 1, 144, 440, 14, 20);
                 sequence.AddFrame(-2, -1, 170, 321, 23, 16, 3);
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
                 sequence.CollisionBox = chargedShotCollisionBox2;
                 sequence.AddFrame(-25, -10, 170, 321, 23, 16, 3);
 
                 sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShot", 0);
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
-                sequence.CollisionBox = semiChargedShotCollisionBox2;
+                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
+                sequence.CollisionBox = chargedShotCollisionBox2;
                 sequence.AddFrame(7, -2, 164, 433, 47, 32, 2, true);
                 sequence.AddFrame(2, -2, 216, 433, 40, 32, 2);
                 sequence.AddFrame(9, -2, 261, 432, 46, 32, 2);
 
                 sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotHit");
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
-                sequence.CollisionBox = semiChargedShotCollisionBox2;
-                sequence.AddFrame(26, -8, 315, 438, 14, 20, 2);
-                sequence.AddFrame(25, -4, 336, 434, 24, 28, 2);
-                sequence.AddFrame(26, -8, 315, 438, 14, 20, 4);
+                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
+                sequence.CollisionBox = chargedShotCollisionBox2;
+                sequence.AddFrame(-26, -8, 315, 438, 14, 20, 2);
+                sequence.AddFrame(-25, -4, 336, 434, 24, 28, 2);
+                sequence.AddFrame(-26, -8, 315, 438, 14, 20, 4);
 
                 sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotExplode");
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
                 sequence.AddFrame(368, 434, 28, 28);
                 sequence.AddFrame(400, 435, 26, 26);
                 sequence.AddFrame(430, 434, 28, 28);
@@ -2291,6 +2378,7 @@ namespace MMX.Engine
 
                 xWeaponsSpriteSheet.ReleaseCurrentTexture();
 
+                // X charging effects
                 using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Effects.png"))
                 {
                     var texture = CreateImageTextureFromStream(stream);
@@ -2305,27 +2393,39 @@ namespace MMX.Engine
                 sequence = xEffectsSpriteSheet.AddFrameSquence("ChargingLevel2");
                 AddChargingEffectFrames(sequence, 2);
 
+                // Enemies
                 using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-driller.png"))
                 {
                     var texture = CreateImageTextureFromStream(stream);
                     drillerSpriteSheet.CurrentTexture = texture;
                 }
 
+                drillerSpriteSheet.CurrentPalette = drillerPalette;
+
                 var drillerOffset = new Vector(11, 24);
                 var drilerHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-11, -24), new Vector(11, 0));
 
+                // 0
                 sequence = drillerSpriteSheet.AddFrameSquence("Idle");
                 sequence.BoudingBoxOriginOffset = drillerOffset;
                 sequence.CollisionBox = drilerHitbox;
                 sequence.AddFrame(0, 0, 4, 10, 35, 24, 1, true);
 
+                // 1
                 sequence = drillerSpriteSheet.AddFrameSquence("Jumping");
                 sequence.BoudingBoxOriginOffset = drillerOffset;
                 sequence.CollisionBox = drilerHitbox;
-                sequence.AddFrame(0, 0, 40, 13, 37, 21, 1);
-                sequence.AddFrame(0, 0, 78, 9, 35, 25, 1);
-                sequence.AddFrame(0, 0, 115, 4, 43, 30, 1);
+                sequence.AddFrame(0, 0, 40, 13, 37, 21, 5);
+                sequence.AddFrame(0, 0, 78, 9, 35, 25, 5);
+                sequence.AddFrame(0, 0, 115, 4, 43, 30, 1, true);
 
+                // 2
+                sequence = drillerSpriteSheet.AddFrameSquence("Landing");
+                sequence.BoudingBoxOriginOffset = drillerOffset;
+                sequence.CollisionBox = drilerHitbox;
+                sequence.AddFrame(0, 0, 40, 13, 37, 21, 5);
+
+                // 3
                 sequence = drillerSpriteSheet.AddFrameSquence("Drilling");
                 sequence.BoudingBoxOriginOffset = drillerOffset;
                 sequence.CollisionBox = drilerHitbox;
@@ -2348,10 +2448,9 @@ namespace MMX.Engine
                     World.Tessellate();
                 }
 
-                if (entities != null)
-                    foreach (var entity in entities)
-                        if (entity is Sprite sprite)
-                            sprite.OnDeviceReset();
+                for (var entity = firstEntity; entity != null; entity = entity.next)
+                    if (entity is Sprite sprite)
+                        sprite.OnDeviceReset();
             }
             catch (SharpDXException)
             {
@@ -3031,24 +3130,64 @@ namespace MMX.Engine
             Device.DrawPrimitives(PrimitiveType.TriangleList, 0, primitiveCount);
         }
 
-        public Texture CreatePalette(Color[] colors)
+        public Texture CreatePalette(Color[] colors, int count = 256)
         {
-            if (colors.Length > 256)
-                throw new ArgumentException("Length of colors should up to 256.");
+            if (colors.Length > count)
+                throw new ArgumentException($"Length of colors should up to {count}.");
 
-            var palette = new Texture(Device, 256, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
+            var palette = new Texture(Device, count, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
             DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.None);
 
-            using (var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
+            using (var stream = new DataStream(rect.DataPointer, count * 1 * sizeof(int), true, true))
             {
                 for (int i = 0; i < colors.Length; i++)
                     stream.Write(colors[i].ToBgra());
 
-                for (int i = colors.Length; i < 256; i++)
+                for (int i = colors.Length; i < count; i++)
                     stream.Write(0);
             }
 
             palette.UnlockRectangle(0);
+            return palette;
+        }
+
+        public Texture CreatePalette(Texture image, int count = 256)
+        {
+            var palette = new Texture(Device, count, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
+
+            DataRectangle paletteRect = palette.LockRectangle(0, D3D9LockFlags.None);
+            DataRectangle imageRect = image.LockRectangle(0, D3D9LockFlags.None);
+
+            try
+            {
+                using var paletteStream = new DataStream(paletteRect.DataPointer, count * 1 * sizeof(int), true, true);
+
+                int width = image.GetLevelDescription(0).Width;
+                int height = image.GetLevelDescription(0).Height;
+                using var imageStream = new DataStream(imageRect.DataPointer, width * height * sizeof(int), true, true);
+
+                var colors = new Dictionary<Color, int>();
+
+                while (imageStream.Position < imageStream.Length)
+                {
+                    Color color = imageStream.Read<Color>();
+                    if (color != Color.Transparent && !colors.ContainsKey(color))
+                    {
+                        int index = colors.Count;
+                        colors.Add(color, index);
+                        paletteStream.Write(index);
+                    }
+                }
+
+                for (int i = colors.Count; i < count; i++)
+                    paletteStream.Write(0);
+            }
+            finally
+            {
+                image.UnlockRectangle(0);
+                palette.UnlockRectangle(0);
+            }
+
             return palette;
         }
 
@@ -3059,7 +3198,10 @@ namespace MMX.Engine
             DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
             try
             {
-                using var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true);
+                int width = palette.GetLevelDescription(0).Width;
+                int height = palette.GetLevelDescription(0).Height;
+
+                using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
                 using var reader = new BinaryReader(stream);
                 for (int i = start; i < start + count; i++)
                 {
@@ -3082,7 +3224,10 @@ namespace MMX.Engine
             DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
             try
             {
-                using var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true);
+                int width = palette.GetLevelDescription(0).Width;
+                int height = palette.GetLevelDescription(0).Height;
+
+                using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
                 using var reader = new BinaryReader(stream);
                 stream.Position = index * sizeof(int);
                 int bgra = reader.ReadInt32();
@@ -3100,7 +3245,10 @@ namespace MMX.Engine
             DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
             try
             {
-                using var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true);
+                int width = palette.GetLevelDescription(0).Width;
+                int height = palette.GetLevelDescription(0).Height;
+
+                using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
                 stream.Position = index * sizeof(int);
                 stream.Write(color.ToBgra());
             }
@@ -3114,16 +3262,8 @@ namespace MMX.Engine
         {
             while (Running)
             {
-                try
-                {
-                    // Main loop
-                    RenderLoop.Run(Form, Render);
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message);
-                    Running = false;
-                }
+                // Main loop
+                RenderLoop.Run(Form, Render);
             }
         }
 

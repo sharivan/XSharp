@@ -57,6 +57,8 @@ namespace MMX.Engine.Entities
             private set;
         }
 
+        public Direction Direction { get; set; } = Direction.RIGHT;
+
         public SpriteSheet Sheet => Engine.GetSpriteSheet(SpriteSheetIndex);
 
         protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false) :
@@ -292,9 +294,9 @@ namespace MMX.Engine.Entities
             elapsed = 0;
         }
 
-        public override void Spawn()
+        public override void OnSpawn()
         {
-            base.Spawn();
+            base.OnSpawn();
 
             solid = true;
 
@@ -813,10 +815,10 @@ namespace MMX.Engine.Entities
             }
         }
 
-        protected override void OnDeath()
+        public override void Dispose()
         {
             animations.Clear();
-            base.OnDeath();
+            base.Dispose();
         }
 
         internal void OnDeviceReset()

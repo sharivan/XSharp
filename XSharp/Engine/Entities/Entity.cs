@@ -37,6 +37,9 @@ namespace MMX.Engine.Entities
         protected bool markedToRemove;
         protected bool respawnable;
 
+        internal Entity previous;
+        internal Entity next;
+
         public GameEngine Engine
         {
             get;
@@ -246,7 +249,9 @@ namespace MMX.Engine.Entities
         {
         }
 
-        public void Dispose() => Kill();
+        public virtual void Dispose()
+        {
+        }
 
         public void Kill()
         {
@@ -266,11 +271,15 @@ namespace MMX.Engine.Entities
             OnDeath();
         }
 
-        public virtual void Spawn()
+        public void Spawn()
         {
             alive = true;
             markedToRemove = false;
             Engine.addedEntities.Add(this);
+        }
+
+        public virtual void OnSpawn()
+        {
         }
 
         protected virtual void OnDeath()

@@ -1,4 +1,5 @@
-﻿using MMX.Geometry;
+﻿using MMX.Engine.Entities.Enemies;
+using MMX.Geometry;
 using MMX.Math;
 
 using static MMX.Engine.Consts;
@@ -31,9 +32,9 @@ namespace MMX.Engine.Entities.Weapons
 
         protected override Box GetCollisionBox() => new(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
 
-        public override void Spawn()
+        public override void OnSpawn()
         {
-            base.Spawn();
+            base.OnSpawn();
 
             Velocity = new Vector(Direction == Direction.LEFT ? (dashLemon ? -LEMON_TERMINAL_SPEED : -LEMON_INITIAL_SPEED) : (dashLemon ? LEMON_TERMINAL_SPEED : LEMON_INITIAL_SPEED), 0);
 
@@ -61,10 +62,19 @@ namespace MMX.Engine.Entities.Weapons
             base.Think();
         }
 
-        public void Explode()
+        public void Explode(Entity entity)
         {
             if (!exploding)
             {
+                if (entity != null)
+                {
+                    Box otherHitbox = entity.HitBox;
+                    Vector center = HitBox.Center;
+                    FixedSingle x = Direction == Direction.RIGHT ? otherHitbox.Left : otherHitbox.Right;
+                    FixedSingle y = center.Y < otherHitbox.Top ? otherHitbox.Top : center.Y > otherHitbox.Bottom ? otherHitbox.Bottom : Origin.Y;
+                    Origin = (x, y);
+                }
+
                 exploding = true;
                 Velocity = Vector.NULL_VECTOR;
                 CurrentAnimationIndex = animationIndices[1];
@@ -86,6 +96,14 @@ namespace MMX.Engine.Entities.Weapons
             Shooter.shots--;
 
             base.OnDeath();
+        }
+
+        protected override void OnStartTouch(Entity entity)
+        {
+            if (entity is Enemy)
+                Explode(entity);
+
+            base.OnStartTouch(entity);
         }
 
         protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)

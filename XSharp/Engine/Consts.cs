@@ -48,6 +48,8 @@ namespace MMX.Engine
         public static readonly int SIDE_WIDTH_SCENES_PER_SCREEN = ((FixedSingle) SCREEN_WIDTH / SCENE_SIZE).Ceil();
         public static readonly int SIDE_HEIGHT_SCENES_PER_SCREEN = ((FixedSingle) SCREEN_HEIGHT / SCENE_SIZE).Ceil();
 
+        public const int MAX_ENTITIES = 2048;
+
         // Times are measured in frames, velocity in pixel per frames and accelerations in pixels per frame squared.
         public static readonly FixedSingle GRAVITY = 0.25;
         public static readonly FixedSingle UNDERWATER_GRAVITY = 33 / 256.0;
@@ -116,6 +118,15 @@ namespace MMX.Engine
         public static readonly FixedSingle LADDER_BOX_VCLIP = 18;
         public static readonly FixedSingle WALL_MAX_DISTANCE_TO_WALL_JUMP = 8;
         public const int ANIMATION_COUNT = 18;
+        public const int X_BASE_HEALTH = 16;
+
+        // Enemies
+
+        // Driller
+        public static readonly FixedSingle DRILLER_JUMP_VELOCITY_X = 384 / 256.0;
+        public static readonly FixedSingle DRILLER_JUMP_VELOCITY_Y = -1280 / 256.0;
+        public static readonly Vector DRILLER_JUMP_VELOCITY = (DRILLER_JUMP_VELOCITY_X, DRILLER_JUMP_VELOCITY_Y);
+        public const int DRILLER_HEALTH = 4;
 
         // Render
         public static readonly Vector DEFAULT_DRAW_ORIGIN = Vector.NULL_VECTOR;
@@ -223,6 +234,46 @@ namespace MMX.Engine
             new Color(240, 176, 56, 255), // 4
             new Color(240, 144, 96, 255) // 5
         };
+
+        public static readonly Color[] FLASHING_PALETTE = new Color[]
+        {
+            Color.Transparent, // 0
+            new Color(248, 248, 248, 255), // 1
+            new Color(240, 248, 248, 255), // 2
+            new Color(232, 248, 248, 255), // 3
+            new Color(224, 248, 248, 255), // 4
+            new Color(216, 248, 248, 255), // 5
+            new Color(208, 248, 248, 255), // 6
+            new Color(200, 248, 248, 255), // 7
+            new Color(192, 248, 248, 255), // 8
+            new Color(184, 248, 248, 255), // 9
+            new Color(176, 248, 248, 255), // 10
+            new Color(168, 248, 248, 255), // 11
+            new Color(160, 248, 248, 255), // 12
+            new Color(152, 248, 248, 255), // 13
+            new Color(144, 248, 248, 255), // 14
+            new Color(136, 248, 248, 255) // 15
+        };
+
+        public static readonly Color[] DRILLER_PALETTE = new Color[]
+{
+            Color.Transparent, // 0
+            new Color(48, 40, 96, 255), // 1
+            new Color(72, 64, 144, 255), // 2
+            new Color(112, 104, 224, 255), // 3
+            new Color(176, 168, 248, 255), // 4
+            new Color(112, 64, 40, 255), // 5
+            new Color(168, 104, 56, 255), // 6
+            new Color(192, 152, 80, 255), // 7
+            new Color(224, 216, 128, 255), // 8
+            new Color(16, 128, 80, 255), // 9
+            new Color(32, 160, 136, 255), // 10
+            new Color(40, 240, 192, 255), // 11
+            new Color(72, 80, 72, 255), // 12
+            new Color(128, 136, 128, 255), // 13
+            new Color(200, 208, 200, 255), // 14
+            new Color(32, 32, 32, 255) // 15
+};
 
         // Startup
         public const bool LOAD_ROM = true;

@@ -1,4 +1,5 @@
-﻿using MMX.Geometry;
+﻿using MMX.Engine.Entities.Enemies;
+using MMX.Geometry;
 using MMX.Math;
 
 using static MMX.Engine.Consts;
@@ -41,9 +42,9 @@ namespace MMX.Engine.Entities.Weapons
             return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
         }
 
-        public override void Spawn()
+        public override void OnSpawn()
         {
-            base.Spawn();
+            base.OnSpawn();
 
             Firing = true;
             Exploding = false;
@@ -57,14 +58,14 @@ namespace MMX.Engine.Entities.Weapons
 
         protected override void Think()
         {
+            if (!soundPlayed)
+            {
+                Engine.PlaySound(1, 1);
+                soundPlayed = true;
+            }
+
             if (!Firing && !Exploding && !Hitting)
             {
-                if (!soundPlayed)
-                {
-                    Engine.PlaySound(1, 1);
-                    soundPlayed = true;
-                }
-
                 Velocity += new Vector(Velocity.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
                 if (Velocity.X.Abs > LEMON_TERMINAL_SPEED)
                     Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
@@ -84,10 +85,19 @@ namespace MMX.Engine.Entities.Weapons
             }
         }
 
-        public void Hit()
+        public void Hit(Entity entity)
         {
             if (!Hitting)
             {
+                if (entity != null)
+                {
+                    Box otherHitbox = entity.HitBox;
+                    Vector center = HitBox.Center;
+                    FixedSingle x = Direction == Direction.RIGHT ? otherHitbox.Left : otherHitbox.Right;
+                    FixedSingle y = center.Y < otherHitbox.Top ? otherHitbox.Top : center.Y > otherHitbox.Bottom ? otherHitbox.Bottom : Origin.Y;
+                    Origin = (x, y);
+                }
+
                 Hitting = true;
                 Velocity = Vector.NULL_VECTOR;
                 CurrentAnimationIndex = animationIndices[2];
@@ -95,12 +105,20 @@ namespace MMX.Engine.Entities.Weapons
             }
         }
 
-        protected override void OnDeath()
+        public override void Dispose()
         {
             Shooter.shots--;
             Shooter.shootingCharged = false;
 
-            base.OnDeath();
+            base.Dispose();
+        }
+
+        protected override void OnStartTouch(Entity entity)
+        {
+            if (entity is Enemy)
+                Hit(entity);
+
+            base.OnStartTouch(entity);
         }
 
         protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)

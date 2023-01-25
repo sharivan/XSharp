@@ -42,9 +42,9 @@ namespace MMX.Engine.Entities.Weapons
             return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
         }
 
-        public override void Spawn()
+        public override void OnSpawn()
         {
-            base.Spawn();
+            base.OnSpawn();
 
             level = 1;
             CurrentAnimationIndex = animationIndices[0];

@@ -37,6 +37,17 @@ namespace XSharp
             form.Resize += new EventHandler(Form_Resize);
             form.FormClosing += new FormClosingEventHandler(Form_Closing);
 
+#if DEBUG
+            try
+            {
+                engine = new GameEngine(form);
+                engine.Run();
+            }
+            finally
+            {
+                engine?.Dispose();
+            }
+#else
             try
             {
                 engine = new GameEngine(form);
@@ -51,6 +62,7 @@ namespace XSharp
             {
                 engine?.Dispose();
             }
+#endif
         }
     }
 }
