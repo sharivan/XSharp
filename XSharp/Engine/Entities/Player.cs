@@ -575,8 +575,6 @@ namespace MMX.Engine.Entities
                 else
                     CheckCollisionWithWorld = true;
 
-                skipPhysics = Standing;
-
                 if (NoClip)
                 {
                     if (spawing)
@@ -627,7 +625,6 @@ namespace MMX.Engine.Entities
                                 else if (WalkingLeftOnly && Landed)
                                 {
                                     baseHSpeed = GetWalkingSpeed();
-                                    skipPhysics = false;
                                     TryMoveLeft();
                                 }
                                 else if (!Landed)
@@ -666,7 +663,6 @@ namespace MMX.Engine.Entities
                                 else if (WalkingRightOnly && Landed)
                                 {
                                     baseHSpeed = GetWalkingSpeed();
-                                    skipPhysics = false;
                                     TryMoveRight();
                                 }
                                 else if (!Landed)
@@ -855,10 +851,7 @@ namespace MMX.Engine.Entities
                         {
                             bool hspeedNull = false;
                             if (PressingDash)
-                            {
-                                skipPhysics = true;
                                 baseHSpeed = DASH_SPEED;
-                            }
                             else if (baseHSpeed == PRE_WALKING_SPEED)
                             {
                                 baseHSpeed = WALKING_SPEED;

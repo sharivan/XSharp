@@ -37,8 +37,6 @@ namespace MMX.Engine.Entities
         private long invincibleExpires;
         protected bool broke;
 
-        protected bool skipPhysics;
-
         public string Name
         {
             get;
@@ -561,129 +559,126 @@ namespace MMX.Engine.Entities
             bool lastLanded = Landed;
 
             FixedSingle gravity = Gravity;
-            if (!skipPhysics)
+            if (!NoClip && !isStatic)
             {
-                if (!NoClip && !isStatic)
+                if (!collider.Landed && gravity != 0)
                 {
-                    if (gravity != 0)
-                    {
-                        Velocity += gravity * Vector.DOWN_VECTOR;
+                    Velocity += gravity * Vector.DOWN_VECTOR;
 
-                        FixedSingle terminalDownwardSpeed = TerminalDownwardSpeed;
-                        if (Velocity.Y > terminalDownwardSpeed)
-                            Velocity = new Vector(Velocity.X, terminalDownwardSpeed);
-                    }
-
-                    if (CheckCollisionWithWorld && collider.Landed && Velocity.Y > 0)
-                        Velocity = Velocity.XVector;
+                    FixedSingle terminalDownwardSpeed = TerminalDownwardSpeed;
+                    if (Velocity.Y > terminalDownwardSpeed)
+                        Velocity = new Vector(Velocity.X, terminalDownwardSpeed);
                 }
 
-                if (!Landed && Velocity.Y > gravity && Velocity.Y < 2 * gravity)
-                    Velocity = new Vector(Velocity.X, gravity);
+                if (CheckCollisionWithWorld && collider.Landed && Velocity.Y > 0)
+                    Velocity = Velocity.XVector;
+            }
 
-                if (Velocity.IsNull && moving)
-                    StopMoving();
+            if (!Landed && Velocity.Y > gravity && Velocity.Y < 2 * gravity)
+                Velocity = new Vector(Velocity.X, gravity);
 
-                Vector delta = !isStatic && !Velocity.IsNull ? Velocity : Vector.NULL_VECTOR;
-                if (!delta.IsNull)
+            if (Velocity.IsNull && moving)
+                StopMoving();
+
+            Vector delta = !isStatic && !Velocity.IsNull ? Velocity : Vector.NULL_VECTOR;
+            if (!delta.IsNull)
+            {
+                if (!NoClip && CheckCollisionWithWorld)
                 {
-                    if (!NoClip && CheckCollisionWithWorld)
+                    if (delta.X != 0)
                     {
-                        if (delta.X != 0)
+                        if (collider.LandedOnSlope)
                         {
-                            if (collider.LandedOnSlope)
+                            if (collider.LandedSlope.HCathetusSign == delta.X.Signal)
                             {
-                                if (collider.LandedSlope.HCathetusSign == delta.X.Signal)
-                                {
-                                    if (gravity != 0)
-                                        MoveAlongSlope(collider, collider.LandedSlope, delta.X, gravity != 0);
-                                }
-                                else
+                                if (gravity != 0)
                                     MoveAlongSlope(collider, collider.LandedSlope, delta.X, gravity != 0);
                             }
                             else
-                                MoveX(collider, delta.X, gravity != 0);
+                                MoveAlongSlope(collider, collider.LandedSlope, delta.X, gravity != 0);
                         }
-
-                        if (delta.Y != 0)
-                        {
-                            var dy = new Vector(0, delta.Y);
-                            MMXBox lastBox = collider.Box;
-                            MMXBox lastUpCollider = collider.UpCollider;
-                            MMXBox lastDownCollider = collider.DownCollider;
-                            collider.Translate(dy);
-
-                            if (dy.Y > 0)
-                            {
-                                MMXBox union = lastDownCollider | collider.DownCollider;
-                                if (CanBlockTheMove(Engine.GetCollisionFlags(union, CollisionFlags.NONE, true)))
-                                {
-                                    collider.Box = lastBox;
-                                    collider.MoveContactFloor(dy.Y.Ceil());
-                                }
-                            }
-                            else
-                            {
-                                MMXBox union = lastUpCollider | collider.UpCollider;
-                                if (CanBlockTheMove(Engine.GetCollisionFlags(union, CollisionFlags.NONE, true)))
-                                {
-                                    collider.Box = lastBox;
-                                    collider.MoveContactSolid(dy, (-dy.Y).Ceil(), Direction.UP);
-                                }
-                            }
-                        }
-
-                        delta = collider.Box.Origin - CollisionBox.Origin;
+                        else
+                            MoveX(collider, delta.X, gravity != 0);
                     }
 
-                    if (!NoClip && CheckCollisionWithSprites)
-                        delta = DoCheckCollisionWithSprites(delta);
-                }
-
-                if (delta != Vector.NULL_VECTOR)
-                {
-                    Vector newOrigin = Origin + delta;
-
-                    FixedSingle x = newOrigin.X;
-                    FixedSingle y = newOrigin.Y;
-
-                    if (!CanGoOutOfMapBounds)
+                    if (delta.Y != 0)
                     {
-                        MMXBox limit = Engine.World.BoundingBox;
-                        if (!Engine.noCameraConstraints)
-                            limit &= Engine.cameraConstraintsBox.ClipTop(-2 * HITBOX_HEIGHT).ClipBottom(-2 * HITBOX_HEIGHT);
+                        var dy = new Vector(0, delta.Y);
+                        MMXBox lastBox = collider.Box;
+                        MMXBox lastUpCollider = collider.UpCollider;
+                        MMXBox lastDownCollider = collider.DownCollider;
+                        collider.Translate(dy);
 
-                        MMXBox collisionBox = newOrigin + GetCollisionBox();
-
-                        FixedSingle minX = collisionBox.Left;
-                        FixedSingle limitLeft = limit.Left;
-                        if (minX < limitLeft)
-                            x -= minX - limitLeft;
-
-                        FixedSingle minY = collisionBox.Top;
-                        FixedSingle limitTop = limit.Top;
-                        if (minY < limitTop)
-                            y -= minY - limitTop;
-                        
-                        FixedSingle maxX = collisionBox.Right;
-                        FixedSingle limitRight = limit.Right;
-                        if (maxX > limitRight)
-                            x += limitRight - maxX;
-
-                        FixedSingle maxY = collisionBox.Bottom;
-                        FixedSingle limitBottom = limit.Bottom;
-                        if (maxY > limitBottom)
-                            y += limitBottom - maxY;
+                        if (dy.Y > 0)
+                        {
+                            MMXBox union = lastDownCollider | collider.DownCollider;
+                            if (CanBlockTheMove(Engine.GetCollisionFlags(union, CollisionFlags.NONE, true)))
+                            {
+                                collider.Box = lastBox;
+                                collider.MoveContactFloor(dy.Y.Ceil());
+                            }
+                        }
+                        else
+                        {
+                            MMXBox union = lastUpCollider | collider.UpCollider;
+                            if (CanBlockTheMove(Engine.GetCollisionFlags(union, CollisionFlags.NONE, true)))
+                            {
+                                collider.Box = lastBox;
+                                collider.MoveContactSolid(dy, (-dy.Y).Ceil(), Direction.UP);
+                            }
+                        }
                     }
 
-                    Origin = new Vector(x, y);
+                    delta = collider.Box.Origin - CollisionBox.Origin;
+                }
 
-                    StartMoving();
-                }
-                else if (moving)
+                if (!NoClip && CheckCollisionWithSprites)
+                    delta = DoCheckCollisionWithSprites(delta);
+            }
+
+            if (delta != Vector.NULL_VECTOR)
+            {
+                Vector newOrigin = Origin + delta;
+
+                FixedSingle x = newOrigin.X;
+                FixedSingle y = newOrigin.Y;
+
+                if (!CanGoOutOfMapBounds)
                 {
-                    StopMoving();
+                    MMXBox limit = Engine.World.BoundingBox;
+                    if (!Engine.noCameraConstraints)
+                        limit &= Engine.cameraConstraintsBox.ClipTop(-2 * HITBOX_HEIGHT).ClipBottom(-2 * HITBOX_HEIGHT);
+
+                    MMXBox collisionBox = newOrigin + GetCollisionBox();
+
+                    FixedSingle minX = collisionBox.Left;
+                    FixedSingle limitLeft = limit.Left;
+                    if (minX < limitLeft)
+                        x -= minX - limitLeft;
+
+                    FixedSingle minY = collisionBox.Top;
+                    FixedSingle limitTop = limit.Top;
+                    if (minY < limitTop)
+                        y -= minY - limitTop;
+                        
+                    FixedSingle maxX = collisionBox.Right;
+                    FixedSingle limitRight = limit.Right;
+                    if (maxX > limitRight)
+                        x += limitRight - maxX;
+
+                    FixedSingle maxY = collisionBox.Bottom;
+                    FixedSingle limitBottom = limit.Bottom;
+                    if (maxY > limitBottom)
+                        y += limitBottom - maxY;
                 }
+
+                Origin = new Vector(x, y);
+
+                StartMoving();
+            }
+            else if (moving)
+            {
+                StopMoving();
             }
 
             if (CheckCollisionWithWorld)
@@ -734,11 +729,7 @@ namespace MMX.Engine.Entities
 
         public Animation GetAnimation(int index) => animations == null || index < 0 || index >= animations.Count ? null : animations[index];
 
-        protected override bool PreThink()
-        {
-            skipPhysics = false;
-            return base.PreThink();
-        }
+        protected override bool PreThink() => base.PreThink();
 
         protected override void Think()
         {

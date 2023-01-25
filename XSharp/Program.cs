@@ -18,10 +18,7 @@ namespace XSharp
             //    engine.UpdateScale();
         }
 
-        static private void Form_Closing(object sender, EventArgs e)
-        {
-            engine.Running = false;
-        }
+        static private void Form_Closing(object sender, EventArgs e) => engine.Running = false;
 
         /// <summary>
         /// Ponto de entrada principal para o aplicativo.
