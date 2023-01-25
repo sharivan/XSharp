@@ -210,9 +210,9 @@ namespace MMX.Engine
 
         private void UpdateColliders()
         {
-            LeftCollider = new Box(box.Left, box.Top + 1, -maskSize, box.Height - 4);
+            LeftCollider = new Box(box.Left, box.Top + 1, -maskSize, box.Height - 10);
             UpCollider = new Box(box.LeftTop, box.Width, -maskSize);
-            RightCollider = new Box(box.Right, box.Top + 1, maskSize, box.Height - 4);
+            RightCollider = new Box(box.Right, box.Top + 1, maskSize, box.Height - 10);
             DownCollider = new Box(box.LeftBottom, box.Width, maskSize);
 
             UpdateFlags();

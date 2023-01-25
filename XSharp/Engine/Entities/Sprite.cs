@@ -559,9 +559,10 @@ namespace MMX.Engine.Entities
             bool lastLanded = Landed;
 
             FixedSingle gravity = Gravity;
+
             if (!NoClip && !isStatic)
             {
-                if (!collider.Landed && gravity != 0)
+                if (!lastLanded && gravity != 0)
                 {
                     Velocity += gravity * Vector.DOWN_VECTOR;
 
@@ -570,11 +571,11 @@ namespace MMX.Engine.Entities
                         Velocity = new Vector(Velocity.X, terminalDownwardSpeed);
                 }
 
-                if (CheckCollisionWithWorld && collider.Landed && Velocity.Y > 0)
+                if (CheckCollisionWithWorld && lastLanded)
                     Velocity = Velocity.XVector;
             }
 
-            if (!Landed && Velocity.Y > gravity && Velocity.Y < 2 * gravity)
+            if (!lastLanded && Velocity.Y > gravity && Velocity.Y < 2 * gravity)
                 Velocity = new Vector(Velocity.X, gravity);
 
             if (Velocity.IsNull && moving)

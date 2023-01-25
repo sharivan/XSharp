@@ -549,6 +549,8 @@ namespace MMX.Engine.Entities
 
         protected override void Think()
         {
+            base.Think();
+
             if (Engine.Paused)
             {
                 if (PressingStart && !WasPressingStart)
@@ -1066,8 +1068,6 @@ namespace MMX.Engine.Entities
                 if (PressingStart && !WasPressingStart)
                     Engine.PauseGame();
             }
-
-            base.Think();
         }
 
         private Vector GetShotOrigin() => state switch
