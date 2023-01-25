@@ -547,6 +547,40 @@ namespace MMX.Engine.Entities
 
         internal void PlaySound(int index) => Engine.PlaySound(0, index);
 
+        protected override void OnBeforeMove(ref Vector origin)
+        {
+            FixedSingle x = origin.X;
+            FixedSingle y = origin.Y;
+
+            Box limit = Engine.World.BoundingBox;
+            if (!Engine.noCameraConstraints)
+                limit &= Engine.cameraConstraintsBox.ClipTop(-2 * HITBOX_HEIGHT).ClipBottom(-2 * HITBOX_HEIGHT);
+
+            Box collisionBox = origin + GetCollisionBox();
+
+            FixedSingle minX = collisionBox.Left;
+            FixedSingle limitLeft = limit.Left;
+            if (minX < limitLeft)
+                x -= minX - limitLeft;
+
+            FixedSingle minY = collisionBox.Top;
+            FixedSingle limitTop = limit.Top;
+            if (minY < limitTop)
+                y -= minY - limitTop;
+
+            FixedSingle maxX = collisionBox.Right;
+            FixedSingle limitRight = limit.Right;
+            if (maxX > limitRight)
+                x += limitRight - maxX;
+
+            FixedSingle maxY = collisionBox.Bottom;
+            FixedSingle limitBottom = limit.Bottom;
+            if (maxY > limitBottom)
+                y += limitBottom - maxY;
+
+            origin = new Vector(x, y);
+        }
+
         protected override void Think()
         {
             base.Think();
@@ -1120,11 +1154,11 @@ namespace MMX.Engine.Entities
 
         public Direction GetWallJumpDir()
         {
-            Box collisionBox = Collider.LeftCollider.ExtendLeftFixed(8).ClipTop(-2);
+            Box collisionBox = Collider.LeftCollider.ExtendLeftFixed(8).ClipTop(-2 + (256 - 32) * MASK_SIZE);
             if (Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true).HasFlag(CollisionFlags.BLOCK))
                 return Direction.LEFT;
 
-            collisionBox = Collider.RightCollider.ExtendRightFixed(8).ClipTop(-2);
+            collisionBox = Collider.RightCollider.ExtendRightFixed(8).ClipTop(-2 + (256 - 32) * MASK_SIZE);
             return Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true).HasFlag(CollisionFlags.BLOCK)
                 ? Direction.RIGHT
                 : Direction.NONE;

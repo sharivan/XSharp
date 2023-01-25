@@ -10,7 +10,7 @@ using MMX.Geometry;
 using static MMX.Engine.Consts;
 using static MMX.Engine.World.World;
 
-using MMXBox = MMX.Geometry.Box;
+using Box = MMX.Geometry.Box;
 
 namespace MMX.Engine.Entities
 {
@@ -345,9 +345,9 @@ namespace MMX.Engine.Entities
             currentAnimationIndex = -1;
         }
 
-        protected virtual bool OnTakeDamage(Sprite attacker, MMXBox region, ref int damage) => true;
+        protected virtual bool OnTakeDamage(Sprite attacker, Box region, ref int damage) => true;
 
-        protected virtual void OnTakeDamagePost(Sprite attacker, MMXBox region, FixedSingle damage)
+        protected virtual void OnTakeDamagePost(Sprite attacker, Box region, FixedSingle damage)
         {
         }
 
@@ -359,12 +359,12 @@ namespace MMX.Engine.Entities
         {
         }
 
-        public void Hurt(Sprite victim, MMXBox region, int damage)
+        public void Hurt(Sprite victim, Box region, int damage)
         {
             if (victim.broke || victim.markedToRemove || health <= 0)
                 return;
 
-            MMXBox intersection = region;
+            Box intersection = region;
 
             if (!intersection.IsValid(EPSLON))
                 return;
@@ -405,13 +405,13 @@ namespace MMX.Engine.Entities
             return result;
         }
 
-        protected override MMXBox GetHitBox() => CollisionBox;
+        protected override Box GetHitBox() => CollisionBox;
 
-        public MMXBox CollisionBox => Origin + GetCollisionBox();
+        public Box CollisionBox => Origin + GetCollisionBox();
 
-        protected abstract MMXBox GetCollisionBox();
+        protected abstract Box GetCollisionBox();
 
-        protected override MMXBox GetBoundingBox() => DrawBox;
+        protected override Box GetBoundingBox() => DrawBox;
 
         private void MoveAlongSlope(BoxCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)
         {
@@ -435,12 +435,12 @@ namespace MMX.Engine.Entities
         {
             var dx = new Vector(deltaX, 0);
 
-            MMXBox lastBox = collider.Box;
+            Box lastBox = collider.Box;
             bool wasLanded = collider.Landed;
             bool wasLandedOnSlope = collider.LandedOnSlope;
             RightTriangle lastSlope = collider.LandedSlope;
-            MMXBox lastLeftCollider = collider.LeftCollider;
-            MMXBox lastRightCollider = collider.RightCollider;
+            Box lastLeftCollider = collider.LeftCollider;
+            Box lastRightCollider = collider.RightCollider;
 
             collider.Translate(dx);
 
@@ -449,7 +449,7 @@ namespace MMX.Engine.Entities
             else if (gravity && wasLanded)
                 collider.TryMoveContactSlope(TILE_SIZE / 2 * QUERY_MAX_DISTANCE);
 
-            MMXBox union = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
+            Box union = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
             CollisionFlags collisionFlags = Engine.GetCollisionFlags(union, CollisionFlags.NONE, true);
 
             if (!CanBlockTheMove(collisionFlags))
@@ -549,6 +549,10 @@ namespace MMX.Engine.Entities
             }
         }
 
+        protected virtual void OnBeforeMove(ref Vector origin)
+        {
+        }
+
         private void DoPhysics()
         {
             collider.Box = CollisionBox;
@@ -605,14 +609,14 @@ namespace MMX.Engine.Entities
                     if (delta.Y != 0)
                     {
                         var dy = new Vector(0, delta.Y);
-                        MMXBox lastBox = collider.Box;
-                        MMXBox lastUpCollider = collider.UpCollider;
-                        MMXBox lastDownCollider = collider.DownCollider;
+                        Box lastBox = collider.Box;
+                        Box lastUpCollider = collider.UpCollider;
+                        Box lastDownCollider = collider.DownCollider;
                         collider.Translate(dy);
 
                         if (dy.Y > 0)
                         {
-                            MMXBox union = lastDownCollider | collider.DownCollider;
+                            Box union = lastDownCollider | collider.DownCollider;
                             if (CanBlockTheMove(Engine.GetCollisionFlags(union, CollisionFlags.NONE, true)))
                             {
                                 collider.Box = lastBox;
@@ -621,7 +625,7 @@ namespace MMX.Engine.Entities
                         }
                         else
                         {
-                            MMXBox union = lastUpCollider | collider.UpCollider;
+                            Box union = lastUpCollider | collider.UpCollider;
                             if (CanBlockTheMove(Engine.GetCollisionFlags(union, CollisionFlags.NONE, true)))
                             {
                                 collider.Box = lastBox;
@@ -641,46 +645,17 @@ namespace MMX.Engine.Entities
             {
                 Vector newOrigin = Origin + delta;
 
-                FixedSingle x = newOrigin.X;
-                FixedSingle y = newOrigin.Y;
-
                 if (!CanGoOutOfMapBounds)
-                {
-                    MMXBox limit = Engine.World.BoundingBox;
-                    if (!Engine.noCameraConstraints)
-                        limit &= Engine.cameraConstraintsBox.ClipTop(-2 * HITBOX_HEIGHT).ClipBottom(-2 * HITBOX_HEIGHT);
+                    OnBeforeMove(ref newOrigin);
 
-                    MMXBox collisionBox = newOrigin + GetCollisionBox();
+                Vector lastOrigin = Origin;
+                Origin = newOrigin;
 
-                    FixedSingle minX = collisionBox.Left;
-                    FixedSingle limitLeft = limit.Left;
-                    if (minX < limitLeft)
-                        x -= minX - limitLeft;
-
-                    FixedSingle minY = collisionBox.Top;
-                    FixedSingle limitTop = limit.Top;
-                    if (minY < limitTop)
-                        y -= minY - limitTop;
-                        
-                    FixedSingle maxX = collisionBox.Right;
-                    FixedSingle limitRight = limit.Right;
-                    if (maxX > limitRight)
-                        x += limitRight - maxX;
-
-                    FixedSingle maxY = collisionBox.Bottom;
-                    FixedSingle limitBottom = limit.Bottom;
-                    if (maxY > limitBottom)
-                        y += limitBottom - maxY;
-                }
-
-                Origin = new Vector(x, y);
-
-                StartMoving();
+                if (lastOrigin != newOrigin)
+                    StartMoving();
             }
             else if (moving)
-            {
                 StopMoving();
-            }
 
             if (CheckCollisionWithWorld)
             {
@@ -720,7 +695,7 @@ namespace MMX.Engine.Entities
 
         protected bool CollisionCheck(Sprite sprite) => ShouldCollide(sprite) || sprite.ShouldCollide(this);
 
-        public MMXBox DrawBox => CurrentAnimation != null ? CurrentAnimation.DrawBox : Origin + MMXBox.EMPTY_BOX;
+        public Box DrawBox => CurrentAnimation != null ? CurrentAnimation.DrawBox : Origin + Box.EMPTY_BOX;
 
         public float Opacity
         {
