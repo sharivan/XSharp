@@ -151,9 +151,9 @@ namespace MMX.Geometry
         /// Vetor nulo
         /// </summary>
         public static readonly Vector NULL_VECTOR = new(0, 0); // Vetor nulo
-                                                                      /// <summary>
-                                                                      /// Vetor leste
-                                                                      /// </summary>
+        /// <summary>
+        /// Vetor leste
+        /// </summary>
         public static readonly Vector LEFT_VECTOR = new(-1, 0);
         /// <summary>
         /// Vetor norte
@@ -171,12 +171,18 @@ namespace MMX.Geometry
         /// <summary>
         /// Coordenada x do vetor
         /// </summary>
-        public FixedSingle X { get; }
+        public FixedSingle X
+        {
+            get;
+        }
 
         /// <summary>
         /// Coordenada y do vetor
         /// </summary>
-        public FixedSingle Y { get; }
+        public FixedSingle Y
+        {
+            get;
+        }
 
         /// <summary>
         /// Módulo/Norma/Comprimento do vetor
@@ -462,12 +468,18 @@ namespace MMX.Geometry
         /// <summary>
         /// Ponto inicial do segmento
         /// </summary>
-        public Vector Start { get; }
+        public Vector Start
+        {
+            get;
+        }
 
         /// <summary>
         /// Ponto final do segmento
         /// </summary>
-        public Vector End { get; }
+        public Vector End
+        {
+            get;
+        }
 
         /// <summary>
         /// Comprimento do segmento
@@ -625,7 +637,7 @@ namespace MMX.Geometry
                 }
 
                 return GeometryType.EMPTY;
-            }            
+            }
 
             var x = (FixedSingle) ((B2 * C1 - B1 * C2) / D);
             var y = (FixedSingle) ((A2 * C1 - A1 * C2) / D);
@@ -960,7 +972,7 @@ namespace MMX.Geometry
             Maxs = maxs;
         }
 
-        public Box((Vector, Vector, Vector) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3) {}
+        public Box((Vector, Vector, Vector) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3) { }
 
         public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height) :
             this(new Vector(x, y), width, height)
@@ -969,76 +981,40 @@ namespace MMX.Geometry
 
         public Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4) { }
 
-        public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height, OriginPosition originPosition)
+        public Box(FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height, OriginPosition originPosition)
         {
-            Origin = new Vector(x, y);
-
-            switch (originPosition)
+            Origin = originPosition switch
             {
-                case OriginPosition.LEFT_TOP:
-                    Mins = Vector.NULL_VECTOR;
-                    Maxs = new Vector(width, height);
-                    break;
+                OriginPosition.LEFT_TOP => (left, top),
+                OriginPosition.LEFT_MIDDLE => (left, top + height * FixedSingle.HALF),
+                OriginPosition.LEFT_BOTTOM => (left, top + height),
+                OriginPosition.MIDDLE_TOP => (left + width * FixedSingle.HALF, top),
+                OriginPosition.CENTER => (left + width * FixedSingle.HALF, top + height * FixedSingle.HALF),
+                OriginPosition.MIDDLE_BOTTOM => (left + width * FixedSingle.HALF, top + height),
+                OriginPosition.RIGHT_TOP => (left + width, top),
+                OriginPosition.RIGHT_MIDDLE => (left + width, top + height * FixedSingle.HALF),
+                OriginPosition.RIGHT_BOTTOM => (left + width, top + height),
+                _ => throw new ArgumentException("Unrecognized Origin Position."),
+            };
 
-                case OriginPosition.LEFT_MIDDLE:
-                    Mins = new Vector(0, -height * FixedSingle.HALF);
-                    Maxs = new Vector(width, height * FixedSingle.HALF);
-                    break;
-
-                case OriginPosition.LEFT_BOTTOM:
-                    Mins = new Vector(0, -height);
-                    Maxs = new Vector(width, 0);
-                    break;
-
-                case OriginPosition.MIDDLE_TOP:
-                    Mins = new Vector(-width * FixedSingle.HALF, 0);
-                    Maxs = new Vector(width * FixedSingle.HALF, height);
-                    break;
-
-                case OriginPosition.CENTER:
-                    Mins = new Vector(-width * FixedSingle.HALF, -height * FixedSingle.HALF);
-                    Maxs = new Vector(width * FixedSingle.HALF, height * FixedSingle.HALF);
-                    break;
-
-                case OriginPosition.MIDDLE_BOTTOM:
-                    Mins = new Vector(-width * FixedSingle.HALF, -height);
-                    Maxs = new Vector(width * FixedSingle.HALF, 0);
-                    break;
-
-                case OriginPosition.RIGHT_TOP:
-                    Mins = new Vector(-width, 0);
-                    Maxs = new Vector(0, height);
-                    break;
-
-                case OriginPosition.RIGHT_MIDDLE:
-                    Mins = new Vector(-width, -height * FixedSingle.HALF);
-                    Maxs = new Vector(0, height * FixedSingle.HALF);
-                    break;
-
-                case OriginPosition.RIGHT_BOTTOM:
-                    Mins = new Vector(-width, -height);
-                    Maxs = Vector.NULL_VECTOR;
-                    break;
-
-                default:
-                    throw new ArgumentException("Unrecognized Origin Position.");
-            }
+            Mins = (left, top) - Origin;
+            Maxs = (left + width, top + height) - Origin;
         }
 
         public Box(Vector origin, FixedSingle width, FixedSingle height)
         {
             Origin = origin;
             Mins = Vector.NULL_VECTOR;
-            Maxs = new Vector(width, height);
+            Maxs = (width, height);
         }
 
         public Box((Vector, FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3) { }
 
         public Box(FixedSingle x, FixedSingle y, FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height)
         {
-            Origin = new Vector(x, y);
-            Mins = new Vector(left - x, top - y);
-            Maxs = new Vector(left + width - x, top + height - y);
+            Origin = (x, y);
+            Mins = (left - x, top - y);
+            Maxs = (left + width - x, top + height - y);
         }
 
         public Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4, tuple.Item5, tuple.Item6) { }
@@ -1073,10 +1049,10 @@ namespace MMX.Geometry
         public Box Truncate()
         {
             Vector mins = Origin + Mins;
-            mins = new Vector(mins.X.Floor(), mins.Y.Floor());
+            mins = (mins.X.Floor(), mins.Y.Floor());
             Vector maxs = Origin + Maxs;
-            maxs = new Vector(maxs.X.Floor(), maxs.Y.Floor());
-            return new Box(mins, Vector.NULL_VECTOR, maxs - mins);
+            maxs = (maxs.X.Floor(), maxs.Y.Floor());
+            return (mins, Vector.NULL_VECTOR, maxs - mins);
         }
 
         public override int GetHashCode()
@@ -1087,24 +1063,17 @@ namespace MMX.Geometry
             return 65536 * m.GetHashCode() + M.GetHashCode();
         }
 
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-                return false;
-
-            if (obj is not Box)
-                return false;
-
-            var other = (Box) obj;
-            return this == other;
-        }
+        public override bool Equals(object obj) => obj != null && obj is Box other && this == other;
 
         public override string ToString() => "[" + Origin + " : " + Mins + " : " + Maxs + "]";
 
         /// <summary>
         /// Origem do retângulo
         /// </summary>
-        public Vector Origin { get; }
+        public Vector Origin
+        {
+            get;
+        }
 
         public FixedSingle X => Origin.X;
 
@@ -1129,31 +1098,34 @@ namespace MMX.Geometry
         /// <summary>
         /// Extremo superior esquerdo do retângulo (ou mínimos absolutos)
         /// </summary>
-        public Vector LeftTop => new(Left, Top);
+        public Vector LeftTop => (Left, Top);
 
-        public Vector LeftMiddle => new(Left, (Top + Bottom) / 2);
+        public Vector LeftMiddle => (Left, (Top + Bottom) * FixedSingle.HALF);
 
-        public Vector LeftBottom => new(Left, Bottom);
+        public Vector LeftBottom => (Left, Bottom);
 
-        public Vector RightTop => new(Right, Top);
+        public Vector RightTop => (Right, Top);
 
-        public Vector RightMiddle => new(Right, (Top + Bottom) / 2);
+        public Vector RightMiddle => (Right, (Top + Bottom) * FixedSingle.HALF);
 
-        public Vector MiddleTop => new((Left + Right) / 2, Top);
+        public Vector MiddleTop => ((Left + Right) * FixedSingle.HALF, Top);
 
-        public Vector MiddleBottom => new((Left + Right) / 2, Bottom);
+        public Vector MiddleBottom => ((Left + Right) * FixedSingle.HALF, Bottom);
 
         /// <summary>
         /// Extremo inferior direito do retângulo (ou máximos absolutos)
         /// </summary>
-        public Vector RightBottom => new(Right, Bottom);
+        public Vector RightBottom => (Right, Bottom);
 
-        public Vector Center => Origin + (Mins + Maxs) / 2;
+        public Vector Center => Origin + (Mins + Maxs) * FixedSingle.HALF;
 
         /// <summary>
         /// Mínimos relativos
         /// </summary>
-        public Vector Mins { get; }
+        public Vector Mins
+        {
+            get;
+        }
 
         /// <summary>
         /// Máximos relativos
@@ -1163,14 +1135,14 @@ namespace MMX.Geometry
             get;
         }
 
-        public Vector WidthVector => new(Width, 0);
+        public Vector WidthVector => (Width, 0);
 
-        public Vector HeightVector => new(0, Height);
+        public Vector HeightVector => (0, Height);
 
         /// <summary>
         /// Vetor correspondente ao tamanho do retângulo contendo sua largura (width) na coordenada x e sua altura (height) na coordenada y
         /// </summary>
-        public Vector DiagonalVector => new(Width, Height);
+        public Vector DiagonalVector => (Width, Height);
 
         /// <summary>
         /// Largura (base) do retângulo
@@ -1182,33 +1154,33 @@ namespace MMX.Geometry
         /// </summary>
         public FixedSingle Height => (Maxs.Y - Mins.Y).Abs;
 
-        public Box LeftTopOrigin() => new(LeftTop, Vector.NULL_VECTOR, DiagonalVector);
+        public Box LeftTopOrigin() => (LeftTop, Vector.NULL_VECTOR, DiagonalVector);
 
-        public Box RightBottomOrigin() => new(RightBottom, -DiagonalVector, Vector.NULL_VECTOR);
+        public Box RightBottomOrigin() => (RightBottom, -DiagonalVector, Vector.NULL_VECTOR);
 
         public Box CenterOrigin()
         {
-            Vector sv2 = DiagonalVector / 2;
+            Vector sv2 = DiagonalVector * FixedSingle.HALF;
             return new Box(Center, -sv2, sv2);
         }
 
-        public Box RoundOriginToCeil() => new(Origin.RoundToCeil(), Mins, Maxs);
+        public Box RoundOriginToCeil() => (Origin.RoundToCeil(), Mins, Maxs);
 
-        public Box RoundOriginXToCeil() => new(Origin.RoundXToCeil(), Mins, Maxs);
+        public Box RoundOriginXToCeil() => (Origin.RoundXToCeil(), Mins, Maxs);
 
-        public Box RoundOriginYToCeil() => new(Origin.RoundYToCeil(), Mins, Maxs);
+        public Box RoundOriginYToCeil() => (Origin.RoundYToCeil(), Mins, Maxs);
 
-        public Box RoundOriginToFloor() => new(Origin.RoundToFloor(), Mins, Maxs);
+        public Box RoundOriginToFloor() => (Origin.RoundToFloor(), Mins, Maxs);
 
-        public Box RoundOriginXToFloor() => new(Origin.RoundXToFloor(), Mins, Maxs);
+        public Box RoundOriginXToFloor() => (Origin.RoundXToFloor(), Mins, Maxs);
 
-        public Box RoundOriginYToFloor() => new(Origin.RoundYToFloor(), Mins, Maxs);
+        public Box RoundOriginYToFloor() => (Origin.RoundYToFloor(), Mins, Maxs);
 
-        public Box RoundOrigin() => new(Origin.Round(), Mins, Maxs);
+        public Box RoundOrigin() => (Origin.Round(), Mins, Maxs);
 
-        public Box RoundOriginX() => new(Origin.RoundX(), Mins, Maxs);
+        public Box RoundOriginX() => (Origin.RoundX(), Mins, Maxs);
 
-        public Box RoundOriginY() => new(Origin.RoundY(), Mins, Maxs);
+        public Box RoundOriginY() => (Origin.RoundY(), Mins, Maxs);
 
         /// <summary>
         /// Área do retângulo
@@ -1224,23 +1196,23 @@ namespace MMX.Geometry
         public Box ScaleLeft(FixedSingle alpha)
         {
             FixedSingle width = Width;
-            return new Box(LeftTop + alpha * width * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, new Vector(alpha * width, Height));
+            return (LeftTop + alpha * width * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, (alpha * width, Height));
         }
 
-        public Box ExtendLeftFixed(FixedSingle fixedWidth) => new(LeftTop + fixedWidth * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, new Vector(fixedWidth, Height));
+        public Box ExtendLeftFixed(FixedSingle fixedWidth) => (LeftTop + fixedWidth * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, (fixedWidth, Height));
 
-        public Box ClipLeft(FixedSingle clip) => new(Origin, new Vector(Mins.X + clip, Mins.Y), Maxs);
+        public Box ClipLeft(FixedSingle clip) => (Origin, (Mins.X + clip, Mins.Y), Maxs);
 
         /// <summary>
         /// Escala o retângulo para a direita
         /// </summary>
         /// <param name="alpha"></param>
         /// <returns></returns>
-        public Box ScaleRight(FixedSingle alpha) => new(LeftTop, Vector.NULL_VECTOR, new Vector(alpha * Width, Height));
+        public Box ScaleRight(FixedSingle alpha) => (LeftTop, Vector.NULL_VECTOR, (alpha * Width, Height));
 
-        public Box ClipRight(FixedSingle clip) => new(Origin, Mins, new Vector(Maxs.X - clip, Maxs.Y));
+        public Box ClipRight(FixedSingle clip) => (Origin, Mins, (Maxs.X - clip, Maxs.Y));
 
-        public Box ExtendRightFixed(FixedSingle fixedWidth) => new(LeftTop, Vector.NULL_VECTOR, new Vector(fixedWidth, Height));
+        public Box ExtendRightFixed(FixedSingle fixedWidth) => (LeftTop, Vector.NULL_VECTOR, (fixedWidth, Height));
 
         /// <summary>
         /// Escala o retângulo para cima
@@ -1250,10 +1222,10 @@ namespace MMX.Geometry
         public Box ScaleTop(FixedSingle alpha)
         {
             FixedSingle height = Height;
-            return new Box(LeftTop + alpha * (height - 1) * Vector.UP_VECTOR, Vector.NULL_VECTOR, new Vector(Width, alpha * height));
+            return (LeftTop + alpha * (height - 1) * Vector.UP_VECTOR, Vector.NULL_VECTOR, (Width, alpha * height));
         }
 
-        public Box ClipTop(FixedSingle clip) => new(Origin, new Vector(Mins.X, Mins.Y + clip), Maxs);
+        public Box ClipTop(FixedSingle clip) => (Origin, (Mins.X, Mins.Y + clip), Maxs);
 
         /// <summary>
         /// Escala o retângulo para baixo
@@ -1457,7 +1429,7 @@ namespace MMX.Geometry
         public static LineSegment operator &(Box box, LineSegment line)
         {
             if (line.Start <= box)
-            {                
+            {
                 if (line.End <= box)
                     return line;
 
@@ -1483,7 +1455,7 @@ namespace MMX.Geometry
 
             if (line.End <= box)
             {
-                if(line.Start <= box)
+                if (line.Start <= box)
                     return line;
 
                 for (BoxSide side = BoxSide.LEFT; side <= BoxSide.DOWN; side++)
@@ -1727,7 +1699,10 @@ namespace MMX.Geometry
         private readonly FixedSingle hCathetus;
         private readonly FixedSingle vCathetus;
 
-        public Vector Origin { get; }
+        public Vector Origin
+        {
+            get;
+        }
 
         public Vector HCathetusVertex => Origin + HCathetusVector;
 
@@ -1801,11 +1776,11 @@ namespace MMX.Geometry
                     return hCathetus >= 0 ? Vector.RIGHT_VECTOR : Vector.LEFT_VECTOR;
 
                 case RightTriangleSide.HYPOTENUSE:
-                    {
-                        int sign = vCathetus.Signal == hCathetus.Signal ? 1 : -1;
-                        var v = new Vector(sign * vCathetus, -sign * hCathetus);
-                        return v.Versor();
-                    }
+                {
+                    int sign = vCathetus.Signal == hCathetus.Signal ? 1 : -1;
+                    var v = new Vector(sign * vCathetus, -sign * hCathetus);
+                    return v.Versor();
+                }
             }
 
             return Vector.NULL_VECTOR;
@@ -1860,7 +1835,7 @@ namespace MMX.Geometry
             return intersection.IsValid(epslon)
             && (Contains(intersection.LeftTop, epslon, excludeHypotenuse)
             || Contains(intersection.LeftBottom, epslon, excludeHypotenuse)
-            || Contains(intersection.RightTop, epslon, excludeHypotenuse) 
+            || Contains(intersection.RightTop, epslon, excludeHypotenuse)
             || Contains(intersection.RightBottom, epslon, excludeHypotenuse));
         }
 

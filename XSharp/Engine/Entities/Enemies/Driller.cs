@@ -34,9 +34,9 @@ namespace MMX.Engine.Entities.Enemies
             }
         }
 
-        public Driller(GameEngine engine, string name, Vector origin, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex) { }
+        public Driller(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 4) { }
 
-        public override void OnSpawn()
+        internal override void OnSpawn()
         {
             base.OnSpawn();
            

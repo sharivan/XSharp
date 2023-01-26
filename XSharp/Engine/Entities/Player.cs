@@ -3,7 +3,8 @@ using System.IO;
 
 using MMX.Geometry;
 using MMX.Math;
-using MMX.Engine.Entities.Weapons;
+
+using MMX.Engine.Entities.Effects;
 
 using static MMX.Engine.Consts;
 
@@ -46,6 +47,7 @@ namespace MMX.Engine.Entities
         private int dashFrameCounter;
         private bool spawing;
         private int wallJumpFrameCounter;
+        private int wallSlideFrameCounter;
 
         private bool wasBlockedLeft;
         private bool wasBlockedRight;
@@ -60,11 +62,14 @@ namespace MMX.Engine.Entities
 
         private bool spawnSoundPlayed;
 
+        private DashSparkEffect dashSparkEffect = null;
+
         public bool CanWallJump => GetWallJumpDir() != Direction.NONE;
 
-        internal Player(GameEngine engine, string name, Vector origin, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex, true)
+        internal Player(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 0, true)
         {
             CheckCollisionWithWorld = false;
+            PaletteIndex = 0;
 
             baseHSpeed = WALKING_SPEED;
 
@@ -379,12 +384,12 @@ namespace MMX.Engine.Entities
                 SetState(PlayerState.SPAWN_END, 0);
         }
 
-        protected override FixedSingle GetTerminalDownwardSpeed() => WallSliding ? WALL_SLIDE_SPEED : base.GetTerminalDownwardSpeed();
+        protected override FixedSingle GetTerminalDownwardSpeed() => WallSliding ? (Underwater ? UNDERWATER_WALL_SLIDE_SPEED : WALL_SLIDE_SPEED) : base.GetTerminalDownwardSpeed();
 
-        public override void OnSpawn()
+        internal override void OnSpawn()
         {
             base.OnSpawn();
-            
+
             spawing = true;
             Velocity = TERMINAL_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
             Lives = 2;
@@ -445,6 +450,7 @@ namespace MMX.Engine.Entities
                         if (!WallSliding)
                         {
                             Velocity = Vector.NULL_VECTOR;
+                            wallSlideFrameCounter = 0;
                             SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
                             PlaySound(6);
                         }
@@ -492,6 +498,7 @@ namespace MMX.Engine.Entities
                         if (!WallSliding)
                         {
                             Velocity = Vector.NULL_VECTOR;
+                            wallSlideFrameCounter = 0;
                             SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
                             PlaySound(6);
                         }
@@ -670,6 +677,7 @@ namespace MMX.Engine.Entities
                                         if (!WallSliding)
                                         {
                                             Velocity = Vector.NULL_VECTOR;
+                                            wallSlideFrameCounter = 0;
                                             SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
                                             PlaySound(6);
                                         }
@@ -708,6 +716,7 @@ namespace MMX.Engine.Entities
                                         if (!WallSliding)
                                         {
                                             Velocity = Vector.NULL_VECTOR;
+                                            wallSlideFrameCounter = 0;
                                             SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
                                             PlaySound(6);
                                         }
@@ -859,6 +868,12 @@ namespace MMX.Engine.Entities
 
                                         if (Dashing)
                                         {
+                                            if (dashSparkEffect != null)
+                                            {
+                                                dashSparkEffect.KillOnNextFrame();
+                                                dashSparkEffect = null;
+                                            }
+
                                             if (PressingLeft && !BlockedLeft)
                                             {
                                                 Velocity = new Vector(-baseHSpeed, Velocity.Y);
@@ -935,9 +950,22 @@ namespace MMX.Engine.Entities
 
                     if (Dashing)
                     {
+                        if (dashFrameCounter == 0)
+                            dashSparkEffect = Engine.StartDashSparkEffect(this);
+
                         dashFrameCounter++;
+
+                        if (dashFrameCounter % 4 == 0 && !Underwater)
+                            Engine.StartDashSmokeEffect(this);
+
                         if (dashFrameCounter > DASH_DURATION)
                         {
+                            if (dashSparkEffect != null)
+                            {
+                                dashSparkEffect.KillOnNextFrame();
+                                dashSparkEffect = null;
+                            }
+
                             baseHSpeed = WALKING_SPEED;
                             if (PressingLeft && !BlockedLeft)
                             {
@@ -954,7 +982,12 @@ namespace MMX.Engine.Entities
                                 Velocity = Velocity.YVector;
                                 SetState(PlayerState.POST_DASH, 0);
                             }
-                        }
+                        }  
+                    }
+                    else if (dashSparkEffect != null)
+                    {
+                        dashSparkEffect.KillOnNextFrame();
+                        dashSparkEffect = null;
                     }
 
                     if (WallJumping)
@@ -983,12 +1016,28 @@ namespace MMX.Engine.Entities
                         else if (wallJumpFrameCounter < 7)
                         {
                             if (wallJumpFrameCounter == 3)
-                            {
                                 SetState(PlayerState.WALL_JUMP, 0);
+                            else if (wallJumpFrameCounter == 4)
+                            {
                                 PlaySound(5);
+                                Engine.StartWallKickEffect(this);
                             }
 
                             Velocity = Vector.NULL_VECTOR;
+                        }
+                    }
+
+                    if (WallSliding)
+                    {
+                        wallSlideFrameCounter++;
+                        Velocity = wallSlideFrameCounter < 8 ? Vector.NULL_VECTOR : (Underwater ? UNDERWATER_WALL_SLIDE_SPEED : WALL_SLIDE_SPEED) * Vector.DOWN_VECTOR;
+                        baseHSpeed = WALKING_SPEED;
+
+                        if (wallSlideFrameCounter >= 11)
+                        {
+                            int diff = wallSlideFrameCounter - 11;
+                            if (!Underwater && diff % 4 == 0)
+                                Engine.StartWallSlideEffect(this);
                         }
                     }
                 }
@@ -1037,7 +1086,7 @@ namespace MMX.Engine.Entities
                                 int frame = chargingFrameCounter - 4;
                                 PaletteIndex = (frame & 2) is 0 or 1 ? 1 : 0;
 
-                                chargingEffect ??= Engine.StartChargeEffect(this);
+                                chargingEffect ??= Engine.StartChargingEffect(this);
 
                                 if (frame == 60)
                                     chargingEffect.Level = 2;
@@ -1244,7 +1293,12 @@ namespace MMX.Engine.Entities
             else if (ContainsAnimationIndex(PlayerState.LAND, animation.Index, true, true))
                 SetState(PlayerState.STAND, 0);
             else if (ContainsAnimationIndex(PlayerState.PRE_DASH, animation.Index, true, true))
+            {
+                if (dashSparkEffect != null)
+                    dashSparkEffect.State = DashingSparkEffectState.DASHING;
+
                 SetState(PlayerState.DASH, 0);
+            }
             else if (ContainsAnimationIndex(PlayerState.POST_DASH, animation.Index, true, true))
             {
                 if (Landed)
@@ -1456,6 +1510,6 @@ namespace MMX.Engine.Entities
             }
         }
 
-        public override FixedSingle GetGravity() => WallJumping && wallJumpFrameCounter < 7 || OnLadder ? (FixedSingle) 0 : base.GetGravity();
+        public override FixedSingle GetGravity() => WallJumping && wallJumpFrameCounter < 7 || WallSliding || OnLadder ? 0 : base.GetGravity();
     }
 }

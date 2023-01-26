@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 using MMX.Geometry;
 using MMX.Math;
@@ -8,7 +9,6 @@ using SharpDX;
 using SharpDX.Direct3D9;
 
 using MMXBox = MMX.Geometry.Box;
-using System.IO;
 
 namespace MMX.Engine
 {
@@ -85,12 +85,12 @@ namespace MMX.Engine
                     AddRange(fromFrame, toFrame);
             }
 
-            public Frame AddFrame(int x, int y, int width, int height, int count = 1, bool loopPoint = false, OriginPosition originPosition = OriginPosition.CENTER)
+            public Frame AddFrame(int left, int top, int width, int height, int count = 1, bool loopPoint = false, OriginPosition originPosition = OriginPosition.CENTER)
             {
                 if (loopPoint)
                     LoopFromSequenceIndex = frames.Count;
 
-                Frame frame = Sheet.AddFrame(x, y, width, height, originPosition);
+                Frame frame = Sheet.AddFrame(left, top, width, height, originPosition);
                 AddRepeated(frame, count);
                 return frame;
             }
@@ -252,10 +252,10 @@ namespace MMX.Engine
 
         public void LoadFromFile(string imageFileName) => CurrentTexture = Engine.CreateImageTextureFromFile(imageFileName);
 
-        public Frame AddFrame(int x, int y, int width, int height, OriginPosition originPosition = OriginPosition.CENTER)
+        public Frame AddFrame(int left, int top, int width, int height, OriginPosition originPosition = OriginPosition.CENTER)
         {
-            var boudingBox = new MMXBox(x, y, width, height, originPosition);
-            return AddFrame(boudingBox, boudingBox);
+            var boudingBox = new MMXBox(left, top, width, height, originPosition);
+            return AddFrame(boudingBox, boudingBox - boudingBox.Origin);
         }
 
         public Frame AddFrame(MMXBox boudingBox, MMXBox collisionBox)
@@ -326,7 +326,7 @@ namespace MMX.Engine
                 return frame;
             }
 
-            frame = new Frame(frames.Count, boudingBox, collisionBox, CurrentTexture, false);
+            frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, collisionBox, CurrentTexture, false);
             frames.Add(frame);
             return frame;
         }

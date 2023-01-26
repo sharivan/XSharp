@@ -24,6 +24,7 @@ using MMX.Engine.Entities;
 using MMX.Engine.Entities.Weapons;
 using MMX.Engine.Entities.Enemies;
 using MMX.Engine.Entities.Triggers;
+using MMX.Engine.Entities.Effects;
 using MMX.Engine.Sound;
 
 using static MMX.Engine.Consts;
@@ -295,7 +296,6 @@ namespace MMX.Engine
         private readonly List<(WaveOutEvent player, SoundStream stream, bool initialized)> soundChannels;
 
         internal Partition<Entity> partition;
-        private long engineTime;
         private readonly Random random;
         private readonly List<Checkpoint> checkpoints;
         private readonly Entity[] entities;
@@ -603,7 +603,14 @@ namespace MMX.Engine
             get;
             internal set;
         }
+
         public IReadOnlyList<Checkpoint> Checkpoints => checkpoints;
+
+        public long FrameCounter
+        {
+            get;
+            private set;
+        } = 0;
 
         public GameEngine(Form form)
         {
@@ -1511,7 +1518,7 @@ namespace MMX.Engine
             if (!nextFrame)
                 return;
 
-            engineTime++;
+            FrameCounter++;
 
             if (!loadingLevel)
             {
@@ -1531,7 +1538,7 @@ namespace MMX.Engine
                         AddEntity(added);
                         added.OnSpawn();
 
-                        partition.Insert(added);                        
+                        partition.Insert(added);
                     }
 
                     addedEntities.Clear();
@@ -1548,7 +1555,7 @@ namespace MMX.Engine
                         if (changeLevel)
                             break;
 
-                        if (entity.Alive && !entity.MarkedToRemove)
+                        if (entity.Alive)
                             entity.OnFrame();
                     }
 
@@ -1556,8 +1563,13 @@ namespace MMX.Engine
                     {
                         foreach (var removed in removedEntities)
                         {
+                            foreach (Entity child in removed.childs)
+                                child.parent = null;
+
+                            removed.childs.Clear();
+                            removed.alive = false;
                             removed.Dispose();
-                            
+
                             partition.Remove(removed);
                             RemoveEntity(removed);
 
@@ -1602,8 +1614,6 @@ namespace MMX.Engine
         public Vector ScreenVector2ToWorld(Vector2 v) => (new Vector(v.X, v.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
 
         public RectangleF WorldBoxToScreen(MMXBox box) => ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
-
-        public long GetEngineTime() => engineTime;
 
         public void PlaySound(string soundName, bool loop = false)
         {
@@ -1650,11 +1660,7 @@ namespace MMX.Engine
 
             World.Camera.LeftTop = cameraPos;
 
-            Player = new Player(this, "X", spawnPos, 0)
-            {
-                PaletteIndex = 0
-            };
-
+            Player = new Player(this, "X", spawnPos);
             Player.Spawn();
 
             World.Camera.FocusOn = Player;
@@ -1928,538 +1934,571 @@ namespace MMX.Engine
 
         private void ResetDevice()
         {
-            try
+            DisposeDevice();
+
+            // Creates the Device
+            var device = new Device9(Direct3D, 0, DeviceType.Hardware, Form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
+            Device = device;
+
+            var function = new ShaderBytecode(VERTEX_SHADER_BYTECODE);
+            VertexShader = new VertexShader(device, function);
+
+            function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
+            PixelShader = new PixelShader(device, function);
+
+            device.VertexShader = null;
+            device.PixelShader = null;
+            device.VertexFormat = D3DFVF_TLVERTEX;
+
+            VertexBuffer = new VertexBuffer(device, VERTEX_SIZE * 4, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
+
+            device.SetRenderState(RenderState.ZEnable, false);
+            device.SetRenderState(RenderState.Lighting, false);
+            device.SetRenderState(RenderState.AlphaBlendEnable, true);
+            device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
+            device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
+            device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.Modulate);
+            device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+            device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+            sprite = new DXSprite(device);
+            line = new Line(device);
+
+            var fontDescription = new FontDescription()
             {
-                DisposeDevice();
-
-                // Creates the Device
-                var device = new Device9(Direct3D, 0, DeviceType.Hardware, Form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
-                Device = device;
-
-                var function = new ShaderBytecode(VERTEX_SHADER_BYTECODE);
-                VertexShader = new VertexShader(device, function);
-
-                function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
-                PixelShader = new PixelShader(device, function);
-
-                device.VertexShader = null;
-                device.PixelShader = null;
-                device.VertexFormat = D3DFVF_TLVERTEX;
-
-                VertexBuffer = new VertexBuffer(device, VERTEX_SIZE * 4, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
-
-                device.SetRenderState(RenderState.ZEnable, false);
-                device.SetRenderState(RenderState.Lighting, false);
-                device.SetRenderState(RenderState.AlphaBlendEnable, true);
-                device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
-                device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
-                device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.Modulate);
-                device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-                device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-                sprite = new DXSprite(device);
-                line = new Line(device);
-
-                var fontDescription = new FontDescription()
-                {
-                    Height = 36,
-                    Italic = false,
-                    CharacterSet = FontCharacterSet.Ansi,
-                    FaceName = "Arial",
-                    MipLevels = 0,
-                    OutputPrecision = FontPrecision.TrueType,
-                    PitchAndFamily = FontPitchAndFamily.Default,
-                    Quality = FontQuality.ClearType,
-                    Weight = FontWeight.Bold
-                };
-
-                infoFont = new Font(device, fontDescription);
-
-                fontDescription = new FontDescription()
-                {
-                    Height = 24,
-                    Italic = false,
-                    CharacterSet = FontCharacterSet.Ansi,
-                    FaceName = "Arial",
-                    MipLevels = 0,
-                    OutputPrecision = FontPrecision.TrueType,
-                    PitchAndFamily = FontPitchAndFamily.Default,
-                    Quality = FontQuality.ClearType,
-                    Weight = FontWeight.Bold
-                };
-
-                coordsTextFont = new Font(device, fontDescription);
-
-                fontDescription = new FontDescription()
-                {
-                    Height = 24,
-                    Italic = false,
-                    CharacterSet = FontCharacterSet.Ansi,
-                    FaceName = "Arial",
-                    MipLevels = 0,
-                    OutputPrecision = FontPrecision.TrueType,
-                    PitchAndFamily = FontPitchAndFamily.Default,
-                    Quality = FontQuality.ClearType,
-                    Weight = FontWeight.Bold
-                };
-
-                highlightMapTextFont = new Font(device, fontDescription);
-
-                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.hitbox.png"))
-                {
-                    hitboxTexture = Texture.FromStream(device, stream);
-                }
-
-                SetupQuad(VertexBuffer);
-
-                // Create palettes
-
-                // 0
-                var x1NormalPalette = CreatePalette(X1_NORMAL_PALETTE);
-                palettes.Add(x1NormalPalette);
-
-                // 1
-                var chargeLevel1Palette = CreatePalette(CHARGE_LEVEL_1_PALETTE);
-                palettes.Add(chargeLevel1Palette);
-
-                // 2
-                var chargeLevel2Palette = CreatePalette(CHARGE_LEVEL_2_PALETTE);
-                palettes.Add(chargeLevel2Palette);
-
-                // 3
-                var chargingEffectPalette = CreatePalette(CHARGE_EFFECT_PALETTE);
-                palettes.Add(chargingEffectPalette);
-
-                // 4
-                var flashingPalette = CreatePalette(FLASHING_PALETTE);
-                palettes.Add(flashingPalette);
-
-                // 5
-                var drillerPalette = CreatePalette(DRILLER_PALETTE);
-                palettes.Add(drillerPalette);
-
-                // Create sprite sheets
-                var normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3);
-                var normalCollisionBox = new MMXBox(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
-                var dashingOffset = new Vector(DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT + 3);
-                var dashingCollisionBox = new MMXBox(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
-
-                var xSpriteSheet = new SpriteSheet(this, "X", true, true);
-                spriteSheets.Add(xSpriteSheet);
-
-                var xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons", true, true);
-                spriteSheets.Add(xWeaponsSpriteSheet);
-
-                var xEffectsSpriteSheet = new SpriteSheet(this, "X Effects", true, true);
-                spriteSheets.Add(xEffectsSpriteSheet);
-
-                var drillerSpriteSheet = new SpriteSheet(this, "Driller", true, true);
-                spriteSheets.Add(drillerSpriteSheet);
-
-                // Setup frame sequences (animations)
-
-                // X
-                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.X[small].png"))
-                {
-                    var texture = CreateImageTextureFromStream(stream);
-                    xSpriteSheet.CurrentTexture = texture;
-                }
-
-                xSpriteSheet.CurrentPalette = x1NormalPalette;
-
-                var sequence = xSpriteSheet.AddFrameSquence("Spawn");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(-4, 25, 5, 15, 8, 48);
-
-                sequence = xSpriteSheet.AddFrameSquence("SpawnEnd");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(-4, 32, 5, 15, 8, 48);
-                sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
-                sequence.AddFrame(8, 11, 46, 21, 30, 42);
-                sequence.AddFrame(8, 8, 84, 24, 30, 39);
-                sequence.AddFrame(8, 5, 120, 27, 30, 36);
-                sequence.AddFrame(8, 4, 156, 28, 30, 34);
-                sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
-
-                sequence = xSpriteSheet.AddFrameSquence("Stand", 0);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(9, 3, 226, 29, 30, 34, 80);
-                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-                sequence.AddFrame(9, 3, 295, 29, 30, 34, 8);
-                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-                sequence.AddFrame(9, 3, 226, 29, 30, 34, 48);
-                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-                sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
-                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-                sequence.AddFrame(9, 3, 226, 29, 30, 34, 4);
-                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-                sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
-                sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-
-                sequence = xSpriteSheet.AddFrameSquence("Shooting", 4);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(9, 3, 365, 29, 30, 34, 4);
-                sequence.AddFrame(9, 3, 402, 29, 29, 34, 12);
-
-                sequence = xSpriteSheet.AddFrameSquence("PreWalking");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(8, 3, 5, 67, 30, 34, 5);
-
-                sequence = xSpriteSheet.AddFrameSquence("Walking", 0);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(1, 3, 50, 67, 20, 34);
-                sequence.AddFrame(3, 4, 75, 67, 23, 35, 2);
-                sequence.AddFrame(7, 3, 105, 68, 32, 34, 3);
-                sequence.AddFrame(10, 2, 145, 68, 34, 33, 3);
-                sequence.AddFrame(5, 2, 190, 68, 26, 33, 3);
-                sequence.AddFrame(3, 3, 222, 67, 22, 34, 2);
-                sequence.AddFrame(5, 4, 248, 67, 25, 35, 2);
-                sequence.AddFrame(5, 3, 280, 67, 30, 34, 3);
-                sequence.AddFrame(8, 2, 318, 68, 34, 33, 3);
-                sequence.AddFrame(7, 2, 359, 68, 29, 33, 3);
-                sequence.AddFrame(1, 3, 50, 67, 20, 34);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootWalking", 0);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(1, 3, 41, 107, 29, 34);
-                sequence.AddFrame(3, 4, 76, 107, 32, 35, 2);
-                sequence.AddFrame(7, 3, 115, 108, 35, 34, 3);
-                sequence.AddFrame(10, 2, 159, 108, 38, 33, 3);
-                sequence.AddFrame(5, 2, 204, 108, 34, 33, 3);
-                sequence.AddFrame(3, 3, 246, 107, 31, 34, 2);
-                sequence.AddFrame(5, 4, 284, 107, 33, 35, 2);
-                sequence.AddFrame(5, 3, 326, 107, 35, 34, 3);
-                sequence.AddFrame(8, 2, 369, 108, 37, 33, 3);
-                sequence.AddFrame(7, 2, 413, 108, 35, 33, 3);
-                sequence.AddFrame(1, 3, 41, 107, 29, 34);
-
-                sequence = xSpriteSheet.AddFrameSquence("Jumping");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(1, 0, 6, 148, 25, 37, 3);
-                sequence.AddFrame(-5, 1, 37, 148, 15, 41);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootJumping");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(1, 0, 201, 148, 29, 37, 3);
-                sequence.AddFrame(-5, 1, 240, 148, 24, 41);
-
-                sequence = xSpriteSheet.AddFrameSquence("GoingUp", 0);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(-1, 5, 56, 146, 19, 46);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp", 0);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(-1, 5, 271, 146, 27, 46);
-
-                sequence = xSpriteSheet.AddFrameSquence("Falling", 4);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(1, 5, 80, 150, 23, 41, 4);
-                sequence.AddFrame(5, 6, 108, 150, 27, 42);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootFalling", 4);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
-                sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42);
-
-                sequence = xSpriteSheet.AddFrameSquence("Landing");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(1, 2, 139, 151, 24, 38, 2);
-                sequence.AddFrame(8, 1, 166, 153, 30, 32, 2);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootLanding");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(1, 2, 378, 151, 30, 38, 2);
-                sequence.AddFrame(8, 1, 413, 153, 36, 32, 2);
-
-                sequence = xSpriteSheet.AddFrameSquence("PreDashing");
-                sequence.BoudingBoxOriginOffset = dashingOffset;
-                sequence.CollisionBox = dashingCollisionBox;
-                sequence.AddFrame(4, 12, 4, 335, 28, 31, 3);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootPreDashing");
-                sequence.BoudingBoxOriginOffset = dashingOffset;
-                sequence.CollisionBox = dashingCollisionBox;
-                sequence.AddFrame(4, 12, 76, 335, 37, 31, 3);
-
-                sequence = xSpriteSheet.AddFrameSquence("Dashing", 0);
-                sequence.BoudingBoxOriginOffset = dashingOffset;
-                sequence.CollisionBox = dashingCollisionBox;
-                sequence.AddFrame(14, 7, 34, 341, 38, 26);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootDashing", 0);
-                sequence.BoudingBoxOriginOffset = dashingOffset;
-                sequence.CollisionBox = dashingCollisionBox;
-                sequence.AddFrame(14, 7, 115, 341, 48, 26);
-
-                sequence = xSpriteSheet.AddFrameSquence("PostDashing");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(5, 0, 4, 335, 28, 31, 8);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootPostDashing");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(5, 0, 76, 335, 37, 31, 8);
-
-                sequence = xSpriteSheet.AddFrameSquence("WallSliding", 11);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(5, 5, 5, 197, 25, 42, 5);
-                sequence.AddFrame(9, 7, 33, 196, 27, 43, 6);
-                sequence.AddFrame(9, 8, 64, 196, 28, 42);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding", 11);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(5, 2 - 3, 158, 200, 31, 39, 5);
-                sequence.AddFrame(9 + 5, 7, 201, 196, 32, 43, 6);
-                sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42);
-
-                sequence = xSpriteSheet.AddFrameSquence("WallJumping");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(7, 2, 95, 199, 30, 39, 3);
-                sequence.AddFrame(5, 10, 128, 195, 27, 44);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootWallJumping");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(7, 1, 276, 200, 31, 38, 3);
-                sequence.AddFrame(5, 5, 315, 200, 32, 39);
-
-                sequence = xSpriteSheet.AddFrameSquence("PreLadderClimbing");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(3, 4, 7, 267, 21, 36, 8);
-
-                sequence = xSpriteSheet.AddFrameSquence("LadderMoving", 0);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(2, 10, 111, 261, 18, 49, 8);
-                sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
-                sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
-                sequence.AddFrame(5, 14, 36, 261, 18, 49, 8);
-                sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
-                sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
-
-                sequence = xSpriteSheet.AddFrameSquence("ShootLadder", 0);
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(5, 14, 137, 261, 26, 48, 16);
-
-                sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
-                sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
-
-                sequence = xSpriteSheet.AddFrameSquence("TopLadderDescending");
-                sequence.BoudingBoxOriginOffset = normalOffset;
-                sequence.CollisionBox = normalCollisionBox;
-                sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
-                sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
-
-                xSpriteSheet.ReleaseCurrentTexture();
-
-                // X weapons
-                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Weapons.png"))
-                {
-                    var texture = CreateImageTextureFromStream(stream);
-                    xWeaponsSpriteSheet.CurrentTexture = texture;
-                }
-
-                var lemonCollisionBox = new MMXBox(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShot", 0);
-                sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
-                sequence.CollisionBox = lemonCollisionBox;
-                sequence.AddFrame(5, -1, 123, 253, 8, 6);
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShotExplode");
-                sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
-                sequence.CollisionBox = lemonCollisionBox;
-                sequence.AddFrame(2, 1, 137, 250, 12, 12, 4);
-                sequence.AddFrame(2, 2, 154, 249, 13, 13, 2);
-                sequence.AddFrame(3, 3, 172, 248, 15, 15);
-
-                var semiChargedShotCollisionBox1 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5));
-                var semiChargedShotCollisionBox2 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5));
-                var semiChargedShotCollisionBox3 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5));
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotFiring");
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
-                sequence.CollisionBox = semiChargedShotCollisionBox1;
-                sequence.AddFrame(-5, -2, 128, 563, 14, 14);
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
-                sequence.CollisionBox = semiChargedShotCollisionBox2;
-                sequence.AddFrame(-9, -6, 128, 563, 14, 14);
-                sequence.AddFrame(-9, -1, 147, 558, 24, 24);
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
-                sequence.CollisionBox = semiChargedShotCollisionBox3;
-                sequence.AddFrame(-11, 3, 147, 558, 24, 24);
-                sequence.AddFrame(-11, -3, 176, 564, 28, 12);
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShot");
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
-                sequence.CollisionBox = semiChargedShotCollisionBox3;
-                sequence.AddFrame(3, -3, 176, 564, 28, 12);
-                sequence.AddFrame(3, -5, 210, 566, 32, 8, 3);
-                sequence.AddFrame(9, -5, 210, 566, 32, 8);
-                sequence.AddFrame(7, -1, 379, 562, 38, 16);
-                sequence.AddFrame(9, -3, 333, 564, 38, 12, 1, true); // loop point
-                sequence.AddFrame(8, 1, 292, 559, 36, 22, 2);
-                sequence.AddFrame(9, -3, 333, 564, 38, 12);
-                sequence.AddFrame(7, -1, 379, 562, 38, 16, 2);
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotHit");
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
-                sequence.CollisionBox = semiChargedShotCollisionBox2;
-                sequence.AddFrame(-9, -6, 424, 563, 14, 14, 2);
-                sequence.AddFrame(-9, -1, 443, 558, 24, 24, 4);
-                sequence.AddFrame(-9, -6, 424, 563, 14, 14, 4);
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotExplode");
-                sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
-                sequence.AddFrame(487, 273, 16, 16);
-                sequence.AddFrame(507, 269, 24, 24);
-                sequence.AddFrame(535, 273, 16, 16);
-                sequence.AddFrame(555, 270, 22, 22);
-                sequence.AddFrame(581, 269, 24, 24);
-                sequence.AddFrame(609, 269, 24, 24);
-
-                var chargedShotCollisionBox1 = new MMXBox(Vector.NULL_VECTOR, new Vector(-CHARGED_HITBOX_WIDTH_1 * 0.5, -CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(CHARGED_HITBOX_WIDTH_1 * 0.5, CHARGED_HITBOX_HEIGHT_1 * 0.5));
-                var chargedShotCollisionBox2 = new MMXBox(Vector.NULL_VECTOR, new Vector(-CHARGED_HITBOX_WIDTH_2 * 0.5, -CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(CHARGED_HITBOX_WIDTH_2 * 0.5, CHARGED_HITBOX_HEIGHT_2 * 0.5));
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotFiring");
-                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox1.Maxs;
-                sequence.CollisionBox = chargedShotCollisionBox1;
-                sequence.AddFrame(-3, 1, 144, 440, 14, 20);
-                sequence.AddFrame(-2, -1, 170, 321, 23, 16, 3);
-                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
-                sequence.CollisionBox = chargedShotCollisionBox2;
-                sequence.AddFrame(-25, -10, 170, 321, 23, 16, 3);
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShot", 0);
-                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
-                sequence.CollisionBox = chargedShotCollisionBox2;
-                sequence.AddFrame(7, -2, 164, 433, 47, 32, 2, true);
-                sequence.AddFrame(2, -2, 216, 433, 40, 32, 2);
-                sequence.AddFrame(9, -2, 261, 432, 46, 32, 2);
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotHit");
-                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
-                sequence.CollisionBox = chargedShotCollisionBox2;
-                sequence.AddFrame(-26, -8, 315, 438, 14, 20, 2);
-                sequence.AddFrame(-25, -4, 336, 434, 24, 28, 2);
-                sequence.AddFrame(-26, -8, 315, 438, 14, 20, 4);
-
-                sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotExplode");
-                sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
-                sequence.AddFrame(368, 434, 28, 28);
-                sequence.AddFrame(400, 435, 26, 26);
-                sequence.AddFrame(430, 434, 28, 28);
-                sequence.AddFrame(462, 433, 30, 30);
-                sequence.AddFrame(496, 432, 32, 32);
-                sequence.AddFrame(532, 432, 32, 32);
-
-                xWeaponsSpriteSheet.ReleaseCurrentTexture();
-
-                // X charging effects
-                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Effects.png"))
-                {
-                    var texture = CreateImageTextureFromStream(stream);
-                    xEffectsSpriteSheet.CurrentTexture = texture;
-                }
-
-                xEffectsSpriteSheet.Precache = false;
-
-                sequence = xEffectsSpriteSheet.AddFrameSquence("ChargingLevel1");
-                AddChargingEffectFrames(sequence, 1);
-
-                sequence = xEffectsSpriteSheet.AddFrameSquence("ChargingLevel2");
-                AddChargingEffectFrames(sequence, 2);
-
-                // Enemies
-                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-driller.png"))
-                {
-                    var texture = CreateImageTextureFromStream(stream);
-                    drillerSpriteSheet.CurrentTexture = texture;
-                }
-
-                drillerSpriteSheet.CurrentPalette = drillerPalette;
-
-                var drillerOffset = new Vector(11, 24);
-                var drilerHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-11, -24), new Vector(11, 0));
-
-                // 0
-                sequence = drillerSpriteSheet.AddFrameSquence("Idle");
-                sequence.BoudingBoxOriginOffset = drillerOffset;
-                sequence.CollisionBox = drilerHitbox;
-                sequence.AddFrame(0, 0, 4, 10, 35, 24, 1, true);
-
-                // 1
-                sequence = drillerSpriteSheet.AddFrameSquence("Jumping");
-                sequence.BoudingBoxOriginOffset = drillerOffset;
-                sequence.CollisionBox = drilerHitbox;
-                sequence.AddFrame(0, 0, 40, 13, 37, 21, 5);
-                sequence.AddFrame(0, 0, 78, 9, 35, 25, 5);
-                sequence.AddFrame(0, 0, 115, 4, 43, 30, 1, true);
-
-                // 2
-                sequence = drillerSpriteSheet.AddFrameSquence("Landing");
-                sequence.BoudingBoxOriginOffset = drillerOffset;
-                sequence.CollisionBox = drilerHitbox;
-                sequence.AddFrame(0, 0, 40, 13, 37, 21, 5);
-
-                // 3
-                sequence = drillerSpriteSheet.AddFrameSquence("Drilling");
-                sequence.BoudingBoxOriginOffset = drillerOffset;
-                sequence.CollisionBox = drilerHitbox;
-                sequence.AddFrame(0, 0, 160, 10, 48, 24, 1, true);
-                sequence.AddFrame(0, 0, 209, 9, 46, 25, 1);
-                sequence.AddFrame(0, 0, 256, 10, 48, 24, 1);
-                sequence.AddFrame(0, 0, 305, 9, 46, 25, 1);
-
-                drillerSpriteSheet.ReleaseCurrentTexture();
-
-                if (romLoaded)
-                {
-                    mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, mmx.PalLoad);
-                    mmx.LoadTilesAndPalettes();
-                    mmx.LoadPalette(this, false);
-                    mmx.LoadPalette(this, true);
-                    mmx.RefreshMapCache(this, false);
-                    mmx.RefreshMapCache(this, true);
-
-                    World.Tessellate();
-                }
-
-                for (var entity = firstEntity; entity != null; entity = entity.next)
-                    if (entity is Sprite sprite)
-                        sprite.OnDeviceReset();
-            }
-            catch (SharpDXException)
+                Height = 36,
+                Italic = false,
+                CharacterSet = FontCharacterSet.Ansi,
+                FaceName = "Arial",
+                MipLevels = 0,
+                OutputPrecision = FontPrecision.TrueType,
+                PitchAndFamily = FontPitchAndFamily.Default,
+                Quality = FontQuality.ClearType,
+                Weight = FontWeight.Bold
+            };
+
+            infoFont = new Font(device, fontDescription);
+
+            fontDescription = new FontDescription()
             {
-                Thread.Sleep(50);
-            }
-            catch (Exception)
+                Height = 24,
+                Italic = false,
+                CharacterSet = FontCharacterSet.Ansi,
+                FaceName = "Arial",
+                MipLevels = 0,
+                OutputPrecision = FontPrecision.TrueType,
+                PitchAndFamily = FontPitchAndFamily.Default,
+                Quality = FontQuality.ClearType,
+                Weight = FontWeight.Bold
+            };
+
+            coordsTextFont = new Font(device, fontDescription);
+
+            fontDescription = new FontDescription()
             {
-                Running = false;
+                Height = 24,
+                Italic = false,
+                CharacterSet = FontCharacterSet.Ansi,
+                FaceName = "Arial",
+                MipLevels = 0,
+                OutputPrecision = FontPrecision.TrueType,
+                PitchAndFamily = FontPitchAndFamily.Default,
+                Quality = FontQuality.ClearType,
+                Weight = FontWeight.Bold
+            };
+
+            highlightMapTextFont = new Font(device, fontDescription);
+
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.hitbox.png"))
+            {
+                hitboxTexture = Texture.FromStream(device, stream);
             }
+
+            SetupQuad(VertexBuffer);
+
+            // Create palettes
+
+            // 0
+            var x1NormalPalette = CreatePalette(X1_NORMAL_PALETTE);
+            palettes.Add(x1NormalPalette);
+
+            // 1
+            var chargeLevel1Palette = CreatePalette(CHARGE_LEVEL_1_PALETTE);
+            palettes.Add(chargeLevel1Palette);
+
+            // 2
+            var chargeLevel2Palette = CreatePalette(CHARGE_LEVEL_2_PALETTE);
+            palettes.Add(chargeLevel2Palette);
+
+            // 3
+            var chargingEffectPalette = CreatePalette(CHARGE_EFFECT_PALETTE);
+            palettes.Add(chargingEffectPalette);
+
+            // 4
+            var flashingPalette = CreatePalette(FLASHING_PALETTE);
+            palettes.Add(flashingPalette);
+
+            // 5
+            var drillerPalette = CreatePalette(DRILLER_PALETTE);
+            palettes.Add(drillerPalette);
+
+            // Create sprite sheets
+            var normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3);
+            var normalCollisionBox = new MMXBox(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
+            var dashingOffset = new Vector(DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT + 3);
+            var dashingCollisionBox = new MMXBox(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
+
+            // 0
+            var xSpriteSheet = new SpriteSheet(this, "X", true, true);
+            spriteSheets.Add(xSpriteSheet);
+
+            // 1
+            var xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons", true, true);
+            spriteSheets.Add(xWeaponsSpriteSheet);
+
+            // 2
+            var xEffectsSpriteSheet = new SpriteSheet(this, "X Effects", true, true);
+            spriteSheets.Add(xEffectsSpriteSheet);
+
+            // 3
+            var xChargingEffectsSpriteSheet = new SpriteSheet(this, "X Charging Effects", true, false);
+            spriteSheets.Add(xChargingEffectsSpriteSheet);
+
+            // 4
+            var drillerSpriteSheet = new SpriteSheet(this, "Driller", true, true);
+            spriteSheets.Add(drillerSpriteSheet);
+
+            // Setup frame sequences (animations)
+
+            // X
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.X[small].png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                xSpriteSheet.CurrentTexture = texture;
+            }
+
+            xSpriteSheet.CurrentPalette = x1NormalPalette;
+
+            var sequence = xSpriteSheet.AddFrameSquence("Spawn");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(-4, 25, 5, 15, 8, 48);
+
+            sequence = xSpriteSheet.AddFrameSquence("SpawnEnd");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(-4, 32, 5, 15, 8, 48);
+            sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
+            sequence.AddFrame(8, 11, 46, 21, 30, 42);
+            sequence.AddFrame(8, 8, 84, 24, 30, 39);
+            sequence.AddFrame(8, 5, 120, 27, 30, 36);
+            sequence.AddFrame(8, 4, 156, 28, 30, 34);
+            sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
+
+            sequence = xSpriteSheet.AddFrameSquence("Stand", 0);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(9, 3, 226, 29, 30, 34, 80);
+            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(9, 3, 295, 29, 30, 34, 8);
+            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(9, 3, 226, 29, 30, 34, 48);
+            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
+            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(9, 3, 226, 29, 30, 34, 4);
+            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
+            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+
+            sequence = xSpriteSheet.AddFrameSquence("Shooting", 4);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(9, 3, 365, 29, 30, 34, 4);
+            sequence.AddFrame(9, 3, 402, 29, 29, 34, 12);
+
+            sequence = xSpriteSheet.AddFrameSquence("PreWalking");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(8, 3, 5, 67, 30, 34, 5);
+
+            sequence = xSpriteSheet.AddFrameSquence("Walking", 0);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(1, 3, 50, 67, 20, 34);
+            sequence.AddFrame(3, 4, 75, 67, 23, 35, 2);
+            sequence.AddFrame(7, 3, 105, 68, 32, 34, 3);
+            sequence.AddFrame(10, 2, 145, 68, 34, 33, 3);
+            sequence.AddFrame(5, 2, 190, 68, 26, 33, 3);
+            sequence.AddFrame(3, 3, 222, 67, 22, 34, 2);
+            sequence.AddFrame(5, 4, 248, 67, 25, 35, 2);
+            sequence.AddFrame(5, 3, 280, 67, 30, 34, 3);
+            sequence.AddFrame(8, 2, 318, 68, 34, 33, 3);
+            sequence.AddFrame(7, 2, 359, 68, 29, 33, 3);
+            sequence.AddFrame(1, 3, 50, 67, 20, 34);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootWalking", 0);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(1, 3, 41, 107, 29, 34);
+            sequence.AddFrame(3, 4, 76, 107, 32, 35, 2);
+            sequence.AddFrame(7, 3, 115, 108, 35, 34, 3);
+            sequence.AddFrame(10, 2, 159, 108, 38, 33, 3);
+            sequence.AddFrame(5, 2, 204, 108, 34, 33, 3);
+            sequence.AddFrame(3, 3, 246, 107, 31, 34, 2);
+            sequence.AddFrame(5, 4, 284, 107, 33, 35, 2);
+            sequence.AddFrame(5, 3, 326, 107, 35, 34, 3);
+            sequence.AddFrame(8, 2, 369, 108, 37, 33, 3);
+            sequence.AddFrame(7, 2, 413, 108, 35, 33, 3);
+            sequence.AddFrame(1, 3, 41, 107, 29, 34);
+
+            sequence = xSpriteSheet.AddFrameSquence("Jumping");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(1, 0, 6, 148, 25, 37, 3);
+            sequence.AddFrame(-5, 1, 37, 148, 15, 41);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootJumping");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(1, 0, 201, 148, 29, 37, 3);
+            sequence.AddFrame(-5, 1, 240, 148, 24, 41);
+
+            sequence = xSpriteSheet.AddFrameSquence("GoingUp", 0);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(-1, 5, 56, 146, 19, 46);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp", 0);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(-1, 5, 271, 146, 27, 46);
+
+            sequence = xSpriteSheet.AddFrameSquence("Falling", 4);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(1, 5, 80, 150, 23, 41, 4);
+            sequence.AddFrame(5, 6, 108, 150, 27, 42);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootFalling", 4);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
+            sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42);
+
+            sequence = xSpriteSheet.AddFrameSquence("Landing");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(1, 2, 139, 151, 24, 38, 2);
+            sequence.AddFrame(8, 1, 166, 153, 30, 32, 2);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootLanding");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(1, 2, 378, 151, 30, 38, 2);
+            sequence.AddFrame(8, 1, 413, 153, 36, 32, 2);
+
+            sequence = xSpriteSheet.AddFrameSquence("PreDashing");
+            sequence.BoudingBoxOriginOffset = dashingOffset;
+            sequence.CollisionBox = dashingCollisionBox;
+            sequence.AddFrame(4, 12, 4, 335, 28, 31, 3);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootPreDashing");
+            sequence.BoudingBoxOriginOffset = dashingOffset;
+            sequence.CollisionBox = dashingCollisionBox;
+            sequence.AddFrame(4, 12, 76, 335, 37, 31, 3);
+
+            sequence = xSpriteSheet.AddFrameSquence("Dashing", 0);
+            sequence.BoudingBoxOriginOffset = dashingOffset;
+            sequence.CollisionBox = dashingCollisionBox;
+            sequence.AddFrame(14, 7, 34, 341, 38, 26);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootDashing", 0);
+            sequence.BoudingBoxOriginOffset = dashingOffset;
+            sequence.CollisionBox = dashingCollisionBox;
+            sequence.AddFrame(14, 7, 115, 341, 48, 26);
+
+            sequence = xSpriteSheet.AddFrameSquence("PostDashing");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(5, 0, 4, 335, 28, 31, 8);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootPostDashing");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(5, 0, 76, 335, 37, 31, 8);
+
+            sequence = xSpriteSheet.AddFrameSquence("WallSliding", 11);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(5, 5, 5, 197, 25, 42, 5);
+            sequence.AddFrame(9, 7, 33, 196, 27, 43, 6);
+            sequence.AddFrame(9, 8, 64, 196, 28, 42);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding", 11);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(5, 2 - 3, 158, 200, 31, 39, 5);
+            sequence.AddFrame(9 + 5, 7, 201, 196, 32, 43, 6);
+            sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42);
+
+            sequence = xSpriteSheet.AddFrameSquence("WallJumping");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(7, 2, 95, 199, 30, 39, 3);
+            sequence.AddFrame(5, 10, 128, 195, 27, 44);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootWallJumping");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(7, 1, 276, 200, 31, 38, 3);
+            sequence.AddFrame(5, 5, 315, 200, 32, 39);
+
+            sequence = xSpriteSheet.AddFrameSquence("PreLadderClimbing");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(3, 4, 7, 267, 21, 36, 8);
+
+            sequence = xSpriteSheet.AddFrameSquence("LadderMoving", 0);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(2, 10, 111, 261, 18, 49, 8);
+            sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
+            sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
+            sequence.AddFrame(5, 14, 36, 261, 18, 49, 8);
+            sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
+            sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
+
+            sequence = xSpriteSheet.AddFrameSquence("ShootLadder", 0);
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(5, 14, 137, 261, 26, 48, 16);
+
+            sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
+            sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
+
+            sequence = xSpriteSheet.AddFrameSquence("TopLadderDescending");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
+            sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
+
+            xSpriteSheet.ReleaseCurrentTexture();
+
+            // X weapons
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Weapons.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                xWeaponsSpriteSheet.CurrentTexture = texture;
+            }
+
+            var lemonCollisionBox = new MMXBox(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShot", 0);
+            sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
+            sequence.CollisionBox = lemonCollisionBox;
+            sequence.AddFrame(5, -1, 123, 253, 8, 6);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShotExplode");
+            sequence.BoudingBoxOriginOffset = lemonCollisionBox.Maxs;
+            sequence.CollisionBox = lemonCollisionBox;
+            sequence.AddFrame(2, 1, 137, 250, 12, 12, 4);
+            sequence.AddFrame(2, 2, 154, 249, 13, 13, 2);
+            sequence.AddFrame(3, 3, 172, 248, 15, 15);
+
+            var semiChargedShotCollisionBox1 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_1 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_1 * 0.5));
+            var semiChargedShotCollisionBox2 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_2 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_2 * 0.5));
+            var semiChargedShotCollisionBox3 = new MMXBox(Vector.NULL_VECTOR, new Vector(-SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, -SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5), new Vector(SEMI_CHARGED_HITBOX_WIDTH_3 * 0.5, SEMI_CHARGED_HITBOX_HEIGHT_3 * 0.5));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotFiring");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox1;
+            sequence.AddFrame(-5, -2, 128, 563, 14, 14);
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox2;
+            sequence.AddFrame(-9, -6, 128, 563, 14, 14);
+            sequence.AddFrame(-9, -1, 147, 558, 24, 24);
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox3;
+            sequence.AddFrame(-11, 3, 147, 558, 24, 24);
+            sequence.AddFrame(-11, -3, 176, 564, 28, 12);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShot");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox3.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox3;
+            sequence.AddFrame(3, -3, 176, 564, 28, 12);
+            sequence.AddFrame(3, -5, 210, 566, 32, 8, 3);
+            sequence.AddFrame(9, -5, 210, 566, 32, 8);
+            sequence.AddFrame(7, -1, 379, 562, 38, 16);
+            sequence.AddFrame(9, -3, 333, 564, 38, 12, 1, true); // loop point
+            sequence.AddFrame(8, 1, 292, 559, 36, 22, 2);
+            sequence.AddFrame(9, -3, 333, 564, 38, 12);
+            sequence.AddFrame(7, -1, 379, 562, 38, 16, 2);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotHit");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox2.Maxs;
+            sequence.CollisionBox = semiChargedShotCollisionBox2;
+            sequence.AddFrame(-9, -6, 424, 563, 14, 14, 2);
+            sequence.AddFrame(-9, -1, 443, 558, 24, 24, 4);
+            sequence.AddFrame(-9, -6, 424, 563, 14, 14, 4);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotExplode");
+            sequence.BoudingBoxOriginOffset = semiChargedShotCollisionBox1.Maxs;
+            sequence.AddFrame(487, 273, 16, 16);
+            sequence.AddFrame(507, 269, 24, 24);
+            sequence.AddFrame(535, 273, 16, 16);
+            sequence.AddFrame(555, 270, 22, 22);
+            sequence.AddFrame(581, 269, 24, 24);
+            sequence.AddFrame(609, 269, 24, 24);
+
+            var chargedShotCollisionBox1 = new MMXBox(Vector.NULL_VECTOR, new Vector(-CHARGED_HITBOX_WIDTH_1 * 0.5, -CHARGED_HITBOX_HEIGHT_1 * 0.5), new Vector(CHARGED_HITBOX_WIDTH_1 * 0.5, CHARGED_HITBOX_HEIGHT_1 * 0.5));
+            var chargedShotCollisionBox2 = new MMXBox(Vector.NULL_VECTOR, new Vector(-CHARGED_HITBOX_WIDTH_2 * 0.5, -CHARGED_HITBOX_HEIGHT_2 * 0.5), new Vector(CHARGED_HITBOX_WIDTH_2 * 0.5, CHARGED_HITBOX_HEIGHT_2 * 0.5));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotFiring");
+            sequence.BoudingBoxOriginOffset = chargedShotCollisionBox1.Maxs;
+            sequence.CollisionBox = chargedShotCollisionBox1;
+            sequence.AddFrame(-3, 1, 144, 440, 14, 20);
+            sequence.AddFrame(-2, -1, 170, 321, 23, 16, 3);
+            sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
+            sequence.CollisionBox = chargedShotCollisionBox2;
+            sequence.AddFrame(-25, -10, 170, 321, 23, 16, 3);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShot", 0);
+            sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
+            sequence.CollisionBox = chargedShotCollisionBox2;
+            sequence.AddFrame(7, -2, 164, 433, 47, 32, 2, true);
+            sequence.AddFrame(2, -2, 216, 433, 40, 32, 2);
+            sequence.AddFrame(9, -2, 261, 432, 46, 32, 2);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotHit");
+            sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
+            sequence.CollisionBox = chargedShotCollisionBox2;
+            sequence.AddFrame(-26, -8, 315, 438, 14, 20, 2);
+            sequence.AddFrame(-25, -4, 336, 434, 24, 28, 2);
+            sequence.AddFrame(-26, -8, 315, 438, 14, 20, 4);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotExplode");
+            sequence.BoudingBoxOriginOffset = chargedShotCollisionBox2.Maxs;
+            sequence.AddFrame(368, 434, 28, 28);
+            sequence.AddFrame(400, 435, 26, 26);
+            sequence.AddFrame(430, 434, 28, 28);
+            sequence.AddFrame(462, 433, 30, 30);
+            sequence.AddFrame(496, 432, 32, 32);
+            sequence.AddFrame(532, 432, 32, 32);
+
+            xWeaponsSpriteSheet.ReleaseCurrentTexture();
+
+            // X effects
+            sequence = xChargingEffectsSpriteSheet.AddFrameSquence("ChargingLevel1");
+            AddChargingEffectFrames(sequence, 1);
+
+            sequence = xChargingEffectsSpriteSheet.AddFrameSquence("ChargingLevel2");
+            AddChargingEffectFrames(sequence, 2);
+
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Effects.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                xEffectsSpriteSheet.CurrentTexture = texture;
+            }
+
+            sequence = xEffectsSpriteSheet.AddFrameSquence("WallKickEffect");
+            sequence.AddFrame(0, 201, 11, 12, 2, false, OriginPosition.LEFT_TOP);
+
+            sequence = xEffectsSpriteSheet.AddFrameSquence("PreDashSparkEffect");
+            sequence.AddFrame(19, 124, 16, 32, 2, false, OriginPosition.LEFT_BOTTOM);
+
+            sequence = xEffectsSpriteSheet.AddFrameSquence("DashSparkEffect");
+            sequence.AddFrame(103, 124, 18, 32, 3, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(139, 124, 23, 32, 2, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(178, 124, 27, 32, 2, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(219, 124, 27, 32, 2, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(260, 124, 27, 32, 2, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(301, 124, 27, 32, 2, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(346, 124, 27, 32, 1, false, OriginPosition.LEFT_BOTTOM);
+
+            sequence = xEffectsSpriteSheet.AddFrameSquence("DashSmokeEffect");
+            sequence.AddFrame(3, 164, 8, 28, 4, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(17, 164, 8, 28, 1, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(44, 164, 10, 28, 2, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(58, 164, 10, 28, 1, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(71, 164, 13, 28, 2, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(85, 164, 13, 28, 1, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(99, 164, 13, 28, 1, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(112, 164, 14, 28, 2, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(126, 164, 14, 28, 1, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(140, 164, 14, 28, 1, false, OriginPosition.LEFT_BOTTOM);
+            sequence.AddFrame(154, 164, 13, 28, 1, false, OriginPosition.LEFT_BOTTOM);
+
+            sequence = xEffectsSpriteSheet.AddFrameSquence("WallSlideEffect");
+            sequence.AddFrame(0, 228, 8, 8, 4, false, OriginPosition.CENTER);
+            sequence.AddFrame(12, 227, 10, 11, 5, false, OriginPosition.CENTER);
+            sequence.AddFrame(29, 226, 13, 13, 5, false, OriginPosition.CENTER);
+            sequence.AddFrame(49, 226, 14, 14, 3, false, OriginPosition.CENTER);
+            sequence.AddFrame(70, 226, 14, 14, 3, false, OriginPosition.CENTER);
+            sequence.AddFrame(90, 226, 14, 14, 3, false, OriginPosition.CENTER);
+
+            xEffectsSpriteSheet.ReleaseCurrentTexture();
+
+            // Enemies
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-driller.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                drillerSpriteSheet.CurrentTexture = texture;
+            }
+
+            drillerSpriteSheet.CurrentPalette = drillerPalette;
+
+            var drillerOffset = new Vector(11, 24);
+            var drilerHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-11, -24), new Vector(11, 0));
+
+            // 0
+            sequence = drillerSpriteSheet.AddFrameSquence("Idle");
+            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.CollisionBox = drilerHitbox;
+            sequence.AddFrame(0, 0, 4, 10, 35, 24, 1, true);
+
+            // 1
+            sequence = drillerSpriteSheet.AddFrameSquence("Jumping");
+            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.CollisionBox = drilerHitbox;
+            sequence.AddFrame(0, 0, 40, 13, 37, 21, 5);
+            sequence.AddFrame(0, 0, 78, 9, 35, 25, 5);
+            sequence.AddFrame(0, 0, 115, 4, 43, 30, 1, true);
+
+            // 2
+            sequence = drillerSpriteSheet.AddFrameSquence("Landing");
+            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.CollisionBox = drilerHitbox;
+            sequence.AddFrame(0, 0, 40, 13, 37, 21, 5);
+
+            // 3
+            sequence = drillerSpriteSheet.AddFrameSquence("Drilling");
+            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.CollisionBox = drilerHitbox;
+            sequence.AddFrame(0, 0, 160, 10, 48, 24, 1, true);
+            sequence.AddFrame(0, 0, 209, 9, 46, 25, 1);
+            sequence.AddFrame(0, 0, 256, 10, 48, 24, 1);
+            sequence.AddFrame(0, 0, 305, 9, 46, 25, 1);
+
+            drillerSpriteSheet.ReleaseCurrentTexture();
+
+            if (romLoaded)
+            {
+                mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, mmx.PalLoad);
+                mmx.LoadTilesAndPalettes();
+                mmx.LoadPalette(this, false);
+                mmx.LoadPalette(this, true);
+                mmx.RefreshMapCache(this, false);
+                mmx.RefreshMapCache(this, true);
+
+                World.Tessellate();
+            }
+
+            for (var entity = firstEntity; entity != null; entity = entity.next)
+                if (entity is Sprite sprite)
+                    sprite.OnDeviceReset();
         }
 
         private static void DisposeResource(IDisposable resource)
@@ -2582,13 +2621,13 @@ namespace MMX.Engine
                 if (drawSprites)
                 {
                     // Render sprites
-                    List<Entity> objects = partition.Query(World.Camera.BoundingBox, BoxKind.BOUDINGBOX);
-                    foreach (Entity obj in objects)
+                    List<Entity> entities = partition.Query(World.Camera.BoundingBox, BoxKind.BOUDINGBOX);
+                    foreach (Entity entity in entities)
                     {
-                        if (!obj.Alive || obj.MarkedToRemove || obj.Equals(Player))
+                        if (!entity.Alive || entity.Equals(Player))
                             continue;
 
-                        if (obj is not Sprite sprite)
+                        if (entity is not Sprite sprite)
                             continue;
 
                         sprite.Render();
@@ -2597,15 +2636,15 @@ namespace MMX.Engine
 
                 if (drawSprites && (drawCollisionBox || showTriggerBounds))
                 {
-                    List<Entity> objects = partition.Query(World.BoundingBox, BoxKind.BOUDINGBOX);
-                    foreach (Entity obj in objects)
+                    List<Entity> entities = partition.Query(World.BoundingBox, BoxKind.BOUDINGBOX);
+                    foreach (Entity entity in entities)
                     {
-                        if (!obj.Alive || obj.MarkedToRemove || obj.Equals(Player))
+                        if (!entity.Alive || entity.Equals(Player))
                             continue;
 
-                        switch (obj)
+                        switch (entity)
                         {
-                            case Sprite sprite when drawCollisionBox:
+                            case Sprite sprite when drawCollisionBox && entity is not SpriteEffect:
                             {
                                 MMXBox collisionBox = sprite.CollisionBox;
                                 var rect = WorldBoxToScreen(collisionBox);
@@ -3024,36 +3063,60 @@ namespace MMX.Engine
 
         internal void ShootLemon(Player shooter, Vector origin, Direction direction, bool dashLemon)
         {
-            var lemon = new BusterLemon(this, shooter, "X Buster Lemon", origin, direction, dashLemon, 1);
+            var lemon = new BusterLemon(this, shooter, "X Buster Lemon", origin, direction, dashLemon);
             lemon.Spawn();
         }
 
         internal void ShootSemiCharged(Player shooter, Vector origin, Direction direction)
         {
-            var semiCharged = new BusterSemiCharged(this, shooter, "X Buster Semi Charged", origin, direction, 1);
+            var semiCharged = new BusterSemiCharged(this, shooter, "X Buster Semi Charged", origin, direction);
             semiCharged.Spawn();
         }
 
         internal void ShootCharged(Player shooter, Vector origin, Direction direction)
         {
-            var semiCharged = new BusterCharged(this, shooter, "X Buster Charged", origin, direction, 1);
+            var semiCharged = new BusterCharged(this, shooter, "X Buster Charged", origin, direction);
             semiCharged.Spawn();
         }
 
-        internal ChargingEffect StartChargeEffect(Player player)
+        internal ChargingEffect StartChargingEffect(Player player)
         {
-            var effect = new ChargingEffect(this, "X Charging Effect", player, 2)
-            {
-                PaletteIndex = 3
-            };
+            var effect = new ChargingEffect(this, "X Charging Effect", player);
+            effect.Spawn();
+            return effect;
+        }
 
+        internal DashSparkEffect StartDashSparkEffect(Player player)
+        {
+            var effect = new DashSparkEffect(this, "X Dash Spark Effect", player);
+            effect.Spawn();
+            return effect;
+        }
+
+        internal DashSmokeEffect StartDashSmokeEffect(Player player)
+        {
+            var effect = new DashSmokeEffect(this, "X Dash Smoke Effect", player);
+            effect.Spawn();
+            return effect;
+        }
+
+        internal WallSlideEffect StartWallSlideEffect(Player player)
+        {
+            var effect = new WallSlideEffect(this, "X Wall Slide Effect", player);
+            effect.Spawn();
+            return effect;
+        }
+
+        internal WallKickEffect StartWallKickEffect(Player player)
+        {
+            var effect = new WallKickEffect(this, "X Wall Kick Effect", player);
             effect.Spawn();
             return effect;
         }
 
         internal Driller AddDriller(MMXBox box)
         {
-            var driller = new Driller(this, "Driller", box.Origin, 3);
+            var driller = new Driller(this, "Driller", box.Origin);
             respawnableEntities.Add((driller, box));
             return driller;
         }

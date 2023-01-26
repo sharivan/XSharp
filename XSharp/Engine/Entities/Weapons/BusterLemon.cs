@@ -18,8 +18,8 @@ namespace MMX.Engine.Entities.Weapons
 
         new public Player Shooter => (Player) base.Shooter;
 
-        internal BusterLemon(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, bool dashLemon, int spriteSheetIndex) :
-            base(engine, shooter, name, origin, direction, spriteSheetIndex)
+        internal BusterLemon(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, bool dashLemon) :
+            base(engine, shooter, name, origin, direction, 1)
         {
             this.dashLemon = dashLemon;
 
@@ -32,7 +32,7 @@ namespace MMX.Engine.Entities.Weapons
 
         protected override Box GetCollisionBox() => new(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
 
-        public override void OnSpawn()
+        internal override void OnSpawn()
         {
             base.OnSpawn();
 
@@ -123,7 +123,7 @@ namespace MMX.Engine.Entities.Weapons
         internal override void OnAnimationEnd(Animation animation)
         {
             if (animation.Index == animationIndices[1])
-                Kill();
+                KillOnNextFrame();
         }
     }
 }

@@ -60,6 +60,7 @@ namespace MMX.Engine
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2 = (1505 + 1 * 64) / 256.0;
         public static readonly FixedSingle LADDER_CLIMB_SPEED = 376 / 256.0;
         public static readonly FixedSingle WALL_SLIDE_SPEED = 2;
+        public static readonly FixedSingle UNDERWATER_WALL_SLIDE_SPEED = 1;
         public static readonly FixedSingle PRE_WALKING_SPEED = 1;
         public static readonly FixedSingle WALKING_SPEED = 376 / 256.0;
         public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_1 = 408 / 256.0;

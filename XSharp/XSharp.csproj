@@ -139,6 +139,11 @@
   <ItemGroup>
     <Compile Include="Engine\Animation.cs" />
     <Compile Include="Engine\Entities\Checkpoint.cs" />
+    <Compile Include="Engine\Entities\Effects\DashSmokeEffect.cs" />
+    <Compile Include="Engine\Entities\Effects\DashSparkEffect.cs" />
+    <Compile Include="Engine\Entities\Effects\SpriteEffect.cs" />
+    <Compile Include="Engine\Entities\Effects\WallKickEffect.cs" />
+    <Compile Include="Engine\Entities\Effects\WallSlideEffect.cs" />
     <Compile Include="Engine\Entities\Enemies\Driller.cs" />
     <Compile Include="Engine\Entities\Triggers\CameraLockTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\ChangeDynamicPropertyTrigger.cs" />
@@ -153,7 +158,7 @@
     <Compile Include="Engine\Entities\Weapons\BusterCharged.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterLemon.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterSemiCharged.cs" />
-    <Compile Include="Engine\Entities\Weapons\ChargingEffect.cs" />
+    <Compile Include="Engine\Entities\Effects\ChargingEffect.cs" />
     <Compile Include="Engine\CollisionPlacement.cs" />
     <Compile Include="Engine\CollisionFlags.cs" />
     <Compile Include="Engine\CollisionData.cs" />

@@ -26,8 +26,8 @@ namespace MMX.Engine.Entities.Weapons
             private set;
         }
 
-        internal BusterCharged(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, int spriteSheetIndex) :
-            base(engine, shooter, name, origin, direction, spriteSheetIndex)
+        internal BusterCharged(GameEngine engine, Player shooter, string name, Vector origin, Direction direction) :
+            base(engine, shooter, name, origin, direction, 1)
         {
             CheckCollisionWithWorld = false;
 
@@ -42,7 +42,7 @@ namespace MMX.Engine.Entities.Weapons
             return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
         }
 
-        public override void OnSpawn()
+        internal override void OnSpawn()
         {
             base.OnSpawn();
 
@@ -153,7 +153,7 @@ namespace MMX.Engine.Entities.Weapons
                 CurrentAnimation.StartFromBegin();
             }
             else if (animation.Index == animationIndices[2] || animation.Index == animationIndices[3])
-                Kill();
+                KillOnNextFrame();
         }
     }
 }

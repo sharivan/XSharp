@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 
 using MMX.Geometry;
-
-using static MMX.Engine.Consts;
 using static MMX.Engine.World.World;
 
 namespace MMX.Engine.Entities
@@ -30,15 +28,16 @@ namespace MMX.Engine.Entities
     public abstract class Entity : IDisposable
     {
         private Vector origin;
-        private Entity parent;
+        internal Entity parent;
         private readonly List<Entity> touchingEntities;
-        private readonly List<Entity> childs;
-        protected bool alive;
-        protected bool markedToRemove;
+        internal readonly List<Entity> childs;
+        protected internal bool alive;
         protected bool respawnable;
 
         internal Entity previous;
         internal Entity next;
+
+        private long frameToKill = -1;
 
         public GameEngine Engine
         {
@@ -95,7 +94,11 @@ namespace MMX.Engine.Entities
 
         public bool Alive => alive;
 
-        public bool MarkedToRemove => markedToRemove;
+        public bool MarkedToRemove
+        {
+            get;
+            private set;
+        }
 
         public bool Respawnable => respawnable;
 
@@ -171,7 +174,7 @@ namespace MMX.Engine.Entities
             origin = new Vector(reader);
             LastOrigin = new Vector(reader);
             alive = reader.ReadBoolean();
-            markedToRemove = reader.ReadBoolean();
+            MarkedToRemove = reader.ReadBoolean();
             respawnable = reader.ReadBoolean();
         }
 
@@ -180,7 +183,7 @@ namespace MMX.Engine.Entities
             origin.Write(writer);
             LastOrigin.Write(writer);
             writer.Write(alive);
-            writer.Write(markedToRemove);
+            writer.Write(MarkedToRemove);
             writer.Write(respawnable);
         }
 
@@ -188,7 +191,14 @@ namespace MMX.Engine.Entities
 
         public virtual void OnFrame()
         {
-            if (!alive || markedToRemove)
+            if (Engine.FrameCounter == frameToKill)
+            {
+                frameToKill = -1;
+                Kill();
+                return;
+            }
+
+            if (!Alive)
                 return;
 
             if (!PreThink())
@@ -255,30 +265,27 @@ namespace MMX.Engine.Entities
 
         public void Kill()
         {
-            if (!alive || markedToRemove)
+            if (!Alive || MarkedToRemove)
                 return;
 
-            markedToRemove = true;
+            MarkedToRemove = true;
             Engine.removedEntities.Add(this);
-
-            foreach (Entity child in childs)
-                child.parent = null;
-
-            childs.Clear();
-
-            alive = false;
 
             OnDeath();
         }
 
+        public void KillOnNextFrame() => KillOnFrame(Engine.FrameCounter + 1);
+
+        public void KillOnFrame(long frameNumber) => frameToKill = frameNumber;
+
         public void Spawn()
         {
             alive = true;
-            markedToRemove = false;
+            MarkedToRemove = false;
             Engine.addedEntities.Add(this);
         }
 
-        public virtual void OnSpawn()
+        internal virtual void OnSpawn()
         {
         }
 

@@ -27,7 +27,6 @@ namespace MMX.Engine.Entities
         protected BoxCollider collider;
 
         private Vector vel;
-        private Vector lastVel;
         protected bool moving;
         protected bool isStatic;
         protected bool breakable;
@@ -96,7 +95,7 @@ namespace MMX.Engine.Entities
             CheckCollisionWithWorld = reader.ReadBoolean();
 
             vel = new Vector(reader);
-            lastVel = new Vector(reader);
+            LastVelocity = new Vector(reader);
             NoClip = reader.ReadBoolean();
             moving = reader.ReadBoolean();
             isStatic = reader.ReadBoolean();
@@ -133,7 +132,7 @@ namespace MMX.Engine.Entities
             writer.Write(CheckCollisionWithWorld);
 
             vel.Write(writer);
-            lastVel.Write(writer);
+            LastVelocity.Write(writer);
             writer.Write(NoClip);
             writer.Write(moving);
             writer.Write(isStatic);
@@ -170,9 +169,12 @@ namespace MMX.Engine.Entities
 
                 currentAnimationIndex = value;
                 animation = CurrentAnimation;
-                animation.CurrentSequenceIndex = animationFrame != -1 ? animationFrame : 0;
-                animation.Animating = animating;
-                animation.Visible = true;
+                if (animation != null)
+                {
+                    animation.CurrentSequenceIndex = animationFrame != -1 ? animationFrame : 0;
+                    animation.Animating = animating;
+                    animation.Visible = true;
+                }
             }
         }
 
@@ -208,12 +210,16 @@ namespace MMX.Engine.Entities
             get => vel;
             set
             {
-                lastVel = vel;
+                LastVelocity = vel;
                 vel = value;
             }
         }
 
-        public Vector LastVelocity => lastVel;
+        public Vector LastVelocity
+        {
+            get;
+            private set;
+        }
 
         public BoxCollider Collider
         {
@@ -292,7 +298,7 @@ namespace MMX.Engine.Entities
             elapsed = 0;
         }
 
-        public override void OnSpawn()
+        internal override void OnSpawn()
         {
             base.OnSpawn();
 
@@ -361,7 +367,7 @@ namespace MMX.Engine.Entities
 
         public void Hurt(Sprite victim, Box region, int damage)
         {
-            if (victim.broke || victim.markedToRemove || health <= 0)
+            if (victim.broke || victim.MarkedToRemove || health <= 0)
                 return;
 
             Box intersection = region;
@@ -391,7 +397,7 @@ namespace MMX.Engine.Entities
         public void MakeInvincible(int time = 0)
         {
             invincible = true;
-            invincibleExpires = Engine.GetEngineTime() + (time <= 0 ? invincibilityTime : time);
+            invincibleExpires = Engine.FrameCounter + (time <= 0 ? invincibilityTime : time);
         }
 
         protected virtual bool ShouldCollide(Sprite sprite) => false;
@@ -409,7 +415,7 @@ namespace MMX.Engine.Entities
 
         public Box CollisionBox => Origin + GetCollisionBox();
 
-        protected abstract Box GetCollisionBox();
+        protected virtual Box GetCollisionBox() => GetBoundingBox() - Origin;
 
         protected override Box GetBoundingBox() => DrawBox;
 
@@ -720,7 +726,7 @@ namespace MMX.Engine.Entities
             if (Engine.Paused)
                 return;
 
-            if (invincible && Engine.GetEngineTime() >= invincibleExpires)
+            if (invincible && Engine.FrameCounter >= invincibleExpires)
                 invincible = false;
 
             foreach (Animation animation in animations)
@@ -729,7 +735,7 @@ namespace MMX.Engine.Entities
 
         public virtual void Render()
         {
-            if (!alive || markedToRemove)
+            if (!Alive)
                 return;
 
             foreach (Animation animation in animations)
@@ -774,7 +780,7 @@ namespace MMX.Engine.Entities
 
         public void Break()
         {
-            if (alive && !broke && !markedToRemove && breakable && OnBreak())
+            if (Alive && !broke && !MarkedToRemove && breakable && OnBreak())
             {
                 broke = true;
                 OnBroke();
