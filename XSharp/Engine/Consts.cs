@@ -280,6 +280,6 @@ namespace MMX.Engine
         public const string ROM_NAME = "ShittyDash.mmx";
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
-        public const int INITIAL_LEVEL = 7;
+        public const int INITIAL_LEVEL = 8;
     }
 }
