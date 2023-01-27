@@ -181,6 +181,9 @@ namespace MMX.Engine.World
                 }
         }
 
-        internal void OnDisposeDevice() => Dispose();
+        internal void OnDisposeDevice()
+        {
+            Dispose();
+        }
     }
 }

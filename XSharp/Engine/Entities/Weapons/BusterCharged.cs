@@ -34,7 +34,10 @@ namespace MMX.Engine.Entities.Weapons
             animationIndices = new int[4];
         }
 
-        public override FixedSingle GetGravity() => FixedSingle.ZERO;
+        public override FixedSingle GetGravity()
+        {
+            return FixedSingle.ZERO;
+        }
 
         protected override Box GetCollisionBox()
         {
@@ -113,13 +116,13 @@ namespace MMX.Engine.Entities.Weapons
             startVisible = false;
 
             if (frameSequenceName == "ChargedShotFiring")
-                animationIndices[0] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+                animationIndices[0] = animationIndex;
             else if (frameSequenceName == "ChargedShot")
-                animationIndices[1] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+                animationIndices[1] = animationIndex;
             else if (frameSequenceName == "ChargedShotHit")
-                animationIndices[2] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+                animationIndices[2] = animationIndex;
             else if (frameSequenceName == "ChargedShotExplode")
-                animationIndices[3] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+                animationIndices[3] = animationIndex;
             else
                 add = false;
         }
@@ -138,16 +141,7 @@ namespace MMX.Engine.Entities.Weapons
             {
                 Firing = false;
 
-                if (Direction == Direction.LEFT)
-                {
-                    //Origin += 14 * Vector.LEFT_VECTOR;
-                    Velocity = CHARGED_SPEED * Vector.LEFT_VECTOR;
-                }
-                else
-                {
-                    //Origin += 14 * Vector.RIGHT_VECTOR;
-                    Velocity = CHARGED_SPEED * Vector.RIGHT_VECTOR;
-                }
+                Velocity = Direction == Direction.LEFT ? CHARGED_SPEED * Vector.LEFT_VECTOR : CHARGED_SPEED * Vector.RIGHT_VECTOR;
 
                 CurrentAnimationIndex = animationIndices[1];
                 CurrentAnimation.StartFromBegin();

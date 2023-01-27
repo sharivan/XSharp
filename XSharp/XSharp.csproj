@@ -145,6 +145,8 @@
     <Compile Include="Engine\Entities\Effects\WallKickEffect.cs" />
     <Compile Include="Engine\Entities\Effects\WallSlideEffect.cs" />
     <Compile Include="Engine\Entities\Enemies\Driller.cs" />
+    <Compile Include="Engine\Entities\EntityState.cs" />
+    <Compile Include="Engine\Entities\SpriteState.cs" />
     <Compile Include="Engine\Entities\Triggers\CameraLockTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\ChangeDynamicPropertyTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\CheckpointSplitterTrigger.cs" />
@@ -446,6 +448,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <LangVersion>preview</LangVersion>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 </Project>

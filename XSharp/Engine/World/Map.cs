@@ -189,7 +189,10 @@ namespace MMX.Engine.World
             SetTile(cell, tile, palette, flipped, mirrored, upLayer);
         }
 
-        public void SetTile(int row, int col, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false) => SetTile(new Cell(row, col), tile, palette, flipped, mirrored, upLayer);
+        public void SetTile(int row, int col, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
+        {
+            SetTile(new Cell(row, col), tile, palette, flipped, mirrored, upLayer);
+        }
 
         public void SetTile(Cell cell, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
         {

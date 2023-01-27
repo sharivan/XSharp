@@ -102,9 +102,15 @@ namespace MMX.Engine
             animationEndFired = reader.ReadBoolean();
         }
 
-        public void SetEvent(int frameSequenceIndex, AnimationFrameEvent animationEvent) => animationEvents[frameSequenceIndex] = animationEvent;
+        public void SetEvent(int frameSequenceIndex, AnimationFrameEvent animationEvent)
+        {
+            animationEvents[frameSequenceIndex] = animationEvent;
+        }
 
-        public void ClearEvent(int frameSequenceIndex) => SetEvent(frameSequenceIndex, null);
+        public void ClearEvent(int frameSequenceIndex)
+        {
+            SetEvent(frameSequenceIndex, null);
+        }
 
         /// <summary>
         /// Inicia a animação a partir do quadro atual
@@ -124,12 +130,18 @@ namespace MMX.Engine
         /// <summary>
         /// Inicia a animação a partir do quadro inicial
         /// </summary>
-        public void StartFromBegin() => Start(0);
+        public void StartFromBegin()
+        {
+            Start(0);
+        }
 
         /// <summary>
         /// Para a animação
         /// </summary>
-        public void Stop() => animating = false;
+        public void Stop()
+        {
+            animating = false;
+        }
 
         /// <summary>
         /// Reseta a animação, definindo o quadro atual como o quadro inicial
@@ -331,19 +343,25 @@ namespace MMX.Engine
 
             if (Flipped)
             {
-                if (Mirrored)
+                if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
                     transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, -1, 1) * Matrix.Translation(center3);
                 else
                     transform *= Matrix.Translation(-center3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(center3);
             }
-            else if (Mirrored)
+            else if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
                 transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(center3);
 
             Sprite.Engine.RenderTexture(texture, Sprite.Palette, drawBox.LeftTop, transform);
         }
 
-        internal void OnDeviceReset() => sequence = Sheet.GetFrameSequence(FrameSequenceName);
+        internal void OnDeviceReset()
+        {
+            sequence = Sheet.GetFrameSequence(FrameSequenceName);
+        }
 
-        public override string ToString() => sequence.Name + (Rotation != 0 ? " rotated " + Rotation : "") + (Scale != 0 ? " scaleed " + Scale : "") + (Mirrored ? " left" : " right") + (Flipped ? " down" : " up");
+        public override string ToString()
+        {
+            return sequence.Name + (Rotation != 0 ? " rotated " + Rotation : "") + (Scale != 0 ? " scaleed " + Scale : "") + (Mirrored ? " left" : " right") + (Flipped ? " down" : " up");
+        }
     }
 }

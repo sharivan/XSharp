@@ -38,7 +38,7 @@ namespace MMX.Engine.Entities
         private readonly Keys[] keyBuffer;
         protected bool death;
 
-        private readonly int[,,] animationIndices;
+        private readonly int[,] animationIndices;
 
         private bool jumping;
         private bool dashReleased;
@@ -75,13 +75,11 @@ namespace MMX.Engine.Entities
 
             keyBuffer = new Keys[KEY_BUFFER_COUNT];
 
-            animationIndices = new int[ANIMATION_COUNT, 2, 2];
+            animationIndices = new int[ANIMATION_COUNT, 2];
             for (int i = 0; i < ANIMATION_COUNT; i++)
             {
-                animationIndices[i, 0, 0] = -1;
-                animationIndices[i, 0, 1] = -1;
-                animationIndices[i, 1, 0] = -1;
-                animationIndices[i, 1, 1] = -1;
+                animationIndices[i, 0] = -1;
+                animationIndices[i, 1] = -1;
             }
         }
 
@@ -147,11 +145,17 @@ namespace MMX.Engine.Entities
             shotFrameCounter = reader.ReadInt32();
         }
 
-        protected override Box GetCollisionBox() => ((-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, (HITBOX_WIDTH, HITBOX_HEIGHT + 4));
+        protected override Box GetCollisionBox()
+        {
+            return ((-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, (HITBOX_WIDTH, HITBOX_HEIGHT + 4));
+        }
 
-        protected override Box GetHitBox() => new Box(Dashing
+        protected override Box GetHitBox()
+        {
+            return new Box(Dashing
                 ? (DASHING_HITBOX_OFFSET, (-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT * 0.5), (DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT * 0.5))
                 : (HITBOX_OFFSET, (-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT * 0.5), (HITBOX_WIDTH * 0.5, HITBOX_HEIGHT * 0.5))) + GetVector(VectorKind.PLAYER_ORIGIN);
+        }
 
         public bool Shooting
         {
@@ -300,21 +304,33 @@ namespace MMX.Engine.Entities
 
         public bool WasPressingSelect => !inputLocked && LastKeys.HasFlag(Keys.SELECT);
 
-        protected void SetState(PlayerState state, int startAnimationIndex = -1) => SetState(state, Direction, startAnimationIndex);
+        protected void SetState(PlayerState state, int startAnimationIndex = -1)
+        {
+            SetState(state, Direction, startAnimationIndex);
+        }
 
         protected void SetState(PlayerState state, Direction direction, int startAnimationIndex = -1)
         {
             this.state = state;
             stateDirection = direction;
-            CurrentAnimationIndex = GetAnimationIndex(state, direction, Shooting && !(TopLadderClimbing || TopLadderDescending || PreLadderClimbing || PreWalking));
+            CurrentAnimationIndex = GetAnimationIndex(state, Shooting && !(TopLadderClimbing || TopLadderDescending || PreLadderClimbing || PreWalking));
             CurrentAnimation.Start(startAnimationIndex);
         }
 
-        protected int GetAnimationIndex(PlayerState state, Direction direction, bool shooting) => animationIndices[(int) state, direction == Direction.LEFT ? 1 : 0, shooting ? 1 : 0];
+        protected int GetAnimationIndex(PlayerState state, bool shooting)
+        {
+            return animationIndices[(int) state, shooting ? 1 : 0];
+        }
 
-        public Keys GetKeys(int latency) => keyBuffer[latency];
+        public Keys GetKeys(int latency)
+        {
+            return keyBuffer[latency];
+        }
 
-        public Keys GetLastKeys(int latency) => keyBuffer[latency + 1];
+        public Keys GetLastKeys(int latency)
+        {
+            return keyBuffer[latency + 1];
+        }
 
         protected override void OnStartMoving()
         {
@@ -384,7 +400,10 @@ namespace MMX.Engine.Entities
                 SetState(PlayerState.SPAWN_END, 0);
         }
 
-        protected override FixedSingle GetTerminalDownwardSpeed() => WallSliding ? (Underwater ? UNDERWATER_WALL_SLIDE_SPEED : WALL_SLIDE_SPEED) : base.GetTerminalDownwardSpeed();
+        protected override FixedSingle GetTerminalDownwardSpeed()
+        {
+            return WallSliding ? (Underwater ? UNDERWATER_WALL_SLIDE_SPEED : WALL_SLIDE_SPEED) : base.GetTerminalDownwardSpeed();
+        }
 
         internal override void OnSpawn()
         {
@@ -552,7 +571,10 @@ namespace MMX.Engine.Entities
             return INITIAL_UPWARD_SPEED_FROM_JUMP;
         }
 
-        internal void PlaySound(int index) => Engine.PlaySound(0, index);
+        internal void PlaySound(int index)
+        {
+            Engine.PlaySound(0, index);
+        }
 
         protected override void OnBeforeMove(ref Vector origin)
         {
@@ -1153,17 +1175,21 @@ namespace MMX.Engine.Entities
             }
         }
 
-        private Vector GetShotOrigin() => state switch
+        private Vector GetShotOrigin()
         {
-            PlayerState.STAND or PlayerState.LAND => new Vector(9, 9),
-            PlayerState.WALK => new Vector(18, 8),
-            PlayerState.JUMP or PlayerState.WALL_JUMP or PlayerState.GOING_UP or PlayerState.FALL => new Vector(18, 9),
-            PlayerState.PRE_DASH => new Vector(21, -3),
-            PlayerState.DASH => new Vector(26, 1),
-            PlayerState.POST_DASH => new Vector(24, 9),
-            PlayerState.LADDER => new Vector(9, 6),
-            _ => new Vector(9, 9),
-        };
+            return state switch
+            {
+                PlayerState.STAND or PlayerState.LAND => new Vector(9, 9),
+                PlayerState.WALK => new Vector(18, 8),
+                PlayerState.JUMP or PlayerState.WALL_JUMP or PlayerState.GOING_UP or PlayerState.FALL => new Vector(18, 9),
+                PlayerState.PRE_DASH => new Vector(21, -3),
+                PlayerState.DASH => new Vector(26, 1),
+                PlayerState.POST_DASH => new Vector(24, 9),
+                PlayerState.LADDER => new Vector(9, 6),
+                PlayerState.WALL_SLIDE when wallSlideFrameCounter >= 11 => new Vector(9, 11),
+                _ => new Vector(9, 9),
+            };
+        }
 
         public void ShootLemon()
         {
@@ -1229,14 +1255,17 @@ namespace MMX.Engine.Entities
                 SetState(PlayerState.GOING_UP, 0);
         }
 
-        public static Vector GetVectorDir(Direction direction) => direction switch
+        public static Vector GetVectorDir(Direction direction)
         {
-            Direction.LEFT => Vector.LEFT_VECTOR,
-            Direction.UP => Vector.UP_VECTOR,
-            Direction.RIGHT => Vector.RIGHT_VECTOR,
-            Direction.DOWN => Vector.DOWN_VECTOR,
-            _ => Vector.NULL_VECTOR,
-        };
+            return direction switch
+            {
+                Direction.LEFT => Vector.LEFT_VECTOR,
+                Direction.UP => Vector.UP_VECTOR,
+                Direction.RIGHT => Vector.RIGHT_VECTOR,
+                Direction.DOWN => Vector.DOWN_VECTOR,
+                _ => Vector.NULL_VECTOR,
+            };
+        }
 
         internal void PushKeys(Keys value)
         {
@@ -1247,26 +1276,14 @@ namespace MMX.Engine.Entities
             keyBuffer[0] = value;
         }
 
-        private void RefreshAnimation() => CurrentAnimationIndex = GetAnimationIndex(state, Direction, Shooting);
-
-        protected bool ContainsAnimationIndex(PlayerState state, int index, bool directional = false, bool checkShooting = false)
+        private void RefreshAnimation()
         {
-            if (animationIndices[(int) state, 0, 0] == index)
-                return true;
+            CurrentAnimationIndex = GetAnimationIndex(state, Shooting);
+        }
 
-            if (checkShooting && animationIndices[(int) state, 0, 1] == index)
-                return true;
-
-            if (directional)
-            {
-                if (animationIndices[(int) state, 1, 0] == index)
-                    return true;
-
-                if (checkShooting && animationIndices[(int) state, 1, 1] == index)
-                    return true;
-            }
-
-            return false;
+        protected bool ContainsAnimationIndex(PlayerState state, int index, bool checkShooting = false)
+        {
+            return animationIndices[(int) state, 0] == index || checkShooting && animationIndices[(int) state, 1] == index;
         }
 
         internal override void OnAnimationEnd(Animation animation)
@@ -1288,18 +1305,18 @@ namespace MMX.Engine.Entities
                         TryMoveRight();
                 }
             }
-            else if (ContainsAnimationIndex(PlayerState.JUMP, animation.Index, true, true))
+            else if (ContainsAnimationIndex(PlayerState.JUMP, animation.Index, true))
                 SetState(PlayerState.GOING_UP, 0);
-            else if (ContainsAnimationIndex(PlayerState.LAND, animation.Index, true, true))
+            else if (ContainsAnimationIndex(PlayerState.LAND, animation.Index, true))
                 SetState(PlayerState.STAND, 0);
-            else if (ContainsAnimationIndex(PlayerState.PRE_DASH, animation.Index, true, true))
+            else if (ContainsAnimationIndex(PlayerState.PRE_DASH, animation.Index, true))
             {
                 if (dashSparkEffect != null)
                     dashSparkEffect.State = DashingSparkEffectState.DASHING;
 
                 SetState(PlayerState.DASH, 0);
             }
-            else if (ContainsAnimationIndex(PlayerState.POST_DASH, animation.Index, true, true))
+            else if (ContainsAnimationIndex(PlayerState.POST_DASH, animation.Index, true))
             {
                 if (Landed)
                 {
@@ -1328,7 +1345,7 @@ namespace MMX.Engine.Entities
                 if (Shooting)
                     CurrentAnimation.Stop();
             }
-            else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animation.Index, true, true))
+            else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animation.Index, true))
             {
                 Box collisionBox = CollisionBox;
                 Vector delta = Origin - collisionBox.Origin;
@@ -1340,7 +1357,7 @@ namespace MMX.Engine.Entities
                 Velocity = Vector.NULL_VECTOR;
                 SetState(PlayerState.STAND, 0);
             }
-            else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animation.Index, true, true))
+            else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animation.Index, true))
             {
                 Origin += (HITBOX_HEIGHT - LADDER_BOX_VCLIP + MAP_SIZE) * Vector.DOWN_VECTOR;
 
@@ -1358,22 +1375,9 @@ namespace MMX.Engine.Entities
             }
         }
 
-        private void SetAnimationIndex(PlayerState state, int animationIndex, bool directional, bool shooting)
+        private void SetAnimationIndex(PlayerState state, int animationIndex, bool shooting)
         {
-            if (shooting)
-            {
-                animationIndices[(int) state, 0, 1] = animationIndex;
-
-                if (directional)
-                    animationIndices[(int) state, 1, 1] = animationIndex + 1;
-            }
-            else
-            {
-                animationIndices[(int) state, 0, 0] = animationIndex;
-
-                if (directional)
-                    animationIndices[(int) state, 1, 0] = animationIndex + 1;
-            }
+            animationIndices[(int) state, shooting ? 1 : 0] = animationIndex;
         }
 
         protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
@@ -1385,123 +1389,123 @@ namespace MMX.Engine.Entities
             switch (frameSequenceName)
             {
                 case "Spawn":
-                    SetAnimationIndex(PlayerState.SPAWN, animationIndex, false, false);
+                    SetAnimationIndex(PlayerState.SPAWN, animationIndex, false);
                     break;
 
                 case "SpawnEnd":
-                    SetAnimationIndex(PlayerState.SPAWN_END, animationIndex, false, false);
+                    SetAnimationIndex(PlayerState.SPAWN_END, animationIndex, false);
                     break;
 
                 case "Stand":
-                    SetAnimationIndex(PlayerState.STAND, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.STAND, animationIndex, false);
                     break;
 
                 case "Shooting":
-                    SetAnimationIndex(PlayerState.STAND, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.STAND, animationIndex, true);
                     break;
 
                 case "PreWalking":
-                    SetAnimationIndex(PlayerState.PRE_WALK, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.PRE_WALK, animationIndex, false);
                     break;
 
                 case "Walking":
-                    SetAnimationIndex(PlayerState.WALK, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.WALK, animationIndex, false);
                     break;
 
                 case "ShootWalking":
-                    SetAnimationIndex(PlayerState.WALK, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.WALK, animationIndex, true);
                     break;
 
                 case "Jumping":
-                    SetAnimationIndex(PlayerState.JUMP, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.JUMP, animationIndex, false);
                     break;
 
                 case "ShootJumping":
-                    SetAnimationIndex(PlayerState.JUMP, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.JUMP, animationIndex, true);
                     break;
 
                 case "GoingUp":
-                    SetAnimationIndex(PlayerState.GOING_UP, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.GOING_UP, animationIndex, false);
                     break;
 
                 case "ShootGoingUp":
-                    SetAnimationIndex(PlayerState.GOING_UP, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.GOING_UP, animationIndex, true);
                     break;
 
                 case "Falling":
-                    SetAnimationIndex(PlayerState.FALL, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.FALL, animationIndex, false);
                     break;
 
                 case "ShootFalling":
-                    SetAnimationIndex(PlayerState.FALL, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.FALL, animationIndex, true);
                     break;
 
                 case "Landing":
-                    SetAnimationIndex(PlayerState.LAND, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.LAND, animationIndex, false);
                     break;
 
                 case "ShootLanding":
-                    SetAnimationIndex(PlayerState.LAND, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.LAND, animationIndex, true);
                     break;
 
                 case "PreDashing":
-                    SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, false);
                     break;
 
                 case "ShootPreDashing":
-                    SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, true);
                     break;
 
                 case "Dashing":
-                    SetAnimationIndex(PlayerState.DASH, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.DASH, animationIndex, false);
                     break;
 
                 case "ShootDashing":
-                    SetAnimationIndex(PlayerState.DASH, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.DASH, animationIndex, true);
                     break;
 
                 case "PostDashing":
-                    SetAnimationIndex(PlayerState.POST_DASH, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.POST_DASH, animationIndex, false);
                     break;
 
                 case "ShootPostDashing":
-                    SetAnimationIndex(PlayerState.POST_DASH, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.POST_DASH, animationIndex, true);
                     break;
 
                 case "WallSliding":
-                    SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, false);
                     break;
 
                 case "ShootWallSliding":
-                    SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, true);
                     break;
 
                 case "WallJumping":
-                    SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, false);
                     break;
 
                 case "ShootWallJumping":
-                    SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, true);
                     break;
 
                 case "PreLadderClimbing":
-                    SetAnimationIndex(PlayerState.PRE_LADDER_CLIMB, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.PRE_LADDER_CLIMB, animationIndex, false);
                     break;
 
                 case "LadderMoving":
-                    SetAnimationIndex(PlayerState.LADDER, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.LADDER, animationIndex, false);
                     break;
 
                 case "ShootLadder":
-                    SetAnimationIndex(PlayerState.LADDER, animationIndex, true, true);
+                    SetAnimationIndex(PlayerState.LADDER, animationIndex, true);
                     break;
 
                 case "TopLadderClimbing":
-                    SetAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animationIndex, false);
                     break;
 
                 case "TopLadderDescending":
-                    SetAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animationIndex, true, false);
+                    SetAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animationIndex, false);
                     break;
 
                 default:
@@ -1510,6 +1514,9 @@ namespace MMX.Engine.Entities
             }
         }
 
-        public override FixedSingle GetGravity() => WallJumping && wallJumpFrameCounter < 7 || WallSliding || OnLadder ? 0 : base.GetGravity();
+        public override FixedSingle GetGravity()
+        {
+            return WallJumping && wallJumpFrameCounter < 7 || WallSliding || OnLadder ? 0 : base.GetGravity();
+        }
     }
 }

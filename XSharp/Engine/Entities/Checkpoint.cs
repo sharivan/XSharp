@@ -49,7 +49,10 @@ namespace MMX.Engine.Entities
             this.boundingBox = boundingBox - boundingBox.Origin;
         }
 
-        protected override Box GetBoundingBox() => Origin + boundingBox;
+        protected override Box GetBoundingBox()
+        {
+            return Origin + boundingBox;
+        }
 
         protected override void SetBoundingBox(Box boundingBox)
         {

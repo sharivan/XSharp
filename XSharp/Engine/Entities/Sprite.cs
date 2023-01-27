@@ -22,7 +22,7 @@ namespace MMX.Engine.Entities
         private bool fading;
         private bool fadingIn;
         private int fadingTime;
-        private int elapsed;     
+        private int elapsed;
 
         protected BoxCollider collider;
 
@@ -70,6 +70,55 @@ namespace MMX.Engine.Entities
 
             animations = new List<Animation>();
             collider = new BoxCollider(engine.World, CollisionBox);
+        }
+
+        protected override Type GetStateType()
+        {
+            return typeof(SpriteState);
+        }
+
+        protected SpriteState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, int animationIndex)
+        {
+            var state = (SpriteState) RegisterState(id, onStart, onFrame, onEnd);
+            state.AnimationIndex = animationIndex;
+            return state;
+        }
+
+        protected SpriteState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, string animationName)
+        {
+            var state = (SpriteState) RegisterState(id, onStart, onFrame, onEnd);
+            state.AnimationName = animationName;
+            return state;
+        }
+
+        protected SpriteState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, int animationIndex) where T : Enum
+        {
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, animationIndex);
+        }
+
+        protected SpriteState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, string animationName) where T : Enum
+        {
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, animationName);
+        }
+
+        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, int animationIndex)
+        {
+            return RegisterState(id, null, onFrame, null, animationIndex);
+        }
+
+        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, string animationName)
+        {
+            return RegisterState(id, null, onFrame, null, animationName);
+        }
+
+        protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, int animationIndex) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, onFrame, null, animationIndex);
+        }
+
+        protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, string animationName) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, onFrame, null, animationName);
         }
 
         public override void LoadState(BinaryReader reader)
@@ -144,9 +193,9 @@ namespace MMX.Engine.Entities
             writer.Write(broke);
         }
 
-        protected Animation CurrentAnimation => GetAnimation(currentAnimationIndex);
+        protected internal Animation CurrentAnimation => GetAnimation(currentAnimationIndex);
 
-        protected int CurrentAnimationIndex
+        protected internal int CurrentAnimationIndex
         {
             get => currentAnimationIndex;
             set
@@ -280,7 +329,10 @@ namespace MMX.Engine.Entities
         {
         }
 
-        public override string ToString() => "Sprite [" + Name + ", " + Origin + "]";
+        public override string ToString()
+        {
+            return "Sprite [" + Name + ", " + Origin + "]";
+        }
 
         public void FadeIn(int time)
         {
@@ -323,18 +375,8 @@ namespace MMX.Engine.Entities
                     if (frameSequenceName != sequence.Name)
                         sequence = Sheet.GetFrameSequence(frameSequenceName);
 
-                    if (Directional)
-                    {
-                        animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn));
-                        animationIndex++;
-                        animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn, true, false));
-                        animationIndex++;
-                    }
-                    else
-                    {
-                        animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn));
-                        animationIndex++;
-                    }
+                    animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn));
+                    animationIndex++;
                 }
             }
 
@@ -351,7 +393,10 @@ namespace MMX.Engine.Entities
             currentAnimationIndex = -1;
         }
 
-        protected virtual bool OnTakeDamage(Sprite attacker, Box region, ref int damage) => true;
+        protected virtual bool OnTakeDamage(Sprite attacker, Box region, ref int damage)
+        {
+            return true;
+        }
 
         protected virtual void OnTakeDamagePost(Sprite attacker, Box region, FixedSingle damage)
         {
@@ -400,7 +445,10 @@ namespace MMX.Engine.Entities
             invincibleExpires = Engine.FrameCounter + (time <= 0 ? invincibilityTime : time);
         }
 
-        protected virtual bool ShouldCollide(Sprite sprite) => false;
+        protected virtual bool ShouldCollide(Sprite sprite)
+        {
+            return false;
+        }
 
         protected Vector DoCheckCollisionWithSprites(Vector delta)
         {
@@ -411,13 +459,22 @@ namespace MMX.Engine.Entities
             return result;
         }
 
-        protected override Box GetHitBox() => CollisionBox;
+        protected override Box GetHitBox()
+        {
+            return CollisionBox;
+        }
 
         public Box CollisionBox => Origin + GetCollisionBox();
 
-        protected virtual Box GetCollisionBox() => GetBoundingBox() - Origin;
+        protected virtual Box GetCollisionBox()
+        {
+            return GetBoundingBox() - Origin;
+        }
 
-        protected override Box GetBoundingBox() => DrawBox;
+        protected override Box GetBoundingBox()
+        {
+            return DrawBox;
+        }
 
         private void MoveAlongSlope(BoxCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)
         {
@@ -679,9 +736,15 @@ namespace MMX.Engine.Entities
             }
         }
 
-        public virtual FixedSingle GetGravity() => Underwater ? UNDERWATER_GRAVITY : GRAVITY;
+        public virtual FixedSingle GetGravity()
+        {
+            return Underwater ? UNDERWATER_GRAVITY : GRAVITY;
+        }
 
-        protected virtual FixedSingle GetTerminalDownwardSpeed() => Underwater ? UNDERWATER_TERMINAL_DOWNWARD_SPEED : TERMINAL_DOWNWARD_SPEED;
+        protected virtual FixedSingle GetTerminalDownwardSpeed()
+        {
+            return Underwater ? UNDERWATER_TERMINAL_DOWNWARD_SPEED : TERMINAL_DOWNWARD_SPEED;
+        }
 
         protected virtual void OnBlockedRight()
         {
@@ -699,7 +762,10 @@ namespace MMX.Engine.Entities
         {
         }
 
-        protected bool CollisionCheck(Sprite sprite) => ShouldCollide(sprite) || sprite.ShouldCollide(this);
+        protected bool CollisionCheck(Sprite sprite)
+        {
+            return ShouldCollide(sprite) || sprite.ShouldCollide(this);
+        }
 
         public Box DrawBox => CurrentAnimation != null ? CurrentAnimation.DrawBox : Origin + Box.EMPTY_BOX;
 
@@ -709,9 +775,33 @@ namespace MMX.Engine.Entities
             set;
         }
 
-        public Animation GetAnimation(int index) => animations == null || index < 0 || index >= animations.Count ? null : animations[index];
+        public Animation GetAnimation(int index)
+        {
+            return animations == null || index < 0 || index >= animations.Count ? null : animations[index];
+        }
 
-        protected override bool PreThink() => base.PreThink();
+        public int GetAnimationIndexByName(string name)
+        {
+            for (int i = 0; i < animations.Count; i++)
+            {
+                var animation = animations[i];
+                if (animation.FrameSequenceName == name)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        public Animation GetAnimationByName(string name)
+        {
+            int index = GetAnimationIndexByName(name);
+            return index >= 0 ? animations[index] : null;
+        }
+
+        protected override bool PreThink()
+        {
+            return base.PreThink();
+        }
 
         protected override void Think()
         {
@@ -772,7 +862,10 @@ namespace MMX.Engine.Entities
         {
         }
 
-        protected virtual bool OnBreak() => true;
+        protected virtual bool OnBreak()
+        {
+            return true;
+        }
 
         protected virtual void OnBroke()
         {

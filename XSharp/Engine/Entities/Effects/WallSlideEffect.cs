@@ -4,12 +4,15 @@ namespace MMX.Engine.Entities.Effects
 {
     public class WallSlideEffect : SpriteEffect
     {
-        private static Vector GetOrigin(Player player) => player.Direction switch
+        private static Vector GetOrigin(Player player)
         {
-            Direction.LEFT => player.HitBox.LeftTop + (-5, 25),
-            Direction.RIGHT => player.HitBox.RightTop + (5, 25),
-            _ => Vector.NULL_VECTOR,
-        };
+            return player.Direction switch
+            {
+                Direction.LEFT => player.HitBox.LeftTop + (-5, 25),
+                Direction.RIGHT => player.HitBox.RightTop + (5, 25),
+                _ => Vector.NULL_VECTOR,
+            };
+        }
 
         public WallSlideEffect(GameEngine engine, string name, Player player) : base(engine, name, GetOrigin(player), 2, true, "WallSlideEffect")
         {

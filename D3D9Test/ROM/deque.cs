@@ -167,13 +167,19 @@ namespace MMX.ROM
             }
         }
 
-        public T PeekFirst() => front.Count > frontDeleted
+        public T PeekFirst()
+        {
+            return front.Count > frontDeleted
                 ? front[front.Count - 1]
                 : back.Count > backDeleted ? back[backDeleted] : throw new InvalidOperationException("Can't peek at empty Deque");
+        }
 
-        public T PeekLast() => back.Count > backDeleted
+        public T PeekLast()
+        {
+            return back.Count > backDeleted
                 ? back[back.Count - 1]
                 : front.Count > frontDeleted ? front[frontDeleted] : throw new InvalidOperationException("Can't peek at empty Deque");
+        }
 
         public T PopFirst()
         {
@@ -307,9 +313,15 @@ namespace MMX.ROM
 
         // explicit method implementations
 
-        void ICollection.CopyTo(Array array, int index) => CopyTo((T[]) array, index);
+        void ICollection.CopyTo(Array array, int index)
+        {
+            CopyTo((T[]) array, index);
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 
     class DequeTest

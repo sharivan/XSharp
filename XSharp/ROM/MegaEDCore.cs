@@ -112,9 +112,15 @@ namespace MMX.ROM
 
         }
 
-        public void Dispose() => FreeRom();
+        public void Dispose()
+        {
+            FreeRom();
+        }
 
-        protected byte ReadByte(int address) => ReadByte((uint) address);
+        protected byte ReadByte(int address)
+        {
+            return ReadByte((uint) address);
+        }
 
         protected byte ReadByte(uint address)
         {
@@ -122,7 +128,10 @@ namespace MMX.ROM
             return reader.ReadByte();
         }
 
-        protected sbyte ReadSByte(int address) => ReadSByte((uint) address);
+        protected sbyte ReadSByte(int address)
+        {
+            return ReadSByte((uint) address);
+        }
 
         protected sbyte ReadSByte(uint address)
         {
@@ -130,7 +139,10 @@ namespace MMX.ROM
             return reader.ReadSByte();
         }
 
-        protected short ReadShort(int address) => ReadShort((uint) address);
+        protected short ReadShort(int address)
+        {
+            return ReadShort((uint) address);
+        }
 
         protected short ReadShort(uint address)
         {
@@ -138,7 +150,10 @@ namespace MMX.ROM
             return reader.ReadInt16();
         }
 
-        protected ushort ReadWord(int address) => ReadWord((uint) address);
+        protected ushort ReadWord(int address)
+        {
+            return ReadWord((uint) address);
+        }
 
         protected ushort ReadWord(uint address)
         {
@@ -146,9 +161,15 @@ namespace MMX.ROM
             return reader.ReadUInt16();
         }
 
-        protected static ushort ReadWord(byte[] buf, uint address) => (ushort) (buf[address] & 0xff | (buf[address + 1] << 8) & 0xff00);
+        protected static ushort ReadWord(byte[] buf, uint address)
+        {
+            return (ushort) (buf[address] & 0xff | (buf[address + 1] << 8) & 0xff00);
+        }
 
-        protected int ReadInt(int address) => ReadInt((uint) address);
+        protected int ReadInt(int address)
+        {
+            return ReadInt((uint) address);
+        }
 
         protected int ReadInt(uint address)
         {
@@ -156,7 +177,10 @@ namespace MMX.ROM
             return reader.ReadInt32();
         }
 
-        protected uint ReadDWord(int address) => ReadDWord((uint) address);
+        protected uint ReadDWord(int address)
+        {
+            return ReadDWord((uint) address);
+        }
 
         protected uint ReadDWord(uint address)
         {
@@ -164,7 +188,10 @@ namespace MMX.ROM
             return reader.ReadUInt32();
         }
 
-        protected string ReadASCIIString(int address, int count) => ReadASCIIString((uint) address, count);
+        protected string ReadASCIIString(int address, int count)
+        {
+            return ReadASCIIString((uint) address, count);
+        }
 
         protected string ReadASCIIString(uint address, int count)
         {
@@ -173,7 +200,10 @@ namespace MMX.ROM
             return Encoding.ASCII.GetString(resultBytes);
         }
 
-        protected void WriteShort(int address, short value) => WriteShort((uint) address, value);
+        protected void WriteShort(int address, short value)
+        {
+            WriteShort((uint) address, value);
+        }
 
         protected void WriteShort(uint address, short value)
         {
@@ -181,7 +211,10 @@ namespace MMX.ROM
             writter.Write(value);
         }
 
-        protected void WriteWord(int address, ushort value) => WriteWord((uint) address, value);
+        protected void WriteWord(int address, ushort value)
+        {
+            WriteWord((uint) address, value);
+        }
 
         protected void WriteWord(uint address, ushort value)
         {
@@ -195,7 +228,10 @@ namespace MMX.ROM
             buf[address + 1] = (byte) ((value >> 8) & 0xff);
         }
 
-        protected void WriteInt(int address, int value) => WriteInt((uint) address, value);
+        protected void WriteInt(int address, int value)
+        {
+            WriteInt((uint) address, value);
+        }
 
         protected void WriteInt(uint address, int value)
         {
@@ -203,7 +239,10 @@ namespace MMX.ROM
             writter.Write(value);
         }
 
-        protected void WriteDWord(int address, uint value) => WriteDWord((uint) address, value);
+        protected void WriteDWord(int address, uint value)
+        {
+            WriteDWord((uint) address, value);
+        }
 
         protected void WriteDWord(uint address, uint value)
         {
@@ -219,7 +258,10 @@ namespace MMX.ROM
             buf[address + 3] = (byte) ((value >> 24) & 0xff);
         }
 
-        protected void WriteASCIIString(int address, string value) => WriteASCIIString((uint) address, value);
+        protected void WriteASCIIString(int address, string value)
+        {
+            WriteASCIIString((uint) address, value);
+        }
 
         protected void WriteASCIIString(uint address, string value)
         {
@@ -228,11 +270,20 @@ namespace MMX.ROM
             writter.Write(resultBytes);
         }
 
-        protected void Copy(int src, int dst, int count) => Copy((uint) src, (uint) dst, count);
+        protected void Copy(int src, int dst, int count)
+        {
+            Copy((uint) src, (uint) dst, count);
+        }
 
-        protected void Copy(uint src, uint dst, int count) => Array.Copy(rom, src, rom, dst, count);
+        protected void Copy(uint src, uint dst, int count)
+        {
+            Array.Copy(rom, src, rom, dst, count);
+        }
 
-        protected int Compare(int left, int right, int count) => Compare((uint) left, (uint) right, count);
+        protected int Compare(int left, int right, int count)
+        {
+            return Compare((uint) left, (uint) right, count);
+        }
 
         protected int Compare(uint left, uint right, int count)
         {
@@ -248,9 +299,15 @@ namespace MMX.ROM
             return 0;
         }
 
-        protected void Fill(int address, int value, int count) => Fill((uint) address, value, count);
+        protected void Fill(int address, int value, int count)
+        {
+            Fill((uint) address, value, count);
+        }
 
-        protected void Fill(uint address, int value, int count) => Fill(rom, address, value, count);
+        protected void Fill(uint address, int value, int count)
+        {
+            Fill(rom, address, value, count);
+        }
 
         protected static void Fill(byte[] buf, uint address, int value, int count)
         {

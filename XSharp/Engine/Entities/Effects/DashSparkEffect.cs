@@ -10,12 +10,15 @@ namespace MMX.Engine.Entities.Effects
 
     public class DashSparkEffect : SpriteEffect
     {
-        private static Vector GetOrigin(Player player) => player.Direction switch
+        private static Vector GetOrigin(Player player)
         {
-            Direction.LEFT => player.HitBox.LeftTop + (23 - 9, 20),
-            Direction.RIGHT => player.HitBox.RightTop + (-23 + 9, 20),
-            _ => Vector.NULL_VECTOR,
-        };
+            return player.Direction switch
+            {
+                Direction.LEFT => player.HitBox.LeftTop + (23 - 9, 20),
+                Direction.RIGHT => player.HitBox.RightTop + (-23 + 9, 20),
+                _ => Vector.NULL_VECTOR,
+            };
+        }
 
         private DashingSparkEffectState state = DashingSparkEffectState.PRE_DASHING;
 

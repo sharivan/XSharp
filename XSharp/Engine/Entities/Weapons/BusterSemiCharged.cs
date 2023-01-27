@@ -34,7 +34,10 @@ namespace MMX.Engine.Entities.Weapons
             animationIndices = new int[4];
         }
 
-        public override FixedSingle GetGravity() => FixedSingle.ZERO;
+        public override FixedSingle GetGravity()
+        {
+            return FixedSingle.ZERO;
+        }
 
         protected override Box GetCollisionBox()
         {
@@ -128,13 +131,13 @@ namespace MMX.Engine.Entities.Weapons
             startVisible = false;
 
             if (frameSequenceName == "SemiChargedShotFiring")
-                animationIndices[0] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+                animationIndices[0] = animationIndex;
             else if (frameSequenceName == "SemiChargedShot")
-                animationIndices[1] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+                animationIndices[1] = animationIndex;
             else if (frameSequenceName == "SemiChargedShotHit")
-                animationIndices[2] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+                animationIndices[2] = animationIndex;
             else if (frameSequenceName == "SemiChargedShotExplode")
-                animationIndices[3] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
+                animationIndices[3] = animationIndex;
             else
                 add = false;
         }

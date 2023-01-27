@@ -13,21 +13,30 @@ namespace MMX.Engine.Sound
 
     public static class WaveStreamUtil
     {
-        public static WaveStream FromStream(Stream stream, SoundFormat format) => format switch
+        public static WaveStream FromStream(Stream stream, SoundFormat format)
         {
-            SoundFormat.WAVE => new WaveFileReader(stream),
-            SoundFormat.MP3 => new Mp3FileReader(stream),
-            _ => throw new ArgumentException($"Sound format is invalid: {format}"),
-        };
+            return format switch
+            {
+                SoundFormat.WAVE => new WaveFileReader(stream),
+                SoundFormat.MP3 => new Mp3FileReader(stream),
+                _ => throw new ArgumentException($"Sound format is invalid: {format}"),
+            };
+        }
 
-        public static WaveStream FromFile(string waveFile, SoundFormat format) => format switch
+        public static WaveStream FromFile(string waveFile, SoundFormat format)
         {
-            SoundFormat.WAVE => new WaveFileReader(waveFile),
-            SoundFormat.MP3 => new Mp3FileReader(waveFile),
-            _ => throw new ArgumentException($"Sound format is invalid: {format}"),
-        };
+            return format switch
+            {
+                SoundFormat.WAVE => new WaveFileReader(waveFile),
+                SoundFormat.MP3 => new Mp3FileReader(waveFile),
+                _ => throw new ArgumentException($"Sound format is invalid: {format}"),
+            };
+        }
 
-        public static long TimeToBytePosition(WaveStream stream, double time) => (long) (time * stream.WaveFormat.AverageBytesPerSecond);
+        public static long TimeToBytePosition(WaveStream stream, double time)
+        {
+            return (long) (time * stream.WaveFormat.AverageBytesPerSecond);
+        }
     }
 
     /// <summary>
@@ -127,11 +136,20 @@ namespace MMX.Engine.Sound
             return totalBytesRead;
         }
 
-        public void Reset() => source.Position = 0;
+        public void Reset()
+        {
+            source.Position = 0;
+        }
 
-        public void Play() => Playing = true;
+        public void Play()
+        {
+            Playing = true;
+        }
 
-        public void Stop() => Playing = false;
+        public void Stop()
+        {
+            Playing = false;
+        }
 
         public void UpdateSource(WaveStream source, long stopPoint, long loopPoint)
         {
@@ -140,12 +158,24 @@ namespace MMX.Engine.Sound
             LoopPoint = loopPoint;
         }
 
-        public void UpdateSource(WaveStream source, long loopPoint) => UpdateSource(source, -1, loopPoint);
+        public void UpdateSource(WaveStream source, long loopPoint)
+        {
+            UpdateSource(source, -1, loopPoint);
+        }
 
-        public void UpdateSource(WaveStream source) => UpdateSource(source, -1, -1);
+        public void UpdateSource(WaveStream source)
+        {
+            UpdateSource(source, -1, -1);
+        }
 
-        public void UpdateSource(WaveStream source, double stopTime, double loopTime) => UpdateSource(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, loopTime) : -1);
+        public void UpdateSource(WaveStream source, double stopTime, double loopTime)
+        {
+            UpdateSource(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, loopTime) : -1);
+        }
 
-        public void UpdateSource(WaveStream source, double loopTime) => UpdateSource(source, -1, loopTime);
+        public void UpdateSource(WaveStream source, double loopTime)
+        {
+            UpdateSource(source, -1, loopTime);
+        }
     }
 }

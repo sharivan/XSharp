@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 
 using MMX.Geometry;
+using static MMX.Engine.Entities.Enemies.Driller;
 using static MMX.Engine.World.World;
 
 namespace MMX.Engine.Entities
@@ -38,6 +39,10 @@ namespace MMX.Engine.Entities
         internal Entity next;
 
         private long frameToKill = -1;
+
+        private readonly List<EntityState> states;
+        private EntityState[] stateArray;
+        private int currentStateID;
 
         public GameEngine Engine
         {
@@ -104,6 +109,28 @@ namespace MMX.Engine.Entities
 
         public bool Offscreen => !HasIntersection(BoundingBox, Engine.World.Camera.BoundingBox);
 
+        public int StateCount => states.Count;
+
+        public int CurrentStateID
+        {
+            get => currentStateID;
+            set
+            {
+                if (currentStateID != value)
+                {
+                    EntityState state = CurrentState;
+                    state?.OnEnd();
+
+                    currentStateID = value;
+
+                    state = CurrentState;
+                    state?.OnStart();
+                }
+            }
+        }
+
+        protected EntityState CurrentState => stateArray != null && CurrentStateID >= 0 ? stateArray[CurrentStateID] : null;
+
         protected Entity(GameEngine engine, Vector origin)
         {
             Engine = engine;
@@ -111,11 +138,95 @@ namespace MMX.Engine.Entities
 
             touchingEntities = new List<Entity>();
             childs = new List<Entity>();
+
+            states = new List<EntityState>();
+            currentStateID = -1;
         }
 
-        public bool IsTouching(Entity other) => touchingEntities.Contains(other);
+        protected void SetupStateArray(int count)
+        {
+            states.Clear();
+            stateArray = new EntityState[count];
+        }
 
-        public bool Contains(Entity other) => childs.Contains(other);
+        protected void SetupStateArray(Type t)
+        {
+            SetupStateArray(Enum.GetNames(t).Length);
+        }
+
+        protected virtual Type GetStateType()
+        {
+            return typeof(EntityState);
+        }
+
+        protected virtual void OnRegisterState(EntityState state)
+        {
+        }
+
+        protected EntityState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd)
+        {
+            Type stateType = GetStateType();
+            var state = (EntityState) Activator.CreateInstance(stateType);
+
+            state.Entity = this;
+            state.ID = id;
+            state.StartEvent += onStart;
+            state.FrameEvent += onFrame;
+            state.EndEvent += onEnd;
+
+            states.Add(state);
+            stateArray[id] = state;
+            OnRegisterState(state);
+
+            return state;
+        }
+
+        protected EntityState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd) where T : Enum
+        {
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd);
+        }
+
+        protected EntityState RegisterState(int id, EntityStateFrameEvent onFrame)
+        {
+            return RegisterState(id, null, onFrame, null);
+        }
+
+        protected EntityState RegisterState<T>(T id, EntityStateFrameEvent onFrame) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, onFrame, null);
+        }
+
+        protected void UnregisterState(int id)
+        {
+            EntityState state = stateArray[id];
+            stateArray[id] = null;
+            states.Remove(state);
+        }
+
+        protected EntityState GetStateByID(int id)
+        {
+            return stateArray[id];
+        }
+
+        protected internal T GetState<T>() where T : Enum
+        {
+            return (T) (object) CurrentStateID;
+        }
+
+        protected internal void SetState<T>(T id) where T : Enum
+        {
+            CurrentStateID = (int) (object) id;
+        }
+
+        public bool IsTouching(Entity other)
+        {
+            return touchingEntities.Contains(other);
+        }
+
+        public bool Contains(Entity other)
+        {
+            return childs.Contains(other);
+        }
 
         protected virtual void SetOrigin(Vector origin)
         {
@@ -145,29 +256,38 @@ namespace MMX.Engine.Entities
             return false;
         }
 
-        public Vector GetVector(VectorKind kind) => kind switch
+        public Vector GetVector(VectorKind kind)
         {
-            VectorKind.ORIGIN => origin,
-            VectorKind.PLAYER_ORIGIN => origin - new Vector(0, 17),
-            VectorKind.BOUDINGBOX_CENTER => BoundingBox.Center,
-            VectorKind.HITBOX_CENTER => HitBox.Center,
-            _ => Vector.NULL_VECTOR
-        };
+            return kind switch
+            {
+                VectorKind.ORIGIN => origin,
+                VectorKind.PLAYER_ORIGIN => origin - new Vector(0, 17),
+                VectorKind.BOUDINGBOX_CENTER => BoundingBox.Center,
+                VectorKind.HITBOX_CENTER => HitBox.Center,
+                _ => Vector.NULL_VECTOR
+            };
+        }
 
         protected abstract Box GetBoundingBox();
 
-        protected virtual Box GetHitBox() => GetBoundingBox();
+        protected virtual Box GetHitBox()
+        {
+            return GetBoundingBox();
+        }
 
         protected virtual void SetBoundingBox(Box boudingBox)
         {
         }
 
-        public Box GetBox(BoxKind kind) => kind switch
+        public Box GetBox(BoxKind kind)
         {
-            BoxKind.BOUDINGBOX => BoundingBox,
-            BoxKind.HITBOX => HitBox,
-            _ => Box.EMPTY_BOX,
-        };
+            return kind switch
+            {
+                BoxKind.BOUDINGBOX => BoundingBox,
+                BoxKind.HITBOX => HitBox,
+                _ => Box.EMPTY_BOX,
+            };
+        }
 
         public virtual void LoadState(BinaryReader reader)
         {
@@ -187,7 +307,10 @@ namespace MMX.Engine.Entities
             writer.Write(respawnable);
         }
 
-        public override string ToString() => "Entity [" + origin + "]";
+        public override string ToString()
+        {
+            return "Entity [" + origin + "]";
+        }
 
         public virtual void OnFrame()
         {
@@ -205,7 +328,7 @@ namespace MMX.Engine.Entities
                 return;
 
             Think();
-
+            CurrentState?.OnFrame();
             PostThink();
 
             List<Entity> touching = Engine.partition.Query(HitBox, this, childs, BoxKind.HITBOX);
@@ -249,7 +372,10 @@ namespace MMX.Engine.Entities
         {
         }
 
-        protected virtual bool PreThink() => true;
+        protected virtual bool PreThink()
+        {
+            return true;
+        }
 
         protected virtual void Think()
         {
@@ -274,9 +400,15 @@ namespace MMX.Engine.Entities
             OnDeath();
         }
 
-        public void KillOnNextFrame() => KillOnFrame(Engine.FrameCounter + 1);
+        public void KillOnNextFrame()
+        {
+            KillOnFrame(Engine.FrameCounter + 1);
+        }
 
-        public void KillOnFrame(long frameNumber) => frameToKill = frameNumber;
+        public void KillOnFrame(long frameNumber)
+        {
+            frameToKill = frameNumber;
+        }
 
         public void Spawn()
         {

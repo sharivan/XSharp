@@ -279,7 +279,10 @@ namespace MMX.Engine
             UpdateColliders();
         }
 
-        public void MoveContactSolid(Vector dir, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE) => MoveContactSolid(dir, QUERY_MAX_DISTANCE, masks, ignore);
+        public void MoveContactSolid(Vector dir, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            MoveContactSolid(dir, QUERY_MAX_DISTANCE, masks, ignore);
+        }
 
         public void MoveContactSolid(Vector dir, FixedSingle maxDistance, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
         {
@@ -331,7 +334,10 @@ namespace MMX.Engine
             UpdateColliders();
         }
 
-        public void MoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE) => MoveContactFloor(QUERY_MAX_DISTANCE, ignore);
+        public void MoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            MoveContactFloor(QUERY_MAX_DISTANCE, ignore);
+        }
 
         public void MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
@@ -357,7 +363,10 @@ namespace MMX.Engine
             }
         }
 
-        public void AdjustOnTheFloor(CollisionFlags ignore = CollisionFlags.NONE) => AdjustOnTheFloor(QUERY_MAX_DISTANCE, ignore);
+        public void AdjustOnTheFloor(CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            AdjustOnTheFloor(QUERY_MAX_DISTANCE, ignore);
+        }
 
         public void AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {

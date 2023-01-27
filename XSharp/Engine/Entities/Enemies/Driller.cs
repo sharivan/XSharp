@@ -3,35 +3,28 @@
 using MMX.Engine.Entities.Weapons;
 
 using static MMX.Engine.Consts;
+using System;
 
 namespace MMX.Engine.Entities.Enemies
 {
+    public enum DrillerState
+    {
+        IDLE = 0,
+        DRILLING = 1,
+        JUMPING = 2,
+        LANDING = 3
+    }
+
     public class Driller : Enemy
     {
-        private DrillerState state;
         private bool flashing;
         private bool jumping;
         private int jumpCounter;
-        private bool stateChanged;
-        private int frameCounter;
-
-        public enum DrillerState
-        {
-            IDLE = 0,
-            DRILLING = 1,
-            JUMPING = 2,
-            LANDING = 3
-        }
 
         public DrillerState State
         {
-            get => state;
-            set
-            {
-                frameCounter = 0;
-                state = value;
-                stateChanged = true;
-            }
+            get => GetState<DrillerState>();
+            set => SetState(value);
         }
 
         public Driller(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 4) { }
@@ -43,16 +36,20 @@ namespace MMX.Engine.Entities.Enemies
             flashing = false;
             jumping = false;
             jumpCounter = 0;
-            stateChanged = false;
-            frameCounter = 0;
 
             PaletteIndex = 5;
-            State = DrillerState.IDLE;
             Health = DRILLER_HEALTH;
 
             CheckCollisionWithWorld = true;
             CheckCollisionWithSprites = false;
-            CurrentAnimationIndex = 0;
+
+            SetupStateArray(typeof(DrillerState));
+            RegisterState(DrillerState.IDLE, OnIdle, "Idle");
+            RegisterState(DrillerState.DRILLING, OnDrilling, "Drilling");
+            RegisterState(DrillerState.JUMPING, OnJumping, "Jumping");
+            RegisterState(DrillerState.LANDING, OnLanding, "Landing");
+
+            State = DrillerState.IDLE;
         }
 
         protected override void OnStartTouch(Entity entity)
@@ -76,34 +73,6 @@ namespace MMX.Engine.Entities.Enemies
                 Direction = Direction.LEFT;
         }
 
-        private void UpdateAnimation()
-        {
-            switch (State)
-            {
-                case DrillerState.IDLE:
-                    CurrentAnimationIndex = Direction == Direction.RIGHT ? 0 : 1;
-                    break;
-
-                case DrillerState.JUMPING:
-                    CurrentAnimationIndex = Direction == Direction.RIGHT ? 2 : 3;
-                    break;
-
-                case DrillerState.LANDING:
-                    CurrentAnimationIndex = Direction == Direction.RIGHT ? 4 : 5;
-                    break;
-
-                case DrillerState.DRILLING:
-                    CurrentAnimationIndex = Direction == Direction.RIGHT ? 6 : 7;
-                    break;               
-            }
-
-            if (stateChanged)
-            {
-                stateChanged = false;
-                CurrentAnimation.StartFromBegin();
-            }
-        }
-
         protected override void OnLanded()
         {
             if (State == DrillerState.JUMPING)
@@ -112,56 +81,43 @@ namespace MMX.Engine.Entities.Enemies
                 jumping = false;
                 Velocity = Vector.NULL_VECTOR;
                 State = DrillerState.LANDING;
-                UpdateAnimation();
             }
         }
 
-        protected override void Think()
+        protected void OnIdle(EntityState state, long frameCounter)
         {
-            switch (State)
+            if (Landed && Engine.Player != null)
             {
-                case DrillerState.IDLE:
+                if (frameCounter >= 12)
+                    FaceToPlayer(Engine.Player);
+
+                if (frameCounter >= 40)
                 {
-                    if (Landed && Engine.Player != null)
-                    {
-                        if (frameCounter >= 12)
-                            FaceToPlayer(Engine.Player);
-                        
-                        if (frameCounter >= 40)
-                        {
-                            State = DrillerState.JUMPING;
-                            jumpCounter = 0;
-                        }
-                    }
-
-                    break;
+                    State = DrillerState.JUMPING;
+                    jumpCounter = 0;
                 }
-
-                case DrillerState.JUMPING:
-                {
-                    if (frameCounter == 10)
-                    {
-                        Velocity = (Direction == Direction.RIGHT ? DRILLER_JUMP_VELOCITY_X : -DRILLER_JUMP_VELOCITY_X, DRILLER_JUMP_VELOCITY_Y);
-                        jumping = true;
-                    }
-                    else if (!jumping)
-                        Velocity = Vector.NULL_VECTOR;
-
-                    break;
-                }
-
-                case DrillerState.LANDING when frameCounter >= 12:
-                    State = jumpCounter >= 2 ? DrillerState.IDLE : DrillerState.JUMPING;
-                    break;
-
-                case DrillerState.DRILLING:
-                    break;
             }
+        }
 
-            frameCounter++;
-            UpdateAnimation();
+        protected void OnJumping(EntityState state, long frameCounter)
+        {
+            if (frameCounter == 10)
+            {
+                Velocity = (Direction == Direction.RIGHT ? DRILLER_JUMP_VELOCITY_X : -DRILLER_JUMP_VELOCITY_X, DRILLER_JUMP_VELOCITY_Y);
+                jumping = true;
+            }
+            else if (!jumping)
+                Velocity = Vector.NULL_VECTOR;
+        }
 
-            base.Think();
+        protected void OnLanding(EntityState state, long frameCounter)
+        {
+            if (frameCounter >= 12)
+                State = jumpCounter >= 2 ? DrillerState.IDLE : DrillerState.JUMPING;
+        }
+
+        protected void OnDrilling(EntityState state, long frameCounter)
+        {
         }
 
         protected override void PostThink()

@@ -14,7 +14,10 @@
 
         public Cell((int, int) tuple) : this(tuple.Item1, tuple.Item2) {}
 
-        public override int GetHashCode() => 65536 * Row + Col;
+        public override int GetHashCode()
+        {
+            return 65536 * Row + Col;
+        }
 
         public override bool Equals(object obj)
         {
@@ -28,10 +31,19 @@
             return other.Row == Row && other.Col == Col;
         }
 
-        public override string ToString() => Row + "," + Col;
+        public override string ToString()
+        {
+            return Row + "," + Col;
+        }
 
-        public static implicit operator Cell((int, int) tuple) => new(tuple.Item1, tuple.Item2);
+        public static implicit operator Cell((int, int) tuple)
+        {
+            return new(tuple.Item1, tuple.Item2);
+        }
 
-        public static implicit operator (int, int)(Cell cell) => (cell.Row, cell.Col);
+        public static implicit operator (int, int)(Cell cell)
+        {
+            return (cell.Row, cell.Col);
+        }
     }
 }

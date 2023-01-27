@@ -239,7 +239,10 @@ namespace MMX.Geometry
             Y.Write(writer);
         }
 
-        public override int GetHashCode() => (X.GetHashCode() << 16) + Y.GetHashCode();
+        public override int GetHashCode()
+        {
+            return (X.GetHashCode() << 16) + Y.GetHashCode();
+        }
 
         public override bool Equals(object obj)
         {
@@ -250,7 +253,10 @@ namespace MMX.Geometry
             return this == other;
         }
 
-        public override string ToString() => "(" + X + ", " + Y + ")";
+        public override string ToString()
+        {
+            return "(" + X + ", " + Y + ")";
+        }
 
         /// <summary>
         /// Normaliza o vetor
@@ -288,64 +294,112 @@ namespace MMX.Geometry
         /// <param name="center">Centro de rotação</param>
         /// <param name="angle">Angulo de rotação em radianos</param>
         /// <returns>O vetor rotacionado</returns>
-        public Vector Rotate(Vector center, FixedSingle angle) => (this - center).Rotate(angle) + center;
+        public Vector Rotate(Vector center, FixedSingle angle)
+        {
+            return (this - center).Rotate(angle) + center;
+        }
 
         /// <summary>
         /// Rotaciona um vetor em 90 graus ao redor da origem
         /// </summary>
         /// <returns>O vetor rotacionado</returns>
-        public Vector Rotate90() => new(-Y, X);
+        public Vector Rotate90()
+        {
+            return new(-Y, X);
+        }
 
         /// <summary>
         /// Rotaciona um vetor em 90 graus ao redor de outro vetor
         /// </summary>
         /// <param name="center">Centro de rotação</param>
         /// <returns>O vetor rotacionado</returns>
-        public Vector Rotate90(Vector center) => (this - center).Rotate90() + center;
+        public Vector Rotate90(Vector center)
+        {
+            return (this - center).Rotate90() + center;
+        }
 
         /// <summary>
         /// Rotaciona um vetor em 180 graus ao redor da origem
         /// </summary>
         /// <returns>O vetor rotacionado</returns>
-        public Vector Rotate180() => new(-X, -Y);
+        public Vector Rotate180()
+        {
+            return new(-X, -Y);
+        }
 
         /// <summary>
         /// Rotaciona um vetor em 180 graus ao redor de outro vetor
         /// </summary>
         /// <param name="center">Centro de rotação</param>
         /// <returns>O vetor rotacionado</returns>
-        public Vector Rotate180(Vector center) => (this - center).Rotate180() + center;
+        public Vector Rotate180(Vector center)
+        {
+            return (this - center).Rotate180() + center;
+        }
 
         /// <summary>
         /// Rotaciona um vetor em 270 graus ao redor da origem
         /// </summary>
         /// <returns>O vetor rotacionado</returns>
-        public Vector Rotate270() => new(Y, -X);
+        public Vector Rotate270()
+        {
+            return new(Y, -X);
+        }
 
         /// <summary>
         /// Rotaciona um vetor em 270 graus ao redor de outro vetor
         /// </summary>
         /// <param name="center">Centro de rotação</param>
         /// <returns>O vetor rotacionado</returns>
-        public Vector Rotate270(Vector center) => (this - center).Rotate270() + center;
+        public Vector Rotate270(Vector center)
+        {
+            return (this - center).Rotate270() + center;
+        }
 
-        public Vector RoundToCeil() => new(X.Ceil(), Y.Ceil());
+        public Vector RoundToCeil()
+        {
+            return new(X.Ceil(), Y.Ceil());
+        }
 
-        public Vector RoundToFloor() => new(X.Floor(), Y.Floor());
+        public Vector RoundToFloor()
+        {
+            return new(X.Floor(), Y.Floor());
+        }
 
-        public Vector RoundXToCeil() => new(X.Ceil(), Y);
+        public Vector RoundXToCeil()
+        {
+            return new(X.Ceil(), Y);
+        }
 
-        public Vector RoundXToFloor() => new(X.Floor(), Y);
+        public Vector RoundXToFloor()
+        {
+            return new(X.Floor(), Y);
+        }
 
-        public Vector RoundYToCeil() => new(X, Y.Ceil());
+        public Vector RoundYToCeil()
+        {
+            return new(X, Y.Ceil());
+        }
 
-        public Vector RoundYToFloor() => new(X, Y.Floor());
+        public Vector RoundYToFloor()
+        {
+            return new(X, Y.Floor());
+        }
 
-        public Vector Round() => new(X.Round(), Y.Round());
+        public Vector Round()
+        {
+            return new(X.Round(), Y.Round());
+        }
 
-        public Vector RoundX() => new(X.Round(), Y);
+        public Vector RoundX()
+        {
+            return new(X.Round(), Y);
+        }
 
-        public Vector RoundY() => new(X, Y.Round());
+        public Vector RoundY()
+        {
+            return new(X, Y.Round());
+        }
 
         /// <summary>
         /// Distâcia entre vetores
@@ -359,13 +413,25 @@ namespace MMX.Geometry
             return System.Math.Sqrt(dx * dx + dy * dy);
         }
 
-        public Vector Scale(FixedSingle scaleX, FixedSingle scaleY) => new(scaleX * X, scaleY * Y);
+        public Vector Scale(FixedSingle scaleX, FixedSingle scaleY)
+        {
+            return new(scaleX * X, scaleY * Y);
+        }
 
-        public Vector Scale(FixedSingle scale) => Scale(scale, scale);
+        public Vector Scale(FixedSingle scale)
+        {
+            return Scale(scale, scale);
+        }
 
-        public Vector ScaleInverse(FixedSingle scaleX, FixedSingle scaleY) => new(X / scaleX, Y / scaleY);
+        public Vector ScaleInverse(FixedSingle scaleX, FixedSingle scaleY)
+        {
+            return new(X / scaleX, Y / scaleY);
+        }
 
-        public Vector ScaleInverse(FixedSingle divisor) => ScaleInverse(divisor, divisor);
+        public Vector ScaleInverse(FixedSingle divisor)
+        {
+            return ScaleInverse(divisor, divisor);
+        }
 
         public GeometryType Type => type;
 
@@ -440,9 +506,15 @@ namespace MMX.Geometry
         /// <returns>true se os vetores forem diferentes, false caso contrário</returns>
         public static bool operator !=(Vector vec1, Vector vec2) => vec1.X != vec2.X || vec1.Y != vec2.Y;
 
-        public static implicit operator (FixedSingle, FixedSingle)(Vector vec) => (vec.X, vec.Y);
+        public static implicit operator (FixedSingle, FixedSingle)(Vector vec)
+        {
+            return (vec.X, vec.Y);
+        }
 
-        public static implicit operator Vector((FixedSingle, FixedSingle) tuple) => new(tuple.Item1, tuple.Item2);
+        public static implicit operator Vector((FixedSingle, FixedSingle) tuple)
+        {
+            return new(tuple.Item1, tuple.Item2);
+        }
     }
 
     /// <summary>
@@ -490,7 +562,10 @@ namespace MMX.Geometry
         /// Inverte o sentido do segmento trocando seu ponto inicial com seu ponto final
         /// </summary>
         /// <returns>O segmento de reta invertido</returns>
-        public LineSegment Negate() => new(End, Start);
+        public LineSegment Negate()
+        {
+            return new(End, Start);
+        }
 
         /// <summary>
         /// Rotaciona um segmento de reta ao redor de um ponto
@@ -571,7 +646,10 @@ namespace MMX.Geometry
             return mX + epslon <= v.X && v.X <= MX - epslon && mY + epslon <= v.Y && v.Y <= MY - epslon;
         }
 
-        public bool Contains(Vector v) => Contains(v, 0);
+        public bool Contains(Vector v)
+        {
+            return Contains(v, 0);
+        }
 
         /// <summary>
         /// Verifica se dois segmentos de reta são paralelos
@@ -650,9 +728,15 @@ namespace MMX.Geometry
             return GeometryType.VECTOR;
         }
 
-        public GeometryType Intersection(LineSegment s, out Vector resultVector, out LineSegment resultLineSegment) => Intersection(s, 0, out resultVector, out resultLineSegment);
+        public GeometryType Intersection(LineSegment s, out Vector resultVector, out LineSegment resultLineSegment)
+        {
+            return Intersection(s, 0, out resultVector, out resultLineSegment);
+        }
 
-        public Box WrappingBox() => new(Start, Vector.NULL_VECTOR, End - Start);
+        public Box WrappingBox()
+        {
+            return new(Start, Vector.NULL_VECTOR, End - Start);
+        }
 
         public override bool Equals(object obj)
         {
@@ -665,9 +749,15 @@ namespace MMX.Geometry
             return StrictEquals(segment);
         }
 
-        public bool StrictEquals(LineSegment other) => Start == other.Start && End == other.End;
+        public bool StrictEquals(LineSegment other)
+        {
+            return Start == other.Start && End == other.End;
+        }
 
-        public bool UnstrictEquals(LineSegment other) => Start == other.Start && End == other.End || Start == other.End && End == other.Start;
+        public bool UnstrictEquals(LineSegment other)
+        {
+            return Start == other.Start && End == other.End || Start == other.End && End == other.Start;
+        }
 
         public override int GetHashCode()
         {
@@ -678,7 +768,10 @@ namespace MMX.Geometry
             return hashCode;
         }
 
-        public override string ToString() => "[" + Start + " : " + End + "]";
+        public override string ToString()
+        {
+            return "[" + Start + " : " + End + "]";
+        }
 
         public GeometryType Type => type;
 
@@ -818,25 +911,37 @@ namespace MMX.Geometry
 
         public FixedSingle Element11 => FixedSingle.FromRawValue(elements[3]);
 
-        public FixedSingle GetElement(int i, int j) => FixedSingle.FromRawValue(elements[2 * i + j]);
+        public FixedSingle GetElement(int i, int j)
+        {
+            return FixedSingle.FromRawValue(elements[2 * i + j]);
+        }
 
         /// <summary>
         /// Calcula o determinante da uma matriz
         /// </summary>
         /// <returns>Determinante</returns>
-        public FixedSingle Determinant() => Element00 * Element11 - Element10 * Element01;
+        public FixedSingle Determinant()
+        {
+            return Element00 * Element11 - Element10 * Element01;
+        }
 
         /// <summary>
         /// Transpõe a matriz
         /// </summary>
         /// <returns>Transposta da matriz</returns>
-        public Matrix2x2 Transpose() => new(Element00, Element10, Element01, Element11);
+        public Matrix2x2 Transpose()
+        {
+            return new(Element00, Element10, Element01, Element11);
+        }
 
         /// <summary>
         /// Inverte a matriz
         /// </summary>
         /// <returns>Inversa da matriz</returns>
-        public Matrix2x2 Inverse() => new Matrix2x2(Element01, -Element01, -Element10, Element00) / Determinant();
+        public Matrix2x2 Inverse()
+        {
+            return new Matrix2x2(Element01, -Element01, -Element10, Element00) / Determinant();
+        }
 
         /// <summary>
         /// Soma entre duas matrizes
@@ -1063,9 +1168,15 @@ namespace MMX.Geometry
             return 65536 * m.GetHashCode() + M.GetHashCode();
         }
 
-        public override bool Equals(object obj) => obj != null && obj is Box other && this == other;
+        public override bool Equals(object obj)
+        {
+            return obj != null && obj is Box other && this == other;
+        }
 
-        public override string ToString() => "[" + Origin + " : " + Mins + " : " + Maxs + "]";
+        public override string ToString()
+        {
+            return "[" + Origin + " : " + Mins + " : " + Maxs + "]";
+        }
 
         /// <summary>
         /// Origem do retângulo
@@ -1154,9 +1265,15 @@ namespace MMX.Geometry
         /// </summary>
         public FixedSingle Height => (Maxs.Y - Mins.Y).Abs;
 
-        public Box LeftTopOrigin() => (LeftTop, Vector.NULL_VECTOR, DiagonalVector);
+        public Box LeftTopOrigin()
+        {
+            return (LeftTop, Vector.NULL_VECTOR, DiagonalVector);
+        }
 
-        public Box RightBottomOrigin() => (RightBottom, -DiagonalVector, Vector.NULL_VECTOR);
+        public Box RightBottomOrigin()
+        {
+            return (RightBottom, -DiagonalVector, Vector.NULL_VECTOR);
+        }
 
         public Box CenterOrigin()
         {
@@ -1164,23 +1281,50 @@ namespace MMX.Geometry
             return new Box(Center, -sv2, sv2);
         }
 
-        public Box RoundOriginToCeil() => (Origin.RoundToCeil(), Mins, Maxs);
+        public Box RoundOriginToCeil()
+        {
+            return (Origin.RoundToCeil(), Mins, Maxs);
+        }
 
-        public Box RoundOriginXToCeil() => (Origin.RoundXToCeil(), Mins, Maxs);
+        public Box RoundOriginXToCeil()
+        {
+            return (Origin.RoundXToCeil(), Mins, Maxs);
+        }
 
-        public Box RoundOriginYToCeil() => (Origin.RoundYToCeil(), Mins, Maxs);
+        public Box RoundOriginYToCeil()
+        {
+            return (Origin.RoundYToCeil(), Mins, Maxs);
+        }
 
-        public Box RoundOriginToFloor() => (Origin.RoundToFloor(), Mins, Maxs);
+        public Box RoundOriginToFloor()
+        {
+            return (Origin.RoundToFloor(), Mins, Maxs);
+        }
 
-        public Box RoundOriginXToFloor() => (Origin.RoundXToFloor(), Mins, Maxs);
+        public Box RoundOriginXToFloor()
+        {
+            return (Origin.RoundXToFloor(), Mins, Maxs);
+        }
 
-        public Box RoundOriginYToFloor() => (Origin.RoundYToFloor(), Mins, Maxs);
+        public Box RoundOriginYToFloor()
+        {
+            return (Origin.RoundYToFloor(), Mins, Maxs);
+        }
 
-        public Box RoundOrigin() => (Origin.Round(), Mins, Maxs);
+        public Box RoundOrigin()
+        {
+            return (Origin.Round(), Mins, Maxs);
+        }
 
-        public Box RoundOriginX() => (Origin.RoundX(), Mins, Maxs);
+        public Box RoundOriginX()
+        {
+            return (Origin.RoundX(), Mins, Maxs);
+        }
 
-        public Box RoundOriginY() => (Origin.RoundY(), Mins, Maxs);
+        public Box RoundOriginY()
+        {
+            return (Origin.RoundY(), Mins, Maxs);
+        }
 
         /// <summary>
         /// Área do retângulo
@@ -1199,20 +1343,35 @@ namespace MMX.Geometry
             return (LeftTop + alpha * width * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, (alpha * width, Height));
         }
 
-        public Box ExtendLeftFixed(FixedSingle fixedWidth) => (LeftTop + fixedWidth * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, (fixedWidth, Height));
+        public Box ExtendLeftFixed(FixedSingle fixedWidth)
+        {
+            return (LeftTop + fixedWidth * Vector.LEFT_VECTOR, Vector.NULL_VECTOR, (fixedWidth, Height));
+        }
 
-        public Box ClipLeft(FixedSingle clip) => (Origin, (Mins.X + clip, Mins.Y), Maxs);
+        public Box ClipLeft(FixedSingle clip)
+        {
+            return (Origin, (Mins.X + clip, Mins.Y), Maxs);
+        }
 
         /// <summary>
         /// Escala o retângulo para a direita
         /// </summary>
         /// <param name="alpha"></param>
         /// <returns></returns>
-        public Box ScaleRight(FixedSingle alpha) => (LeftTop, Vector.NULL_VECTOR, (alpha * Width, Height));
+        public Box ScaleRight(FixedSingle alpha)
+        {
+            return (LeftTop, Vector.NULL_VECTOR, (alpha * Width, Height));
+        }
 
-        public Box ClipRight(FixedSingle clip) => (Origin, Mins, (Maxs.X - clip, Maxs.Y));
+        public Box ClipRight(FixedSingle clip)
+        {
+            return (Origin, Mins, (Maxs.X - clip, Maxs.Y));
+        }
 
-        public Box ExtendRightFixed(FixedSingle fixedWidth) => (LeftTop, Vector.NULL_VECTOR, (fixedWidth, Height));
+        public Box ExtendRightFixed(FixedSingle fixedWidth)
+        {
+            return (LeftTop, Vector.NULL_VECTOR, (fixedWidth, Height));
+        }
 
         /// <summary>
         /// Escala o retângulo para cima
@@ -1225,20 +1384,35 @@ namespace MMX.Geometry
             return (LeftTop + alpha * (height - 1) * Vector.UP_VECTOR, Vector.NULL_VECTOR, (Width, alpha * height));
         }
 
-        public Box ClipTop(FixedSingle clip) => (Origin, (Mins.X, Mins.Y + clip), Maxs);
+        public Box ClipTop(FixedSingle clip)
+        {
+            return (Origin, (Mins.X, Mins.Y + clip), Maxs);
+        }
 
         /// <summary>
         /// Escala o retângulo para baixo
         /// </summary>
         /// <param name="alpha"></param>
         /// <returns></returns>
-        public Box ScaleBottom(FixedSingle alpha) => new(LeftTop, Vector.NULL_VECTOR, new Vector(Width, alpha * Height));
+        public Box ScaleBottom(FixedSingle alpha)
+        {
+            return new(LeftTop, Vector.NULL_VECTOR, new Vector(Width, alpha * Height));
+        }
 
-        public Box ClipBottom(FixedSingle clip) => new(Origin, Mins, new Vector(Maxs.X, Maxs.Y - clip));
+        public Box ClipBottom(FixedSingle clip)
+        {
+            return new(Origin, Mins, new Vector(Maxs.X, Maxs.Y - clip));
+        }
 
-        public Box Mirror() => Mirror(0);
+        public Box Mirror()
+        {
+            return Mirror(0);
+        }
 
-        public Box Flip() => Flip(0);
+        public Box Flip()
+        {
+            return Flip(0);
+        }
 
         public Box Mirror(FixedSingle x)
         {
@@ -1266,51 +1440,99 @@ namespace MMX.Geometry
             return new Box(Origin, new Vector(Mins.X, newMinsY - originY), new Vector(Maxs.X, newMaxsY - originY));
         }
 
-        public Vector GetNormal(BoxSide side) => side switch
+        public Vector GetNormal(BoxSide side)
         {
-            BoxSide.LEFT => Vector.RIGHT_VECTOR,
-            BoxSide.UP => Vector.DOWN_VECTOR,
-            BoxSide.RIGHT => Vector.LEFT_VECTOR,
-            BoxSide.DOWN => Vector.UP_VECTOR,
-            _ => Vector.NULL_VECTOR,
-        };
+            return side switch
+            {
+                BoxSide.LEFT => Vector.RIGHT_VECTOR,
+                BoxSide.UP => Vector.DOWN_VECTOR,
+                BoxSide.RIGHT => Vector.LEFT_VECTOR,
+                BoxSide.DOWN => Vector.UP_VECTOR,
+                _ => Vector.NULL_VECTOR,
+            };
+        }
 
-        public LineSegment GetSideSegment(BoxSide side) => side switch
+        public LineSegment GetSideSegment(BoxSide side)
         {
-            BoxSide.LEFT => new LineSegment(LeftTop, LeftBottom),
-            BoxSide.UP => new LineSegment(LeftTop, RightTop),
-            BoxSide.RIGHT => new LineSegment(RightTop, RightBottom),
-            BoxSide.DOWN => new LineSegment(LeftBottom, RightBottom),
-            _ => LineSegment.NULL_SEGMENT,
-        };
+            return side switch
+            {
+                BoxSide.LEFT => new LineSegment(LeftTop, LeftBottom),
+                BoxSide.UP => new LineSegment(LeftTop, RightTop),
+                BoxSide.RIGHT => new LineSegment(RightTop, RightBottom),
+                BoxSide.DOWN => new LineSegment(LeftBottom, RightBottom),
+                _ => LineSegment.NULL_SEGMENT,
+            };
+        }
 
-        public Box HalfLeft() => new(Origin, Mins, new Vector((Mins.X + Maxs.X) * FixedSingle.HALF, Maxs.Y));
+        public Box HalfLeft()
+        {
+            return new(Origin, Mins, new Vector((Mins.X + Maxs.X) * FixedSingle.HALF, Maxs.Y));
+        }
 
-        public Box HalfTop() => new(Origin, Mins, new Vector(Maxs.X, (Mins.Y + Maxs.Y) * FixedSingle.HALF));
+        public Box HalfTop()
+        {
+            return new(Origin, Mins, new Vector(Maxs.X, (Mins.Y + Maxs.Y) * FixedSingle.HALF));
+        }
 
-        public Box HalfRight() => new(Origin, new Vector((Mins.X + Maxs.X) * FixedSingle.HALF, Mins.Y), Maxs);
+        public Box HalfRight()
+        {
+            return new(Origin, new Vector((Mins.X + Maxs.X) * FixedSingle.HALF, Mins.Y), Maxs);
+        }
 
-        public Box HalfBottom() => new(Origin, new Vector(Mins.X, (Mins.Y + Maxs.Y) * FixedSingle.HALF), Maxs);
+        public Box HalfBottom()
+        {
+            return new(Origin, new Vector(Mins.X, (Mins.Y + Maxs.Y) * FixedSingle.HALF), Maxs);
+        }
 
-        public bool IsValid(FixedSingle epslon) => Width > epslon && Height > epslon;
+        public bool IsValid(FixedSingle epslon)
+        {
+            return Width > epslon && Height > epslon;
+        }
 
-        public bool IsValid() => IsValid(0);
+        public bool IsValid()
+        {
+            return IsValid(0);
+        }
 
-        public Box Scale(Vector center, FixedSingle scaleX, FixedSingle scaleY) => new((Origin - center).Scale(scaleX, scaleY) + center, Mins.Scale(scaleX, scaleY), Maxs.Scale(scaleX, scaleY));
+        public Box Scale(Vector center, FixedSingle scaleX, FixedSingle scaleY)
+        {
+            return new((Origin - center).Scale(scaleX, scaleY) + center, Mins.Scale(scaleX, scaleY), Maxs.Scale(scaleX, scaleY));
+        }
 
-        public Box Scale(Vector center, FixedSingle scale) => Scale(center, scale, scale);
+        public Box Scale(Vector center, FixedSingle scale)
+        {
+            return Scale(center, scale, scale);
+        }
 
-        public Box Scale(FixedSingle scaleX, FixedSingle scaleY) => Scale(Vector.NULL_VECTOR, scaleX, scaleY);
+        public Box Scale(FixedSingle scaleX, FixedSingle scaleY)
+        {
+            return Scale(Vector.NULL_VECTOR, scaleX, scaleY);
+        }
 
-        public Box Scale(FixedSingle scale) => Scale(Vector.NULL_VECTOR, scale, scale);
+        public Box Scale(FixedSingle scale)
+        {
+            return Scale(Vector.NULL_VECTOR, scale, scale);
+        }
 
-        public Box ScaleInverse(Vector center, FixedSingle divisorX, FixedSingle divisorY) => new((Origin - center).ScaleInverse(divisorX, divisorY) + center, Mins.ScaleInverse(divisorX, divisorY), Maxs.ScaleInverse(divisorX, divisorY));
+        public Box ScaleInverse(Vector center, FixedSingle divisorX, FixedSingle divisorY)
+        {
+            return new((Origin - center).ScaleInverse(divisorX, divisorY) + center, Mins.ScaleInverse(divisorX, divisorY), Maxs.ScaleInverse(divisorX, divisorY));
+        }
 
-        public Box ScaleInverse(Vector center, FixedSingle divisor) => ScaleInverse(center, divisor, divisor);
+        public Box ScaleInverse(Vector center, FixedSingle divisor)
+        {
+            return ScaleInverse(center, divisor, divisor);
+        }
 
-        public Box ScaleInverse(FixedSingle divisorX, FixedSingle divisorY) => ScaleInverse(Vector.NULL_VECTOR, divisorX, divisorY);
+        public Box ScaleInverse(FixedSingle divisorX, FixedSingle divisorY)
+        {
+            return ScaleInverse(Vector.NULL_VECTOR, divisorX, divisorY);
+        }
 
-        public Box ScaleInverse(FixedSingle divisor) => ScaleInverse(Vector.NULL_VECTOR, divisor, divisor);
+        public Box ScaleInverse(FixedSingle divisor)
+        {
+            return ScaleInverse(Vector.NULL_VECTOR, divisor, divisor);
+        }
 
         public GeometryType Type => type;
 
@@ -1663,25 +1885,55 @@ namespace MMX.Geometry
         /// <returns>true se forem diferentes, false caso contrário</returns>
         public static bool operator !=(Box box1, Box box2) => !(box1 == box2);
 
-        public static implicit operator Box((Vector, Vector, Vector) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3);
+        public static implicit operator Box((Vector, Vector, Vector) tuple)
+        {
+            return new(tuple.Item1, tuple.Item2, tuple.Item3);
+        }
 
-        public static implicit operator Box((Vector, FixedSingle, FixedSingle) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3);
+        public static implicit operator Box((Vector, FixedSingle, FixedSingle) tuple)
+        {
+            return new(tuple.Item1, tuple.Item2, tuple.Item3);
+        }
 
-        public static implicit operator Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4);
+        public static implicit operator Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple)
+        {
+            return new(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4);
+        }
 
-        public static implicit operator Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4, tuple.Item5, tuple.Item6);
+        public static implicit operator Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple)
+        {
+            return new(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4, tuple.Item5, tuple.Item6);
+        }
 
-        public static implicit operator Box((Vector, Vector) tuple) => new(tuple.Item1, tuple.Item2);
+        public static implicit operator Box((Vector, Vector) tuple)
+        {
+            return new(tuple.Item1, tuple.Item2);
+        }
 
-        public static implicit operator (Vector, Vector, Vector)(Box box) => (box.Origin, box.Mins, box.Maxs);
+        public static implicit operator (Vector, Vector, Vector)(Box box)
+        {
+            return (box.Origin, box.Mins, box.Maxs);
+        }
 
-        public static implicit operator (Vector, FixedSingle, FixedSingle)(Box box) => (box.LeftTop, box.Width, box.Height);
+        public static implicit operator (Vector, FixedSingle, FixedSingle)(Box box)
+        {
+            return (box.LeftTop, box.Width, box.Height);
+        }
 
-        public static implicit operator (FixedSingle, FixedSingle, FixedSingle, FixedSingle)(Box box) => (box.Left, box.Top, box.Width, box.Height);
+        public static implicit operator (FixedSingle, FixedSingle, FixedSingle, FixedSingle)(Box box)
+        {
+            return (box.Left, box.Top, box.Width, box.Height);
+        }
 
-        public static implicit operator (FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle)(Box box) => (box.Origin.X, box.Origin.Y, box.Left, box.Top, box.Width, box.Height);
+        public static implicit operator (FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle)(Box box)
+        {
+            return (box.Origin.X, box.Origin.Y, box.Left, box.Top, box.Width, box.Height);
+        }
 
-        public static implicit operator (Vector, Vector)(Box box) => (box.Origin + box.Mins, box.Origin + box.Maxs);
+        public static implicit operator (Vector, Vector)(Box box)
+        {
+            return (box.Origin + box.Mins, box.Origin + box.Maxs);
+        }
     }
 
     public enum RightTriangleSide
@@ -1759,9 +2011,15 @@ namespace MMX.Geometry
             this.vCathetus = vCathetus;
         }
 
-        public RightTriangle Translate(Vector shift) => new(Origin + shift, hCathetus, vCathetus);
+        public RightTriangle Translate(Vector shift)
+        {
+            return new(Origin + shift, hCathetus, vCathetus);
+        }
 
-        public RightTriangle Negate() => new(-Origin, -hCathetus, -vCathetus);
+        public RightTriangle Negate()
+        {
+            return new(-Origin, -hCathetus, -vCathetus);
+        }
 
         public FixedDouble Area => FixedDouble.HALF * (FixedDouble) HCathetus * (FixedDouble) VCathetus;
 
@@ -1786,7 +2044,10 @@ namespace MMX.Geometry
             return Vector.NULL_VECTOR;
         }
 
-        private static FixedSingle Sign(Vector p1, Vector p2, Vector p3) => (p1.X - p3.X) * (p2.Y - p3.Y) - (p2.X - p3.X) * (p1.Y - p3.Y);
+        private static FixedSingle Sign(Vector p1, Vector p2, Vector p3)
+        {
+            return (p1.X - p3.X) * (p2.Y - p3.Y) - (p2.X - p3.X) * (p1.Y - p3.Y);
+        }
 
         private static bool PointInTriangle(Vector pt, Vector v1, Vector v2, Vector v3)
         {
@@ -1827,7 +2088,10 @@ namespace MMX.Geometry
             return PointInTriangle(v, Origin, HCathetusVertex + (epslon, 0), VCathetusVertex + (0, epslon));
         }
 
-        public bool Contains(Vector v, bool excludeHypotenuse = false) => Contains(v, 0, excludeHypotenuse);
+        public bool Contains(Vector v, bool excludeHypotenuse = false)
+        {
+            return Contains(v, 0, excludeHypotenuse);
+        }
 
         public bool HasIntersectionWith(Box box, FixedSingle epslon, bool excludeHypotenuse = false)
         {
@@ -1839,9 +2103,15 @@ namespace MMX.Geometry
             || Contains(intersection.RightBottom, epslon, excludeHypotenuse));
         }
 
-        public bool HasIntersectionWith(Box box, bool excludeHypotenuse = false) => HasIntersectionWith(box, 0, excludeHypotenuse);
+        public bool HasIntersectionWith(Box box, bool excludeHypotenuse = false)
+        {
+            return HasIntersectionWith(box, 0, excludeHypotenuse);
+        }
 
-        public override string ToString() => "[" + Origin + " : " + hCathetus + " : " + vCathetus + "]";
+        public override string ToString()
+        {
+            return "[" + Origin + " : " + hCathetus + " : " + vCathetus + "]";
+        }
 
         public override bool Equals(object obj)
         {

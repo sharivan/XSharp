@@ -59,7 +59,10 @@ namespace MMX.Engine
                 frames = new List<Frame>();
             }
 
-            public void Add(Frame frame) => frames.Add(frame);
+            public void Add(Frame frame)
+            {
+                frames.Add(frame);
+            }
 
             public void AddRepeated(Frame frame, int count)
             {
@@ -116,11 +119,20 @@ namespace MMX.Engine
                 return frame;
             }
 
-            public void Clear() => frames.Clear();
+            public void Clear()
+            {
+                frames.Clear();
+            }
 
-            public bool Remove(Frame frame) => frames.Remove(frame);
+            public bool Remove(Frame frame)
+            {
+                return frames.Remove(frame);
+            }
 
-            public void Remove(int index) => frames.RemoveAt(index);
+            public void Remove(int index)
+            {
+                frames.RemoveAt(index);
+            }
         }
 
         public class Frame
@@ -159,10 +171,13 @@ namespace MMX.Engine
                 Precached = precached;
             }
 
-            public override bool Equals(object obj) => obj is Frame frame &&
+            public override bool Equals(object obj)
+            {
+                return obj is Frame frame &&
                        EqualityComparer<MMXBox>.Default.Equals(BoundingBox, frame.BoundingBox) &&
                        EqualityComparer<MMXBox>.Default.Equals(CollisionBox, frame.CollisionBox) &&
                        EqualityComparer<Texture>.Default.Equals(Texture, frame.Texture);
+            }
 
             public override int GetHashCode()
             {
@@ -173,7 +188,10 @@ namespace MMX.Engine
                 return hashCode;
             }
 
-            public override string ToString() => "{" + BoundingBox + ", " + CollisionBox + "}";
+            public override string ToString()
+            {
+                return "{" + BoundingBox + ", " + CollisionBox + "}";
+            }
         }
 
         private readonly List<Frame> frames;
@@ -250,7 +268,10 @@ namespace MMX.Engine
             LoadFromFile(imageFileName);
         }
 
-        public void LoadFromFile(string imageFileName) => CurrentTexture = Engine.CreateImageTextureFromFile(imageFileName);
+        public void LoadFromFile(string imageFileName)
+        {
+            CurrentTexture = Engine.CreateImageTextureFromFile(imageFileName);
+        }
 
         public Frame AddFrame(int left, int top, int width, int height, OriginPosition originPosition = OriginPosition.CENTER)
         {
@@ -331,15 +352,30 @@ namespace MMX.Engine
             return frame;
         }
 
-        public Frame GetFrame(int frameIndex) => frames[frameIndex];
+        public Frame GetFrame(int frameIndex)
+        {
+            return frames[frameIndex];
+        }
 
-        public int IndexOfFrame(Frame frame) => frames.IndexOf(frame);
+        public int IndexOfFrame(Frame frame)
+        {
+            return frames.IndexOf(frame);
+        }
 
-        public bool ContainsFrame(Frame frame) => frames.Contains(frame);
+        public bool ContainsFrame(Frame frame)
+        {
+            return frames.Contains(frame);
+        }
 
-        public bool RemoveFrame(Frame frame) => frames.Remove(frame);
+        public bool RemoveFrame(Frame frame)
+        {
+            return frames.Remove(frame);
+        }
 
-        public void RemoveFrame(int index) => frames.RemoveAt(index);
+        public void RemoveFrame(int index)
+        {
+            frames.RemoveAt(index);
+        }
 
         public void ClearFrames()
         {
@@ -362,11 +398,20 @@ namespace MMX.Engine
             return result;
         }
 
-        public Dictionary<string, FrameSequence>.Enumerator GetFrameSequenceEnumerator() => sequences.GetEnumerator();
+        public Dictionary<string, FrameSequence>.Enumerator GetFrameSequenceEnumerator()
+        {
+            return sequences.GetEnumerator();
+        }
 
-        public bool ContainsFrameSequence(string name) => sequences.ContainsKey(name);
+        public bool ContainsFrameSequence(string name)
+        {
+            return sequences.ContainsKey(name);
+        }
 
-        public FrameSequence GetFrameSequence(string name) => sequences.ContainsKey(name) ? sequences[name] : null;
+        public FrameSequence GetFrameSequence(string name)
+        {
+            return sequences.ContainsKey(name) ? sequences[name] : null;
+        }
 
         public FrameSequence RemoveFrameSequence(string name)
         {
@@ -380,7 +425,10 @@ namespace MMX.Engine
             return null;
         }
 
-        public void ClearFrameSequences() => sequences.Clear();
+        public void ClearFrameSequences()
+        {
+            sequences.Clear();
+        }
 
         public void Dispose()
         {

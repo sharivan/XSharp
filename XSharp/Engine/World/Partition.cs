@@ -246,11 +246,20 @@ namespace MMX.Engine.World
             }
         }
 
-        public List<T> Query(Box box, BoxKind kind = BoxKind.ALL) => Query(box, null, null, kind);
+        public List<T> Query(Box box, BoxKind kind = BoxKind.ALL)
+        {
+            return Query(box, null, null, kind);
+        }
 
-        public List<T> Query(Box box, T exclude, BoxKind kind = BoxKind.ALL) => Query(box, exclude, null, kind);
+        public List<T> Query(Box box, T exclude, BoxKind kind = BoxKind.ALL)
+        {
+            return Query(box, exclude, null, kind);
+        }
 
-        public List<T> Query(Box box, List<T> exclusionList, BoxKind kind = BoxKind.ALL) => Query(box, null, exclusionList, kind);
+        public List<T> Query(Box box, List<T> exclusionList, BoxKind kind = BoxKind.ALL)
+        {
+            return Query(box, null, exclusionList, kind);
+        }
 
         /// <summary>
         /// Realiza uma busca de quais entidades possuem intesecção não vazia com um retângulo dado

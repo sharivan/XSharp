@@ -875,11 +875,20 @@ namespace MMX.Engine
             }
         }
 
-        private static void DrawChargingPointLevel1Small(DataRectangle dataRect, int length, Vector point) => FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 1);
+        private static void DrawChargingPointLevel1Small(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 1);
+        }
 
-        private static void DrawChargingPointLevel1Large(DataRectangle dataRect, int length, Vector point) => FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 1);
+        private static void DrawChargingPointLevel1Large(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 1);
+        }
 
-        private static void DrawChargingPointLevel2Small1(DataRectangle dataRect, int length, Vector point) => FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 2);
+        private static void DrawChargingPointLevel2Small1(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 2);
+        }
 
         private static void DrawChargingPointLevel2Small2(DataRectangle dataRect, int length, Vector point)
         {
@@ -896,7 +905,10 @@ namespace MMX.Engine
             FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y + 1, 1, 1), 5);
         }
 
-        private static void DrawChargingPointLevel2Large1(DataRectangle dataRect, int length, Vector point) => FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 2);
+        private static void DrawChargingPointLevel2Large1(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 2);
+        }
 
         private static void DrawChargingPointLevel2Large2(DataRectangle dataRect, int length, Vector point)
         {
@@ -1063,7 +1075,10 @@ namespace MMX.Engine
             sprite.End();
         }
 
-        public void RenderTexture(Texture texture, MMXBox box, Matrix transform) => RenderTexture(texture, null, box, transform);
+        public void RenderTexture(Texture texture, MMXBox box, Matrix transform)
+        {
+            RenderTexture(texture, null, box, transform);
+        }
 
         public void RenderTexture(Texture texture, Vector v, Matrix transform)
         {
@@ -1149,7 +1164,10 @@ namespace MMX.Engine
             lastEntity = null;
         }
 
-        private void RemoveEntity(Entity entity) => RemoveEntity(entity.Index);
+        private void RemoveEntity(Entity entity)
+        {
+            RemoveEntity(entity.Index);
+        }
 
         private void OnFrame()
         {
@@ -1595,25 +1613,55 @@ namespace MMX.Engine
             }
         }
 
-        public static Vector2 ToVector2(Vector v) => new((float) v.X, (float) v.Y);
+        public static Vector2 ToVector2(Vector v)
+        {
+            return new((float) v.X, (float) v.Y);
+        }
 
-        public static Vector3 ToVector3(Vector v) => new((float) v.X, (float) v.Y, 0);
+        public static Vector3 ToVector3(Vector v)
+        {
+            return new((float) v.X, (float) v.Y, 0);
+        }
 
-        public static Rectangle ToRectangle(MMXBox box) => new((int) box.Left, (int) box.Top, (int) box.Width, (int) box.Height);
+        public static Rectangle ToRectangle(MMXBox box)
+        {
+            return new((int) box.Left, (int) box.Top, (int) box.Width, (int) box.Height);
+        }
 
-        public static RectangleF ToRectangleF(MMXBox box) => new((float) box.Left, (float) box.Top, (float) box.Width, (float) box.Height);
+        public static RectangleF ToRectangleF(MMXBox box)
+        {
+            return new((float) box.Left, (float) box.Top, (float) box.Width, (float) box.Height);
+        }
 
-        public Vector2 WorldVectorToScreen(Vector v) => ToVector2((v - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
+        public Vector2 WorldVectorToScreen(Vector v)
+        {
+            return ToVector2((v - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
+        }
 
-        public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y) => WorldVectorToScreen(new Vector(x, y));
+        public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
+        {
+            return WorldVectorToScreen(new Vector(x, y));
+        }
 
-        public Vector ScreenPointToVector(int x, int y) => ScreenPointToVector(new Point(x, y));
+        public Vector ScreenPointToVector(int x, int y)
+        {
+            return ScreenPointToVector(new Point(x, y));
+        }
 
-        public Vector ScreenPointToVector(Point p) => (new Vector(p.X, p.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
+        public Vector ScreenPointToVector(Point p)
+        {
+            return (new Vector(p.X, p.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
+        }
 
-        public Vector ScreenVector2ToWorld(Vector2 v) => (new Vector(v.X, v.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
+        public Vector ScreenVector2ToWorld(Vector2 v)
+        {
+            return (new Vector(v.X, v.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
+        }
 
-        public RectangleF WorldBoxToScreen(MMXBox box) => ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
+        public RectangleF WorldBoxToScreen(MMXBox box)
+        {
+            return ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
+        }
 
         public void PlaySound(string soundName, bool loop = false)
         {
@@ -1631,9 +1679,15 @@ namespace MMX.Engine
                 PauseGame();
         }
 
-        public void PauseGame() => paused = true;
+        public void PauseGame()
+        {
+            paused = true;
+        }
 
-        public void ContinueGame() => paused = false;
+        public void ContinueGame()
+        {
+            paused = false;
+        }
 
         public void NextLevel()
         {
@@ -1641,7 +1695,10 @@ namespace MMX.Engine
             levelToChange = (ushort) (currentLevel + 1);
         }
 
-        internal void OnGameOver() => gameOver = true;
+        internal void OnGameOver()
+        {
+            gameOver = true;
+        }
 
         private void SpawnPlayer()
         {
@@ -1862,7 +1919,10 @@ namespace MMX.Engine
                 }
         }
 
-        public void DrawLine(Vector from, Vector to, float width, Color color) => DrawLine(WorldVectorToScreen(from), WorldVectorToScreen(to), width, color);
+        public void DrawLine(Vector from, Vector to, float width, Color color)
+        {
+            DrawLine(WorldVectorToScreen(from), WorldVectorToScreen(to), width, color);
+        }
 
         public void DrawLine(Vector2 from, Vector2 to, float width, Color color)
         {
@@ -1876,7 +1936,10 @@ namespace MMX.Engine
             line.End();
         }
 
-        public void DrawRectangle(MMXBox box, float borderWith, Color color) => DrawRectangle(WorldBoxToScreen(box), borderWith, color);
+        public void DrawRectangle(MMXBox box, float borderWith, Color color)
+        {
+            DrawRectangle(WorldBoxToScreen(box), borderWith, color);
+        }
 
         public void DrawRectangle(RectangleF rect, float borderWith, Color color)
         {
@@ -1889,7 +1952,10 @@ namespace MMX.Engine
             line.End();
         }
 
-        public void FillRectangle(MMXBox box, Color color) => FillRectangle(WorldBoxToScreen(box), color);
+        public void FillRectangle(MMXBox box, Color color)
+        {
+            FillRectangle(WorldBoxToScreen(box), color);
+        }
 
         public void FillRectangle(RectangleF rect, Color color)
         {
@@ -1914,7 +1980,10 @@ namespace MMX.Engine
             sprite.End();
         }
 
-        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color) => DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color);
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color)
+        {
+            DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color);
+        }
 
         public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, RawMatrix transform, Color color)
         {
@@ -2228,19 +2297,19 @@ namespace MMX.Engine
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(5, 0, 76, 335, 37, 31, 8);
 
-            sequence = xSpriteSheet.AddFrameSquence("WallSliding", 11);
+            sequence = xSpriteSheet.AddFrameSquence("WallSliding");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(5, 5, 5, 197, 25, 42, 5);
             sequence.AddFrame(9, 7, 33, 196, 27, 43, 6);
-            sequence.AddFrame(9, 8, 64, 196, 28, 42);
+            sequence.AddFrame(9, 8, 64, 196, 28, 42, 1, true);
 
-            sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding", 11);
+            sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(5, 2 - 3, 158, 200, 31, 39, 5);
             sequence.AddFrame(9 + 5, 7, 201, 196, 32, 43, 6);
-            sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42);
+            sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42, 1, true);
 
             sequence = xSpriteSheet.AddFrameSquence("WallJumping");
             sequence.BoudingBoxOriginOffset = normalOffset;
@@ -2865,13 +2934,25 @@ namespace MMX.Engine
             return world.CheckCollision(collisionBox, dir, ignore);
         }*/
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetTouchingFlags(collisionBox, dir, ignore, preciseCollisionCheck);
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        {
+            return World.GetTouchingFlags(collisionBox, dir, ignore, preciseCollisionCheck);
+        }
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetTouchingFlags(collisionBox, dir, out slopeTriangle, ignore, preciseCollisionCheck);
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        {
+            return World.GetTouchingFlags(collisionBox, dir, out slopeTriangle, ignore, preciseCollisionCheck);
+        }
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetTouchingFlags(collisionBox, dir, placements, ignore, preciseCollisionCheck);
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        {
+            return World.GetTouchingFlags(collisionBox, dir, placements, ignore, preciseCollisionCheck);
+        }
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetTouchingFlags(collisionBox, dir, placements, out slopeTriangle, ignore, preciseCollisionCheck);
+        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        {
+            return World.GetTouchingFlags(collisionBox, dir, placements, out slopeTriangle, ignore, preciseCollisionCheck);
+        }
 
         /*public Box MoveContactSolid(Box box, Vector dir, Fixed maxDistance, Fixed maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
@@ -2883,19 +2964,40 @@ namespace MMX.Engine
             return world.MoveContactSolid(box, dir, out slope, maxDistance, maskSize, ignore);
         }*/
 
-        public MMXBox MoveContactFloor(MMXBox box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE) => World.MoveContactFloor(box, maxDistance, maskSize, ignore);
+        public MMXBox MoveContactFloor(MMXBox box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            return World.MoveContactFloor(box, maxDistance, maskSize, ignore);
+        }
 
-        public MMXBox MoveContactFloor(MMXBox box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE) => World.MoveContactFloor(box, out slope, maxDistance, maskSize, ignore);
+        public MMXBox MoveContactFloor(MMXBox box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            return World.MoveContactFloor(box, out slope, maxDistance, maskSize, ignore);
+        }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetCollisionFlags(collisionBox, ignore, preciseCollisionCheck);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        {
+            return World.GetCollisionFlags(collisionBox, ignore, preciseCollisionCheck);
+        }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetCollisionFlags(collisionBox, out slope, ignore, preciseCollisionCheck);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        {
+            return World.GetCollisionFlags(collisionBox, out slope, ignore, preciseCollisionCheck);
+        }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetCollisionFlags(collisionBox, placements, ignore, preciseCollisionCheck);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        {
+            return World.GetCollisionFlags(collisionBox, placements, ignore, preciseCollisionCheck);
+        }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true) => World.GetCollisionFlags(collisionBox, placements, out slope, ignore, preciseCollisionCheck);
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        {
+            return World.GetCollisionFlags(collisionBox, placements, out slope, ignore, preciseCollisionCheck);
+        }
 
-        public CollisionFlags ComputedLandedState(MMXBox box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE) => World.ComputedLandedState(box, out slope, maskSize, ignore);
+        public CollisionFlags ComputedLandedState(MMXBox box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            return World.ComputedLandedState(box, out slope, maskSize, ignore);
+        }
 
         private void SaveState(BinaryWriter writer)
         {
@@ -3053,13 +3155,25 @@ namespace MMX.Engine
             UpdateCameraConstraintsBox();
         }
 
-        public void AddConstraint(Vector constraint) => cameraConstraints.Add(constraint);
+        public void AddConstraint(Vector constraint)
+        {
+            cameraConstraints.Add(constraint);
+        }
 
-        public Vector GetConstraint(int index) => cameraConstraints[index];
+        public Vector GetConstraint(int index)
+        {
+            return cameraConstraints[index];
+        }
 
-        public bool ContainsConstraint(Vector constraint) => cameraConstraints.Contains(constraint);
+        public bool ContainsConstraint(Vector constraint)
+        {
+            return cameraConstraints.Contains(constraint);
+        }
 
-        public void ClearConstraints() => cameraConstraints.Clear();
+        public void ClearConstraints()
+        {
+            cameraConstraints.Clear();
+        }
 
         internal void ShootLemon(Player shooter, Vector origin, Direction direction, bool dashLemon)
         {
@@ -3254,7 +3368,10 @@ namespace MMX.Engine
             return palette;
         }
 
-        public static int LookupColor(Texture palette, Color color) => LookupColor(palette, color, 0, 256);
+        public static int LookupColor(Texture palette, Color color)
+        {
+            return LookupColor(palette, color, 0, 256);
+        }
 
         public static int LookupColor(Texture palette, Color color, int start, int count)
         {
@@ -3330,8 +3447,15 @@ namespace MMX.Engine
             }
         }
 
-        internal SpriteSheet GetSpriteSheet(int spriteSheetIndex) => spriteSheets[spriteSheetIndex];
-        internal Texture GetPalette(int paletteIndex) => paletteIndex >= 0 && paletteIndex < palettes.Count ? palettes[paletteIndex] : null;
+        internal SpriteSheet GetSpriteSheet(int spriteSheetIndex)
+        {
+            return spriteSheets[spriteSheetIndex];
+        }
+
+        internal Texture GetPalette(int paletteIndex)
+        {
+            return paletteIndex >= 0 && paletteIndex < palettes.Count ? palettes[paletteIndex] : null;
+        }
 
         public void PlaySound(int channel, int index, double stopTime, double loopTime)
         {
@@ -3356,9 +3480,15 @@ namespace MMX.Engine
             player.Play();
         }
 
-        public void PlaySound(int channel, int index, double loopTime) => PlaySound(channel, index, -1, loopTime);
+        public void PlaySound(int channel, int index, double loopTime)
+        {
+            PlaySound(channel, index, -1, loopTime);
+        }
 
-        public void PlaySound(int channel, int index) => PlaySound(channel, index, -1, -1);
+        public void PlaySound(int channel, int index)
+        {
+            PlaySound(channel, index, -1, -1);
+        }
 
         public void StopSound(int channel, int index)
         {

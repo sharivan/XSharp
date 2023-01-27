@@ -30,12 +30,24 @@ namespace MMX.Engine.Entities.Triggers
             Engine.SetCameraConstraints(ConstraintOrigin, constraints);
         }
 
-        public void AddConstraint(Vector constraint) => constraints.Add(constraint);
+        public void AddConstraint(Vector constraint)
+        {
+            constraints.Add(constraint);
+        }
 
-        public Vector GetConstraint(int index) => constraints[index];
+        public Vector GetConstraint(int index)
+        {
+            return constraints[index];
+        }
 
-        public bool ContainsConstraint(Vector constraint) => constraints.Contains(constraint);
+        public bool ContainsConstraint(Vector constraint)
+        {
+            return constraints.Contains(constraint);
+        }
 
-        public void ClearConstraints() => constraints.Clear();
+        public void ClearConstraints()
+        {
+            constraints.Clear();
+        }
     }
 }

@@ -75,9 +75,15 @@ namespace MMX.Engine.World
             private set;
         }
 
-        private void SetLeftTop(Vector v) => SetCenter(v.X + Width, v.Y + Height);
+        private void SetLeftTop(Vector v)
+        {
+            SetCenter(v.X + Width, v.Y + Height);
+        }
 
-        private void SetCenter(Vector v) => SetCenter(v.X, v.Y);
+        private void SetCenter(Vector v)
+        {
+            SetCenter(v.X, v.Y);
+        }
 
         private void SetCenter(FixedSingle x, FixedSingle y)
         {
@@ -160,11 +166,20 @@ namespace MMX.Engine.World
 
         public bool Moving => moveDistance > STEP_SIZE;
 
-        public void MoveToLeftTop(Vector dest) => MoveToCenter(dest + SizeVector / 2, SmoothSpeed);
+        public void MoveToLeftTop(Vector dest)
+        {
+            MoveToCenter(dest + SizeVector / 2, SmoothSpeed);
+        }
 
-        public void MoveToLeftTop(Vector dest, FixedSingle speed) => MoveToCenter(dest + SizeVector / 2, speed);
+        public void MoveToLeftTop(Vector dest, FixedSingle speed)
+        {
+            MoveToCenter(dest + SizeVector / 2, speed);
+        }
 
-        public void MoveToCenter(Vector dest) => MoveToCenter(dest, SmoothSpeed);
+        public void MoveToCenter(Vector dest)
+        {
+            MoveToCenter(dest, SmoothSpeed);
+        }
 
         public void MoveToCenter(Vector dest, FixedSingle speed)
         {
@@ -261,11 +276,20 @@ namespace MMX.Engine.World
             moveToFocus = true;
         }
 
-        public void StopMoving() => moveDistance = 0;
+        public void StopMoving()
+        {
+            moveDistance = 0;
+        }
 
-        public Box VisibleBox(Box box) => BoundingBox & box;
+        public Box VisibleBox(Box box)
+        {
+            return BoundingBox & box;
+        }
 
-        public bool IsVisible(Box box) => VisibleBox(box).IsValid(EPSLON);
+        public bool IsVisible(Box box)
+        {
+            return VisibleBox(box).IsValid(EPSLON);
+        }
 
         public void OnFrame()
         {

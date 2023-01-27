@@ -109,13 +109,25 @@ namespace MMX.ROM
             spriteCache = new byte[64 * 0x8000];
         }
 
-        public static uint Snes2pc(int snesAddress) => Snes2pc((uint) snesAddress);
+        public static uint Snes2pc(int snesAddress)
+        {
+            return Snes2pc((uint) snesAddress);
+        }
 
-        public static uint Snes2pc(uint snesAddress) => !hirom ? ((snesAddress & 0x007F0000) >> 1) + (snesAddress & 0x7FFF) : snesAddress & 0x3FFFFF;
+        public static uint Snes2pc(uint snesAddress)
+        {
+            return !hirom ? ((snesAddress & 0x007F0000) >> 1) + (snesAddress & 0x7FFF) : snesAddress & 0x3FFFFF;
+        }
 
-        public static uint Pc2snes(int pcAddress) => Pc2snes((uint) pcAddress);
+        public static uint Pc2snes(int pcAddress)
+        {
+            return Pc2snes((uint) pcAddress);
+        }
 
-        public static uint Pc2snes(uint pcAddress) => !hirom ? (uint) (0x800000L + ((pcAddress & 0x3F8000) << 1) + 0x8000L + (pcAddress & 0x7FFF)) : 0xC00000 | pcAddress;
+        public static uint Pc2snes(uint pcAddress)
+        {
+            return !hirom ? (uint) (0x800000L + ((pcAddress & 0x3F8000) << 1) + 0x8000L + (pcAddress & 0x7FFF)) : 0xC00000 | pcAddress;
+        }
 
         public override void Init()
         {
@@ -235,13 +247,25 @@ namespace MMX.ROM
             }
         }
 
-        internal static ushort Convert16Color(ushort color) => (ushort) (((color & 0x1F) << 10) | (color & 0x3E0) | ((color >> 10) & 0x1F));
+        internal static ushort Convert16Color(ushort color)
+        {
+            return (ushort) (((color & 0x1F) << 10) | (color & 0x3E0) | ((color >> 10) & 0x1F));
+        }
 
-        internal static uint ConvertRGBColor(ushort color) => (uint) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9));
+        internal static uint ConvertRGBColor(ushort color)
+        {
+            return (uint) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9));
+        }
 
-        internal static uint ConvertBGRColor(ushort color) => (uint) (((color & 0x1F) << 19) | ((color & 0x3E0) << 6) | ((color & 0x7C00) >> 7));
+        internal static uint ConvertBGRColor(ushort color)
+        {
+            return (uint) (((color & 0x1F) << 19) | ((color & 0x3E0) << 6) | ((color & 0x7C00) >> 7));
+        }
 
-        internal static ushort ConvertRGB2SNES(uint color) => (ushort) (((color >> 3) & 0x1F) | ((color >> 6) & 0x3E0) | ((color >> 9) & 0x7C00));
+        internal static ushort ConvertRGB2SNES(uint color)
+        {
+            return (ushort) (((color >> 3) & 0x1F) | ((color >> 6) & 0x3E0) | ((color >> 9) & 0x7C00));
+        }
 
         /// <summary>
         /// Convert 5bppBGR to 5bppRGB format
@@ -272,7 +296,10 @@ namespace MMX.ROM
             return Color.FromArgb((color % 0x20) << 3, ((color >> 5) % 0x20) << 11, ((color >> 10) % 0x20) << 19);
         }
 
-        protected ushort SReadByte(int address) => SReadByte((uint) address);
+        protected ushort SReadByte(int address)
+        {
+            return SReadByte((uint) address);
+        }
 
         protected byte SReadByte(uint address)
         {
@@ -280,7 +307,10 @@ namespace MMX.ROM
             return reader.ReadByte();
         }
 
-        protected ushort SReadWord(int address) => SReadWord((uint) address);
+        protected ushort SReadWord(int address)
+        {
+            return SReadWord((uint) address);
+        }
 
         protected ushort SReadWord(uint address)
         {
@@ -288,7 +318,10 @@ namespace MMX.ROM
             return reader.ReadUInt16();
         }
 
-        protected uint SReadDWord(int address) => SReadDWord((uint) address);
+        protected uint SReadDWord(int address)
+        {
+            return SReadDWord((uint) address);
+        }
 
         protected uint SReadDWord(uint address)
         {

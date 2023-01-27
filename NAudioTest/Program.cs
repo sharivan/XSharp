@@ -20,7 +20,10 @@ namespace NAudioTest
         /// </summary>
         public class LoopStream : WaveStream
         {
-            public static long TimeToBytePosition(WaveStream stream, double time) => (long) (time * stream.WaveFormat.AverageBytesPerSecond);
+            public static long TimeToBytePosition(WaveStream stream, double time)
+            {
+                return (long) (time * stream.WaveFormat.AverageBytesPerSecond);
+            }
 
             /// <summary>
             /// Creates a new Loop stream

@@ -257,7 +257,10 @@ namespace D3D9Test
                 Col = col;
             }
 
-            public override int GetHashCode() => 65536 * Row + Col;
+            public override int GetHashCode()
+            {
+                return 65536 * Row + Col;
+            }
 
             public override bool Equals(object obj)
             {
@@ -271,7 +274,10 @@ namespace D3D9Test
                 return other.Row == Row && other.Col == Col;
             }
 
-            public override string ToString() => Row + "," + Col;
+            public override string ToString()
+            {
+                return Row + "," + Col;
+            }
         }
 
         private class Tile
@@ -358,7 +364,10 @@ namespace D3D9Test
                         }
             }
 
-            public void SetTile(int row, int col, Tile tile, int subPalette, bool flipped = false, bool mirrored = false, bool upLayer = false) => SetTile(new Cell(row, col), tile, subPalette, flipped, mirrored, upLayer);
+            public void SetTile(int row, int col, Tile tile, int subPalette, bool flipped = false, bool mirrored = false, bool upLayer = false)
+            {
+                SetTile(new Cell(row, col), tile, subPalette, flipped, mirrored, upLayer);
+            }
 
             public void SetTile(Cell cell, Tile tile, int subPalette, bool flipped = false, bool mirrored = false, bool upLayer = false)
             {
@@ -384,7 +393,10 @@ namespace D3D9Test
         private Tile[] tiles;
         private Map[] maps;
 
-        private int Transform(int color, bool notTransparent) => !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
+        private int Transform(int color, bool notTransparent)
+        {
+            return !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
+        }
 
         private Tile AddTile(Device device, uint tile, bool transparent = false)
         {
@@ -724,7 +736,10 @@ namespace D3D9Test
             device.DrawPrimitives(PrimitiveType.TriangleList, 0, 2 * TILES_PER_COL_IN_IMAGE * TILES_PER_ROW_IN_IMAGE);
         }
 
-        private void RenderAllTiles(Device device, VertexBuffer vb) => RenderAllTiles(device, vb, new RectangleF(TILEMAP_IMAGE_WIDTH, 0, TILESET_IMAGE_WIDTH, TILESET_IMAGE_HEIGHT));
+        private void RenderAllTiles(Device device, VertexBuffer vb)
+        {
+            RenderAllTiles(device, vb, new RectangleF(TILEMAP_IMAGE_WIDTH, 0, TILESET_IMAGE_WIDTH, TILESET_IMAGE_HEIGHT));
+        }
 
         private void RenderAllMaps(Device device, VertexBuffer vb, RectangleF rDest)
         {
@@ -743,7 +758,10 @@ namespace D3D9Test
             device.DrawPrimitives(PrimitiveType.TriangleList, 0, 2 * MAPS_PER_COL_IN_IMAGE * SIDE_TILES_PER_MAP * MAPS_PER_ROW_IN_IMAGE * SIDE_TILES_PER_MAP);
         }
 
-        private void RenderAllMaps(Device device, VertexBuffer vb) => RenderAllMaps(device, vb, new RectangleF(0, 0, TILEMAP_IMAGE_WIDTH, TILEMAP_IMAGE_HEIGHT));
+        private void RenderAllMaps(Device device, VertexBuffer vb)
+        {
+            RenderAllMaps(device, vb, new RectangleF(0, 0, TILEMAP_IMAGE_WIDTH, TILEMAP_IMAGE_HEIGHT));
+        }
 
         public void Run()
         {

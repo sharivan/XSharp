@@ -4,9 +4,10 @@ namespace MMX.Engine.Entities.Weapons
 {
     public abstract class Weapon : Sprite
     {
-        public Sprite Shooter { get; }
-
-        public Direction Direction { get; }
+        public Sprite Shooter
+        {
+            get;
+        }
 
         protected Weapon(GameEngine engine, Sprite shooter, string name, Vector origin, Direction direction, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex, true)
         {

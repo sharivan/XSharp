@@ -577,24 +577,35 @@ namespace MMX.ROM
             return; //why is there a return for a void function that doesn't return anything?
         }
 
-        internal uint GetCheckPointPointer(uint p) =>
+        internal uint GetCheckPointPointer(uint p)
+        {
             //notice the bitwise operations
-            Snes2pc((int) (((p_checkp[type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[type] + SReadWord((uint) (p_checkp[type] + Level * 2)) + p * 2)));
+            return Snes2pc((int) (((p_checkp[type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[type] + SReadWord((uint) (p_checkp[type] + Level * 2)) + p * 2)));
+        }
 
-        internal uint GetCheckPointBasePointer() => Snes2pc((int) (((p_checkp[type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[type] + SReadWord((uint) (p_checkp[type] + Level * 2)) + 0 * 2)));
+        internal uint GetCheckPointBasePointer()
+        {
+            return Snes2pc((int) (((p_checkp[type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[type] + SReadWord((uint) (p_checkp[type] + Level * 2)) + 0 * 2)));
+        }
 
         private static readonly ushort[,] origEventSize = { { 0x2c8,0x211,0x250,0x4b3,0x2ea,0x32c,0x2e2,0x260,0x2d2,0x37f,0x254,0x2b2,0x27,0 },
                                         { 0x235,0x4a7,0x338,0x489,0x310,0x382,0x3b6,0x3da,0x45c,0x303,0x212,0x30f,0xbd,0 },
                                         { 0x2f1,0x3b4,0x3a7,0x3d9,0x3da,0x455,0x3c9,0x405,0x33b,0x22b,0x3cb,0x2ba,0x274,0xe6 } };
 
         //unsigned GetEventSize();
-        internal uint GetOrigEventSize() => expandedROM ? expandedEventSize : origEventSize[type, Level];
+        internal uint GetOrigEventSize()
+        {
+            return expandedROM ? expandedEventSize : origEventSize[type, Level];
+        }
 
         private static readonly ushort[,] origLayoutSize = { { 0x12, 0x32, 0x38, 0x64, 0x22, 0x3a, 0x1e, 0x6a, 0x2a, 0x3c, 0x22, 0x1a, 0x00 },
                                         { 0x8c, 0x3e, 0x38, 0x40, 0x42, 0x5c, 0x2a, 0x4e, 0x5e, 0x5a, 0x16, 0x5a, 0x00 },
                                         { 0x4c, 0x4c, 0x38, 0x42, 0x60, 0x54, 0x4e, 0x52, 0x30, 0x2e, 0x4e, 0x46, 0x22 } };
 
-        internal uint GetOrigLayoutSize() => expandedROM ? expandedLayoutSize : origLayoutSize[type, Level];
+        internal uint GetOrigLayoutSize()
+        {
+            return expandedROM ? expandedLayoutSize : origLayoutSize[type, Level];
+        }
 
         internal System.Drawing.Rectangle GetBoundingBox(ref EventInfo e)
         {
@@ -1739,7 +1750,10 @@ namespace MMX.ROM
 
         private class TileSortComparator : IComparer<STileInfo>
         {
-            public int Compare(STileInfo a, STileInfo b) => a.value - b.value;
+            public int Compare(STileInfo a, STileInfo b)
+            {
+                return a.value - b.value;
+            }
         }
 
         private static readonly IComparer<STileInfo> TileSortComparer = new TileSortComparator();
@@ -2967,11 +2981,16 @@ namespace MMX.ROM
 
         private Map[] maps;
 
-        private byte Expand(int i) => (byte) (i * 256.0f / 32.0f);
+        private byte Expand(int i)
+        {
+            return (byte) (i * 256.0f / 32.0f);
+        }
 
-        private int Transform(int color, bool notTransparent) =>
+        private int Transform(int color, bool notTransparent)
+        {
             //return !transparent ? 0 : (int) (Expand(color & 0x1F) | (Expand((color & 0x3E0) >> 5) << 8) | (Expand((color & 0x7C00) >> 10) << 16) | 0xFF000000);
-            !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
+            return !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
+        }
 
         private Tile AddTile(World world, uint tile, bool transparent = false, bool background = false)
         {
@@ -3360,7 +3379,10 @@ namespace MMX.ROM
         private static readonly char[] UHEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
         private static readonly char[] LHEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
-        public static string IntToHex(int n, int digits) => IntToHex(n, digits, false);
+        public static string IntToHex(int n, int digits)
+        {
+            return IntToHex(n, digits, false);
+        }
 
         /**
          * Returns a string of 8 hexadecimal digits (most significant digit first)

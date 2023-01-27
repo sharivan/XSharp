@@ -111,11 +111,20 @@ namespace MMX.Engine.Entities.Triggers
             }
         }
 
-        protected override void OnEndTouch(Entity obj) => triggereds.Remove(obj);
+        protected override void OnEndTouch(Entity obj)
+        {
+            triggereds.Remove(obj);
+        }
 
-        protected virtual void OnTrigger(Entity obj) => TriggerEvent?.Invoke(obj);
+        protected virtual void OnTrigger(Entity obj)
+        {
+            TriggerEvent?.Invoke(obj);
+        }
 
-        protected override Box GetBoundingBox() => Origin + boundingBox;
+        protected override Box GetBoundingBox()
+        {
+            return Origin + boundingBox;
+        }
 
         protected override void SetBoundingBox(Box boundingBox)
         {

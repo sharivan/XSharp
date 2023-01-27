@@ -6,15 +6,17 @@ using static MMX.Engine.Consts;
 
 namespace MMX.Engine.Entities.Weapons
 {
+    public enum LemonState
+    {
+        SHOOTING = 0,
+        EXPLODING = 1
+    }
+
     public class BusterLemon : Weapon
     {
         private readonly bool dashLemon;
 
-        private readonly int[] animationIndices;
-
         private bool reflected;
-        private bool exploding;
-        private bool soundPlayed;
 
         new public Player Shooter => (Player) base.Shooter;
 
@@ -24,13 +26,17 @@ namespace MMX.Engine.Entities.Weapons
             this.dashLemon = dashLemon;
 
             CheckCollisionWithWorld = false;
-
-            animationIndices = new int[2];
         }
 
-        public override FixedSingle GetGravity() => reflected && dashLemon && !exploding ? GRAVITY : FixedSingle.ZERO;
+        public override FixedSingle GetGravity()
+        {
+            return reflected && dashLemon && GetState<LemonState>() != LemonState.EXPLODING ? GRAVITY : FixedSingle.ZERO;
+        }
 
-        protected override Box GetCollisionBox() => new(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
+        protected override Box GetCollisionBox()
+        {
+            return new(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
+        }
 
         internal override void OnSpawn()
         {
@@ -38,33 +44,34 @@ namespace MMX.Engine.Entities.Weapons
 
             Velocity = new Vector(Direction == Direction.LEFT ? (dashLemon ? -LEMON_TERMINAL_SPEED : -LEMON_INITIAL_SPEED) : (dashLemon ? LEMON_TERMINAL_SPEED : LEMON_INITIAL_SPEED), 0);
 
-            CurrentAnimationIndex = animationIndices[0];
-            CurrentAnimation.StartFromBegin();
+            SetupStateArray(typeof(LemonState));
+            RegisterState(LemonState.SHOOTING, OnStartShot, OnShooting, null, "LemonShot");
+            RegisterState(LemonState.EXPLODING, null, null, OnExploded, "LemonShotExplode");
+
+            SetState(LemonState.SHOOTING);
         }
 
-        protected override void Think()
+        protected void OnStartShot(EntityState state)
         {
-            if (!exploding)
-            {
-                if (!soundPlayed)
-                {
-                    if (!Shooter.shootingCharged)
-                        Engine.PlaySound(1, 0);
+            if (!Shooter.shootingCharged)
+                Engine.PlaySound(1, 0);
+        }
 
-                    soundPlayed = true;
-                }
+        protected void OnShooting(EntityState state, long frameCounter)
+        {
+            Velocity += new Vector(Velocity.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
+            if (Velocity.X.Abs > LEMON_TERMINAL_SPEED)
+                Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
+        }
 
-                Velocity += new Vector(Velocity.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
-                if (Velocity.X.Abs > LEMON_TERMINAL_SPEED)
-                    Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
-            }
-
-            base.Think();
+        protected void OnExploded(EntityState state)
+        {
+            KillOnNextFrame();
         }
 
         public void Explode(Entity entity)
         {
-            if (!exploding)
+            if (GetState<LemonState>() != LemonState.EXPLODING)
             {
                 if (entity != null)
                 {
@@ -75,16 +82,14 @@ namespace MMX.Engine.Entities.Weapons
                     Origin = (x, y);
                 }
 
-                exploding = true;
                 Velocity = Vector.NULL_VECTOR;
-                CurrentAnimationIndex = animationIndices[1];
-                CurrentAnimation.StartFromBegin();
+                SetState(LemonState.EXPLODING);
             }
         }
 
         public void Reflect()
         {
-            if (!reflected && !exploding)
+            if (!reflected && GetState<LemonState>() != LemonState.EXPLODING)
             {
                 reflected = true;
                 Velocity = new Vector(-Velocity.X, LEMON_REFLECTION_VSPEED);
@@ -94,7 +99,6 @@ namespace MMX.Engine.Entities.Weapons
         protected override void OnDeath()
         {
             Shooter.shots--;
-
             base.OnDeath();
         }
 
@@ -106,23 +110,9 @@ namespace MMX.Engine.Entities.Weapons
             base.OnStartTouch(entity);
         }
 
-        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
-        {
-            base.OnCreateAnimation(animationIndex, sheet, ref frameSequenceName, ref initialSequenceIndex, ref startVisible, ref startOn, ref add);
-            startOn = false;
-            startVisible = false;
-
-            if (frameSequenceName == "LemonShot")
-                animationIndices[0] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
-            else if (frameSequenceName == "LemonShotExplode")
-                animationIndices[1] = Direction == Direction.LEFT ? animationIndex + 1 : animationIndex;
-            else
-                add = false;
-        }
-
         internal override void OnAnimationEnd(Animation animation)
         {
-            if (animation.Index == animationIndices[1])
+            if (GetState<LemonState>() == LemonState.EXPLODING && animation.Index == ((SpriteState) GetStateByID((int) LemonState.EXPLODING)).AnimationIndex)
                 KillOnNextFrame();
         }
     }
