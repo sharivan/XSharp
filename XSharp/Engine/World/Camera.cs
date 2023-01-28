@@ -154,6 +154,15 @@ namespace MMX.Engine.World
             }
         }
 
+        public Box ExtendedBoundingBox
+        {
+            get
+            {
+                Vector sv2 = SizeVector / 2 + EXTENDED_BORDER_SCREEN_OFFSET;
+                return new Box(center, -sv2, sv2);
+            }
+        }
+
         public Vector Velocity
         {
             get => vel;

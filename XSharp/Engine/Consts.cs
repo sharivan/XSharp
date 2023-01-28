@@ -48,6 +48,8 @@ namespace MMX.Engine
         public static readonly int SIDE_WIDTH_SCENES_PER_SCREEN = ((FixedSingle) SCREEN_WIDTH / SCENE_SIZE).Ceil();
         public static readonly int SIDE_HEIGHT_SCENES_PER_SCREEN = ((FixedSingle) SCREEN_HEIGHT / SCENE_SIZE).Ceil();
 
+        public static readonly Vector EXTENDED_BORDER_SCREEN_OFFSET = (2 * HITBOX_HEIGHT, 2 * HITBOX_HEIGHT);
+
         public const int MAX_ENTITIES = 2048;
 
         // Times are measured in frames, velocity in pixel per frames and accelerations in pixels per frame squared.

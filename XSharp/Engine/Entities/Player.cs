@@ -38,7 +38,7 @@ namespace MMX.Engine.Entities
         private readonly Keys[] keyBuffer;
         protected bool death;
 
-        private readonly int[,] animationIndices;
+        private readonly int[,] animationIndices = new int[ANIMATION_COUNT, 2];
 
         private bool jumping;
         private bool dashReleased;
@@ -74,13 +74,6 @@ namespace MMX.Engine.Entities
             baseHSpeed = WALKING_SPEED;
 
             keyBuffer = new Keys[KEY_BUFFER_COUNT];
-
-            animationIndices = new int[ANIMATION_COUNT, 2];
-            for (int i = 0; i < ANIMATION_COUNT; i++)
-            {
-                animationIndices[i, 0] = -1;
-                animationIndices[i, 1] = -1;
-            }
         }
 
         public override void SaveState(BinaryWriter writer)
@@ -1286,7 +1279,7 @@ namespace MMX.Engine.Entities
             return animationIndices[(int) state, 0] == index || checkShooting && animationIndices[(int) state, 1] == index;
         }
 
-        internal override void OnAnimationEnd(Animation animation)
+        protected internal override void OnAnimationEnd(Animation animation)
         {
             if (ContainsAnimationIndex(PlayerState.SPAWN_END, animation.Index))
             {
@@ -1380,9 +1373,9 @@ namespace MMX.Engine.Entities
             animationIndices[(int) state, shooting ? 1 : 0] = animationIndex;
         }
 
-        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
         {
-            base.OnCreateAnimation(animationIndex, sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
+            base.OnCreateAnimation(animationIndex, sheet, frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
             startOn = false; // Por padrão, a animação de um jogador começa parada.
             startVisible = false;
 

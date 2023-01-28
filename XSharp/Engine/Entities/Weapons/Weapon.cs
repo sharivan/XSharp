@@ -22,7 +22,7 @@ namespace MMX.Engine.Entities.Weapons
             base.Think();
 
             if (Offscreen)
-                Kill();
+                KillOnNextFrame();
         }
     }
 }

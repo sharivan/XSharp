@@ -27,7 +27,14 @@ namespace MMX.Engine.Entities.Enemies
             set => SetState(value);
         }
 
-        public Driller(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 4) { }
+        public Driller(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 4)
+        {
+            SetupStateArray(typeof(DrillerState));
+            RegisterState(DrillerState.IDLE, OnIdle, "Idle");
+            RegisterState(DrillerState.DRILLING, OnDrilling, "Drilling");
+            RegisterState(DrillerState.JUMPING, OnJumping, "Jumping");
+            RegisterState(DrillerState.LANDING, OnLanding, "Landing");
+        }
 
         internal override void OnSpawn()
         {
@@ -42,12 +49,6 @@ namespace MMX.Engine.Entities.Enemies
 
             CheckCollisionWithWorld = true;
             CheckCollisionWithSprites = false;
-
-            SetupStateArray(typeof(DrillerState));
-            RegisterState(DrillerState.IDLE, OnIdle, "Idle");
-            RegisterState(DrillerState.DRILLING, OnDrilling, "Drilling");
-            RegisterState(DrillerState.JUMPING, OnJumping, "Jumping");
-            RegisterState(DrillerState.LANDING, OnLanding, "Landing");
 
             State = DrillerState.IDLE;
         }
@@ -84,14 +85,19 @@ namespace MMX.Engine.Entities.Enemies
             }
         }
 
-        protected void OnIdle(EntityState state, long frameCounter)
+        private void OnIdle(EntityState state, long frameCounter)
         {
             if (Landed && Engine.Player != null)
             {
                 if (frameCounter >= 12)
+                {
                     FaceToPlayer(Engine.Player);
 
-                if (frameCounter >= 40)
+                    if ((Engine.Player.Origin.X - Origin.X).Abs <= 50)
+                        State = DrillerState.DRILLING;
+                }
+
+                if (frameCounter >= 40 && State != DrillerState.DRILLING)
                 {
                     State = DrillerState.JUMPING;
                     jumpCounter = 0;
@@ -99,7 +105,7 @@ namespace MMX.Engine.Entities.Enemies
             }
         }
 
-        protected void OnJumping(EntityState state, long frameCounter)
+        private void OnJumping(EntityState state, long frameCounter)
         {
             if (frameCounter == 10)
             {
@@ -110,17 +116,21 @@ namespace MMX.Engine.Entities.Enemies
                 Velocity = Vector.NULL_VECTOR;
         }
 
-        protected void OnLanding(EntityState state, long frameCounter)
+        private void OnLanding(EntityState state, long frameCounter)
         {
             if (frameCounter >= 12)
                 State = jumpCounter >= 2 ? DrillerState.IDLE : DrillerState.JUMPING;
         }
 
-        protected void OnDrilling(EntityState state, long frameCounter)
+        private void OnDrilling(EntityState state, long frameCounter)
         {
+            if (frameCounter >= 12 && (Engine.Player.Origin.X - Origin.X).Abs > 50)
+                State = DrillerState.IDLE;
+            else
+                FaceToPlayer(Engine.Player);
         }
 
-        protected override void PostThink()
+        protected internal override void PostThink()
         {
             base.PostThink();
 

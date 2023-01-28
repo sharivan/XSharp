@@ -117,6 +117,9 @@ namespace MMX.Engine.Sound
                 if (source.Position + bytesToRead > StopPoint)
                     bytesToRead = (int) (StopPoint - source.Position);
 
+                if (bytesToRead < 0)
+                    bytesToRead = 0;
+
                 int bytesRead = source.Read(buffer, offset + totalBytesRead, bytesToRead);
                 if (bytesRead == 0)
                 {

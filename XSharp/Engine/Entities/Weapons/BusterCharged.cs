@@ -6,32 +6,34 @@ using static MMX.Engine.Consts;
 
 namespace MMX.Engine.Entities.Weapons
 {
+    public enum ChargedState
+    {
+        FIRING = 0,
+        SHOOTING = 1,
+        HITTING = 2,
+        EXPLODING = 3
+    }
+
     public class BusterCharged : Weapon
     {
-        private readonly int[] animationIndices;
-
-        private bool soundPlayed;
+        private Entity hitEntity;
 
         new public Player Shooter => (Player) base.Shooter;
 
-        public bool Firing { get;
-            private set;
-        }
+        public bool Firing => GetState<ChargedState>() == ChargedState.FIRING;
 
-        public bool Exploding { get;
-            private set;
-        }
+        public bool Exploding => GetState<ChargedState>() == ChargedState.EXPLODING;
 
-        public bool Hitting { get;
-            private set;
-        }
+        public bool Hitting => GetState<ChargedState>() == ChargedState.HITTING;
 
         internal BusterCharged(GameEngine engine, Player shooter, string name, Vector origin, Direction direction) :
             base(engine, shooter, name, origin, direction, 1)
         {
-            CheckCollisionWithWorld = false;
-
-            animationIndices = new int[4];
+            SetupStateArray(typeof(ChargedState));
+            RegisterState(ChargedState.FIRING, OnStartFiring, null, null, "ChargedShotFiring");
+            RegisterState(ChargedState.SHOOTING, OnStartShooting, OnShooting, null, "ChargedShot");
+            RegisterState(ChargedState.HITTING, OnStartHitting, null, null, "ChargedShotHit");
+            RegisterState(ChargedState.EXPLODING, OnStartExploding, null, null, "ChargedShotExplode");
         }
 
         public override FixedSingle GetGravity()
@@ -49,56 +51,64 @@ namespace MMX.Engine.Entities.Weapons
         {
             base.OnSpawn();
 
-            Firing = true;
-            Exploding = false;
-            Hitting = false;
-
+            CheckCollisionWithWorld = false;
             Velocity = Vector.NULL_VECTOR;
 
-            CurrentAnimationIndex = animationIndices[0];
-            CurrentAnimation.StartFromBegin();
+            SetState(ChargedState.FIRING);
+        }
+
+        private void OnStartFiring(EntityState state)
+        {
+            Engine.PlaySound(1, 2);
+        }
+
+        private void OnStartShooting(EntityState state)
+        {
+            if (Direction == Direction.LEFT)
+            {
+                Origin += 14 * Vector.LEFT_VECTOR;
+                Velocity = SEMI_CHARGED_INITIAL_SPEED * Vector.LEFT_VECTOR;
+            }
+            else
+            {
+                Origin += 14 * Vector.RIGHT_VECTOR;
+                Velocity = SEMI_CHARGED_INITIAL_SPEED * Vector.RIGHT_VECTOR;
+            }
+        }
+
+        private void OnShooting(EntityState state, long frameCounter)
+        {
+            Velocity = Direction == Direction.LEFT ? CHARGED_SPEED * Vector.LEFT_VECTOR : CHARGED_SPEED * Vector.RIGHT_VECTOR;
+        }
+
+        private void OnStartHitting(EntityState state)
+        {
+            if (hitEntity != null)
+            {
+                Box otherHitbox = hitEntity.HitBox;
+                Vector center = HitBox.Center;
+                FixedSingle x = Direction == Direction.RIGHT ? otherHitbox.Left : otherHitbox.Right;
+                FixedSingle y = center.Y < otherHitbox.Top ? otherHitbox.Top : center.Y > otherHitbox.Bottom ? otherHitbox.Bottom : Origin.Y;
+                Origin = (x, y);
+            }
+
+            Velocity = Vector.NULL_VECTOR;
+        }
+
+        private void OnStartExploding(EntityState state)
+        {
+            Velocity = Vector.NULL_VECTOR;
         }
 
         public void Explode()
         {
-            if (!Exploding)
-            {
-                Exploding = true;
-                Velocity = Vector.NULL_VECTOR;
-                CurrentAnimationIndex = animationIndices[3];
-                CurrentAnimation.StartFromBegin();
-            }
+            SetState(ChargedState.EXPLODING);
         }
 
         public void Hit(Entity entity)
         {
-            if (!Hitting)
-            {
-                if (entity != null)
-                {
-                    Box otherHitbox = entity.HitBox;
-                    Vector center = HitBox.Center;
-                    FixedSingle x = Direction == Direction.RIGHT ? otherHitbox.Left : otherHitbox.Right;
-                    FixedSingle y = center.Y < otherHitbox.Top ? otherHitbox.Top : center.Y > otherHitbox.Bottom ? otherHitbox.Bottom : Origin.Y;
-                    Origin = (x, y);
-                }
-
-                Hitting = true;
-                Velocity = Vector.NULL_VECTOR;
-                CurrentAnimationIndex = animationIndices[2];
-                CurrentAnimation.StartFromBegin();
-            }
-        }
-
-        protected override void Think()
-        {
-            if (!soundPlayed)
-            {
-                Engine.PlaySound(1, 2);
-                soundPlayed = true;
-            }
-
-            base.Think();
+            hitEntity = entity;
+            SetState(ChargedState.HITTING);
         }
 
         public override void Dispose()
@@ -109,24 +119,6 @@ namespace MMX.Engine.Entities.Weapons
             base.Dispose();
         }
 
-        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
-        {
-            base.OnCreateAnimation(animationIndex, sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
-            startOn = false;
-            startVisible = false;
-
-            if (frameSequenceName == "ChargedShotFiring")
-                animationIndices[0] = animationIndex;
-            else if (frameSequenceName == "ChargedShot")
-                animationIndices[1] = animationIndex;
-            else if (frameSequenceName == "ChargedShotHit")
-                animationIndices[2] = animationIndex;
-            else if (frameSequenceName == "ChargedShotExplode")
-                animationIndices[3] = animationIndex;
-            else
-                add = false;
-        }
-
         protected override void OnStartTouch(Entity entity)
         {
             if (entity is Enemy)
@@ -135,18 +127,16 @@ namespace MMX.Engine.Entities.Weapons
             base.OnStartTouch(entity);
         }
 
-        internal override void OnAnimationEnd(Animation animation)
+        protected internal override void OnAnimationEnd(Animation animation)
         {
-            if (animation.Index == animationIndices[0])
-            {
-                Firing = false;
+            base.OnAnimationEnd(animation);
 
-                Velocity = Direction == Direction.LEFT ? CHARGED_SPEED * Vector.LEFT_VECTOR : CHARGED_SPEED * Vector.RIGHT_VECTOR;
+            if (animation.FrameSequenceName != CurrentState.AnimationName)
+                return;
 
-                CurrentAnimationIndex = animationIndices[1];
-                CurrentAnimation.StartFromBegin();
-            }
-            else if (animation.Index == animationIndices[2] || animation.Index == animationIndices[3])
+            if (Firing)
+                SetState(ChargedState.SHOOTING);
+            else if (Hitting || Exploding)
                 KillOnNextFrame();
         }
     }

@@ -36,11 +36,7 @@ namespace MMX.Engine.Entities
         private long invincibleExpires;
         protected bool broke;
 
-        public string Name
-        {
-            get;
-            private set;
-        }
+        private readonly Dictionary<string, int> animationNames;
 
         public int SpriteSheetIndex
         {
@@ -58,18 +54,70 @@ namespace MMX.Engine.Entities
 
         public SpriteSheet Sheet => Engine.GetSpriteSheet(SpriteSheetIndex);
 
-        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false) :
-            base(engine, origin)
+        public string InitialAnimationName
         {
-            Name = name;
+            get;
+            set;
+        }
+
+        public int InitialAnimationIndex => InitialAnimationName != null ? GetAnimationIndex(InitialAnimationName) : -1;
+
+        new public SpriteState CurrentState => (SpriteState) base.CurrentState;
+
+        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false) :
+            base(engine, name, origin)
+        {
             SpriteSheetIndex = spriteSheetIndex;
-            Directional = directional;
+            InitialAnimationName = initialAnimationName;
+            Directional = directional;            
 
             PaletteIndex = -1;
             Opacity = 1;
 
             animations = new List<Animation>();
             collider = new BoxCollider(engine.World, CollisionBox);
+
+            this.animationNames = new Dictionary<string, int>();
+
+            if (animationNames != null)
+                foreach (var animationName in animationNames)
+                    this.animationNames.Add(animationName, -1);
+            else
+                foreach (var frameSequenceName in Sheet.FrameSequenceNames)
+                    this.animationNames.Add(frameSequenceName, -1);
+
+            int animationIndex = 0;
+            var names = new List<string>(this.animationNames.Keys);
+            foreach (var animationName in names)
+            {
+                SpriteSheet.FrameSequence sequence = Sheet.GetFrameSequence(animationName);
+                string frameSequenceName = sequence.Name;
+                int initialFrame = 0;
+                bool startVisible = false;
+                bool startOn = true;
+                bool add = true;
+
+                OnCreateAnimation(animationIndex, Sheet, frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
+
+                if (add)
+                {
+                    animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn));
+                    this.animationNames[animationName] = animationIndex;
+                    animationIndex++;
+                }
+                else
+                    this.animationNames.Remove(animationName);
+            }
+        }
+
+        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames) :
+            this(engine, name, origin, spriteSheetIndex, animationNames.Length > 0 ? animationNames : null, animationNames.Length > 0 ? animationNames[0] : null, directional)
+        {
+        }
+
+        public int GetAnimationIndex(string animationName)
+        {
+            return animationNames.TryGetValue(animationName, out int result) ? result : -1;
         }
 
         protected override Type GetStateType()
@@ -325,13 +373,13 @@ namespace MMX.Engine.Entities
 
         public Texture Palette => Engine.GetPalette(PaletteIndex);
 
-        protected virtual void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
+        protected virtual void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
         {
         }
 
         public override string ToString()
         {
-            return "Sprite [" + Name + ", " + Origin + "]";
+            return $"{GetType().Name}[{Name}, {Origin}]";
         }
 
         public void FadeIn(int time)
@@ -355,31 +403,6 @@ namespace MMX.Engine.Entities
             base.OnSpawn();
 
             solid = true;
-
-            Dictionary<string, SpriteSheet.FrameSequence>.Enumerator sequences = Sheet.GetFrameSequenceEnumerator();
-            int animationIndex = 0;
-            while (sequences.MoveNext())
-            {
-                var pair = sequences.Current;
-                SpriteSheet.FrameSequence sequence = pair.Value;
-                string frameSequenceName = sequence.Name;
-                int initialFrame = 0;
-                bool startVisible = false;
-                bool startOn = true;
-                bool add = true;
-
-                OnCreateAnimation(animationIndex, Sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
-
-                if (add)
-                {
-                    if (frameSequenceName != sequence.Name)
-                        sequence = Sheet.GetFrameSequence(frameSequenceName);
-
-                    animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn));
-                    animationIndex++;
-                }
-            }
-
             Velocity = Vector.NULL_VECTOR;
             NoClip = false;
             moving = false;
@@ -390,7 +413,8 @@ namespace MMX.Engine.Entities
             invincibilityTime = DEFAULT_INVINCIBLE_TIME;
             broke = false;
 
-            currentAnimationIndex = -1;
+            CurrentAnimationIndex = InitialAnimationIndex;
+            CurrentAnimation?.StartFromBegin();
         }
 
         protected virtual bool OnTakeDamage(Sprite attacker, Box region, ref int damage)
@@ -799,7 +823,7 @@ namespace MMX.Engine.Entities
         }
 
         protected override bool PreThink()
-        {
+        {         
             return base.PreThink();
         }
 
@@ -809,7 +833,7 @@ namespace MMX.Engine.Entities
                 DoPhysics();
         }
 
-        protected override void PostThink()
+        protected internal override void PostThink()
         {
             base.PostThink();
 
@@ -820,7 +844,7 @@ namespace MMX.Engine.Entities
                 invincible = false;
 
             foreach (Animation animation in animations)
-                animation.OnFrame();
+                animation.NextFrame();
         }
 
         public virtual void Render()
@@ -832,7 +856,7 @@ namespace MMX.Engine.Entities
                 animation.Render();
         }
 
-        internal virtual void OnAnimationEnd(Animation animation)
+        protected internal virtual void OnAnimationEnd(Animation animation)
         {
         }
 
@@ -879,12 +903,6 @@ namespace MMX.Engine.Entities
                 OnBroke();
                 Kill();
             }
-        }
-
-        public override void Dispose()
-        {
-            animations.Clear();
-            base.Dispose();
         }
 
         internal void OnDeviceReset()

@@ -16,7 +16,7 @@ namespace MMX.Engine.Entities.Effects
 
         public WallKickEffect(GameEngine engine, string name, Player player) : base(engine, name, GetOrigin(player), 2, false, "WallKickEffect") { }
 
-        internal override void OnAnimationEnd(Animation animation)
+        protected internal override void OnAnimationEnd(Animation animation)
         {
             base.OnAnimationEnd(animation);
             KillOnNextFrame();

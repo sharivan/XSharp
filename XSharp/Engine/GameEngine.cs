@@ -305,7 +305,7 @@ namespace MMX.Engine
         private int entityCount;
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
-        internal List<(Entity entity, MMXBox box)> respawnableEntities;
+        internal List<(Entity entity, Vector origin)> respawnableEntities;
         private ushort currentLevel;
         private bool changeLevel;
         private ushort levelToChange;
@@ -325,8 +325,8 @@ namespace MMX.Engine
         internal MMXBox cameraConstraintsBox;
 
         private bool frameAdvance;
-        private readonly bool recording;
-        private readonly bool playbacking;
+        private bool recording;
+        private bool playbacking;
 
         private bool wasPressingToggleFrameAdvance;
         private bool wasPressingNextFrame;
@@ -334,8 +334,8 @@ namespace MMX.Engine
         private bool wasPressingLoadState;
         private bool wasPressingNextSlot;
         private bool wasPressingPreviousSlot;
-        private readonly bool wasPressingRecord;
-        private readonly bool wasPressingPlayback;
+        private bool wasPressingRecord;
+        private bool wasPressingPlayback;
         private bool wasPressingToggleNoClip;
         private bool wasPressingToggleCameraConstraints;
         private bool wasPressingToggleDrawCollisionBox;
@@ -352,10 +352,9 @@ namespace MMX.Engine
         private bool wasPressingToggleDrawDownLayer;
         private bool wasPressingToggleDrawUpLayer;
         private bool wasPressingToggleDrawSprites;
-        private readonly bool wasPressingToggleDrawX;
 
         private readonly MMXCore mmx;
-        private readonly bool romLoaded;
+        private bool romLoaded;
 
         private readonly DirectInput directInput;
         private readonly Keyboard keyboard;
@@ -722,7 +721,7 @@ namespace MMX.Engine
             entities = new Entity[MAX_ENTITIES];
             addedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
-            respawnableEntities = new List<(Entity, MMXBox)>();
+            respawnableEntities = new List<(Entity, Vector)>();
 
             firstFreeEntityIndex = 0;
             firstEntity = null;
@@ -1043,7 +1042,7 @@ namespace MMX.Engine
             vb.Unlock();
         }
 
-        public void RenderTexture(Texture texture, Texture palette, MMXBox box, Matrix transform)
+        public void RenderSprite(Texture texture, Texture palette, MMXBox box, Matrix transform)
         {
             RectangleF rDest = WorldBoxToScreen(box);
 
@@ -1075,33 +1074,33 @@ namespace MMX.Engine
             sprite.End();
         }
 
-        public void RenderTexture(Texture texture, MMXBox box, Matrix transform)
+        public void RenderSprite(Texture texture, MMXBox box, Matrix transform)
         {
-            RenderTexture(texture, null, box, transform);
+            RenderSprite(texture, null, box, transform);
         }
 
-        public void RenderTexture(Texture texture, Vector v, Matrix transform)
+        public void RenderSprite(Texture texture, Vector v, Matrix transform)
         {
             var description = texture.GetLevelDescription(0);
-            RenderTexture(texture, null, new MMXBox(v.X, v.Y, description.Width, description.Height), transform);
+            RenderSprite(texture, null, new MMXBox(v.X, v.Y, description.Width, description.Height), transform);
         }
 
-        public void RenderTexture(Texture texture, FixedSingle x, FixedSingle y, Matrix transform)
+        public void RenderSprite(Texture texture, FixedSingle x, FixedSingle y, Matrix transform)
         {
             var description = texture.GetLevelDescription(0);
-            RenderTexture(texture, null, new MMXBox(x, y, description.Width, description.Height), transform);
+            RenderSprite(texture, null, new MMXBox(x, y, description.Width, description.Height), transform);
         }
 
-        public void RenderTexture(Texture texture, Texture palette, Vector v, Matrix transform)
+        public void RenderSprite(Texture texture, Texture palette, Vector v, Matrix transform)
         {
             var description = texture.GetLevelDescription(0);
-            RenderTexture(texture, palette, new MMXBox(v.X, v.Y, description.Width, description.Height), transform);
+            RenderSprite(texture, palette, new MMXBox(v.X, v.Y, description.Width, description.Height), transform);
         }
 
-        public void RenderTexture(Texture texture, Texture palette, FixedSingle x, FixedSingle y, Matrix transform)
+        public void RenderSprite(Texture texture, Texture palette, FixedSingle x, FixedSingle y, Matrix transform)
         {
             var description = texture.GetLevelDescription(0);
-            RenderTexture(texture, palette, new MMXBox(x, y, description.Width, description.Height), transform);
+            RenderSprite(texture, palette, new MMXBox(x, y, description.Width, description.Height), transform);
         }
 
         private void AddEntity(Entity entity)
@@ -1112,9 +1111,11 @@ namespace MMX.Engine
             if (lastEntity != null)
                 lastEntity.next = entity;
 
+            entity.previous = lastEntity;
+            entity.next = null;
+
             firstEntity ??= entity;
             lastEntity = entity;
-            entity.previous = lastEntity;
 
             entity.Index = firstFreeEntityIndex;
             entities[firstFreeEntityIndex++] = entity;
@@ -1169,7 +1170,7 @@ namespace MMX.Engine
             RemoveEntity(entity.Index);
         }
 
-        private void OnFrame()
+        private bool OnFrame()
         {
             bool nextFrame = !frameAdvance;
             Keys keys = Keys.NONE;
@@ -1526,25 +1527,27 @@ namespace MMX.Engine
                             }
                         }
                     }
-                    catch (SharpDXException)
+                    catch (SharpDXException e)
                     {
+                        MessageBox.Show(e.Message);
                         joystick = null;
                     }
                 }
             }
 
             if (!nextFrame)
-                return;
+                return false;
 
             FrameCounter++;
 
             if (!loadingLevel)
             {
-                foreach (var (entity, box) in respawnableEntities)
+                // TODO : Please, optmize me!
+                foreach (var (entity, origin) in respawnableEntities)
                 {
-                    if (!entity.Alive && HasIntersection(World.Camera.BoundingBox, box))
+                    if (!entity.Alive && origin < World.Camera.ExtendedBoundingBox && !(origin < World.Camera.BoundingBox))
                     {
-                        entity.Origin = box.Origin;
+                        entity.Origin = origin;
                         entity.Spawn();
                     }
                 }
@@ -1569,13 +1572,7 @@ namespace MMX.Engine
                 else
                 {
                     for (var entity = firstEntity; entity != null; entity = entity.next)
-                    {
-                        if (changeLevel)
-                            break;
-
-                        if (entity.Alive)
-                            entity.OnFrame();
-                    }
+                        entity.OnFrame();
 
                     if (removedEntities.Count > 0)
                     {
@@ -1585,7 +1582,7 @@ namespace MMX.Engine
                                 child.parent = null;
 
                             removed.childs.Clear();
-                            removed.alive = false;
+                            removed.Alive = false;
                             removed.Dispose();
 
                             partition.Remove(removed);
@@ -1611,6 +1608,8 @@ namespace MMX.Engine
             {
 
             }
+
+            return true;
         }
 
         public static Vector2 ToVector2(Vector v)
@@ -1742,7 +1741,7 @@ namespace MMX.Engine
                     mmx.SetLevel(level, 0);
 
                     mmx.LoadLevel();
-                    mmx.LoadTriggers(this);
+                    mmx.LoadEvents(this);
                     mmx.LoadToWorld(this, false);
 
                     mmx.LoadBackground();
@@ -1759,7 +1758,7 @@ namespace MMX.Engine
                     Player.Lives = oldPlayer.Lives;
                 }
 
-                AddDriller(new MMXBox(160, 1024, 50, 50, OriginPosition.CENTER));
+                AddDriller(new Vector(160, 1024));
 
                 loadingLevel = false;
             }
@@ -2519,37 +2518,37 @@ namespace MMX.Engine
 
             drillerSpriteSheet.CurrentPalette = drillerPalette;
 
-            var drillerOffset = new Vector(11, 24);
-            var drilerHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-11, -24), new Vector(11, 0));
+            var drilerHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-16, -24), new Vector(16, 0));
+            var drilerDrillingHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-16, -24), new Vector(32, 0));
 
             // 0
             sequence = drillerSpriteSheet.AddFrameSquence("Idle");
-            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.BoudingBoxOriginOffset = -drilerHitbox.Mins;
             sequence.CollisionBox = drilerHitbox;
-            sequence.AddFrame(0, 0, 4, 10, 35, 24, 1, true);
+            sequence.AddFrame(-5, 6, 4, 4, 35, 30, 1, true);
 
             // 1
             sequence = drillerSpriteSheet.AddFrameSquence("Jumping");
-            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.BoudingBoxOriginOffset = -drilerHitbox.Mins;
             sequence.CollisionBox = drilerHitbox;
-            sequence.AddFrame(0, 0, 40, 13, 37, 21, 5);
-            sequence.AddFrame(0, 0, 78, 9, 35, 25, 5);
-            sequence.AddFrame(0, 0, 115, 4, 43, 30, 1, true);
+            sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
+            sequence.AddFrame(-7, 6, 78, 4, 35, 30, 5);
+            sequence.AddFrame(4, -3, 115, 4, 43, 30, 1, true);
 
             // 2
             sequence = drillerSpriteSheet.AddFrameSquence("Landing");
-            sequence.BoudingBoxOriginOffset = drillerOffset;
+            sequence.BoudingBoxOriginOffset = -drilerHitbox.Mins;
             sequence.CollisionBox = drilerHitbox;
-            sequence.AddFrame(0, 0, 40, 13, 37, 21, 5);
+            sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
 
             // 3
             sequence = drillerSpriteSheet.AddFrameSquence("Drilling");
-            sequence.BoudingBoxOriginOffset = drillerOffset;
-            sequence.CollisionBox = drilerHitbox;
-            sequence.AddFrame(0, 0, 160, 10, 48, 24, 1, true);
-            sequence.AddFrame(0, 0, 209, 9, 46, 25, 1);
-            sequence.AddFrame(0, 0, 256, 10, 48, 24, 1);
-            sequence.AddFrame(0, 0, 305, 9, 46, 25, 1);
+            sequence.BoudingBoxOriginOffset = -drilerDrillingHitbox.Mins;
+            sequence.CollisionBox = drilerDrillingHitbox;
+            sequence.AddFrame(-5, 6, 160, 4, 48, 30, 2, true);
+            sequence.AddFrame(-6, 6, 209, 4, 46, 30, 2);
+            sequence.AddFrame(-5, 6, 256, 4, 48, 30, 2);
+            sequence.AddFrame(-6, 6, 305, 4, 46, 30, 2);
 
             drillerSpriteSheet.ReleaseCurrentTexture();
 
@@ -2639,7 +2638,7 @@ namespace MMX.Engine
             if (totalMillis < nextTick)
                 return;
 
-            OnFrame();
+            bool nextFrame = OnFrame();
             fpsFrames++;
             nextTick = totalMillis + tick;
 
@@ -2883,6 +2882,18 @@ namespace MMX.Engine
             catch (SharpDXException)
             {
             }
+            finally
+            {
+                if (nextFrame)
+                    for (var entity = firstEntity; entity != null; entity = entity.next)
+                    {
+                        if (changeLevel)
+                            break;
+
+                        if (entity.Alive)
+                            entity.PostThink();
+                    }
+            }
         }
 
         public void Dispose()
@@ -3103,6 +3114,11 @@ namespace MMX.Engine
             return trigger;
         }
 
+        public Enemy AddEnemy(ushort index, Vector origin)
+        {
+            return AddDriller(origin);
+        }
+
         public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
         {
             var trigger = new CameraLockTrigger(this, boundingBox, extensions);
@@ -3228,10 +3244,10 @@ namespace MMX.Engine
             return effect;
         }
 
-        internal Driller AddDriller(MMXBox box)
+        internal Driller AddDriller(Vector origin)
         {
-            var driller = new Driller(this, "Driller", box.Origin);
-            respawnableEntities.Add((driller, box));
+            var driller = new Driller(this, "Driller", origin);
+            respawnableEntities.Add((driller, origin));
             return driller;
         }
 

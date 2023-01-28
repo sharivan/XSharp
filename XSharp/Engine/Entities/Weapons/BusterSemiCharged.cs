@@ -1,37 +1,38 @@
 ﻿using MMX.Engine.Entities.Enemies;
 using MMX.Geometry;
 using MMX.Math;
-
 using static MMX.Engine.Consts;
 
 namespace MMX.Engine.Entities.Weapons
 {
+    public enum SemiChargedState
+    {
+        FIRING = 0,
+        SHOOTING = 1,
+        HITTING = 2,
+        EXPLODING = 3
+    }
+
     public class BusterSemiCharged : Weapon
     {
-        private readonly int[] animationIndices;
-
-        private bool soundPlayed;
+        private Entity hitEntity;
 
         new public Player Shooter => (Player) base.Shooter;
 
-        public bool Firing { get;
-            private set;
-        }
+        public bool Firing => GetState<SemiChargedState>() == SemiChargedState.FIRING;
 
-        public bool Exploding { get;
-            private set;
-        }
+        public bool Exploding => GetState<SemiChargedState>() == SemiChargedState.EXPLODING;
 
-        public bool Hitting { get;
-            private set;
-        }
+        public bool Hitting => GetState<SemiChargedState>() == SemiChargedState.HITTING;
 
         internal BusterSemiCharged(GameEngine engine, Player shooter, string name, Vector origin, Direction direction) :
             base(engine, shooter, name, origin, direction, 1)
         {
-            CheckCollisionWithWorld = false;
-
-            animationIndices = new int[4];
+            SetupStateArray(typeof(SemiChargedState));
+            RegisterState(SemiChargedState.FIRING, OnStartFiring, null, null, "SemiChargedShotFiring");
+            RegisterState(SemiChargedState.SHOOTING, OnStartShooting, OnShooting, null, "SemiChargedShot");
+            RegisterState(SemiChargedState.HITTING, OnStartHitting, null, null, "SemiChargedShotHit");
+            RegisterState(SemiChargedState.EXPLODING, OnStartExploding, null, null, "SemiChargedShotExplode");
         }
 
         public override FixedSingle GetGravity()
@@ -49,63 +50,66 @@ namespace MMX.Engine.Entities.Weapons
         {
             base.OnSpawn();
 
-            Firing = true;
-            Exploding = false;
-            Hitting = false;
+            CheckCollisionWithWorld = false;
+            Velocity = Vector.NULL_VECTOR;
 
-            Velocity = Vector.NULL_VECTOR;         
-
-            CurrentAnimationIndex = animationIndices[0];
-            CurrentAnimation.StartFromBegin();
+            SetState(SemiChargedState.FIRING);
         }
 
-        protected override void Think()
+        private void OnStartFiring(EntityState state)
         {
-            if (!soundPlayed)
+            Engine.PlaySound(1, 1);
+        }
+
+        private void OnStartShooting(EntityState state)
+        {
+            if (Direction == Direction.LEFT)
             {
-                Engine.PlaySound(1, 1);
-                soundPlayed = true;
+                Origin += 14 * Vector.LEFT_VECTOR;
+                Velocity = SEMI_CHARGED_INITIAL_SPEED * Vector.LEFT_VECTOR;
+            }
+            else
+            {
+                Origin += 14 * Vector.RIGHT_VECTOR;
+                Velocity = SEMI_CHARGED_INITIAL_SPEED * Vector.RIGHT_VECTOR;
+            }
+        }
+
+        private void OnShooting(EntityState state, long frameCounter)
+        {
+            Velocity += new Vector(Velocity.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
+            if (Velocity.X.Abs > LEMON_TERMINAL_SPEED)
+                Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
+        }
+
+        private void OnStartHitting(EntityState state)
+        {
+            if (hitEntity != null)
+            {
+                Box otherHitbox = hitEntity.HitBox;
+                Vector center = HitBox.Center;
+                FixedSingle x = Direction == Direction.RIGHT ? otherHitbox.Left : otherHitbox.Right;
+                FixedSingle y = center.Y < otherHitbox.Top ? otherHitbox.Top : center.Y > otherHitbox.Bottom ? otherHitbox.Bottom : Origin.Y;
+                Origin = (x, y);
             }
 
-            if (!Firing && !Exploding && !Hitting)
-            {
-                Velocity += new Vector(Velocity.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
-                if (Velocity.X.Abs > LEMON_TERMINAL_SPEED)
-                    Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
-            }
+            Velocity = Vector.NULL_VECTOR;
+        }
 
-            base.Think();
+        private void OnStartExploding(EntityState state)
+        {
+            Velocity = Vector.NULL_VECTOR;
         }
 
         public void Explode()
         {
-            if (!Exploding)
-            {
-                Exploding = true;
-                Velocity = Vector.NULL_VECTOR;
-                CurrentAnimationIndex = animationIndices[3];
-                CurrentAnimation.StartFromBegin();
-            }
+            SetState(SemiChargedState.EXPLODING);
         }
 
         public void Hit(Entity entity)
         {
-            if (!Hitting)
-            {
-                if (entity != null)
-                {
-                    Box otherHitbox = entity.HitBox;
-                    Vector center = HitBox.Center;
-                    FixedSingle x = Direction == Direction.RIGHT ? otherHitbox.Left : otherHitbox.Right;
-                    FixedSingle y = center.Y < otherHitbox.Top ? otherHitbox.Top : center.Y > otherHitbox.Bottom ? otherHitbox.Bottom : Origin.Y;
-                    Origin = (x, y);
-                }
-
-                Hitting = true;
-                Velocity = Vector.NULL_VECTOR;
-                CurrentAnimationIndex = animationIndices[2];
-                CurrentAnimation.StartFromBegin();
-            }
+            hitEntity = entity;
+            SetState(SemiChargedState.HITTING);
         }
 
         public override void Dispose()
@@ -124,45 +128,16 @@ namespace MMX.Engine.Entities.Weapons
             base.OnStartTouch(entity);
         }
 
-        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, ref string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+        protected internal override void OnAnimationEnd(Animation animation)
         {
-            base.OnCreateAnimation(animationIndex, sheet, ref frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
-            startOn = false;
-            startVisible = false;
+            base.OnAnimationEnd(animation);
 
-            if (frameSequenceName == "SemiChargedShotFiring")
-                animationIndices[0] = animationIndex;
-            else if (frameSequenceName == "SemiChargedShot")
-                animationIndices[1] = animationIndex;
-            else if (frameSequenceName == "SemiChargedShotHit")
-                animationIndices[2] = animationIndex;
-            else if (frameSequenceName == "SemiChargedShotExplode")
-                animationIndices[3] = animationIndex;
-            else
-                add = false;
-        }
+            if (animation.FrameSequenceName != CurrentState.AnimationName)
+                return;
 
-        internal override void OnAnimationEnd(Animation animation)
-        {
-            if (animation.Index == animationIndices[0])
-            {
-                Firing = false;
-                
-                if (Direction == Direction.LEFT)
-                {
-                    Origin += 14 * Vector.LEFT_VECTOR;
-                    Velocity = SEMI_CHARGED_INITIAL_SPEED * Vector.LEFT_VECTOR;
-                }
-                else
-                {
-                    Origin += 14 * Vector.RIGHT_VECTOR;
-                    Velocity = SEMI_CHARGED_INITIAL_SPEED * Vector.RIGHT_VECTOR;
-                }                
-
-                CurrentAnimationIndex = animationIndices[1];
-                CurrentAnimation.StartFromBegin();
-            }
-            else if (animation.Index == animationIndices[2] || animation.Index == animationIndices[3])
+            if (Firing)
+                SetState(SemiChargedState.SHOOTING);
+            else if (Hitting || Exploding)
                 KillOnNextFrame();
         }
     }

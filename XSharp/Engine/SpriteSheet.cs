@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-
+using System.Linq;
 using MMX.Geometry;
 using MMX.Math;
 
@@ -231,13 +231,9 @@ namespace MMX.Engine
             set;
         }
 
-        public void ReleaseCurrentTexture()
-        {
-            if (DisposeTexture && CurrentTexture != null)
-                CurrentTexture.Dispose();
+        public IEnumerable<string> FrameSequenceNames => sequences.Keys;
 
-            CurrentTexture = null;
-        }
+        public IEnumerable<FrameSequence> FrameSequences => sequences.Values;
 
         public int FrameCount => frames.Count;
 
@@ -271,6 +267,14 @@ namespace MMX.Engine
         public void LoadFromFile(string imageFileName)
         {
             CurrentTexture = Engine.CreateImageTextureFromFile(imageFileName);
+        }
+
+        public void ReleaseCurrentTexture()
+        {
+            if (DisposeTexture && CurrentTexture != null)
+                CurrentTexture.Dispose();
+
+            CurrentTexture = null;
         }
 
         public Frame AddFrame(int left, int top, int width, int height, OriginPosition originPosition = OriginPosition.CENTER)

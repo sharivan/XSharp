@@ -1,5 +1,6 @@
 ﻿using MMX.Math;
 using MMX.Geometry;
+using System.Runtime.InteropServices;
 
 namespace MMX.Engine.Entities.Effects
 {
@@ -8,6 +9,11 @@ namespace MMX.Engine.Entities.Effects
         private int level;
 
         private bool soundPlayed;
+
+        public Player Charger
+        {
+            get;
+        }
 
         public int Level
         {
@@ -23,9 +29,9 @@ namespace MMX.Engine.Entities.Effects
             }
         }
 
-        public ChargingEffect(GameEngine engine, string name, Player charger) : base(engine, name, charger.HitBox.Center, 3, false, "ChargingLevel1", "ChargingLevel2")
+        public ChargingEffect(GameEngine engine, string name, Player charger) : base(engine, name, charger.HitBox.Center, 3, true, "ChargingLevel1", "ChargingLevel2")
         {
-            Parent = charger;
+            Charger = charger;
             PaletteIndex = 3;
         }
 
@@ -44,6 +50,9 @@ namespace MMX.Engine.Entities.Effects
                 Engine.PlaySound(2, 3, 3.350, 1.585);
                 soundPlayed = true;
             }
+
+            Origin = Charger.HitBox.Center;
+            Direction = Charger.Direction;
 
             base.Think();
         }

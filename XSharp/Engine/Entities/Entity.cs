@@ -32,13 +32,11 @@ namespace MMX.Engine.Entities
         internal Entity parent;
         private readonly List<Entity> touchingEntities;
         internal readonly List<Entity> childs;
-        protected internal bool alive;
-        protected bool respawnable;
 
         internal Entity previous;
         internal Entity next;
 
-        private long frameToKill = -1;
+        internal long frameToKill = -1;
 
         private readonly List<EntityState> states;
         private EntityState[] stateArray;
@@ -53,6 +51,12 @@ namespace MMX.Engine.Entities
         {
             get;
             internal set;
+        }
+
+        public string Name
+        {
+            get;
+            set;
         }
 
         public Vector Origin
@@ -97,7 +101,11 @@ namespace MMX.Engine.Entities
 
         public Box HitBox => GetHitBox();
 
-        public bool Alive => alive;
+        public bool Alive
+        {
+            get;
+            internal set;
+        }
 
         public bool MarkedToRemove
         {
@@ -105,9 +113,13 @@ namespace MMX.Engine.Entities
             private set;
         }
 
-        public bool Respawnable => respawnable;
+        public bool Respawnable
+        {
+            get;
+            set;
+        }
 
-        public bool Offscreen => !HasIntersection(BoundingBox, Engine.World.Camera.BoundingBox);
+        public bool Offscreen => !HasIntersection(BoundingBox, Engine.World.Camera.ExtendedBoundingBox);
 
         public int StateCount => states.Count;
 
@@ -131,16 +143,16 @@ namespace MMX.Engine.Entities
 
         protected EntityState CurrentState => stateArray != null && CurrentStateID >= 0 ? stateArray[CurrentStateID] : null;
 
-        protected Entity(GameEngine engine, Vector origin)
+        protected Entity(GameEngine engine, string name, Vector origin)
         {
             Engine = engine;
+            Name = name;
             this.origin = origin;
 
             touchingEntities = new List<Entity>();
             childs = new List<Entity>();
 
-            states = new List<EntityState>();
-            currentStateID = -1;
+            states = new List<EntityState>();            
         }
 
         protected void SetupStateArray(int count)
@@ -293,26 +305,26 @@ namespace MMX.Engine.Entities
         {
             origin = new Vector(reader);
             LastOrigin = new Vector(reader);
-            alive = reader.ReadBoolean();
+            Alive = reader.ReadBoolean();
             MarkedToRemove = reader.ReadBoolean();
-            respawnable = reader.ReadBoolean();
+            Respawnable = reader.ReadBoolean();
         }
 
         public virtual void SaveState(BinaryWriter writer)
         {
             origin.Write(writer);
             LastOrigin.Write(writer);
-            writer.Write(alive);
+            writer.Write(Alive);
             writer.Write(MarkedToRemove);
-            writer.Write(respawnable);
+            writer.Write(Respawnable);
         }
 
         public override string ToString()
         {
-            return "Entity [" + origin + "]";
+            return $"{GetType().Name}[{Name}, {Origin}]";
         }
 
-        public virtual void OnFrame()
+        protected internal virtual void OnFrame()
         {
             if (Engine.FrameCounter == frameToKill)
             {
@@ -329,7 +341,6 @@ namespace MMX.Engine.Entities
 
             Think();
             CurrentState?.OnFrame();
-            PostThink();
 
             List<Entity> touching = Engine.partition.Query(HitBox, this, childs, BoxKind.HITBOX);
 
@@ -381,7 +392,7 @@ namespace MMX.Engine.Entities
         {
         }
 
-        protected virtual void PostThink()
+        protected internal virtual void PostThink()
         {
         }
 
@@ -412,7 +423,9 @@ namespace MMX.Engine.Entities
 
         public void Spawn()
         {
-            alive = true;
+            frameToKill = -1;
+            currentStateID = -1;
+            Alive = true;
             MarkedToRemove = false;
             Engine.addedEntities.Add(this);
         }

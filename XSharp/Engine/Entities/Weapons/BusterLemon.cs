@@ -25,7 +25,9 @@ namespace MMX.Engine.Entities.Weapons
         {
             this.dashLemon = dashLemon;
 
-            CheckCollisionWithWorld = false;
+            SetupStateArray(typeof(LemonState));
+            RegisterState(LemonState.SHOOTING, OnStartShot, OnShooting, null, "LemonShot");
+            RegisterState(LemonState.EXPLODING, null, null, OnExploded, "LemonShotExplode");
         }
 
         public override FixedSingle GetGravity()
@@ -42,29 +44,26 @@ namespace MMX.Engine.Entities.Weapons
         {
             base.OnSpawn();
 
+            CheckCollisionWithWorld = false;
             Velocity = new Vector(Direction == Direction.LEFT ? (dashLemon ? -LEMON_TERMINAL_SPEED : -LEMON_INITIAL_SPEED) : (dashLemon ? LEMON_TERMINAL_SPEED : LEMON_INITIAL_SPEED), 0);
-
-            SetupStateArray(typeof(LemonState));
-            RegisterState(LemonState.SHOOTING, OnStartShot, OnShooting, null, "LemonShot");
-            RegisterState(LemonState.EXPLODING, null, null, OnExploded, "LemonShotExplode");
 
             SetState(LemonState.SHOOTING);
         }
 
-        protected void OnStartShot(EntityState state)
+        private void OnStartShot(EntityState state)
         {
             if (!Shooter.shootingCharged)
                 Engine.PlaySound(1, 0);
         }
 
-        protected void OnShooting(EntityState state, long frameCounter)
+        private void OnShooting(EntityState state, long frameCounter)
         {
             Velocity += new Vector(Velocity.X > 0 ? LEMON_ACCELERATION : -LEMON_ACCELERATION, 0);
             if (Velocity.X.Abs > LEMON_TERMINAL_SPEED)
                 Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
         }
 
-        protected void OnExploded(EntityState state)
+        private void OnExploded(EntityState state)
         {
             KillOnNextFrame();
         }
@@ -110,9 +109,14 @@ namespace MMX.Engine.Entities.Weapons
             base.OnStartTouch(entity);
         }
 
-        internal override void OnAnimationEnd(Animation animation)
+        protected internal override void OnAnimationEnd(Animation animation)
         {
-            if (GetState<LemonState>() == LemonState.EXPLODING && animation.Index == ((SpriteState) GetStateByID((int) LemonState.EXPLODING)).AnimationIndex)
+            base.OnAnimationEnd(animation);
+
+            if (animation.FrameSequenceName != CurrentState.AnimationName)
+                return;
+
+            if (GetState<LemonState>() == LemonState.EXPLODING)
                 KillOnNextFrame();
         }
     }

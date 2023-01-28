@@ -15,10 +15,9 @@ namespace MMX.Engine
     public class Animation
     {
         private SpriteSheet.FrameSequence sequence;
-        private bool animating; // Indica se a animação será dinâmica ou estática
-        private int currentSequenceIndex; // Quadro atual
-        private int currentRenderSequenceIndex;
-        private bool animationEndFired; // Indica se o evento OnAnimationEnd da entidade associada a esta animação foi chamado desde que a animação foi completada
+        private bool animating;
+        private int currentSequenceIndex;
+        private bool animationEndFired;
 
         private readonly AnimationFrameEvent[] animationEvents;
 
@@ -26,7 +25,7 @@ namespace MMX.Engine
         {
             get
             {
-                var frame = sequence[currentRenderSequenceIndex];
+                var frame = sequence[currentSequenceIndex];
                 return Sprite.Origin + frame.BoundingBox;
             }
         }
@@ -65,7 +64,6 @@ namespace MMX.Engine
             Scale = 1;
 
             currentSequenceIndex = initialSequenceIndex;
-            currentRenderSequenceIndex = currentSequenceIndex;
             animationEndFired = false;
 
             int count = sequence.Count;
@@ -121,10 +119,7 @@ namespace MMX.Engine
             animating = true;
 
             if (startIndex != -1)
-            {
                 currentSequenceIndex = InitialSequenceIndex + startIndex;
-                currentRenderSequenceIndex = currentSequenceIndex;
-            }
         }
 
         /// <summary>
@@ -149,7 +144,6 @@ namespace MMX.Engine
         public void Reset()
         {
             currentSequenceIndex = InitialSequenceIndex;
-            currentRenderSequenceIndex = currentSequenceIndex;
         }
 
         /// <summary>
@@ -202,7 +196,6 @@ namespace MMX.Engine
             set
             {
                 currentSequenceIndex = value >= sequence.Count ? sequence.Count - 1 : value;
-                currentRenderSequenceIndex = currentSequenceIndex;
                 animationEndFired = false;
             }
         }
@@ -211,10 +204,10 @@ namespace MMX.Engine
         {
             get
             {
-                if (currentRenderSequenceIndex < 0 || currentRenderSequenceIndex > sequence.Count)
+                if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
                     return MMXBox.EMPTY_BOX;
 
-                MMXBox boundingBox = sequence[currentRenderSequenceIndex].BoundingBox;
+                MMXBox boundingBox = sequence[currentSequenceIndex].BoundingBox;
                 return boundingBox;
             }
         }
@@ -223,10 +216,10 @@ namespace MMX.Engine
         {
             get
             {
-                if (currentRenderSequenceIndex < 0 || currentRenderSequenceIndex > sequence.Count)
+                if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
                     return MMXBox.EMPTY_BOX;
 
-                MMXBox collisionBox = sequence[currentRenderSequenceIndex].CollisionBox;
+                MMXBox collisionBox = sequence[currentSequenceIndex].CollisionBox;
                 return collisionBox;
             }
         }
@@ -285,16 +278,16 @@ namespace MMX.Engine
         /// <summary>
         /// Evento a ser executado a cada frame (tick) do engine
         /// </summary>
-        public void OnFrame()
+        internal void NextFrame()
         {
             // Se a animação não está em execução ou não ouver pelo menos dois quadros na animação então não é necessário computar o próximo quadro da animação
             if (!animating || animationEndFired || sequence.Count == 0)
                 return;
 
             animationEvents[currentSequenceIndex]?.Invoke(this, currentSequenceIndex);
-            currentRenderSequenceIndex = currentSequenceIndex++;
+            currentSequenceIndex++;
 
-            if (currentSequenceIndex >= sequence.Count) // Se chegamos no final da animação
+            if (currentSequenceIndex >= sequence.Count)
             {
                 currentSequenceIndex = sequence.Count - 1;
 
@@ -322,7 +315,7 @@ namespace MMX.Engine
             if (!Visible || sequence.Count == 0)
                 return;
 
-            var frame = sequence[currentRenderSequenceIndex];
+            var frame = sequence[currentSequenceIndex];
             MMXBox srcBox = frame.BoundingBox;
             Texture texture = frame.Texture;
 
@@ -351,7 +344,7 @@ namespace MMX.Engine
             else if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
                 transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(center3);
 
-            Sprite.Engine.RenderTexture(texture, Sprite.Palette, drawBox.LeftTop, transform);
+            Sprite.Engine.RenderSprite(texture, Sprite.Palette, drawBox.LeftTop, transform);
         }
 
         internal void OnDeviceReset()

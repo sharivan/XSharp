@@ -44,7 +44,7 @@ namespace MMX.Engine.Entities.Effects
             Parent = player;
         }
 
-        internal override void OnAnimationEnd(Animation animation)
+        protected internal override void OnAnimationEnd(Animation animation)
         {
             base.OnAnimationEnd(animation);
 

@@ -17,5 +17,13 @@ namespace MMX.Engine.Entities.Enemies
             Animation animation = CurrentAnimation;
             return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
         }
+
+        protected override void Think()
+        {
+            base.Think();
+
+            if (Offscreen)
+                KillOnNextFrame();
+        }
     }
 }

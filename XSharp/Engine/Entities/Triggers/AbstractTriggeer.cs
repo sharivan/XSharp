@@ -52,7 +52,7 @@ namespace MMX.Engine.Entities.Triggers
         }
 
         protected AbstractTrigger(GameEngine engine, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN) :
-            base(engine, boundingBox.Origin)
+            base(engine, "Trigger", boundingBox.Origin)
         {
             this.boundingBox = boundingBox - boundingBox.Origin;
 

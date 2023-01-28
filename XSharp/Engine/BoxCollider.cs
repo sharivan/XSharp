@@ -27,9 +27,6 @@ namespace MMX.Engine
 
         private RightTriangle landedSlope;
 
-        private bool wasLandedOnSlope;
-        private RightTriangle lastLandedSlope;
-
         private bool leftMaskComputed;
         private bool upMaskComputed;
         private bool rightMaskComputed;
@@ -241,11 +238,7 @@ namespace MMX.Engine
             {
                 DownMaskFlags = world.ComputedLandedState(box, downCollisionPlacements, out landedSlope, maskSize, CollisionFlags.NONE);
                 if (DownMaskFlags == CollisionFlags.SLOPE)
-                {
                     ClipFromSlope(landedSlope);
-                    wasLandedOnSlope = true;
-                    lastLandedSlope = landedSlope;
-                }
 
                 upMaskFlags = world.GetCollisionFlags(UpCollider, upCollisionPlacements, CollisionFlags.NONE, true);
                 leftMaskFlags = world.GetCollisionFlags(LeftCollider, leftCollisionPlacements, CollisionFlags.NONE, true);
@@ -263,7 +256,6 @@ namespace MMX.Engine
                 upMaskComputed = true;
                 rightMaskComputed = true;
                 innerMaskComputed = true;
-                wasLandedOnSlope = false;
 
                 leftMaskFlags = CollisionFlags.NONE;
                 upMaskFlags = CollisionFlags.NONE;
