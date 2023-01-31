@@ -41,15 +41,12 @@ Shortcut Keys:
 
 Modifications currently in progress:
 
-- Addition of sound effects.
 - More maps for testing.
 - More types of enemies.
 - Armors.
 
 Some Pending Fixes:
 
-- Fix some X sprite animations.
-- Fix full charged X buster position.
 - Fix ladders.
 - Fix background position in some levels.
 - Fix triggers and camera lock in some levels.
