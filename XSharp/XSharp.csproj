@@ -96,11 +96,15 @@
     <Compile Include="Engine\Entities\Checkpoint.cs" />
     <Compile Include="Engine\Entities\Effects\DashSmokeEffect.cs" />
     <Compile Include="Engine\Entities\Effects\DashSparkEffect.cs" />
+    <Compile Include="Engine\Entities\Effects\ExplosionEffect.cs" />
     <Compile Include="Engine\Entities\Effects\SpriteEffect.cs" />
     <Compile Include="Engine\Entities\Effects\WallKickEffect.cs" />
     <Compile Include="Engine\Entities\Effects\WallSlideEffect.cs" />
+    <Compile Include="Engine\Entities\Effects\XDieExplosion.cs" />
     <Compile Include="Engine\Entities\Enemies\Driller.cs" />
     <Compile Include="Engine\Entities\EntityState.cs" />
+    <Compile Include="Engine\Entities\HUD\HealthHUD.cs" />
+    <Compile Include="Engine\Entities\HUD\ReadyHUD.cs" />
     <Compile Include="Engine\Entities\SpriteState.cs" />
     <Compile Include="Engine\Entities\Triggers\CameraLockTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\ChangeDynamicPropertyTrigger.cs" />
@@ -143,11 +147,64 @@
     <Compile Include="Engine\World\World.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Engine\Entities\HUD\HUD.cs" />
     <Compile Include="ROM\CompressionCore.cs" />
     <Compile Include="ROM\Deque.cs" />
     <Compile Include="ROM\MegaEDCore.cs" />
     <Compile Include="ROM\MMXCore.cs" />
     <Compile Include="ROM\SNESCore.cs" />
+    <Content Include="resources\sounds\ost\mmx\01 - Capcom Logo.mp3" />
+    <Content Include="resources\sounds\ost\mmx\02 - Title Screen.mp3" />
+    <Content Include="resources\sounds\ost\mmx\03 - Password Screen.mp3" />
+    <Content Include="resources\sounds\ost\mmx\04 - Intro Stage.mp3" />
+    <Content Include="resources\sounds\ost\mmx\05 - Sigma Intro 1.mp3" />
+    <Content Include="resources\sounds\ost\mmx\06 - Sigma Boss Battle.mp3" />
+    <Content Include="resources\sounds\ost\mmx\07 - Zero 1.mp3" />
+    <Content Include="resources\sounds\ost\mmx\08 - Zero 2.mp3" />
+    <Content Include="resources\sounds\ost\mmx\09 - Stage Select 1.mp3" />
+    <Content Include="resources\sounds\ost\mmx\10 - Stage Intro.mp3" />
+    <Content Include="resources\sounds\ost\mmx\11 - Launch Octopus.mp3" />
+    <Content Include="resources\sounds\ost\mmx\12 - Chill Penguin.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\sounds\ost\mmx\13 - Flame Mammoth.mp3" />
+    <Content Include="resources\sounds\ost\mmx\14 - Boomer Kuwanger.mp3" />
+    <Content Include="resources\sounds\ost\mmx\15 - Sting Chameleon.mp3" />
+    <Content Include="resources\sounds\ost\mmx\16 - Spark Mandrill.mp3" />
+    <Content Include="resources\sounds\ost\mmx\17 - Storm Eagle.mp3" />
+    <Content Include="resources\sounds\ost\mmx\18 - Armored Armadillo.mp3" />
+    <Content Include="resources\sounds\ost\mmx\19 - Boss Intro.mp3" />
+    <Content Include="resources\sounds\ost\mmx\20 - Boss Battle.mp3" />
+    <Content Include="resources\sounds\ost\mmx\21 - Boss Defeated.mp3" />
+    <Content Include="resources\sounds\ost\mmx\22 - Weapon Screen.mp3" />
+    <Content Include="resources\sounds\ost\mmx\23 - Stage Select 2.mp3" />
+    <Content Include="resources\sounds\ost\mmx\24 - Sigma Fortress 1.mp3" />
+    <Content Include="resources\sounds\ost\mmx\25 - Sigma Fortress 2.mp3" />
+    <Content Include="resources\sounds\ost\mmx\26 - Sigma Fortress 3.mp3" />
+    <Content Include="resources\sounds\ost\mmx\27 - Sigma Intro 2.mp3" />
+    <Content Include="resources\sounds\ost\mmx\28 - Sigma Battle.mp3" />
+    <Content Include="resources\sounds\ost\mmx\29 - Stigma Defeated.mp3" />
+    <Content Include="resources\sounds\ost\mmx\30 - Sigma Battle 2.mp3" />
+    <Content Include="resources\sounds\ost\mmx\31 - Dr. Light.mp3" />
+    <Content Include="resources\sounds\ost\mmx\32 - Ending.mp3" />
+    <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
+    <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
+    <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
+    <EmbeddedResource Include="resources\tiles\black_pixel.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\tiles\white_pixel.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\Ready.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\X\HP.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\Effects\Explosion.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -217,13 +274,12 @@
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="PaletteShader.hlsl" />
+    <Content Include="PaletteShader.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="resources\sprites\Enemies\X2\mmx2-driller.png" />
-    <EmbeddedResource Include="resources\tiles\hitbox.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
     <Content Include="resources\sounds\mmx2\X Semi Charged Shot.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -290,7 +346,9 @@
     </Content>
     <Content Include="resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav" />
     <Content Include="resources\sounds\mmx\15 - MMX - X Powerup Infuse.wav" />
-    <Content Include="resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav" />
+    <Content Include="resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\mmx\17 - MMX - X Fade In.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

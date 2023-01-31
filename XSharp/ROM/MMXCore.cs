@@ -7,24 +7,19 @@
     MegaEDX v1.3: https://github.com/rbrummett/megaedx_v1.3
  */
 
+using MMX.Engine;
+using MMX.Engine.Entities.Triggers;
+using MMX.Engine.World;
+using MMX.Geometry;
+using MMX.Math;
+using SharpDX;
+using SharpDX.Direct3D9;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-
-using SharpDX;
-using SharpDX.Direct3D9;
-
-using MMX.Math;
-using MMX.Geometry;
-
-using MMX.Engine;
-using MMX.Engine.World;
-using MMX.Engine.Entities.Triggers;
-
 using static MMX.Engine.Consts;
-
 using MMXBox = MMX.Geometry.Box;
 
 namespace MMX.ROM
@@ -290,6 +285,8 @@ namespace MMX.ROM
         // FONT
         private readonly ushort[] fontPalCache;
         private readonly byte[] fontCache;
+
+        public byte Type => type;
 
         public ushort Level
         {
@@ -3376,7 +3373,7 @@ namespace MMX.ROM
                             break;
 
                         case 0x03:
-                            engine.AddEnemy(info.eventSubId, new Vector(info.xpos, info.ypos));
+                            engine.AddEnemy(info.eventId, info.eventSubId, new Vector(info.xpos, info.ypos));
                             break;
                     }
                 }

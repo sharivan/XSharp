@@ -1,8 +1,4 @@
-﻿using MMX.Math;
-using MMX.Geometry;
-using System.Runtime.InteropServices;
-
-namespace MMX.Engine.Entities.Effects
+﻿namespace MMX.Engine.Entities.Effects
 {
     public class ChargingEffect : SpriteEffect
     {
@@ -36,7 +32,7 @@ namespace MMX.Engine.Entities.Effects
         }
 
 
-        internal override void OnSpawn()
+        protected internal override void OnSpawn()
         {
             base.OnSpawn();
 

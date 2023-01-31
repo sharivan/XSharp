@@ -1,10 +1,8 @@
-﻿using System;
+﻿using MMX.Engine;
 using SharpDX.Windows;
-
-using MMX.Engine;
-
-using static MMX.Engine.Consts;
+using System;
 using System.Windows.Forms;
+using static MMX.Engine.Consts;
 
 namespace XSharp
 {

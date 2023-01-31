@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-
-using MMX.Geometry;
+﻿using MMX.Geometry;
 using MMX.Math;
-
+using System.Collections.Generic;
 using static MMX.Engine.Consts;
 using MMXWorld = MMX.Engine.World.World;
 

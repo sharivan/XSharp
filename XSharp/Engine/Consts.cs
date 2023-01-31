@@ -28,7 +28,7 @@ namespace MMX.Engine
         public static readonly Vector STEP_LEFT_VECTOR = STEP_SIZE * Vector.LEFT_VECTOR;
         public static readonly Vector STEP_UP_VECTOR = STEP_SIZE * Vector.UP_VECTOR;
         public static readonly Vector STEP_RIGHT_VECTOR = STEP_SIZE * Vector.RIGHT_VECTOR;
-        public static readonly Vector STEP_DOWN_VECTOR = STEP_SIZE * Vector.DOWN_VECTOR;       
+        public static readonly Vector STEP_DOWN_VECTOR = STEP_SIZE * Vector.DOWN_VECTOR;
 
         // Engine
         public const int TILE_SIZE = 8;
@@ -52,10 +52,13 @@ namespace MMX.Engine
 
         public const int MAX_ENTITIES = 2048;
 
+        public const int SPAWNING_BLACK_SCREEN_FRAMES = 120;
+
         // Times are measured in frames, velocity in pixel per frames and accelerations in pixels per frame squared.
         public static readonly FixedSingle GRAVITY = 0.25;
         public static readonly FixedSingle UNDERWATER_GRAVITY = 33 / 256.0;
         public static readonly FixedSingle TERMINAL_DOWNWARD_SPEED = 5.75;
+        public static readonly FixedSingle TELEPORT_DOWNWARD_SPEED = 8;
         public static readonly FixedSingle UNDERWATER_TERMINAL_DOWNWARD_SPEED = 737 / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_JUMP = (1363 + 0 * 64) / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = (1417 + 1 * 64) / 256.0;
@@ -88,7 +91,7 @@ namespace MMX.Engine
         public static readonly FixedSingle LEMON_INITIAL_SPEED = 1024 / 256.0;
         public static readonly FixedSingle LEMON_ACCELERATION = 64 / 256.0;
         public static readonly FixedSingle LEMON_TERMINAL_SPEED = 1536 / 256.0;
-        public static readonly FixedSingle LEMON_REFLECTION_VSPEED = -768 / 256.0;        
+        public static readonly FixedSingle LEMON_REFLECTION_VSPEED = -768 / 256.0;
         public const int SEMI_CHARGED_HITBOX_WIDTH_1 = 18;
         public const int SEMI_CHARGED_HITBOX_HEIGHT_1 = 18;
         public const int SEMI_CHARGED_HITBOX_WIDTH_2 = 26;
@@ -120,8 +123,9 @@ namespace MMX.Engine
         public const int INPUT_MOVEMENT_LATENCY = 1;
         public static readonly FixedSingle LADDER_BOX_VCLIP = 18;
         public static readonly FixedSingle WALL_MAX_DISTANCE_TO_WALL_JUMP = 8;
-        public const int ANIMATION_COUNT = 18;
-        public const int X_BASE_HEALTH = 16;
+        public const int X_INITIAL_LIVES = 2;
+        public static readonly FixedSingle X_INITIAL_HEALT_CAPACITY = 16;
+        public static readonly FixedSingle X_TIRED_PERCENTAGE = 0.25;
 
         // Enemies
 
@@ -130,6 +134,7 @@ namespace MMX.Engine
         public static readonly FixedSingle DRILLER_JUMP_VELOCITY_Y = -1280 / 256.0;
         public static readonly Vector DRILLER_JUMP_VELOCITY = (DRILLER_JUMP_VELOCITY_X, DRILLER_JUMP_VELOCITY_Y);
         public const int DRILLER_HEALTH = 4;
+        public static readonly FixedSingle DRILLER_CONTACT_DAMAGE = 2;
 
         // Render
         public static readonly Vector DEFAULT_DRAW_ORIGIN = Vector.NULL_VECTOR;
@@ -166,6 +171,11 @@ namespace MMX.Engine
         public static readonly Color CHECKPOINT_TRIGGER_BOX_COLOR = Color.FromRgba(0x8000ff00);
         public static readonly Color CAMERA_LOCK_COLOR = Color.Yellow;
         public static readonly Color TOUCHING_MAP_COLOR = Color.Blue;
+
+        // HUD
+
+        public static readonly Vector HP_OFFSET = (9, 44);
+        public static readonly Vector READY_OFFSET = new Vector(SCREEN_WIDTH - 39, SCREEN_HEIGHT - 13) / 2;
 
         // Palettes
         public static readonly Color[] X1_NORMAL_PALETTE = new Color[]
@@ -259,7 +269,7 @@ namespace MMX.Engine
         };
 
         public static readonly Color[] DRILLER_PALETTE = new Color[]
-{
+        {
             Color.Transparent, // 0
             new Color(48, 40, 96, 255), // 1
             new Color(72, 64, 144, 255), // 2
@@ -276,7 +286,7 @@ namespace MMX.Engine
             new Color(128, 136, 128, 255), // 13
             new Color(200, 208, 200, 255), // 14
             new Color(32, 32, 32, 255) // 15
-};
+        };
 
         // Startup
         public const bool LOAD_ROM = true;
@@ -284,5 +294,6 @@ namespace MMX.Engine
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
         public const int INITIAL_LEVEL = 8;
+        public const int INITIAL_CHECKPOINT = 0;
     }
 }

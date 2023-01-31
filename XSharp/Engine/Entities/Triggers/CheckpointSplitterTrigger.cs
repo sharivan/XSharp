@@ -66,13 +66,13 @@ namespace MMX.Engine.Entities.Triggers
                     LastBackgroundTile = Engine.BackgroundTile;
                     LastPalette = Engine.Palette;
                     LastCheckpoint = Engine.CurrentCheckpoint;
-                    LastCameraConstraintBox = Engine.cameraConstraintsBox;
+                    LastCameraConstraintBox = Engine.CameraConstraintsBox;
                     Engine.CurrentCheckpoint = Checkpoint;
                 }
                 else
                 {
                     Engine.SetCheckpoint(LastCheckpoint, LastObjectTile, LastBackgroundTile, LastPalette);
-                    Engine.cameraConstraintsBox = LastCameraConstraintBox;
+                    Engine.CameraConstraintsBox = LastCameraConstraintBox;
                 }
             }
         }

@@ -5,9 +5,15 @@ namespace MMX.Engine
 {
     public readonly struct CollisionPlacement
     {
-        public CollisionFlags Flag { get; }
+        public CollisionFlags Flag
+        {
+            get;
+        }
 
-        public MapPlacement Placement { get; }
+        public MapPlacement Placement
+        {
+            get;
+        }
 
         internal CollisionPlacement(CollisionFlags flag, MapPlacement placement)
         {

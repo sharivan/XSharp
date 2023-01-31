@@ -19,7 +19,7 @@ namespace MMX.Engine.Entities.Effects
         }
 
         protected internal override void OnAnimationEnd(Animation animation)
-        {            
+        {
             base.OnAnimationEnd(animation);
             KillOnNextFrame();
         }

@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-
+﻿using MMX.Geometry;
 using MMX.Math;
-using MMX.Geometry;
 
 namespace MMX.Engine.Entities.Effects
 {
@@ -19,11 +17,11 @@ namespace MMX.Engine.Entities.Effects
             return FixedSingle.ZERO;
         }
 
-        internal override void OnSpawn()
+        protected internal override void OnSpawn()
         {
             base.OnSpawn();
 
-            CheckCollisionWithWorld = false; 
+            CheckCollisionWithWorld = false;
         }
     }
 }

@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using SharpDX.Direct3D9;
-
+﻿using MMX.Engine.Entities;
 using MMX.Geometry;
 using MMX.Math;
-
-using MMX.Engine.Entities;
-
-using MMXBox = MMX.Geometry.Box;
-
+using SharpDX.Direct3D9;
+using System;
+using System.Collections.Generic;
 using static MMX.Engine.Consts;
+using MMXBox = MMX.Geometry.Box;
 
 namespace MMX.Engine.World
 {
@@ -706,6 +702,7 @@ namespace MMX.Engine.World
                 CollisionData.LETHAL_SPIKE => true,
                 CollisionData.SLIPPERY_SLOPE_BASE => true,
                 CollisionData.SLIPPERY => true,
+                CollisionData.DOOR => true,
                 _ => false,
             };
         }

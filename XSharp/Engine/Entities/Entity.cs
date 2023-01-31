@@ -1,9 +1,7 @@
-﻿using System;
+﻿using MMX.Geometry;
+using System;
 using System.Collections.Generic;
 using System.IO;
-
-using MMX.Geometry;
-using static MMX.Engine.Entities.Enemies.Driller;
 using static MMX.Engine.World.World;
 
 namespace MMX.Engine.Entities
@@ -152,7 +150,7 @@ namespace MMX.Engine.Entities
             touchingEntities = new List<Entity>();
             childs = new List<Entity>();
 
-            states = new List<EntityState>();            
+            states = new List<EntityState>();
         }
 
         protected void SetupStateArray(int count)
@@ -326,7 +324,7 @@ namespace MMX.Engine.Entities
 
         protected internal virtual void OnFrame()
         {
-            if (Engine.FrameCounter == frameToKill)
+            if (frameToKill > 0 && Engine.FrameCounter >= frameToKill)
             {
                 frameToKill = -1;
                 Kill();
@@ -347,39 +345,40 @@ namespace MMX.Engine.Entities
             int count = touchingEntities.Count;
             for (int i = 0; i < count; i++)
             {
-                Entity obj = touchingEntities[i];
-                int index = touching.IndexOf(obj);
+                Entity entity = touchingEntities[i];
+                int index = touching.IndexOf(entity);
 
                 if (index == -1)
                 {
                     touchingEntities.RemoveAt(i);
                     i--;
                     count--;
-                    OnEndTouch(obj);
+                    OnEndTouch(entity);
                 }
-                else
+                else if (entity.Alive && !entity.MarkedToRemove)
                 {
                     touching.RemoveAt(index);
-                    OnTouching(obj);
+                    OnTouching(entity);
                 }
             }
 
-            foreach (Entity obj in touching)
-            {
-                touchingEntities.Add(obj);
-                OnStartTouch(obj);
-            }
+            foreach (Entity entity in touching)
+                if (entity.Alive && !entity.MarkedToRemove)
+                {
+                    touchingEntities.Add(entity);
+                    OnStartTouch(entity);
+                }
         }
 
-        protected virtual void OnStartTouch(Entity obj)
+        protected virtual void OnStartTouch(Entity entity)
         {
         }
 
-        protected virtual void OnTouching(Entity obj)
+        protected virtual void OnTouching(Entity entity)
         {
         }
 
-        protected virtual void OnEndTouch(Entity obj)
+        protected virtual void OnEndTouch(Entity entity)
         {
         }
 
@@ -407,6 +406,7 @@ namespace MMX.Engine.Entities
 
             MarkedToRemove = true;
             Engine.removedEntities.Add(this);
+            Engine.partition.Remove(this);
 
             OnDeath();
         }
@@ -421,7 +421,7 @@ namespace MMX.Engine.Entities
             frameToKill = frameNumber;
         }
 
-        public void Spawn()
+        public virtual void Spawn()
         {
             frameToKill = -1;
             currentStateID = -1;
@@ -430,7 +430,7 @@ namespace MMX.Engine.Entities
             Engine.addedEntities.Add(this);
         }
 
-        internal virtual void OnSpawn()
+        protected internal virtual void OnSpawn()
         {
         }
 

@@ -1,43 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
-using System.Configuration;
-using System.Threading;
-
+﻿using MMX.Engine.Entities;
+using MMX.Engine.Entities.Effects;
+using MMX.Engine.Entities.Enemies;
+using MMX.Engine.Entities.HUD;
+using MMX.Engine.Entities.Triggers;
+using MMX.Engine.Entities.Weapons;
+using MMX.Engine.Sound;
+using MMX.Engine.World;
+using MMX.Geometry;
+using MMX.Math;
+using MMX.ROM;
+using NAudio.Wave;
 using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
 using SharpDX.Mathematics.Interop;
 using SharpDX.Windows;
-
-using NAudio.Wave;
-
-using MMX.Math;
-using MMX.Geometry;
-using MMX.ROM;
-using MMX.Engine.World;
-using MMX.Engine.Entities;
-using MMX.Engine.Entities.Weapons;
-using MMX.Engine.Entities.Enemies;
-using MMX.Engine.Entities.Triggers;
-using MMX.Engine.Entities.Effects;
-using MMX.Engine.Sound;
-
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using static MMX.Engine.Consts;
 using static MMX.Engine.World.World;
-
 using Configuration = System.Configuration.Configuration;
+using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using Device9 = SharpDX.Direct3D9.Device;
+using DeviceType = SharpDX.Direct3D9.DeviceType;
 using DXSprite = SharpDX.Direct3D9.Sprite;
 using MMXBox = MMX.Geometry.Box;
 using MMXWorld = MMX.Engine.World.World;
-using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using ResultCode = SharpDX.Direct3D9.ResultCode;
-using DeviceType = SharpDX.Direct3D9.DeviceType;
 using SoundStream = MMX.Engine.Sound.SoundStream;
 using Sprite = MMX.Engine.Entities.Sprite;
 
@@ -283,11 +279,19 @@ namespace MMX.Engine
         private Font infoFont;
         private Font coordsTextFont;
         private Font highlightMapTextFont;
-        private Texture hitboxTexture;
+        private Texture whitePixelTexture;
+        private Texture blackPixelTexture;
         private Texture foregroundTilemap;
         private Texture backgroundTilemap;
         private Texture foregroundPalette;
         private Texture backgroundPalette;
+
+        private int lastLives;
+        private bool respawning;
+
+        private EffectHandle hasPaletteHandle;
+        private EffectHandle fadingLevelHandle;
+        private EffectHandle fadingColorHandle;
 
         private readonly List<SpriteSheet> spriteSheets;
         private readonly List<Texture> palettes;
@@ -305,7 +309,9 @@ namespace MMX.Engine
         private int entityCount;
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
-        internal List<(Entity entity, Vector origin)> respawnableEntities;
+        internal List<(Entity entity, Vector origin, bool wasVisible)> respawnableEntities;
+        private List<Sprite> sprites;
+        private List<HUD> huds;
         private ushort currentLevel;
         private bool changeLevel;
         private ushort levelToChange;
@@ -322,7 +328,6 @@ namespace MMX.Engine
         private Checkpoint currentCheckpoint;
         internal Vector cameraConstraintOrigin;
         internal List<Vector> cameraConstraints;
-        internal MMXBox cameraConstraintsBox;
 
         private bool frameAdvance;
         private bool recording;
@@ -421,6 +426,30 @@ namespace MMX.Engine
             private set;
         }
 
+        public HealthHUD HP
+        {
+            get;
+            private set;
+        }
+
+        public ReadyHUD ReadyHUD
+        {
+            get;
+            private set;
+        }
+
+        public FixedSingle HealthCapacity
+        {
+            get;
+            set;
+        } = X_INITIAL_HEALT_CAPACITY;
+
+        public MMXBox CameraConstraintsBox
+        {
+            get;
+            set;
+        }
+
         public Vector ExtensionOrigin
         {
             get => cameraConstraintOrigin;
@@ -429,9 +458,9 @@ namespace MMX.Engine
 
         public int ExtensionCount => cameraConstraints.Count;
 
-        public Vector MinCameraPos => noCameraConstraints ? World.BoundingBox.LeftTop : cameraConstraintsBox.LeftTop;
+        public Vector MinCameraPos => noCameraConstraints ? World.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
 
-        public Vector MaxCameraPos => noCameraConstraints ? World.BoundingBox.RightBottom : cameraConstraintsBox.RightBottom;
+        public Vector MaxCameraPos => noCameraConstraints ? World.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
 
         public bool Paused
         {
@@ -529,7 +558,7 @@ namespace MMX.Engine
                 currentCheckpoint = value;
                 if (currentCheckpoint != null)
                 {
-                    cameraConstraintsBox = currentCheckpoint.BoundingBox;
+                    CameraConstraintsBox = currentCheckpoint.BoundingBox;
 
                     if (romLoaded)
                     {
@@ -542,7 +571,7 @@ namespace MMX.Engine
                     }
                 }
                 else
-                    cameraConstraintsBox = World.BoundingBox;
+                    CameraConstraintsBox = World.BoundingBox;
             }
         }
 
@@ -611,6 +640,122 @@ namespace MMX.Engine
             private set;
         } = 0;
 
+        public float FadingLevel
+        {
+            get;
+            set;
+        } = 0;
+
+        public Color FadingColor
+        {
+            get;
+            set;
+        } = Color.Black;
+
+        public bool Fading
+        {
+            get;
+            private set;
+        }
+
+        public bool FadeIn
+        {
+            get;
+            private set;
+        }
+
+        public long FadingFrames
+        {
+            get;
+            private set;
+        }
+
+        public long FadingTick
+        {
+            get;
+            private set;
+        }
+
+        public Action OnFadingComplete
+        {
+            get;
+            private set;
+        }
+
+        public float FadingOSTLevel
+        {
+            get;
+            private set;
+        }
+
+        public float FadingOSTInitialVolume
+        {
+            get;
+            private set;
+        }
+
+        public float FadingOSTVolume
+        {
+            get;
+            private set;
+        }
+
+        public bool FadingOST
+        {
+            get;
+            private set;
+        }
+
+        public bool FadeInOST
+        {
+            get;
+            private set;
+        }
+
+        public long FadingOSTFrames
+        {
+            get;
+            private set;
+        }
+
+        public long FadingOSTTick
+        {
+            get;
+            private set;
+        }
+
+        public Action OnFadingOSTComplete
+        {
+            get;
+            private set;
+        }
+
+        public bool Spawning
+        {
+            get;
+            private set;
+        } = false;
+
+        public int SpawningFrameCounter
+        {
+            get;
+            private set;
+        } = 0;
+
+        public bool DyingEffectActive
+        {
+            get;
+            private set;
+        } = false;
+
+        public int DyingEffectFrameCounter
+        {
+            get;
+            private set;
+        } = 0;
+
+        public Random RNG => random;
+
         public GameEngine(Form form)
         {
             Form = form;
@@ -655,6 +800,8 @@ namespace MMX.Engine
                 soundChannels.Add((player, ss, false));
             }
 
+            soundChannels[3].player.Volume = 0.5f;
+
             // 0
             var stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\01 - MMX - X Regular Shot.wav", SoundFormat.WAVE);
             soundStreams.Add(stream);
@@ -691,6 +838,46 @@ namespace MMX.Engine
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\30 - MMX - Small Hit.wav", SoundFormat.WAVE);
             soundStreams.Add(stream);
 
+            // 9
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\10 - MMX - X Hurt.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 10
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\11 - MMX - X Die.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 11
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\11 - MMX - X Die.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 12
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\56 - MMX - Enemy Die (1).wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 13
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\57 - MMX - Enemy Die (2).wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 14
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\58 - MMX - Enemy Die (3).wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 15
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\59 - MMX - Enemy Die (4).wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 16
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 17
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\18 - MMX - X Fade Out.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 18
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\12 - Chill Penguin.mp3", SoundFormat.MP3);
+            soundStreams.Add(stream);
+
             directInput = new DirectInput();
 
             keyboard = new Keyboard(directInput);
@@ -714,14 +901,16 @@ namespace MMX.Engine
 
             World = new MMXWorld(this, 32, 32);
             partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
-            cameraConstraintsBox = World.BoundingBox;
+            CameraConstraintsBox = World.BoundingBox;
 
             random = new Random();
             checkpoints = new List<Checkpoint>();
             entities = new Entity[MAX_ENTITIES];
             addedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
-            respawnableEntities = new List<(Entity, Vector)>();
+            respawnableEntities = new List<(Entity, Vector, bool)>();
+            sprites = new List<Sprite>();
+            huds = new List<HUD>();
 
             firstFreeEntityIndex = 0;
             firstEntity = null;
@@ -747,7 +936,7 @@ namespace MMX.Engine
                 }
             }
 
-            LoadLevel(INITIAL_LEVEL);
+            LoadLevel(INITIAL_LEVEL, INITIAL_CHECKPOINT);
 
             if (romLoaded)
                 mmx.UpdateVRAMCache();
@@ -826,6 +1015,39 @@ namespace MMX.Engine
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
             sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 1), new Vector(27, 47) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
             sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+        }
+
+        public void StartFading(Color color, int frames, bool fadeIn, Action onFadingComplete = null)
+        {
+            Fading = true;
+            FadingColor = color;
+            FadingFrames = frames;
+            FadingLevel = fadeIn ? 1 : 0;
+            FadeIn = fadeIn;
+            FadingTick = 0;
+            OnFadingComplete = onFadingComplete;
+        }
+
+        public void StartFading(Color color, int frames, Action onFadingComplete = null)
+        {
+            StartFading(color, frames, false, onFadingComplete);
+        }
+
+        public void StartFadingOST(float volume, int frames, bool fadeIn, Action onFadingComplete = null)
+        {
+            FadingOST = true;
+            FadingOSTInitialVolume = soundChannels[3].player.Volume;
+            FadingOSTVolume = volume;
+            FadingOSTFrames = frames;
+            FadingOSTLevel = fadeIn ? 1 : 0;
+            FadeInOST = fadeIn;
+            FadingOSTTick = 0;
+            OnFadingOSTComplete = onFadingComplete;
+        }
+
+        public void StartFadingOST(float volume, int frames, Action onFadingComplete = null)
+        {
+            StartFadingOST(volume, frames, false, onFadingComplete);
         }
 
         public static uint NextHighestPowerOfTwo(uint v)
@@ -1042,65 +1264,76 @@ namespace MMX.Engine
             vb.Unlock();
         }
 
-        public void RenderSprite(Texture texture, Texture palette, MMXBox box, Matrix transform)
+        public void RenderSprite(Texture texture, Texture palette, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             RectangleF rDest = WorldBoxToScreen(box);
 
-            float x = rDest.Left;
-            float y = rDest.Top;
-
             var matScaling = Matrix.Scaling(4, 4, 1);
-            var matTranslation = Matrix.Translation(x, y, 0);
-            Matrix matTransform = matTranslation * transform * matScaling;
 
             sprite.Begin();
 
             Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
 
-            Device.VertexShader = null;
+            Device.PixelShader = PixelShader;
 
             if (palette != null)
             {
-                Device.PixelShader = PixelShader;
+                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, true);
                 Device.SetTexture(1, palette);
             }
             else
-                Device.PixelShader = null;
+                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
 
-            sprite.Transform = matTransform;
-            sprite.Draw(texture, Color.FromRgba(0xffffffff));
+            if (Fading)
+            {
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingLevel);
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingColor.ToVector4());
+            }
+            else
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
+
+            for (int i = 0; i < repeatX; i++)
+                for (int j = 0; j < repeatY; j++)
+                {
+                    float x = rDest.Left + i * rDest.Width;
+                    float y = rDest.Top + j * rDest.Height;
+                    var matTranslation = Matrix.Translation(x, y, 0);
+                    Matrix matTransform = matTranslation * transform * matScaling;
+                    sprite.Transform = matTransform;
+                    sprite.Draw(texture, Color.FromRgba(0xffffffff));
+                }
 
             sprite.End();
         }
 
-        public void RenderSprite(Texture texture, MMXBox box, Matrix transform)
+        public void RenderSprite(Texture texture, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
-            RenderSprite(texture, null, box, transform);
+            RenderSprite(texture, null, box, transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, Vector v, Matrix transform)
+        public void RenderSprite(Texture texture, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
-            RenderSprite(texture, null, new MMXBox(v.X, v.Y, description.Width, description.Height), transform);
+            RenderSprite(texture, null, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, FixedSingle x, FixedSingle y, Matrix transform)
+        public void RenderSprite(Texture texture, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
-            RenderSprite(texture, null, new MMXBox(x, y, description.Width, description.Height), transform);
+            RenderSprite(texture, null, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, Texture palette, Vector v, Matrix transform)
+        public void RenderSprite(Texture texture, Texture palette, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
-            RenderSprite(texture, palette, new MMXBox(v.X, v.Y, description.Width, description.Height), transform);
+            RenderSprite(texture, palette, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, Texture palette, FixedSingle x, FixedSingle y, Matrix transform)
+        public void RenderSprite(Texture texture, Texture palette, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
-            RenderSprite(texture, palette, new MMXBox(x, y, description.Width, description.Height), transform);
+            RenderSprite(texture, palette, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
         }
 
         private void AddEntity(Entity entity)
@@ -1127,11 +1360,28 @@ namespace MMX.Engine
                     firstFreeEntityIndex = i;
                     break;
                 }
+
+            if (entity is Sprite sprite)
+            {
+                if (sprite is HUD hud)
+                    huds.Add(hud);
+                else
+                    sprites.Add(sprite);
+            }
         }
 
         private void RemoveEntity(int index)
         {
             var entity = entities[index];
+
+            if (entity is Sprite sprite)
+            {
+                if (sprite is HUD hud)
+                    huds.Remove(hud);
+                else
+                    sprites.Remove(sprite);
+            }
+
             var next = entity.next;
             var previous = entity.previous;
 
@@ -1540,16 +1790,88 @@ namespace MMX.Engine
 
             FrameCounter++;
 
+            if (Fading)
+            {
+                FadingTick++;
+                if (FadingTick > FadingFrames)
+                {
+                    Fading = false;
+                    OnFadingComplete?.Invoke();
+                }
+                else
+                {
+                    FadingLevel = (float) FadingTick / FadingFrames;
+                    if (FadeIn)
+                        FadingLevel = 1 - FadingLevel;
+                }
+            }
+
+            if (FadingOST)
+            {
+                FadingOSTTick++;
+                if (FadingOSTTick > FadingOSTFrames)
+                {
+                    FadingOST = false;
+                    OnFadingOSTComplete?.Invoke();
+                }
+                else
+                {
+                    FadingOSTLevel = (float) FadingOSTTick / FadingOSTFrames;
+                    if (FadeInOST)
+                        FadingOSTLevel = 1 - FadingOSTLevel;
+
+                    soundChannels[3].player.Volume = FadingOSTInitialVolume * (1 - FadingOSTLevel) + FadingOSTVolume * FadingOSTLevel;
+                }
+            }
+
+            if (Spawning)
+            {
+                SpawningFrameCounter++;
+                if (SpawningFrameCounter >= SPAWNING_BLACK_SCREEN_FRAMES)
+                {
+                    Spawning = false;
+
+                    if (romLoaded && mmx.Type == 0 && mmx.Level == 8)
+                    {
+                        soundChannels[3].player.Volume = 0.5f;
+                        PlayOST(18, 83, 50.152);
+                    }
+
+                    StartFading(Color.Black, 26, true, StartReadyHUD);
+                }
+            }
+
+            if (DyingEffectActive)
+            {
+                if (DyingEffectFrameCounter % 32 == 0)
+                    CreateXDieExplosionEffect(DyingEffectFrameCounter % 64 == 0 ? 0 : System.Math.PI / 8);
+                else if (DyingEffectFrameCounter == 1)
+                    CreateXDieExplosionEffect(System.Math.PI / 8);
+
+                DyingEffectFrameCounter++;
+            }
+
             if (!loadingLevel)
             {
                 // TODO : Please, optmize me!
-                foreach (var (entity, origin) in respawnableEntities)
+                for (int i = 0; i < respawnableEntities.Count; i++)
                 {
-                    if (!entity.Alive && origin < World.Camera.ExtendedBoundingBox && !(origin < World.Camera.BoundingBox))
+                    var (entity, origin, wasVisible) = respawnableEntities[i];
+                    if (origin < World.Camera.ExtendedBoundingBox)
                     {
-                        entity.Origin = origin;
-                        entity.Spawn();
+                        if (!wasVisible)
+                        {
+                            if (!entity.Alive)
+                            {
+                                entity.Origin = origin;
+                                entity.Spawn();
+                            }
+                        }
+
+                        respawnableEntities[i] = (entity, origin, true);
                     }
+                    else
+                        respawnableEntities[i] = (entity, origin, false);
                 }
 
                 if (addedEntities.Count > 0)
@@ -1558,7 +1880,6 @@ namespace MMX.Engine
                     {
                         AddEntity(added);
                         added.OnSpawn();
-
                         partition.Insert(added);
                     }
 
@@ -1567,7 +1888,7 @@ namespace MMX.Engine
 
                 Player?.PushKeys(keys);
 
-                if (paused)
+                if (paused || Player != null && Player.DyingFreeze)
                     Player?.OnFrame();
                 else
                 {
@@ -1585,7 +1906,6 @@ namespace MMX.Engine
                             removed.Alive = false;
                             removed.Dispose();
 
-                            partition.Remove(removed);
                             RemoveEntity(removed);
 
                             DisposeResource(removed);
@@ -1594,9 +1914,9 @@ namespace MMX.Engine
                         removedEntities.Clear();
                     }
                 }
-            }
 
-            World.OnFrame();
+                World.OnFrame();
+            }
 
             if (changeLevel)
             {
@@ -1662,14 +1982,6 @@ namespace MMX.Engine
             return ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
         }
 
-        public void PlaySound(string soundName, bool loop = false)
-        {
-        }
-
-        public void StopSound(string soundName)
-        {
-        }
-
         public void TogglePauseGame()
         {
             if (paused)
@@ -1699,7 +2011,7 @@ namespace MMX.Engine
             gameOver = true;
         }
 
-        private void SpawnPlayer()
+        public void SpawnPlayer()
         {
             Vector spawnPos;
             Vector cameraPos;
@@ -1714,18 +2026,22 @@ namespace MMX.Engine
                 cameraPos = new Vector(SCREEN_WIDTH * 0.5f, 0);
             }
 
-            World.Camera.LeftTop = cameraPos;
+            World.Camera.RightTop = cameraPos;
 
-            Player = new Player(this, "X", spawnPos);
-            Player.Spawn();
+            SpawnX(spawnPos);
+            CreateHP();
 
             World.Camera.FocusOn = Player;
 
-            if (checkpoints.Count > 0)
-                CurrentCheckpoint = checkpoints[0];
+            CurrentCheckpoint = checkpoints.Count > 0 ? checkpoints[mmx.Point] : null;
         }
 
-        public void LoadLevel(ushort level)
+        public void LoadLevel()
+        {
+            LoadLevel(currentLevel, (ushort) (CurrentCheckpoint != null ? CurrentCheckpoint.Index : 0));
+        }
+
+        public void LoadLevel(ushort level, ushort checkpoint = 0)
         {
             paused = false;
             lock (this)
@@ -1738,7 +2054,7 @@ namespace MMX.Engine
 
                 if (romLoaded)
                 {
-                    mmx.SetLevel(level, 0);
+                    mmx.SetLevel(level, checkpoint);
 
                     mmx.LoadLevel();
                     mmx.LoadEvents(this);
@@ -1746,26 +2062,31 @@ namespace MMX.Engine
 
                     mmx.LoadBackground();
                     mmx.LoadToWorld(this, true);
+
+                    CurrentCheckpoint = checkpoints[mmx.Point];
+                    CameraConstraintsBox = CurrentCheckpoint.BoundingBox;
                 }
+                else
+                    CameraConstraintsBox = World.BoundingBox;
 
                 World.Tessellate();
 
-                Player oldPlayer = Player;
-                SpawnPlayer();
-
-                if (oldPlayer != null)
-                {
-                    Player.Lives = oldPlayer.Lives;
-                }
-
-                AddDriller(new Vector(160, 1024));
-
                 loadingLevel = false;
+
+                Spawning = true;
+                SpawningFrameCounter = 0;
+                respawning = false;
+
+                World.Camera.FocusOn = null;
+                var cameraPos = romLoaded ? mmx.CameraPos : Vector.NULL_VECTOR;
+                World.Camera.LeftTop = cameraPos;
             }
         }
 
         private void UnloadLevel()
         {
+            World.Dispose();
+
             foreach (var entity in addedEntities)
                 if (entity is Sprite sprite)
                     DisposeResource(sprite);
@@ -1774,12 +2095,19 @@ namespace MMX.Engine
                 if (entity is Sprite sprite)
                     DisposeResource(sprite);
 
+            huds.Clear();
+            sprites.Clear();
             checkpoints.Clear();
             ClearEntities();
             addedEntities.Clear();
             removedEntities.Clear();
             respawnableEntities.Clear();
             partition.Clear();
+
+            lastLives = Player != null ? Player.Lives : X_INITIAL_LIVES;
+            Player = null;
+            ReadyHUD = null;
+            HP = null;
 
             long currentMemoryUsage = GC.GetTotalMemory(true);
             long delta = currentMemoryUsage - lastCurrentMemoryUsage;
@@ -1956,7 +2284,7 @@ namespace MMX.Engine
             FillRectangle(WorldBoxToScreen(box), color);
         }
 
-        public void FillRectangle(RectangleF rect, Color color)
+        public void FillRectangle(RectangleF rect, Color color, bool usePixelShader = false)
         {
             float x = 4 * rect.Left;
             float y = 4 * rect.Top;
@@ -1971,11 +2299,24 @@ namespace MMX.Engine
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
 
             Device.VertexShader = null;
-            Device.PixelShader = null;
+
+            if (usePixelShader)
+            {
+                Device.PixelShader = PixelShader;
+                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
+
+                if (Fading)
+                {
+                    PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingLevel);
+                    PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingColor.ToVector4());
+                }
+                else
+                    PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
+            }
 
             sprite.Transform = matTransform;
 
-            sprite.Draw(hitboxTexture, color);
+            sprite.Draw(color == Color.Black ? blackPixelTexture : whitePixelTexture, color);
             sprite.End();
         }
 
@@ -2008,14 +2349,16 @@ namespace MMX.Engine
             var device = new Device9(Direct3D, 0, DeviceType.Hardware, Form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
             Device = device;
 
-            var function = new ShaderBytecode(VERTEX_SHADER_BYTECODE);
-            VertexShader = new VertexShader(device, function);
-
-            function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
+            //function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
+            var function = ShaderBytecode.CompileFromFile("PaletteShader.hlsl", "main", "ps_2_0");
             PixelShader = new PixelShader(device, function);
 
+            hasPaletteHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "hasPalette");
+            fadingLevelHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
+            fadingColorHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
+
             device.VertexShader = null;
-            device.PixelShader = null;
+            device.PixelShader = PixelShader;
             device.VertexFormat = D3DFVF_TLVERTEX;
 
             VertexBuffer = new VertexBuffer(device, VERTEX_SIZE * 4, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
@@ -2077,9 +2420,14 @@ namespace MMX.Engine
 
             highlightMapTextFont = new Font(device, fontDescription);
 
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.hitbox.png"))
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.white_pixel.png"))
             {
-                hitboxTexture = Texture.FromStream(device, stream);
+                whitePixelTexture = Texture.FromStream(device, stream);
+            }
+
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.black_pixel.png"))
+            {
+                blackPixelTexture = Texture.FromStream(device, stream);
             }
 
             SetupQuad(VertexBuffer);
@@ -2136,6 +2484,18 @@ namespace MMX.Engine
             var drillerSpriteSheet = new SpriteSheet(this, "Driller", true, true);
             spriteSheets.Add(drillerSpriteSheet);
 
+            // 5
+            var explosionSpriteSheet = new SpriteSheet(this, "Explosion", true, true);
+            spriteSheets.Add(explosionSpriteSheet);
+
+            // 6
+            var hpSpriteSheet = new SpriteSheet(this, "HP", true, true);
+            spriteSheets.Add(hpSpriteSheet);
+
+            // 7
+            var readySpriteSheet = new SpriteSheet(this, "Ready", true, true);
+            spriteSheets.Add(readySpriteSheet);
+
             // Setup frame sequences (animations)
 
             // X
@@ -2163,10 +2523,10 @@ namespace MMX.Engine
             sequence.AddFrame(8, 4, 156, 28, 30, 34);
             sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
 
-            sequence = xSpriteSheet.AddFrameSquence("Stand", 0);
+            sequence = xSpriteSheet.AddFrameSquence("Stand");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(9, 3, 226, 29, 30, 34, 80);
+            sequence.AddFrame(9, 3, 226, 29, 30, 34, 80, true);
             sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
             sequence.AddFrame(9, 3, 295, 29, 30, 34, 8);
             sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
@@ -2179,21 +2539,39 @@ namespace MMX.Engine
             sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
             sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
 
-            sequence = xSpriteSheet.AddFrameSquence("Shooting", 4);
+            sequence = xSpriteSheet.AddFrameSquence("Tired");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(9, 4, 166, 331, 30, 35, 10, true);
+            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
+            sequence.AddFrame(9, 2, 230, 333, 30, 33, 10);
+            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
+            sequence.AddFrame(9, 4, 166, 331, 30, 35, 10);
+            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
+            sequence.AddFrame(9, 2, 230, 333, 30, 33, 10);
+            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
+            sequence.AddFrame(9, 4, 166, 331, 30, 35, 10);
+            sequence.AddFrame(9, 3, 262, 332, 30, 34, 2);
+            sequence.AddFrame(9, 3, 294, 332, 30, 34, 6);
+            sequence.AddFrame(9, 3, 262, 332, 30, 34, 2);
+            sequence.AddFrame(9, 2, 230, 333, 30, 33, 10);
+            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
+
+            sequence = xSpriteSheet.AddFrameSquence("Shooting");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(9, 3, 365, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 402, 29, 29, 34, 12);
+            sequence.AddFrame(9, 3, 402, 29, 29, 34, 12, true);
 
             sequence = xSpriteSheet.AddFrameSquence("PreWalking");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(8, 3, 5, 67, 30, 34, 5);
 
-            sequence = xSpriteSheet.AddFrameSquence("Walking", 0);
+            sequence = xSpriteSheet.AddFrameSquence("Walking");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 3, 50, 67, 20, 34);
+            sequence.AddFrame(1, 3, 50, 67, 20, 34, 1, true);
             sequence.AddFrame(3, 4, 75, 67, 23, 35, 2);
             sequence.AddFrame(7, 3, 105, 68, 32, 34, 3);
             sequence.AddFrame(10, 2, 145, 68, 34, 33, 3);
@@ -2205,10 +2583,10 @@ namespace MMX.Engine
             sequence.AddFrame(7, 2, 359, 68, 29, 33, 3);
             sequence.AddFrame(1, 3, 50, 67, 20, 34);
 
-            sequence = xSpriteSheet.AddFrameSquence("ShootWalking", 0);
+            sequence = xSpriteSheet.AddFrameSquence("ShootWalking");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(1, 3, 41, 107, 29, 34);
+            sequence.AddFrame(1, 3, 41, 107, 29, 34, 1, true);
             sequence.AddFrame(3, 4, 76, 107, 32, 35, 2);
             sequence.AddFrame(7, 3, 115, 108, 35, 34, 3);
             sequence.AddFrame(10, 2, 159, 108, 38, 33, 3);
@@ -2232,27 +2610,27 @@ namespace MMX.Engine
             sequence.AddFrame(1, 0, 201, 148, 29, 37, 3);
             sequence.AddFrame(-5, 1, 240, 148, 24, 41);
 
-            sequence = xSpriteSheet.AddFrameSquence("GoingUp", 0);
+            sequence = xSpriteSheet.AddFrameSquence("GoingUp");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(-1, 5, 56, 146, 19, 46);
+            sequence.AddFrame(-1, 5, 56, 146, 19, 46, 1, true);
 
-            sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp", 0);
+            sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(-1, 5, 271, 146, 27, 46);
+            sequence.AddFrame(-1, 5, 271, 146, 27, 46, 1, true);
 
-            sequence = xSpriteSheet.AddFrameSquence("Falling", 4);
+            sequence = xSpriteSheet.AddFrameSquence("Falling");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 5, 80, 150, 23, 41, 4);
-            sequence.AddFrame(5, 6, 108, 150, 27, 42);
+            sequence.AddFrame(5, 6, 108, 150, 27, 42, 1, true);
 
-            sequence = xSpriteSheet.AddFrameSquence("ShootFalling", 4);
+            sequence = xSpriteSheet.AddFrameSquence("ShootFalling");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
-            sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42);
+            sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42, 1, true);
 
             sequence = xSpriteSheet.AddFrameSquence("Landing");
             sequence.BoudingBoxOriginOffset = normalOffset;
@@ -2281,10 +2659,10 @@ namespace MMX.Engine
             sequence.CollisionBox = dashingCollisionBox;
             sequence.AddFrame(14, 7, 34, 341, 38, 26);
 
-            sequence = xSpriteSheet.AddFrameSquence("ShootDashing", 0);
+            sequence = xSpriteSheet.AddFrameSquence("ShootDashing");
             sequence.BoudingBoxOriginOffset = dashingOffset;
             sequence.CollisionBox = dashingCollisionBox;
-            sequence.AddFrame(14, 7, 115, 341, 48, 26);
+            sequence.AddFrame(14, 7, 115, 341, 48, 26, 1, true);
 
             sequence = xSpriteSheet.AddFrameSquence("PostDashing");
             sequence.BoudingBoxOriginOffset = normalOffset;
@@ -2327,20 +2705,20 @@ namespace MMX.Engine
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(3, 4, 7, 267, 21, 36, 8);
 
-            sequence = xSpriteSheet.AddFrameSquence("LadderMoving", 0);
+            sequence = xSpriteSheet.AddFrameSquence("LadderMoving");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(2, 10, 111, 261, 18, 49, 8);
+            sequence.AddFrame(2, 10, 111, 261, 18, 49, 8, true);
             sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
             sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
             sequence.AddFrame(5, 14, 36, 261, 18, 49, 8);
             sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
             sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
 
-            sequence = xSpriteSheet.AddFrameSquence("ShootLadder", 0);
+            sequence = xSpriteSheet.AddFrameSquence("ShootLadder");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(5, 14, 137, 261, 26, 48, 16);
+            sequence.AddFrame(5, 14, 137, 261, 26, 48, 16, true);
 
             sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
             sequence.BoudingBoxOriginOffset = normalOffset;
@@ -2352,6 +2730,55 @@ namespace MMX.Engine
             sequence.CollisionBox = normalCollisionBox;
             sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
             sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
+
+            sequence = xSpriteSheet.AddFrameSquence("TakingDamage");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(6, 1, 478, 157, 25, 36, 4);
+            sequence.AddFrame(10, -1, 509, 159, 29, 34, 1);
+            sequence.AddFrame(10, -1, 543, 159, 29, 34, 1);
+            sequence.AddFrame(11, 9, 578, 149, 32, 48, 2);
+            sequence.AddFrame(10, 1, 616, 159, 31, 34, 2);
+            sequence.AddFrame(11, 11, 654, 149, 32, 48, 2);
+            sequence.AddFrame(10, 1, 692, 159, 29, 34, 2);
+            sequence.AddFrame(11, 11, 727, 149, 32, 48, 2);
+            sequence.AddFrame(12, -1, 768, 159, 31, 34, 1);
+            sequence.AddFrame(10, 1, 804, 158, 29, 35, 1);
+            sequence.AddFrame(10, -1, 509, 159, 29, 34, 8);
+            sequence.AddFrame(6, 1, 478, 157, 25, 36, 2);
+
+            sequence = xSpriteSheet.AddFrameSquence("Dying");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(6, 1, 478, 157, 25, 36, 30);
+
+            sequence = xSpriteSheet.AddFrameSquence("DyingExplosion");
+            sequence.AddFrame(396, 344, 6, 6, 8, false, OriginPosition.CENTER);
+            sequence.AddFrame(406, 343, 8, 8, 8, false, OriginPosition.CENTER);
+            sequence.AddFrame(417, 342, 9, 9, 8, false, OriginPosition.CENTER);
+            sequence.AddFrame(429, 341, 11, 11, 8, true, OriginPosition.CENTER);
+            sequence.AddFrame(443, 339, 15, 15, 8, false, OriginPosition.CENTER);
+
+            sequence = xSpriteSheet.AddFrameSquence("Victory");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(0, 0, 221, 253, 34, 48, 10);
+            sequence.AddFrame(0, 0, 259, 253, 34, 48, 1);
+            sequence.AddFrame(0, 0, 297, 253, 34, 48, 2);
+            sequence.AddFrame(0, 0, 335, 253, 34, 48, 2);
+            sequence.AddFrame(0, 0, 373, 253, 34, 48, 3);
+            sequence.AddFrame(0, 0, 221, 253, 34, 48, 40);
+
+            sequence = xSpriteSheet.AddFrameSquence("PreTeleporting");
+            sequence.BoudingBoxOriginOffset = normalOffset;
+            sequence.CollisionBox = normalCollisionBox;
+            sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
+            sequence.AddFrame(8, 4, 156, 28, 30, 34);
+            sequence.AddFrame(8, 5, 120, 27, 30, 36);
+            sequence.AddFrame(8, 8, 84, 24, 30, 39);
+            sequence.AddFrame(8, 11, 46, 21, 30, 42);
+            sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
+            sequence.AddFrame(-4, 32, 5, 15, 8, 48);
 
             xSpriteSheet.ReleaseCurrentTexture();
 
@@ -2552,6 +2979,84 @@ namespace MMX.Engine
 
             drillerSpriteSheet.ReleaseCurrentTexture();
 
+            // Explosion
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Explosion.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                explosionSpriteSheet.CurrentTexture = texture;
+            }
+
+            sequence = explosionSpriteSheet.AddFrameSquence("Explosion");
+            sequence.AddFrame(0, 0, 38, 48, 1, false, OriginPosition.CENTER);
+            sequence.AddFrame(38, 0, 38, 48, 2, false, OriginPosition.CENTER);
+            sequence.AddFrame(0, 0, 38, 48, 3, false, OriginPosition.CENTER);
+            sequence.AddFrame(76, 0, 38, 48, 3, false, OriginPosition.CENTER);
+            sequence.AddFrame(114, 0, 38, 48, 3, false, OriginPosition.CENTER);
+            sequence.AddFrame(0, 48, 38, 48, 3, false, OriginPosition.CENTER);
+            sequence.AddFrame(38, 48, 38, 48, 3, false, OriginPosition.CENTER);
+            sequence.AddFrame(76, 48, 38, 48, 2, false, OriginPosition.CENTER);
+            sequence.AddFrame(114, 48, 38, 48, 2, false, OriginPosition.CENTER);
+
+            explosionSpriteSheet.ReleaseCurrentTexture();
+
+            // HP
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.HP.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                hpSpriteSheet.CurrentTexture = texture;
+            }
+
+            sequence = hpSpriteSheet.AddFrameSquence("HPTop");
+            sequence.AddFrame(0, 0, 14, 4, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("HPBottom");
+            sequence.AddFrame(0, 4, 14, 16, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("HPMiddle");
+            sequence.AddFrame(0, 20, 14, 2, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("HPMiddleEmpty");
+            sequence.AddFrame(0, 22, 14, 2, 1, true, OriginPosition.LEFT_TOP);
+
+            hpSpriteSheet.ReleaseCurrentTexture();
+
+            // Ready
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Ready.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                readySpriteSheet.CurrentTexture = texture;
+            }
+
+            sequence = readySpriteSheet.AddFrameSquence("Ready");
+            sequence.AddFrame(5, 22, 8, 13, 1, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(21, 22, 16, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(45, 22, 16, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(68, 22, 24, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(107, 22, 24, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(139, 22, 31, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(181, 22, 30, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(220, 22, 39, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(267, 22, 39, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(314, 22, 39, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(367, 22, 39, 13, 2, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(413, 22, 39, 13, 10, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
+            sequence.AddFrame(413, 22, 39, 13, 9, false, OriginPosition.LEFT_TOP);
+
+            readySpriteSheet.ReleaseCurrentTexture();
+
+            // Load tiles & object positions from the ROM (if exist)
+
             if (romLoaded)
             {
                 mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, mmx.PalLoad);
@@ -2591,7 +3096,8 @@ namespace MMX.Engine
 
             World?.OnDisposeDevice();
 
-            DisposeResource(hitboxTexture);
+            DisposeResource(whitePixelTexture);
+            DisposeResource(blackPixelTexture);
             DisposeResource(foregroundTilemap);
             DisposeResource(backgroundTilemap);
             DisposeResource(foregroundPalette);
@@ -2683,7 +3189,7 @@ namespace MMX.Engine
                 if (drawX)
                 {
                     // Render X
-                    Player.Render();
+                    Player?.Render();
                 }
 
                 if (drawSprites)
@@ -2695,7 +3201,7 @@ namespace MMX.Engine
                         if (!entity.Alive || entity.Equals(Player))
                             continue;
 
-                        if (entity is not Sprite sprite)
+                        if (entity is not Sprite sprite || sprite is HUD)
                             continue;
 
                         sprite.Render();
@@ -2712,7 +3218,7 @@ namespace MMX.Engine
 
                         switch (entity)
                         {
-                            case Sprite sprite when drawCollisionBox && entity is not SpriteEffect:
+                            case Sprite sprite when drawCollisionBox && sprite is not HUD && sprite is not SpriteEffect:
                             {
                                 MMXBox collisionBox = sprite.CollisionBox;
                                 var rect = WorldBoxToScreen(collisionBox);
@@ -2777,31 +3283,43 @@ namespace MMX.Engine
                 if (drawUpLayer)
                     World.RenderForeground(1);
 
-                if (drawTouchingMapBounds)
+                foreach (HUD hud in huds)
                 {
-                    MMXBox collisionBox = Player.CollisionBox;
-
-                    CheckAndDrawTouchingMaps(collisionBox + Vector.LEFT_VECTOR, true);
-                    CheckAndDrawTouchingMaps(collisionBox + Vector.UP_VECTOR);
-                    CheckAndDrawTouchingMaps(collisionBox + Vector.RIGHT_VECTOR, true);
-                    CheckAndDrawTouchingMaps(collisionBox + Vector.DOWN_VECTOR);
+                    hud.UpdateOrigin();
+                    hud.Render();
                 }
 
-                if (drawCollisionBox)
-                {
-                    MMXBox hitbox = Player.HitBox;
-                    var rect = WorldBoxToScreen(hitbox);
-                    DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
-                    FillRectangle(rect, HITBOX_COLOR);
-                }
+                if (respawning || Spawning)
+                    FillRectangle(WorldBoxToScreen(World.Camera.BoundingBox), Color.Black, true);
 
-                if (showColliders)
+                if (Player != null)
                 {
-                    BoxCollider collider = Player.Collider;
-                    FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
-                    FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
-                    FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
-                    FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
+                    if (drawTouchingMapBounds)
+                    {
+                        MMXBox collisionBox = Player.CollisionBox;
+
+                        CheckAndDrawTouchingMaps(collisionBox + Vector.LEFT_VECTOR, true);
+                        CheckAndDrawTouchingMaps(collisionBox + Vector.UP_VECTOR);
+                        CheckAndDrawTouchingMaps(collisionBox + Vector.RIGHT_VECTOR, true);
+                        CheckAndDrawTouchingMaps(collisionBox + Vector.DOWN_VECTOR);
+                    }
+
+                    if (drawCollisionBox)
+                    {
+                        MMXBox hitbox = Player.HitBox;
+                        var rect = WorldBoxToScreen(hitbox);
+                        DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
+                        FillRectangle(rect, HITBOX_COLOR);
+                    }
+
+                    if (showColliders)
+                    {
+                        BoxCollider collider = Player.Collider;
+                        FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
+                        FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
+                        FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
+                        FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
+                    }
                 }
 
                 if (drawHighlightedPointingTiles)
@@ -2885,14 +3403,13 @@ namespace MMX.Engine
             finally
             {
                 if (nextFrame)
-                    for (var entity = firstEntity; entity != null; entity = entity.next)
-                    {
-                        if (changeLevel)
-                            break;
-
-                        if (entity.Alive)
+                {
+                    if (Player == null || !Player.DyingFreeze)
+                        for (var entity = firstEntity; entity != null; entity = entity.next)
                             entity.PostThink();
-                    }
+                    else
+                        Player.PostThink();
+                }
             }
         }
 
@@ -2940,11 +3457,6 @@ namespace MMX.Engine
             config.Save();
         }
 
-        /*public MMXVector CheckCollisionWithTiles(MMXBox collisionBox, MMXVector dir, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return world.CheckCollision(collisionBox, dir, ignore);
-        }*/
-
         public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
         {
             return World.GetTouchingFlags(collisionBox, dir, ignore, preciseCollisionCheck);
@@ -2964,16 +3476,6 @@ namespace MMX.Engine
         {
             return World.GetTouchingFlags(collisionBox, dir, placements, out slopeTriangle, ignore, preciseCollisionCheck);
         }
-
-        /*public Box MoveContactSolid(Box box, Vector dir, Fixed maxDistance, Fixed maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return world.MoveContactSolid(box, dir, maxDistance, maskSize, ignore);
-        }
-
-        public Box MoveContactSolid(Box box, Vector dir, out RightTriangle slope, Fixed maxDistance, Fixed maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return world.MoveContactSolid(box, dir, out slope, maxDistance, maskSize, ignore);
-        }*/
 
         public MMXBox MoveContactFloor(MMXBox box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
         {
@@ -3021,7 +3523,7 @@ namespace MMX.Engine
             if (currentCheckpoint != null)
                 writer.Write(currentCheckpoint.Point);
 
-            cameraConstraintsBox.Write(writer);
+            CameraConstraintsBox.Write(writer);
 
             writer.Write(gameOver);
             writer.Write(currentStageMusic ?? "");
@@ -3046,7 +3548,7 @@ namespace MMX.Engine
             int checkPointIndex = reader.ReadInt32();
             currentCheckpoint = checkPointIndex != -1 ? (Checkpoint) entities[checkPointIndex] : null;
 
-            cameraConstraintsBox = new MMXBox(reader);
+            CameraConstraintsBox = new MMXBox(reader);
 
             gameOver = reader.ReadBoolean();
             currentStageMusic = reader.ReadString();
@@ -3114,9 +3616,9 @@ namespace MMX.Engine
             return trigger;
         }
 
-        public Enemy AddEnemy(ushort index, Vector origin)
+        public Enemy AddEnemy(ushort id, ushort subid, Vector origin)
         {
-            return AddDriller(origin);
+            return id != 0x4D && (id != 0x2F || subid == 0) ? AddDriller(origin) : null;
         }
 
         public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
@@ -3128,7 +3630,7 @@ namespace MMX.Engine
 
         internal void UpdateCameraConstraintsBox()
         {
-            MMXBox boundingBox = cameraConstraintsBox;
+            MMXBox boundingBox = CameraConstraintsBox;
             FixedSingle minX = boundingBox.Left;
             FixedSingle minY = boundingBox.Top;
             FixedSingle maxX = boundingBox.Right;
@@ -3152,7 +3654,7 @@ namespace MMX.Engine
                 }
             }
 
-            cameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
+            CameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
 
             if ((Player.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR - World.Camera.Center).Length > STEP_SIZE)
             {
@@ -3244,11 +3746,53 @@ namespace MMX.Engine
             return effect;
         }
 
+        internal ExplosionEffect CreateExplosionEffect(Vector origin)
+        {
+            var effect = new ExplosionEffect(this, "Explosion Effect", origin);
+            effect.Spawn();
+            return effect;
+        }
+
+        private XDieExplosion CreateXDieExplosionEffect(double phase)
+        {
+            var effect = new XDieExplosion(this, "X Die Explosion Effect", Player.HitBox.Center, phase);
+            effect.Spawn();
+            return effect;
+        }
+
         internal Driller AddDriller(Vector origin)
         {
             var driller = new Driller(this, "Driller", origin);
-            respawnableEntities.Add((driller, origin));
+            respawnableEntities.Add((driller, origin, false));
             return driller;
+        }
+
+        private void SpawnX(Vector origin)
+        {
+            if (Player != null)
+                RemoveEntity(Player);
+
+            Player = new Player(this, "X", origin);
+            Player.Spawn();
+            Player.Lives = lastLives;
+        }
+
+        private void CreateHP()
+        {
+            if (HP != null)
+                RemoveEntity(HP);
+
+            HP = new HealthHUD(this, "HP");
+            HP.Spawn();
+        }
+
+        private void StartReadyHUD()
+        {
+            if (ReadyHUD != null)
+                RemoveEntity(ReadyHUD);
+
+            ReadyHUD = new ReadyHUD(this, "Ready");
+            ReadyHUD.Spawn();
         }
 
         public static void WriteTriangle(DataStream vbData, Vector r0, Vector r1, Vector r2, Vector t0, Vector t1, Vector t2)
@@ -3308,18 +3852,27 @@ namespace MMX.Engine
             Device.SetTransform(TransformState.Texture1, Matrix.Identity);
             Device.SetTexture(0, texture);
 
-            Device.VertexShader = null;
+            Device.PixelShader = PixelShader;
 
             if (palette != null)
             {
-                Device.PixelShader = PixelShader;
+                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, true);
                 Device.SetTexture(1, palette);
             }
             else
-                Device.PixelShader = null;
+                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
+
+            if (Fading)
+            {
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingLevel);
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingColor.ToVector4());
+            }
+            else
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
 
             Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+
             Device.DrawPrimitives(PrimitiveType.TriangleList, 0, primitiveCount);
         }
 
@@ -3506,6 +4059,21 @@ namespace MMX.Engine
             PlaySound(channel, index, -1, -1);
         }
 
+        public void PlayOST(int index, double stopTime, double loopTime)
+        {
+            PlaySound(3, index, stopTime, loopTime);
+        }
+
+        public void PlayOST(int index, double loopTime)
+        {
+            PlaySound(3, index, loopTime);
+        }
+
+        public void PlayOST(int index)
+        {
+            PlaySound(3, index);
+        }
+
         public void StopSound(int channel, int index)
         {
             var stream = soundStreams[index];
@@ -3513,6 +4081,22 @@ namespace MMX.Engine
 
             if (ss.Source == stream)
                 ss.Stop();
+        }
+
+        internal void ReloadLevelTransition()
+        {
+            DyingEffectActive = false;
+            respawning = true;
+            UnloadLevel();
+            StartFading(Color.White, 28, true, LoadLevel);
+            StartFadingOST(0, 60, () => soundChannels[3].player.Stop());
+        }
+
+        internal void StartDyingEffect()
+        {
+            DyingEffectActive = true;
+            DyingEffectFrameCounter = 0;
+            StartFading(Color.White, 132, ReloadLevelTransition);
         }
     }
 }

@@ -59,7 +59,10 @@ namespace MMX.Geometry
         /// Cria uma união a partir das partes
         /// </summary>
         /// <param name="parts">Partes</param>
-        public Union(params IGeometry[] parts) => this.parts = parts;
+        public Union(params IGeometry[] parts)
+        {
+            this.parts = parts;
+        }
 
         public GeometryType Type => type;
 

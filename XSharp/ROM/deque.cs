@@ -30,12 +30,14 @@ namespace MMX.ROM
             {
                 if (back.Count - backDeleted > 0)
                 {
-                    for (int i = back.Count - 1; i >= backDeleted; i--) yield return back[i];
+                    for (int i = back.Count - 1; i >= backDeleted; i--)
+                        yield return back[i];
                 }
 
                 if (front.Count - frontDeleted > 0)
                 {
-                    for (int i = frontDeleted; i < front.Count; i++) yield return front[i];
+                    for (int i = frontDeleted; i < front.Count; i++)
+                        yield return front[i];
                 }
             }
         }
@@ -50,7 +52,8 @@ namespace MMX.ROM
 
         public Deque(int capacity)
         {
-            if (capacity < 0) throw new ArgumentException("Capacity cannot be negative");
+            if (capacity < 0)
+                throw new ArgumentException("Capacity cannot be negative");
             int temp = capacity / 2;
             int temp2 = capacity - temp;
             front = new List<T>(temp);
@@ -63,18 +66,21 @@ namespace MMX.ROM
 
         public Deque(IEnumerable<T> backCollection, IEnumerable<T> frontCollection)
         {
-            if (backCollection == null && frontCollection == null) throw new ArgumentException("Collections cannot both be null");
+            if (backCollection == null && frontCollection == null)
+                throw new ArgumentException("Collections cannot both be null");
             front = new List<T>();
             back = new List<T>();
 
             if (backCollection != null)
             {
-                foreach (T item in backCollection) back.Add(item);
+                foreach (T item in backCollection)
+                    back.Add(item);
             }
 
             if (frontCollection != null)
             {
-                foreach (T item in frontCollection) front.Add(item);
+                foreach (T item in frontCollection)
+                    front.Add(item);
             }
         }
 
@@ -106,7 +112,8 @@ namespace MMX.ROM
         {
             if (range != null)
             {
-                foreach (T item in range) AddFirst(item);
+                foreach (T item in range)
+                    AddFirst(item);
             }
         }
 
@@ -114,7 +121,8 @@ namespace MMX.ROM
         {
             if (range != null)
             {
-                foreach (T item in range) AddLast(item);
+                foreach (T item in range)
+                    AddLast(item);
             }
         }
 
@@ -130,12 +138,14 @@ namespace MMX.ROM
         {
             for (int i = frontDeleted; i < front.Count; i++)
             {
-                if (Equals(front[i], item)) return true;
+                if (Equals(front[i], item))
+                    return true;
             }
 
             for (int i = backDeleted; i < back.Count; i++)
             {
-                if (Equals(back[i], item)) return true;
+                if (Equals(back[i], item))
+                    return true;
             }
 
             return false;
@@ -143,9 +153,12 @@ namespace MMX.ROM
 
         public void CopyTo(T[] array, int index)
         {
-            if (array == null) throw new ArgumentNullException("Array cannot be null");
-            if (index < 0) throw new ArgumentOutOfRangeException("Index cannot be negative");
-            if (array.Length < index + Count) throw new ArgumentException("Index is invalid");
+            if (array == null)
+                throw new ArgumentNullException("Array cannot be null");
+            if (index < 0)
+                throw new ArgumentOutOfRangeException("Index cannot be negative");
+            if (array.Length < index + Count)
+                throw new ArgumentException("Index is invalid");
             int i = index;
 
             foreach (T item in this)
@@ -158,12 +171,14 @@ namespace MMX.ROM
         {
             if (front.Count - frontDeleted > 0)
             {
-                for (int i = front.Count - 1; i >= frontDeleted; i--) yield return front[i];
+                for (int i = front.Count - 1; i >= frontDeleted; i--)
+                    yield return front[i];
             }
 
             if (back.Count - backDeleted > 0)
             {
-                for (int i = backDeleted; i < back.Count; i++) yield return back[i];
+                for (int i = backDeleted; i < back.Count; i++)
+                    yield return back[i];
             }
         }
 
@@ -233,7 +248,8 @@ namespace MMX.ROM
 
         public T[] ToArray()
         {
-            if (Count == 0) return new T[0];
+            if (Count == 0)
+                return new T[0];
             var result = new T[Count];
             CopyTo(result, 0);
             return result;
@@ -336,12 +352,14 @@ namespace MMX.ROM
 
             // iterate from first to last
             Console.Write("The Deque contains  : ");
-            foreach (int i in d) Console.Write("{0} ", i); // 1 to 10
+            foreach (int i in d)
+                Console.Write("{0} ", i); // 1 to 10
             Console.WriteLine();
 
             // iterate from last to first
             Console.Write("Or in reverse order : ");
-            foreach (int i in d.Reversed) Console.Write("{0} ", i); // 10 to 1
+            foreach (int i in d.Reversed)
+                Console.Write("{0} ", i); // 10 to 1
             Console.WriteLine();
 
             // permanently reverse the order of the items
@@ -349,7 +367,8 @@ namespace MMX.ROM
 
             // iterate from first to last again
             Console.Write("After permanent reversal : ");
-            foreach (int i in d) Console.Write("{0} ", i); // 10 to 1
+            foreach (int i in d)
+                Console.Write("{0} ", i); // 10 to 1
             Console.WriteLine();
 
             // add items at front
@@ -378,7 +397,8 @@ namespace MMX.ROM
             {
                 // iterate again
                 Console.Write("The Deque now contains : ");
-                foreach (int i in d) Console.Write("{0} ", i); // 11 to 1
+                foreach (int i in d)
+                    Console.Write("{0} ", i); // 11 to 1
                 Console.WriteLine();
             }
 
@@ -394,7 +414,8 @@ namespace MMX.ROM
             // reload to a new Deque adding all items at front so they'll now be reversed       
             d = new Deque<int>(null, ia);
             Console.Write("The new Deque contains : ");
-            foreach (int i in d) Console.Write("{0} ", i); // 1 to 11
+            foreach (int i in d)
+                Console.Write("{0} ", i); // 1 to 11
 
             Console.WriteLine("\nThe capacity is : {0}", d.Capacity);
             d.TrimExcess();

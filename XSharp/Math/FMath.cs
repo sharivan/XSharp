@@ -17,6 +17,8 @@ namespace MMX.Math
         public static readonly FixedSingle HALF = new(0.5);
         public static readonly FixedSingle ONE = new(1D);
         public static readonly FixedSingle TWO = new(2D);
+        public static readonly FixedSingle E = new(System.Math.E);
+        public static readonly FixedSingle PI = new(System.Math.PI);
         public static readonly FixedSingle MIN_VALUE = new(int.MinValue);
         public static readonly FixedSingle MIN_POSITIVE_VALUE = new(1);
         public static readonly FixedSingle MAX_VALUE = new(int.MaxValue);
@@ -40,13 +42,25 @@ namespace MMX.Math
 
         public int Signal => RawValue == 0 ? 0 : RawValue > 0 ? 1 : -1;
 
-        private FixedSingle(int rawValue) => RawValue = rawValue;
+        private FixedSingle(int rawValue)
+        {
+            RawValue = rawValue;
+        }
 
-        public FixedSingle(float value) => RawValue = (int) (value * FIXED_DIVISOR);
+        public FixedSingle(float value)
+        {
+            RawValue = (int) (value * FIXED_DIVISOR);
+        }
 
-        public FixedSingle(double value) => RawValue = (int) (value * FIXED_DIVISOR);
+        public FixedSingle(double value)
+        {
+            RawValue = (int) (value * FIXED_DIVISOR);
+        }
 
-        public FixedSingle(BinaryReader reader) => RawValue = reader.ReadInt32();
+        public FixedSingle(BinaryReader reader)
+        {
+            RawValue = reader.ReadInt32();
+        }
 
         public void Write(BinaryWriter writer)
         {
@@ -239,6 +253,8 @@ namespace MMX.Math
         public static readonly FixedDouble HALF = new(0.5);
         public static readonly FixedDouble ONE = new(1D);
         public static readonly FixedDouble TWO = new(2D);
+        public static readonly FixedDouble E = new(System.Math.E);
+        public static readonly FixedDouble PI = new(System.Math.PI);
         public static readonly FixedDouble MIN_VALUE = new(long.MinValue);
         public static readonly FixedDouble MIN_POSITIVE_VALUE = new(1L);
         public static readonly FixedDouble MAX_VALUE = new(long.MaxValue);
@@ -264,13 +280,25 @@ namespace MMX.Math
 
         public int Signal => RawValue == 0 ? 0 : RawValue > 0 ? 1 : -1;
 
-        private FixedDouble(long rawValue) => RawValue = rawValue;
+        private FixedDouble(long rawValue)
+        {
+            RawValue = rawValue;
+        }
 
-        public FixedDouble(float value) => RawValue = (long) (value * FIXED_DIVISOR);
+        public FixedDouble(float value)
+        {
+            RawValue = (long) (value * FIXED_DIVISOR);
+        }
 
-        public FixedDouble(double value) => RawValue = (long) (value * FIXED_DIVISOR);
+        public FixedDouble(double value)
+        {
+            RawValue = (long) (value * FIXED_DIVISOR);
+        }
 
-        public FixedDouble(BinaryReader reader) => RawValue = reader.ReadInt64();
+        public FixedDouble(BinaryReader reader)
+        {
+            RawValue = reader.ReadInt64();
+        }
 
         public void Write(BinaryWriter writer)
         {

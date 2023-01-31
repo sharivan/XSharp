@@ -1,11 +1,9 @@
-﻿using System;
-using System.IO;
-
+﻿using MMX.Engine.Entities.Effects;
 using MMX.Geometry;
 using MMX.Math;
-
-using MMX.Engine.Entities.Effects;
-
+using SharpDX;
+using System;
+using System.IO;
 using static MMX.Engine.Consts;
 
 namespace MMX.Engine.Entities
@@ -29,23 +27,29 @@ namespace MMX.Engine.Entities
         PRE_LADDER_CLIMB = 14,
         LADDER = 15,
         TOP_LADDER_CLIMB = 16,
-        TOP_LADDER_DESCEND = 17
+        TOP_LADDER_DESCEND = 17,
+        TAKING_DAMAGE = 18,
+        DYING = 19,       
+        VICTORY = 20,
+        PRE_TELEPORTING = 20,
+        TELEPORTING = 21
     }
 
     public class Player : Sprite
     {
         private bool inputLocked;
-        private readonly Keys[] keyBuffer;
+        private readonly Keys[] keyBuffer = new Keys[KEY_BUFFER_COUNT];
         protected bool death;
 
-        private readonly int[,] animationIndices = new int[ANIMATION_COUNT, 2];
+        private readonly int[,] animationIndices = new int[Enum.GetNames(typeof(PlayerState)).Length, 3];
 
         private bool jumping;
         private bool dashReleased;
+        private bool teleporting;
 
-        private FixedSingle baseHSpeed;
+        private FixedSingle baseHSpeed = WALKING_SPEED;
         private int dashFrameCounter;
-        private bool spawing;
+        private bool spawning;
         private int wallJumpFrameCounter;
         private int wallSlideFrameCounter;
 
@@ -68,12 +72,6 @@ namespace MMX.Engine.Entities
 
         internal Player(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 0, true)
         {
-            CheckCollisionWithWorld = false;
-            PaletteIndex = 0;
-
-            baseHSpeed = WALKING_SPEED;
-
-            keyBuffer = new Keys[KEY_BUFFER_COUNT];
         }
 
         public override void SaveState(BinaryWriter writer)
@@ -93,7 +91,7 @@ namespace MMX.Engine.Entities
 
             baseHSpeed.Write(writer);
             writer.Write(dashFrameCounter);
-            writer.Write(spawing);
+            writer.Write(spawning);
             writer.Write(WallJumping);
             writer.Write(wallJumpFrameCounter);
 
@@ -124,7 +122,7 @@ namespace MMX.Engine.Entities
 
             baseHSpeed = new FixedSingle(reader);
             dashFrameCounter = reader.ReadInt32();
-            spawing = reader.ReadBoolean();
+            spawning = reader.ReadBoolean();
             WallJumping = reader.ReadBoolean();
             wallJumpFrameCounter = reader.ReadInt32();
 
@@ -208,6 +206,10 @@ namespace MMX.Engine.Entities
 
         public bool Spawning => state == PlayerState.SPAWN;
 
+        public bool Teleporting => state == PlayerState.TELEPORTING;
+
+        public bool VictoryPosing => state == PlayerState.VICTORY;
+
         public bool Standing => state == PlayerState.STAND;
 
         public bool PreLadderClimbing => state == PlayerState.PRE_LADDER_CLIMB;
@@ -225,6 +227,16 @@ namespace MMX.Engine.Entities
         public bool LadderClimbing => Velocity.Y < 0 && OnLadder;
 
         public bool LadderDescending => Velocity.Y > 0 && OnLadder;
+
+        public bool TakingDamage => state == PlayerState.TAKING_DAMAGE;
+
+        public bool Dying => state == PlayerState.DYING;
+
+        public bool DyingFreeze
+        {
+            get;
+            private set;
+        }
 
         public Keys Keys => GetKeys(0);
 
@@ -244,6 +256,8 @@ namespace MMX.Engine.Entities
             get;
             set;
         }
+
+        public bool Tired => Health / Engine.HealthCapacity < X_TIRED_PERCENTAGE;
 
         public bool PressingNothing => Keys == 0;
 
@@ -297,6 +311,15 @@ namespace MMX.Engine.Entities
 
         public bool WasPressingSelect => !inputLocked && LastKeys.HasFlag(Keys.SELECT);
 
+        protected override FixedSingle GetTerminalDownwardSpeed()
+        {
+            return spawning || teleporting ? 
+                TELEPORT_DOWNWARD_SPEED : 
+                WallSliding ? 
+                (Underwater ? UNDERWATER_WALL_SLIDE_SPEED : WALL_SLIDE_SPEED) : 
+                base.GetTerminalDownwardSpeed();
+        }
+
         protected void SetState(PlayerState state, int startAnimationIndex = -1)
         {
             SetState(state, Direction, startAnimationIndex);
@@ -306,13 +329,13 @@ namespace MMX.Engine.Entities
         {
             this.state = state;
             stateDirection = direction;
-            CurrentAnimationIndex = GetAnimationIndex(state, Shooting && !(TopLadderClimbing || TopLadderDescending || PreLadderClimbing || PreWalking));
+            CurrentAnimationIndex = GetAnimationIndex(state, Shooting);
             CurrentAnimation.Start(startAnimationIndex);
         }
 
         protected int GetAnimationIndex(PlayerState state, bool shooting)
         {
-            return animationIndices[(int) state, shooting ? 1 : 0];
+            return animationIndices[(int) state, shooting && !(spawning || teleporting || TopLadderClimbing || TopLadderDescending || PreLadderClimbing || PreWalking || TakingDamage || Dying || VictoryPosing) ? 1 : state == PlayerState.STAND && Tired ? 2 : 0];
         }
 
         public Keys GetKeys(int latency)
@@ -335,7 +358,7 @@ namespace MMX.Engine.Entities
 
         protected override void OnBlockedUp()
         {
-            if (WallJumping && wallJumpFrameCounter >= 7)
+            if (!teleporting && !TakingDamage && !Dying && WallJumping && wallJumpFrameCounter >= 7)
             {
                 Velocity = Vector.NULL_VECTOR;
                 WallJumping = false;
@@ -348,26 +371,36 @@ namespace MMX.Engine.Entities
 
         protected override void OnBlockedLeft()
         {
-            if (Landed)
-                SetState(PlayerState.STAND, 0);
-            else if (WallJumping && wallJumpFrameCounter >= 7)
+            if (!teleporting && !TakingDamage && !Dying)
             {
-                WallJumping = false;
-                jumping = false;
-                SetAirStateAnimation(true);
+                if (Landed)
+                    SetState(PlayerState.STAND, 0);
+                else if (WallJumping && wallJumpFrameCounter >= 7)
+                {
+                    WallJumping = false;
+                    jumping = false;
+                    SetAirStateAnimation(true);
+                }
             }
+            else
+                Velocity = Velocity.XVector;
         }
 
         protected override void OnBlockedRight()
         {
-            if (Landed)
-                SetState(PlayerState.STAND, 0);
-            else if (WallJumping && wallJumpFrameCounter >= 7)
+            if (!teleporting && !TakingDamage && !Dying)
             {
-                WallJumping = false;
-                jumping = false;
-                SetAirStateAnimation(true);
+                if (Landed)
+                    SetState(PlayerState.STAND, 0);
+                else if (WallJumping && wallJumpFrameCounter >= 7)
+                {
+                    WallJumping = false;
+                    jumping = false;
+                    SetAirStateAnimation(true);
+                }
             }
+            else
+                Velocity = Velocity.YVector;
         }
 
         protected override void OnLanded()
@@ -375,37 +408,44 @@ namespace MMX.Engine.Entities
             WallJumping = false;
             baseHSpeed = WALKING_SPEED;
 
-            if (!spawing)
-            {
-                PlaySound(6);
+            if (Dying || teleporting)
+                return;
 
-                if (PressingLeft)
-                    TryMoveLeft();
-                else if (PressingRight)
-                    TryMoveRight();
-                else
+            if (!spawning)
+            {
+                if (!TakingDamage)
                 {
-                    Velocity = Vector.NULL_VECTOR;
-                    SetState(PlayerState.LAND, 0);
+                    PlaySound(6);
+
+                    if (PressingLeft)
+                        TryMoveLeft();
+                    else if (PressingRight)
+                        TryMoveRight();
+                    else
+                    {
+                        Velocity = Vector.NULL_VECTOR;
+                        SetState(PlayerState.LAND, 0);
+                    }
                 }
+                else
+                    Velocity = Velocity.XVector;
             }
             else
                 SetState(PlayerState.SPAWN_END, 0);
         }
 
-        protected override FixedSingle GetTerminalDownwardSpeed()
-        {
-            return WallSliding ? (Underwater ? UNDERWATER_WALL_SLIDE_SPEED : WALL_SLIDE_SPEED) : base.GetTerminalDownwardSpeed();
-        }
-
-        internal override void OnSpawn()
+        protected internal override void OnSpawn()
         {
             base.OnSpawn();
 
-            spawing = true;
-            Velocity = TERMINAL_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
-            Lives = 2;
-            Health = X_BASE_HEALTH;
+            spawning = true;
+
+            CheckCollisionWithWorld = false;
+            PaletteIndex = 0;
+            Velocity = TELEPORT_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
+            Lives = X_INITIAL_LIVES;
+            Health = Engine.HealthCapacity;
+            DyingFreeze = false;
 
             ResetKeys();
 
@@ -576,7 +616,7 @@ namespace MMX.Engine.Entities
 
             Box limit = Engine.World.BoundingBox;
             if (!Engine.noCameraConstraints)
-                limit &= Engine.cameraConstraintsBox.ClipTop(-2 * HITBOX_HEIGHT).ClipBottom(-2 * HITBOX_HEIGHT);
+                limit &= Engine.CameraConstraintsBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE);
 
             Box collisionBox = origin + GetCollisionBox();
 
@@ -612,7 +652,7 @@ namespace MMX.Engine.Entities
                 if (PressingStart && !WasPressingStart)
                     Engine.ContinueGame();
             }
-            else
+            else if (!Dying && !teleporting && !VictoryPosing)
             {
                 if (Spawning && !CheckCollisionWithWorld)
                 {
@@ -635,10 +675,7 @@ namespace MMX.Engine.Entities
 
                 if (NoClip)
                 {
-                    if (spawing)
-                    {
-                        spawing = false;
-                    }
+                    spawning = false;
 
                     bool mirrored = false;
                     Direction direction = PressingLeft ? Direction.LEFT : PressingRight ? Direction.RIGHT : Direction.NONE;
@@ -653,314 +690,323 @@ namespace MMX.Engine.Entities
                     Velocity = new Vector(mirrored ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, PressingUp ? -baseHSpeed : PressingDown ? baseHSpeed : 0);
                     SetAirStateAnimation();
                 }
-                else if (!spawing)
+                else if (!spawning)
                 {
+                    if (GetVector(VectorKind.PLAYER_ORIGIN).Y > Engine.World.Camera.RightBottom.Y + BLOCK_SIZE)
+                    {
+                        Die();
+                        return;
+                    }
+
                     Direction lastDirection = Direction;
 
                     if (baseHSpeed == PRE_WALKING_SPEED)
                         baseHSpeed = WALKING_SPEED;
 
-                    if (!WallJumping)
+                    if (!TakingDamage)
                     {
-                        if (!OnLadder)
+                        if (!WallJumping)
                         {
-                            if (PressingLeft)
+                            if (!OnLadder)
                             {
-                                Direction = Direction.LEFT;
+                                if (PressingLeft)
+                                {
+                                    Direction = Direction.LEFT;
 
-                                bool mirrored = false;
-                                if (lastDirection == Direction.RIGHT && !WalkingRight && !DashingRight)
-                                {
-                                    mirrored = true;
-                                    RefreshAnimation();
-                                }
-
-                                if (Standing || PostDashing || WalkingRight || DashingRight)
-                                {
-                                    baseHSpeed = Standing ? PRE_WALKING_SPEED : WALKING_SPEED;
-                                    TryMoveLeft(mirrored);
-                                }
-                                else if (WalkingLeftOnly && Landed)
-                                {
-                                    baseHSpeed = GetWalkingSpeed();
-                                    TryMoveLeft();
-                                }
-                                else if (!Landed)
-                                {
-                                    if (BlockedLeft && !Jumping && !GoingUp && GetWallJumpDir() == Direction.LEFT)
+                                    bool mirrored = false;
+                                    if (lastDirection == Direction.RIGHT && !WalkingRight && !DashingRight)
                                     {
-                                        if (!WallSliding)
+                                        mirrored = true;
+                                        RefreshAnimation();
+                                    }
+
+                                    if (Standing || PostDashing || WalkingRight || DashingRight)
+                                    {
+                                        baseHSpeed = Standing ? PRE_WALKING_SPEED : WALKING_SPEED;
+                                        TryMoveLeft(mirrored);
+                                    }
+                                    else if (WalkingLeftOnly && Landed)
+                                    {
+                                        baseHSpeed = GetWalkingSpeed();
+                                        TryMoveLeft();
+                                    }
+                                    else if (!Landed)
+                                    {
+                                        if (BlockedLeft && !Jumping && !GoingUp && GetWallJumpDir() == Direction.LEFT)
                                         {
-                                            Velocity = Vector.NULL_VECTOR;
-                                            wallSlideFrameCounter = 0;
-                                            SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
-                                            PlaySound(6);
+                                            if (!WallSliding)
+                                            {
+                                                Velocity = Vector.NULL_VECTOR;
+                                                wallSlideFrameCounter = 0;
+                                                SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
+                                                PlaySound(6);
+                                            }
+                                            else if (!WallJumping)
+                                                TryMoveLeft(mirrored);
                                         }
                                         else if (!WallJumping)
                                             TryMoveLeft(mirrored);
                                     }
-                                    else if (!WallJumping)
-                                        TryMoveLeft(mirrored);
                                 }
-                            }
-                            else if (PressingRight)
-                            {
-                                Direction = Direction.RIGHT;
+                                else if (PressingRight)
+                                {
+                                    Direction = Direction.RIGHT;
 
-                                bool mirrored = false;
-                                if (lastDirection == Direction.LEFT && !WalkingLeft && !DashingLeft)
-                                {
-                                    mirrored = true;
-                                    RefreshAnimation();
-                                }
-
-                                if (Standing || PostDashing || WalkingLeft || DashingLeft)
-                                {
-                                    baseHSpeed = Standing ? PRE_WALKING_SPEED : WALKING_SPEED;
-                                    TryMoveRight(mirrored);
-                                }
-                                else if (WalkingRightOnly && Landed)
-                                {
-                                    baseHSpeed = GetWalkingSpeed();
-                                    TryMoveRight();
-                                }
-                                else if (!Landed)
-                                {
-                                    if (BlockedRight && !Jumping && !GoingUp && GetWallJumpDir() == Direction.RIGHT)
+                                    bool mirrored = false;
+                                    if (lastDirection == Direction.LEFT && !WalkingLeft && !DashingLeft)
                                     {
-                                        if (!WallSliding)
+                                        mirrored = true;
+                                        RefreshAnimation();
+                                    }
+
+                                    if (Standing || PostDashing || WalkingLeft || DashingLeft)
+                                    {
+                                        baseHSpeed = Standing ? PRE_WALKING_SPEED : WALKING_SPEED;
+                                        TryMoveRight(mirrored);
+                                    }
+                                    else if (WalkingRightOnly && Landed)
+                                    {
+                                        baseHSpeed = GetWalkingSpeed();
+                                        TryMoveRight();
+                                    }
+                                    else if (!Landed)
+                                    {
+                                        if (BlockedRight && !Jumping && !GoingUp && GetWallJumpDir() == Direction.RIGHT)
                                         {
-                                            Velocity = Vector.NULL_VECTOR;
-                                            wallSlideFrameCounter = 0;
-                                            SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
-                                            PlaySound(6);
+                                            if (!WallSliding)
+                                            {
+                                                Velocity = Vector.NULL_VECTOR;
+                                                wallSlideFrameCounter = 0;
+                                                SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
+                                                PlaySound(6);
+                                            }
+                                            else if (!WallJumping)
+                                                TryMoveRight(mirrored);
                                         }
                                         else if (!WallJumping)
                                             TryMoveRight(mirrored);
                                     }
-                                    else if (!WallJumping)
-                                        TryMoveRight(mirrored);
                                 }
-                            }
-                            else
-                            {
-                                if (Landed)
+                                else
                                 {
-                                    if (!Standing && !Dashing)
+                                    if (Landed)
+                                    {
+                                        if (!Standing && !Dashing)
+                                        {
+                                            if (!WallJumping)
+                                                Velocity = new Vector(0, Velocity.Y);
+
+                                            if (!Landing && !PostDashing)
+                                                SetState(PlayerState.STAND, 0);
+                                        }
+                                    }
+                                    else
                                     {
                                         if (!WallJumping)
                                             Velocity = new Vector(0, Velocity.Y);
 
-                                        if (!Landing && !PostDashing)
-                                            SetState(PlayerState.STAND, 0);
+                                        SetAirStateAnimation();
                                     }
                                 }
-                                else
-                                {
-                                    if (!WallJumping)
-                                        Velocity = new Vector(0, Velocity.Y);
-
-                                    SetAirStateAnimation();
-                                }
                             }
-                        }
 
-                        if (PressingUp)
-                        {
-                            if (OnLadderOnly)
+                            if (PressingUp)
                             {
-                                if (!Shooting)
+                                if (OnLadderOnly)
+                                {
+                                    if (!Shooting)
+                                    {
+                                        collider.Box = CollisionBox;
+                                        Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
+                                        CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true);
+                                        if (flags.HasFlag(CollisionFlags.TOP_LADDER))
+                                        {
+                                            if (!TopLadderClimbing && !TopLadderDescending)
+                                                SetState(PlayerState.TOP_LADDER_CLIMB, 0);
+                                        }
+                                        else if (!TopLadderClimbing && !TopLadderDescending)
+                                        {
+                                            Velocity = new Vector(0, -LADDER_CLIMB_SPEED);
+                                            CurrentAnimation.Start();
+                                        }
+                                    }
+                                }
+                                else if (!OnLadder)
                                 {
                                     collider.Box = CollisionBox;
                                     Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
                                     CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true);
-                                    if (flags.HasFlag(CollisionFlags.TOP_LADDER))
+                                    if (flags.HasFlag(CollisionFlags.LADDER))
                                     {
-                                        if (!TopLadderClimbing && !TopLadderDescending)
-                                            SetState(PlayerState.TOP_LADDER_CLIMB, 0);
-                                    }
-                                    else if (!TopLadderClimbing && !TopLadderDescending)
-                                    {
-                                        Velocity = new Vector(0, -LADDER_CLIMB_SPEED);
-                                        CurrentAnimation.Start();
+                                        Velocity = Vector.NULL_VECTOR;
+
+                                        collider.Box = collisionBox;
+                                        collider.AdjustOnTheLadder();
+                                        Vector delta = collider.Box.Origin - collisionBox.Origin;
+                                        Origin += delta;
+
+                                        SetState(PlayerState.PRE_LADDER_CLIMB, 0);
                                     }
                                 }
                             }
-                            else if (!OnLadder)
+                            else if (PressingDown)
                             {
-                                collider.Box = CollisionBox;
-                                Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
-                                CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true);
-                                if (flags.HasFlag(CollisionFlags.LADDER))
+                                if (OnLadderOnly)
+                                {
+                                    if (!Shooting)
+                                    {
+                                        collider.Box = CollisionBox;
+                                        Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
+                                        CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true);
+                                        if (!flags.HasFlag(CollisionFlags.LADDER))
+                                        {
+                                            if (Landed)
+                                            {
+                                                if (!Standing)
+                                                    SetState(PlayerState.LAND, 0);
+                                            }
+                                            else if (!TopLadderClimbing && !TopLadderDescending)
+                                            {
+                                                Velocity = Vector.NULL_VECTOR;
+                                                SetAirStateAnimation();
+                                            }
+                                        }
+                                        else if (!TopLadderClimbing && !TopLadderDescending)
+                                        {
+                                            Velocity = new Vector(0, LADDER_CLIMB_SPEED);
+                                            CurrentAnimation.Start();
+                                        }
+                                    }
+                                }
+                                else if (LandedOnTopLadder && !TopLadderDescending && !TopLadderClimbing)
                                 {
                                     Velocity = Vector.NULL_VECTOR;
 
+                                    Box collisionBox = CollisionBox;
                                     collider.Box = collisionBox;
                                     collider.AdjustOnTheLadder();
                                     Vector delta = collider.Box.Origin - collisionBox.Origin;
                                     Origin += delta;
 
-                                    SetState(PlayerState.PRE_LADDER_CLIMB, 0);
+                                    SetState(PlayerState.TOP_LADDER_DESCEND, 0);
                                 }
                             }
-                        }
-                        else if (PressingDown)
-                        {
-                            if (OnLadderOnly)
+                            else if (OnLadderOnly && (WasPressingUp || WasPressingDown))
                             {
-                                if (!Shooting)
+                                Velocity = Vector.NULL_VECTOR;
+                                CurrentAnimation.Stop();
+                            }
+
+                            if (!OnLadder)
+                            {
+                                if (PressingDash)
                                 {
-                                    collider.Box = CollisionBox;
-                                    Box collisionBox = collider.UpCollider + (HITBOX_HEIGHT - LADDER_BOX_VCLIP) * Vector.DOWN_VECTOR;
-                                    CollisionFlags flags = Engine.GetCollisionFlags(collisionBox, CollisionFlags.NONE, true);
-                                    if (!flags.HasFlag(CollisionFlags.LADDER))
+                                    if (!WasPressingDash)
                                     {
+                                        dashReleased = false;
+                                        if (Landed && (Direction == Direction.LEFT ? !BlockedLeft : !BlockedRight))
+                                        {
+                                            baseHSpeed = DASH_SPEED;
+                                            dashFrameCounter = 0;
+                                            Velocity = new Vector(Direction == Direction.LEFT ? -DASH_SPEED : DASH_SPEED, Velocity.Y);
+                                            SetState(PlayerState.PRE_DASH, 0);
+                                            PlaySound(4);
+                                        }
+                                    }
+                                    else if (!Landed && !WallJumping && !WallSliding && !OnLadder)
+                                        SetAirStateAnimation();
+                                }
+                                else if (WasPressingDash && !PressingDash)
+                                {
+                                    if (!dashReleased)
+                                    {
+                                        dashReleased = true;
+
                                         if (Landed)
                                         {
-                                            if (!Standing)
-                                                SetState(PlayerState.LAND, 0);
+                                            baseHSpeed = WALKING_SPEED;
+
+                                            if (Dashing)
+                                            {
+                                                if (dashSparkEffect != null)
+                                                {
+                                                    dashSparkEffect.KillOnNextFrame();
+                                                    dashSparkEffect = null;
+                                                }
+
+                                                if (PressingLeft && !BlockedLeft)
+                                                {
+                                                    Velocity = new Vector(-baseHSpeed, Velocity.Y);
+                                                    SetState(PlayerState.WALK, 0);
+                                                }
+                                                else if (PressingRight && !BlockedRight)
+                                                {
+                                                    Velocity = new Vector(baseHSpeed, Velocity.Y);
+                                                    SetState(PlayerState.WALK, 0);
+                                                }
+                                                else
+                                                {
+                                                    Velocity = new Vector(0, Velocity.Y);
+                                                    SetState(PlayerState.POST_DASH, 0);
+                                                }
+                                            }
                                         }
-                                        else if (!TopLadderClimbing && !TopLadderDescending)
-                                        {
-                                            Velocity = Vector.NULL_VECTOR;
-                                            SetAirStateAnimation();
-                                        }
-                                    }
-                                    else if (!TopLadderClimbing && !TopLadderDescending)
-                                    {
-                                        Velocity = new Vector(0, LADDER_CLIMB_SPEED);
-                                        CurrentAnimation.Start();
                                     }
                                 }
                             }
-                            else if (LandedOnTopLadder && !TopLadderDescending && !TopLadderClimbing)
+                        }
+
+                        if (!WasPressingJump && PressingJump)
+                        {
+                            if (collider.Landed || collider.TouchingWaterSurface && !CanWallJump)
+                            {
+                                bool hspeedNull = false;
+                                if (PressingDash)
+                                    baseHSpeed = DASH_SPEED;
+                                else if (baseHSpeed == PRE_WALKING_SPEED)
+                                {
+                                    baseHSpeed = WALKING_SPEED;
+                                    hspeedNull = true;
+                                }
+
+                                if (!BlockedUp)
+                                {
+                                    jumping = true;
+                                    Velocity = (hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
+                                    SetState(PlayerState.JUMP, 0);
+                                    PlaySound(5);
+                                }
+                                else if (Velocity.Y < 0)
+                                    Velocity = Velocity.XVector;
+                            }
+                            else if (OnLadder)
                             {
                                 Velocity = Vector.NULL_VECTOR;
-
-                                Box collisionBox = CollisionBox;
-                                collider.Box = collisionBox;
-                                collider.AdjustOnTheLadder();
-                                Vector delta = collider.Box.Origin - collisionBox.Origin;
-                                Origin += delta;
-
-                                SetState(PlayerState.TOP_LADDER_DESCEND, 0);
+                                SetAirStateAnimation();
                             }
-                        }
-                        else if (OnLadderOnly && (WasPressingUp || WasPressingDown))
-                        {
-                            Velocity = Vector.NULL_VECTOR;
-                            CurrentAnimation.Stop();
-                        }
-
-                        if (!OnLadder)
-                        {
-                            if (PressingDash)
-                            {
-                                if (!WasPressingDash)
-                                {
-                                    dashReleased = false;
-                                    if (Landed && (Direction == Direction.LEFT ? !BlockedLeft : !BlockedRight))
-                                    {
-                                        baseHSpeed = DASH_SPEED;
-                                        dashFrameCounter = 0;
-                                        Velocity = new Vector(Direction == Direction.LEFT ? -DASH_SPEED : DASH_SPEED, Velocity.Y);
-                                        SetState(PlayerState.PRE_DASH, 0);
-                                        PlaySound(4);
-                                    }
-                                }
-                                else if (!Landed && !WallJumping && !WallSliding && !OnLadder)
-                                    SetAirStateAnimation();
-                            }
-                            else if (WasPressingDash && !PressingDash)
-                            {
-                                if (!dashReleased)
-                                {
-                                    dashReleased = true;
-
-                                    if (Landed)
-                                    {
-                                        baseHSpeed = WALKING_SPEED;
-
-                                        if (Dashing)
-                                        {
-                                            if (dashSparkEffect != null)
-                                            {
-                                                dashSparkEffect.KillOnNextFrame();
-                                                dashSparkEffect = null;
-                                            }
-
-                                            if (PressingLeft && !BlockedLeft)
-                                            {
-                                                Velocity = new Vector(-baseHSpeed, Velocity.Y);
-                                                SetState(PlayerState.WALK, 0);
-                                            }
-                                            else if (PressingRight && !BlockedRight)
-                                            {
-                                                Velocity = new Vector(baseHSpeed, Velocity.Y);
-                                                SetState(PlayerState.WALK, 0);
-                                            }
-                                            else
-                                            {
-                                                Velocity = new Vector(0, Velocity.Y);
-                                                SetState(PlayerState.POST_DASH, 0);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (!WasPressingJump && PressingJump)
-                    {
-                        if (collider.Landed || collider.TouchingWaterSurface && !CanWallJump)
-                        {
-                            bool hspeedNull = false;
-                            if (PressingDash)
-                                baseHSpeed = DASH_SPEED;
-                            else if (baseHSpeed == PRE_WALKING_SPEED)
-                            {
-                                baseHSpeed = WALKING_SPEED;
-                                hspeedNull = true;
-                            }
-
-                            if (!BlockedUp)
-                            {
-                                jumping = true;
-                                Velocity = (hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
-                                SetState(PlayerState.JUMP, 0);
-                                PlaySound(5);
-                            }
-                            else if (Velocity.Y < 0)
+                            else if (BlockedUp && Velocity.Y < 0)
                                 Velocity = Velocity.XVector;
-                        }
-                        else if (OnLadder)
-                        {
-                            Velocity = Vector.NULL_VECTOR;
-                            SetAirStateAnimation();
-                        }
-                        else if (BlockedUp && Velocity.Y < 0)
-                            Velocity = Velocity.XVector;
-                        else if (!WallJumping || wallJumpFrameCounter >= 3)
-                        {
-                            Direction wallJumpDir = GetWallJumpDir();
-                            if (wallJumpDir != Direction.NONE)
+                            else if (!WallJumping || wallJumpFrameCounter >= 3)
                             {
-                                WallJumping = true;
-                                wallJumpFrameCounter = 0;
-                                Direction = wallJumpDir;
-                                baseHSpeed = PressingDash ? DASH_SPEED : WALKING_SPEED;
+                                Direction wallJumpDir = GetWallJumpDir();
+                                if (wallJumpDir != Direction.NONE)
+                                {
+                                    WallJumping = true;
+                                    wallJumpFrameCounter = 0;
+                                    Direction = wallJumpDir;
+                                    baseHSpeed = PressingDash ? DASH_SPEED : WALKING_SPEED;
 
-                                jumping = true;
-                                Velocity = Vector.NULL_VECTOR;
+                                    jumping = true;
+                                    Velocity = Vector.NULL_VECTOR;
+                                }
                             }
                         }
-                    }
-                    else if (WasPressingJump && !PressingJump && !WallJumping && jumping && !Landed && !WallSliding && Velocity.Y < 0)
-                    {
-                        jumping = false;
-                        WallJumping = false;
-                        Velocity = Velocity.XVector;
+                        else if (WasPressingJump && !PressingJump && !WallJumping && jumping && !Landed && !WallSliding && Velocity.Y < 0)
+                        {
+                            jumping = false;
+                            WallJumping = false;
+                            Velocity = Velocity.XVector;
+                        }
                     }
 
                     if (Dashing)
@@ -997,7 +1043,7 @@ namespace MMX.Engine.Entities
                                 Velocity = Velocity.YVector;
                                 SetState(PlayerState.POST_DASH, 0);
                             }
-                        }  
+                        }
                     }
                     else if (dashSparkEffect != null)
                     {
@@ -1057,13 +1103,80 @@ namespace MMX.Engine.Entities
                     }
                 }
 
-                if (PressingShot)
+                if (!TakingDamage)
                 {
-                    if (!WasPressingShot)
+                    if (PressingShot)
                     {
-                        if (shots < MAX_SHOTS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
+                        if (!WasPressingShot)
+                        {
+                            if (!spawning && shots < MAX_SHOTS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
+                            {
+                                Shooting = true;
+                                shotFrameCounter = 0;
+
+                                if (OnLadderOnly)
+                                {
+                                    Velocity = Vector.NULL_VECTOR;
+
+                                    if (PressingLeft)
+                                        Direction = Direction.LEFT;
+                                    else if (PressingRight)
+                                        Direction = Direction.RIGHT;
+
+                                    RefreshAnimation();
+                                }
+                                else if (Standing || PreWalking)
+                                    SetState(PlayerState.STAND, 0);
+                                else
+                                    RefreshAnimation();
+
+                                ShootLemon();
+                            }
+                        }
+                        else
+                        {
+                            if (!Shooting && !charging && !shootingCharged && shots < MAX_SHOTS)
+                            {
+                                charging = true;
+                                chargingFrameCounter = 0;
+                            }
+
+                            if (charging)
+                            {
+                                chargingFrameCounter++;
+                                if (chargingFrameCounter >= 4)
+                                {
+                                    int frame = chargingFrameCounter - 4;
+                                    PaletteIndex = (frame & 2) is 0 or 1 ? 1 : 0;
+
+                                    chargingEffect ??= Engine.StartChargingEffect(this);
+
+                                    if (frame == 60)
+                                        chargingEffect.Level = 2;
+                                }
+                            }
+                        }
+                    }
+
+                    if (charging && !PressingShot)
+                    {
+                        bool charging = this.charging;
+                        int chargingFrameCounter = this.chargingFrameCounter;
+                        this.charging = false;
+                        this.chargingFrameCounter = 0;
+
+                        PaletteIndex = 0;
+
+                        if (chargingEffect != null)
+                        {
+                            chargingEffect.KillOnNextFrame();
+                            chargingEffect = null;
+                        }
+
+                        if (!spawning && charging && chargingFrameCounter >= 4 && shots < MAX_SHOTS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
                         {
                             Shooting = true;
+                            shootingCharged = true;
                             shotFrameCounter = 0;
 
                             if (OnLadderOnly)
@@ -1082,74 +1195,11 @@ namespace MMX.Engine.Entities
                             else
                                 RefreshAnimation();
 
-                            ShootLemon();
+                            if (chargingFrameCounter >= 60)
+                                ShootCharged();
+                            else
+                                ShootSemiCharged();
                         }
-                    }
-                    else
-                    {
-                        if (!Shooting && !charging && !shootingCharged && shots < MAX_SHOTS)
-                        {
-                            charging = true;
-                            chargingFrameCounter = 0;
-                        }
-
-                        if (charging)
-                        {
-                            chargingFrameCounter++;
-                            if (chargingFrameCounter >= 4)
-                            {
-                                int frame = chargingFrameCounter - 4;
-                                PaletteIndex = (frame & 2) is 0 or 1 ? 1 : 0;
-
-                                chargingEffect ??= Engine.StartChargingEffect(this);
-
-                                if (frame == 60)
-                                    chargingEffect.Level = 2;
-                            }
-                        }
-                    }
-                }
-                else if (WasPressingShot && !PressingShot)
-                {
-                    bool charging = this.charging;
-                    int chargingFrameCounter = this.chargingFrameCounter;
-                    this.charging = false;
-                    this.chargingFrameCounter = 0;
-
-                    PaletteIndex = 0;
-
-                    if (chargingEffect != null)
-                    {
-                        chargingEffect.Kill();
-                        chargingEffect = null;
-                    }
-
-                    if (charging && chargingFrameCounter >= 4 && shots < MAX_SHOTS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
-                    {
-                        Shooting = true;
-                        shootingCharged = true;
-                        shotFrameCounter = 0;
-
-                        if (OnLadderOnly)
-                        {
-                            Velocity = Vector.NULL_VECTOR;
-
-                            if (PressingLeft)
-                                Direction = Direction.LEFT;
-                            else if (PressingRight)
-                                Direction = Direction.RIGHT;
-
-                            RefreshAnimation();
-                        }
-                        else if (Standing || PreWalking)
-                            SetState(PlayerState.STAND, 0);
-                        else
-                            RefreshAnimation();
-
-                        if (chargingFrameCounter >= 60)
-                            ShootCharged();
-                        else
-                            ShootSemiCharged();
                     }
                 }
 
@@ -1262,7 +1312,7 @@ namespace MMX.Engine.Entities
 
         internal void PushKeys(Keys value)
         {
-            if (spawing || death)
+            if (death)
                 return;
 
             Array.Copy(keyBuffer, 0, keyBuffer, 1, keyBuffer.Length - 1);
@@ -1283,7 +1333,7 @@ namespace MMX.Engine.Entities
         {
             if (ContainsAnimationIndex(PlayerState.SPAWN_END, animation.Index))
             {
-                spawing = false;
+                spawning = false;
                 SetState(PlayerState.STAND, 0);
             }
             else if (ContainsAnimationIndex(PlayerState.PRE_WALK, animation.Index, true))
@@ -1366,16 +1416,86 @@ namespace MMX.Engine.Entities
                 if (Shooting)
                     CurrentAnimation.Stop();
             }
+            else if (ContainsAnimationIndex(PlayerState.TAKING_DAMAGE, animation.Index, false))
+            {
+                if (Landed)
+                {
+                    baseHSpeed = WALKING_SPEED;
+                    if (PressingLeft)
+                        TryMoveLeft();
+                    else if (PressingRight)
+                        TryMoveRight();
+                    else
+                    {
+                        Velocity = Vector.NULL_VECTOR;
+                        SetState(PlayerState.STAND, 0);
+                    }
+                }
+                else
+                    SetAirStateAnimation();
+
+                MakeInvincible(60, true);
+            }
+            else if (ContainsAnimationIndex(PlayerState.DYING, animation.Index, false))
+            {
+                DyingFreeze = false;
+                PlaySound(10);
+                PaletteIndex = 4;
+
+                Engine.StartDyingEffect();
+                KillOnNextFrame();
+            }
+            else if (ContainsAnimationIndex(PlayerState.VICTORY, animation.Index, false))
+            {
+                if (teleporting)
+                {
+                    Invincible = true;
+                    SetState(PlayerState.PRE_TELEPORTING, 0);
+                    PlaySound(17);
+                }
+                else
+                {
+                    Invincible = false;
+                    SetState(PlayerState.STAND, 0);
+                }
+            }
+            else if (ContainsAnimationIndex(PlayerState.PRE_TELEPORTING, animation.Index, false))
+            {
+                Invincible = true;
+                Velocity = TELEPORT_DOWNWARD_SPEED * Vector.UP_VECTOR;
+                SetState(PlayerState.TELEPORTING, 0);
+            }
         }
 
-        private void SetAnimationIndex(PlayerState state, int animationIndex, bool shooting)
+        public void StartVictoryPosing()
         {
-            animationIndices[(int) state, shooting ? 1 : 0] = animationIndex;
+            Invincible = true;
+            SetState(PlayerState.VICTORY, 0);
+            PlaySound(16);
         }
 
-        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+        public void StartTeleporting(bool withVictoryPose)
         {
-            base.OnCreateAnimation(animationIndex, sheet, frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
+            teleporting = true;
+
+            if (withVictoryPose)
+                StartVictoryPosing();
+            else
+            {
+                Invincible = true;
+                SetState(PlayerState.PRE_TELEPORTING, 0);
+                PlaySound(17);
+            }
+        }
+
+        private void SetAnimationIndex(PlayerState state, int animationIndex, bool shooting, bool tired = false)
+        {
+            animationIndices[(int) state, shooting ? 1 : tired ? 2 : 0] = animationIndex;
+        }
+
+        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+        {
+            base.OnCreateAnimation(animationIndex, sheet, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
             startOn = false; // Por padrão, a animação de um jogador começa parada.
             startVisible = false;
 
@@ -1383,6 +1503,7 @@ namespace MMX.Engine.Entities
             {
                 case "Spawn":
                     SetAnimationIndex(PlayerState.SPAWN, animationIndex, false);
+                    SetAnimationIndex(PlayerState.TELEPORTING, animationIndex, false);
                     break;
 
                 case "SpawnEnd":
@@ -1395,6 +1516,10 @@ namespace MMX.Engine.Entities
 
                 case "Shooting":
                     SetAnimationIndex(PlayerState.STAND, animationIndex, true);
+                    break;
+
+                case "Tired":
+                    SetAnimationIndex(PlayerState.STAND, animationIndex, false, true);
                     break;
 
                 case "PreWalking":
@@ -1501,6 +1626,22 @@ namespace MMX.Engine.Entities
                     SetAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animationIndex, false);
                     break;
 
+                case "TakingDamage":
+                    SetAnimationIndex(PlayerState.TAKING_DAMAGE, animationIndex, false);
+                    break;
+
+                case "Dying":
+                    SetAnimationIndex(PlayerState.DYING, animationIndex, false);
+                    break;
+
+                case "Victory":
+                    SetAnimationIndex(PlayerState.VICTORY, animationIndex, false);
+                    break;
+
+                case "PreTeleporting":
+                    SetAnimationIndex(PlayerState.PRE_TELEPORTING, animationIndex, false);
+                    break;
+
                 default:
                     add = false;
                     break;
@@ -1509,7 +1650,61 @@ namespace MMX.Engine.Entities
 
         public override FixedSingle GetGravity()
         {
-            return WallJumping && wallJumpFrameCounter < 7 || WallSliding || OnLadder ? 0 : base.GetGravity();
+            return spawning || teleporting || WallJumping && wallJumpFrameCounter < 7 || WallSliding || OnLadder || Dying ? 0 : base.GetGravity();
+        }
+
+        private Direction GetDamageDirection(Sprite attacker)
+        {
+            return Origin.X < attacker.Origin.X ? Direction.RIGHT : Direction.LEFT;
+        }
+
+        protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
+        {
+            if (TakingDamage)
+                return false;
+
+            Invincible = true;
+
+            Direction direction = GetDamageDirection(attacker);
+            if (direction != Direction.NONE)
+                Direction = direction;
+
+            PlaySound(9);
+
+            WallJumping = false;
+
+            if (Health - damage > 0)
+            {
+                Velocity = (Direction == Direction.RIGHT ? INITIAL_DAMAGE_RECOIL_SPEED_X : -INITIAL_DAMAGE_RECOIL_SPEED_X, INITIAL_DAMAGE_RECOIL_SPEED_Y);
+                SetState(PlayerState.TAKING_DAMAGE, 0);
+            }
+            else
+                Velocity = Vector.NULL_VECTOR;
+
+            return true;
+        }
+
+        public void Die()
+        {
+            Invincible = true;
+            WallJumping = false;
+            Velocity = Vector.NULL_VECTOR;
+            DyingFreeze = true;
+            charging = false;
+
+            if (chargingEffect != null)
+            {
+                chargingEffect.KillOnNextFrame();
+                chargingEffect = null;                
+            }
+
+            SetState(PlayerState.DYING, 0);
+        }
+
+        protected override bool OnBreak()
+        {
+            Die();
+            return false;
         }
     }
 }

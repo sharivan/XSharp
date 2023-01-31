@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-
-using MMX.Geometry;
+﻿using MMX.Geometry;
+using System.Collections.Generic;
 
 namespace MMX.Engine.Entities.Triggers
 {
@@ -15,10 +14,16 @@ namespace MMX.Engine.Entities.Triggers
         public int ConstraintCount => constraints.Count;
 
         public CameraLockTrigger(GameEngine engine, Box boudingBox) :
-            base(engine, boudingBox, TouchingKind.VECTOR, VectorKind.PLAYER_ORIGIN) => constraints = new List<Vector>();
+            base(engine, boudingBox, TouchingKind.VECTOR, VectorKind.PLAYER_ORIGIN)
+        {
+            constraints = new List<Vector>();
+        }
 
         public CameraLockTrigger(GameEngine engine, Box boudingBox, IEnumerable<Vector> constraints) :
-            base(engine, boudingBox, TouchingKind.VECTOR, VectorKind.PLAYER_ORIGIN) => this.constraints = new List<Vector>(constraints);
+            base(engine, boudingBox, TouchingKind.VECTOR, VectorKind.PLAYER_ORIGIN)
+        {
+            this.constraints = new List<Vector>(constraints);
+        }
 
         protected override void OnTrigger(Entity obj)
         {

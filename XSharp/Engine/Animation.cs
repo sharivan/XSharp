@@ -4,6 +4,7 @@ using SharpDX;
 using SharpDX.Direct3D9;
 
 using MMX.Math;
+using MMX.Geometry;
 
 using MMXBox = MMX.Geometry.Box;
 using Sprite = MMX.Engine.Entities.Sprite;
@@ -21,17 +22,23 @@ namespace MMX.Engine
 
         private readonly AnimationFrameEvent[] animationEvents;
 
+        public Vector Offset
+        {
+            get;
+            set;
+        }
+
         public MMXBox DrawBox
         {
             get
             {
                 var frame = sequence[currentSequenceIndex];
-                return Sprite.Origin + frame.BoundingBox;
+                return Sprite.Origin + Offset + frame.BoundingBox;
             }
         }
 
-        public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false) :
-            this(sprite, index, spriteSheetIndex, frameSequenceName, FixedSingle.ZERO, initialFrame, startVisible, startOn, mirrored, flipped)
+        public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false) :
+            this(sprite, index, spriteSheetIndex, frameSequenceName, offset, FixedSingle.ZERO, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped)
         {
         }
 
@@ -46,15 +53,18 @@ namespace MMX.Engine
         /// <param name="startVisible">Especifica se a animação iniciará visível ou não</param>
         /// <param name="startOn">Especifica se a animação começará ativa ou não</param>
         /// <param name="loop">Especifica se a animação estará em looping ou não</param>
-        public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, FixedSingle rotation, int initialSequenceIndex = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+        public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, Vector offset, FixedSingle rotation, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
         {
             Sprite = sprite;
             Index = index;
             SpriteSheetIndex = spriteSheetIndex;
             FrameSequenceName = frameSequenceName;
+            Offset = offset;
+            RepeatX = repeatX;
+            RepeatY = repeatY;
 
             sequence = Sheet.GetFrameSequence(frameSequenceName);
-            InitialSequenceIndex = initialSequenceIndex;
+            InitialSequenceIndex = initialFrame;
             Visible = startVisible;
             animating = startOn;
             Mirrored = mirrored;
@@ -63,7 +73,7 @@ namespace MMX.Engine
 
             Scale = 1;
 
-            currentSequenceIndex = initialSequenceIndex;
+            currentSequenceIndex = initialFrame;
             animationEndFired = false;
 
             int count = sequence.Count;
@@ -219,7 +229,18 @@ namespace MMX.Engine
                 if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
                     return MMXBox.EMPTY_BOX;
 
-                MMXBox collisionBox = sequence[currentSequenceIndex].CollisionBox;
+                var collisionBox = sequence[currentSequenceIndex].CollisionBox;
+
+                if (Flipped)
+                {
+                    if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
+                        collisionBox = collisionBox.Flip().Mirror();
+                    else
+                        collisionBox = collisionBox.Flip();
+                }
+                else if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
+                    collisionBox = collisionBox.Mirror();
+
                 return collisionBox;
             }
         }
@@ -275,6 +296,18 @@ namespace MMX.Engine
             set;
         }
 
+        public int RepeatX
+        {
+            get;
+            set;
+        } = 1;
+
+        public int RepeatY
+        {
+            get;
+            set;
+        } = 1;
+
         /// <summary>
         /// Evento a ser executado a cada frame (tick) do engine
         /// </summary>
@@ -311,15 +344,15 @@ namespace MMX.Engine
         /// <param name="g">Objeto do tipo Graphics usado nas operações de desenho e pintura pela animação</param>
         public void Render()
         {
-            // Se ñão estiver visível ou não ouver frames então não precisa desenhar nada
-            if (!Visible || sequence.Count == 0)
+            // Se não estiver visível ou não ouver frames então não precisa desenhar nada
+            if (!Visible || sequence.Count == 0 || RepeatX <= 0 || RepeatY <= 0)
                 return;
 
             var frame = sequence[currentSequenceIndex];
             MMXBox srcBox = frame.BoundingBox;
             Texture texture = frame.Texture;
 
-            MMXBox drawBox = Sprite.Origin + srcBox;
+            MMXBox drawBox = Sprite.Origin + Offset + srcBox;
             Vector2 center = Sprite.Engine.WorldVectorToScreen(drawBox.Origin);
             var center3 = new Vector3(center.X, center.Y, 0);
 
@@ -344,7 +377,7 @@ namespace MMX.Engine
             else if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
                 transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(center3);
 
-            Sprite.Engine.RenderSprite(texture, Sprite.Palette, drawBox.LeftTop, transform);
+            Sprite.Engine.RenderSprite(texture, Sprite.Palette, drawBox.LeftTop, transform, RepeatX, RepeatY);
         }
 
         internal void OnDeviceReset()
@@ -354,7 +387,7 @@ namespace MMX.Engine
 
         public override string ToString()
         {
-            return sequence.Name + (Rotation != 0 ? " rotated " + Rotation : "") + (Scale != 0 ? " scaleed " + Scale : "") + (Mirrored ? " left" : " right") + (Flipped ? " down" : " up");
+            return sequence.Name + (Rotation != 0 ? " rotation " + Rotation : "") + (Scale != 0 ? " scale " + Scale : "") + (Mirrored ? " mirrored" : "") + (Flipped ? " flipped" : "");
         }
     }
 }

@@ -1,12 +1,9 @@
-﻿using System;
-
+﻿using MMX.Geometry;
 using SharpDX;
 using SharpDX.Direct3D9;
-using MMX.Geometry;
-
-using MMXBox = MMX.Geometry.Box;
-
+using System;
 using static MMX.Engine.Consts;
+using MMXBox = MMX.Geometry.Box;
 
 namespace MMX.Engine.World
 {

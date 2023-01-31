@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-
-using MMX.Geometry;
+﻿using MMX.Geometry;
+using System.Collections.Generic;
 
 namespace MMX.Engine.Entities.Triggers
 {

@@ -1,15 +1,11 @@
-﻿using System;
+﻿using MMX.Geometry;
+using MMX.Math;
+using SharpDX.Direct3D9;
+using System;
 using System.Collections.Generic;
 using System.IO;
-
-using SharpDX.Direct3D9;
-
-using MMX.Math;
-using MMX.Geometry;
-
 using static MMX.Engine.Consts;
 using static MMX.Engine.World.World;
-
 using Box = MMX.Geometry.Box;
 
 namespace MMX.Engine.Entities
@@ -17,7 +13,7 @@ namespace MMX.Engine.Entities
     public abstract class Sprite : Entity, IDisposable
     {
         protected List<Animation> animations;
-        private int currentAnimationIndex;
+        private int currentAnimationIndex = -1;
         protected bool solid;
         private bool fading;
         private bool fadingIn;
@@ -30,11 +26,14 @@ namespace MMX.Engine.Entities
         protected bool moving;
         protected bool isStatic;
         protected bool breakable;
-        protected int health;
-        protected bool invincible;
-        protected int invincibilityTime;
+        protected FixedSingle health;
+        private bool invincible;
+        private int invincibilityFrames;
         private long invincibleExpires;
         protected bool broke;
+        private bool blinking;
+        private bool blinkOn;
+        private long blinkExpires;
 
         private readonly Dictionary<string, int> animationNames;
 
@@ -64,12 +63,138 @@ namespace MMX.Engine.Entities
 
         new public SpriteState CurrentState => (SpriteState) base.CurrentState;
 
+        public bool Static => isStatic;
+
+        public bool NoClip
+        {
+            get;
+            set;
+        }
+
+        public bool Moving => moving;
+
+        public bool Broke => broke;
+
+        public bool Invincible
+        {
+            get => invincible;
+            set
+            {
+                if (!invincible && value)
+                    MakeInvincible();
+
+                invincible = value;
+            }
+        }
+
+        public bool Blinking
+        {
+            get => blinking;
+            set
+            {
+                if (!blinking && value)
+                    MakeBlinking();
+
+                blinking = value;
+            }
+        }
+
+        public bool InvisibleOnCurrentFrame
+        {
+            get;
+            set;
+        }
+
+        public FixedSingle Health
+        {
+            get => health;
+            set
+            {
+                health = value;
+                OnHealthChanged(health);
+
+                if (health == 0)
+                    Break();
+            }
+        }
+
+        public Vector Velocity
+        {
+            get => vel;
+            set
+            {
+                LastVelocity = vel;
+                vel = value;
+            }
+        }
+
+        public Vector LastVelocity
+        {
+            get;
+            private set;
+        }
+
+        public BoxCollider Collider
+        {
+            get
+            {
+                collider.Box = CollisionBox;
+                return collider;
+            }
+        }
+
+        public FixedSingle Gravity => GetGravity();
+
+        public FixedSingle TerminalDownwardSpeed => GetTerminalDownwardSpeed();
+
+        public bool CheckCollisionWithSprites
+        {
+            get;
+            set;
+        }
+
+        public bool CheckCollisionWithWorld
+        {
+            get;
+            set;
+        }
+
+        public bool BlockedUp => !NoClip && collider.BlockedUp;
+
+        public bool BlockedLeft => !NoClip && collider.BlockedLeft;
+
+        public bool BlockedRight => !NoClip && collider.BlockedRight;
+
+        public bool Landed => !NoClip && collider.Landed && Velocity.Y >= 0;
+
+        public bool LandedOnSlope => !NoClip && collider.LandedOnSlope;
+
+        public bool LandedOnTopLadder => !NoClip && collider.LandedOnTopLadder;
+
+        public RightTriangle LandedSlope => collider.LandedSlope;
+
+        public bool Underwater => !NoClip && collider.Underwater;
+
+        public bool CanGoOutOfMapBounds
+        {
+            get;
+            set;
+        }
+
+        public int PaletteIndex
+        {
+            get;
+            set;
+        }
+
+        public Texture Palette => Engine.GetPalette(PaletteIndex);
+
         protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false) :
             base(engine, name, origin)
         {
             SpriteSheetIndex = spriteSheetIndex;
             InitialAnimationName = initialAnimationName;
-            Directional = directional;            
+            Directional = directional;
 
             PaletteIndex = -1;
             Opacity = 1;
@@ -85,29 +210,6 @@ namespace MMX.Engine.Entities
             else
                 foreach (var frameSequenceName in Sheet.FrameSequenceNames)
                     this.animationNames.Add(frameSequenceName, -1);
-
-            int animationIndex = 0;
-            var names = new List<string>(this.animationNames.Keys);
-            foreach (var animationName in names)
-            {
-                SpriteSheet.FrameSequence sequence = Sheet.GetFrameSequence(animationName);
-                string frameSequenceName = sequence.Name;
-                int initialFrame = 0;
-                bool startVisible = false;
-                bool startOn = true;
-                bool add = true;
-
-                OnCreateAnimation(animationIndex, Sheet, frameSequenceName, ref initialFrame, ref startVisible, ref startOn, ref add);
-
-                if (add)
-                {
-                    animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, initialFrame, startVisible, startOn));
-                    this.animationNames[animationName] = animationIndex;
-                    animationIndex++;
-                }
-                else
-                    this.animationNames.Remove(animationName);
-            }
         }
 
         protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames) :
@@ -199,7 +301,7 @@ namespace MMX.Engine.Entities
             breakable = reader.ReadBoolean();
             health = reader.ReadInt32();
             invincible = reader.ReadBoolean();
-            invincibilityTime = reader.ReadInt32();
+            invincibilityFrames = reader.ReadInt32();
             invincibleExpires = reader.ReadInt64();
             broke = reader.ReadBoolean();
         }
@@ -236,7 +338,7 @@ namespace MMX.Engine.Entities
             writer.Write(breakable);
             writer.Write(health);
             writer.Write(invincible);
-            writer.Write(invincibilityTime);
+            writer.Write(invincibilityFrames);
             writer.Write(invincibleExpires);
             writer.Write(broke);
         }
@@ -248,20 +350,19 @@ namespace MMX.Engine.Entities
             get => currentAnimationIndex;
             set
             {
-                Animation animation = CurrentAnimation;
-                bool animating;
-                int animationFrame;
-                if (animation != null)
+                Animation animation;
+                bool animating = false;
+                int animationFrame = -1;
+                if (!MultiAnimation)
                 {
-                    animating = animation.Animating;
-                    animationFrame = animation.CurrentSequenceIndex;
-                    animation.Stop();
-                    animation.Visible = false;
-                }
-                else
-                {
-                    animating = false;
-                    animationFrame = -1;
+                    animation = CurrentAnimation;
+                    if (animation != null)
+                    {
+                        animating = animation.Animating;
+                        animationFrame = animation.CurrentSequenceIndex;
+                        animation.Stop();
+                        animation.Visible = false;
+                    }
                 }
 
                 currentAnimationIndex = value;
@@ -275,105 +376,7 @@ namespace MMX.Engine.Entities
             }
         }
 
-        public bool Static => isStatic;
-
-        public bool NoClip
-        {
-            get;
-            set;
-        }
-
-        public bool Moving => moving;
-
-        public bool Broke => broke;
-
-        public bool Invincible => invincible;
-
-        public int Health
-        {
-            get => health;
-            set
-            {
-                health = value;
-                OnHealthChanged(health);
-
-                if (health == 0)
-                    Break();
-            }
-        }
-
-        public Vector Velocity
-        {
-            get => vel;
-            set
-            {
-                LastVelocity = vel;
-                vel = value;
-            }
-        }
-
-        public Vector LastVelocity
-        {
-            get;
-            private set;
-        }
-
-        public BoxCollider Collider
-        {
-            get
-            {
-                collider.Box = CollisionBox;
-                return collider;
-            }
-        }
-
-        public FixedSingle Gravity => GetGravity();
-
-        public FixedSingle TerminalDownwardSpeed => GetTerminalDownwardSpeed();
-
-        public bool CheckCollisionWithSprites
-        {
-            get;
-            set;
-        }
-
-        public bool CheckCollisionWithWorld
-        {
-            get;
-            set;
-        }
-
-        public bool BlockedUp => !NoClip && collider.BlockedUp;
-
-        public bool BlockedLeft => !NoClip && collider.BlockedLeft;
-
-        public bool BlockedRight => !NoClip && collider.BlockedRight;
-
-        public bool Landed => !NoClip && collider.Landed && Velocity.Y >= 0;
-
-        public bool LandedOnSlope => !NoClip && collider.LandedOnSlope;
-
-        public bool LandedOnTopLadder => !NoClip && collider.LandedOnTopLadder;
-
-        public RightTriangle LandedSlope => collider.LandedSlope;
-
-        public bool Underwater => !NoClip && collider.Underwater;
-
-        public bool CanGoOutOfMapBounds
-        {
-            get;
-            set;
-        }
-
-        public int PaletteIndex
-        {
-            get;
-            set;
-        }
-
-        public Texture Palette => Engine.GetPalette(PaletteIndex);
-
-        protected virtual void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
+        protected virtual void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
         {
         }
 
@@ -398,7 +401,7 @@ namespace MMX.Engine.Entities
             elapsed = 0;
         }
 
-        internal override void OnSpawn()
+        protected internal override void OnSpawn()
         {
             base.OnSpawn();
 
@@ -409,20 +412,58 @@ namespace MMX.Engine.Entities
             isStatic = false;
             breakable = true;
             health = DEFAULT_HEALTH;
-            invincible = false;
-            invincibilityTime = DEFAULT_INVINCIBLE_TIME;
+            Invincible = false;
+            Blinking = false;
+            invincibilityFrames = DEFAULT_INVINCIBLE_TIME;
             broke = false;
+            MultiAnimation = false;
 
             CurrentAnimationIndex = InitialAnimationIndex;
             CurrentAnimation?.StartFromBegin();
         }
 
-        protected virtual bool OnTakeDamage(Sprite attacker, Box region, ref int damage)
+        public override void Spawn()
+        {
+            base.Spawn();
+
+            int animationIndex = 0;
+            var names = new List<string>(animationNames.Keys);
+            foreach (var animationName in names)
+            {
+                SpriteSheet.FrameSequence sequence = Sheet.GetFrameSequence(animationName);
+                string frameSequenceName = sequence.Name;
+                Vector offset = Vector.NULL_VECTOR;
+                int count = 1;
+                int repeatX = 1;
+                int repeatY = 1;
+                int initialFrame = 0;
+                bool startVisible = false;
+                bool startOn = true;
+                bool add = true;
+
+                OnCreateAnimation(animationIndex, Sheet, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
+
+                if (add)
+                {
+                    int ai = animationIndex;
+                    for (int i = 0; i < count; i++)
+                    {
+                        animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, offset, repeatX, repeatY, initialFrame, startVisible, startOn));
+                        animationNames[animationName] = ai;
+                        animationIndex++;
+                    }
+                }
+                else
+                    animationNames.Remove(animationName);
+            }
+        }
+
+        protected virtual bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
         {
             return true;
         }
 
-        protected virtual void OnTakeDamagePost(Sprite attacker, Box region, FixedSingle damage)
+        protected virtual void OnTakeDamagePost(Sprite attacker, FixedSingle damage)
         {
         }
 
@@ -432,21 +473,15 @@ namespace MMX.Engine.Entities
 
         public void Hurt(Sprite victim, FixedSingle damage)
         {
-        }
-
-        public void Hurt(Sprite victim, Box region, int damage)
-        {
-            if (victim.broke || victim.MarkedToRemove || health <= 0)
+            if (!Alive || broke || MarkedToRemove)
                 return;
 
-            Box intersection = region;
-
-            if (!intersection.IsValid(EPSLON))
+            if (!victim.Alive || victim.broke || victim.MarkedToRemove || health <= 0)
                 return;
 
-            if (!victim.invincible && victim.OnTakeDamage(this, region, ref damage))
+            if (!victim.Invincible && !victim.NoClip && victim.OnTakeDamage(this, ref damage))
             {
-                int h = victim.health;
+                FixedSingle h = victim.health;
                 h -= damage;
 
                 if (h < 0)
@@ -454,19 +489,27 @@ namespace MMX.Engine.Entities
 
                 victim.health = h;
                 victim.OnHealthChanged(h);
-                victim.OnTakeDamagePost(this, region, damage);
+                victim.OnTakeDamagePost(this, damage);
 
                 if (victim.health == 0)
                     victim.Break();
-                else
-                    victim.MakeInvincible();
             }
         }
 
-        public void MakeInvincible(int time = 0)
+        public void MakeInvincible(int frames = 0, bool blink = false)
         {
             invincible = true;
-            invincibleExpires = Engine.FrameCounter + (time <= 0 ? invincibilityTime : time);
+            invincibleExpires = frames < 0 ? Engine.FrameCounter + invincibilityFrames : frames > 0 ? Engine.FrameCounter + frames : 0;
+
+            if (blink)
+                MakeBlinking(frames < 0 ? invincibilityFrames : frames);
+        }
+
+        public void MakeBlinking(int frames = 0)
+        {
+            blinking = true;
+            blinkOn = false;
+            blinkExpires = frames > 0 ? Engine.FrameCounter + frames : 0;
         }
 
         protected virtual bool ShouldCollide(Sprite sprite)
@@ -791,7 +834,27 @@ namespace MMX.Engine.Entities
             return ShouldCollide(sprite) || sprite.ShouldCollide(this);
         }
 
-        public Box DrawBox => CurrentAnimation != null ? CurrentAnimation.DrawBox : Origin + Box.EMPTY_BOX;
+        public bool MultiAnimation
+        {
+            get;
+            protected set;
+        }
+
+        public Box DrawBox
+        {
+            get
+            {
+                if (!MultiAnimation)
+                    return CurrentAnimation != null ? CurrentAnimation.DrawBox : Origin + Box.EMPTY_BOX;
+
+                Box result = Box.EMPTY_BOX;
+                foreach (var animation in animations)
+                    if (animation.Visible)
+                        result |= animation.DrawBox;
+
+                return result;
+            }
+        }
 
         public float Opacity
         {
@@ -823,7 +886,8 @@ namespace MMX.Engine.Entities
         }
 
         protected override bool PreThink()
-        {         
+        {
+            InvisibleOnCurrentFrame = false;
             return base.PreThink();
         }
 
@@ -840,11 +904,19 @@ namespace MMX.Engine.Entities
             if (Engine.Paused)
                 return;
 
-            if (invincible && Engine.FrameCounter >= invincibleExpires)
-                invincible = false;
+            if (Invincible && invincibleExpires > 0 && Engine.FrameCounter >= invincibleExpires)
+                Invincible = false;
+
+            if (Blinking && blinkExpires > 0 && Engine.FrameCounter >= blinkExpires)
+                Blinking = false;
 
             foreach (Animation animation in animations)
                 animation.NextFrame();
+        }
+
+        protected virtual void OnBlink(bool blinkOn)
+        {
+            InvisibleOnCurrentFrame = !blinkOn;
         }
 
         public virtual void Render()
@@ -852,8 +924,17 @@ namespace MMX.Engine.Entities
             if (!Alive)
                 return;
 
-            foreach (Animation animation in animations)
-                animation.Render();
+            if (Blinking)
+            {
+                blinkOn = !blinkOn;
+                OnBlink(blinkOn);
+            }
+
+            if (!InvisibleOnCurrentFrame)
+                foreach (Animation animation in animations)
+                    animation.Render();
+
+            InvisibleOnCurrentFrame = false;
         }
 
         protected internal virtual void OnAnimationEnd(Animation animation)

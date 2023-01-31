@@ -1,8 +1,6 @@
-﻿using MMX.Math;
+﻿using MMX.Engine.Entities;
 using MMX.Geometry;
-
-using MMX.Engine.Entities;
-
+using MMX.Math;
 using static MMX.Engine.Consts;
 
 namespace MMX.Engine.World
@@ -51,11 +49,20 @@ namespace MMX.Engine.World
             MovingSpeed = 0;
         }
 
-        public World World { get; }
+        public World World
+        {
+            get;
+        }
 
-        public FixedSingle Width { get; }
+        public FixedSingle Width
+        {
+            get;
+        }
 
-        public FixedSingle Height { get; }
+        public FixedSingle Height
+        {
+            get;
+        }
 
         public bool SmoothOnNextMove
         {
@@ -73,11 +80,6 @@ namespace MMX.Engine.World
         {
             get;
             private set;
-        }
-
-        private void SetLeftTop(Vector v)
-        {
-            SetCenter(v.X + Width, v.Y + Height);
         }
 
         private void SetCenter(Vector v)
@@ -111,6 +113,30 @@ namespace MMX.Engine.World
             center = new Vector(x, y);
         }
 
+        public Vector LeftTop
+        {
+            get => center - SizeVector / 2;
+            set => Center = value + SizeVector / 2;
+        }
+
+        public Vector LeftMiddle
+        {
+            get => (center.X - Width / 2, center.Y);
+            set => Center = (value.X + Width / 2, value.Y);
+        }
+
+        public Vector LeftBottom
+        {
+            get => (center.X - Width / 2, center.Y + Height / 2);
+            set => Center = (value.X + Width / 2, value.Y - Height / 2);
+        }
+
+        public Vector MiddleTop
+        {
+            get => (center.X, center.Y - Height / 2);
+            set => Center = (value.X, value.Y + Height / 2);
+        }
+
         public Vector Center
         {
             get => center;
@@ -123,14 +149,29 @@ namespace MMX.Engine.World
             }
         }
 
-        public Vector LeftTop
+        public Vector MiddleBottom
         {
-            get => center - SizeVector / 2;
-
-            set => SetLeftTop(value);
+            get => (center.X, center.Y + Height / 2);
+            set => Center = (value.X, value.Y - Height / 2);
         }
 
-        public Vector RightBottom => center + SizeVector / 2;
+        public Vector RightTop
+        {
+            get => (center.X + Width / 2, center.Y - Height / 2);
+            set => Center = (value.X - Width / 2, value.Y + Height / 2);
+        }
+
+        public Vector RightMiddle
+        {
+            get => (center.X + Width / 2, center.Y);
+            set => Center = (value.X - Width / 2, value.Y);
+        }
+
+        public Vector RightBottom
+        {
+            get => center + SizeVector / 2;
+            set => Center = value - SizeVector / 2;
+        }
 
         public Entity FocusOn
         {

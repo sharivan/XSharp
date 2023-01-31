@@ -1,9 +1,6 @@
 ﻿using MMX.Geometry;
-
-using MMX.Engine.Entities.Weapons;
-
+using MMX.Math;
 using static MMX.Engine.Consts;
-using System;
 
 namespace MMX.Engine.Entities.Enemies
 {
@@ -36,16 +33,17 @@ namespace MMX.Engine.Entities.Enemies
             RegisterState(DrillerState.LANDING, OnLanding, "Landing");
         }
 
-        internal override void OnSpawn()
+        protected internal override void OnSpawn()
         {
             base.OnSpawn();
-           
+
             flashing = false;
             jumping = false;
             jumpCounter = 0;
 
             PaletteIndex = 5;
             Health = DRILLER_HEALTH;
+            ContactDamage = DRILLER_CONTACT_DAMAGE;
 
             CheckCollisionWithWorld = true;
             CheckCollisionWithSprites = false;
@@ -53,16 +51,12 @@ namespace MMX.Engine.Entities.Enemies
             State = DrillerState.IDLE;
         }
 
-        protected override void OnStartTouch(Entity entity)
+        protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
         {
-            if (entity is Weapon)
-            {
-                flashing = true;
-                PaletteIndex = 4;
-                Engine.PlaySound(2, 8);
-            }
+            flashing = true;
+            PaletteIndex = 4;
 
-            base.OnStartTouch(entity);
+            return base.OnTakeDamage(attacker, ref damage);
         }
 
         public void FaceToPlayer(Player player)
@@ -130,15 +124,15 @@ namespace MMX.Engine.Entities.Enemies
                 FaceToPlayer(Engine.Player);
         }
 
-        protected internal override void PostThink()
+        protected override bool PreThink()
         {
-            base.PostThink();
-
             if (flashing)
             {
                 flashing = false;
                 PaletteIndex = 5;
             }
+
+            return base.PreThink();
         }
     }
 }

@@ -46,7 +46,12 @@ namespace MMX.Engine.Entities.Weapons
             return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
         }
 
-        internal override void OnSpawn()
+        protected override FixedSingle GetBaseDamage()
+        {
+            return 4;
+        }
+
+        protected internal override void OnSpawn()
         {
             base.OnSpawn();
 
@@ -106,10 +111,15 @@ namespace MMX.Engine.Entities.Weapons
             SetState(SemiChargedState.EXPLODING);
         }
 
-        public void Hit(Entity entity)
+        public override void Hit(Enemy enemy)
         {
-            hitEntity = entity;
-            SetState(SemiChargedState.HITTING);
+            base.Hit(enemy);
+
+            if (!enemy.Broke)
+            {
+                hitEntity = enemy;
+                SetState(SemiChargedState.HITTING);
+            }
         }
 
         public override void Dispose()
@@ -118,14 +128,6 @@ namespace MMX.Engine.Entities.Weapons
             Shooter.shootingCharged = false;
 
             base.Dispose();
-        }
-
-        protected override void OnStartTouch(Entity entity)
-        {
-            if (entity is Enemy)
-                Hit(entity);
-
-            base.OnStartTouch(entity);
         }
 
         protected internal override void OnAnimationEnd(Animation animation)

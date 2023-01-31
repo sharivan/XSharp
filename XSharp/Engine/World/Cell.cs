@@ -2,9 +2,15 @@
 {
     public readonly struct Cell
     {
-        public int Row { get; }
+        public int Row
+        {
+            get;
+        }
 
-        public int Col { get; }
+        public int Col
+        {
+            get;
+        }
 
         public Cell(int row, int col)
         {
@@ -12,7 +18,7 @@
             Col = col;
         }
 
-        public Cell((int, int) tuple) : this(tuple.Item1, tuple.Item2) {}
+        public Cell((int, int) tuple) : this(tuple.Item1, tuple.Item2) { }
 
         public override int GetHashCode()
         {

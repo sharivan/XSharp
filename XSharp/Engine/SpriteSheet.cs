@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using MMX.Geometry;
+﻿using MMX.Geometry;
 using MMX.Math;
-
 using SharpDX;
 using SharpDX.Direct3D9;
-
+using System;
+using System.Collections.Generic;
+using System.IO;
 using MMXBox = MMX.Geometry.Box;
 
 namespace MMX.Engine

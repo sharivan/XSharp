@@ -1,10 +1,7 @@
-﻿using SharpDX;
-
-using MMX.Geometry;
-
-using MMXBox = MMX.Geometry.Box;
-
+﻿using MMX.Geometry;
+using SharpDX;
 using static MMX.Engine.Consts;
+using MMXBox = MMX.Geometry.Box;
 
 namespace MMX.Engine.World
 {
@@ -12,9 +9,15 @@ namespace MMX.Engine.World
     {
         internal Map[,] maps;
 
-        public World World { get; }
+        public World World
+        {
+            get;
+        }
 
-        public int ID { get; }
+        public int ID
+        {
+            get;
+        }
 
         public Map this[int row, int col]
         {

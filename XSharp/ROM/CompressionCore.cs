@@ -352,7 +352,8 @@ namespace MMX.ROM
                         if (!sizeOnly)
                         { //debug:i<155 will save but can't edit layout
 
-                            if (writeIndex == 27 && buf == 0 && overdrive_ostrich) counter += 34;
+                            if (writeIndex == 27 && buf == 0 && overdrive_ostrich)
+                                counter += 34;
                             dst[dstOff + writeIndex++] = counter;
                             dst[dstOff + writeIndex++] = buf;
                             if (writeIndex == 19 && overdrive_ostrich)

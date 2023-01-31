@@ -8,9 +8,15 @@ namespace MMX.Engine.World
     {
         private readonly Map map;
 
-        public World World { get; }
+        public World World
+        {
+            get;
+        }
 
-        public Cell Cell { get; }
+        public Cell Cell
+        {
+            get;
+        }
 
         public int Row => Cell.Row;
 

@@ -27,7 +27,7 @@ namespace MMX.Engine.Entities.Weapons
 
             SetupStateArray(typeof(LemonState));
             RegisterState(LemonState.SHOOTING, OnStartShot, OnShooting, null, "LemonShot");
-            RegisterState(LemonState.EXPLODING, null, null, OnExploded, "LemonShotExplode");
+            RegisterState(LemonState.EXPLODING, null, OnExploding, OnExploded, "LemonShotExplode");
         }
 
         public override FixedSingle GetGravity()
@@ -40,7 +40,12 @@ namespace MMX.Engine.Entities.Weapons
             return new(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
         }
 
-        internal override void OnSpawn()
+        protected override FixedSingle GetBaseDamage()
+        {
+            return dashLemon ? 4 : 2;
+        }
+
+        protected internal override void OnSpawn()
         {
             base.OnSpawn();
 
@@ -63,9 +68,20 @@ namespace MMX.Engine.Entities.Weapons
                 Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
         }
 
+        private void OnExploding(EntityState state, long frameCounter)
+        {
+            Velocity = Vector.NULL_VECTOR;
+        }
+
         private void OnExploded(EntityState state)
         {
             KillOnNextFrame();
+        }
+
+        public override void Hit(Enemy enemy)
+        {
+            base.Hit(enemy);
+            Explode(enemy);
         }
 
         public void Explode(Entity entity)
@@ -99,14 +115,6 @@ namespace MMX.Engine.Entities.Weapons
         {
             Shooter.shots--;
             base.OnDeath();
-        }
-
-        protected override void OnStartTouch(Entity entity)
-        {
-            if (entity is Enemy)
-                Explode(entity);
-
-            base.OnStartTouch(entity);
         }
 
         protected internal override void OnAnimationEnd(Animation animation)

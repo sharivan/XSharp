@@ -26,7 +26,10 @@ namespace MMX.Engine.Entities.Triggers
         }
 
         public SplitterTrigger(GameEngine engine, Box box, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL, VectorKind vectorKind = VectorKind.ORIGIN) :
-            base(engine, box, TouchingKind.VECTOR, vectorKind) => Orientation = orientation;
+            base(engine, box, TouchingKind.VECTOR, vectorKind)
+        {
+            Orientation = orientation;
+        }
 
         protected virtual void OnSplitterTriggerEvent(Entity target, SplitterTriggerDirection side)
         {

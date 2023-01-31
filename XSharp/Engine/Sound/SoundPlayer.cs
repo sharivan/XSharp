@@ -1,7 +1,6 @@
-﻿using System;
+﻿using NAudio.Wave;
+using System;
 using System.IO;
-
-using NAudio.Wave;
 
 namespace MMX.Engine.Sound
 {
@@ -46,7 +45,10 @@ namespace MMX.Engine.Sound
     {
         private WaveStream source;
 
-        public SoundStream() => Playing = false;
+        public SoundStream()
+        {
+            Playing = false;
+        }
 
         public SoundStream(WaveStream source, long stopPoint, long loopPoint)
         {

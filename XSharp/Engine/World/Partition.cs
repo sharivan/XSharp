@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
-
+﻿using MMX.Engine.Entities;
 using MMX.Geometry;
 using MMX.Math;
-
-using MMX.Engine.Entities;
+using System.Collections.Generic;
 
 namespace MMX.Engine.World
 {

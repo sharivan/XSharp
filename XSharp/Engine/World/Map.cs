@@ -1,10 +1,7 @@
-﻿using SharpDX;
-
-using MMX.Geometry;
-
-using MMXBox = MMX.Geometry.Box;
-
+﻿using MMX.Geometry;
+using SharpDX;
 using static MMX.Engine.Consts;
+using MMXBox = MMX.Geometry.Box;
 
 namespace MMX.Engine.World
 {
