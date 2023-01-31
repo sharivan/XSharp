@@ -2127,50 +2127,6 @@ namespace MMX.ROM
                 LoadCheckpoints();
             }*/
             expandedLayoutScenes = 0x40;
-
-#pragma warning disable CS0162 // Código inacessível detectado
-            if (DEBUG_DUMP_ROM_MEMORY)
-            {
-                string sFileName = "C:\\Users\\miste\\Documents\\Projects\\c#\\vc#\\XSharp\\XSharp\\resources\\roms\\" + ROM_NAME + ".smc";
-                int pos = sFileName.LastIndexOf('.');
-                if (pos != -1)
-                    sFileName = sFileName.Substring(0, pos);
-
-                sFileName += ".rom.txt";
-
-                using (StreamWriter writer = File.CreateText(sFileName))
-                {
-                    WriteDump("rom", writer, rom, 0, romSize);
-                    writer.Flush();
-                }
-
-                sFileName = "C:\\Users\\miste\\Documents\\Projects\\c#\\vc#\\XSharp\\XSharp\\resources\\roms\\" + ROM_NAME + ".smc";
-                pos = sFileName.LastIndexOf('.');
-                if (pos == -1)
-                    sFileName += "[";
-                else
-                    sFileName = sFileName.Substring(0, pos) + "[";
-
-                sFileName += Level;
-                sFileName += "].txt";
-
-                using (StreamWriter writer = File.CreateText(sFileName))
-                {
-                    WriteDump("palCache", writer, palCache, 0, palCache.Length);
-                    WriteDump("palSpriteCache", writer, palSpriteCache, 0, palSpriteCache.Length);
-                    WriteDump("vramCache", writer, vramCache, 0, vramCache.Length);
-                    WriteDump("spriteCache", writer, spriteCache, 0, spriteCache.Length);
-                    WriteDump("vram", writer, vram, 0, vram.Length);
-                    WriteDump("mapping", writer, mapping, 0, mapping.Length);
-                    WriteDump("mappingBG", writer, mappingBG, 0, mappingBG.Length);
-                    WriteDump("sceneLayout", writer, sceneLayout, 0, sceneLayout.Length);
-                    WriteDump("palettesOffset", writer, palettesOffset, 0, palettesOffset.Length);
-                    WriteDump("fontPalCache", writer, fontPalCache, 0, fontPalCache.Length);
-                    WriteDump("fontCache", writer, fontCache, 0, fontCache.Length);
-                    writer.Flush();
-                }
-            }
-#pragma warning restore CS0162 // Código inacessível detectado
         }
 
         internal void LoadBackground(bool skipLayout = false)

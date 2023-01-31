@@ -157,7 +157,6 @@ namespace MMX.Engine
         public const bool DEBUG_DRAW_CHECKPOINT = false;
         public const bool DEBUG_SHOW_TRIGGERS = false;
         public const bool DEBUG_SHOW_CAMERA_TRIGGER_EXTENSIONS = false;
-        public const bool DEBUG_DUMP_ROM_MEMORY = false;
 
         public static readonly Color HITBOX_COLOR = Color.FromRgba(0x8000ff00);
         public static readonly Color HITBOX_BORDER_COLOR = Color.Green;
