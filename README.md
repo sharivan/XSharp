@@ -53,7 +53,6 @@ Some Pending Fixes:
 - Fix ladders.
 - Fix background position in some levels.
 - Fix triggers and camera lock in some levels.
-- Add documentation.
 
 Future additions:
 
@@ -64,3 +63,4 @@ Future additions:
 - Demo recorder.
 - Embedded console.
 - Support for other render APIs like D3D11 and OpenGL.
+- Add documentation.
