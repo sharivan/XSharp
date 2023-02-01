@@ -66,6 +66,8 @@ namespace MMX.Engine.Entities.Items
 
         protected override void OnStopMoving()
         {
+            base.OnStopMoving();
+
             if (State == SmallHealthRecoverState.DROPPING)
             {
                 Velocity = Vector.NULL_VECTOR;

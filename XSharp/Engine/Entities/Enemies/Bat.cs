@@ -97,6 +97,8 @@ namespace MMX.Engine.Entities.Enemies
 
         protected override void OnStopMoving()
         {
+            base.OnStopMoving();
+
             if (State == BatState.ESCAPING)
             {
                 Velocity = Vector.NULL_VECTOR;

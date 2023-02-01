@@ -422,6 +422,18 @@ namespace MMX.Engine.Entities
 
             CurrentAnimationIndex = InitialAnimationIndex;
             CurrentAnimation?.StartFromBegin();
+
+            if (BlockedUp)
+                OnBlockedUp();
+
+            if (BlockedLeft)
+                OnBlockedLeft();
+
+            if (BlockedRight)
+                OnBlockedRight();
+
+            if (Landed)
+                OnLanded();
         }
 
         public override void Spawn()
