@@ -1,4 +1,5 @@
-﻿using MMX.Geometry;
+﻿using MMX.Engine.Entities.Enemies;
+using MMX.Geometry;
 
 using static MMX.Engine.Consts;
 
@@ -61,6 +62,15 @@ namespace MMX.Engine.Entities.Items
             base.OnBlockedRight();
 
             State = SmallHealthRecoverState.IDLE;
+        }
+
+        protected override void OnStopMoving()
+        {
+            if (State == SmallHealthRecoverState.DROPPING)
+            {
+                Velocity = Vector.NULL_VECTOR;
+                State = SmallHealthRecoverState.IDLE;
+            }
         }
 
         protected override void OnCollecting(Player player)

@@ -81,7 +81,7 @@ namespace MMX.Engine.Entities.Enemies
 
             int random = Engine.RNG.Next(0, (int) System.Math.Ceiling(TotalDropOdd));
             if (random <= SmallHealthDropOdd)
-                Engine.DropSmallHealthRecover(Origin, ITEM_DURATION_FRAMES);
+                Engine.DropSmallHealthRecover(HitBox.Center, ITEM_DURATION_FRAMES);
         }
 
         protected override void Think()
