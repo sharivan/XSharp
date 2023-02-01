@@ -48,8 +48,12 @@ namespace MMX.Engine.Entities.Enemies
             CheckCollisionWithWorld = true;
             CheckCollisionWithSprites = false;
 
-            NothingDropOdd = 80;
-            SmallHealthDropOdd = 20;
+            NothingDropOdd = 79;
+            SmallHealthDropOdd = 10;
+            BigHealthDropOdd = 10;
+            SmallAmmoDropOdd = 0;
+            BigAmmoDropOdd = 0;
+            LifeUpDropOdd = 1;
 
             State = DrillerState.IDLE;
         }

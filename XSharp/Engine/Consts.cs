@@ -126,6 +126,8 @@ namespace MMX.Engine
         public const int X_INITIAL_LIVES = 2;
         public static readonly FixedSingle X_INITIAL_HEALT_CAPACITY = 16;
         public static readonly FixedSingle X_TIRED_PERCENTAGE = 0.25;
+        public const int MIN_LIVES = 0;
+        public const int MAX_LIVES = 9;
 
         // Items
 
@@ -196,7 +198,8 @@ namespace MMX.Engine
         public static readonly Color TOUCHING_MAP_COLOR = Color.Blue;
 
         // HUD
-        public static readonly Vector HP_OFFSET = (9, 44);
+        public static readonly FixedSingle HP_LEFT = 9;
+        public static readonly FixedSingle HP_BOTTOM = 96;
         public static readonly Vector READY_OFFSET = new Vector(SCREEN_WIDTH - 39, SCREEN_HEIGHT - 13) / 2;
 
         // Palettes
@@ -332,10 +335,10 @@ namespace MMX.Engine
 
         // Startup
         public const bool LOAD_ROM = true;
-        public const string ROM_NAME = "ShittyDash.mmx";
+        public const string ROM_NAME = "BestGame.mmx";
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
-        public const int INITIAL_LEVEL = 8;
+        public const int INITIAL_LEVEL = 2;
         public const int INITIAL_CHECKPOINT = 0;
     }
 }

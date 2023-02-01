@@ -37,7 +37,7 @@ namespace MMX.Engine.Entities.Enemies
             set;
         }
 
-        public float LifeDropOdd
+        public float LifeUpDropOdd
         {
             get;
             set;
@@ -49,7 +49,7 @@ namespace MMX.Engine.Entities.Enemies
             set;
         }
 
-        public float TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeDropOdd + NothingDropOdd;
+        public float TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeUpDropOdd + NothingDropOdd;
 
         protected Enemy(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false) : base(engine, name, origin, spriteSheetIndex, directional)
         {
@@ -79,9 +79,37 @@ namespace MMX.Engine.Entities.Enemies
         {
             Engine.CreateExplosionEffect(HitBox.Center);
 
-            int random = Engine.RNG.Next(0, (int) System.Math.Ceiling(TotalDropOdd));
-            if (random <= SmallHealthDropOdd)
+            double random = Engine.RNG.NextDouble() * TotalDropOdd;
+            if (random < SmallHealthDropOdd)
+            {
                 Engine.DropSmallHealthRecover(HitBox.Center, ITEM_DURATION_FRAMES);
+                return;
+            }
+
+            random -= SmallHealthDropOdd;
+            if (random < BigHealthDropOdd)
+            {
+                Engine.DropBigHealthRecover(HitBox.Center, ITEM_DURATION_FRAMES);
+                return;
+            }
+
+            random -= BigHealthDropOdd;
+            if (random < SmallAmmoDropOdd)
+            {
+                Engine.DropSmallAmmoRecover(HitBox.Center, ITEM_DURATION_FRAMES);
+                return;
+            }
+
+            random -= SmallAmmoDropOdd;
+            if (random < BigAmmoDropOdd)
+            {
+                Engine.DropBigAmmoRecover(HitBox.Center, ITEM_DURATION_FRAMES);
+                return;
+            }
+
+            random -= BigAmmoDropOdd;
+            if (random < LifeUpDropOdd)
+                Engine.DropLifeUp(HitBox.Center, ITEM_DURATION_FRAMES);
         }
 
         protected override void Think()

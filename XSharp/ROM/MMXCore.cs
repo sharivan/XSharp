@@ -3189,6 +3189,40 @@ namespace MMX.ROM
                 {
                     switch (info.type)
                     {
+                        case 0x00:
+                            switch (info.eventId)
+                            {
+                                case 0x01:
+                                    if (info.eventSubId == 0x80)
+                                        engine.AddBigAmmoRecover((info.xpos, info.ypos));
+                                    else
+                                        engine.AddSmallAmmoRecover((info.xpos, info.ypos));
+
+                                    break;
+
+                                case 0x02:
+                                    if (info.eventSubId == 0x80)
+                                        engine.AddBigHealthRecover((info.xpos, info.ypos));
+                                    else
+                                        engine.AddSmallHealthRecover((info.xpos, info.ypos));
+
+                                    break;
+
+                                case 0x04:
+                                    engine.AddLifeUp((info.xpos, info.ypos));
+                                    break;
+
+                                case 0x05:
+                                    engine.AddSubTank((info.xpos, info.ypos));
+                                    break;
+
+                                case 0x0B:
+                                    engine.AddHeartTank((info.xpos, info.ypos));
+                                    break;
+                            }
+
+                            break;
+
                         case 0x02:
                             switch (info.eventId)
                             {
@@ -3274,7 +3308,7 @@ namespace MMX.ROM
                                         int lockX = lockLeft < lockX0 ? lockLeft : lockRight;
                                         int lockY = lockTop < lockY0 ? lockTop : lockBottom;
 
-                                        extensions.Add(new Vector(lockX - lockX0, lockY - lockY0));
+                                        extensions.Add((lockX - lockX0, lockY - lockY0));
                                         lockNum++;
                                     }
 
@@ -3285,43 +3319,43 @@ namespace MMX.ROM
                                 case 0x02:
                                 case 0x0B: // checkpoint trigger
                                 {
-                                    engine.AddCheckpointTrigger((ushort) (info.eventSubId & 0xf), new Vector(info.xpos, info.ypos));
+                                    engine.AddCheckpointTrigger((ushort) (info.eventSubId & 0xf), (info.xpos, info.ypos));
                                     break;
                                 }
 
                                 case 0x15: // dynamic change object/enemy tiles (vertical)
                                 {
-                                    engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.VERTICAL);
+                                    engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
                                     break;
                                 }
 
                                 case 0x16: // dynamic change background tiles tiles (vertical)
                                 {
-                                    engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.VERTICAL);
+                                    engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
                                     break;
                                 }
 
                                 case 0x17: // dynamic change palette (vertical)
                                 {
-                                    engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.PALETTE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.VERTICAL);
+                                    engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.PALETTE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
                                     break;
                                 }
 
                                 case 0x18: // dynamic change object/enemy tiles (horizontal)
                                 {
-                                    engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.HORIZONTAL);
+                                    engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
                                     break;
                                 }
 
                                 case 0x19: // dynamic change background tiles tiles (horizontal)
                                 {
-                                    engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.HORIZONTAL);
+                                    engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
                                     break;
                                 }
 
                                 case 0x1A: // dynamic change palette (horizontal)
                                 {
-                                    engine.AddChangeDynamicPropertyTrigger(new Vector(info.xpos, info.ypos), DynamicProperty.PALETTE, (int) (info.eventSubId & 0xf), (int) ((info.eventSubId >> 4) & 0xf), SplitterTriggerOrientation.HORIZONTAL);
+                                    engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.PALETTE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
                                     break;
                                 }
                             }
@@ -3329,7 +3363,7 @@ namespace MMX.ROM
                             break;
 
                         case 0x03:
-                            engine.AddEnemy(info.eventId, info.eventSubId, new Vector(info.xpos, info.ypos));
+                            engine.AddEnemy(info.eventId, info.eventSubId, (info.xpos, info.ypos));
                             break;
                     }
                 }

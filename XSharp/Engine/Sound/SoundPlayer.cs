@@ -44,23 +44,7 @@ namespace MMX.Engine.Sound
     public class SoundStream : WaveStream
     {
         private WaveStream source;
-
-        public SoundStream()
-        {
-            Playing = false;
-        }
-
-        public SoundStream(WaveStream source, long stopPoint, long loopPoint)
-        {
-            UpdateSource(source, stopPoint, loopPoint);
-            Playing = true;
-        }
-
-        public SoundStream(WaveStream source, double stopTime, double loopTime) : this(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, loopTime) : -1) { }
-
-        public SoundStream(WaveStream source, long loopPoint) : this(source, -1, loopPoint) { }
-
-        public SoundStream(WaveStream source) : this(source, -1, -1) { }
+        private bool ignoreUpdatesUntilPlayed;
 
         /// <summary>
         /// Return source stream's wave format
@@ -107,6 +91,24 @@ namespace MMX.Engine.Sound
             set;
         }
 
+        public SoundStream()
+        {
+            Playing = false;
+        }
+
+        public SoundStream(WaveStream source, long stopPoint, long loopPoint)
+        {
+            UpdateSource(source, stopPoint, loopPoint);
+            Playing = true;
+        }
+
+        public SoundStream(WaveStream source, double stopTime, double loopTime) : this(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, loopTime) : -1) { }
+
+        public SoundStream(WaveStream source, long loopPoint) : this(source, -1, loopPoint) { }
+
+        public SoundStream(WaveStream source) : this(source, -1, -1) { }
+
+
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (!Playing)
@@ -128,6 +130,7 @@ namespace MMX.Engine.Sound
                     if (source.Position == 0 || !Looping)
                     {
                         // something wrong with the source stream
+                        ignoreUpdatesUntilPlayed = false;
                         break;
                     }
 
@@ -154,33 +157,38 @@ namespace MMX.Engine.Sound
         public void Stop()
         {
             Playing = false;
+            ignoreUpdatesUntilPlayed = false;
         }
 
-        public void UpdateSource(WaveStream source, long stopPoint, long loopPoint)
+        public void UpdateSource(WaveStream source, long stopPoint, long loopPoint, bool ignoreUpdatesUntilPlayed = false)
         {
+            if (this.ignoreUpdatesUntilPlayed)
+                return;
+
             this.source = source;
             StopPoint = stopPoint >= 0 ? stopPoint : source.Length;
             LoopPoint = loopPoint;
+            this.ignoreUpdatesUntilPlayed = ignoreUpdatesUntilPlayed;
         }
 
-        public void UpdateSource(WaveStream source, long loopPoint)
+        public void UpdateSource(WaveStream source, long loopPoint, bool ignoreUpdatesUntilPlayed = false)
         {
-            UpdateSource(source, -1, loopPoint);
+            UpdateSource(source, -1, loopPoint, ignoreUpdatesUntilPlayed);
         }
 
-        public void UpdateSource(WaveStream source)
+        public void UpdateSource(WaveStream source, bool ignoreUpdatesUntilPlayed = false)
         {
-            UpdateSource(source, -1, -1);
+            UpdateSource(source, -1, -1, ignoreUpdatesUntilPlayed);
         }
 
-        public void UpdateSource(WaveStream source, double stopTime, double loopTime)
+        public void UpdateSource(WaveStream source, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
         {
-            UpdateSource(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, loopTime) : -1);
+            UpdateSource(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source, loopTime) : -1, ignoreUpdatesUntilPlayed);
         }
 
-        public void UpdateSource(WaveStream source, double loopTime)
+        public void UpdateSource(WaveStream source, double loopTime, bool ignoreUpdatesUntilPlayed = false)
         {
-            UpdateSource(source, -1, loopTime);
+            UpdateSource(source, -1, loopTime, ignoreUpdatesUntilPlayed);
         }
     }
 }

@@ -403,6 +403,23 @@ namespace MMX.Engine.Entities
             elapsed = 0;
         }
 
+        internal void FireFirstCollisionCheckEvents()
+        {
+            collider.Box = CollisionBox;
+
+            if (BlockedUp)
+                OnBlockedUp();
+
+            if (BlockedLeft)
+                OnBlockedLeft();
+
+            if (BlockedRight)
+                OnBlockedRight();
+
+            if (Landed)
+                OnLanded();
+        }
+
         protected internal override void OnSpawn()
         {
             base.OnSpawn();
@@ -422,18 +439,6 @@ namespace MMX.Engine.Entities
 
             CurrentAnimationIndex = InitialAnimationIndex;
             CurrentAnimation?.StartFromBegin();
-
-            if (BlockedUp)
-                OnBlockedUp();
-
-            if (BlockedLeft)
-                OnBlockedLeft();
-
-            if (BlockedRight)
-                OnBlockedRight();
-
-            if (Landed)
-                OnLanded();
         }
 
         public override void Spawn()

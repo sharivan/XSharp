@@ -37,6 +37,8 @@ namespace MMX.Engine.Entities
 
     public class Player : Sprite
     {
+        private int lives;
+
         private bool inputLocked;
         private readonly Keys[] keyBuffer = new Keys[KEY_BUFFER_COUNT];
         protected bool death;
@@ -253,8 +255,14 @@ namespace MMX.Engine.Entities
 
         public int Lives
         {
-            get;
-            set;
+            get => lives;
+            set
+            {
+                if (value < MIN_LIVES || value > MAX_LIVES)
+                    return;
+
+                lives = value;
+            }
         }
 
         public bool Tired => Health / Engine.HealthCapacity < X_TIRED_PERCENTAGE;
@@ -1001,7 +1009,7 @@ namespace MMX.Engine.Entities
                                 }
                             }
                         }
-                        else if (WasPressingJump && !PressingJump && !WallJumping && jumping && !Landed && !WallSliding && Velocity.Y < 0)
+                        else if (!PressingJump && !WallJumping && jumping && !Landed && !WallSliding && Velocity.Y < 0)
                         {
                             jumping = false;
                             WallJumping = false;
@@ -1715,7 +1723,12 @@ namespace MMX.Engine.Entities
                 health = Engine.HealthCapacity;
 
             if (health > Health)
-                Engine.StartHealthRecovering(amount);
+                Engine.StartHealthRecovering((int) (health - Health));
+        }
+
+        public void ReloadAmmo(int amount)
+        {
+            // TODO : Implement
         }
     }
 }

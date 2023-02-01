@@ -43,42 +43,9 @@ namespace MMX.Engine.Entities.Items
             State = SmallHealthRecoverState.IDLE;
         }
 
-        protected override void OnBlockedUp()
-        {
-            base.OnBlockedUp();
-
-            State = SmallHealthRecoverState.IDLE;
-        }
-
-        protected override void OnBlockedLeft()
-        {
-            base.OnBlockedLeft();
-
-            State = SmallHealthRecoverState.IDLE;
-        }
-
-        protected override void OnBlockedRight()
-        {
-            base.OnBlockedRight();
-
-            State = SmallHealthRecoverState.IDLE;
-        }
-
-        protected override void OnStopMoving()
-        {
-            base.OnStopMoving();
-
-            if (State == SmallHealthRecoverState.DROPPING)
-            {
-                Velocity = Vector.NULL_VECTOR;
-                State = SmallHealthRecoverState.IDLE;
-            }
-        }
-
         protected override void OnCollecting(Player player)
         {
             player.Heal(SMALL_HEALTH_RECOVER_AMOUNT);
-            Kill();
         }
     }
 }

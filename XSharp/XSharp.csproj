@@ -106,8 +106,14 @@
     <Compile Include="Engine\Entities\EntityState.cs" />
     <Compile Include="Engine\Entities\HUD\HealthHUD.cs" />
     <Compile Include="Engine\Entities\HUD\ReadyHUD.cs" />
+    <Compile Include="Engine\Entities\Items\BigAmmoRecover.cs" />
+    <Compile Include="Engine\Entities\Items\BigHealthRecover.cs" />
+    <Compile Include="Engine\Entities\Items\HeartTank.cs" />
     <Compile Include="Engine\Entities\Items\Item.cs" />
+    <Compile Include="Engine\Entities\Items\LifeUp.cs" />
+    <Compile Include="Engine\Entities\Items\SmallAmmoRecover.cs" />
     <Compile Include="Engine\Entities\Items\SmallHealthRecover.cs" />
+    <Compile Include="Engine\Entities\Items\SubTankItem.cs" />
     <Compile Include="Engine\Entities\SpriteState.cs" />
     <Compile Include="Engine\Entities\Triggers\CameraLockTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\ChangeDynamicPropertyTrigger.cs" />
@@ -348,7 +354,9 @@
     <Content Include="resources\sounds\mmx\13 - MMX - X Extra Life.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav" />
+    <Content Include="resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\mmx\15 - MMX - X Powerup Infuse.wav" />
     <Content Include="resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

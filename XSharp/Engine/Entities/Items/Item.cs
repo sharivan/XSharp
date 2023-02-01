@@ -18,6 +18,12 @@ namespace MMX.Engine.Entities.Items
             set;
         }
 
+        public bool Collected
+        {
+            get;
+            private set;
+        } = false;
+
         public Item(GameEngine engine, string name, Vector origin, int durationFrames, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false) : base(engine, name, origin, spriteSheetIndex, animationNames, initialAnimationName, directional)
         {
             DurationFrames = durationFrames;
@@ -44,7 +50,11 @@ namespace MMX.Engine.Entities.Items
             base.OnStartTouch(entity);
 
             if (entity is Player player)
+            {
+                Collected = true;
                 OnCollecting(player);
+                Kill();
+            }
         }
 
         protected override void Think()

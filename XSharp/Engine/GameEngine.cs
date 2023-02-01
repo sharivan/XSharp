@@ -755,25 +755,31 @@ namespace MMX.Engine
             private set;
         } = 0;
 
-        public bool HealthRecovering
+        public bool Freezing
         {
             get;
             private set;
         }
 
-        public int HealthRecoveringAmount
+        public int FreezingFrames
         {
             get;
             private set;
         }
 
-        public int HealthRecoveringAmountRemaining
+        public Action OnFreezeComplete
         {
             get;
             private set;
         }
 
-        public int HealthRecoveringFrameCounter
+        public int FreezeFrameCounter
+        {
+            get;
+            private set;
+        }
+
+        public int FreezingFrameCounter
         {
             get;
             private set;
@@ -905,6 +911,14 @@ namespace MMX.Engine
 
             // 19
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\12 - MMX - X Life Gain.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 20
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\13 - MMX - X Extra Life.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 21
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav", SoundFormat.WAVE);
             soundStreams.Add(stream);
 
             directInput = new DirectInput();
@@ -1860,12 +1874,10 @@ namespace MMX.Engine
                 if (SpawningFrameCounter >= SPAWNING_BLACK_SCREEN_FRAMES)
                 {
                     Spawning = false;
+                    soundChannels[3].player.Volume = 0.5f;
 
-                    if (romLoaded && mmx.Type == 0 && mmx.Level == 8)
-                    {
-                        soundChannels[3].player.Volume = 0.5f;
+                    if (romLoaded && mmx.Type == 0 && mmx.Level == 8) 
                         PlayOST(18, 83, 50.152);
-                    }
 
                     StartFading(Color.Black, 26, true, StartReadyHUD);
                 }
@@ -1881,19 +1893,15 @@ namespace MMX.Engine
                 DyingEffectFrameCounter++;
             }
 
-            if (HealthRecovering)
+            if (Freezing)
             {
-                HealthRecoveringFrameCounter++;
-                if (HealthRecoveringFrameCounter % 4 == 0)
+                if (FreezingFrameCounter >= FreezingFrames)
                 {
-                    Player.Health++;
-                    HealthRecoveringAmountRemaining--;                       
-
-                    if (HealthRecoveringAmountRemaining == 0)
-                        HealthRecovering = false;
-
-                    PlaySound(0, 19);
+                    Freezing = false;
+                    OnFreezeComplete?.Invoke();
                 }
+                else
+                    FreezingFrameCounter++;
             }
 
             if (!loadingLevel)
@@ -1908,6 +1916,9 @@ namespace MMX.Engine
                         {
                             if (!entity.Alive)
                             {
+                                if (entity is Item item && item.Collected)
+                                    continue;
+
                                 entity.Origin = origin;
                                 entity.Spawn();
                             }
@@ -1926,6 +1937,9 @@ namespace MMX.Engine
                         AddEntity(added);
                         added.OnSpawn();
                         partition.Insert(added);
+
+                        if (added is Sprite sprite)
+                            sprite.FireFirstCollisionCheckEvents();
                     }
 
                     addedEntities.Clear();
@@ -1933,7 +1947,7 @@ namespace MMX.Engine
 
                 Player?.PushKeys(keys);
 
-                if (HealthRecovering)
+                if (Freezing)
                     return false;
 
                 if (paused || Player != null && Player.DyingFreeze)
@@ -2938,21 +2952,91 @@ namespace MMX.Engine
             sequence.AddFrame(496, 432, 32, 32);
             sequence.AddFrame(532, 432, 32, 32);
 
+            var smallHealthRecoverDroppingCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-4, -8), (4, 0));
+
             sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverDropping");
-            sequence.BoudingBoxOriginOffset = Vector.NULL_VECTOR;
-            sequence.CollisionBox = MMXBox.EMPTY_BOX;
-            sequence.AddFrame(5, 138, 10, 8);
-            sequence.AddFrame(0, 138, 1, 1);
-            sequence.AddFrame(5, 138, 10, 8, 1, true);
+            sequence.BoudingBoxOriginOffset = -smallHealthRecoverDroppingCollisionBox.Mins;
+            sequence.CollisionBox = smallHealthRecoverDroppingCollisionBox;
+            sequence.AddFrame(0, 0, 6, 138, 8, 8);
+            sequence.AddFrame(0, 0, 24, 114, 8, 8);
+            sequence.AddFrame(0, 0, 6, 138, 8, 8, 1, true);
+
+            var smallHealthRecoverIdleCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-5, -8), (5, 0));
 
             sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverIdle");
-            sequence.BoudingBoxOriginOffset = Vector.NULL_VECTOR;
-            sequence.CollisionBox = MMXBox.EMPTY_BOX;
-            sequence.AddFrame(22, 138, 10, 8, 1, true);
-            sequence.AddFrame(40, 138, 10, 8, 2);
-            sequence.AddFrame(58, 138, 10, 8, 2);
-            sequence.AddFrame(40, 138, 10, 8, 2);
-            sequence.AddFrame(22, 138, 10, 8, 1);
+            sequence.BoudingBoxOriginOffset = -smallHealthRecoverIdleCollisionBox.Mins;
+            sequence.CollisionBox = smallHealthRecoverIdleCollisionBox;
+            sequence.AddFrame(0, 0, 22, 138, 10, 8, 1, true);
+            sequence.AddFrame(0, 0, 40, 138, 10, 8, 2);
+            sequence.AddFrame(0, 0, 58, 138, 10, 8, 2);
+            sequence.AddFrame(0, 0, 40, 138, 10, 8, 2);
+            sequence.AddFrame(0, 0, 22, 138, 10, 8, 1);
+
+            var bigHealthRecoverDroppingCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-7, -12), (7, 0));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("BigHealthRecoverDropping");
+            sequence.BoudingBoxOriginOffset = -bigHealthRecoverDroppingCollisionBox.Mins;
+            sequence.CollisionBox = bigHealthRecoverDroppingCollisionBox;
+            sequence.AddFrame(0, 0, 3, 150, 14, 12);
+            sequence.AddFrame(0, 0, 24, 114, 14, 12);
+            sequence.AddFrame(0, 0, 3, 150, 14, 12, 1, true);
+
+            var bigHealthRecoverIdleCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -12), (8, 0));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("BigHealthRecoverIdle");
+            sequence.BoudingBoxOriginOffset = -bigHealthRecoverIdleCollisionBox.Mins;
+            sequence.CollisionBox = bigHealthRecoverIdleCollisionBox;
+            sequence.AddFrame(0, 0, 19, 150, 16, 12, 1, true);
+            sequence.AddFrame(0, 0, 37, 150, 16, 12, 2);
+            sequence.AddFrame(0, 0, 55, 150, 16, 12, 2);
+            sequence.AddFrame(0, 0, 37, 150, 16, 12, 2);
+            sequence.AddFrame(0, 0, 19, 150, 16, 12, 1);
+
+            var smallAmmoRecoverCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-4, -8), (4, 0));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallAmmoRecover");
+            sequence.BoudingBoxOriginOffset = -smallAmmoRecoverCollisionBox.Mins;
+            sequence.CollisionBox = smallAmmoRecoverCollisionBox;
+            sequence.AddFrame(0, 0, 84, 138, 8, 8, 2, true);
+            sequence.AddFrame(0, 0, 100, 138, 8, 8, 2);
+            sequence.AddFrame(0, 0, 116, 138, 8, 8, 2);
+            sequence.AddFrame(0, 0, 100, 138, 8, 8, 2);
+
+            var bigAmmoRecoverCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-7, -14), (7, 0));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("BigAmmoRecover");
+            sequence.BoudingBoxOriginOffset = -bigAmmoRecoverCollisionBox.Mins;
+            sequence.CollisionBox = bigAmmoRecoverCollisionBox;
+            sequence.AddFrame(0, 0, 81, 148, 14, 14, 2, true);
+            sequence.AddFrame(0, 0, 97, 148, 14, 14, 2);
+            sequence.AddFrame(0, 0, 113, 148, 14, 14, 2);
+            sequence.AddFrame(0, 0, 97, 148, 14, 14, 2);
+
+            var lifeUpCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -16), (8, 0));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("LifeUp");
+            sequence.BoudingBoxOriginOffset = -lifeUpCollisionBox.Mins;
+            sequence.CollisionBox = lifeUpCollisionBox;
+            sequence.AddFrame(0, 0, 137, 146, 16, 16, 4, true);
+            sequence.AddFrame(0, 0, 157, 146, 16, 16, 4);
+
+            var heartTankCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -19), (8, 0));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("HeartTank");
+            sequence.BoudingBoxOriginOffset = -heartTankCollisionBox.Mins;
+            sequence.CollisionBox = heartTankCollisionBox;
+            sequence.AddFrame(-1, -1, 183, 147, 14, 15, 11, true);
+            sequence.AddFrame(-2, -2, 199, 147, 12, 15, 11);
+            sequence.AddFrame(-3, -3, 213, 147, 10, 15, 11);
+            sequence.AddFrame(-2, -2, 225, 147, 12, 15, 11);
+
+            var subTankCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -19), (8, 0));
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SubTank");
+            sequence.BoudingBoxOriginOffset = -subTankCollisionBox.Mins;
+            sequence.CollisionBox = subTankCollisionBox;
+            sequence.AddFrame(2, 0, 247, 143, 20, 19, 4, true);
+            sequence.AddFrame(2, 0, 269, 143, 20, 19, 4);
 
             xWeaponsSpriteSheet.ReleaseCurrentTexture();
 
@@ -3506,7 +3590,7 @@ namespace MMX.Engine
             {
                 if (nextFrame)
                 {
-                    if (HealthRecovering || Player == null || !Player.DyingFreeze)
+                    if (Freezing || Player == null || !Player.DyingFreeze)
                         for (var entity = firstEntity; entity != null; entity = entity.next)
                             entity.PostThink();
                     else
@@ -4148,13 +4232,13 @@ namespace MMX.Engine
             return paletteIndex >= 0 && paletteIndex < palettes.Count ? palettes[paletteIndex] : null;
         }
 
-        public void PlaySound(int channel, int index, double stopTime, double loopTime)
+        public void PlaySound(int channel, int index, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
         {
             var stream = soundStreams[index];
             var (player, ss, initialized) = soundChannels[channel];
 
             stream.Position = 0;
-            ss.UpdateSource(stream, stopTime, loopTime);
+            ss.UpdateSource(stream, stopTime, loopTime, ignoreUpdatesUntilPlayed);
 
             if (!ss.Playing)
             {
@@ -4171,14 +4255,14 @@ namespace MMX.Engine
             player.Play();
         }
 
-        public void PlaySound(int channel, int index, double loopTime)
+        public void PlaySound(int channel, int index, double loopTime, bool ignoreUpdatesUntilPlayed = false)
         {
-            PlaySound(channel, index, -1, loopTime);
+            PlaySound(channel, index, -1, loopTime, ignoreUpdatesUntilPlayed);
         }
 
-        public void PlaySound(int channel, int index)
+        public void PlaySound(int channel, int index, bool ignoreUpdatesUntilPlayed = false)
         {
-            PlaySound(channel, index, -1, -1);
+            PlaySound(channel, index, -1, -1, ignoreUpdatesUntilPlayed);
         }
 
         public void PlayOST(int index, double stopTime, double loopTime)
@@ -4221,19 +4305,143 @@ namespace MMX.Engine
             StartFading(Color.White, 132, ReloadLevelTransition);
         }
 
-        public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames = 0)
+        public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames)
         {
             var drop = new SmallHealthRecover(this, "Small Health Recover", origin, durationFrames);
             drop.Spawn();
             return drop;
         }
 
+        public BigHealthRecover DropBigHealthRecover(Vector origin, int durationFrames)
+        {
+            var drop = new BigHealthRecover(this, "Big Health Recover", origin, durationFrames);
+            drop.Spawn();
+            return drop;
+        }
+
+        public SmallAmmoRecover DropSmallAmmoRecover(Vector origin, int durationFrames)
+        {
+            var drop = new SmallAmmoRecover(this, "Small Ammo Recover", origin, durationFrames);       
+            drop.Spawn();
+            return drop;
+        }
+
+        public BigAmmoRecover DropBigAmmoRecover(Vector origin, int durationFrames)
+        {
+            var drop = new BigAmmoRecover(this, "Big Ammo Recover", origin, durationFrames);
+            drop.Spawn();
+            return drop;
+        }
+
+        public LifeUp DropLifeUp(Vector origin, int durationFrames)
+        {
+            var drop = new LifeUp(this, "Life Up", origin, durationFrames);
+            drop.Spawn();
+            return drop;
+        }
+
+        public SmallHealthRecover AddSmallHealthRecover(Vector origin)
+        {
+            var item = new SmallHealthRecover(this, "Small Health Recover", origin, -1);
+            respawnableEntities.Add((item, origin, false));
+            return item;
+        }
+
+        public BigHealthRecover AddBigHealthRecover(Vector origin)
+        {
+            var item = new BigHealthRecover(this, "Big Health Recover", origin, -1);
+            respawnableEntities.Add((item, origin, false));
+            return item;
+        }
+
+        public SmallAmmoRecover AddSmallAmmoRecover(Vector origin)
+        {
+            var item = new SmallAmmoRecover(this, "Small Ammo Recover", origin, -1);
+            respawnableEntities.Add((item, origin, false));
+            return item;
+        }
+
+        public BigAmmoRecover AddBigAmmoRecover(Vector origin)
+        {
+            var item = new BigAmmoRecover(this, "Big Ammo Recover", origin, -1);
+            respawnableEntities.Add((item, origin, false));
+            return item;
+        }
+
+        public LifeUp AddLifeUp(Vector origin)
+        {
+            var item = new LifeUp(this, "Life Up", origin, -1);
+            respawnableEntities.Add((item, origin, false));
+            return item;
+        }
+
+        public HeartTank AddHeartTank(Vector origin)
+        {
+            var item = new HeartTank(this, "Heart Tank", origin);
+            respawnableEntities.Add((item, origin, false));
+            return item;
+        }
+
+        public SubTankItem AddSubTank(Vector origin)
+        {
+            var item = new SubTankItem(this, "Sub Tank", origin);
+            respawnableEntities.Add((item, origin, false));
+            return item;
+        }
+
         internal void StartHealthRecovering(int amount)
         {
-            HealthRecovering = true;
-            HealthRecoveringAmount = amount;
-            HealthRecoveringAmountRemaining = amount;
-            HealthRecoveringFrameCounter = 0;
+            StartFreezing(4, () => HealthRecoveringStep(amount));
+        }
+
+        internal void HealthRecoveringStep(int amount)
+        {
+            Player.Health++;
+            amount--;
+
+            PlaySound(0, 19);
+
+            if (amount > 0)
+                StartFreezing(4, () => HealthRecoveringStep(amount));
+        }
+
+        internal void StartHeartTankAcquiring()
+        {
+            PlaySound(0, 21);
+            StartFreezing(84, () => HeartTankAcquiringStep(2));
+        }
+
+        internal void HeartTankAcquiringStep(int amount)
+        {
+            Player.Health++;
+            HealthCapacity++;
+            amount--;
+
+            PlaySound(0, 19);
+
+            if (amount > 0)
+                StartFreezing(4, () => HeartTankAcquiringStep(amount));
+
+            // TODO : Implement the remaining
+        }
+
+        internal void StartSubTankAcquiring()
+        {
+            PlaySound(0, 21);
+            StartFreezing(84, SubTankAcquiringStep);
+        }
+
+        internal void SubTankAcquiringStep()
+        {
+            // TODO : Implement
+        }
+
+        public void StartFreezing(int frames, Action onFreezeComplete = null)
+        {
+            Freezing = true;            
+            FreezingFrames = frames;
+            OnFreezeComplete = onFreezeComplete;
+            FreezingFrameCounter = 0;
         }
     }
 }

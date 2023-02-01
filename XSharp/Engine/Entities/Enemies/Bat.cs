@@ -51,8 +51,12 @@ namespace MMX.Engine.Entities.Enemies
             CheckCollisionWithWorld = true;
             CheckCollisionWithSprites = false;
 
-            NothingDropOdd = 80;
-            SmallHealthDropOdd = 20;
+            NothingDropOdd = 79;
+            SmallHealthDropOdd = 5;
+            BigHealthDropOdd = 5;
+            SmallAmmoDropOdd = 5;
+            BigAmmoDropOdd = 5;
+            LifeUpDropOdd = 1;
 
             State = BatState.IDLE;
         }
@@ -71,30 +75,6 @@ namespace MMX.Engine.Entities.Enemies
             State = BatState.ESCAPING;
         }
 
-        protected override void OnBlockedUp()
-        {
-            base.OnBlockedUp();
-
-            Velocity = Vector.NULL_VECTOR;
-            State = BatState.IDLE;
-        }
-
-        protected override void OnBlockedRight()
-        {
-            base.OnBlockedRight();
-
-            Velocity = Vector.NULL_VECTOR;
-            State = BatState.IDLE;
-        }
-
-        protected override void OnBlockedLeft()
-        {
-            base.OnBlockedLeft();
-
-            Velocity = Vector.NULL_VECTOR;
-            State = BatState.IDLE;
-        }
-
         protected override void OnStopMoving()
         {
             base.OnStopMoving();
@@ -104,14 +84,6 @@ namespace MMX.Engine.Entities.Enemies
                 Velocity = Vector.NULL_VECTOR;
                 State = BatState.IDLE;
             }
-        }
-
-        protected override void OnLanded()
-        {
-            base.OnLanded();
-
-            Velocity = Vector.NULL_VECTOR;
-            State = BatState.IDLE;
         }
 
         private void OnIdle(EntityState state, long frameCounter)
@@ -127,7 +99,7 @@ namespace MMX.Engine.Entities.Enemies
             Vector playerOrigin = Engine.Player.GetVector(VectorKind.PLAYER_ORIGIN);
             FixedSingle dx = playerOrigin.X - Origin.X;
             FixedSingle dy = playerOrigin.Y - Origin.Y;
-            Velocity = (dx.Signal * BAT_ATTACK_VELOCITY_X, dy.Signal * BAT_ATTACK_VELOCITY_X);
+            Velocity = (dx.Signal * BAT_ATTACK_VELOCITY_X, dy.Signal * BAT_ATTACK_VELOCITY_Y);
         }
 
         private void OnEscaping(EntityState state, long frameCounter)
