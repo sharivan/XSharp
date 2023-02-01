@@ -42,7 +42,7 @@ namespace MMX.Engine.Entities.Weapons
 
         protected override FixedSingle GetBaseDamage()
         {
-            return dashLemon ? 4 : 2;
+            return dashLemon ? 2 * LEMON_DAMAGE : LEMON_DAMAGE;
         }
 
         protected internal override void OnSpawn()

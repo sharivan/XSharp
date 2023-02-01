@@ -11,7 +11,7 @@ namespace MMX.Engine.Entities.Enemies
             set;
         }
 
-        protected Enemy(GameEngine engine, string name, Vector origin, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex, true)
+        protected Enemy(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false) : base(engine, name, origin, spriteSheetIndex, directional)
         {
         }
 

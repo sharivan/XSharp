@@ -227,48 +227,50 @@ namespace MMX.Engine.Entities
             return typeof(SpriteState);
         }
 
-        protected SpriteState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, int animationIndex)
+        protected SpriteState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, int animationIndex, int initialFrame = 0)
         {
             var state = (SpriteState) RegisterState(id, onStart, onFrame, onEnd);
             state.AnimationIndex = animationIndex;
+            state.InitialFrame = initialFrame;
             return state;
         }
 
-        protected SpriteState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, string animationName)
+        protected SpriteState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, string animationName, int initialFrame = 0)
         {
             var state = (SpriteState) RegisterState(id, onStart, onFrame, onEnd);
             state.AnimationName = animationName;
+            state.InitialFrame = initialFrame;
             return state;
         }
 
-        protected SpriteState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, int animationIndex) where T : Enum
+        protected SpriteState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum
         {
-            return RegisterState((int) (object) id, onStart, onFrame, onEnd, animationIndex);
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, animationIndex, initialFrame);
         }
 
-        protected SpriteState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, string animationName) where T : Enum
+        protected SpriteState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, string animationName, int initialFrame = 0) where T : Enum
         {
-            return RegisterState((int) (object) id, onStart, onFrame, onEnd, animationName);
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, animationName, initialFrame);
         }
 
-        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, int animationIndex)
+        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0)
         {
-            return RegisterState(id, null, onFrame, null, animationIndex);
+            return RegisterState(id, null, onFrame, null, animationIndex, initialFrame);
         }
 
-        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, string animationName)
+        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0)
         {
-            return RegisterState(id, null, onFrame, null, animationName);
+            return RegisterState(id, null, onFrame, null, animationName, initialFrame);
         }
 
-        protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, int animationIndex) where T : Enum
+        protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : Enum
         {
-            return RegisterState((int) (object) id, null, onFrame, null, animationIndex);
+            return RegisterState((int) (object) id, null, onFrame, null, animationIndex, initialFrame);
         }
 
-        protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, string animationName) where T : Enum
+        protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0) where T : Enum
         {
-            return RegisterState((int) (object) id, null, onFrame, null, animationName);
+            return RegisterState((int) (object) id, null, onFrame, null, animationName, initialFrame);
         }
 
         public override void LoadState(BinaryReader reader)
@@ -471,6 +473,10 @@ namespace MMX.Engine.Entities
         {
         }
 
+        protected virtual void OnHurt(Sprite victim, FixedSingle damage)
+        {
+        }
+
         public void Hurt(Sprite victim, FixedSingle damage)
         {
             if (!Alive || broke || MarkedToRemove)
@@ -490,6 +496,8 @@ namespace MMX.Engine.Entities
                 victim.health = h;
                 victim.OnHealthChanged(h);
                 victim.OnTakeDamagePost(this, damage);
+
+                OnHurt(victim, damage);
 
                 if (victim.health == 0)
                     victim.Break();

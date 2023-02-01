@@ -175,29 +175,65 @@ namespace MMX.Math
             return System.Math.Atan2(y.DoubleValue, x.DoubleValue);
         }
 
-        public static bool operator ==(FixedSingle left, FixedSingle right) => left.RawValue == right.RawValue;
+        public static bool operator ==(FixedSingle left, FixedSingle right)
+        {
+            return left.RawValue == right.RawValue;
+        }
 
-        public static bool operator !=(FixedSingle left, FixedSingle right) => left.RawValue != right.RawValue;
+        public static bool operator !=(FixedSingle left, FixedSingle right)
+        {
+            return left.RawValue != right.RawValue;
+        }
 
-        public static bool operator >(FixedSingle left, FixedSingle right) => left.RawValue > right.RawValue;
+        public static bool operator >(FixedSingle left, FixedSingle right)
+        {
+            return left.RawValue > right.RawValue;
+        }
 
-        public static bool operator >=(FixedSingle left, FixedSingle right) => left.RawValue >= right.RawValue;
+        public static bool operator >=(FixedSingle left, FixedSingle right)
+        {
+            return left.RawValue >= right.RawValue;
+        }
 
-        public static bool operator <(FixedSingle left, FixedSingle right) => left.RawValue < right.RawValue;
+        public static bool operator <(FixedSingle left, FixedSingle right)
+        {
+            return left.RawValue < right.RawValue;
+        }
 
-        public static bool operator <=(FixedSingle left, FixedSingle right) => left.RawValue <= right.RawValue;
+        public static bool operator <=(FixedSingle left, FixedSingle right)
+        {
+            return left.RawValue <= right.RawValue;
+        }
 
-        public static FixedSingle operator +(FixedSingle value) => value;
+        public static FixedSingle operator +(FixedSingle value)
+        {
+            return value;
+        }
 
-        public static FixedSingle operator +(FixedSingle left, FixedSingle right) => new(left.RawValue + right.RawValue);
+        public static FixedSingle operator +(FixedSingle left, FixedSingle right)
+        {
+            return new(left.RawValue + right.RawValue);
+        }
 
-        public static FixedSingle operator -(FixedSingle value) => new(-value.RawValue);
+        public static FixedSingle operator -(FixedSingle value)
+        {
+            return new(-value.RawValue);
+        }
 
-        public static FixedSingle operator -(FixedSingle left, FixedSingle right) => new(left.RawValue - right.RawValue);
+        public static FixedSingle operator -(FixedSingle left, FixedSingle right)
+        {
+            return new(left.RawValue - right.RawValue);
+        }
 
-        public static FixedSingle operator *(FixedSingle left, FixedSingle right) => new((int) ((left.RawValue * (long) right.RawValue) >> FIXED_BITS_COUNT));
+        public static FixedSingle operator *(FixedSingle left, FixedSingle right)
+        {
+            return new((int) ((left.RawValue * (long) right.RawValue) >> FIXED_BITS_COUNT));
+        }
 
-        public static FixedSingle operator /(FixedSingle left, FixedSingle right) => new((int) (((long) left.RawValue << FIXED_BITS_COUNT) / right.RawValue));
+        public static FixedSingle operator /(FixedSingle left, FixedSingle right)
+        {
+            return new((int) (((long) left.RawValue << FIXED_BITS_COUNT) / right.RawValue));
+        }
 
         public static explicit operator int(FixedSingle src)
         {
@@ -413,29 +449,65 @@ namespace MMX.Math
             return System.Math.Atan2(y.DoubleValue, x.DoubleValue);
         }
 
-        public static bool operator ==(FixedDouble left, FixedDouble right) => left.RawValue == right.RawValue;
+        public static bool operator ==(FixedDouble left, FixedDouble right)
+        {
+            return left.RawValue == right.RawValue;
+        }
 
-        public static bool operator !=(FixedDouble left, FixedDouble right) => left.RawValue != right.RawValue;
+        public static bool operator !=(FixedDouble left, FixedDouble right)
+        {
+            return left.RawValue != right.RawValue;
+        }
 
-        public static bool operator >(FixedDouble left, FixedDouble right) => left.RawValue > right.RawValue;
+        public static bool operator >(FixedDouble left, FixedDouble right)
+        {
+            return left.RawValue > right.RawValue;
+        }
 
-        public static bool operator >=(FixedDouble left, FixedDouble right) => left.RawValue >= right.RawValue;
+        public static bool operator >=(FixedDouble left, FixedDouble right)
+        {
+            return left.RawValue >= right.RawValue;
+        }
 
-        public static bool operator <(FixedDouble left, FixedDouble right) => left.RawValue < right.RawValue;
+        public static bool operator <(FixedDouble left, FixedDouble right)
+        {
+            return left.RawValue < right.RawValue;
+        }
 
-        public static bool operator <=(FixedDouble left, FixedDouble right) => left.RawValue <= right.RawValue;
+        public static bool operator <=(FixedDouble left, FixedDouble right)
+        {
+            return left.RawValue <= right.RawValue;
+        }
 
-        public static FixedDouble operator +(FixedDouble value) => value;
+        public static FixedDouble operator +(FixedDouble value)
+        {
+            return value;
+        }
 
-        public static FixedDouble operator +(FixedDouble left, FixedDouble right) => new(left.RawValue + right.RawValue);
+        public static FixedDouble operator +(FixedDouble left, FixedDouble right)
+        {
+            return new(left.RawValue + right.RawValue);
+        }
 
-        public static FixedDouble operator -(FixedDouble value) => new(-value.RawValue);
+        public static FixedDouble operator -(FixedDouble value)
+        {
+            return new(-value.RawValue);
+        }
 
-        public static FixedDouble operator -(FixedDouble left, FixedDouble right) => new(left.RawValue - right.RawValue);
+        public static FixedDouble operator -(FixedDouble left, FixedDouble right)
+        {
+            return new(left.RawValue - right.RawValue);
+        }
 
-        public static FixedDouble operator *(FixedDouble left, FixedDouble right) => new((left.RawValue * right.RawValue) >> FIXED_BITS_COUNT);
+        public static FixedDouble operator *(FixedDouble left, FixedDouble right)
+        {
+            return new((left.RawValue * right.RawValue) >> FIXED_BITS_COUNT);
+        }
 
-        public static FixedDouble operator /(FixedDouble left, FixedDouble right) => new((left.RawValue << FIXED_BITS_COUNT) / right.RawValue);
+        public static FixedDouble operator /(FixedDouble left, FixedDouble right)
+        {
+            return new((left.RawValue << FIXED_BITS_COUNT) / right.RawValue);
+        }
 
         public static explicit operator int(FixedDouble src)
         {
@@ -671,8 +743,14 @@ namespace MMX.Math
             return hashCode;
         }
 
-        public static bool operator ==(Interval left, Interval right) => left.Equals(right);
+        public static bool operator ==(Interval left, Interval right)
+        {
+            return left.Equals(right);
+        }
 
-        public static bool operator !=(Interval left, Interval right) => !left.Equals(right);
+        public static bool operator !=(Interval left, Interval right)
+        {
+            return !left.Equals(right);
+        }
     }
 }

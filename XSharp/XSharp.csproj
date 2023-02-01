@@ -101,6 +101,7 @@
     <Compile Include="Engine\Entities\Effects\WallKickEffect.cs" />
     <Compile Include="Engine\Entities\Effects\WallSlideEffect.cs" />
     <Compile Include="Engine\Entities\Effects\XDieExplosion.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bat.cs" />
     <Compile Include="Engine\Entities\Enemies\Driller.cs" />
     <Compile Include="Engine\Entities\EntityState.cs" />
     <Compile Include="Engine\Entities\HUD\HealthHUD.cs" />
@@ -190,6 +191,7 @@
     <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
     <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
     <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
+    <EmbeddedResource Include="resources\sprites\Enemies\X2\mmx2-bat.png" />
     <EmbeddedResource Include="resources\tiles\black_pixel.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>

@@ -127,14 +127,27 @@ namespace MMX.Engine
         public static readonly FixedSingle X_INITIAL_HEALT_CAPACITY = 16;
         public static readonly FixedSingle X_TIRED_PERCENTAGE = 0.25;
 
+        // Weapons
+
+        // X-Buster
+        public const int LEMON_DAMAGE = 3;
+        public const int SEMI_CHARGED_DAMAGE = 6;
+        public const int CHARGED_DAMAGE = 9;
+
         // Enemies
 
         // Driller
         public static readonly FixedSingle DRILLER_JUMP_VELOCITY_X = 384 / 256.0;
         public static readonly FixedSingle DRILLER_JUMP_VELOCITY_Y = -1280 / 256.0;
-        public static readonly Vector DRILLER_JUMP_VELOCITY = (DRILLER_JUMP_VELOCITY_X, DRILLER_JUMP_VELOCITY_Y);
         public const int DRILLER_HEALTH = 4;
         public static readonly FixedSingle DRILLER_CONTACT_DAMAGE = 2;
+
+        // Bat
+        public static readonly FixedSingle BAT_ATTACK_VELOCITY_X = 181 / 256.0;
+        public static readonly FixedSingle BAT_ATTACK_VELOCITY_Y = 181 / 256.0;
+        public static readonly FixedSingle BAT_ESCAPE_VELOCITY_Y = 512 / 256.0;
+        public const int BAT_HEALTH = 3;
+        public static readonly FixedSingle BAT_CONTACT_DAMAGE = 1;
 
         // Render
         public static readonly Vector DEFAULT_DRAW_ORIGIN = Vector.NULL_VECTOR;
@@ -172,7 +185,6 @@ namespace MMX.Engine
         public static readonly Color TOUCHING_MAP_COLOR = Color.Blue;
 
         // HUD
-
         public static readonly Vector HP_OFFSET = (9, 44);
         public static readonly Vector READY_OFFSET = new Vector(SCREEN_WIDTH - 39, SCREEN_HEIGHT - 13) / 2;
 
@@ -285,6 +297,26 @@ namespace MMX.Engine
             new Color(128, 136, 128, 255), // 13
             new Color(200, 208, 200, 255), // 14
             new Color(32, 32, 32, 255) // 15
+        };
+
+        public static readonly Color[] BAT_PALETTE = new Color[]
+        {
+            Color.Transparent, // 0
+            new Color(64, 136, 64, 255), // 1
+            new Color(248, 192, 240, 255), // 2
+            new Color(240, 48, 80, 255), // 3
+            new Color(224, 216, 128, 255), // 4
+            new Color(200, 160, 80, 255), // 5           
+            new Color(152, 112, 48, 255), // 6
+            new Color(120, 72, 48, 255), // 7
+            new Color(104, 232, 168, 255), // 8
+            new Color(96, 72, 128, 255), // 9
+            new Color(136, 104, 184, 255), // 10
+            new Color(168, 136, 224, 255), // 11
+            new Color(240, 240, 240, 255), // 12
+            new Color(160, 160, 160, 255), // 13
+            new Color(104, 104, 104, 255), // 14
+            new Color(40, 40, 40, 255), // 15
         };
 
         // Startup

@@ -48,7 +48,7 @@ namespace MMX.Engine.Entities.Weapons
 
         protected override FixedSingle GetBaseDamage()
         {
-            return 4;
+            return SEMI_CHARGED_DAMAGE;
         }
 
         protected internal override void OnSpawn()

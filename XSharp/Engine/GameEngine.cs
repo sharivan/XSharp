@@ -2350,7 +2350,6 @@ namespace MMX.Engine
             var device = new Device9(Direct3D, 0, DeviceType.Hardware, Form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
             Device = device;
 
-            //function = new ShaderBytecode(PIXEL_SHADER_BYTECODE);
             var function = ShaderBytecode.CompileFromFile("PaletteShader.hlsl", "main", "ps_2_0");
             PixelShader = new PixelShader(device, function);
 
@@ -2459,6 +2458,10 @@ namespace MMX.Engine
             var drillerPalette = CreatePalette(DRILLER_PALETTE);
             palettes.Add(drillerPalette);
 
+            // 6
+            var batPalette = CreatePalette(BAT_PALETTE);
+            palettes.Add(batPalette);
+
             // Create sprite sheets
             var normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3);
             var normalCollisionBox = new MMXBox(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
@@ -2496,6 +2499,10 @@ namespace MMX.Engine
             // 7
             var readySpriteSheet = new SpriteSheet(this, "Ready", true, true);
             spriteSheets.Add(readySpriteSheet);
+
+            // 8
+            var batSpriteSheet = new SpriteSheet(this, "Bat", true, true);
+            spriteSheets.Add(batSpriteSheet);
 
             // Setup frame sequences (animations)
 
@@ -2938,6 +2945,8 @@ namespace MMX.Engine
             xEffectsSpriteSheet.ReleaseCurrentTexture();
 
             // Enemies
+
+            // Driller
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-driller.png"))
             {
                 var texture = CreateImageTextureFromStream(stream);
@@ -2978,7 +2987,36 @@ namespace MMX.Engine
             sequence.AddFrame(-5, 6, 256, 4, 48, 30, 2);
             sequence.AddFrame(-6, 6, 305, 4, 46, 30, 2);
 
-            drillerSpriteSheet.ReleaseCurrentTexture();
+            // Bat
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-bat.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                batSpriteSheet.CurrentTexture = texture;
+            }
+
+            batSpriteSheet.CurrentPalette = batPalette;
+
+            var batIdleHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-6, -18), new Vector(6, 0));
+            var batAttackingHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-8, -14), new Vector(8, 0));
+
+            // 0
+            sequence = batSpriteSheet.AddFrameSquence("Idle");
+            sequence.BoudingBoxOriginOffset = -batIdleHitbox.Mins;
+            sequence.CollisionBox = batIdleHitbox;
+            sequence.AddFrame(0, 4, 7, 1, 14, 23, 1, true);
+
+            // 1
+            sequence = batSpriteSheet.AddFrameSquence("Attacking");
+            sequence.BoudingBoxOriginOffset = -batAttackingHitbox.Mins;
+            sequence.CollisionBox = batAttackingHitbox;
+            sequence.AddFrame(4, 7, 22, 1, 30, 23, 1, true);
+            sequence.AddFrame(10, 8, 53, 1, 39, 23, 3);
+            sequence.AddFrame(5, 6, 93, 1, 29, 23, 3);
+            sequence.AddFrame(3, 2, 123, 1, 23, 23, 3);
+            sequence.AddFrame(3, 5, 147, 1, 23, 23, 4);
+            sequence.AddFrame(4, 7, 22, 1, 30, 23, 3);
+
+            batSpriteSheet.ReleaseCurrentTexture();
 
             // Explosion
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Explosion.png"))
@@ -3619,6 +3657,16 @@ namespace MMX.Engine
 
         public Enemy AddEnemy(ushort id, ushort subid, Vector origin)
         {
+            switch (id)
+            {
+                case 0x09:
+                    return AddDriller(origin);
+
+                case 0x2D:
+                case 0x50:
+                    return AddBat(origin);
+            }
+
             return id != 0x4D && (id != 0x2F || subid == 0) ? AddDriller(origin) : null;
         }
 
@@ -3761,11 +3809,18 @@ namespace MMX.Engine
             return effect;
         }
 
-        internal Driller AddDriller(Vector origin)
+        public Driller AddDriller(Vector origin)
         {
             var driller = new Driller(this, "Driller", origin);
             respawnableEntities.Add((driller, origin, false));
             return driller;
+        }
+
+        public Bat AddBat(Vector origin)
+        {
+            var bat = new Bat(this, "Bat", origin);
+            respawnableEntities.Add((bat, origin, false));
+            return bat;
         }
 
         private void SpawnX(Vector origin)

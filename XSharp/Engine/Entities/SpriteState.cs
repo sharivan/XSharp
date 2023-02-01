@@ -16,6 +16,12 @@
             set;
         } = -1;
 
+        public int InitialFrame
+        {
+            get;
+            set;
+        } = 0;
+
         public string AnimationName
         {
             get => animationName;
@@ -38,7 +44,7 @@
                 if (AnimationIndex >= 0)
                 {
                     Sprite.CurrentAnimationIndex = AnimationIndex;
-                    Sprite.CurrentAnimation?.StartFromBegin();
+                    Sprite.CurrentAnimation?.Start(InitialFrame);
                 }
             }
         }

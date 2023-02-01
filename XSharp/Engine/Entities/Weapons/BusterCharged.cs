@@ -49,7 +49,7 @@ namespace MMX.Engine.Entities.Weapons
 
         protected override FixedSingle GetBaseDamage()
         {
-            return 6;
+            return CHARGED_DAMAGE;
         }
 
         protected internal override void OnSpawn()

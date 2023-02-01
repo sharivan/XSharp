@@ -128,7 +128,7 @@ namespace MMX.Engine
             animationEndFired = false;
             animating = true;
 
-            if (startIndex != -1)
+            if (startIndex >= 0)
                 currentSequenceIndex = InitialSequenceIndex + startIndex;
         }
 

@@ -140,7 +140,10 @@ namespace MMX.Geometry
         /// <param name="set1">Primeira união</param>
         /// <param name="set2">Segunda união</param>
         /// <returns>true se as uniões forem diferentes, false caso contrário</returns>
-        public static bool operator !=(Union set1, Union set2) => !(set1 == set2);
+        public static bool operator !=(Union set1, Union set2)
+        {
+            return !(set1 == set2);
+        }
     }
 
     /// <summary>
@@ -444,7 +447,10 @@ namespace MMX.Geometry
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>Soma entre os dois vetores</returns>
-        public static Vector operator +(Vector vec1, Vector vec2) => new(vec1.X + vec2.X, vec1.Y + vec2.Y);
+        public static Vector operator +(Vector vec1, Vector vec2)
+        {
+            return new(vec1.X + vec2.X, vec1.Y + vec2.Y);
+        }
 
         /// <summary>
         /// Subtração de vetores
@@ -452,14 +458,20 @@ namespace MMX.Geometry
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>Diferença entre os dois vetores</returns>
-        public static Vector operator -(Vector vec1, Vector vec2) => new(vec1.X - vec2.X, vec1.Y - vec2.Y);
+        public static Vector operator -(Vector vec1, Vector vec2)
+        {
+            return new(vec1.X - vec2.X, vec1.Y - vec2.Y);
+        }
 
         /// <summary>
         /// Inverte o sentido do vetor
         /// </summary>
         /// <param name="vec">Vetor</param>
         /// <returns>O oposto do vetor</returns>
-        public static Vector operator -(Vector vec) => new(-vec.X, -vec.Y);
+        public static Vector operator -(Vector vec)
+        {
+            return new(-vec.X, -vec.Y);
+        }
 
         /// <summary>
         /// Produto de um vetor por um escalar
@@ -467,7 +479,10 @@ namespace MMX.Geometry
         /// <param name="alpha">Escalar</param>
         /// <param name="vec">Vetor</param>
         /// <returns>O vetor escalado por alpha</returns>
-        public static Vector operator *(FixedSingle alpha, Vector vec) => new(alpha * vec.X, alpha * vec.Y);
+        public static Vector operator *(FixedSingle alpha, Vector vec)
+        {
+            return new(alpha * vec.X, alpha * vec.Y);
+        }
 
         /// <summary>
         /// Produto de um vetor por um escalar
@@ -475,7 +490,10 @@ namespace MMX.Geometry
         /// <param name="vec">Vetor</param>
         /// <param name="alpha">Escalar</param>
         /// <returns>O vetor escalado por alpha</returns>
-        public static Vector operator *(Vector vec, FixedSingle alpha) => new(alpha * vec.X, alpha * vec.Y);
+        public static Vector operator *(Vector vec, FixedSingle alpha)
+        {
+            return new(alpha * vec.X, alpha * vec.Y);
+        }
 
         /// <summary>
         /// Divisão de vetor por um escalar, o mesmo que multiplicar o vetor pelo inverso do escalar
@@ -483,7 +501,10 @@ namespace MMX.Geometry
         /// <param name="vec">Vetor</param>
         /// <param name="alpha">Escalar</param>
         /// <returns>O vetor dividido pelo escalar alpha</returns>
-        public static Vector operator /(Vector vec, FixedSingle alpha) => new(vec.X / alpha, vec.Y / alpha);
+        public static Vector operator /(Vector vec, FixedSingle alpha)
+        {
+            return new(vec.X / alpha, vec.Y / alpha);
+        }
 
         /// <summary>
         /// Produto escalar/interno/ponto entre dois vetores
@@ -491,7 +512,10 @@ namespace MMX.Geometry
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>Produto escalar entre os dois vetores</returns>
-        public static FixedDouble operator *(Vector vec1, Vector vec2) => (FixedDouble) vec1.X * (FixedDouble) vec2.X + (FixedDouble) vec1.Y * (FixedDouble) vec2.Y;
+        public static FixedDouble operator *(Vector vec1, Vector vec2)
+        {
+            return (FixedDouble) vec1.X * (FixedDouble) vec2.X + (FixedDouble) vec1.Y * (FixedDouble) vec2.Y;
+        }
 
         /// <summary>
         /// Igualdade entre vetores
@@ -499,7 +523,10 @@ namespace MMX.Geometry
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>true se os vetores forem iguais, false caso contrário</returns>
-        public static bool operator ==(Vector vec1, Vector vec2) => vec1.X == vec2.X && vec1.Y == vec2.Y;
+        public static bool operator ==(Vector vec1, Vector vec2)
+        {
+            return vec1.X == vec2.X && vec1.Y == vec2.Y;
+        }
 
         /// <summary>
         /// Inequalidade entre vetores
@@ -507,7 +534,10 @@ namespace MMX.Geometry
         /// <param name="vec1">Primeiro vetor</param>
         /// <param name="vec2">Segundo vetor</param>
         /// <returns>true se os vetores forem diferentes, false caso contrário</returns>
-        public static bool operator !=(Vector vec1, Vector vec2) => vec1.X != vec2.X || vec1.Y != vec2.Y;
+        public static bool operator !=(Vector vec1, Vector vec2)
+        {
+            return vec1.X != vec2.X || vec1.Y != vec2.Y;
+        }
 
         public static implicit operator (FixedSingle, FixedSingle)(Vector vec)
         {
@@ -786,7 +816,10 @@ namespace MMX.Geometry
         /// <param name="v">Vetor</param>
         /// <param name="s">Seguimento de reta</param>
         /// <returns>Resultado da comparação</returns>
-        public static bool operator <(Vector v, LineSegment s) => s.Compare(v) == -1;
+        public static bool operator <(Vector v, LineSegment s)
+        {
+            return s.Compare(v) == -1;
+        }
 
         /// <summary>
         /// Verifica se o vetor v está a direita ou é colinear ao seguimento de reta s
@@ -794,7 +827,10 @@ namespace MMX.Geometry
         /// <param name="v">Vetor</param>
         /// <param name="s">Seguimento de reta</param>
         /// <returns>Resultado da comparação</returns>
-        public static bool operator <=(Vector v, LineSegment s) => s.Compare(v) <= 0;
+        public static bool operator <=(Vector v, LineSegment s)
+        {
+            return s.Compare(v) <= 0;
+        }
 
         /// <summary>
         /// Verifica se o vetor v está a esquerda do seguimento de reta s
@@ -802,7 +838,10 @@ namespace MMX.Geometry
         /// <param name="v">Vetor</param>
         /// <param name="s">Seguimento de reta</param>
         /// <returns>Resultado da comparação</returns>
-        public static bool operator >(Vector v, LineSegment s) => s.Compare(v) == 1;
+        public static bool operator >(Vector v, LineSegment s)
+        {
+            return s.Compare(v) == 1;
+        }
 
         /// <summary>
         /// Verifica se o vetor v está a esquerda ou é colinear ao seguimento de reta s
@@ -810,7 +849,10 @@ namespace MMX.Geometry
         /// <param name="v">Vetor</param>
         /// <param name="s">Seguimento de reta</param>
         /// <returns>Resultado da comparação</returns>
-        public static bool operator >=(Vector v, LineSegment s) => s.Compare(v) >= 0;
+        public static bool operator >=(Vector v, LineSegment s)
+        {
+            return s.Compare(v) >= 0;
+        }
 
         /// <summary>
         /// O mesmo que v > s
@@ -818,7 +860,10 @@ namespace MMX.Geometry
         /// <param name="s">Seguimento de reta</param>
         /// <param name="v">Vetor</param>
         /// <returns>v > s</returns>
-        public static bool operator <(LineSegment s, Vector v) => v > s;
+        public static bool operator <(LineSegment s, Vector v)
+        {
+            return v > s;
+        }
 
         /// <summary>
         /// O mesmo que v >= s
@@ -826,7 +871,10 @@ namespace MMX.Geometry
         /// <param name="s">Seguimento de reta</param>
         /// <param name="v">Vetor</param>
         /// <returns>v >= s</returns>
-        public static bool operator <=(LineSegment s, Vector v) => v >= s;
+        public static bool operator <=(LineSegment s, Vector v)
+        {
+            return v >= s;
+        }
 
         /// <summary>
         /// O mesmo que v < s
@@ -834,7 +882,10 @@ namespace MMX.Geometry
         /// <param name="s">Seguimento de reta</param>
         /// <param name="v">Vetor</param>
         /// <returns>v < s</returns>
-        public static bool operator >(LineSegment s, Vector v) => v < s;
+        public static bool operator >(LineSegment s, Vector v)
+        {
+            return v < s;
+        }
 
         /// <summary>
         /// O mesmo que v <= s
@@ -842,7 +893,10 @@ namespace MMX.Geometry
         /// <param name="s">Seguimento de reta</param>
         /// <param name="v">Vetor</param>
         /// <returns>v <= s</returns>
-        public static bool operator >=(LineSegment s, Vector v) => v <= s;
+        public static bool operator >=(LineSegment s, Vector v)
+        {
+            return v <= s;
+        }
 
         /// <summary>
         /// Compara se dois seguimentos de reta são iguais
@@ -850,7 +904,10 @@ namespace MMX.Geometry
         /// <param name="s1">Primeiro seguimento de reta</param>
         /// <param name="s2">Seguindo seguimento de reta</param>
         /// <returns>true se forem iguais, false caso contrário</returns>
-        public static bool operator ==(LineSegment s1, LineSegment s2) => s1.StrictEquals(s2);
+        public static bool operator ==(LineSegment s1, LineSegment s2)
+        {
+            return s1.StrictEquals(s2);
+        }
 
         /// <summary>
         /// Compara se dois seguimentos de reta são diferentes
@@ -858,7 +915,10 @@ namespace MMX.Geometry
         /// <param name="s1">Primeiro seguimento de reta</param>
         /// <param name="s2">Seguindo seguimento de reta</param>
         /// <returns>true se forem diferentes, false caso contrário</returns>
-        public static bool operator !=(LineSegment s1, LineSegment s2) => !s1.StrictEquals(s2);
+        public static bool operator !=(LineSegment s1, LineSegment s2)
+        {
+            return !s1.StrictEquals(s2);
+        }
     }
 
     /// <summary>
@@ -952,7 +1012,10 @@ namespace MMX.Geometry
         /// <param name="m1">Primeira matriz</param>
         /// <param name="m2">Segunda matriz</param>
         /// <returns>Soma</returns>
-        public static Matrix2x2 operator +(Matrix2x2 m1, Matrix2x2 m2) => new(m1.Element00 + m2.Element00, m1.Element01 + m2.Element01, m1.Element10 + m2.Element10, m1.Element11 + m2.Element11);
+        public static Matrix2x2 operator +(Matrix2x2 m1, Matrix2x2 m2)
+        {
+            return new(m1.Element00 + m2.Element00, m1.Element01 + m2.Element01, m1.Element10 + m2.Element10, m1.Element11 + m2.Element11);
+        }
 
         /// <summary>
         /// Diferença/Subtração entre duas matrizes
@@ -960,14 +1023,20 @@ namespace MMX.Geometry
         /// <param name="m1">Primeira matriz</param>
         /// <param name="m2">Segunda matriz</param>
         /// <returns>Diferença</returns>
-        public static Matrix2x2 operator -(Matrix2x2 m1, Matrix2x2 m2) => new(m1.Element00 - m2.Element00, m1.Element01 - m2.Element01, m1.Element10 - m2.Element10, m1.Element11 - m2.Element11);
+        public static Matrix2x2 operator -(Matrix2x2 m1, Matrix2x2 m2)
+        {
+            return new(m1.Element00 - m2.Element00, m1.Element01 - m2.Element01, m1.Element10 - m2.Element10, m1.Element11 - m2.Element11);
+        }
 
         /// <summary>
         /// Oposto aditivo de uma matriz
         /// </summary>
         /// <param name="m">Matriz</param>
         /// <returns>Oposto</returns>
-        public static Matrix2x2 operator -(Matrix2x2 m) => new(-m.Element00, -m.Element01, -m.Element10, -m.Element11);
+        public static Matrix2x2 operator -(Matrix2x2 m)
+        {
+            return new(-m.Element00, -m.Element01, -m.Element10, -m.Element11);
+        }
 
         /// <summary>
         /// Produto de uma matriz por um escalar
@@ -975,7 +1044,10 @@ namespace MMX.Geometry
         /// <param name="factor">Escalar</param>
         /// <param name="m">Matriz</param>
         /// <returns>Produto</returns>
-        public static Matrix2x2 operator *(FixedSingle factor, Matrix2x2 m) => new(factor * m.Element00, factor * m.Element01, factor * m.Element10, factor * m.Element11);
+        public static Matrix2x2 operator *(FixedSingle factor, Matrix2x2 m)
+        {
+            return new(factor * m.Element00, factor * m.Element01, factor * m.Element10, factor * m.Element11);
+        }
 
         /// <summary>
         /// Produto de uma matriz por um escalar
@@ -983,7 +1055,10 @@ namespace MMX.Geometry
         /// <param name="m">Matriz</param>
         /// <param name="factor">Escalar</param>
         /// <returns>Produto</returns>
-        public static Matrix2x2 operator *(Matrix2x2 m, FixedSingle factor) => new(m.Element00 * factor, m.Element01 * factor, m.Element10 * factor, m.Element11 * factor);
+        public static Matrix2x2 operator *(Matrix2x2 m, FixedSingle factor)
+        {
+            return new(m.Element00 * factor, m.Element01 * factor, m.Element10 * factor, m.Element11 * factor);
+        }
 
         /// <summary>
         /// Divisão de uma matriz por um escalar
@@ -991,7 +1066,10 @@ namespace MMX.Geometry
         /// <param name="m">Matriz</param>
         /// <param name="divisor">Escalar</param>
         /// <returns>Divisão</returns>
-        public static Matrix2x2 operator /(Matrix2x2 m, FixedSingle divisor) => new(m.Element00 / divisor, m.Element01 / divisor, m.Element10 / divisor, m.Element11 / divisor);
+        public static Matrix2x2 operator /(Matrix2x2 m, FixedSingle divisor)
+        {
+            return new(m.Element00 / divisor, m.Element01 / divisor, m.Element10 / divisor, m.Element11 / divisor);
+        }
 
         /// <summary>
         /// Produto entre duas matrizes
@@ -999,8 +1077,11 @@ namespace MMX.Geometry
         /// <param name="m1">Primeira matriz</param>
         /// <param name="m2">Segunda matriz</param>
         /// <returns>Produto matricial</returns>
-        public static Matrix2x2 operator *(Matrix2x2 m1, Matrix2x2 m2) => new(m1.Element00 * m2.Element00 + m1.Element01 * m2.Element10, m1.Element00 * m2.Element01 + m1.Element01 * m2.Element11,
+        public static Matrix2x2 operator *(Matrix2x2 m1, Matrix2x2 m2)
+        {
+            return new(m1.Element00 * m2.Element00 + m1.Element01 * m2.Element10, m1.Element00 * m2.Element01 + m1.Element01 * m2.Element11,
                                  m1.Element10 * m2.Element00 + m1.Element11 * m2.Element10, m1.Element10 * m2.Element01 + m1.Element11 * m2.Element11);
+        }
 
         /// <summary>
         /// Calcula a matriz de rotação a partir de um angulo dado
@@ -1547,7 +1628,10 @@ namespace MMX.Geometry
         /// <param name="box">Retângulo</param>
         /// <param name="vec">Vetor</param>
         /// <returns>Retângulo box translatado na direção de vec</returns>
-        public static Box operator +(Box box, Vector vec) => new(box.Origin + vec, box.Mins, box.Maxs);
+        public static Box operator +(Box box, Vector vec)
+        {
+            return new(box.Origin + vec, box.Mins, box.Maxs);
+        }
 
         /// <summary>
         /// Translata um retângulo na direção de um vetor
@@ -1556,7 +1640,10 @@ namespace MMX.Geometry
         /// /// <param name="box">Retângulo</param>
         /// <returns>Retângulo box translatado na direção de vec</returns>
 
-        public static Box operator +(Vector vec, Box box) => new(box.Origin + vec, box.Mins, box.Maxs);
+        public static Box operator +(Vector vec, Box box)
+        {
+            return new(box.Origin + vec, box.Mins, box.Maxs);
+        }
 
         /// <summary>
         /// Translata um retângulo na direção oposta de um vetor
@@ -1564,7 +1651,10 @@ namespace MMX.Geometry
         /// <param name="box">Retângulo</param>
         /// <param name="vec">Vetor</param>
         /// <returns>Retângulo box translatado na direção oposta de vec</returns>
-        public static Box operator -(Box box, Vector vec) => new(box.Origin - vec, box.Mins, box.Maxs);
+        public static Box operator -(Box box, Vector vec)
+        {
+            return new(box.Origin - vec, box.Mins, box.Maxs);
+        }
 
         /// <summary>
         /// Escala um retângulo
@@ -1740,7 +1830,10 @@ namespace MMX.Geometry
             return new LineSegment(foundVector, foundVector);
         }
 
-        public static LineSegment operator &(LineSegment line, Box box) => box & line;
+        public static LineSegment operator &(LineSegment line, Box box)
+        {
+            return box & line;
+        }
 
         /// <summary>
         /// Verifica se um vetor está contido no interior de um retângulo
@@ -1767,7 +1860,10 @@ namespace MMX.Geometry
         /// <param name="vec">Vetor</param>
         /// <param name="box">Retângulo</param>
         /// <returns>true se vec estiver contido no exterior de box, false caso contrário</returns>
-        public static bool operator >(Vector vec, Box box) => !(vec <= box);
+        public static bool operator >(Vector vec, Box box)
+        {
+            return !(vec <= box);
+        }
 
         /// <summary>
         /// Verifica se um retâgulo contém um vetor em seu exterior
@@ -1775,7 +1871,10 @@ namespace MMX.Geometry
         /// <param name="box">Retângulo</param>
         /// <param name="vec">Vetor</param>
         /// <returns>true se box contém vec em seu exterior, false caso contrário</returns>
-        public static bool operator <(Box box, Vector vec) => !(box >= vec);
+        public static bool operator <(Box box, Vector vec)
+        {
+            return !(box >= vec);
+        }
 
         /// <summary>
         /// Verifica um retângulo contém um vetor em seu interior
@@ -1783,7 +1882,10 @@ namespace MMX.Geometry
         /// <param name="box">Retângulo</param>
         /// /// <param name="vec">Vetor</param>
         /// <returns>true box contém vec em seu interior, false caso contrário</returns>
-        public static bool operator >(Box box, Vector vec) => vec < box;
+        public static bool operator >(Box box, Vector vec)
+        {
+            return vec < box;
+        }
 
         /// <summary>
         /// Verifica se um vetor está contido no interior ou na borda de um retângulo
@@ -1810,7 +1912,10 @@ namespace MMX.Geometry
         /// <param name="vec">Vetor</param>
         /// <param name="box">Retângulo</param>
         /// <returns>true se vec estiver contido no exterior ou na borda de box, false caso contrário</returns>
-        public static bool operator >=(Vector vec, Box box) => !(vec < box);
+        public static bool operator >=(Vector vec, Box box)
+        {
+            return !(vec < box);
+        }
 
         /// <summary>
         /// Verifica se um retângulo contém um vetor em seu exterior ou em sua borda
@@ -1818,7 +1923,10 @@ namespace MMX.Geometry
         /// <param name="box">Retângulo</param>
         /// <param name="vec">Vetor</param>
         /// <returns>true se box contém vec em seu exterior ou em sua borda, false caso contrário</returns>
-        public static bool operator <=(Box box, Vector vec) => !(box > vec);
+        public static bool operator <=(Box box, Vector vec)
+        {
+            return !(box > vec);
+        }
 
         /// <summary>
         /// Verifica um retângulo contém um vetor em seu interior ou emsua borda
@@ -1826,7 +1934,10 @@ namespace MMX.Geometry
         /// <param name="box">Retângulo</param>
         /// /// <param name="vec">Vetor</param>
         /// <returns>true box contém vec em seu interior ou em sua borda, false caso contrário</returns>
-        public static bool operator >=(Box box, Vector vec) => vec <= box;
+        public static bool operator >=(Box box, Vector vec)
+        {
+            return vec <= box;
+        }
 
         /// <summary>
         /// Veririca se um retângulo está contido em outro retângulo
@@ -1834,7 +1945,10 @@ namespace MMX.Geometry
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se box1 está contido em box2, falso caso contrário</returns>
-        public static bool operator <=(Box box1, Box box2) => (box1 & box2) == box1;
+        public static bool operator <=(Box box1, Box box2)
+        {
+            return (box1 & box2) == box1;
+        }
 
         /// <summary>
         /// Verifica se um retângulo contém outro retângulo
@@ -1842,7 +1956,10 @@ namespace MMX.Geometry
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se box1 contém box2, false caso contrário</returns>
-        public static bool operator >=(Box box1, Box box2) => (box2 & box1) == box2;
+        public static bool operator >=(Box box1, Box box2)
+        {
+            return (box2 & box1) == box2;
+        }
 
         /// <summary>
         /// Veririca se um retângulo está inteiramente contido em outro retângulo
@@ -1850,7 +1967,10 @@ namespace MMX.Geometry
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se box1 está inteiramente contido em box2 (ou seja box1 está em box2 mas box1 não é igual a box2), falso caso contrário</returns>
-        public static bool operator <(Box box1, Box box2) => box1 <= box2 && box1 != box2;
+        public static bool operator <(Box box1, Box box2)
+        {
+            return box1 <= box2 && box1 != box2;
+        }
 
         /// <summary>
         /// Verifica se um retângulo contém inteiramente outro retângulo
@@ -1858,7 +1978,10 @@ namespace MMX.Geometry
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se box1 contém inteiramente box2 (ou seja, box1 contém box2 mas box1 não é igual a box2), false caso contrário</returns>
-        public static bool operator >(Box box1, Box box2) => box2 <= box1 && box1 != box2;
+        public static bool operator >(Box box1, Box box2)
+        {
+            return box2 <= box1 && box1 != box2;
+        }
 
         /// <summary>
         /// Verifica se dois retângulos são iguais
@@ -1886,7 +2009,10 @@ namespace MMX.Geometry
         /// <param name="box1">Primeiro retângulo</param>
         /// <param name="box2">Segundo retângulo</param>
         /// <returns>true se forem diferentes, false caso contrário</returns>
-        public static bool operator !=(Box box1, Box box2) => !(box1 == box2);
+        public static bool operator !=(Box box1, Box box2)
+        {
+            return !(box1 == box2);
+        }
 
         public static implicit operator Box((Vector, Vector, Vector) tuple)
         {
@@ -2143,17 +2269,39 @@ namespace MMX.Geometry
 
         public FixedSingle Length => HCathetus + VCathetus + Hypotenuse;
 
-        public static bool operator ==(RightTriangle left, RightTriangle right) => left.Origin == right.Origin && left.hCathetus == right.hCathetus && left.vCathetus == right.vCathetus;
-        public static bool operator !=(RightTriangle left, RightTriangle right) => left.Origin != right.Origin || left.hCathetus != right.hCathetus || left.vCathetus != right.vCathetus;
+        public static bool operator ==(RightTriangle left, RightTriangle right)
+        {
+            return left.Origin == right.Origin && left.hCathetus == right.hCathetus && left.vCathetus == right.vCathetus;
+        }
 
-        public static RightTriangle operator +(RightTriangle triangle, Vector shift) => triangle.Translate(shift);
+        public static bool operator !=(RightTriangle left, RightTriangle right)
+        {
+            return left.Origin != right.Origin || left.hCathetus != right.hCathetus || left.vCathetus != right.vCathetus;
+        }
 
-        public static RightTriangle operator +(Vector shift, RightTriangle triangle) => triangle.Translate(shift);
+        public static RightTriangle operator +(RightTriangle triangle, Vector shift)
+        {
+            return triangle.Translate(shift);
+        }
 
-        public static RightTriangle operator -(RightTriangle triangle) => triangle.Negate();
+        public static RightTriangle operator +(Vector shift, RightTriangle triangle)
+        {
+            return triangle.Translate(shift);
+        }
 
-        public static RightTriangle operator -(RightTriangle triangle, Vector shift) => triangle.Translate(-shift);
+        public static RightTriangle operator -(RightTriangle triangle)
+        {
+            return triangle.Negate();
+        }
 
-        public static RightTriangle operator -(Vector shift, RightTriangle triangle) => (-triangle).Translate(shift);
+        public static RightTriangle operator -(RightTriangle triangle, Vector shift)
+        {
+            return triangle.Translate(-shift);
+        }
+
+        public static RightTriangle operator -(Vector shift, RightTriangle triangle)
+        {
+            return (-triangle).Translate(shift);
+        }
     }
 }
