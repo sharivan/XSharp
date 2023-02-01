@@ -916,7 +916,7 @@ namespace MMX.Engine.Entities
                                     else if (!Landed && !WallJumping && !WallSliding && !OnLadder)
                                         SetAirStateAnimation();
                                 }
-                                else if (WasPressingDash && !PressingDash)
+                                else if (Dashing)
                                 {
                                     if (!dashReleased)
                                     {
@@ -1705,6 +1705,17 @@ namespace MMX.Engine.Entities
         {
             Die();
             return false;
+        }
+
+        public void Heal(int amount)
+        {
+            FixedSingle health = Health;
+            health += amount;
+            if (health > Engine.HealthCapacity)
+                health = Engine.HealthCapacity;
+
+            if (health > Health)
+                Engine.StartHealthRecovering(amount);
         }
     }
 }

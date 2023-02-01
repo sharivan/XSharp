@@ -51,6 +51,9 @@ namespace MMX.Engine.Entities.Enemies
             CheckCollisionWithWorld = true;
             CheckCollisionWithSprites = false;
 
+            NothingDropOdd = 80;
+            SmallHealthDropOdd = 20;
+
             State = BatState.IDLE;
         }
 
@@ -76,9 +79,42 @@ namespace MMX.Engine.Entities.Enemies
             State = BatState.IDLE;
         }
 
+        protected override void OnBlockedRight()
+        {
+            base.OnBlockedRight();
+
+            Velocity = Vector.NULL_VECTOR;
+            State = BatState.IDLE;
+        }
+
+        protected override void OnBlockedLeft()
+        {
+            base.OnBlockedLeft();
+
+            Velocity = Vector.NULL_VECTOR;
+            State = BatState.IDLE;
+        }
+
+        protected override void OnStopMoving()
+        {
+            if (State == BatState.ESCAPING)
+            {
+                Velocity = Vector.NULL_VECTOR;
+                State = BatState.IDLE;
+            }
+        }
+
+        protected override void OnLanded()
+        {
+            base.OnLanded();
+
+            Velocity = Vector.NULL_VECTOR;
+            State = BatState.IDLE;
+        }
+
         private void OnIdle(EntityState state, long frameCounter)
         {
-            if (frameCounter >= 60 && Origin.DistanceTo(Engine.Player.GetVector(VectorKind.ORIGIN)) <= SCENE_SIZE / 2)
+            if (frameCounter >= 60 && Origin.DistanceTo(Engine.Player.GetVector(VectorKind.PLAYER_ORIGIN)) <= SCENE_SIZE / 2)
                 State = BatState.ATTACKING;
             else
                 Velocity = Vector.NULL_VECTOR;

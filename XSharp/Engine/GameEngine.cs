@@ -2,6 +2,7 @@
 using MMX.Engine.Entities.Effects;
 using MMX.Engine.Entities.Enemies;
 using MMX.Engine.Entities.HUD;
+using MMX.Engine.Entities.Items;
 using MMX.Engine.Entities.Triggers;
 using MMX.Engine.Entities.Weapons;
 using MMX.Engine.Sound;
@@ -754,6 +755,30 @@ namespace MMX.Engine
             private set;
         } = 0;
 
+        public bool HealthRecovering
+        {
+            get;
+            private set;
+        }
+
+        public int HealthRecoveringAmount
+        {
+            get;
+            private set;
+        }
+
+        public int HealthRecoveringAmountRemaining
+        {
+            get;
+            private set;
+        }
+
+        public int HealthRecoveringFrameCounter
+        {
+            get;
+            private set;
+        }
+
         public Random RNG => random;
 
         public GameEngine(Form form)
@@ -876,6 +901,10 @@ namespace MMX.Engine
 
             // 18
             stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\12 - Chill Penguin.mp3", SoundFormat.MP3);
+            soundStreams.Add(stream);
+
+            // 19
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\12 - MMX - X Life Gain.wav", SoundFormat.WAVE);
             soundStreams.Add(stream);
 
             directInput = new DirectInput();
@@ -1852,6 +1881,21 @@ namespace MMX.Engine
                 DyingEffectFrameCounter++;
             }
 
+            if (HealthRecovering)
+            {
+                HealthRecoveringFrameCounter++;
+                if (HealthRecoveringFrameCounter % 4 == 0)
+                {
+                    Player.Health++;
+                    HealthRecoveringAmountRemaining--;                       
+
+                    if (HealthRecoveringAmountRemaining == 0)
+                        HealthRecovering = false;
+
+                    PlaySound(0, 19);
+                }
+            }
+
             if (!loadingLevel)
             {
                 // TODO : Please, optmize me!
@@ -1888,6 +1932,9 @@ namespace MMX.Engine
                 }
 
                 Player?.PushKeys(keys);
+
+                if (HealthRecovering)
+                    return false;
 
                 if (paused || Player != null && Player.DyingFreeze)
                     Player?.OnFrame();
@@ -2891,6 +2938,22 @@ namespace MMX.Engine
             sequence.AddFrame(496, 432, 32, 32);
             sequence.AddFrame(532, 432, 32, 32);
 
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverDropping");
+            sequence.BoudingBoxOriginOffset = Vector.NULL_VECTOR;
+            sequence.CollisionBox = MMXBox.EMPTY_BOX;
+            sequence.AddFrame(5, 138, 10, 8);
+            sequence.AddFrame(0, 138, 1, 1);
+            sequence.AddFrame(5, 138, 10, 8, 1, true);
+
+            sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverIdle");
+            sequence.BoudingBoxOriginOffset = Vector.NULL_VECTOR;
+            sequence.CollisionBox = MMXBox.EMPTY_BOX;
+            sequence.AddFrame(22, 138, 10, 8, 1, true);
+            sequence.AddFrame(40, 138, 10, 8, 2);
+            sequence.AddFrame(58, 138, 10, 8, 2);
+            sequence.AddFrame(40, 138, 10, 8, 2);
+            sequence.AddFrame(22, 138, 10, 8, 1);
+
             xWeaponsSpriteSheet.ReleaseCurrentTexture();
 
             // X effects
@@ -3443,7 +3506,7 @@ namespace MMX.Engine
             {
                 if (nextFrame)
                 {
-                    if (Player == null || !Player.DyingFreeze)
+                    if (HealthRecovering || Player == null || !Player.DyingFreeze)
                         for (var entity = firstEntity; entity != null; entity = entity.next)
                             entity.PostThink();
                     else
@@ -3657,6 +3720,9 @@ namespace MMX.Engine
 
         public Enemy AddEnemy(ushort id, ushort subid, Vector origin)
         {
+            if (!ENABLE_ENEMIES)
+                return null;
+
             switch (id)
             {
                 case 0x09:
@@ -4153,6 +4219,21 @@ namespace MMX.Engine
             DyingEffectActive = true;
             DyingEffectFrameCounter = 0;
             StartFading(Color.White, 132, ReloadLevelTransition);
+        }
+
+        public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames = 0)
+        {
+            var drop = new SmallHealthRecover(this, "Small Health Recover", origin, durationFrames);
+            drop.Spawn();
+            return drop;
+        }
+
+        internal void StartHealthRecovering(int amount)
+        {
+            HealthRecovering = true;
+            HealthRecoveringAmount = amount;
+            HealthRecoveringAmountRemaining = amount;
+            HealthRecoveringFrameCounter = 0;
         }
     }
 }

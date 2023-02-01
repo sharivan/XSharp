@@ -1,6 +1,8 @@
 ﻿using MMX.Geometry;
 using MMX.Math;
 
+using static MMX.Engine.Consts;
+
 namespace MMX.Engine.Entities.Enemies
 {
     public abstract class Enemy : Sprite
@@ -10,6 +12,44 @@ namespace MMX.Engine.Entities.Enemies
             get;
             set;
         }
+
+        public float SmallHealthDropOdd
+        {
+            get;
+            set;
+        }
+
+        public float BigHealthDropOdd
+        {
+            get;
+            set;
+        }
+
+        public float SmallAmmoDropOdd
+        {
+            get;
+            set;
+        }
+
+        public float BigAmmoDropOdd
+        {
+            get;
+            set;
+        }
+
+        public float LifeDropOdd
+        {
+            get;
+            set;
+        }
+
+        public float NothingDropOdd
+        {
+            get;
+            set;
+        }
+
+        public float TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeDropOdd + NothingDropOdd;
 
         protected Enemy(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false) : base(engine, name, origin, spriteSheetIndex, directional)
         {
@@ -38,6 +78,10 @@ namespace MMX.Engine.Entities.Enemies
         protected override void OnBroke()
         {
             Engine.CreateExplosionEffect(HitBox.Center);
+
+            int random = Engine.RNG.Next(0, (int) System.Math.Ceiling(TotalDropOdd));
+            if (random <= SmallHealthDropOdd)
+                Engine.DropSmallHealthRecover(Origin, ITEM_DURATION_FRAMES);
         }
 
         protected override void Think()

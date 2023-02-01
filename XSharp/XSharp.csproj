@@ -106,6 +106,8 @@
     <Compile Include="Engine\Entities\EntityState.cs" />
     <Compile Include="Engine\Entities\HUD\HealthHUD.cs" />
     <Compile Include="Engine\Entities\HUD\ReadyHUD.cs" />
+    <Compile Include="Engine\Entities\Items\Item.cs" />
+    <Compile Include="Engine\Entities\Items\SmallHealthRecover.cs" />
     <Compile Include="Engine\Entities\SpriteState.cs" />
     <Compile Include="Engine\Entities\Triggers\CameraLockTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\ChangeDynamicPropertyTrigger.cs" />

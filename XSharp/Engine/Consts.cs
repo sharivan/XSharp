@@ -127,6 +127,15 @@ namespace MMX.Engine
         public static readonly FixedSingle X_INITIAL_HEALT_CAPACITY = 16;
         public static readonly FixedSingle X_TIRED_PERCENTAGE = 0.25;
 
+        // Items
+
+        public const int ITEM_DURATION_FRAMES = 240;
+        public const int ITEM_BLINKING_FRAMES = 60;
+        public const int SMALL_HEALTH_RECOVER_AMOUNT = 2;
+        public const int BIG_HEALTH_RECOVER_AMOUNT = 8;
+        public const int SMALL_AMMO_RECOVER_AMOUNT = 2;
+        public const int BIG_AMMO_RECOVER_AMOUNT = 8;
+
         // Weapons
 
         // X-Buster
@@ -135,6 +144,8 @@ namespace MMX.Engine
         public const int CHARGED_DAMAGE = 9;
 
         // Enemies
+
+        public const bool ENABLE_ENEMIES = true;
 
         // Driller
         public static readonly FixedSingle DRILLER_JUMP_VELOCITY_X = 384 / 256.0;
