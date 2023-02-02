@@ -1,5 +1,6 @@
 ﻿using MMX.Engine.World;
 using MMX.Geometry;
+using SharpDX;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,9 +14,8 @@ namespace MMX.Engine.Entities
     {
         NONE = 0,
         ORIGIN = 1,
-        PLAYER_ORIGIN = 2,
-        BOUDINGBOX_CENTER = 4,
-        HITBOX_CENTER = 8,
+        BOUDINGBOX_CENTER = 2,
+        HITBOX_CENTER = 4,
         ALL = 255
     }
 
@@ -66,12 +66,6 @@ namespace MMX.Engine.Entities
             set;
         }
 
-        public Vector Origin
-        {
-            get => origin;
-            set => SetOrigin(value);
-        }
-
         public Entity Parent
         {
             get => parent;
@@ -94,6 +88,12 @@ namespace MMX.Engine.Entities
 
         public IEnumerable<Entity> Childs => childs;
 
+        public Vector Origin
+        {
+            get => GetOrigin();
+            set => SetOrigin(value);
+        }
+
         public Vector LastOrigin
         {
             get;
@@ -102,11 +102,27 @@ namespace MMX.Engine.Entities
 
         public Box BoundingBox
         {
-            get => GetBoundingBox();
-            set => SetBoundingBox(value);
+            get => Origin + GetBoundingBox();
+            set
+            {
+                SetBoundingBox(value - value.Origin);
+                SetOrigin(value.Origin);
+            }
         }
 
-        public Box HitBox => GetHitBox();
+        public Box LastBoundingBox => LastOrigin + GetBoundingBox();
+
+        public Box HitBox
+        {
+            get => Origin + GetHitBox();
+            set
+            {
+                SetHitBox(value - value.Origin);
+                SetOrigin(value.Origin);
+            }
+        }
+
+        public Box LastHitBox => LastOrigin + GetHitBox();
 
         public bool Alive
         {
@@ -273,6 +289,11 @@ namespace MMX.Engine.Entities
             return childs.Contains(other);
         }
 
+        protected virtual Vector GetOrigin()
+        {
+            return origin;
+        }
+
         protected virtual void SetOrigin(Vector origin)
         {
             LastOrigin = this.origin;
@@ -306,10 +327,20 @@ namespace MMX.Engine.Entities
         {
             return kind switch
             {
-                VectorKind.ORIGIN => origin,
-                VectorKind.PLAYER_ORIGIN => origin - new Vector(0, 17),
+                VectorKind.ORIGIN => Origin,
                 VectorKind.BOUDINGBOX_CENTER => BoundingBox.Center,
                 VectorKind.HITBOX_CENTER => HitBox.Center,
+                _ => Vector.NULL_VECTOR
+            };
+        }
+
+        public Vector GetLastVector(VectorKind kind)
+        {
+            return kind switch
+            {
+                VectorKind.ORIGIN => LastOrigin,
+                VectorKind.BOUDINGBOX_CENTER => LastBoundingBox.Center,
+                VectorKind.HITBOX_CENTER => LastHitBox.Center,
                 _ => Vector.NULL_VECTOR
             };
         }
@@ -322,6 +353,10 @@ namespace MMX.Engine.Entities
         }
 
         protected virtual void SetBoundingBox(Box boudingBox)
+        {
+        }
+
+        protected virtual void SetHitBox(Box hitbox)
         {
         }
 
@@ -496,7 +531,7 @@ namespace MMX.Engine.Entities
 
         }
 
-        private void UpdatePartition()
+        protected virtual void UpdatePartition()
         {
             if (!Alive)
                 return;

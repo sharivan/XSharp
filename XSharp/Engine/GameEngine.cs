@@ -2530,9 +2530,9 @@ namespace MMX.Engine
             palettes.Add(batPalette);
 
             // Create sprite sheets
-            var normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3);
+            var normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3) - (0, 17);
             var normalCollisionBox = new MMXBox(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
-            var dashingOffset = new Vector(DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT + 3);
+            var dashingOffset = new Vector(DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT + 3) - (0, 17);
             var dashingCollisionBox = new MMXBox(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
 
             // 0
@@ -3423,7 +3423,7 @@ namespace MMX.Engine
                             {
                                 var rect = WorldBoxToScreen(cameraLockTrigger.HitBox);
 
-                                if (Player.IsTouching(cameraLockTrigger) && Player.GetVector(VectorKind.PLAYER_ORIGIN) <= cameraLockTrigger.HitBox)
+                                if (Player.IsTouching(cameraLockTrigger) && Player.Origin <= cameraLockTrigger.HitBox)
                                     FillRectangle(rect, TRIGGER_BOX_COLOR);
 
                                 DrawRectangle(rect, 4, TRIGGER_BORDER_BOX_COLOR);
@@ -3462,7 +3462,7 @@ namespace MMX.Engine
                             {
                                 var rect = WorldBoxToScreen(checkpointTrigger.HitBox);
 
-                                if (Player.IsTouching(checkpointTrigger) && Player.GetVector(VectorKind.PLAYER_ORIGIN) <= checkpointTrigger.HitBox)
+                                if (Player.IsTouching(checkpointTrigger) && Player.Origin <= checkpointTrigger.HitBox)
                                     FillRectangle(rect, CHECKPOINT_TRIGGER_BOX_COLOR);
 
                                 DrawRectangle(rect, 4, CHECKPOINT_TRIGGER_BORDER_BOX_COLOR);
@@ -3559,12 +3559,10 @@ namespace MMX.Engine
 
                 RectangleF drawRect = RenderRectangle;
 
-                //if (DEBUG_DRAW_BOX)
-                //    target.DrawRectangle(drawRect, screenBoxBrush, 4);
 
-                if (drawPlayerOriginAxis)
+                if (drawPlayerOriginAxis && Player != null)
                 {
-                    Vector2 v = WorldVectorToScreen(Player.GetVector(VectorKind.PLAYER_ORIGIN));
+                    Vector2 v = WorldVectorToScreen(Player.Origin);
 
                     line.Width = 2;
 
@@ -3579,7 +3577,7 @@ namespace MMX.Engine
 
                 if (showInfoText)
                 {
-                    string text = $"X: {(float) Player.Origin.X * 256} Y: {((float) Player.Origin.Y - 17) * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256} Checkpoint: {(currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
+                    string text = $"X: {(float) Player.Origin.X * 256} Y: {(float) Player.Origin.Y * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256} Checkpoint: {(currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.Yellow);
                 }
             }

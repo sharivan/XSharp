@@ -36,5 +36,9 @@ namespace MMX.Engine.Entities.HUD
         {
             Origin = Engine.World.Camera.LeftTop + Offset;
         }
+
+        protected override void UpdatePartition()
+        {
+        }
     }
 }

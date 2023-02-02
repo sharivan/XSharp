@@ -541,21 +541,23 @@ namespace MMX.Engine.Entities
             return false;
         }
 
+        protected override Box GetBoundingBox()
+        {
+            return DrawBox - Origin;
+        }
+
         protected override Box GetHitBox()
         {
-            return CollisionBox;
+            return GetCollisionBox();
         }
 
         public Box CollisionBox => Origin + GetCollisionBox();
 
+        public Box LastCollisionBox => LastOrigin + GetCollisionBox();
+
         protected virtual Box GetCollisionBox()
         {
-            return GetBoundingBox() - Origin;
-        }
-
-        protected override Box GetBoundingBox()
-        {
-            return DrawBox;
+            return GetBoundingBox();
         }
 
         private void MoveAlongSlope(BoxCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)

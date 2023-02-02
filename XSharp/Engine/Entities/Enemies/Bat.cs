@@ -87,7 +87,7 @@ namespace MMX.Engine.Entities.Enemies
 
         private void OnIdle(EntityState state, long frameCounter)
         {
-            if (frameCounter >= 60 && Origin.DistanceTo(Engine.Player.GetVector(VectorKind.PLAYER_ORIGIN)) <= SCENE_SIZE / 2)
+            if (frameCounter >= 60 && Origin.DistanceTo(Engine.Player.Origin) <= SCENE_SIZE / 2)
                 State = BatState.ATTACKING;
             else
                 Velocity = Vector.NULL_VECTOR;
@@ -95,7 +95,7 @@ namespace MMX.Engine.Entities.Enemies
 
         private void OnAttacking(EntityState state, long frameCounter)
         {
-            Vector playerOrigin = Engine.Player.GetVector(VectorKind.PLAYER_ORIGIN);
+            Vector playerOrigin = Engine.Player.Origin;
             FixedSingle dx = playerOrigin.X - Origin.X;
             FixedSingle dy = playerOrigin.Y - Origin.Y;
             Velocity = (dx.Signal * BAT_ATTACK_VELOCITY_X, dy.Signal * BAT_ATTACK_VELOCITY_Y);

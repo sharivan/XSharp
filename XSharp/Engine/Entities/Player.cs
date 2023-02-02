@@ -138,14 +138,14 @@ namespace MMX.Engine.Entities
 
         protected override Box GetCollisionBox()
         {
-            return ((-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, (HITBOX_WIDTH, HITBOX_HEIGHT + 4));
+            return new Box((-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, (HITBOX_WIDTH, HITBOX_HEIGHT + 4)) + (0, 17);
         }
 
         protected override Box GetHitBox()
         {
             return new Box(Dashing
                 ? (DASHING_HITBOX_OFFSET, (-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT * 0.5), (DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT * 0.5))
-                : (HITBOX_OFFSET, (-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT * 0.5), (HITBOX_WIDTH * 0.5, HITBOX_HEIGHT * 0.5))) + GetVector(VectorKind.PLAYER_ORIGIN);
+                : (HITBOX_OFFSET, (-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT * 0.5), (HITBOX_WIDTH * 0.5, HITBOX_HEIGHT * 0.5)));
         }
 
         public bool Shooting
@@ -709,7 +709,7 @@ namespace MMX.Engine.Entities
 
                     if (Engine.CurrentCheckpoint != null)
                     {
-                        if (GetVector(VectorKind.PLAYER_ORIGIN).Y >= Engine.CurrentCheckpoint.BoundingBox.Top + SCREEN_HEIGHT / 2)
+                        if (Origin.Y >= Engine.CurrentCheckpoint.BoundingBox.Top + SCREEN_HEIGHT / 2)
                             CheckCollisionWithWorld = true;
                     }
                     else
@@ -737,7 +737,7 @@ namespace MMX.Engine.Entities
                 }
                 else if (!spawning)
                 {
-                    if (GetVector(VectorKind.PLAYER_ORIGIN).Y > Engine.World.Camera.RightBottom.Y + BLOCK_SIZE)
+                    if (Origin.Y > Engine.World.Camera.RightBottom.Y + BLOCK_SIZE)
                     {
                         Die();
                         return;
@@ -914,7 +914,7 @@ namespace MMX.Engine.Entities
                                                 SetState(PlayerState.LAND, 0);
                                         }
                                         else
-                                        {                                            
+                                        {
                                             Box ladderCollisionBox = HitBox.ClipTop(15);
                                             CollisionFlags flags = Engine.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, true);
                                             if (!flags.HasFlag(CollisionFlags.LADDER))

@@ -53,19 +53,19 @@ namespace MMX.Engine.Entities.Triggers
         protected AbstractTrigger(GameEngine engine, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN) :
             base(engine, "Trigger", boundingBox.Origin)
         {
-            this.boundingBox = boundingBox - boundingBox.Origin;
-
             Enabled = true;
             MaxTriggers = uint.MaxValue;
             TouchingKind = touchingKind;
             VectorKind = vectorKind;
 
             triggereds = new List<Entity>();
+
+            SetBoundingBox(boundingBox);
         }
 
-        protected override void OnStartTouch(Entity obj)
+        protected override void OnStartTouch(Entity entity)
         {
-            base.OnStartTouch(obj);
+            base.OnStartTouch(entity);
 
             if (Enabled && Triggers < MaxTriggers)
             {
@@ -73,12 +73,12 @@ namespace MMX.Engine.Entities.Triggers
                 {
                     case TouchingKind.VECTOR:
                     {
-                        Vector v = obj.GetVector(VectorKind);
+                        Vector v = entity.GetVector(VectorKind);
                         if (v <= HitBox)
                         {
-                            triggereds.Add(obj);
+                            triggereds.Add(entity);
                             Triggers++;
-                            OnTrigger(obj);
+                            OnTrigger(entity);
                         }
 
                         break;
@@ -87,48 +87,47 @@ namespace MMX.Engine.Entities.Triggers
                     case TouchingKind.BOX:
                     {
                         Triggers++;
-                        OnTrigger(obj);
+                        OnTrigger(entity);
                         break;
                     }
                 }
             }
         }
 
-        protected override void OnTouching(Entity obj)
+        protected override void OnTouching(Entity entity)
         {
-            base.OnTouching(obj);
+            base.OnTouching(entity);
 
-            if (Enabled && Triggers < MaxTriggers && TouchingKind == TouchingKind.VECTOR && !triggereds.Contains(obj))
+            if (Enabled && Triggers < MaxTriggers && TouchingKind == TouchingKind.VECTOR && !triggereds.Contains(entity))
             {
-                Vector v = obj.GetVector(VectorKind);
+                Vector v = entity.GetVector(VectorKind);
                 if (v <= HitBox)
                 {
-                    triggereds.Add(obj);
+                    triggereds.Add(entity);
                     Triggers++;
-                    OnTrigger(obj);
+                    OnTrigger(entity);
                 }
             }
         }
 
-        protected override void OnEndTouch(Entity obj)
+        protected override void OnEndTouch(Entity entity)
         {
-            triggereds.Remove(obj);
+            triggereds.Remove(entity);
         }
 
-        protected virtual void OnTrigger(Entity obj)
+        protected virtual void OnTrigger(Entity entity)
         {
-            TriggerEvent?.Invoke(obj);
+            TriggerEvent?.Invoke(entity);
         }
 
         protected override Box GetBoundingBox()
         {
-            return Origin + boundingBox;
+            return boundingBox;
         }
 
         protected override void SetBoundingBox(Box boundingBox)
         {
             this.boundingBox = boundingBox - boundingBox.Origin;
-            SetOrigin(boundingBox.Origin);
         }
     }
 }

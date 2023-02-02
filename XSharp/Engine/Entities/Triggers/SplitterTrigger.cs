@@ -36,31 +36,31 @@ namespace MMX.Engine.Entities.Triggers
             LineTriggerEvent?.Invoke(this, target, side);
         }
 
-        protected override void OnTouching(Entity obj)
+        protected override void OnTouching(Entity entity)
         {
-            base.OnTouching(obj);
+            base.OnTouching(entity);
 
             if (!Enabled)
                 return;
 
-            Vector targetOrigin = obj.Origin;
-            Vector targetLastOrigin = obj.LastOrigin;
+            Vector targetOrigin = entity.GetVector(VectorKind);
+            Vector targetLastOrigin = entity.GetLastVector(VectorKind);
 
             switch (Orientation)
             {
                 case SplitterTriggerOrientation.HORIZONTAL:
                     if (targetOrigin.Y < Origin.Y && targetLastOrigin.Y >= Origin.Y)
-                        OnSplitterTriggerEvent(obj, SplitterTriggerDirection.BACKWARD);
+                        OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
                     else if (targetOrigin.Y >= Origin.Y && targetLastOrigin.Y < Origin.Y)
-                        OnSplitterTriggerEvent(obj, SplitterTriggerDirection.FORWARD);
+                        OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
 
                     break;
 
                 case SplitterTriggerOrientation.VERTICAL:
                     if (targetOrigin.X < Origin.X && targetLastOrigin.X >= Origin.X)
-                        OnSplitterTriggerEvent(obj, SplitterTriggerDirection.BACKWARD);
+                        OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
                     else if (targetOrigin.X >= Origin.X && targetLastOrigin.X < Origin.X)
-                        OnSplitterTriggerEvent(obj, SplitterTriggerDirection.FORWARD);
+                        OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
 
                     break;
             }

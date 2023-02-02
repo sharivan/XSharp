@@ -26,7 +26,7 @@ namespace MMX.Engine.Entities.Triggers
             get; set;
         }
 
-        public ChangeDynamicPropertyTrigger(GameEngine engine, Box box, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL) : base(engine, box, orientation, VectorKind.PLAYER_ORIGIN)
+        public ChangeDynamicPropertyTrigger(GameEngine engine, Box box, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL) : base(engine, box, orientation)
         {
             Property = prop;
             Forward = forward;
