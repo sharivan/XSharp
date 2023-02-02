@@ -1940,10 +1940,7 @@ namespace MMX.Engine
                     {
                         AddEntity(added);
                         added.OnSpawn();
-                        partition.Insert(added);
-
-                        if (added is Sprite sprite)
-                            sprite.FireFirstCollisionCheckEvents();
+                        added.PostSpawn();
                     }
 
                     addedEntities.Clear();
@@ -3393,7 +3390,7 @@ namespace MMX.Engine
                     List<Entity> entities = partition.Query(World.Camera.BoundingBox, BoxKind.BOUDINGBOX);
                     foreach (Entity entity in entities)
                     {
-                        if (!entity.Alive || entity.Equals(Player))
+                        if (!entity.Alive || entity == Player)
                             continue;
 
                         if (entity is not Sprite sprite || sprite is HUD)
@@ -3403,12 +3400,12 @@ namespace MMX.Engine
                     }
                 }
 
-                if (drawSprites && (drawCollisionBox || showTriggerBounds))
+                if (drawCollisionBox || showTriggerBounds)
                 {
-                    List<Entity> entities = partition.Query(World.BoundingBox, BoxKind.BOUDINGBOX);
+                    List<Entity> entities = partition.Query(World.BoundingBox, BoxKind.HITBOX);
                     foreach (Entity entity in entities)
                     {
-                        if (!entity.Alive || entity.Equals(Player))
+                        if (!entity.Alive || entity == Player)
                             continue;
 
                         switch (entity)
@@ -4298,7 +4295,9 @@ namespace MMX.Engine
             respawning = true;
             UnloadLevel();
             StartFading(Color.White, 28, true, LoadLevel);
-            StartFadingOST(0, 60, () => soundChannels[3].player.Stop());
+
+            if (ENABLE_OST)
+                StartFadingOST(0, 60, () => soundChannels[3].player.Stop());
         }
 
         internal void StartDyingEffect()

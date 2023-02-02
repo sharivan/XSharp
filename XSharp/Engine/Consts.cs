@@ -35,6 +35,8 @@ namespace MMX.Engine
 
         // Engine
 
+        public const int BOXKIND_COUNT = 2;
+
         public const int TILE_SIZE = 8;
         public const int MAP_SIZE = TILE_SIZE * 2; // In pixels
         public const int BLOCK_SIZE = MAP_SIZE * 2; // In pixels
@@ -348,7 +350,7 @@ namespace MMX.Engine
 
         public const bool ENABLE_ENEMIES = true;
         public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
-        public const bool ENABLE_OST = true;
+        public const bool ENABLE_OST = false;
 
         public const bool LOAD_ROM = true;
         public const string ROM_NAME = "ShittyDash.mmx";

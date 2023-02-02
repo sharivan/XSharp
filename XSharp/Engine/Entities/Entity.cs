@@ -1,7 +1,10 @@
-﻿using MMX.Geometry;
+﻿using MMX.Engine.World;
+using MMX.Geometry;
 using System;
 using System.Collections.Generic;
 using System.IO;
+
+using static MMX.Engine.Consts;
 using static MMX.Engine.World.World;
 
 namespace MMX.Engine.Entities
@@ -39,6 +42,12 @@ namespace MMX.Engine.Entities
         private readonly List<EntityState> states;
         private EntityState[] stateArray;
         private int currentStateID;
+
+        private bool visible;
+        private bool checkCollisionWithEntities;
+
+        private BoxKind boxKind;
+        private BoxKind lastBoxKind;
 
         public GameEngine Engine
         {
@@ -117,12 +126,32 @@ namespace MMX.Engine.Entities
             set;
         }
 
+        public bool Visible
+        {
+            get => visible;
+            set
+            {
+                visible = value;
+                UpdatePartition();
+            }
+        }
+
+        public bool Spawning
+        {
+            get;
+            private set;
+        }
+
         public bool Offscreen => !HasIntersection(BoundingBox, Engine.World.Camera.ExtendedBoundingBox);
 
         public bool CheckCollisionWithEntities
         {
-            get;
-            set;
+            get => checkCollisionWithEntities;
+            set
+            {
+                checkCollisionWithEntities = value;
+                UpdatePartition();
+            }
         }
 
         public int StateCount => states.Count;
@@ -248,7 +277,8 @@ namespace MMX.Engine.Entities
         {
             LastOrigin = this.origin;
             this.origin = origin;
-            Engine.partition.Update(this);
+
+            UpdatePartition();
 
             Vector delta = origin - LastOrigin;
             foreach (Entity child in childs)
@@ -434,16 +464,27 @@ namespace MMX.Engine.Entities
 
         public virtual void Spawn()
         {
+            boxKind = BoxKind.NONE;
+            lastBoxKind = BoxKind.NONE;
+            Spawning = true;
+            Visible = false;
             CheckCollisionWithEntities = true;
             frameToKill = -1;
             currentStateID = -1;
-            Alive = true;
             MarkedToRemove = false;
             Engine.addedEntities.Add(this);
         }
 
         protected internal virtual void OnSpawn()
         {           
+        }
+
+        protected internal virtual void PostSpawn()
+        {
+            Spawning = false;
+            Alive = true;
+
+            UpdatePartition();           
         }
 
         protected virtual void OnDeath()
@@ -453,6 +494,36 @@ namespace MMX.Engine.Entities
         protected virtual void OnVisible()
         {
 
+        }
+
+        private void UpdatePartition()
+        {
+            if (!Alive)
+                return;
+
+            boxKind = (Visible ? BoxKind.BOUDINGBOX : BoxKind.NONE) | (CheckCollisionWithEntities ? BoxKind.HITBOX : BoxKind.NONE);
+
+            if (lastBoxKind == BoxKind.NONE && boxKind != BoxKind.NONE)
+                Engine.partition.Insert(this, boxKind);
+            else if (lastBoxKind != BoxKind.NONE && boxKind == BoxKind.NONE)
+                Engine.partition.Remove(this, boxKind);
+            else if (lastBoxKind != boxKind)
+            {
+                for (int i = 0; i < BOXKIND_COUNT; i++)
+                {
+                    var k = (BoxKind) (1 << i);
+                    if (boxKind.HasFlag(k) && !lastBoxKind.HasFlag(k))
+                        Engine.partition.Insert(this, k);
+                    else if (!boxKind.HasFlag(k) && lastBoxKind.HasFlag(k))
+                        Engine.partition.Remove(this, k);
+                    else
+                        Engine.partition.Update(this, k);
+                }
+            }
+            else
+                Engine.partition.Update(this, boxKind);
+
+            lastBoxKind = boxKind;
         }
     }
 }

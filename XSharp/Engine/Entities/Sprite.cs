@@ -398,27 +398,11 @@ namespace MMX.Engine.Entities
             elapsed = 0;
         }
 
-        internal void FireFirstCollisionCheckEvents()
-        {
-            collider.Box = CollisionBox;
-
-            if (BlockedUp)
-                OnBlockedUp();
-
-            if (BlockedLeft)
-                OnBlockedLeft();
-
-            if (BlockedRight)
-                OnBlockedRight();
-
-            if (Landed)
-                OnLanded();
-        }
-
         protected internal override void OnSpawn()
         {
             base.OnSpawn();
 
+            Visible = true;
             CheckCollisionWithWorld = true;
             solid = true;
             Velocity = Vector.NULL_VECTOR;
@@ -435,6 +419,25 @@ namespace MMX.Engine.Entities
 
             CurrentAnimationIndex = InitialAnimationIndex;
             CurrentAnimation?.StartFromBegin();
+        }
+
+        protected internal override void PostSpawn()
+        {
+            base.PostSpawn();
+
+            collider.Box = CollisionBox;
+
+            if (BlockedUp)
+                OnBlockedUp();
+
+            if (BlockedLeft)
+                OnBlockedLeft();
+
+            if (BlockedRight)
+                OnBlockedRight();
+
+            if (Landed)
+                OnLanded();
         }
 
         public override void Spawn()
@@ -697,12 +700,20 @@ namespace MMX.Engine.Entities
 
         private void DoPhysics()
         {
-            collider.Box = CollisionBox;
+            bool lastBlockedUp = false;
+            bool lastBlockedLeft = false;
+            bool lastBlockedRight = false;
+            bool lastLanded = false;
 
-            bool lastBlockedUp = BlockedUp;
-            bool lastBlockedLeft = BlockedLeft;
-            bool lastBlockedRight = BlockedRight;
-            bool lastLanded = Landed;
+            if (CheckCollisionWithWorld)
+            {
+                collider.Box = CollisionBox;
+
+                lastBlockedUp = BlockedUp;
+                lastBlockedLeft = BlockedLeft;
+                lastBlockedRight = BlockedRight;
+                lastLanded = Landed;
+            }
 
             FixedSingle gravity = Gravity;
 
@@ -717,7 +728,7 @@ namespace MMX.Engine.Entities
                         Velocity = new Vector(Velocity.X, terminalDownwardSpeed);
                 }
 
-                if (CheckCollisionWithWorld && lastLanded)
+                if (lastLanded)
                     Velocity = Velocity.XVector;
             }
 
@@ -930,7 +941,7 @@ namespace MMX.Engine.Entities
 
         public virtual void Render()
         {
-            if (!Alive)
+            if (!Alive || !Visible)
                 return;
 
             if (Blinking)

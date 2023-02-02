@@ -3,6 +3,8 @@ using MMX.Geometry;
 using MMX.Math;
 using System.Collections.Generic;
 
+using static MMX.Engine.Consts;
+
 namespace MMX.Engine.World
 {
     /// <summary>
@@ -12,8 +14,6 @@ namespace MMX.Engine.World
     /// <typeparam name="T">Tipo da entidade (deve descender da classe Sprite)</typeparam>
     internal class Partition<T> where T : Entity
     {
-        public const int BOXKIND_COUNT = 2;
-
         /// <summary>
         /// Elemento/Célula de uma partição.
         /// A partição é dividida em uma matriz bidimensional de células onde cada uma delas são retângulos iguais.
@@ -22,6 +22,27 @@ namespace MMX.Engine.World
         /// <typeparam name="U">Tipo da entidade (deve descender da classe Sprite)</typeparam>
         private class PartitionCell<U> where U : Entity
         {
+            private static int ToIndex(BoxKind kind)
+            {
+                int x = (int) kind;
+                
+                // Map a bit value mod
+                // 37 to its position
+                int[] lookup = {32, 0, 1, 26, 2, 23,
+                    27, 0, 3, 16, 24, 30,
+                    28, 11, 0, 13, 4, 7,
+                    17, 0, 25, 22, 31, 15,
+                    29, 10, 12, 6, 0, 21,
+                    14, 9, 5, 20, 8, 19, 18};
+
+                // Only difference between
+                // (x and -x) is the value
+                // of signed magnitude
+                // (leftmostbit) negative
+                // numbers signed bit is 1
+                return lookup[(-x & x) % 37];
+            }
+
             readonly Partition<U> partition; // Partição a qual esta célula pertence
             readonly Box box; // Retângulo que delimita a célula
             readonly List<U>[] values;
@@ -44,41 +65,30 @@ namespace MMX.Engine.World
 
             public void Insert(U value, BoxKind kind)
             {
-                for (int i = 0; i < BOXKIND_COUNT; i++)
-                {
-                    if (((1 << i) & (int) kind) == 0)
-                        continue;
-
-                    List<U> list = values[i];
-                    if (!list.Contains(value))
-                        list.Add(value);
-                }
+                int index = ToIndex(kind);
+                List<U> list = values[index];
+                if (!list.Contains(value))
+                    list.Add(value);
             }
 
             public void Query(Box box, List<U> result, U exclude, List<U> addictionalExclusionList, BoxKind kind)
             {
-                for (int i = 0; i < BOXKIND_COUNT; i++)
+                int index = ToIndex(kind);
+                List<U> list = values[index];
+
+                // Verifica a lista de entidades da célula
+                foreach (U value in list)
                 {
-                    if (((1 << i) & (int) kind) == 0)
+                    if (exclude != null && exclude.Equals(value))
                         continue;
 
-                    List<U> list = values[i];
-                    BoxKind k = (BoxKind) (1 << i);
+                    if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
+                        continue;
 
-                    // Verifica a lista de entidades da célula
-                    foreach (U value in list)
-                    {
-                        if (exclude != null && exclude.Equals(value))
-                            continue;
+                    Box intersection = value.GetBox(kind) & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
 
-                        if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
-                            continue;
-
-                        Box intersection = value.GetBox(k) & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
-
-                        if (intersection.IsValid() && !result.Contains(value)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
-                            result.Add(value); // adiciona esta entidade à lista
-                    }
+                    if (intersection.IsValid() && !result.Contains(value)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                        result.Add(value); // adiciona esta entidade à lista
                 }
             }
 
@@ -88,35 +98,26 @@ namespace MMX.Engine.World
             /// <param name="value">Entidade a ser atualizada nesta célula</param>
             public void Update(U value, BoxKind kind)
             {
-                for (int i = 0; i < BOXKIND_COUNT; i++)
-                {
-                    if (((1 << i) & (int) kind) == 0)
-                        continue;
+                int index = ToIndex(kind);
+                List<U> list = values[index];
 
-                    List<U> list = values[i];
-                    BoxKind k = (BoxKind) (1 << i);
+                Box intersection = value.GetBox(kind) & box; // Calcula a interecção
+                bool intersectionNull = !intersection.IsValid();
 
-                    Box intersection = value.GetBox(k) & box; // Calcula a interecção
-                    bool intersectionNull = !intersection.IsValid();
-
-                    if (!intersectionNull && !list.Contains(value)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
-                        list.Add(value); // então adiciona-a em sua lista de entidades
-                    else if (intersectionNull && list.Contains(value)) // Senão, se a intesecção for vazia e esta entidade ainda está contida neta célula
-                        list.Remove(value); // remove-a da sua lista de entidades
-                }
+                if (!intersectionNull && !list.Contains(value)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
+                    list.Add(value); // então adiciona-a em sua lista de entidades
+                else if (intersectionNull && list.Contains(value)) // Senão, se a intesecção for vazia e esta entidade ainda está contida neta célula
+                    list.Remove(value); // remove-a da sua lista de entidades
             }
 
             /// <summary>
             /// Remove uma entidade desta célula
             /// </summary>
             /// <param name="value">Entidade a ser removida</param>
-            public void Remove(U value, BoxKind kind = BoxKind.ALL)
+            public void Remove(U value, BoxKind kind)
             {
-                for (int i = 0; i < BOXKIND_COUNT; i++)
-                {
-                    if (((1 << i) & (int) kind) != 0)
-                        values[i].Remove(value);
-                }
+                int index = ToIndex(kind);
+                values[index].Remove(value);
             }
 
             /// <summary>
@@ -124,11 +125,8 @@ namespace MMX.Engine.World
             /// </summary>
             public void Clear(BoxKind kind)
             {
-                for (int i = 0; i < BOXKIND_COUNT; i++)
-                {
-                    if (((1 << i) & (int) kind) != 0)
-                        values[i].Clear();
-                }
+                int index = ToIndex(kind);
+                values[index].Clear();
             }
 
             /// <summary>
@@ -136,12 +134,15 @@ namespace MMX.Engine.World
             /// </summary>
             public int Count(BoxKind kind)
             {
+                int index = ToIndex(kind);
+                return values[index].Count;
+            }
+
+            public int Count()
+            {
                 int result = 0;
                 for (int i = 0; i < BOXKIND_COUNT; i++)
-                {
-                    if (((1 << i) & (int) kind) != 0)
-                        result += values[i].Count;
-                }
+                    result += values[i].Count;
 
                 return result;
             }
@@ -296,10 +297,18 @@ namespace MMX.Engine.World
             if (endRow >= rows)
                 endRow = rows - 1;
 
-            // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
-            for (int col = startCol; col <= endCol; col++)
-                for (int row = startRow; row <= endRow; row++)
-                    cells[col, row]?.Query(box, result, exclude, addictionalExclusionList, kind); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
+            for (int i = 0; i < BOXKIND_COUNT; i++)
+            {
+                if (((1 << i) & (int) kind) == 0)
+                    continue;
+
+                var k = (BoxKind) (1 << i);
+
+                // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
+                for (int col = startCol; col <= endCol; col++)
+                    for (int row = startRow; row <= endRow; row++)
+                        cells[col, row]?.Query(box, result, exclude, addictionalExclusionList, k); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
+            }
 
             return result;
         }
@@ -375,9 +384,9 @@ namespace MMX.Engine.World
                     for (int row = startRow; row <= endRow; row++)
                         if (cells[col, row] != null) // Se a célula já existir
                         {
-                            cells[col, row].Update(item, kind); // Atualiza a entidade dentro da célula
+                            cells[col, row].Update(item, k); // Atualiza a entidade dentro da célula
 
-                            if (cells[col, row].Count(BoxKind.ALL) == 0) // Se a célula não possuir mais entidades, defina como nula
+                            if (cells[col, row].Count() == 0) // Se a célula não possuir mais entidades, defina como nula
                                 cells[col, row] = null;
                         }
                         else
@@ -458,9 +467,9 @@ namespace MMX.Engine.World
                     for (int row = startRow; row <= endRow; row++)
                         if (cells[col, row] != null)
                         {
-                            cells[col, row].Remove(item, kind); // Remove a entidade da célula caso ela possua intersecção não vazia com a célula
+                            cells[col, row].Remove(item, k); // Remove a entidade da célula caso ela possua intersecção não vazia com a célula
 
-                            if (cells[col, row].Count(BoxKind.ALL) == 0) // Se a célula não possuir mais entidades
+                            if (cells[col, row].Count() == 0) // Se a célula não possuir mais entidades
                                 cells[col, row] = null; // defina-a como nula
                         }
             }
@@ -475,9 +484,16 @@ namespace MMX.Engine.World
                 for (int row = 0; row < rows; row++)
                     if (cells[col, row] != null)
                     {
-                        cells[col, row].Clear(kind);
+                        for (int i = 0; i < BOXKIND_COUNT; i++)
+                        {
+                            if (((1 << i) & (int) kind) == 0)
+                                continue;
 
-                        if (cells[col, row].Count(BoxKind.ALL) == 0) // Se a célula não possuir mais entidades
+                            var k = (BoxKind) (1 << i);
+                            cells[col, row].Clear(k);
+                        }
+
+                        if (cells[col, row].Count() == 0) // Se a célula não possuir mais entidades
                             cells[col, row] = null; // defina-a como nula
                     }
         }
