@@ -121,7 +121,7 @@ namespace MMX.Engine
         public const int DASHING_HITBOX_HEIGHT = 16;
         public static readonly Vector DASHING_HITBOX_SIZE = (DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT);
         public const int INPUT_MOVEMENT_LATENCY = 1;
-        public static readonly FixedSingle LADDER_BOX_VCLIP = 18;
+        public static readonly FixedSingle LADDER_OFFSET = 24;
         public static readonly FixedSingle WALL_MAX_DISTANCE_TO_WALL_JUMP = 8;
         public const int X_INITIAL_LIVES = 2;
         public static readonly FixedSingle X_INITIAL_HEALT_CAPACITY = 16;
@@ -338,7 +338,7 @@ namespace MMX.Engine
         public const string ROM_NAME = "ShittyDash.mmx";
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
-        public const int INITIAL_LEVEL = 8;
+        public const int INITIAL_LEVEL = 7;
         public const int INITIAL_CHECKPOINT = 0;
     }
 }

@@ -23,6 +23,15 @@ namespace MMX.Engine.Entities.HUD
             Offset = offset;
         }
 
+        protected internal override void OnSpawn()
+        {
+            base.OnSpawn();
+
+            CheckCollisionWithSprites = false;
+            CheckCollisionWithWorld = false;
+            Static = true;
+        }
+
         protected internal virtual void UpdateOrigin()
         {
             Origin = Engine.World.Camera.LeftTop + Offset;

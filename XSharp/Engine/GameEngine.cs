@@ -2791,14 +2791,14 @@ namespace MMX.Engine
 
             sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
             sequence.BoudingBoxOriginOffset = normalOffset;
-            sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
-            sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
+            sequence.AddFrame(5, -11, 169, 281, 21, 32, 4);
+            sequence.AddFrame(2, -4, 195, 274, 18, 34, 4);
 
             sequence = xSpriteSheet.AddFrameSquence("TopLadderDescending");
             sequence.BoudingBoxOriginOffset = normalOffset;
             sequence.CollisionBox = normalCollisionBox;
-            sequence.AddFrame(2, -4, 195, 274, 18, 34, 6);
-            sequence.AddFrame(5, -11, 169, 281, 21, 32, 8);
+            sequence.AddFrame(2, -4, 195, 274, 18, 34, 4);
+            sequence.AddFrame(5, -11, 169, 281, 21, 32, 4);
 
             sequence = xSpriteSheet.AddFrameSquence("TakingDamage");
             sequence.BoudingBoxOriginOffset = normalOffset;

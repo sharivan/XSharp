@@ -24,7 +24,6 @@ namespace MMX.Engine.Entities
 
         private Vector vel;
         protected bool moving;
-        protected bool isStatic;
         protected bool breakable;
         protected FixedSingle health;
         private bool invincible;
@@ -63,7 +62,11 @@ namespace MMX.Engine.Entities
 
         new public SpriteState CurrentState => (SpriteState) base.CurrentState;
 
-        public bool Static => isStatic;
+        public bool Static
+        {
+            get;
+            set;
+        }
 
         public bool NoClip
         {
@@ -299,7 +302,7 @@ namespace MMX.Engine.Entities
             LastVelocity = new Vector(reader);
             NoClip = reader.ReadBoolean();
             moving = reader.ReadBoolean();
-            isStatic = reader.ReadBoolean();
+            Static = reader.ReadBoolean();
             breakable = reader.ReadBoolean();
             health = reader.ReadInt32();
             invincible = reader.ReadBoolean();
@@ -336,7 +339,7 @@ namespace MMX.Engine.Entities
             LastVelocity.Write(writer);
             writer.Write(NoClip);
             writer.Write(moving);
-            writer.Write(isStatic);
+            writer.Write(Static);
             writer.Write(breakable);
             writer.Write(health);
             writer.Write(invincible);
@@ -428,7 +431,7 @@ namespace MMX.Engine.Entities
             Velocity = Vector.NULL_VECTOR;
             NoClip = false;
             moving = false;
-            isStatic = false;
+            Static = false;
             breakable = true;
             health = DEFAULT_HEALTH;
             Invincible = false;
@@ -719,7 +722,7 @@ namespace MMX.Engine.Entities
 
             FixedSingle gravity = Gravity;
 
-            if (!NoClip && !isStatic)
+            if (!NoClip && !Static)
             {
                 if (!lastLanded && gravity != 0)
                 {
@@ -740,7 +743,7 @@ namespace MMX.Engine.Entities
             if (Velocity.IsNull && moving)
                 StopMoving();
 
-            Vector delta = !isStatic && !Velocity.IsNull ? Velocity : Vector.NULL_VECTOR;
+            Vector delta = !Static && !Velocity.IsNull ? Velocity : Vector.NULL_VECTOR;
             if (!delta.IsNull)
             {
                 if (!NoClip && CheckCollisionWithWorld)
@@ -918,7 +921,7 @@ namespace MMX.Engine.Entities
 
         protected override void Think()
         {
-            if (!isStatic && !Engine.Paused)
+            if (!Static && !Engine.Paused)
                 DoPhysics();
         }
 
