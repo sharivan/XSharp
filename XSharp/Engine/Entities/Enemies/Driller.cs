@@ -45,9 +45,6 @@ namespace MMX.Engine.Entities.Enemies
             Health = DRILLER_HEALTH;
             ContactDamage = DRILLER_CONTACT_DAMAGE;
 
-            CheckCollisionWithWorld = true;
-            CheckCollisionWithSprites = false;
-
             NothingDropOdd = 79;
             SmallHealthDropOdd = 10;
             BigHealthDropOdd = 10;

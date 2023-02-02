@@ -42,14 +42,13 @@ namespace MMX.Engine.Entities.Enemies
         {
             base.OnSpawn();
 
+            CheckCollisionWithWorld = false;
+
             flashing = false;
 
             PaletteIndex = 6;
             Health = BAT_HEALTH;
-            ContactDamage = DRILLER_CONTACT_DAMAGE;
-
-            CheckCollisionWithWorld = true;
-            CheckCollisionWithSprites = false;
+            ContactDamage = BAT_CONTACT_DAMAGE;
 
             NothingDropOdd = 79;
             SmallHealthDropOdd = 5;

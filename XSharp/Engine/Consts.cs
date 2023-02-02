@@ -11,14 +11,17 @@ namespace MMX.Engine
         public const int KEY_BUFFER_COUNT = 60;
 
         // Tick rate
+
         public static readonly FixedSingle TICKRATE = 60;
         public static readonly FixedSingle TICK = 1D / TICKRATE;
 
-        // Sprite        
+        // Sprite
+        // 
         public const int DEFAULT_INVINCIBLE_TIME = 60;
         public const int DEFAULT_HEALTH = 16;
 
         // Directions
+
         public const int STEP_BIT_COUNT = 8;
         public const int STEP_COUNT = 1 << STEP_BIT_COUNT;
         public static readonly FixedSingle STEP_SIZE = FixedSingle.FromRawValue(1 << (FixedSingle.FIXED_BITS_COUNT - STEP_BIT_COUNT));
@@ -31,6 +34,7 @@ namespace MMX.Engine
         public static readonly Vector STEP_DOWN_VECTOR = STEP_SIZE * Vector.DOWN_VECTOR;
 
         // Engine
+
         public const int TILE_SIZE = 8;
         public const int MAP_SIZE = TILE_SIZE * 2; // In pixels
         public const int BLOCK_SIZE = MAP_SIZE * 2; // In pixels
@@ -55,6 +59,7 @@ namespace MMX.Engine
         public const int SPAWNING_BLACK_SCREEN_FRAMES = 120;
 
         // Times are measured in frames, velocity in pixel per frames and accelerations in pixels per frame squared.
+
         public static readonly FixedSingle GRAVITY = 0.25;
         public static readonly FixedSingle UNDERWATER_GRAVITY = 33 / 256.0;
         public static readonly FixedSingle TERMINAL_DOWNWARD_SPEED = 5.75;
@@ -108,6 +113,7 @@ namespace MMX.Engine
         public static readonly Box CHARGING_EFFECT_HITBOX = (Vector.NULL_VECTOR, (-CHARGING_EFFECT_HITBOX_SIZE / 2, -CHARGING_EFFECT_HITBOX_SIZE / 2), (CHARGING_EFFECT_HITBOX_SIZE / 2, CHARGING_EFFECT_HITBOX_SIZE / 2));
 
         // X
+
         public const int HITBOX_OFFSET_X = 0;
         public const int HITBOX_OFFSET_Y = -1;
         public static readonly Vector HITBOX_OFFSET = (HITBOX_OFFSET_X, HITBOX_OFFSET_Y);
@@ -141,21 +147,22 @@ namespace MMX.Engine
         // Weapons
 
         // X-Buster
+
         public const int LEMON_DAMAGE = 3;
         public const int SEMI_CHARGED_DAMAGE = 6;
         public const int CHARGED_DAMAGE = 9;
 
         // Enemies
 
-        public const bool ENABLE_ENEMIES = true;
-
         // Driller
+
         public static readonly FixedSingle DRILLER_JUMP_VELOCITY_X = 384 / 256.0;
         public static readonly FixedSingle DRILLER_JUMP_VELOCITY_Y = -1280 / 256.0;
         public const int DRILLER_HEALTH = 4;
         public static readonly FixedSingle DRILLER_CONTACT_DAMAGE = 2;
 
         // Bat
+
         public static readonly FixedSingle BAT_ATTACK_VELOCITY_X = 181 / 256.0;
         public static readonly FixedSingle BAT_ATTACK_VELOCITY_Y = 181 / 256.0;
         public static readonly FixedSingle BAT_ESCAPE_VELOCITY_Y = 512 / 256.0;
@@ -163,6 +170,7 @@ namespace MMX.Engine
         public static readonly FixedSingle BAT_CONTACT_DAMAGE = 1;
 
         // Render
+
         public static readonly Vector DEFAULT_DRAW_ORIGIN = Vector.NULL_VECTOR;
         public static readonly FixedSingle DEFAULT_DRAW_SCALE = 1;
         public static readonly FixedSingle DEFAULT_CLIENT_WIDTH = DEFAULT_DRAW_SCALE * SCREEN_WIDTH;
@@ -172,6 +180,7 @@ namespace MMX.Engine
         public const bool VSYNC = false;
 
         // Debug
+
         public const bool DEBUG_DRAW_COLLISION_BOX = false;
         public const bool DEBUG_SHOW_COLLIDERS = false;
         public const bool DEBUG_DRAW_COLLISION_DATA = false;
@@ -198,11 +207,13 @@ namespace MMX.Engine
         public static readonly Color TOUCHING_MAP_COLOR = Color.Blue;
 
         // HUD
+
         public static readonly FixedSingle HP_LEFT = 9;
         public static readonly FixedSingle HP_BOTTOM = 96;
         public static readonly Vector READY_OFFSET = new Vector(SCREEN_WIDTH - 39, SCREEN_HEIGHT - 13) / 2;
 
         // Palettes
+
         public static readonly Color[] X1_NORMAL_PALETTE = new Color[]
         {
             Color.Transparent, // 0
@@ -334,6 +345,11 @@ namespace MMX.Engine
         };
 
         // Startup
+
+        public const bool ENABLE_ENEMIES = true;
+        public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
+        public const bool ENABLE_OST = true;
+
         public const bool LOAD_ROM = true;
         public const string ROM_NAME = "ShittyDash.mmx";
         public const bool SKIP_MENU = false;

@@ -22,6 +22,7 @@ namespace MMX.Engine.Entities.Effects
             base.OnSpawn();
 
             CheckCollisionWithWorld = false;
+            CheckCollisionWithEntities = false;
         }
     }
 }

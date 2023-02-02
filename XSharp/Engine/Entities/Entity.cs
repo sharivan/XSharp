@@ -119,6 +119,12 @@ namespace MMX.Engine.Entities
 
         public bool Offscreen => !HasIntersection(BoundingBox, Engine.World.Camera.ExtendedBoundingBox);
 
+        public bool CheckCollisionWithEntities
+        {
+            get;
+            set;
+        }
+
         public int StateCount => states.Count;
 
         public int CurrentStateID
@@ -306,6 +312,7 @@ namespace MMX.Engine.Entities
             Alive = reader.ReadBoolean();
             MarkedToRemove = reader.ReadBoolean();
             Respawnable = reader.ReadBoolean();
+            CheckCollisionWithEntities = reader.ReadBoolean();
         }
 
         public virtual void SaveState(BinaryWriter writer)
@@ -315,6 +322,7 @@ namespace MMX.Engine.Entities
             writer.Write(Alive);
             writer.Write(MarkedToRemove);
             writer.Write(Respawnable);
+            writer.Write(CheckCollisionWithEntities);
         }
 
         public override string ToString()
@@ -340,34 +348,37 @@ namespace MMX.Engine.Entities
             Think();
             CurrentState?.OnFrame();
 
-            List<Entity> touching = Engine.partition.Query(HitBox, this, childs, BoxKind.HITBOX);
-
-            int count = touchingEntities.Count;
-            for (int i = 0; i < count; i++)
+            if (CheckCollisionWithEntities)
             {
-                Entity entity = touchingEntities[i];
-                int index = touching.IndexOf(entity);
+                List<Entity> touching = Engine.partition.Query(HitBox, this, childs, BoxKind.HITBOX);
 
-                if (index == -1)
+                int count = touchingEntities.Count;
+                for (int i = 0; i < count; i++)
                 {
-                    touchingEntities.RemoveAt(i);
-                    i--;
-                    count--;
-                    OnEndTouch(entity);
+                    Entity entity = touchingEntities[i];
+                    int index = touching.IndexOf(entity);
+
+                    if (index == -1)
+                    {
+                        touchingEntities.RemoveAt(i);
+                        i--;
+                        count--;
+                        OnEndTouch(entity);
+                    }
+                    else if (entity.Alive && !entity.MarkedToRemove)
+                    {
+                        touching.RemoveAt(index);
+                        OnTouching(entity);
+                    }
                 }
-                else if (entity.Alive && !entity.MarkedToRemove)
-                {
-                    touching.RemoveAt(index);
-                    OnTouching(entity);
-                }
+
+                foreach (Entity entity in touching)
+                    if (entity.Alive && !entity.MarkedToRemove)
+                    {
+                        touchingEntities.Add(entity);
+                        OnStartTouch(entity);
+                    }
             }
-
-            foreach (Entity entity in touching)
-                if (entity.Alive && !entity.MarkedToRemove)
-                {
-                    touchingEntities.Add(entity);
-                    OnStartTouch(entity);
-                }
         }
 
         protected virtual void OnStartTouch(Entity entity)
@@ -423,6 +434,7 @@ namespace MMX.Engine.Entities
 
         public virtual void Spawn()
         {
+            CheckCollisionWithEntities = true;
             frameToKill = -1;
             currentStateID = -1;
             Alive = true;
@@ -431,7 +443,7 @@ namespace MMX.Engine.Entities
         }
 
         protected internal virtual void OnSpawn()
-        {
+        {           
         }
 
         protected virtual void OnDeath()

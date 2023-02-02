@@ -317,7 +317,6 @@ namespace MMX.Engine
         private bool changeLevel;
         private ushort levelToChange;
         private bool gameOver;
-        private string currentStageMusic;
         private bool loadingLevel;
         private bool paused;
         internal bool noCameraConstraints;
@@ -731,13 +730,13 @@ namespace MMX.Engine
             private set;
         }
 
-        public bool Spawning
+        public bool SpawningBlackScreen
         {
             get;
             private set;
         } = false;
 
-        public int SpawningFrameCounter
+        public int SpawningBlackScreenFrameCounter
         {
             get;
             private set;
@@ -1464,6 +1463,16 @@ namespace MMX.Engine
             RemoveEntity(entity.Index);
         }
 
+        private void OnSpawningBlackScreenComplete()
+        {
+            soundChannels[3].player.Volume = 0.5f;
+
+            if (ENABLE_OST && romLoaded && mmx.Type == 0 && mmx.Level == 8)
+                PlayOST(18, 83, 50.152);
+
+            StartFading(Color.Black, 26, true, StartReadyHUD);
+        }
+
         private bool OnFrame()
         {
             bool nextFrame = !frameAdvance;
@@ -1868,18 +1877,13 @@ namespace MMX.Engine
                 }
             }
 
-            if (Spawning)
+            if (SpawningBlackScreen)
             {
-                SpawningFrameCounter++;
-                if (SpawningFrameCounter >= SPAWNING_BLACK_SCREEN_FRAMES)
+                SpawningBlackScreenFrameCounter++;
+                if (SpawningBlackScreenFrameCounter >= SPAWNING_BLACK_SCREEN_FRAMES)
                 {
-                    Spawning = false;
-                    soundChannels[3].player.Volume = 0.5f;
-
-                    if (romLoaded && mmx.Type == 0 && mmx.Level == 8) 
-                        PlayOST(18, 83, 50.152);
-
-                    StartFading(Color.Black, 26, true, StartReadyHUD);
+                    SpawningBlackScreen = false;                   
+                    OnSpawningBlackScreenComplete();
                 }
             }
 
@@ -2134,10 +2138,15 @@ namespace MMX.Engine
                 World.Tessellate();
 
                 loadingLevel = false;
-
-                Spawning = true;
-                SpawningFrameCounter = 0;
                 respawning = false;
+
+                if (ENABLE_SPAWNING_BLACK_SCREEN)
+                {
+                    SpawningBlackScreen = true;
+                    SpawningBlackScreenFrameCounter = 0;
+                }
+                else
+                    OnSpawningBlackScreenComplete();
 
                 World.Camera.FocusOn = null;
                 var cameraPos = romLoaded ? mmx.CameraPos : Vector.NULL_VECTOR;
@@ -3475,7 +3484,7 @@ namespace MMX.Engine
                     hud.Render();
                 }
 
-                if (respawning || Spawning)
+                if (respawning || SpawningBlackScreen)
                     FillRectangle(WorldBoxToScreen(World.Camera.BoundingBox), Color.Black, true);
 
                 if (Player != null)
@@ -3706,17 +3715,15 @@ namespace MMX.Engine
             for (int i = 0; i < seedArray.Length; i++)
                 writer.Write(seedArray[i]);
 
-            if (currentCheckpoint != null)
-                writer.Write(currentCheckpoint.Point);
+            writer.Write(currentCheckpoint != null ? currentCheckpoint.Point : -1);
 
             CameraConstraintsBox.Write(writer);
 
             writer.Write(gameOver);
-            writer.Write(currentStageMusic ?? "");
             writer.Write(paused);
 
             World.Camera.Center.Write(writer);
-            writer.Write(World.Camera.FocusOn.Index);
+            writer.Write(World.Camera.FocusOn != null ? World.Camera.FocusOn.Index : -1);
 
             Player?.SaveState(writer);
         }
@@ -3732,20 +3739,16 @@ namespace MMX.Engine
             seedArrayInfo.SetValue(random, seedArray);
 
             int checkPointIndex = reader.ReadInt32();
-            currentCheckpoint = checkPointIndex != -1 ? (Checkpoint) entities[checkPointIndex] : null;
+            currentCheckpoint = checkPointIndex != -1 ? checkpoints[checkPointIndex] : null;
 
             CameraConstraintsBox = new MMXBox(reader);
 
             gameOver = reader.ReadBoolean();
-            currentStageMusic = reader.ReadString();
-            if (currentStageMusic.Equals(""))
-                currentStageMusic = null;
-
             paused = reader.ReadBoolean();
 
             World.Camera.Center = new Vector(reader);
             int focusedObjectIndex = reader.ReadInt32();
-            World.Camera.FocusOn = entities[focusedObjectIndex];
+            World.Camera.FocusOn = focusedObjectIndex >= 0 ? entities[focusedObjectIndex] : null;
 
             Player?.LoadState(reader);
         }

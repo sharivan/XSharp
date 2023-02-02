@@ -80,7 +80,6 @@ namespace MMX.Engine.Entities
         {
             base.SaveState(writer);
 
-            writer.Write(KEY_BUFFER_COUNT);
             for (int i = 0; i < KEY_BUFFER_COUNT; i++)
                 writer.Write((int) keyBuffer[i]);
 
@@ -111,8 +110,7 @@ namespace MMX.Engine.Entities
         {
             base.LoadState(reader);
 
-            int count = reader.ReadInt32();
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < KEY_BUFFER_COUNT; i++)
                 keyBuffer[i] = (Keys) reader.ReadInt32();
 
             Lives = reader.ReadInt32();
@@ -472,19 +470,7 @@ namespace MMX.Engine.Entities
                     else if (PressingRight)
                         TryMoveRight();
                     else
-                    {
-                        if (LandedOnTopLadder)
-                        {
-                            Box collisionBox = CollisionBox;
-                            collider.Box = collisionBox;
-                            collider.AdjustOnTheFloor(MAP_SIZE);
-                            Vector delta = collider.Box.Origin - collisionBox.Origin;
-                            Origin += delta;
-                        }
-
-                        Velocity = Vector.NULL_VECTOR;
                         SetState(PlayerState.LAND, 0);
-                    }
                 }
                 else
                     Velocity = Velocity.XVector;

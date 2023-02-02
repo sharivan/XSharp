@@ -14,9 +14,6 @@ namespace MMX.Engine.Entities.Items
         {
             base.OnSpawn();
 
-            CheckCollisionWithWorld = true;
-            CheckCollisionWithSprites = false;
-
             CurrentAnimationIndex = 0;
             CurrentAnimation.StartFromBegin();
         }

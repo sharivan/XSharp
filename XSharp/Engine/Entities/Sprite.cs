@@ -150,12 +150,6 @@ namespace MMX.Engine.Entities
 
         public FixedSingle TerminalDownwardSpeed => GetTerminalDownwardSpeed();
 
-        public bool CheckCollisionWithSprites
-        {
-            get;
-            set;
-        }
-
         public bool CheckCollisionWithWorld
         {
             get;
@@ -294,8 +288,7 @@ namespace MMX.Engine.Entities
             fading = reader.ReadBoolean();
             fadingIn = reader.ReadBoolean();
             fadingTime = reader.ReadInt32();
-            elapsed = reader.ReadInt32();
-            CheckCollisionWithSprites = reader.ReadBoolean();
+            elapsed = reader.ReadInt32();            
             CheckCollisionWithWorld = reader.ReadBoolean();
 
             vel = new Vector(reader);
@@ -304,7 +297,7 @@ namespace MMX.Engine.Entities
             moving = reader.ReadBoolean();
             Static = reader.ReadBoolean();
             breakable = reader.ReadBoolean();
-            health = reader.ReadInt32();
+            health = new FixedSingle(reader);
             invincible = reader.ReadBoolean();
             invincibilityFrames = reader.ReadInt32();
             invincibleExpires = reader.ReadInt64();
@@ -331,8 +324,7 @@ namespace MMX.Engine.Entities
             writer.Write(fading);
             writer.Write(fadingIn);
             writer.Write(fadingTime);
-            writer.Write(elapsed);
-            writer.Write(CheckCollisionWithSprites);
+            writer.Write(elapsed);            
             writer.Write(CheckCollisionWithWorld);
 
             vel.Write(writer);
@@ -341,7 +333,7 @@ namespace MMX.Engine.Entities
             writer.Write(moving);
             writer.Write(Static);
             writer.Write(breakable);
-            writer.Write(health);
+            health.Write(writer);
             writer.Write(invincible);
             writer.Write(invincibilityFrames);
             writer.Write(invincibleExpires);
@@ -427,6 +419,7 @@ namespace MMX.Engine.Entities
         {
             base.OnSpawn();
 
+            CheckCollisionWithWorld = true;
             solid = true;
             Velocity = Vector.NULL_VECTOR;
             NoClip = false;
@@ -543,15 +536,6 @@ namespace MMX.Engine.Entities
         protected virtual bool ShouldCollide(Sprite sprite)
         {
             return false;
-        }
-
-        protected Vector DoCheckCollisionWithSprites(Vector delta)
-        {
-            Vector result = delta;
-
-            // TODO: Implement
-
-            return result;
         }
 
         protected override Box GetHitBox()
@@ -794,9 +778,6 @@ namespace MMX.Engine.Entities
 
                     delta = collider.Box.Origin - CollisionBox.Origin;
                 }
-
-                if (!NoClip && CheckCollisionWithSprites)
-                    delta = DoCheckCollisionWithSprites(delta);
             }
 
             if (delta != Vector.NULL_VECTOR)

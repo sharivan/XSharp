@@ -27,7 +27,7 @@ namespace MMX.Engine.Entities.HUD
         {
             base.OnSpawn();
 
-            CheckCollisionWithSprites = false;
+            CheckCollisionWithEntities = false;
             CheckCollisionWithWorld = false;
             Static = true;
         }
