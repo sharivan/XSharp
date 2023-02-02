@@ -17,7 +17,6 @@ using SharpDX.DirectInput;
 using SharpDX.Mathematics.Interop;
 using SharpDX.Windows;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
