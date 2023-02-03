@@ -122,7 +122,7 @@ namespace MMX.Engine.Entities.Objects
         {
             Cell sceneCell = GetSceneCellFromPos(Engine.Player.Origin);
             Box sceneBox = GetSceneBoundingBox(sceneCell);
-            Engine.World.Camera.MoveToCenter(sceneBox.Center + (SCENE_SIZE, 0), 1.5);
+            Engine.World.Camera.MoveToLeftTop(sceneBox.LeftTop + (SCENE_SIZE, 0), 1.5);
 
             if (ClosingHugeSound)
             {
