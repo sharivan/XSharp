@@ -3216,6 +3216,10 @@ namespace MMX.ROM
                                     engine.AddSubTank((info.xpos, info.ypos));
                                     break;
 
+                                case 0x07:
+                                    engine.AddBossDoor(info.eventSubId, (info.xpos, info.ypos));
+                                    break;
+
                                 case 0x0B:
                                     engine.AddHeartTank((info.xpos, info.ypos));
                                     break;

@@ -124,7 +124,7 @@ namespace MMX.Engine.World
 
         public void SetMap(Cell cell, Map map)
         {
-            SetMap(new Vector(cell.Col * BLOCK_SIZE * MAP_SIZE, cell.Row * BLOCK_SIZE * MAP_SIZE), map);
+            SetMap(new Vector(cell.Col * MAP_SIZE, cell.Row * MAP_SIZE), map);
         }
 
         public void SetBlock(Vector pos, Block block)
@@ -210,6 +210,12 @@ namespace MMX.Engine.World
 
             if (endRow > SIDE_BLOCKS_PER_SCENE)
                 endRow = SIDE_BLOCKS_PER_SCENE;
+
+            if (startCol == endCol)
+                endCol++;
+
+            if (startRow == endRow)
+                endRow++;
 
             int startPos = BLOCK_PRIMITIVE_SIZE * (SIDE_BLOCKS_PER_SCENE * startCol + startRow);
             int sizeToLock = BLOCK_PRIMITIVE_SIZE * (endRow - startRow);

@@ -1,6 +1,7 @@
 ﻿using MMX.Engine.Entities;
 using MMX.Engine.Entities.Effects;
 using MMX.Engine.Entities.Enemies;
+using MMX.Engine.Entities.Objects;
 using MMX.Engine.Entities.HUD;
 using MMX.Engine.Entities.Items;
 using MMX.Engine.Entities.Triggers;
@@ -320,6 +321,8 @@ namespace MMX.Engine
         private bool paused;
         internal bool noCameraConstraints;
 
+        private List<Sprite> freezingSpriteExceptions;
+
         private int currentSaveSlot;
 
         private long lastCurrentMemoryUsage;
@@ -457,9 +460,9 @@ namespace MMX.Engine
 
         public int ExtensionCount => cameraConstraints.Count;
 
-        public Vector MinCameraPos => noCameraConstraints ? World.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
+        public Vector MinCameraPos => noCameraConstraints || World.Camera.NoConstraints ? World.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
 
-        public Vector MaxCameraPos => noCameraConstraints ? World.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
+        public Vector MaxCameraPos => noCameraConstraints || World.Camera.NoConstraints ? World.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
 
         public bool Paused
         {
@@ -783,6 +786,12 @@ namespace MMX.Engine
             private set;
         }
 
+        public bool FreezingSprites
+        {
+            get;
+            private set;
+        }
+
         public Random RNG => random;
 
         public GameEngine(Form form)
@@ -791,6 +800,8 @@ namespace MMX.Engine
 
             clock.Start();
             fpsTimer.Start();
+
+            freezingSpriteExceptions = new List<Sprite>();
 
             spriteSheets = new List<SpriteSheet>();
             palettes = new List<Texture>();
@@ -917,6 +928,14 @@ namespace MMX.Engine
 
             // 21
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 22
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Door Opening.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 23
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Door Closing.wav", SoundFormat.WAVE);
             soundStreams.Add(stream);
 
             directInput = new DirectInput();
@@ -1881,7 +1900,7 @@ namespace MMX.Engine
                 SpawningBlackScreenFrameCounter++;
                 if (SpawningBlackScreenFrameCounter >= SPAWNING_BLACK_SCREEN_FRAMES)
                 {
-                    SpawningBlackScreen = false;                   
+                    SpawningBlackScreen = false;
                     OnSpawningBlackScreenComplete();
                 }
             }
@@ -1935,8 +1954,9 @@ namespace MMX.Engine
 
                 if (addedEntities.Count > 0)
                 {
-                    foreach (var added in addedEntities)
+                    for (int i = 0; i < addedEntities.Count; i++)
                     {
+                        var added = addedEntities[i];
                         AddEntity(added);
                         added.OnSpawn();
                         added.PostSpawn();
@@ -1950,17 +1970,26 @@ namespace MMX.Engine
                 if (Freezing)
                     return false;
 
-                if (paused || Player != null && Player.DyingFreeze)
+                if (paused || Player != null && Player.Freezed && (!FreezingSprites || freezingSpriteExceptions.Contains(Player)))
                     Player?.OnFrame();
                 else
                 {
-                    for (var entity = firstEntity; entity != null; entity = entity.next)
-                        entity.OnFrame();
+                    if (FreezingSprites)
+                    {
+                        for (var entity = firstEntity; entity != null; entity = entity.next)
+                            if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
+                                entity.OnFrame();
+                    }
+                    else
+                        for (var entity = firstEntity; entity != null; entity = entity.next)
+                            entity.OnFrame();
 
                     if (removedEntities.Count > 0)
                     {
-                        foreach (var removed in removedEntities)
+                        for (int i = 0; i < removedEntities.Count; i++)
                         {
+                            var removed = removedEntities[i];
+
                             foreach (Entity child in removed.childs)
                                 child.parent = null;
 
@@ -2570,6 +2599,10 @@ namespace MMX.Engine
             var batSpriteSheet = new SpriteSheet(this, "Bat", true, true);
             spriteSheets.Add(batSpriteSheet);
 
+            // 9
+            var bossDoorSpriteSheet = new SpriteSheet(this, "Boos Door", true, true);
+            spriteSheets.Add(bossDoorSpriteSheet);
+
             // Setup frame sequences (animations)
 
             // X
@@ -3025,15 +3058,15 @@ namespace MMX.Engine
             sequence.AddFrame(0, 0, 137, 146, 16, 16, 4, true);
             sequence.AddFrame(0, 0, 157, 146, 16, 16, 4);
 
-            var heartTankCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -19), (8, 0));
+            var heartTankCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -17), (8, 0));
 
             sequence = xWeaponsSpriteSheet.AddFrameSquence("HeartTank");
             sequence.BoudingBoxOriginOffset = -heartTankCollisionBox.Mins;
             sequence.CollisionBox = heartTankCollisionBox;
-            sequence.AddFrame(-1, -1, 183, 147, 14, 15, 11, true);
-            sequence.AddFrame(-2, -2, 199, 147, 12, 15, 11);
-            sequence.AddFrame(-3, -3, 213, 147, 10, 15, 11);
-            sequence.AddFrame(-2, -2, 225, 147, 12, 15, 11);
+            sequence.AddFrame(-1, 0, 183, 147, 14, 15, 11, true);
+            sequence.AddFrame(-2, -1, 199, 147, 12, 15, 11);
+            sequence.AddFrame(-3, -2, 213, 147, 10, 15, 11);
+            sequence.AddFrame(-2, -1, 225, 147, 12, 15, 11);
 
             var subTankCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -19), (8, 0));
 
@@ -3246,6 +3279,67 @@ namespace MMX.Engine
 
             readySpriteSheet.ReleaseCurrentTexture();
 
+            // Ready
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Objects.BossDoor.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                bossDoorSpriteSheet.CurrentTexture = texture;
+            }
+
+            var bossDoorHitbox = new MMXBox(Vector.NULL_VECTOR, (-8, -23), (24, 25));
+
+            sequence = bossDoorSpriteSheet.AddFrameSquence("Closed");
+            sequence.BoudingBoxOriginOffset = -bossDoorHitbox.Mins;
+            sequence.CollisionBox = bossDoorHitbox;
+            sequence.AddFrame(0, 0, 32, 0, 32, 48, 1, true);
+
+            sequence = bossDoorSpriteSheet.AddFrameSquence("Opening");
+            sequence.BoudingBoxOriginOffset = -bossDoorHitbox.Mins;
+            sequence.CollisionBox = bossDoorHitbox;
+            sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 64, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 160, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 224, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 160, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 224, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 256, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 288, 0, 32, 48, 4);
+
+            sequence = bossDoorSpriteSheet.AddFrameSquence("PlayerCrossing");
+            sequence.BoudingBoxOriginOffset = -bossDoorHitbox.Mins;
+            sequence.CollisionBox = bossDoorHitbox;
+            sequence.AddFrame(0, 0, 32, 48, 1, true);
+
+            sequence = bossDoorSpriteSheet.AddFrameSquence("Closing");
+            sequence.BoudingBoxOriginOffset = -bossDoorHitbox.Mins;
+            sequence.CollisionBox = bossDoorHitbox;
+            sequence.AddFrame(0, 0, 288, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 256, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 224, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 160, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 224, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 160, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 64, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
+            sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+            sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
+
+            bossDoorSpriteSheet.ReleaseCurrentTexture();
+
             // Load tiles & object positions from the ROM (if exist)
 
             if (romLoaded)
@@ -3415,56 +3509,72 @@ namespace MMX.Engine
                                 var rect = WorldBoxToScreen(collisionBox);
                                 DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
                                 FillRectangle(rect, HITBOX_COLOR);
-                                break;
-                            }
 
-                            case CameraLockTrigger cameraLockTrigger when showTriggerBounds:
-                            {
-                                var rect = WorldBoxToScreen(cameraLockTrigger.HitBox);
-
-                                if (Player.IsTouching(cameraLockTrigger) && Player.Origin <= cameraLockTrigger.HitBox)
-                                    FillRectangle(rect, TRIGGER_BOX_COLOR);
-
-                                DrawRectangle(rect, 4, TRIGGER_BORDER_BOX_COLOR);
-                                if (showTriggerCameraLook)
+                                if (showColliders)
                                 {
-                                    Vector constraintOrigin = cameraLockTrigger.ConstraintOrigin;
-                                    foreach (var constraint in cameraLockTrigger.Constraints)
-                                        DrawLine(WorldVectorToScreen(constraintOrigin), WorldVectorToScreen(constraintOrigin + constraint), 4, CAMERA_LOCK_COLOR);
+                                    BoxCollider collider = sprite.Collider;
+                                    FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
+                                    FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
+                                    FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
+                                    FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
                                 }
 
                                 break;
                             }
 
-                            case ChangeDynamicPropertyTrigger changeDynamicPropertyTrigger when showTriggerBounds:
+                            case AbstractTrigger trigger when showTriggerBounds:
                             {
-                                var box = changeDynamicPropertyTrigger.BoundingBox;
-                                var origin = box.Origin;
-                                var mins = box.Mins;
-                                var maxs = box.Maxs;
-                                switch (changeDynamicPropertyTrigger.Orientation)
+                                var rect = WorldBoxToScreen(trigger.HitBox);
+
+                                if (trigger is not ChangeDynamicPropertyTrigger)
                                 {
-                                    case SplitterTriggerOrientation.HORIZONTAL:
-                                        DrawLine(new Vector(origin.X + mins.X, origin.Y), new Vector(origin.X + maxs.X, origin.Y), 4, Color.Purple);
-                                        break;
-
-                                    case SplitterTriggerOrientation.VERTICAL:
-                                        DrawLine(new Vector(origin.X, origin.Y + mins.Y), new Vector(origin.X, origin.Y + maxs.Y), 4, Color.Purple);
-                                        break;
-
+                                    if (Player != null && trigger.IsTriggering(Player))
+                                        FillRectangle(rect, TRIGGER_BOX_COLOR);
                                 }
 
-                                break;
-                            }
+                                switch (trigger)
+                                {
+                                    case CheckpointTriggerOnce:
+                                        DrawRectangle(rect, 4, CHECKPOINT_TRIGGER_BORDER_BOX_COLOR);
+                                        break;
 
-                            case CheckpointTriggerOnce checkpointTrigger when showTriggerBounds:
-                            {
-                                var rect = WorldBoxToScreen(checkpointTrigger.HitBox);
+                                    case CameraLockTrigger cameraLockTrigger when showTriggerCameraLook:
+                                    {
+                                        DrawRectangle(rect, 4, TRIGGER_BORDER_BOX_COLOR);
 
-                                if (Player.IsTouching(checkpointTrigger) && Player.Origin <= checkpointTrigger.HitBox)
-                                    FillRectangle(rect, CHECKPOINT_TRIGGER_BOX_COLOR);
+                                        Vector constraintOrigin = cameraLockTrigger.ConstraintOrigin;
+                                        foreach (var constraint in cameraLockTrigger.Constraints)
+                                            DrawLine(WorldVectorToScreen(constraintOrigin), WorldVectorToScreen(constraintOrigin + constraint), 4, CAMERA_LOCK_COLOR);
 
-                                DrawRectangle(rect, 4, CHECKPOINT_TRIGGER_BORDER_BOX_COLOR);
+                                        break;
+                                    }
+
+                                    case ChangeDynamicPropertyTrigger changeDynamicPropertyTrigger:
+                                    {
+                                        var box = changeDynamicPropertyTrigger.BoundingBox;
+                                        var origin = box.Origin;
+                                        var mins = box.Mins;
+                                        var maxs = box.Maxs;
+                                        switch (changeDynamicPropertyTrigger.Orientation)
+                                        {
+                                            case SplitterTriggerOrientation.HORIZONTAL:
+                                                DrawLine(new Vector(origin.X + mins.X, origin.Y), new Vector(origin.X + maxs.X, origin.Y), 4, Color.Purple);
+                                                break;
+
+                                            case SplitterTriggerOrientation.VERTICAL:
+                                                DrawLine(new Vector(origin.X, origin.Y + mins.Y), new Vector(origin.X, origin.Y + maxs.Y), 4, Color.Purple);
+                                                break;
+
+                                        }
+
+                                        break;
+                                    }
+
+                                    default:
+                                        DrawRectangle(rect, 4, TRIGGER_BORDER_BOX_COLOR);
+                                        break;
+                                }
+
                                 break;
                             }
                         }
@@ -3574,7 +3684,7 @@ namespace MMX.Engine
                 if (showCheckpointBounds && currentCheckpoint != null)
                     DrawRectangle(WorldBoxToScreen(currentCheckpoint.BoundingBox), 4, Color.Yellow);
 
-                if (showInfoText)
+                if (showInfoText && Player != null)
                 {
                     string text = $"X: {(float) Player.Origin.X * 256} Y: {(float) Player.Origin.Y * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256} Checkpoint: {(currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.Yellow);
@@ -3593,11 +3703,20 @@ namespace MMX.Engine
             {
                 if (nextFrame)
                 {
-                    if (Freezing || Player == null || !Player.DyingFreeze)
-                        for (var entity = firstEntity; entity != null; entity = entity.next)
-                            entity.PostThink();
+                    if (Freezing || Player == null || !Player.Freezed)
+                    {
+                        if (FreezingSprites)
+                        {
+                            for (var entity = firstEntity; entity != null; entity = entity.next)
+                                if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
+                                    entity.PostThink();
+                        }
+                        else
+                            for (var entity = firstEntity; entity != null; entity = entity.next)
+                                entity.PostThink();
+                    }
                     else
-                        Player.PostThink();
+                        Player?.PostThink();
                 }
             }
         }
@@ -3867,6 +3986,11 @@ namespace MMX.Engine
             cameraConstraints.AddRange(extensions);
 
             UpdateCameraConstraintsBox();
+        }
+
+        public void SetCameraConstraints(Vector origin, params Vector[] extensions)
+        {
+            SetCameraConstraints(origin, (IEnumerable<Vector>) extensions);
         }
 
         public void AddConstraint(Vector constraint)
@@ -4320,7 +4444,7 @@ namespace MMX.Engine
 
         public SmallAmmoRecover DropSmallAmmoRecover(Vector origin, int durationFrames)
         {
-            var drop = new SmallAmmoRecover(this, "Small Ammo Recover", origin, durationFrames);       
+            var drop = new SmallAmmoRecover(this, "Small Ammo Recover", origin, durationFrames);
             drop.Spawn();
             return drop;
         }
@@ -4437,10 +4561,112 @@ namespace MMX.Engine
 
         public void StartFreezing(int frames, Action onFreezeComplete = null)
         {
-            Freezing = true;            
+            Freezing = true;
             FreezingFrames = frames;
             OnFreezeComplete = onFreezeComplete;
             FreezingFrameCounter = 0;
+        }
+
+        internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
+        {
+            var door = new BossDoor(this, "Boss Door", pos);
+            door.Spawn();
+            door.Bidirectional = true;
+
+            bool secondDoor = (eventSubId & 0x80) != 0;
+            door.ClosingHugeSound = secondDoor;
+            door.OpeningEvent += (BossDoor source) => DoorOpening(secondDoor);
+            door.ClosedEvent += (BossDoor source) => DoorClosing(secondDoor);
+
+            return door;
+        }
+
+        private void DoorOpening(bool secondDoor)
+        {
+            if (romLoaded && mmx.Type == 0 && mmx.Level == 8)
+            {
+                if (secondDoor)
+                {
+                    Scene scene = World.GetSceneFrom(1, 29);
+                    scene.SetMap(new Cell(7, 15), World.GetMapByID(0x176));
+                    scene.SetMap(new Cell(8, 15), World.GetMapByID(0x207));
+                    scene.SetMap(new Cell(9, 15), World.GetMapByID(0x20f));
+
+                    scene = World.GetSceneFrom(1, 30);
+                    scene.SetMap(new Cell(7, 0), World.GetMapByID(0x177));
+                    scene.SetMap(new Cell(8, 0), World.GetMapByID(0x1b0));
+                    scene.SetMap(new Cell(9, 0), World.GetMapByID(0x20b));
+                }
+                else
+                {
+                    Scene scene = World.GetSceneFrom(1, 28);
+                    scene.SetMap(new Cell(7, 15), World.GetMapByID(0x177));
+                    scene.SetMap(new Cell(8, 15), World.GetMapByID(0x1b0));
+                    scene.SetMap(new Cell(9, 15), World.GetMapByID(0x20b));
+
+                    scene = World.GetSceneFrom(1, 29);
+                    scene.SetMap(new Cell(7, 0), World.GetMapByID(0x177));
+                    scene.SetMap(new Cell(8, 0), World.GetMapByID(0x1b0));
+                    scene.SetMap(new Cell(9, 0), World.GetMapByID(0x20b));
+                }
+            }
+        }
+
+        private void DoorClosing(bool secondDoor)
+        {
+            if (romLoaded && mmx.Type == 0 && mmx.Level == 8)
+            {
+                if (secondDoor)
+                {
+                    Scene scene = World.GetSceneFrom(1, 29);
+                    scene.SetMap(new Cell(7, 15), World.GetMapByID(0x172));
+                    scene.SetMap(new Cell(8, 15), World.GetMapByID(0x173));
+                    scene.SetMap(new Cell(9, 15), World.GetMapByID(0x174));
+
+                    scene = World.GetSceneFrom(1, 30);
+                    scene.SetMap(new Cell(7, 0), World.GetMapByID(0x172));
+                    scene.SetMap(new Cell(8, 0), World.GetMapByID(0x173));
+                    scene.SetMap(new Cell(9, 0), World.GetMapByID(0x174));
+                }
+                else
+                {
+                    Scene scene = World.GetSceneFrom(1, 28);
+                    scene.SetMap(new Cell(7, 15), World.GetMapByID(0x172));
+                    scene.SetMap(new Cell(8, 15), World.GetMapByID(0x173));
+                    scene.SetMap(new Cell(9, 15), World.GetMapByID(0x174));
+
+                    scene = World.GetSceneFrom(1, 29);
+                    scene.SetMap(new Cell(7, 0), World.GetMapByID(0x172));
+                    scene.SetMap(new Cell(8, 0), World.GetMapByID(0x173));
+                    scene.SetMap(new Cell(9, 0), World.GetMapByID(0x174));
+                }
+            }
+        }
+
+        public string GetExclusiveName(string prefix)
+        {
+            // TODO : Improve this using hashtables, please!
+
+            int counter = 0;
+            string possibleName = prefix + counter++;
+            for (Entity entity = firstEntity; entity != null; entity = entity.next)
+                if (entity.Name == possibleName)
+                    possibleName = prefix + counter++;
+
+            return possibleName;
+        }
+
+        public void FreezeSprites(params Sprite[] exceptions)
+        {
+            FreezingSprites = true;
+
+            freezingSpriteExceptions.Clear();
+            freezingSpriteExceptions.AddRange(exceptions);
+        }
+
+        public void UnfreezeSprites()
+        {
+            FreezingSprites = false;
         }
     }
 }

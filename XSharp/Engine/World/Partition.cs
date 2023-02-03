@@ -77,8 +77,9 @@ namespace MMX.Engine.World
                 List<U> list = values[index];
 
                 // Verifica a lista de entidades da célula
-                foreach (U value in list)
+                for (int i = 0; i < list.Count; i++)
                 {
+                    U value = list[i];
                     if (exclude != null && exclude.Equals(value))
                         continue;
 
@@ -88,7 +89,15 @@ namespace MMX.Engine.World
                     Box intersection = value.GetBox(kind) & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
 
                     if (intersection.IsValid() && !result.Contains(value)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
-                        result.Add(value); // adiciona esta entidade à lista
+                    {
+                        if (value.Alive)
+                            result.Add(value); // adiciona esta entidade à lista
+                        else
+                        {
+                            Remove(value);
+                            i--;
+                        }
+                    }
                 }
             }
 
@@ -120,6 +129,16 @@ namespace MMX.Engine.World
                 values[index].Remove(value);
             }
 
+            public void Remove(U value)
+            {
+                for (int i = 0; i < BOXKIND_COUNT; i++)
+                {
+                    var kind = (BoxKind) (1 << i);
+                    int index = ToIndex(kind);
+                    values[index].Remove(value);
+                }
+            }
+
             /// <summary>
             /// Limpa a lista de entidades desta célula
             /// </summary>
@@ -127,6 +146,16 @@ namespace MMX.Engine.World
             {
                 int index = ToIndex(kind);
                 values[index].Clear();
+            }
+
+            public void Clear()
+            {
+                for (int i = 0; i < BOXKIND_COUNT; i++)
+                {
+                    var kind = (BoxKind) (1 << i);
+                    int index = ToIndex(kind);
+                    values[index].Clear();
+                }
             }
 
             /// <summary>
@@ -318,11 +347,11 @@ namespace MMX.Engine.World
         /// Este método deve ser chamado sempre que a entidade tiver sua posição ou dimensões alteradas.
         /// </summary>
         /// <param name="item">Entidade a ser atualizada dentro da partição</param>
-        public void Update(T item, BoxKind kind = BoxKind.ALL)
+        public void Update(T item, BoxKind kind = BoxKind.ALL, bool force = false)
         {
             Vector delta = item.Origin - item.LastOrigin; // Obtém o vetor de deslocamento da entidade desde o último tick
 
-            if (delta == Vector.NULL_VECTOR) // Se a entidade não se deslocou desde o último tick então não há nada o que se fazer aqui
+            if (!force && delta == Vector.NULL_VECTOR) // Se a entidade não se deslocou desde o último tick então não há nada o que se fazer aqui
                 return;
 
             for (int i = 0; i < BOXKIND_COUNT; i++)

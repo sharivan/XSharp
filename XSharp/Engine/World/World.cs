@@ -622,6 +622,18 @@ namespace MMX.Engine.World
                 : background ? backgroundScenes[row, col] : scenes[row, col];
         }
 
+        public Scene GetSceneFrom(Cell cell, bool background = false)
+        {
+            return GetSceneFrom(cell.Row, cell.Col, background);
+        }
+
+        public Scene GetSceneFrom(int row, int col, bool background = false)
+        {
+            return row < 0 || col < 0 || row >= SceneRowCount || col >= SceneColCount
+                ? null
+                : background ? backgroundScenes[row, col] : scenes[row, col];
+        }
+
         public static MMXBox GetTileBoundingBox(int row, int col)
         {
             return GetTileBoundingBox(new Cell(row, col));

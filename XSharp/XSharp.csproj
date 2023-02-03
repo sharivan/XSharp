@@ -94,6 +94,7 @@
   <ItemGroup>
     <Compile Include="Engine\Animation.cs" />
     <Compile Include="Engine\Entities\Checkpoint.cs" />
+    <Compile Include="Engine\Entities\Objects\BossDoorEffect.cs" />
     <Compile Include="Engine\Entities\Effects\DashSmokeEffect.cs" />
     <Compile Include="Engine\Entities\Effects\DashSparkEffect.cs" />
     <Compile Include="Engine\Entities\Effects\ExplosionEffect.cs" />
@@ -102,6 +103,7 @@
     <Compile Include="Engine\Entities\Effects\WallSlideEffect.cs" />
     <Compile Include="Engine\Entities\Effects\XDieExplosion.cs" />
     <Compile Include="Engine\Entities\Enemies\Bat.cs" />
+    <Compile Include="Engine\Entities\Objects\BossDoor.cs" />
     <Compile Include="Engine\Entities\Enemies\Driller.cs" />
     <Compile Include="Engine\Entities\EntityState.cs" />
     <Compile Include="Engine\Entities\HUD\HealthHUD.cs" />
@@ -162,6 +164,12 @@
     <Compile Include="ROM\MegaEDCore.cs" />
     <Compile Include="ROM\MMXCore.cs" />
     <Compile Include="ROM\SNESCore.cs" />
+    <Content Include="resources\sounds\mmx\Door Closing.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\sounds\mmx\Door Opening.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\ost\mmx\01 - Capcom Logo.mp3" />
     <Content Include="resources\sounds\ost\mmx\02 - Title Screen.mp3" />
     <Content Include="resources\sounds\ost\mmx\03 - Password Screen.mp3" />
@@ -199,6 +207,9 @@
     <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
     <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
     <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
+    <EmbeddedResource Include="resources\sprites\Objects\BossDoor.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Enemies\X2\mmx2-bat.png" />
     <EmbeddedResource Include="resources\tiles\black_pixel.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

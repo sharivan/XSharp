@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MMX.Engine.Entities.Triggers
 {
-    public delegate void TriggerEvent(Entity obj);
+    public delegate void TriggerEvent(AbstractTrigger source, Entity activator);
 
     public enum TouchingKind
     {
@@ -14,14 +14,27 @@ namespace MMX.Engine.Entities.Triggers
     public abstract class AbstractTrigger : Entity
     {
         private Box boundingBox;
-        private readonly List<Entity> triggereds;
+        private readonly List<Entity> triggerings;
 
+        public event TriggerEvent StartTriggerEvent;
         public event TriggerEvent TriggerEvent;
+        public event TriggerEvent StopTriggerEvent;
 
         public bool Enabled
         {
-            get;
-            set;
+            get => CheckCollisionWithEntities;
+            set
+            {
+                if (Alive && !value)
+                {
+                    foreach (var triggered in triggerings)
+                        OnStopTrigger(triggered);
+
+                    triggerings.Clear();
+                }
+
+                CheckCollisionWithEntities = value;
+            }
         }
 
         public uint Triggers
@@ -48,26 +61,36 @@ namespace MMX.Engine.Entities.Triggers
         {
             get;
             protected set;
-        }
+        } = 0;
 
-        protected AbstractTrigger(GameEngine engine, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN) :
-            base(engine, "Trigger", boundingBox.Origin)
+        protected AbstractTrigger(GameEngine engine, string name, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
+            : base(engine, name, boundingBox.Origin)
         {
-            Enabled = true;
-            MaxTriggers = uint.MaxValue;
             TouchingKind = touchingKind;
             VectorKind = vectorKind;
 
-            triggereds = new List<Entity>();
+            triggerings = new List<Entity>();
 
             SetBoundingBox(boundingBox);
+        }
+
+        protected AbstractTrigger(GameEngine engine, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
+            : this(engine, engine.GetExclusiveName("Trigger"), boundingBox, touchingKind, vectorKind)
+        {
+        }
+
+        protected internal override void OnSpawn()
+        {
+            base.OnSpawn();
+
+            Enabled = true;
         }
 
         protected override void OnStartTouch(Entity entity)
         {
             base.OnStartTouch(entity);
 
-            if (Enabled && Triggers < MaxTriggers)
+            if (Enabled && (MaxTriggers == 0 || Triggers < MaxTriggers))
             {
                 switch (TouchingKind)
                 {
@@ -76,8 +99,10 @@ namespace MMX.Engine.Entities.Triggers
                         Vector v = entity.GetVector(VectorKind);
                         if (v <= HitBox)
                         {
-                            triggereds.Add(entity);
+                            triggerings.Add(entity);
                             Triggers++;
+
+                            OnStartTrigger(entity);
                             OnTrigger(entity);
                         }
 
@@ -86,7 +111,10 @@ namespace MMX.Engine.Entities.Triggers
 
                     case TouchingKind.BOX:
                     {
+                        triggerings.Add(entity);
                         Triggers++;
+
+                        OnStartTrigger(entity);
                         OnTrigger(entity);
                         break;
                     }
@@ -98,12 +126,30 @@ namespace MMX.Engine.Entities.Triggers
         {
             base.OnTouching(entity);
 
-            if (Enabled && Triggers < MaxTriggers && TouchingKind == TouchingKind.VECTOR && !triggereds.Contains(entity))
+            if (Enabled && (MaxTriggers == 0 || Triggers < MaxTriggers))
             {
-                Vector v = entity.GetVector(VectorKind);
-                if (v <= HitBox)
+                if (TouchingKind == TouchingKind.VECTOR)
                 {
-                    triggereds.Add(entity);
+                    Vector v = entity.GetVector(VectorKind);
+                    if (v <= HitBox)
+                    {
+                        if (!triggerings.Contains(entity))
+                        {
+                            triggerings.Add(entity);
+                            OnStartTrigger(entity);
+                        }
+
+                        Triggers++;
+                        OnTrigger(entity);
+                    }
+                    else if (!(v <= HitBox) && triggerings.Contains(entity))
+                    {
+                        triggerings.Remove(entity);
+                        OnStopTrigger(entity);
+                    }
+                }
+                else
+                {
                     Triggers++;
                     OnTrigger(entity);
                 }
@@ -112,12 +158,28 @@ namespace MMX.Engine.Entities.Triggers
 
         protected override void OnEndTouch(Entity entity)
         {
-            triggereds.Remove(entity);
+            base.OnEndTouch(entity);
+
+            if (triggerings.Contains(entity))
+            {
+                triggerings.Remove(entity);
+                OnStopTrigger(entity);
+            }
+        }
+
+        protected virtual void OnStartTrigger(Entity entity)
+        {
+            StartTriggerEvent?.Invoke(this, entity);
         }
 
         protected virtual void OnTrigger(Entity entity)
         {
-            TriggerEvent?.Invoke(entity);
+            TriggerEvent?.Invoke(this, entity);
+        }
+
+        protected virtual void OnStopTrigger(Entity entity)
+        {
+            StopTriggerEvent?.Invoke(this, entity);
         }
 
         protected override Box GetBoundingBox()
@@ -128,6 +190,12 @@ namespace MMX.Engine.Entities.Triggers
         protected override void SetBoundingBox(Box boundingBox)
         {
             this.boundingBox = boundingBox - boundingBox.Origin;
+            UpdatePartition(true);
+        }
+
+        public bool IsTriggering(Entity entity)
+        {
+            return triggerings.Contains(entity);
         }
     }
 }

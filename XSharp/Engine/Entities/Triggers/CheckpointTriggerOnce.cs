@@ -54,9 +54,9 @@ namespace MMX.Engine.Entities.Triggers
             LastCheckpoint = null;
         }
 
-        protected override void OnTrigger(Entity obj)
+        protected override void OnStartTrigger(Entity obj)
         {
-            base.OnTrigger(obj);
+            base.OnStartTrigger(obj);
 
             if (!Triggered && obj is Player)
             {

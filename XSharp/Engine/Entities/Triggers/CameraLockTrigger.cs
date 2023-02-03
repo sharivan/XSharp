@@ -25,14 +25,12 @@ namespace MMX.Engine.Entities.Triggers
             this.constraints = new List<Vector>(constraints);
         }
 
-        protected override void OnTrigger(Entity obj)
+        protected override void OnStartTrigger(Entity obj)
         {
-            base.OnTrigger(obj);
+            base.OnStartTrigger(obj);
 
-            if (obj is not Player)
-                return;
-
-            Engine.SetCameraConstraints(ConstraintOrigin, constraints);
+            if (obj is Player)
+                Engine.SetCameraConstraints(ConstraintOrigin, constraints);
         }
 
         public void AddConstraint(Vector constraint)

@@ -30,13 +30,11 @@
         protected internal virtual void OnStart()
         {
             FrameCounter = 0;
+            StartEvent?.Invoke(this);
         }
 
         protected internal virtual void OnFrame()
         {
-            if (FrameCounter == 0)
-                StartEvent?.Invoke(this);
-
             FrameEvent?.Invoke(this, FrameCounter);
             FrameCounter++;
         }

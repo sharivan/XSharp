@@ -14,11 +14,11 @@ namespace MMX.Engine.Entities.Triggers
         BACKWARD
     }
 
-    public delegate void SplitterTriggerEventHandler(SplitterTrigger source, Entity target, SplitterTriggerDirection direction);
+    public delegate void SplitterTriggerEvent(SplitterTrigger source, Entity activator, SplitterTriggerDirection direction);
 
     public class SplitterTrigger : AbstractTrigger
     {
-        public event SplitterTriggerEventHandler LineTriggerEvent;
+        public event SplitterTriggerEvent SplitterTriggerEvent;
 
         public SplitterTriggerOrientation Orientation
         {
@@ -33,15 +33,12 @@ namespace MMX.Engine.Entities.Triggers
 
         protected virtual void OnSplitterTriggerEvent(Entity target, SplitterTriggerDirection side)
         {
-            LineTriggerEvent?.Invoke(this, target, side);
+            SplitterTriggerEvent?.Invoke(this, target, side);
         }
 
-        protected override void OnTouching(Entity entity)
+        protected override void OnTrigger(Entity entity)
         {
-            base.OnTouching(entity);
-
-            if (!Enabled)
-                return;
+            base.OnTrigger(entity);
 
             Vector targetOrigin = entity.GetVector(VectorKind);
             Vector targetLastOrigin = entity.GetLastVector(VectorKind);

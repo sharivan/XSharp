@@ -11,6 +11,8 @@ namespace MMX.Engine
         private MMXWorld world;
         private Box box;
         private FixedSingle maskSize;
+        private FixedSingle sideCollidersTopOffset;
+        private FixedSingle sideCollidersBottomOffset;
 
         private CollisionFlags leftMaskFlags;
         private CollisionFlags upMaskFlags;
@@ -59,6 +61,28 @@ namespace MMX.Engine
             set
             {
                 maskSize = value;
+                UpdateColliders();
+            }
+        }
+
+        public FixedSingle SideCollidersTopOffset
+        {
+            get => sideCollidersTopOffset;
+
+            set
+            {
+                sideCollidersTopOffset = value;
+                UpdateColliders();
+            }
+        }
+
+        public FixedSingle SideCollidersBottomOffset
+        {
+            get => sideCollidersBottomOffset;
+
+            set
+            {
+                sideCollidersBottomOffset = value;
                 UpdateColliders();
             }
         }
@@ -161,6 +185,12 @@ namespace MMX.Engine
             }
         }
 
+        public bool UseCollisionPlacements
+        {
+            get;
+            private set;
+        }
+
         public bool LandedOnBlock => DownMaskFlags == CollisionFlags.BLOCK;
 
         public bool LandedOnSlope => DownMaskFlags == CollisionFlags.SLOPE;
@@ -173,41 +203,47 @@ namespace MMX.Engine
 
         public bool TouchingWaterSurface => (innerMaskFlags & CollisionFlags.WATER_SURFACE) != 0;
 
-        public BoxCollider(Box box) :
-            this(null, box, MASK_SIZE)
+        public BoxCollider(Box box, bool useCollisionPlacements = false) :
+            this(null, box, MASK_SIZE, 0, 0, useCollisionPlacements)
         {
         }
 
-        public BoxCollider(Box box, FixedSingle maskSize) :
-            this(null, box, maskSize)
+        public BoxCollider(Box box, FixedSingle maskSize, bool useCollisionPlacements = false) :
+            this(null, box, maskSize, 0, 0, useCollisionPlacements)
         {
         }
 
-        public BoxCollider(MMXWorld world, Box box) :
-            this(world, box, MASK_SIZE)
+        public BoxCollider(MMXWorld world, Box box, bool useCollisionPlacements = false) :
+            this(world, box, MASK_SIZE, 0, 0, useCollisionPlacements)
         {
         }
 
-        public BoxCollider(MMXWorld world, Box box, FixedSingle maskSize)
+        public BoxCollider(MMXWorld world, Box box, FixedSingle maskSize, FixedSingle sideCollidersTopOffset, FixedSingle sideCollidersBottomOffset, bool useCollisionPlacements = false)
         {
             this.world = world;
             this.box = box;
             this.maskSize = maskSize;
+            UseCollisionPlacements = useCollisionPlacements;
+            this.sideCollidersTopOffset = sideCollidersTopOffset;
+            this.sideCollidersBottomOffset = sideCollidersBottomOffset;
 
-            leftCollisionPlacements = new List<CollisionPlacement>();
-            upCollisionPlacements = new List<CollisionPlacement>();
-            rightCollisionPlacements = new List<CollisionPlacement>();
-            downCollisionPlacements = new List<CollisionPlacement>();
-            innerCollisionPlacements = new List<CollisionPlacement>();
+            if (useCollisionPlacements)
+            {
+                leftCollisionPlacements = new List<CollisionPlacement>();
+                upCollisionPlacements = new List<CollisionPlacement>();
+                rightCollisionPlacements = new List<CollisionPlacement>();
+                downCollisionPlacements = new List<CollisionPlacement>();
+                innerCollisionPlacements = new List<CollisionPlacement>();
+            }
 
             UpdateColliders();
         }
 
         private void UpdateColliders()
         {
-            LeftCollider = new Box(box.Left, box.Top + 1, -maskSize, box.Height - 10);
+            LeftCollider = new Box(box.Left, box.Top + sideCollidersTopOffset, -maskSize, box.Height + sideCollidersTopOffset + sideCollidersBottomOffset);
             UpCollider = new Box(box.LeftTop, box.Width, -maskSize);
-            RightCollider = new Box(box.Right, box.Top + 1, maskSize, box.Height - 10);
+            RightCollider = new Box(box.Right, box.Top + sideCollidersTopOffset, maskSize, box.Height + sideCollidersTopOffset + sideCollidersBottomOffset);
             DownCollider = new Box(box.LeftBottom, box.Width, maskSize);
 
             UpdateFlags();
@@ -226,11 +262,14 @@ namespace MMX.Engine
 
         private void UpdateFlags()
         {
-            leftCollisionPlacements.Clear();
-            upCollisionPlacements.Clear();
-            rightCollisionPlacements.Clear();
-            downCollisionPlacements.Clear();
-            innerCollisionPlacements.Clear();
+            if (UseCollisionPlacements)
+            {
+                leftCollisionPlacements.Clear();
+                upCollisionPlacements.Clear();
+                rightCollisionPlacements.Clear();
+                downCollisionPlacements.Clear();
+                innerCollisionPlacements.Clear();
+            }
 
             if (world != null)
             {
@@ -366,6 +405,9 @@ namespace MMX.Engine
 
         public void AdjustOnTheLadder()
         {
+            if (!UseCollisionPlacements)
+                return;
+
             if (LandedOnTopLadder)
             {
                 foreach (var placement in downCollisionPlacements)

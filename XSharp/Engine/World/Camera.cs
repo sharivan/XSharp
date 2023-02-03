@@ -17,6 +17,12 @@ namespace MMX.Engine.World
         private bool moveToFocus;
         private Vector vel;
 
+        public bool NoConstraints
+        {
+            get;
+            set;
+        }
+
         internal Camera(World world, FixedSingle width, FixedSingle height)
         {
             World = world;

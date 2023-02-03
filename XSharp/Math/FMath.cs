@@ -627,12 +627,12 @@ namespace MMX.Math
 
         private bool CheckMin(FixedSingle element, FixedSingle epslon)
         {
-            return IsClosedLeft ? Min + epslon <= element : Min + epslon < element;
+            return IsClosedLeft ? Min - epslon <= element : Min - epslon < element;
         }
 
         private bool CheckMax(FixedSingle element, FixedSingle epslon)
         {
-            return IsClosedRight ? element <= Max - epslon : element < Max - epslon;
+            return IsClosedRight ? element <= Max + epslon : element < Max + epslon;
         }
 
         public bool Equals(Interval other)
@@ -644,7 +644,7 @@ namespace MMX.Math
         public bool Contains(FixedSingle element, FixedSingle epslon, bool includeBounds = true)
         {
             return !includeBounds
-                ? Min + epslon < element && element < Max - epslon
+                ? Min - epslon < element && element < Max + epslon
                 : CheckMin(element, epslon) && CheckMax(element, epslon);
         }
 

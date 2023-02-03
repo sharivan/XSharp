@@ -1,4 +1,5 @@
 ﻿using MMX.Engine.Entities.Effects;
+using MMX.Engine.Entities.Objects;
 using MMX.Geometry;
 using MMX.Math;
 using SharpDX;
@@ -72,7 +73,17 @@ namespace MMX.Engine.Entities
 
         public bool CanWallJump => GetWallJumpDir() != Direction.NONE;
 
+        public bool CrossingBossDoor
+        {
+            get;
+            private set;
+        }
+
         internal Player(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 0, true)
+        {
+        }
+
+        internal Player(GameEngine engine, Vector origin) : this(engine, engine.GetExclusiveName("Player"), origin)
         {
         }
 
@@ -204,7 +215,7 @@ namespace MMX.Engine.Entities
 
         public bool WalkingRightOnly => state == PlayerState.WALK && stateDirection == Direction.RIGHT;
 
-        public bool Spawning => state == PlayerState.SPAWN;
+        public bool PlayerSpawning => state == PlayerState.SPAWN;
 
         public bool Teleporting => state == PlayerState.TELEPORTING;
 
@@ -232,7 +243,7 @@ namespace MMX.Engine.Entities
 
         public bool Dying => state == PlayerState.DYING;
 
-        public bool DyingFreeze
+        public bool Freezed
         {
             get;
             private set;
@@ -388,7 +399,7 @@ namespace MMX.Engine.Entities
 
         protected override void OnBlockedUp()
         {
-            if (!teleporting && !TakingDamage && !Dying && WallJumping && wallJumpFrameCounter >= 7)
+            if (!CrossingBossDoor && !teleporting && !TakingDamage && !Dying && WallJumping && wallJumpFrameCounter >= 7)
             {
                 Velocity = Vector.NULL_VECTOR;
                 WallJumping = false;
@@ -421,7 +432,7 @@ namespace MMX.Engine.Entities
 
         protected override void OnBlockedLeft()
         {
-            if (!teleporting && !TakingDamage && !Dying)
+            if (!CrossingBossDoor && !teleporting && !TakingDamage && !Dying)
             {
                 if (Landed)
                     SetStandState();
@@ -431,13 +442,11 @@ namespace MMX.Engine.Entities
                     SetAirStateAnimation(true);
                 }*/
             }
-            else
-                Velocity = Velocity.XVector;
         }
 
         protected override void OnBlockedRight()
         {
-            if (!teleporting && !TakingDamage && !Dying)
+            if (!CrossingBossDoor && !teleporting && !TakingDamage && !Dying)
             {
                 if (Landed)
                     SetStandState();
@@ -447,8 +456,6 @@ namespace MMX.Engine.Entities
                     SetAirStateAnimation(true);
                 }*/
             }
-            else
-                Velocity = Velocity.YVector;
         }
 
         protected override void OnLanded()
@@ -456,7 +463,7 @@ namespace MMX.Engine.Entities
             WallJumping = false;
             baseHSpeed = WALKING_SPEED;
 
-            if (Dying || teleporting)
+            if (CrossingBossDoor || Dying || teleporting)
                 return;
 
             if (!spawning)
@@ -479,6 +486,21 @@ namespace MMX.Engine.Entities
                 SetState(PlayerState.SPAWN_END, 0);
         }
 
+        protected override FixedSingle GetSideColliderTopOffset()
+        {
+            return 1;
+        }
+
+        protected override FixedSingle GetSideColliderBottomOffset()
+        {
+            return -9;
+        }
+
+        protected override bool IsUsingCollisionPlacements()
+        {
+            return true;
+        }
+
         protected internal override void OnSpawn()
         {
             base.OnSpawn();
@@ -490,7 +512,8 @@ namespace MMX.Engine.Entities
             Velocity = TELEPORT_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
             Lives = X_INITIAL_LIVES;
             Health = Engine.HealthCapacity;
-            DyingFreeze = false;
+            Freezed = false;
+            CrossingBossDoor = false;
 
             ResetKeys();
 
@@ -660,7 +683,7 @@ namespace MMX.Engine.Entities
             FixedSingle y = origin.Y;
 
             Box limit = Engine.World.BoundingBox;
-            if (!Engine.noCameraConstraints)
+            if (!CrossingBossDoor && !Engine.noCameraConstraints && !Engine.World.Camera.NoConstraints)
                 limit &= Engine.CameraConstraintsBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE);
 
             Box collisionBox = origin + GetCollisionBox();
@@ -697,9 +720,9 @@ namespace MMX.Engine.Entities
                 if (PressedStart)
                     Engine.ContinueGame();
             }
-            else if (!Dying && !teleporting && !VictoryPosing)
+            else if (!CrossingBossDoor && !Dying && !teleporting && !VictoryPosing)
             {
-                if (Spawning && !CheckCollisionWithWorld)
+                if (spawning)
                 {
                     if (!spawnSoundPlayed)
                     {
@@ -707,13 +730,16 @@ namespace MMX.Engine.Entities
                         spawnSoundPlayed = true;
                     }
 
-                    if (Engine.CurrentCheckpoint != null)
+                    if (!CheckCollisionWithWorld)
                     {
-                        if (Origin.Y >= Engine.CurrentCheckpoint.BoundingBox.Top + SCREEN_HEIGHT / 2)
+                        if (Engine.CurrentCheckpoint != null)
+                        {
+                            if (Origin.Y >= Engine.CurrentCheckpoint.BoundingBox.Top + SCREEN_HEIGHT / 2)
+                                CheckCollisionWithWorld = true;
+                        }
+                        else
                             CheckCollisionWithWorld = true;
                     }
-                    else
-                        CheckCollisionWithWorld = true;
                 }
                 else
                     CheckCollisionWithWorld = true;
@@ -1280,6 +1306,12 @@ namespace MMX.Engine.Entities
             }
         }
 
+        protected internal override void PostThink()
+        {
+            if (!CrossingBossDoor)
+                base.PostThink();
+        }
+
         private Vector GetShotOrigin()
         {
             return state switch
@@ -1501,7 +1533,7 @@ namespace MMX.Engine.Entities
             }
             else if (ContainsAnimationIndex(PlayerState.DYING, animation.Index, false))
             {
-                DyingFreeze = false;
+                Freezed = false;
                 PlaySound(10);
                 PaletteIndex = 4;
 
@@ -1713,7 +1745,7 @@ namespace MMX.Engine.Entities
 
         public override FixedSingle GetGravity()
         {
-            return spawning || teleporting || WallJumping && wallJumpFrameCounter < 7 || WallSliding || OnLadder || Dying ? 0 : base.GetGravity();
+            return spawning || teleporting || WallJumping && wallJumpFrameCounter < 7 || WallSliding || OnLadder || Dying || CrossingBossDoor ? 0 : base.GetGravity();
         }
 
         private Direction GetDamageDirection(Sprite attacker)
@@ -1752,7 +1784,7 @@ namespace MMX.Engine.Entities
             Invincible = true;
             WallJumping = false;
             Velocity = Vector.NULL_VECTOR;
-            DyingFreeze = true;
+            Freezed = true;
             charging = false;
 
             if (chargingEffect != null)
@@ -1784,6 +1816,22 @@ namespace MMX.Engine.Entities
         public void ReloadAmmo(int amount)
         {
             // TODO : Implement
+        }
+
+        public void StartBossDoorCrossing()
+        {
+            CrossingBossDoor = true;
+            CheckCollisionWithWorld = false;
+            Invincible = true;
+            Velocity = Vector.NULL_VECTOR;
+        }
+
+        public void StopBossDoorCrossing()
+        {
+            CrossingBossDoor = false;
+            CheckCollisionWithWorld = true;
+            Invincible = false;
+            Velocity = Vector.NULL_VECTOR;
         }
     }
 }

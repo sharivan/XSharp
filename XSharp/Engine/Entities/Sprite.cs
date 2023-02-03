@@ -10,8 +10,28 @@ using Box = MMX.Geometry.Box;
 
 namespace MMX.Engine.Entities
 {
+    public delegate void SpriteEvent(Sprite source);
+    public delegate void TakeDamageEvent(Sprite source, Sprite attacker, FixedSingle damage);
+    public delegate void HurtEvent(Sprite source, Sprite victim, FixedSingle damage);
+    public delegate void HealthChangedEvent(Sprite source, FixedSingle health);
+    public delegate void AnimationEndEvent(Sprite source, Animation animation);
+
     public abstract class Sprite : Entity, IDisposable
     {
+        public event TakeDamageEvent TakeDamageEvent;
+        public event HurtEvent HurtEvent;
+        public event HealthChangedEvent HealthChangedEvent;
+        public event AnimationEndEvent AnimationEndEvent;
+        public event SpriteEvent BeforeMoveEvent;
+        public event SpriteEvent MoveEvent;
+        public event SpriteEvent StartMovingEvent;
+        public event SpriteEvent StopMovingEvent;
+        public event SpriteEvent BlockedLeftEvent;
+        public event SpriteEvent BlockedRightEvent;
+        public event SpriteEvent BlockedUpEvent;
+        public event SpriteEvent LandedEvent;
+        public event SpriteEvent BrokeEvent;
+
         protected List<Animation> animations;
         private int currentAnimationIndex = -1;
         protected bool solid;
@@ -196,8 +216,7 @@ namespace MMX.Engine.Entities
             PaletteIndex = -1;
             Opacity = 1;
 
-            animations = new List<Animation>();
-            collider = new BoxCollider(engine.World, CollisionBox);
+            animations = new List<Animation>();            
 
             this.animationNames = new Dictionary<string, int>();
 
@@ -209,8 +228,18 @@ namespace MMX.Engine.Entities
                     this.animationNames.Add(frameSequenceName, -1);
         }
 
-        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames) :
-            this(engine, name, origin, spriteSheetIndex, animationNames.Length > 0 ? animationNames : null, animationNames.Length > 0 ? animationNames[0] : null, directional)
+        protected Sprite(GameEngine engine, Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
+            : this(engine, engine.GetExclusiveName("Sprite"), origin, spriteSheetIndex, animationNames, initialAnimationName, directional)
+        {
+        }
+
+        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames)
+            : this(engine, name, origin, spriteSheetIndex, animationNames.Length > 0 ? animationNames : null, animationNames.Length > 0 ? animationNames[0] : null, directional)
+        {
+        }
+
+        protected Sprite(GameEngine engine, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames)
+            : this(engine, engine.GetExclusiveName("Sprite"), origin, spriteSheetIndex, directional, animationNames)
         {
         }
 
@@ -255,9 +284,19 @@ namespace MMX.Engine.Entities
             return RegisterState(id, null, onFrame, null, animationIndex, initialFrame);
         }
 
+        protected SpriteState RegisterState(int id, int animationIndex, int initialFrame = 0)
+        {
+            return RegisterState(id, null, null, null, animationIndex, initialFrame);
+        }
+
         protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0)
         {
             return RegisterState(id, null, onFrame, null, animationName, initialFrame);
+        }
+
+        protected SpriteState RegisterState(int id, string animationName, int initialFrame = 0)
+        {
+            return RegisterState(id, null, null, null, animationName, initialFrame);
         }
 
         protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : Enum
@@ -265,9 +304,19 @@ namespace MMX.Engine.Entities
             return RegisterState((int) (object) id, null, onFrame, null, animationIndex, initialFrame);
         }
 
+        protected SpriteState RegisterState<T>(T id, int animationIndex, int initialFrame = 0) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, null, null, animationIndex, initialFrame);
+        }
+
         protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0) where T : Enum
         {
             return RegisterState((int) (object) id, null, onFrame, null, animationName, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T>(T id, string animationName, int initialFrame = 0) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, null, null, animationName, initialFrame);
         }
 
         public override void LoadState(BinaryReader reader)
@@ -425,24 +474,49 @@ namespace MMX.Engine.Entities
         {
             base.PostSpawn();
 
-            collider.Box = CollisionBox;
+            if (CheckCollisionWithWorld)
+            {
+                collider.Box = CollisionBox;
 
-            if (BlockedUp)
-                OnBlockedUp();
+                if (BlockedUp)
+                    OnBlockedUp();
 
-            if (BlockedLeft)
-                OnBlockedLeft();
+                if (BlockedLeft)
+                    OnBlockedLeft();
 
-            if (BlockedRight)
-                OnBlockedRight();
+                if (BlockedRight)
+                    OnBlockedRight();
 
-            if (Landed)
-                OnLanded();
+                if (Landed)
+                    OnLanded();
+            }
+        }
+
+        protected virtual FixedSingle GetMaskSize()
+        {
+            return MASK_SIZE;
+        }
+
+        protected virtual FixedSingle GetSideColliderTopOffset()
+        {
+            return 0;
+        }
+
+        protected virtual FixedSingle GetSideColliderBottomOffset()
+        {
+            return 0;
+        }
+
+        protected virtual bool IsUsingCollisionPlacements()
+        {
+            return false;
         }
 
         public override void Spawn()
         {
             base.Spawn();
+
+            collider = new BoxCollider(Engine.World, CollisionBox, GetMaskSize(), GetSideColliderTopOffset(), GetSideColliderBottomOffset(), IsUsingCollisionPlacements());
 
             int animationIndex = 0;
             var names = new List<string>(animationNames.Keys);
@@ -483,14 +557,17 @@ namespace MMX.Engine.Entities
 
         protected virtual void OnTakeDamagePost(Sprite attacker, FixedSingle damage)
         {
+            TakeDamageEvent?.Invoke(this, attacker, damage);
         }
 
         protected virtual void OnHealthChanged(FixedSingle health)
         {
+            HealthChangedEvent?.Invoke(this, health);
         }
 
         protected virtual void OnHurt(Sprite victim, FixedSingle damage)
         {
+            HurtEvent?.Invoke(this, victim, damage);
         }
 
         public void Hurt(Sprite victim, FixedSingle damage)
@@ -557,7 +634,15 @@ namespace MMX.Engine.Entities
 
         protected virtual Box GetCollisionBox()
         {
-            return GetBoundingBox();
+            if (!MultiAnimation)
+                return CurrentAnimation != null ? CurrentAnimation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
+
+            Box result = Box.EMPTY_BOX;
+            foreach (var animation in animations)
+                if (animation.Visible)
+                    result |= animation.CurrentFrameCollisionBox;
+
+            return result;
         }
 
         private void MoveAlongSlope(BoxCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)
@@ -698,6 +783,7 @@ namespace MMX.Engine.Entities
 
         protected virtual void OnBeforeMove(ref Vector origin)
         {
+            BeforeMoveEvent?.Invoke(this);
         }
 
         private void DoPhysics()
@@ -837,22 +923,27 @@ namespace MMX.Engine.Entities
 
         protected virtual void OnBlockedRight()
         {
+            BlockedRightEvent?.Invoke(this);
         }
 
         protected virtual void OnBlockedLeft()
         {
+            BlockedLeftEvent?.Invoke(this);
         }
 
         protected virtual void OnBlockedUp()
         {
+            BlockedUpEvent?.Invoke(this);
         }
 
         protected virtual void OnLanded()
         {
+            LandedEvent?.Invoke(this);
         }
 
         protected bool CollisionCheck(Sprite sprite)
         {
+            // TODO : Implement call to this
             return ShouldCollide(sprite) || sprite.ShouldCollide(this);
         }
 
@@ -961,6 +1052,7 @@ namespace MMX.Engine.Entities
 
         protected internal virtual void OnAnimationEnd(Animation animation)
         {
+            AnimationEndEvent?.Invoke(this, animation);
         }
 
         private void StartMoving()
@@ -983,10 +1075,12 @@ namespace MMX.Engine.Entities
 
         protected virtual void OnStartMoving()
         {
+            StartMovingEvent?.Invoke(this);
         }
 
         protected virtual void OnStopMoving()
         {
+            StopMovingEvent?.Invoke(this);
         }
 
         protected virtual bool OnBreak()
@@ -996,6 +1090,7 @@ namespace MMX.Engine.Entities
 
         protected virtual void OnBroke()
         {
+            BrokeEvent?.Invoke(this);
         }
 
         public void Break()

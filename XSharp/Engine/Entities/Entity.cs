@@ -27,8 +27,21 @@ namespace MMX.Engine.Entities
         ALL = 255
     }
 
+    public delegate void EntityEvent(Entity source);
+    public delegate void EntityActivatorEvent(Entity source, Entity activator);
+
     public abstract class Entity : IDisposable
     {
+        public event EntityEvent SpawnEvent;
+        public event EntityEvent DeathEvent;
+        public event EntityEvent VisibleChangedEvent;
+        public event EntityEvent PreThinkEvent;
+        public event EntityEvent ThinkEvent;
+        public event EntityEvent PostThinkEvent;                 
+        public event EntityActivatorEvent StartTouchEvent;                
+        public event EntityActivatorEvent TouchingEvent;
+        public event EntityActivatorEvent EndTouchEvent;
+
         private Vector origin;
         internal Entity parent;
         private readonly List<Entity> touchingEntities;
@@ -204,6 +217,10 @@ namespace MMX.Engine.Entities
             states = new List<EntityState>();
         }
 
+        protected Entity(GameEngine engine, Vector origin) : this(engine, engine.GetExclusiveName("Entity"), origin)
+        {
+        }
+
         protected void SetupStateArray(int count)
         {
             states.Clear();
@@ -242,19 +259,29 @@ namespace MMX.Engine.Entities
             return state;
         }
 
-        protected EntityState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd) where T : Enum
-        {
-            return RegisterState((int) (object) id, onStart, onFrame, onEnd);
-        }
-
         protected EntityState RegisterState(int id, EntityStateFrameEvent onFrame)
         {
             return RegisterState(id, null, onFrame, null);
         }
 
+        protected EntityState RegisterState(int id)
+        {
+            return RegisterState(id, null, null, null);
+        }
+
+        protected EntityState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd) where T : Enum
+        {
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd);
+        }
+
         protected EntityState RegisterState<T>(T id, EntityStateFrameEvent onFrame) where T : Enum
         {
             return RegisterState((int) (object) id, null, onFrame, null);
+        }
+
+        protected EntityState RegisterState<T>(T id) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, null, null);
         }
 
         protected void UnregisterState(int id)
@@ -448,34 +475,40 @@ namespace MMX.Engine.Entities
 
         protected virtual void OnStartTouch(Entity entity)
         {
+            StartTouchEvent?.Invoke(this, entity);
         }
 
         protected virtual void OnTouching(Entity entity)
         {
+            TouchingEvent?.Invoke(this, entity);
         }
 
         protected virtual void OnEndTouch(Entity entity)
         {
+            EndTouchEvent?.Invoke(this, entity);
         }
 
         protected virtual bool PreThink()
         {
+            PreThinkEvent?.Invoke(this);
             return true;
         }
 
         protected virtual void Think()
         {
+            ThinkEvent?.Invoke(this);
         }
 
         protected internal virtual void PostThink()
         {
+            PostThinkEvent?.Invoke(this);
         }
 
         public virtual void Dispose()
         {
         }
 
-        public void Kill()
+        public virtual void Kill()
         {
             if (!Alive || MarkedToRemove)
                 return;
@@ -511,7 +544,8 @@ namespace MMX.Engine.Entities
         }
 
         protected internal virtual void OnSpawn()
-        {           
+        {
+            SpawnEvent?.Invoke(this);
         }
 
         protected internal virtual void PostSpawn()
@@ -524,14 +558,16 @@ namespace MMX.Engine.Entities
 
         protected virtual void OnDeath()
         {
+            DeathEvent?.Invoke(this);
         }
 
         protected virtual void OnVisible()
         {
-
+            // TODO : Implement call to this and implement OnInvisible()
+            VisibleChangedEvent?.Invoke(this);
         }
 
-        protected virtual void UpdatePartition()
+        protected virtual void UpdatePartition(bool force = false)
         {
             if (!Alive)
                 return;
@@ -552,11 +588,11 @@ namespace MMX.Engine.Entities
                     else if (!boxKind.HasFlag(k) && lastBoxKind.HasFlag(k))
                         Engine.partition.Remove(this, k);
                     else
-                        Engine.partition.Update(this, k);
+                        Engine.partition.Update(this, k, force);
                 }
             }
             else
-                Engine.partition.Update(this, boxKind);
+                Engine.partition.Update(this, boxKind, force);
 
             lastBoxKind = boxKind;
         }

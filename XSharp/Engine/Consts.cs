@@ -92,6 +92,7 @@ namespace MMX.Engine
         public static readonly FixedSingle FALL_ANIMATION_MINIMAL_SPEED = 1.25;
         public static readonly FixedSingle NO_CLIP_SPEED = 6;
         public static readonly FixedSingle NO_CLIP_SPEED_BOOST = 2.5 * NO_CLIP_SPEED;
+        public static readonly FixedSingle CROSSING_BOOS_DOOR_SPEED = 116 / 256.0;
         public const int MAX_SHOTS = 3;
         public const int LEMON_HITBOX_WIDTH = 8;
         public const int LEMON_HITBOX_HEIGHT = 8;
