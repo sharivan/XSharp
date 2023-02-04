@@ -359,6 +359,6 @@ namespace XSharp.Engine
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
         public const int INITIAL_LEVEL = 8;
-        public const int INITIAL_CHECKPOINT = 0;
+        public const int INITIAL_CHECKPOINT = 2;
     }
 }

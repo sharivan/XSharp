@@ -59,8 +59,9 @@ namespace XSharp.Engine.Entities
         private Direction stateDirection;
         internal int shots;
         private int shotFrameCounter;
-        private bool charging;
+        private bool charging;        
         private int chargingFrameCounter;
+        private int chargingFrameCounter2;
         internal bool shootingCharged;
 
         private bool spawnSoundPlayed;
@@ -1222,37 +1223,21 @@ namespace XSharp.Engine.Entities
                                 ShootLemon();
                             }
                         }
-                        else
+                        else if (!Shooting && !charging && !shootingCharged && shots < MAX_SHOTS)
                         {
-                            if (!Shooting && !charging && !shootingCharged && shots < MAX_SHOTS)
-                            {
-                                charging = true;
-                                chargingFrameCounter = 0;
-                            }
-
-                            if (charging)
-                            {
-                                chargingFrameCounter++;
-                                if (chargingFrameCounter >= 4)
-                                {
-                                    int frame = chargingFrameCounter - 4;
-                                    PaletteIndex = (frame & 2) is 0 or 1 ? 1 : 0;
-
-                                    ChargingEffect ??= Engine.StartChargingEffect(this);
-
-                                    if (frame == 60)
-                                        ChargingEffect.Level = 2;
-                                }
-                            }
+                            charging = true;
+                            chargingFrameCounter = 0;
+                            chargingFrameCounter2 = 0;
                         }
                     }
 
-                    if (charging && !PressingShot)
+                    if (!InputLocked && charging && !PressingShot)
                     {
                         bool charging = this.charging;
                         int chargingFrameCounter = this.chargingFrameCounter;
                         this.charging = false;
                         this.chargingFrameCounter = 0;
+                        this.chargingFrameCounter2 = 0;
 
                         PaletteIndex = 0;
 
@@ -1304,6 +1289,25 @@ namespace XSharp.Engine.Entities
 
                 if (PressedStart)
                     Engine.PauseGame();
+            }
+
+            if (charging)
+            {
+                if (!InputLocked)
+                    chargingFrameCounter++;
+
+                chargingFrameCounter2++;
+
+                if (chargingFrameCounter >= 4)
+                {
+                    int frame = chargingFrameCounter2 - 4;
+                    PaletteIndex = (frame & 2) is 0 or 1 ? 1 : 0;
+
+                    ChargingEffect ??= Engine.StartChargingEffect(this);
+
+                    if (chargingFrameCounter == 64)
+                        ChargingEffect.Level = 2;
+                }
             }
         }
 
