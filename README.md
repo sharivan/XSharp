@@ -67,5 +67,6 @@ Future additions:
 - Weapons.
 - Demo recorder.
 - Embedded console.
+- General optimization, mainly in physics.
 - Support for other render APIs like D3D11 and OpenGL.
 - Add documentation.
