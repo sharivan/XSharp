@@ -77,11 +77,11 @@ namespace MMX.Engine.Entities
             private set;
         }
 
-        internal Player(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 0, true)
+        internal Player(string name, Vector origin) : base(name, origin, 0, true)
         {
         }
 
-        internal Player(GameEngine engine, Vector origin) : this(engine, engine.GetExclusiveName("Player"), origin)
+        internal Player(Vector origin) : this(null, origin)
         {
         }
 
@@ -150,7 +150,7 @@ namespace MMX.Engine.Entities
             return new Box((-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, (HITBOX_WIDTH, HITBOX_HEIGHT + 4)) + (0, 17);
         }
 
-        protected override Box GetHitBox()
+        protected override Box GetHitbox()
         {
             return new Box(Dashing
                 ? (DASHING_HITBOX_OFFSET, (-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT * 0.5), (DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT * 0.5))
@@ -885,7 +885,7 @@ namespace MMX.Engine.Entities
                                 {
                                     if (!Shooting)
                                     {
-                                        Box ladderCollisionBox = HitBox.ClipTop(HITBOX_HEIGHT - 5);
+                                        Box ladderCollisionBox = Hitbox.ClipTop(HITBOX_HEIGHT - 5);
                                         CollisionFlags flags = Engine.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, true);
                                         if (flags.HasFlag(CollisionFlags.TOP_LADDER))
                                         {
@@ -909,7 +909,7 @@ namespace MMX.Engine.Entities
                                 }
                                 else if (!OnLadder)
                                 {
-                                    Box ladderCollisionBox = HitBox.ClipTop(15);
+                                    Box ladderCollisionBox = Hitbox.ClipTop(15);
                                     CollisionFlags flags = Engine.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, true);
                                     if (flags.HasFlag(CollisionFlags.LADDER))
                                     {
@@ -939,7 +939,7 @@ namespace MMX.Engine.Entities
                                         }
                                         else
                                         {
-                                            Box ladderCollisionBox = HitBox.ClipTop(15);
+                                            Box ladderCollisionBox = Hitbox.ClipTop(15);
                                             CollisionFlags flags = Engine.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, true);
                                             if (!flags.HasFlag(CollisionFlags.LADDER))
                                             {
@@ -1335,7 +1335,7 @@ namespace MMX.Engine.Entities
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            Engine.ShootLemon(this, direction == Direction.RIGHT ? HitBox.RightTop + shotOrigin : HitBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction, baseHSpeed == DASH_SPEED);
+            Engine.ShootLemon(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction, baseHSpeed == DASH_SPEED);
         }
 
         public void ShootSemiCharged()
@@ -1347,7 +1347,7 @@ namespace MMX.Engine.Entities
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            Engine.ShootSemiCharged(this, direction == Direction.RIGHT ? HitBox.RightTop + shotOrigin : HitBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
+            Engine.ShootSemiCharged(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
         }
 
         public void ShootCharged()
@@ -1359,7 +1359,7 @@ namespace MMX.Engine.Entities
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            Engine.ShootCharged(this, direction == Direction.RIGHT ? HitBox.RightTop + shotOrigin : HitBox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
+            Engine.ShootCharged(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
         }
 
         private bool CanWallJumpLeft()

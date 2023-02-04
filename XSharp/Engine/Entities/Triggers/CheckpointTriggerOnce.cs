@@ -46,8 +46,8 @@ namespace MMX.Engine.Entities.Triggers
             private set;
         }
 
-        public CheckpointTriggerOnce(GameEngine engine, Box box, Checkpoint checkpoint)
-            : base(engine, box, TouchingKind.VECTOR)
+        public CheckpointTriggerOnce(Box box, Checkpoint checkpoint)
+            : base(box, TouchingKind.VECTOR)
         {
             Checkpoint = checkpoint;
             Triggered = false;

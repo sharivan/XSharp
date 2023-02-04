@@ -6,19 +6,19 @@ namespace MMX.Engine.Entities.HUD
 {
     public class HealthHUD : HUD
     {
-        private static FixedSingle GetValue(GameEngine engine)
+        private static FixedSingle GetValue()
         {
-            return engine.Player != null ? engine.Player.Health : 0;
+            return GameEngine.Engine.Player != null ? GameEngine.Engine.Player.Health : 0;
         }
 
-        private static FixedSingle GetHeight(GameEngine engine)
+        private static FixedSingle GetHeight()
         {
-            return 4 + 2 * engine.HealthCapacity + 16;
+            return 4 + 2 * GameEngine.Engine.HealthCapacity + 16;
         }
 
-        private static FixedSingle GetTop(GameEngine engine)
+        private static FixedSingle GetTop()
         {
-            return HP_BOTTOM - GetHeight(engine);
+            return HP_BOTTOM - GetHeight();
         }
 
         private int topAnimationIndex;
@@ -28,7 +28,7 @@ namespace MMX.Engine.Entities.HUD
 
         public FixedSingle Capacity => Engine.HealthCapacity;
 
-        public FixedSingle Value => GetValue(Engine);
+        public FixedSingle Value => GetValue();
 
         protected Animation TopAnimation => GetAnimation(topAnimationIndex);
 
@@ -38,7 +38,7 @@ namespace MMX.Engine.Entities.HUD
 
         protected Animation BottomAnimation => GetAnimation(bottomAnimationIndex);
 
-        public HealthHUD(GameEngine engine, string name) : base(engine, name, (HP_LEFT, GetTop(engine)), 6)
+        public HealthHUD(string name) : base(name, (HP_LEFT, GetTop()), 6)
         {
         }
 
@@ -51,7 +51,7 @@ namespace MMX.Engine.Entities.HUD
 
         protected internal override void UpdateOrigin()
         {
-            Offset = (HP_LEFT, GetTop(Engine));
+            Offset = (HP_LEFT, GetTop());
 
             base.UpdateOrigin();
 

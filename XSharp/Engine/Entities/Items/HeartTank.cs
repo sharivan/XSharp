@@ -4,7 +4,7 @@ namespace MMX.Engine.Entities.Items
 {
     public class HeartTank : Item
     {
-        public HeartTank(GameEngine engine, string name, Vector origin) : base(engine, name, origin, -1, 1, false, "HeartTank")
+        public HeartTank(string name, Vector origin) : base(name, origin, -1, 1, false, "HeartTank")
         {
         }
 

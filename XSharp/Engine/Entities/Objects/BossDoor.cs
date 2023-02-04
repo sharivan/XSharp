@@ -61,9 +61,9 @@ namespace MMX.Engine.Entities.Objects
             set;
         }
 
-        public BossDoor(GameEngine engine, string name, Vector origin) : base(engine, name, GetTriggerBoudingBox(origin), TouchingKind.BOX)
+        public BossDoor(string name, Vector origin) : base(name, GetTriggerBoudingBox(origin), TouchingKind.BOX)
         {
-            effect = new BossDoorEffect(Engine, this, origin);
+            effect = new BossDoorEffect(this, origin);
         }
 
         protected internal override void OnSpawn()

@@ -18,7 +18,7 @@ namespace MMX.Engine.Entities.Items
             set => SetState(value);
         }
 
-        public SmallHealthRecover(GameEngine engine, string name, Vector origin, int durationFrames = 0) : base(engine, name, origin, durationFrames, 1, false, "SmallHealthRecoverDropping", "SmallHealthRecoverIdle")
+        public SmallHealthRecover(string name, Vector origin, int durationFrames = 0) : base(name, origin, durationFrames, 1, false, "SmallHealthRecoverDropping", "SmallHealthRecoverIdle")
         {
             SetupStateArray(typeof(SmallHealthRecoverState));
             RegisterState(SmallHealthRecoverState.DROPPING, null, "SmallHealthRecoverDropping");

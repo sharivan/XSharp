@@ -206,8 +206,8 @@ namespace MMX.Engine.Entities
 
         public Texture Palette => Engine.GetPalette(PaletteIndex);
 
-        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
-            : base(engine, name, origin)
+        protected Sprite(string name, Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
+            : base(name, origin)
         {
             SpriteSheetIndex = spriteSheetIndex;
             InitialAnimationName = initialAnimationName;
@@ -228,18 +228,18 @@ namespace MMX.Engine.Entities
                     this.animationNames.Add(frameSequenceName, -1);
         }
 
-        protected Sprite(GameEngine engine, Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
-            : this(engine, engine.GetExclusiveName("Sprite"), origin, spriteSheetIndex, animationNames, initialAnimationName, directional)
+        protected Sprite(Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
+            : this(null, origin, spriteSheetIndex, animationNames, initialAnimationName, directional)
         {
         }
 
-        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames)
-            : this(engine, name, origin, spriteSheetIndex, animationNames.Length > 0 ? animationNames : null, animationNames.Length > 0 ? animationNames[0] : null, directional)
+        protected Sprite(string name, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames)
+            : this(name, origin, spriteSheetIndex, animationNames.Length > 0 ? animationNames : null, animationNames.Length > 0 ? animationNames[0] : null, directional)
         {
         }
 
-        protected Sprite(GameEngine engine, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames)
-            : this(engine, engine.GetExclusiveName("Sprite"), origin, spriteSheetIndex, directional, animationNames)
+        protected Sprite(Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames)
+            : this(null, origin, spriteSheetIndex, directional, animationNames)
         {
         }
 
@@ -623,7 +623,7 @@ namespace MMX.Engine.Entities
             return DrawBox - Origin;
         }
 
-        protected override Box GetHitBox()
+        protected override Box GetHitbox()
         {
             return GetCollisionBox();
         }

@@ -24,7 +24,7 @@ namespace MMX.Engine.Entities.Enemies
             set => SetState(value);
         }
 
-        public Driller(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 4, true)
+        public Driller(string name, Vector origin) : base(name, origin, 4, true)
         {
             SetupStateArray(typeof(DrillerState));
             RegisterState(DrillerState.IDLE, OnIdle, "Idle");

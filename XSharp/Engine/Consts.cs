@@ -184,7 +184,8 @@ namespace MMX.Engine
 
         // Debug
 
-        public const bool DEBUG_DRAW_COLLISION_BOX = false;
+        public const bool DEBUG_DRAW_HITBOX = false;
+        public const bool DEBUG_SHOW_BOUNDING_BOX = false;
         public const bool DEBUG_SHOW_COLLIDERS = false;
         public const bool DEBUG_DRAW_COLLISION_DATA = false;
         public const bool DEBUG_DRAW_MAP_BOUNDS = false;
@@ -198,6 +199,8 @@ namespace MMX.Engine
 
         public static readonly Color HITBOX_COLOR = Color.FromRgba(0x8000ff00);
         public static readonly Color HITBOX_BORDER_COLOR = Color.Green;
+        public static readonly Color BOUNDING_BOX_COLOR = Color.FromRgba(0x80ff0000);
+        public static readonly Color BOUNDING_BOX_BORDER_COLOR = Color.Red;
         public static readonly Color DOWN_COLLIDER_COLOR = Color.Green;
         public static readonly Color UP_COLLIDER_COLOR = Color.Blue;
         public static readonly Color LEFT_COLLIDER_COLOR = Color.Red;
@@ -350,7 +353,7 @@ namespace MMX.Engine
         // Startup
 
         public const bool ENABLE_ENEMIES = true;
-        public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
+        public const bool ENABLE_SPAWNING_BLACK_SCREEN = true;
         public const bool ENABLE_OST = true;
 
         public const bool LOAD_ROM = true;

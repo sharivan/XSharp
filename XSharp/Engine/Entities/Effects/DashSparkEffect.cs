@@ -14,8 +14,8 @@ namespace MMX.Engine.Entities.Effects
         {
             return player.Direction switch
             {
-                Direction.LEFT => player.HitBox.LeftTop + (23 - 9, 20),
-                Direction.RIGHT => player.HitBox.RightTop + (-23 + 9, 20),
+                Direction.LEFT => player.Hitbox.LeftTop + (23 - 9, 20),
+                Direction.RIGHT => player.Hitbox.RightTop + (-23 + 9, 20),
                 _ => Vector.NULL_VECTOR,
             };
         }
@@ -38,7 +38,7 @@ namespace MMX.Engine.Entities.Effects
             }
         }
 
-        public DashSparkEffect(GameEngine engine, string name, Player player) : base(engine, name, GetOrigin(player), 2, true, "PreDashSparkEffect", "DashSparkEffect")
+        public DashSparkEffect(string name, Player player) : base(name, GetOrigin(player), 2, true, "PreDashSparkEffect", "DashSparkEffect")
         {
             Direction = player.Direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
             Parent = player;

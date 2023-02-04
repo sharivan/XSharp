@@ -36,8 +36,8 @@ namespace MMX.Engine.Entities.Effects
             set;
         }
 
-        public XDieExplosion(GameEngine engine, string name, Vector origin, int maxFrames, int framesPerCicle, double maxRadius, double phase, int sparkCount)
-            : base(engine, name, origin, 0, false, "DyingExplosion")
+        public XDieExplosion(string name, Vector origin, int maxFrames, int framesPerCicle, double maxRadius, double phase, int sparkCount)
+            : base(name, origin, 0, false, "DyingExplosion")
         {
             MaxFrames = maxFrames;
             FramesPerCicle = framesPerCicle;
@@ -46,8 +46,8 @@ namespace MMX.Engine.Entities.Effects
             SparkCount = sparkCount;
         }
 
-        public XDieExplosion(GameEngine engine, string name, Vector origin, double phase)
-            : this(engine, name, origin, 68, 128, 140, phase, 8)
+        public XDieExplosion(string name, Vector origin, double phase)
+            : this(name, origin, 68, 128, 140, phase, 8)
         {
         }
 

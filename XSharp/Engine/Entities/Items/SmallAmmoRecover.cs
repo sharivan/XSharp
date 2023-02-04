@@ -12,7 +12,8 @@ namespace MMX.Engine.Entities.Items
 
     public class SmallAmmoRecover : Item
     {
-        public SmallAmmoRecover(GameEngine engine, string name, Vector origin, int durationFrames = 0) : base(engine, name, origin, durationFrames, 1, false, "SmallAmmoRecover")
+        public SmallAmmoRecover(string name, Vector origin, int durationFrames = 0) 
+            : base(name, origin, durationFrames, 1, false, "SmallAmmoRecover")
         {
         }
 

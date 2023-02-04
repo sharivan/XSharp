@@ -9,14 +9,14 @@ namespace MMX.Engine.Entities.HUD
             get; set;
         }
 
-        public HUD(GameEngine engine, string name, Vector offset, int spriteSheetIndex, string[] animationNames, string initialAnimationName)
-            : base(engine, name, engine.World.Camera.LeftTop + offset, spriteSheetIndex, animationNames, initialAnimationName, false)
+        public HUD(string name, Vector offset, int spriteSheetIndex, string[] animationNames, string initialAnimationName)
+            : base(name, GameEngine.Engine.World.Camera.LeftTop + offset, spriteSheetIndex, animationNames, initialAnimationName, false)
         {
             Offset = offset;
         }
 
-        public HUD(GameEngine engine, string name, Vector offset, int spriteSheetIndex, params string[] animationNames)
-            : base(engine, name, engine.World.Camera.LeftTop + offset, spriteSheetIndex, false, animationNames)
+        public HUD(string name, Vector offset, int spriteSheetIndex, params string[] animationNames)
+            : base(name, GameEngine.Engine.World.Camera.LeftTop + offset, spriteSheetIndex, false, animationNames)
         {
             Offset = offset;
         }

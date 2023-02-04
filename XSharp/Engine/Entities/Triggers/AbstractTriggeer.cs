@@ -63,8 +63,8 @@ namespace MMX.Engine.Entities.Triggers
             protected set;
         } = 0;
 
-        protected AbstractTrigger(GameEngine engine, string name, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
-            : base(engine, name, boundingBox.Origin)
+        protected AbstractTrigger(string name, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
+            : base(name, boundingBox.Origin)
         {
             TouchingKind = touchingKind;
             VectorKind = vectorKind;
@@ -74,8 +74,8 @@ namespace MMX.Engine.Entities.Triggers
             SetBoundingBox(boundingBox);
         }
 
-        protected AbstractTrigger(GameEngine engine, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
-            : this(engine, engine.GetExclusiveName("Trigger"), boundingBox, touchingKind, vectorKind)
+        protected AbstractTrigger(Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
+            : this(null, boundingBox, touchingKind, vectorKind)
         {
         }
 
@@ -97,7 +97,7 @@ namespace MMX.Engine.Entities.Triggers
                     case TouchingKind.VECTOR:
                     {
                         Vector v = entity.GetVector(VectorKind);
-                        if (v <= HitBox)
+                        if (v <= Hitbox)
                         {
                             triggerings.Add(entity);
                             Triggers++;
@@ -131,7 +131,7 @@ namespace MMX.Engine.Entities.Triggers
                 if (TouchingKind == TouchingKind.VECTOR)
                 {
                     Vector v = entity.GetVector(VectorKind);
-                    if (v <= HitBox)
+                    if (v <= Hitbox)
                     {
                         if (!triggerings.Contains(entity))
                         {
@@ -142,7 +142,7 @@ namespace MMX.Engine.Entities.Triggers
                         Triggers++;
                         OnTrigger(entity);
                     }
-                    else if (!(v <= HitBox) && triggerings.Contains(entity))
+                    else if (!(v <= Hitbox) && triggerings.Contains(entity))
                     {
                         triggerings.Remove(entity);
                         OnStopTrigger(entity);

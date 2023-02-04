@@ -25,7 +25,7 @@ namespace MMX.Engine.Entities.Enemies
             }
         }
 
-        public Bat(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 8)
+        public Bat(string name, Vector origin) : base(name, origin, 8)
         {
             SetupStateArray(typeof(BatState));
             RegisterState(BatState.IDLE, OnIdle, "Idle");

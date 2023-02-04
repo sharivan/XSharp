@@ -4,7 +4,7 @@ namespace MMX.Engine.Entities.Items
 {
     public class SubTankItem : Item
     {
-        public SubTankItem(GameEngine engine, string name, Vector origin) : base(engine, name, origin, -1, 1, false, "SubTank")
+        public SubTankItem(string name, Vector origin) : base(name, origin, -1, 1, false, "SubTank")
         {
         }
 

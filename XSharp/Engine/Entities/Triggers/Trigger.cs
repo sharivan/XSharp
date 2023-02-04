@@ -16,8 +16,8 @@ namespace MMX.Engine.Entities.Triggers
             set => base.MaxTriggers = value;
         }
 
-        public Trigger(GameEngine engine, Box boudingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
-            : base(engine, boudingBox, touchingKind, vectorKind)
+        public Trigger(Box boudingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
+            : base(boudingBox, touchingKind, vectorKind)
         {
         }
     }

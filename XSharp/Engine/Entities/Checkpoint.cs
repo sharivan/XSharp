@@ -36,8 +36,8 @@ namespace MMX.Engine.Entities
             get;
         }
 
-        public Checkpoint(GameEngine engine, ushort point, Box boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
-            : base(engine, "Checkpoint #" + point, boundingBox.Origin)
+        public Checkpoint(ushort point, Box boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
+            : base("Checkpoint #" + point, boundingBox.Origin)
         {
             Point = point;
             CharacterPos = characterPos;

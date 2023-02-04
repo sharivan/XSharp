@@ -19,7 +19,7 @@ namespace MMX.Engine.Entities.Weapons
             set;
         }
 
-        protected Weapon(GameEngine engine, Sprite shooter, string name, Vector origin, Direction direction, int spriteSheetIndex) : base(engine, name, origin, spriteSheetIndex, true)
+        protected Weapon(Sprite shooter, string name, Vector origin, Direction direction, int spriteSheetIndex) : base(name, origin, spriteSheetIndex, true)
         {
             Shooter = shooter;
             Direction = direction;

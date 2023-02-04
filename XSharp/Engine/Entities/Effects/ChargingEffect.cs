@@ -25,7 +25,7 @@
             }
         }
 
-        public ChargingEffect(GameEngine engine, string name, Player charger) : base(engine, name, charger.HitBox.Center, 3, true, "ChargingLevel1", "ChargingLevel2")
+        public ChargingEffect(string name, Player charger) : base(name, charger.Hitbox.Center, 3, true, "ChargingLevel1", "ChargingLevel2")
         {
             Charger = charger;
             PaletteIndex = 3;
@@ -46,7 +46,7 @@
                 soundPlayed = true;
             }
 
-            Origin = Charger.HitBox.Center;
+            Origin = Charger.Hitbox.Center;
             Direction = Charger.Direction;
 
             base.Think();

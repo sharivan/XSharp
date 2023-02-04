@@ -8,13 +8,13 @@ namespace MMX.Engine.Entities.Effects
         {
             return player.Direction switch
             {
-                Direction.LEFT => player.HitBox.LeftTop + (-14, 27),
-                Direction.RIGHT => player.HitBox.RightTop + (14 - 11, 27),
+                Direction.LEFT => player.Hitbox.LeftTop + (-14, 27),
+                Direction.RIGHT => player.Hitbox.RightTop + (14 - 11, 27),
                 _ => Vector.NULL_VECTOR,
             };
         }
 
-        public WallKickEffect(GameEngine engine, string name, Player player) : base(engine, name, GetOrigin(player), 2, false, "WallKickEffect") { }
+        public WallKickEffect(string name, Player player) : base(name, GetOrigin(player), 2, false, "WallKickEffect") { }
 
         protected internal override void OnAnimationEnd(Animation animation)
         {

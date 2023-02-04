@@ -24,12 +24,14 @@ namespace MMX.Engine.Entities.Items
             private set;
         } = false;
 
-        public Item(GameEngine engine, string name, Vector origin, int durationFrames, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false) : base(engine, name, origin, spriteSheetIndex, animationNames, initialAnimationName, directional)
+        public Item(string name, Vector origin, int durationFrames, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false) 
+            : base(name, origin, spriteSheetIndex, animationNames, initialAnimationName, directional)
         {
             DurationFrames = durationFrames;
         }
 
-        public Item(GameEngine engine, string name, Vector origin, int durationFrames, int spriteSheetIndex, bool directional = false, params string[] animationNames) : base(engine, name, origin, spriteSheetIndex, directional, animationNames)
+        public Item(string name, Vector origin, int durationFrames, int spriteSheetIndex, bool directional = false, params string[] animationNames) 
+            : base(name, origin, spriteSheetIndex, directional, animationNames)
         {
             DurationFrames = durationFrames;
         }

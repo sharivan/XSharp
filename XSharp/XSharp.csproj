@@ -94,6 +94,10 @@
   <ItemGroup>
     <Compile Include="Engine\Animation.cs" />
     <Compile Include="Engine\Entities\Checkpoint.cs" />
+    <Compile Include="Engine\Entities\Logical\LogicalBranch.cs" />
+    <Compile Include="Engine\Entities\Logical\LogicalEntity.cs" />
+    <Compile Include="Engine\Entities\Logical\LogicalLineTo.cs" />
+    <Compile Include="Engine\Entities\Logical\LogicalTimer.cs" />
     <Compile Include="Engine\Entities\Objects\BossDoorEffect.cs" />
     <Compile Include="Engine\Entities\Effects\DashSmokeEffect.cs" />
     <Compile Include="Engine\Entities\Effects\DashSparkEffect.cs" />
@@ -261,7 +265,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Engine\Entities\Armors\" />
-    <Folder Include="Engine\Entities\Logical\" />
     <Folder Include="Engine\Entities\Misc\" />
     <Folder Include="resources\maps\" />
     <Folder Include="sstates\" />
