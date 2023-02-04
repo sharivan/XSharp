@@ -24,7 +24,7 @@ namespace XSharp.Engine.Entities.Objects
             RegisterState(BossDoorState.CLOSED, OnStartClosed, null, null, "Closed");
             RegisterState(BossDoorState.OPENING, OnStartOpening, OnOpening, null, "Opening");
             RegisterState(BossDoorState.PLAYER_CROSSING, OnStartPlayerCrossing, OnPlayerCrossing, null, "PlayerCrossing");
-            RegisterState(BossDoorState.CLOSING, OnStartClosing, OnClosing, OnEndClosing, "Closing");
+            RegisterState(BossDoorState.CLOSING, OnStartClosing, null, OnEndClosing, "Closing");
         }
 
         public BossDoorEffect(BossDoor door, Vector origin) : this(null, door, origin)
@@ -59,11 +59,6 @@ namespace XSharp.Engine.Entities.Objects
         private void OnStartClosing(EntityState state)
         {
             Door?.OnStartClosing();
-        }
-
-        private void OnClosing(EntityState state, long frameCounter)
-        {
-            Door?.OnClosing(frameCounter);
         }
 
         private void OnEndClosing(EntityState state)

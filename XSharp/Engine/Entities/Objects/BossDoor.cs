@@ -61,6 +61,12 @@ namespace XSharp.Engine.Entities.Objects
             set;
         }
 
+        public bool UnlockInputAfterClosing
+        {
+            get;
+            set;
+        } = true;
+
         public BossDoor(string name, Vector origin) : base(name, GetTriggerBoudingBox(origin), TouchingKind.BOX)
         {
             effect = new BossDoorEffect(this, origin);
@@ -71,6 +77,8 @@ namespace XSharp.Engine.Entities.Objects
             base.OnSpawn();
 
             effect.Spawn();
+
+            UnlockInputAfterClosing = true;
 
             State = BossDoorState.CLOSED;
         }
@@ -163,16 +171,13 @@ namespace XSharp.Engine.Entities.Objects
             ClosingEvent?.Invoke(this);
         }
 
-        internal void OnClosing(long frameCounter)
-        {
-        }
-
         internal void OnEndClosing()
         {
             if (!ClosingHugeSound)
                 Engine.Player.Invincible = false;
 
-            Engine.Player.InputLocked = false;
+            if (UnlockInputAfterClosing)
+                Engine.Player.InputLocked = false;
         }
     }
 }
