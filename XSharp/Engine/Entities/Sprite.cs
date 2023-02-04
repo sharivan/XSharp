@@ -206,8 +206,8 @@ namespace MMX.Engine.Entities
 
         public Texture Palette => Engine.GetPalette(PaletteIndex);
 
-        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false) :
-            base(engine, name, origin)
+        protected Sprite(GameEngine engine, string name, Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
+            : base(engine, name, origin)
         {
             SpriteSheetIndex = spriteSheetIndex;
             InitialAnimationName = initialAnimationName;
@@ -216,7 +216,7 @@ namespace MMX.Engine.Entities
             PaletteIndex = -1;
             Opacity = 1;
 
-            animations = new List<Animation>();            
+            animations = new List<Animation>();
 
             this.animationNames = new Dictionary<string, int>();
 
@@ -337,7 +337,7 @@ namespace MMX.Engine.Entities
             fading = reader.ReadBoolean();
             fadingIn = reader.ReadBoolean();
             fadingTime = reader.ReadInt32();
-            elapsed = reader.ReadInt32();            
+            elapsed = reader.ReadInt32();
             CheckCollisionWithWorld = reader.ReadBoolean();
 
             vel = new Vector(reader);
@@ -373,7 +373,7 @@ namespace MMX.Engine.Entities
             writer.Write(fading);
             writer.Write(fadingIn);
             writer.Write(fadingTime);
-            writer.Write(elapsed);            
+            writer.Write(elapsed);
             writer.Write(CheckCollisionWithWorld);
 
             vel.Write(writer);

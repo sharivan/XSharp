@@ -202,7 +202,7 @@ namespace D3D9Test
             internal readonly int id;
             internal byte[] data;
 
-            internal Tile(Device device, int id, byte[] data)
+            internal Tile(int id, byte[] data)
             {
                 this.id = id;
                 this.data = data;
@@ -315,7 +315,7 @@ namespace D3D9Test
             return !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
         }
 
-        private Tile AddTile(Device device, uint tile, bool transparent = false)
+        private Tile AddTile(uint tile, bool transparent = false)
         {
             uint tileNum = tile & 0x3FF;
             uint image = tileNum << 6;
@@ -339,7 +339,7 @@ namespace D3D9Test
             //if (!notNull)
             //    return null;
 
-            var wtile = new Tile(device, (int) tileNum, imageData);
+            var wtile = new Tile((int) tileNum, imageData);
             return wtile;
         }
 
@@ -393,7 +393,7 @@ namespace D3D9Test
 
             for (int tileIndex = 0; tileIndex < 0x400; tileIndex++)
             {
-                Tile tile = AddTile(device, (uint) tileIndex, true);
+                Tile tile = AddTile((uint) tileIndex, true);
                 int row = tileIndex / (TILESET_WIDTH / TILE_SIZE);
                 int col = tileIndex % (TILESET_WIDTH / TILE_SIZE);                
                 WriteTile(rect, tile?.data, row, col);

@@ -87,9 +87,9 @@ namespace MMX.Engine.Entities.Objects
             base.OnStartTrigger(entity);
 
             if (entity is Player player)
-            {              
+            {
                 Engine.World.Camera.NoConstraints = true;
-                Engine.World.Camera.FocusOn = null;                               
+                Engine.World.Camera.FocusOn = null;
                 player.StartBossDoorCrossing();
                 Engine.FreezeSprites(player, effect);
 
@@ -126,7 +126,7 @@ namespace MMX.Engine.Entities.Objects
 
             if (ClosingHugeSound)
             {
-                Engine.cameraConstraintOrigin += (SCENE_SIZE, 0);
+                Engine.CameraConstraintsOrigin += (SCENE_SIZE, 0);
                 Engine.CameraConstraintsBox += (SCENE_SIZE, 0);
             }
 

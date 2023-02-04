@@ -1,6 +1,4 @@
-﻿using MMX.Engine.World;
-using MMX.Geometry;
-using SharpDX;
+﻿using MMX.Geometry;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,8 +35,8 @@ namespace MMX.Engine.Entities
         public event EntityEvent VisibleChangedEvent;
         public event EntityEvent PreThinkEvent;
         public event EntityEvent ThinkEvent;
-        public event EntityEvent PostThinkEvent;                 
-        public event EntityActivatorEvent StartTouchEvent;                
+        public event EntityEvent PostThinkEvent;
+        public event EntityActivatorEvent StartTouchEvent;
         public event EntityActivatorEvent TouchingEvent;
         public event EntityActivatorEvent EndTouchEvent;
 
@@ -553,7 +551,7 @@ namespace MMX.Engine.Entities
             Spawning = false;
             Alive = true;
 
-            UpdatePartition();           
+            UpdatePartition();
         }
 
         protected virtual void OnDeath()

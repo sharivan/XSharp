@@ -20,8 +20,8 @@
             set => data = value;
         }
 
-        internal Tile(World world, int id) :
-            this(world, id, null)
+        internal Tile(World world, int id)
+            : this(world, id, null)
         {
         }
 

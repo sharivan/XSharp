@@ -20,8 +20,8 @@ namespace MMX.Engine.Entities.Weapons
 
         new public Player Shooter => (Player) base.Shooter;
 
-        internal BusterLemon(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, bool dashLemon) :
-            base(engine, shooter, name, origin, direction, 1)
+        internal BusterLemon(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, bool dashLemon)
+            : base(engine, shooter, name, origin, direction, 1)
         {
             this.dashLemon = dashLemon;
 

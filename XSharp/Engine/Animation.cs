@@ -1,11 +1,8 @@
-﻿using System.IO;
-
+﻿using MMX.Geometry;
+using MMX.Math;
 using SharpDX;
 using SharpDX.Direct3D9;
-
-using MMX.Math;
-using MMX.Geometry;
-
+using System.IO;
 using MMXBox = MMX.Geometry.Box;
 using Sprite = MMX.Engine.Entities.Sprite;
 
@@ -37,8 +34,8 @@ namespace MMX.Engine
             }
         }
 
-        public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false) :
-            this(sprite, index, spriteSheetIndex, frameSequenceName, offset, FixedSingle.ZERO, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped)
+        public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+            : this(sprite, index, spriteSheetIndex, frameSequenceName, offset, FixedSingle.ZERO, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped)
         {
         }
 
@@ -232,12 +229,7 @@ namespace MMX.Engine
                 var collisionBox = sequence[currentSequenceIndex].CollisionBox;
 
                 if (Flipped)
-                {
-                    if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
-                        collisionBox = collisionBox.Flip().Mirror();
-                    else
-                        collisionBox = collisionBox.Flip();
-                }
+                    collisionBox = Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT ? collisionBox.Flip().Mirror() : collisionBox.Flip();
                 else if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
                     collisionBox = collisionBox.Mirror();
 

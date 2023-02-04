@@ -48,13 +48,7 @@ namespace NAudioTest
             /// <summary>
             /// Return source stream's wave format
             /// </summary>
-            public override WaveFormat WaveFormat
-            {
-                get
-                {
-                    return SourceStream.WaveFormat;
-                }
-            }
+            public override WaveFormat WaveFormat => SourceStream.WaveFormat;
 
             public WaveStream SourceStream
             {
@@ -65,13 +59,7 @@ namespace NAudioTest
             /// <summary>
             /// LoopStream simply returns
             /// </summary>
-            public override long Length
-            {
-                get
-                {
-                    return SourceStream.Length;
-                }
-            }
+            public override long Length => SourceStream.Length;
 
             /// <summary>
             /// LoopStream simply passes on positioning to source stream

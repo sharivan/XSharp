@@ -108,7 +108,6 @@ namespace MMX.Engine.Sound
 
         public SoundStream(WaveStream source) : this(source, -1, -1) { }
 
-
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (!Playing)

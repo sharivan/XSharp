@@ -62,14 +62,14 @@ namespace MMX.Engine.Entities.Items
             base.Think();
 
             if (DurationFrames > 0)
-            { 
+            {
                 if (Offscreen || DurationFrameCounter >= DurationFrames)
                     Kill();
 
                 if (!Blinking && DurationFrameCounter >= DurationFrames - ITEM_BLINKING_FRAMES)
                     Blinking = true;
             }
-            
+
             if (Landed || BlockedLeft || BlockedRight || BlockedUp)
                 DurationFrameCounter++;
         }

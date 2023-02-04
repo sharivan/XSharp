@@ -1,7 +1,5 @@
 ﻿using MMX.Geometry;
 
-using static MMX.Engine.Consts;
-
 namespace MMX.Engine.Entities.Items
 {
     public class HeartTank : Item

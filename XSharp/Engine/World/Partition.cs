@@ -25,7 +25,7 @@ namespace MMX.Engine.World
             private static int ToIndex(BoxKind kind)
             {
                 int x = (int) kind;
-                
+
                 // Map a bit value mod
                 // 37 to its position
                 int[] lookup = {32, 0, 1, 26, 2, 23,

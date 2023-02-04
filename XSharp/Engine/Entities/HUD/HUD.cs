@@ -1,6 +1,4 @@
-﻿using MMX.Engine;
-using MMX.Engine.Entities;
-using MMX.Geometry;
+﻿using MMX.Geometry;
 
 namespace MMX.Engine.Entities.HUD
 {

@@ -1163,8 +1163,8 @@ namespace MMX.Geometry
 
         public Box((Vector, Vector, Vector) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3) { }
 
-        public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height) :
-            this(new Vector(x, y), width, height)
+        public Box(FixedSingle x, FixedSingle y, FixedSingle width, FixedSingle height)
+            : this(new Vector(x, y), width, height)
         {
         }
 

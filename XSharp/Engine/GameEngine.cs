@@ -1,9 +1,10 @@
 ﻿using MMX.Engine.Entities;
 using MMX.Engine.Entities.Effects;
 using MMX.Engine.Entities.Enemies;
-using MMX.Engine.Entities.Objects;
+using MMX.Engine.Entities.Enemies.Bosses;
 using MMX.Engine.Entities.HUD;
 using MMX.Engine.Entities.Items;
+using MMX.Engine.Entities.Objects;
 using MMX.Engine.Entities.Triggers;
 using MMX.Engine.Entities.Weapons;
 using MMX.Engine.Sound;
@@ -12,6 +13,7 @@ using MMX.Geometry;
 using MMX.Math;
 using MMX.ROM;
 using NAudio.Wave;
+using NLua;
 using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
@@ -185,7 +187,6 @@ namespace MMX.Engine
             get => (bool) this["showTriggerCameraLook"];
             set => this["showTriggerCameraLook"] = value;
         }
-
     }
 
     public class GameEngine : IDisposable
@@ -301,7 +302,6 @@ namespace MMX.Engine
         private readonly List<(WaveOutEvent player, SoundStream stream, bool initialized)> soundChannels;
 
         internal Partition<Entity> partition;
-        private readonly Random random;
         private readonly List<Checkpoint> checkpoints;
         private readonly Entity[] entities;
         private int firstFreeEntityIndex;
@@ -311,25 +311,23 @@ namespace MMX.Engine
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
         internal List<(Entity entity, Vector origin, bool wasVisible)> respawnableEntities;
-        private List<Sprite> sprites;
-        private List<HUD> huds;
+        private readonly List<Sprite> freezingSpriteExceptions;
+        private readonly List<Sprite> sprites;
+        private readonly List<HUD> huds;
         private ushort currentLevel;
         private bool changeLevel;
         private ushort levelToChange;
         private bool gameOver;
         private bool loadingLevel;
         private bool paused;
-        internal bool noCameraConstraints;
-
-        private List<Sprite> freezingSpriteExceptions;
+        private Lua lua;
 
         private int currentSaveSlot;
 
         private long lastCurrentMemoryUsage;
         private MMXBox drawBox;
         private Checkpoint currentCheckpoint;
-        internal Vector cameraConstraintOrigin;
-        internal List<Vector> cameraConstraints;
+        private readonly List<Vector> cameraConstraints;
 
         private bool frameAdvance;
         private bool recording;
@@ -370,7 +368,7 @@ namespace MMX.Engine
         private bool drawBackground = true;
         private bool drawDownLayer = true;
         private bool drawSprites = true;
-        private readonly bool drawX = true;
+        private bool drawX = true;
         private bool drawUpLayer = true;
 
         private bool drawCollisionBox = DEBUG_DRAW_COLLISION_BOX;
@@ -452,17 +450,23 @@ namespace MMX.Engine
             set;
         }
 
-        public Vector ExtensionOrigin
+        public Vector CameraConstraintsOrigin
         {
-            get => cameraConstraintOrigin;
-            set => cameraConstraintOrigin = value;
+            get;
+            set;
         }
 
-        public int ExtensionCount => cameraConstraints.Count;
+        public IEnumerable<Vector> CameraConstraints => cameraConstraints;
 
-        public Vector MinCameraPos => noCameraConstraints || World.Camera.NoConstraints ? World.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
+        public bool NoCameraConstraints
+        {
+            get;
+            set;
+        }
 
-        public Vector MaxCameraPos => noCameraConstraints || World.Camera.NoConstraints ? World.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
+        public Vector MinCameraPos => NoCameraConstraints || World.Camera.NoConstraints ? World.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
+
+        public Vector MaxCameraPos => NoCameraConstraints || World.Camera.NoConstraints ? World.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
 
         public bool Paused
         {
@@ -792,7 +796,10 @@ namespace MMX.Engine
             private set;
         }
 
-        public Random RNG => random;
+        public Random RNG
+        {
+            get;
+        }
 
         public GameEngine(Form form)
         {
@@ -809,6 +816,8 @@ namespace MMX.Engine
             soundStreams = new List<WaveStream>();
             soundChannels = new List<(WaveOutEvent, SoundStream, bool)>();
 
+            lua = new Lua();
+
             presentationParams = new PresentParameters
             {
                 Windowed = true,
@@ -824,7 +833,7 @@ namespace MMX.Engine
             Direct3D = new Direct3D();
             ResetDevice();
 
-            noCameraConstraints = NO_CAMERA_CONSTRAINTS;
+            NoCameraConstraints = NO_CAMERA_CONSTRAINTS;
 
             cameraConstraints = new List<Vector>();
 
@@ -963,7 +972,7 @@ namespace MMX.Engine
             partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
             CameraConstraintsBox = World.BoundingBox;
 
-            random = new Random();
+            RNG = new Random();
             checkpoints = new List<Checkpoint>();
             entities = new Entity[MAX_ENTITIES];
             addedEntities = new List<Entity>();
@@ -1001,1440 +1010,35 @@ namespace MMX.Engine
             if (romLoaded)
                 mmx.UpdateVRAMCache();
 
-            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
-            {
-                section = new ProgramConfiguratinSection();
-                config.Sections.Add("ProgramConfiguratinSection", section);
-                config.Save();
-            }
-
-            if (section.Left != -1)
-                Form.Left = section.Left;
-
-            if (section.Top != -1)
-                Form.Top = section.Top;
-
-            drawCollisionBox = section.DrawCollisionBox;
-            showColliders = section.ShowColliders;
-            drawMapBounds = section.DrawMapBounds;
-            drawTouchingMapBounds = section.DrawTouchingMapBounds;
-            drawHighlightedPointingTiles = section.DrawHighlightedPointingTiles;
-            drawPlayerOriginAxis = section.DrawPlayerOriginAxis;
-            showInfoText = section.ShowInfoText;
-            showCheckpointBounds = section.ShowCheckpointBounds;
-            showTriggerBounds = section.ShowTriggerBounds;
-            showTriggerCameraLook = section.ShowTriggerCameraLook;
+            LoadConfig();
 
             Running = true;
         }
 
-        private void AddChargingEffectFrames(SpriteSheet.FrameSequence sequence, int level)
+        public void Dispose()
         {
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 2), new Vector(27, 46) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, true, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 3), new Vector(27, 45), new Vector(5, 24), new Vector(49, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(6, 24), new Vector(27, 5), new Vector(27, 44), new Vector(48, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 24), new Vector(11, 40), new Vector(43, 8), new Vector(47, 24), new Vector(27, 43), new Vector(28, 6) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 24), new Vector(12, 39), new Vector(42, 9), new Vector(46, 24), new Vector(27, 42), new Vector(28, 7) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(11, 8), new Vector(13, 38), new Vector(41, 10), new Vector(43, 40), new Vector(10, 25), new Vector(27, 41), new Vector(27, 7), new Vector(44, 23) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 1, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(12, 9), new Vector(14, 37), new Vector(40, 11), new Vector(42, 39), new Vector(11, 25), new Vector(28, 9), new Vector(43, 23) }, new bool[] { true, true, true, true, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(13, 10), new Vector(19, 44), new Vector(35, 4), new Vector(41, 38), new Vector(12, 25), new Vector(16, 36), new Vector(39, 13), new Vector(43, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(14, 11), new Vector(19, 43), new Vector(35, 5), new Vector(40, 37), new Vector(13, 25), new Vector(17, 35), new Vector(38, 14), new Vector(42, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 16), new Vector(20, 42), new Vector(34, 6), new Vector(47, 32), new Vector(16, 13), new Vector(18, 34), new Vector(37, 15), new Vector(39, 36) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 16), new Vector(20, 41), new Vector(34, 7), new Vector(46, 32), new Vector(17, 4), new Vector(19, 33), new Vector(36, 16), new Vector(38, 35) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(9, 16), new Vector(19, 4), new Vector(24, 40), new Vector(33, 8), new Vector(35, 44), new Vector(45, 31), new Vector(18, 15), new Vector(37, 34) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(10, 17), new Vector(19, 5), new Vector(21, 39), new Vector(39, 9), new Vector(35, 43), new Vector(44, 30), new Vector(19, 16), new Vector(36, 33) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 32), new Vector(47, 16), new Vector(12, 18), new Vector(21, 7), new Vector(22, 38), new Vector(33, 11), new Vector(35, 43), new Vector(44, 31) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 32), new Vector(46, 16), new Vector(13, 19), new Vector(20, 8), new Vector(22, 37), new Vector(33, 12), new Vector(36, 42), new Vector(43, 30) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(21, 8), new Vector(33, 40), new Vector(10, 32), new Vector(14, 19), new Vector(42, 30), new Vector(46, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(21, 9), new Vector(33, 39), new Vector(11, 32), new Vector(15, 20), new Vector(41, 29), new Vector(45, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(11, 29), new Vector(43, 17), new Vector(23, 10) }, new bool[] { true, true, false }, new int[] { 1, 1, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(13, 30), new Vector(42, 19) }, new bool[] { true, true }, new int[] { 1, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(14, 29), new Vector(41, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(15, 29), new Vector(40, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 1), new Vector(27, 47) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
-            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        }
+            UnloadLevel();
 
-        public void StartFading(Color color, int frames, bool fadeIn, Action onFadingComplete = null)
-        {
-            Fading = true;
-            FadingColor = color;
-            FadingFrames = frames;
-            FadingLevel = fadeIn ? 1 : 0;
-            FadeIn = fadeIn;
-            FadingTick = 0;
-            OnFadingComplete = onFadingComplete;
-        }
+            DisposeResource(lua);
 
-        public void StartFading(Color color, int frames, Action onFadingComplete = null)
-        {
-            StartFading(color, frames, false, onFadingComplete);
-        }
-
-        public void StartFadingOST(float volume, int frames, bool fadeIn, Action onFadingComplete = null)
-        {
-            FadingOST = true;
-            FadingOSTInitialVolume = soundChannels[3].player.Volume;
-            FadingOSTVolume = volume;
-            FadingOSTFrames = frames;
-            FadingOSTLevel = fadeIn ? 1 : 0;
-            FadeInOST = fadeIn;
-            FadingOSTTick = 0;
-            OnFadingOSTComplete = onFadingComplete;
-        }
-
-        public void StartFadingOST(float volume, int frames, Action onFadingComplete = null)
-        {
-            StartFadingOST(volume, frames, false, onFadingComplete);
-        }
-
-        public static uint NextHighestPowerOfTwo(uint v)
-        {
-            v--;
-            v |= v >> 1;
-            v |= v >> 2;
-            v |= v >> 4;
-            v |= v >> 8;
-            v |= v >> 16;
-            v++;
-
-            return v;
-        }
-
-        private static readonly byte[] EMPTY_TEXTURE_DATA = new byte[4096];
-
-        private static void ZeroDataRect(DataRectangle dataRect, int length)
-        {
-            int remaining = length;
-            IntPtr ptr = dataRect.DataPointer;
-            while (remaining > 0)
+            foreach (var (channel, stream, _) in soundChannels)
             {
-                int bytesToCopy = remaining > EMPTY_TEXTURE_DATA.Length ? EMPTY_TEXTURE_DATA.Length : remaining;
-                Marshal.Copy(EMPTY_TEXTURE_DATA, 0, ptr, bytesToCopy);
-                ptr += bytesToCopy;
-                remaining -= bytesToCopy;
-            }
-        }
-
-        private static void FillRegion(DataRectangle dataRect, int length, MMXBox box, int paletteIndex)
-        {
-            int dstX = (int) box.Left;
-            int dstY = (int) box.Top;
-            int width = (int) box.Width;
-            int height = (int) box.Height;
-
-            using var dstDS = new DataStream(dataRect.DataPointer, length * sizeof(byte), true, true);
-            for (int y = dstY; y < dstY + height; y++)
-            {
-                for (int x = dstX; x < dstX + width; x++)
-                {
-                    dstDS.Seek(y * dataRect.Pitch + x * sizeof(byte), SeekOrigin.Begin);
-                    dstDS.Write((byte) paletteIndex);
-                }
-            }
-        }
-
-        private static void DrawChargingPointLevel1Small(DataRectangle dataRect, int length, Vector point)
-        {
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 1);
-        }
-
-        private static void DrawChargingPointLevel1Large(DataRectangle dataRect, int length, Vector point)
-        {
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 1);
-        }
-
-        private static void DrawChargingPointLevel2Small1(DataRectangle dataRect, int length, Vector point)
-        {
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 2);
-        }
-
-        private static void DrawChargingPointLevel2Small2(DataRectangle dataRect, int length, Vector point)
-        {
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 3);
-
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y - 1, 1, 1), 4);
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y + 1, 1, 1), 4);
-            FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y, 1, 1), 4);
-            FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y, 1, 1), 4);
-
-            FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y - 1, 1, 1), 5);
-            FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y - 1, 1, 1), 5);
-            FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y + 1, 1, 1), 5);
-            FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y + 1, 1, 1), 5);
-        }
-
-        private static void DrawChargingPointLevel2Large1(DataRectangle dataRect, int length, Vector point)
-        {
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 2);
-        }
-
-        private static void DrawChargingPointLevel2Large2(DataRectangle dataRect, int length, Vector point)
-        {
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 3);
-
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y - 1, 2, 1), 4);
-            FillRegion(dataRect, length, new MMXBox(point.X, point.Y + 2, 2, 1), 4);
-            FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y, 1, 2), 4);
-            FillRegion(dataRect, length, new MMXBox(point.X + 2, point.Y, 1, 2), 4);
-        }
-
-        private static void DrawChargingPointSmall(DataRectangle dataRect, int length, Vector point, int level, int type)
-        {
-            switch (type)
-            {
-                case 1:
-                    switch (level)
-                    {
-                        case 1:
-                            DrawChargingPointLevel1Small(dataRect, length, point);
-                            break;
-
-                        case 2:
-                            DrawChargingPointLevel2Small1(dataRect, length, point);
-                            break;
-                    }
-
-                    break;
-
-                case 2:
-                    switch (level)
-                    {
-                        case 1:
-                            DrawChargingPointLevel1Small(dataRect, length, point);
-                            break;
-
-                        case 2:
-                            DrawChargingPointLevel2Small2(dataRect, length, point);
-                            break;
-                    }
-
-                    break;
-            }
-        }
-
-        private static void DrawChargingPointLarge(DataRectangle dataRect, int length, Vector point, int level, int type)
-        {
-            switch (type)
-            {
-                case 1:
-                    switch (level)
-                    {
-                        case 1:
-                            DrawChargingPointLevel1Large(dataRect, length, point);
-                            break;
-
-                        case 2:
-                            DrawChargingPointLevel2Large1(dataRect, length, point);
-                            break;
-                    }
-
-                    break;
-
-                case 2:
-                    switch (level)
-                    {
-                        case 1:
-                            DrawChargingPointLevel1Large(dataRect, length, point);
-                            break;
-
-                        case 2:
-                            DrawChargingPointLevel2Large2(dataRect, length, point);
-                            break;
-                    }
-
-                    break;
-            }
-        }
-
-        private Texture CreateChargingTexture(Vector[] points, bool[] large, int[] types, int level)
-        {
-            int width1 = (int) NextHighestPowerOfTwo(CHARGING_EFFECT_HITBOX_SIZE);
-            int height1 = (int) NextHighestPowerOfTwo(CHARGING_EFFECT_HITBOX_SIZE);
-            int length = width1 * height1;
-
-            var result = new Texture(Device, width1, height1, 1, Usage.None, Format.L8, Pool.Managed);
-            DataRectangle rect = result.LockRectangle(0, D3D9LockFlags.Discard);
-
-            ZeroDataRect(rect, length);
-
-            for (int i = 0; i < points.Length; i++)
-                if (large[i])
-                    DrawChargingPointLarge(rect, length, points[i], level, types[i]);
-                else
-                    DrawChargingPointSmall(rect, length, points[i], level, types[i]);
-
-            result.UnlockRectangle(0);
-            return result;
-        }
-
-        public Texture CreateImageTextureFromFile(string filePath)
-        {
-            var result = Texture.FromFile(Device, filePath, Usage.None, Pool.SystemMemory);
-            return result;
-        }
-
-        public Texture CreateImageTextureFromStream(Stream stream)
-        {
-            var result = Texture.FromStream(Device, stream, Usage.None, Pool.SystemMemory);
-            return result;
-        }
-
-        private static void WriteVertex(DataStream vbData, float x, float y, float u, float v)
-        {
-            vbData.Write(x - 0 * 0.5f);
-            vbData.Write(y - 0 * 0.5f);
-            vbData.Write(0f);
-            vbData.Write(0xffffffff);
-            vbData.Write(u);
-            vbData.Write(v);
-        }
-
-        public static void SetupQuad(VertexBuffer vb)
-        {
-            DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, D3D9LockFlags.None);
-
-            WriteVertex(vbData, 0, 0, 0, 0);
-            WriteVertex(vbData, 1, 0, 1, 0);
-            WriteVertex(vbData, 1, -1, 1, 1);
-            WriteVertex(vbData, 0, -1, 0, 1);
-
-            vb.Unlock();
-        }
-
-        public void RenderSprite(Texture texture, Texture palette, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
-        {
-            RectangleF rDest = WorldBoxToScreen(box);
-
-            var matScaling = Matrix.Scaling(4, 4, 1);
-
-            sprite.Begin(SpriteFlags.AlphaBlend);
-
-            Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
-            Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
-            Device.SetSamplerState(0, SamplerState.MipFilter, TextureFilter.None);
-
-            Device.PixelShader = PixelShader;
-
-            if (palette != null)
-            {
-                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, true);
-                Device.SetTexture(1, palette);
-            }
-            else
-                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
-
-            if (Fading)
-            {
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingLevel);
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingColor.ToVector4());
-            }
-            else
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
-
-            for (int i = 0; i < repeatX; i++)
-                for (int j = 0; j < repeatY; j++)
-                {
-                    float x = rDest.Left + i * rDest.Width;
-                    float y = rDest.Top + j * rDest.Height;
-                    var matTranslation = Matrix.Translation(x, y, 0);
-                    Matrix matTransform = matTranslation * transform * matScaling;
-                    sprite.Transform = matTransform;
-                    sprite.Draw(texture, Color.FromRgba(0xffffffff));
-                }
-
-            sprite.End();
-        }
-
-        public void RenderSprite(Texture texture, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
-        {
-            RenderSprite(texture, null, box, transform, repeatX, repeatY);
-        }
-
-        public void RenderSprite(Texture texture, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
-        {
-            var description = texture.GetLevelDescription(0);
-            RenderSprite(texture, null, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
-        }
-
-        public void RenderSprite(Texture texture, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
-        {
-            var description = texture.GetLevelDescription(0);
-            RenderSprite(texture, null, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
-        }
-
-        public void RenderSprite(Texture texture, Texture palette, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
-        {
-            var description = texture.GetLevelDescription(0);
-            RenderSprite(texture, palette, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
-        }
-
-        public void RenderSprite(Texture texture, Texture palette, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
-        {
-            var description = texture.GetLevelDescription(0);
-            RenderSprite(texture, palette, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
-        }
-
-        private void AddEntity(Entity entity)
-        {
-            if (entityCount == MAX_ENTITIES)
-                throw new IndexOutOfRangeException("Max entities reached the limit.");
-
-            if (lastEntity != null)
-                lastEntity.next = entity;
-
-            entity.previous = lastEntity;
-            entity.next = null;
-
-            firstEntity ??= entity;
-            lastEntity = entity;
-
-            entity.Index = firstFreeEntityIndex;
-            entities[firstFreeEntityIndex++] = entity;
-            entityCount++;
-
-            for (int i = firstFreeEntityIndex; i < MAX_ENTITIES; i++)
-                if (entities[i] == null)
-                {
-                    firstFreeEntityIndex = i;
-                    break;
-                }
-
-            if (entity is Sprite sprite)
-            {
-                if (sprite is HUD hud)
-                    huds.Add(hud);
-                else
-                    sprites.Add(sprite);
-            }
-        }
-
-        private void RemoveEntity(int index)
-        {
-            var entity = entities[index];
-
-            if (entity is Sprite sprite)
-            {
-                if (sprite is HUD hud)
-                    huds.Remove(hud);
-                else
-                    sprites.Remove(sprite);
+                DisposeResource(stream);
+                DisposeResource(channel);
             }
 
-            var next = entity.next;
-            var previous = entity.previous;
+            soundChannels.Clear();
 
-            if (next != null)
-                next.previous = previous;
+            foreach (var stream in soundStreams)
+                DisposeResource(stream);
 
-            if (previous != null)
-                previous.next = next;
+            soundStreams.Clear();
 
-            if (entity == firstEntity)
-                firstEntity = next;
+            DisposeResource(mmx);
+            DisposeDevice();
+            DisposeResource(Direct3D);
 
-            if (entity == lastEntity)
-                lastEntity = previous;
-
-            entities[index] = null;
-            entityCount--;
-
-            if (index < firstFreeEntityIndex)
-                firstFreeEntityIndex = index;
-        }
-
-        private void ClearEntities()
-        {
-            for (int i = 0; i < MAX_ENTITIES; i++)
-                entities[i] = null;
-
-            firstFreeEntityIndex = 0;
-            entityCount = 0;
-            firstEntity = null;
-            lastEntity = null;
-        }
-
-        private void RemoveEntity(Entity entity)
-        {
-            RemoveEntity(entity.Index);
-        }
-
-        private void OnSpawningBlackScreenComplete()
-        {
-            soundChannels[3].player.Volume = 0.5f;
-
-            if (ENABLE_OST && romLoaded && mmx.Type == 0 && mmx.Level == 8)
-                PlayOST(18, 83, 50.152);
-
-            StartFading(Color.Black, 26, true, StartReadyHUD);
-        }
-
-        private bool OnFrame()
-        {
-            bool nextFrame = !frameAdvance;
-            Keys keys = Keys.NONE;
-
-            if (Form.Focused)
-            {
-                keyboard.Poll();
-                var state = keyboard.GetCurrentState();
-
-                if (state.IsPressed(Key.Left))
-                    keys |= Keys.LEFT;
-
-                if (state.IsPressed(Key.Up))
-                    keys |= Keys.UP;
-
-                if (state.IsPressed(Key.Right))
-                    keys |= Keys.RIGHT;
-
-                if (state.IsPressed(Key.Down))
-                    keys |= Keys.DOWN;
-
-                if (state.IsPressed(Key.V))
-                    keys |= Keys.SHOT;
-
-                if (state.IsPressed(Key.C))
-                    keys |= Keys.JUMP;
-
-                if (state.IsPressed(Key.X))
-                    keys |= Keys.DASH;
-
-                if (state.IsPressed(Key.D))
-                    keys |= Keys.WEAPON;
-
-                if (state.IsPressed(Key.L))
-                    keys |= Keys.LWS;
-
-                if (state.IsPressed(Key.R))
-                    keys |= Keys.RWS;
-
-                if (state.IsPressed(Key.Return))
-                    keys |= Keys.START;
-
-                if (state.IsPressed(Key.Escape))
-                    keys |= Keys.SELECT;
-
-                if (state.IsPressed(Key.Backslash) && state.IsPressed(Key.LeftControl))
-                {
-                    if (!wasPressingToggleFrameAdvance)
-                    {
-                        wasPressingToggleFrameAdvance = true;
-                        frameAdvance = !frameAdvance;
-                        nextFrame = !frameAdvance;
-                    }
-                }
-                else
-                    wasPressingToggleFrameAdvance = false;
-
-                if (state.IsPressed(Key.Backslash) && !state.IsPressed(Key.LeftControl))
-                {
-                    if (!wasPressingNextFrame)
-                    {
-                        wasPressingNextFrame = true;
-                        frameAdvance = true;
-                        nextFrame = true;
-                    }
-                }
-                else
-                    wasPressingNextFrame = false;
-
-                if (state.IsPressed(Key.F5) && !state.IsPressed(Key.LeftShift))
-                {
-                    if (!wasPressingSaveState)
-                    {
-                        wasPressingSaveState = true;
-                        SaveState();
-                    }
-                }
-                else
-                    wasPressingSaveState = false;
-
-                if (state.IsPressed(Key.F7) && !state.IsPressed(Key.LeftShift))
-                {
-                    if (!wasPressingLoadState)
-                    {
-                        wasPressingLoadState = true;
-                        LoadState();
-                    }
-                }
-                else
-                    wasPressingLoadState = false;
-
-                if (state.IsPressed(Key.Equals))
-                {
-                    if (!wasPressingNextSlot)
-                    {
-                        wasPressingNextSlot = true;
-                        currentSaveSlot++;
-                        if (currentSaveSlot >= SAVE_SLOT_COUNT)
-                            currentSaveSlot = 0;
-                    }
-                }
-                else
-                    wasPressingNextSlot = false;
-
-                if (state.IsPressed(Key.Minus))
-                {
-                    if (!wasPressingPreviousSlot)
-                    {
-                        wasPressingPreviousSlot = true;
-                        currentSaveSlot--;
-                        if (currentSaveSlot < 0)
-                            currentSaveSlot = SAVE_SLOT_COUNT - 1;
-                    }
-                }
-                else
-                    wasPressingPreviousSlot = false;
-
-                if (state.IsPressed(Key.N))
-                {
-                    if (!wasPressingToggleNoClip)
-                    {
-                        wasPressingToggleNoClip = true;
-                        if (Player != null)
-                            Player.NoClip = !Player.NoClip;
-                    }
-                }
-                else
-                    wasPressingToggleNoClip = false;
-
-                if (state.IsPressed(Key.M))
-                {
-                    if (!wasPressingToggleCameraConstraints)
-                    {
-                        wasPressingToggleCameraConstraints = true;
-                        noCameraConstraints = !noCameraConstraints;
-                    }
-                }
-                else
-                    wasPressingToggleCameraConstraints = false;
-
-                if (state.IsPressed(Key.D1))
-                {
-                    if (!wasPressingToggleDrawCollisionBox)
-                    {
-                        wasPressingToggleDrawCollisionBox = true;
-                        drawCollisionBox = !drawCollisionBox;
-                    }
-                }
-                else
-                    wasPressingToggleDrawCollisionBox = false;
-
-                if (state.IsPressed(Key.D2))
-                {
-                    if (!wasPressingToggleShowColliders)
-                    {
-                        wasPressingToggleShowColliders = true;
-                        showColliders = !showColliders;
-                    }
-                }
-                else
-                    wasPressingToggleShowColliders = false;
-
-                if (state.IsPressed(Key.D3))
-                {
-                    if (!wasPressingToggleDrawMapBounds)
-                    {
-                        wasPressingToggleDrawMapBounds = true;
-                        drawMapBounds = !drawMapBounds;
-                    }
-                }
-                else
-                    wasPressingToggleDrawMapBounds = false;
-
-                if (state.IsPressed(Key.D4))
-                {
-                    if (!wasPressingToggleDrawTouchingMapBounds)
-                    {
-                        wasPressingToggleDrawTouchingMapBounds = true;
-                        drawTouchingMapBounds = !drawTouchingMapBounds;
-                    }
-                }
-                else
-                    wasPressingToggleDrawTouchingMapBounds = false;
-
-                if (state.IsPressed(Key.D5))
-                {
-                    if (!wasPressingToggleDrawHighlightedPointingTiles)
-                    {
-                        wasPressingToggleDrawHighlightedPointingTiles = true;
-                        drawHighlightedPointingTiles = !drawHighlightedPointingTiles;
-                    }
-                }
-                else
-                    wasPressingToggleDrawHighlightedPointingTiles = false;
-
-                if (state.IsPressed(Key.D6))
-                {
-                    if (!wasPressingToggleDrawPlayerOriginAxis)
-                    {
-                        wasPressingToggleDrawPlayerOriginAxis = true;
-                        drawPlayerOriginAxis = !drawPlayerOriginAxis;
-                    }
-                }
-                else
-                    wasPressingToggleDrawPlayerOriginAxis = false;
-
-                if (state.IsPressed(Key.D7))
-                {
-                    if (!wasPressingToggleShowInfoText)
-                    {
-                        wasPressingToggleShowInfoText = true;
-                        showInfoText = !showInfoText;
-                    }
-                }
-                else
-                    wasPressingToggleShowInfoText = false;
-
-                if (state.IsPressed(Key.D8))
-                {
-                    if (!wasPressingToggleShowCheckpointBounds)
-                    {
-                        wasPressingToggleShowCheckpointBounds = true;
-                        showCheckpointBounds = !showCheckpointBounds;
-                    }
-                }
-                else
-                    wasPressingToggleShowCheckpointBounds = false;
-
-                if (state.IsPressed(Key.D9))
-                {
-                    if (!wasPressingToggleShowTriggerBounds)
-                    {
-                        wasPressingToggleShowTriggerBounds = true;
-                        showTriggerBounds = !showTriggerBounds;
-                    }
-                }
-                else
-                    wasPressingToggleShowTriggerBounds = false;
-
-                if (state.IsPressed(Key.D0))
-                {
-                    if (!wasPressingToggleShowTriggerCameraLook)
-                    {
-                        wasPressingToggleShowTriggerCameraLook = true;
-                        showTriggerCameraLook = !showTriggerCameraLook;
-                    }
-                }
-                else
-                    wasPressingToggleShowTriggerCameraLook = false;
-
-                if (state.IsPressed(Key.F1))
-                {
-                    if (!wasPressingToggleDrawBackground)
-                    {
-                        wasPressingToggleDrawBackground = true;
-                        drawBackground = !drawBackground;
-                    }
-                }
-                else
-                    wasPressingToggleDrawBackground = false;
-
-                if (state.IsPressed(Key.F2))
-                {
-                    if (!wasPressingToggleDrawDownLayer)
-                    {
-                        wasPressingToggleDrawDownLayer = true;
-                        drawDownLayer = !drawDownLayer;
-                    }
-                }
-                else
-                    wasPressingToggleDrawDownLayer = false;
-
-                if (state.IsPressed(Key.F3))
-                {
-                    if (!wasPressingToggleDrawUpLayer)
-                    {
-                        wasPressingToggleDrawUpLayer = true;
-                        drawUpLayer = !drawUpLayer;
-                    }
-                }
-                else
-                    wasPressingToggleDrawUpLayer = false;
-
-                if (state.IsPressed(Key.F4))
-                {
-                    if (!wasPressingToggleDrawSprites)
-                    {
-                        wasPressingToggleDrawSprites = true;
-                        drawSprites = !drawSprites;
-                    }
-                }
-                else
-                    wasPressingToggleDrawSprites = false;
-
-                if (joystick != null)
-                {
-                    try
-                    {
-                        joystick.Poll();
-                        var joyState = joystick.GetCurrentState();
-                        bool[] buttons = joyState.Buttons;
-                        bool reverseButtons = joystick.Capabilities.ButtonCount == 14;
-                        if (buttons != null && buttons.Length > 0)
-                        {
-                            if (reverseButtons ? buttons[0] : buttons[2])
-                                keys |= Keys.SHOT;
-
-                            if (reverseButtons ? buttons[1] : buttons[0])
-                                keys |= Keys.JUMP;
-
-                            if (reverseButtons ? buttons[2] : buttons[1])
-                                keys |= Keys.DASH;
-
-                            if (buttons[7])
-                                keys |= Keys.START;
-                        }
-
-                        int[] pov = joyState.PointOfViewControllers;
-                        if (pov != null && pov.Length > 0)
-                        {
-                            switch (pov[0])
-                            {
-                                case 0:
-                                    keys |= Keys.UP;
-                                    break;
-
-                                case 4500:
-                                    keys |= Keys.UP | Keys.RIGHT;
-                                    break;
-
-                                case 9000:
-                                    keys |= Keys.RIGHT;
-                                    break;
-
-                                case 13500:
-                                    keys |= Keys.DOWN | Keys.RIGHT;
-                                    break;
-
-                                case 18000:
-                                    keys |= Keys.DOWN;
-                                    break;
-
-                                case 22500:
-                                    keys |= Keys.DOWN | Keys.LEFT;
-                                    break;
-
-                                case 27000:
-                                    keys |= Keys.LEFT;
-                                    break;
-
-                                case 31500:
-                                    keys |= Keys.UP | Keys.LEFT;
-                                    break;
-                            }
-                        }
-                    }
-                    catch (SharpDXException e)
-                    {
-                        MessageBox.Show(e.Message);
-                        joystick = null;
-                    }
-                }
-            }
-
-            if (!nextFrame)
-                return false;
-
-            FrameCounter++;
-
-            if (Fading)
-            {
-                FadingTick++;
-                if (FadingTick > FadingFrames)
-                {
-                    Fading = false;
-                    OnFadingComplete?.Invoke();
-                }
-                else
-                {
-                    FadingLevel = (float) FadingTick / FadingFrames;
-                    if (FadeIn)
-                        FadingLevel = 1 - FadingLevel;
-                }
-            }
-
-            if (FadingOST)
-            {
-                FadingOSTTick++;
-                if (FadingOSTTick > FadingOSTFrames)
-                {
-                    FadingOST = false;
-                    OnFadingOSTComplete?.Invoke();
-                }
-                else
-                {
-                    FadingOSTLevel = (float) FadingOSTTick / FadingOSTFrames;
-                    if (FadeInOST)
-                        FadingOSTLevel = 1 - FadingOSTLevel;
-
-                    soundChannels[3].player.Volume = FadingOSTInitialVolume * (1 - FadingOSTLevel) + FadingOSTVolume * FadingOSTLevel;
-                }
-            }
-
-            if (SpawningBlackScreen)
-            {
-                SpawningBlackScreenFrameCounter++;
-                if (SpawningBlackScreenFrameCounter >= SPAWNING_BLACK_SCREEN_FRAMES)
-                {
-                    SpawningBlackScreen = false;
-                    OnSpawningBlackScreenComplete();
-                }
-            }
-
-            if (DyingEffectActive)
-            {
-                if (DyingEffectFrameCounter % 32 == 0)
-                    CreateXDieExplosionEffect(DyingEffectFrameCounter % 64 == 0 ? 0 : System.Math.PI / 8);
-                else if (DyingEffectFrameCounter == 1)
-                    CreateXDieExplosionEffect(System.Math.PI / 8);
-
-                DyingEffectFrameCounter++;
-            }
-
-            if (Freezing)
-            {
-                if (FreezingFrameCounter >= FreezingFrames)
-                {
-                    Freezing = false;
-                    OnFreezeComplete?.Invoke();
-                }
-                else
-                    FreezingFrameCounter++;
-            }
-
-            if (!loadingLevel)
-            {
-                // TODO : Please, optmize me!
-                for (int i = 0; i < respawnableEntities.Count; i++)
-                {
-                    var (entity, origin, wasVisible) = respawnableEntities[i];
-                    if (origin < World.Camera.ExtendedBoundingBox)
-                    {
-                        if (!wasVisible)
-                        {
-                            if (!entity.Alive)
-                            {
-                                if (entity is Item item && item.Collected)
-                                    continue;
-
-                                entity.Origin = origin;
-                                entity.Spawn();
-                            }
-                        }
-
-                        respawnableEntities[i] = (entity, origin, true);
-                    }
-                    else
-                        respawnableEntities[i] = (entity, origin, false);
-                }
-
-                if (addedEntities.Count > 0)
-                {
-                    for (int i = 0; i < addedEntities.Count; i++)
-                    {
-                        var added = addedEntities[i];
-                        AddEntity(added);
-                        added.OnSpawn();
-                        added.PostSpawn();
-                    }
-
-                    addedEntities.Clear();
-                }
-
-                Player?.PushKeys(keys);
-
-                if (Freezing)
-                    return false;
-
-                if (paused || Player != null && Player.Freezed && (!FreezingSprites || freezingSpriteExceptions.Contains(Player)))
-                    Player?.OnFrame();
-                else
-                {
-                    if (FreezingSprites)
-                    {
-                        for (var entity = firstEntity; entity != null; entity = entity.next)
-                            if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
-                                entity.OnFrame();
-                    }
-                    else
-                        for (var entity = firstEntity; entity != null; entity = entity.next)
-                            entity.OnFrame();
-
-                    if (removedEntities.Count > 0)
-                    {
-                        for (int i = 0; i < removedEntities.Count; i++)
-                        {
-                            var removed = removedEntities[i];
-
-                            foreach (Entity child in removed.childs)
-                                child.parent = null;
-
-                            removed.childs.Clear();
-                            removed.Alive = false;
-                            removed.Dispose();
-
-                            RemoveEntity(removed);
-
-                            DisposeResource(removed);
-                        }
-
-                        removedEntities.Clear();
-                    }
-                }
-
-                World.OnFrame();
-            }
-
-            if (changeLevel)
-            {
-                changeLevel = false;
-                LoadLevel(levelToChange);
-            }
-
-            if (gameOver)
-            {
-
-            }
-
-            return true;
-        }
-
-        public static Vector2 ToVector2(Vector v)
-        {
-            return new((float) v.X, (float) v.Y);
-        }
-
-        public static Vector3 ToVector3(Vector v)
-        {
-            return new((float) v.X, (float) v.Y, 0);
-        }
-
-        public static Rectangle ToRectangle(MMXBox box)
-        {
-            return new((int) box.Left, (int) box.Top, (int) box.Width, (int) box.Height);
-        }
-
-        public static RectangleF ToRectangleF(MMXBox box)
-        {
-            return new((float) box.Left, (float) box.Top, (float) box.Width, (float) box.Height);
-        }
-
-        public Vector2 WorldVectorToScreen(Vector v)
-        {
-            return ToVector2((v - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
-        }
-
-        public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
-        {
-            return WorldVectorToScreen(new Vector(x, y));
-        }
-
-        public Vector ScreenPointToVector(int x, int y)
-        {
-            return ScreenPointToVector(new Point(x, y));
-        }
-
-        public Vector ScreenPointToVector(Point p)
-        {
-            return (new Vector(p.X, p.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
-        }
-
-        public Vector ScreenVector2ToWorld(Vector2 v)
-        {
-            return (new Vector(v.X, v.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
-        }
-
-        public RectangleF WorldBoxToScreen(MMXBox box)
-        {
-            return ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
-        }
-
-        public void TogglePauseGame()
-        {
-            if (paused)
-                ContinueGame();
-            else
-                PauseGame();
-        }
-
-        public void PauseGame()
-        {
-            paused = true;
-        }
-
-        public void ContinueGame()
-        {
-            paused = false;
-        }
-
-        public void NextLevel()
-        {
-            changeLevel = true;
-            levelToChange = (ushort) (currentLevel + 1);
-        }
-
-        internal void OnGameOver()
-        {
-            gameOver = true;
-        }
-
-        public void SpawnPlayer()
-        {
-            Vector spawnPos;
-            Vector cameraPos;
-            if (romLoaded)
-            {
-                spawnPos = mmx.CharacterPos + Vector.DOWN_VECTOR * (HITBOX_HEIGHT + 1);
-                cameraPos = mmx.CameraPos;
-            }
-            else
-            {
-                spawnPos = new Vector(SCREEN_WIDTH * 0.5f, 0);
-                cameraPos = new Vector(SCREEN_WIDTH * 0.5f, 0);
-            }
-
-            World.Camera.RightTop = cameraPos;
-
-            SpawnX(spawnPos);
-            CreateHP();
-
-            World.Camera.FocusOn = Player;
-
-            CurrentCheckpoint = checkpoints.Count > 0 ? checkpoints[mmx.Point] : null;
-        }
-
-        public void LoadLevel()
-        {
-            LoadLevel(currentLevel, (ushort) (CurrentCheckpoint != null ? CurrentCheckpoint.Index : 0));
-        }
-
-        public void LoadLevel(ushort level, ushort checkpoint = 0)
-        {
-            paused = false;
-            lock (this)
-            {
-                loadingLevel = true;
-
-                UnloadLevel();
-
-                currentLevel = level;
-
-                if (romLoaded)
-                {
-                    mmx.SetLevel(level, checkpoint);
-
-                    mmx.LoadLevel();
-                    mmx.LoadEvents(this);
-                    mmx.LoadToWorld(this, false);
-
-                    mmx.LoadBackground();
-                    mmx.LoadToWorld(this, true);
-
-                    CurrentCheckpoint = checkpoints[mmx.Point];
-                    CameraConstraintsBox = CurrentCheckpoint.BoundingBox;
-                }
-                else
-                    CameraConstraintsBox = World.BoundingBox;
-
-                World.Tessellate();
-
-                loadingLevel = false;
-                respawning = false;
-
-                if (ENABLE_SPAWNING_BLACK_SCREEN)
-                {
-                    SpawningBlackScreen = true;
-                    SpawningBlackScreenFrameCounter = 0;
-                }
-                else
-                    OnSpawningBlackScreenComplete();
-
-                World.Camera.FocusOn = null;
-                var cameraPos = romLoaded ? mmx.CameraPos : Vector.NULL_VECTOR;
-                World.Camera.LeftTop = cameraPos;
-            }
-        }
-
-        private void UnloadLevel()
-        {
-            World.Dispose();
-
-            foreach (var entity in addedEntities)
-                if (entity is Sprite sprite)
-                    DisposeResource(sprite);
-
-            for (var entity = firstEntity; entity != null; entity = entity.next)
-                if (entity is Sprite sprite)
-                    DisposeResource(sprite);
-
-            huds.Clear();
-            sprites.Clear();
-            checkpoints.Clear();
-            ClearEntities();
-            addedEntities.Clear();
-            removedEntities.Clear();
-            respawnableEntities.Clear();
-            partition.Clear();
-
-            lastLives = Player != null ? Player.Lives : X_INITIAL_LIVES;
-            Player = null;
-            ReadyHUD = null;
-            HP = null;
-
-            long currentMemoryUsage = GC.GetTotalMemory(true);
-            long delta = currentMemoryUsage - lastCurrentMemoryUsage;
-            Debug.WriteLine("**************************Total memory: {0}({1}{2})", currentMemoryUsage, delta > 0 ? "+" : delta < 0 ? "-" : "", delta);
-            lastCurrentMemoryUsage = currentMemoryUsage;
-        }
-
-        internal void UpdateScale()
-        {
-            FixedSingle width = Form.ClientSize.Width;
-            FixedSingle height = Form.ClientSize.Height;
-
-            Vector drawOrigin;
-            /*if (width / height < SIZE_RATIO)
-            {
-                drawScale = width / DEFAULT_CLIENT_WIDTH;
-                MMXFloat newHeight = drawScale * DEFAULT_CLIENT_HEIGHT;
-                drawOrigin = new MMXVector(0, (height - newHeight) / 2);
-                height = newHeight;
-            }
-            else
-            {
-                drawScale = height / DEFAULT_CLIENT_HEIGHT;
-                MMXFloat newWidth = drawScale * DEFAULT_CLIENT_WIDTH;
-                drawOrigin = new MMXVector((width - newWidth) / 2, 0);
-                width = newWidth;
-            }*/
-            drawOrigin = Vector.NULL_VECTOR;
-
-            drawBox = new MMXBox(drawOrigin.X, drawOrigin.Y, width, height);
-        }
-
-        private void DrawSlopeMap(MMXBox box, RightTriangle triangle, float strokeWidth)
-        {
-            Vector tv1 = triangle.Origin;
-            Vector tv2 = triangle.HCathetusVertex;
-            Vector tv3 = triangle.VCathetusVertex;
-
-            DrawLine(tv2, tv3, strokeWidth, TOUCHING_MAP_COLOR);
-
-            FixedSingle h = tv1.Y - box.Top;
-            FixedSingle H = MAP_SIZE - h;
-            if (H > 0)
-            {
-                if (triangle.HCathetusVector.X < 0)
-                {
-                    DrawLine(tv2, box.LeftBottom, strokeWidth, TOUCHING_MAP_COLOR);
-                    DrawLine(tv3, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
-                }
-                else
-                {
-                    DrawLine(tv3, box.LeftBottom, strokeWidth, TOUCHING_MAP_COLOR);
-                    DrawLine(tv2, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
-                }
-
-                DrawLine(box.LeftBottom, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
-            }
-            else
-            {
-                DrawLine(tv3, tv1, strokeWidth, TOUCHING_MAP_COLOR);
-                DrawLine(tv1, tv2, strokeWidth, TOUCHING_MAP_COLOR);
-            }
-        }
-
-        private void DrawHighlightMap(int row, int col, CollisionData collisionData)
-        {
-            MMXBox mapBox = GetMapBoundingBox(row, col);
-            if (IsSolidBlock(collisionData))
-                DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
-            else if (IsSlope(collisionData))
-            {
-                RightTriangle st = MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
-                DrawSlopeMap(mapBox, st, 4);
-            }
-        }
-
-        private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, MMXBox collisionBox, bool ignoreSlopes = false)
-        {
-            var halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
-            var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
-
-            MMXBox mapBox = GetMapBoundingBox(row, col);
-            if (IsSolidBlock(collisionData) && HasIntersection(mapBox, collisionBox))
-                DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
-            else if (!ignoreSlopes && IsSlope(collisionData))
-            {
-                RightTriangle st = MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
-                Vector hv = st.HCathetusVector;
-                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, EPSLON, true) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, EPSLON, true))
-                    DrawSlopeMap(mapBox, st, 4);
-            }
-        }
-
-        private void CheckAndDrawTouchingMaps(MMXBox collisionBox, bool ignoreSlopes = false)
-        {
-            Cell start = GetMapCellFromPos(collisionBox.LeftTop);
-            Cell end = GetMapCellFromPos(collisionBox.RightBottom);
-
-            int startRow = start.Row;
-            int startCol = start.Col;
-
-            if (startRow < 0)
-                startRow = 0;
-
-            if (startRow >= World.MapRowCount)
-                startRow = World.MapRowCount - 1;
-
-            if (startCol < 0)
-                startCol = 0;
-
-            if (startCol >= World.MapColCount)
-                startCol = World.MapColCount - 1;
-
-            int endRow = end.Row;
-            int endCol = end.Col;
-
-            if (endRow < 0)
-                endRow = 0;
-
-            if (endRow >= World.MapRowCount)
-                endRow = World.MapRowCount - 1;
-
-            if (endCol < 0)
-                endCol = 0;
-
-            if (endCol >= World.MapColCount)
-                endCol = World.MapColCount - 1;
-
-            for (int row = startRow; row <= endRow; row++)
-                for (int col = startCol; col <= endCol; col++)
-                {
-                    var v = new Vector(col * MAP_SIZE, row * MAP_SIZE);
-                    Map map = World.GetMapFrom(v);
-                    if (map != null)
-                        CheckAndDrawTouchingMap(row, col, map.CollisionData, collisionBox, ignoreSlopes);
-                }
-        }
-
-        public void DrawLine(Vector from, Vector to, float width, Color color)
-        {
-            DrawLine(WorldVectorToScreen(from), WorldVectorToScreen(to), width, color);
-        }
-
-        public void DrawLine(Vector2 from, Vector2 to, float width, Color color)
-        {
-            from *= 4;
-            to *= 4;
-
-            line.Width = width;
-
-            line.Begin();
-            line.Draw(new Vector2[] { from, to }, color);
-            line.End();
-        }
-
-        public void DrawRectangle(MMXBox box, float borderWith, Color color)
-        {
-            DrawRectangle(WorldBoxToScreen(box), borderWith, color);
-        }
-
-        public void DrawRectangle(RectangleF rect, float borderWith, Color color)
-        {
-            rect = new RectangleF(rect.X * 4, rect.Y * 4, rect.Width * 4, rect.Height * 4);
-
-            line.Width = borderWith;
-
-            line.Begin();
-            line.Draw(new Vector2[] { rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft, rect.TopLeft }, color);
-            line.End();
-        }
-
-        public void FillRectangle(MMXBox box, Color color)
-        {
-            FillRectangle(WorldBoxToScreen(box), color);
-        }
-
-        public void FillRectangle(RectangleF rect, Color color, bool usePixelShader = false)
-        {
-            float x = 4 * rect.Left;
-            float y = 4 * rect.Top;
-
-            var matScaling = Matrix.Scaling(4 * rect.Width, 4 * rect.Height, 1);
-            var matTranslation = Matrix.Translation(x, y, 0);
-            Matrix matTransform = matScaling * matTranslation;
-
-            sprite.Begin(SpriteFlags.AlphaBlend);
-
-            Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
-            Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
-
-            Device.VertexShader = null;
-
-            if (usePixelShader)
-            {
-                Device.PixelShader = PixelShader;
-                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
-
-                if (Fading)
-                {
-                    PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingLevel);
-                    PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingColor.ToVector4());
-                }
-                else
-                    PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
-            }
-
-            sprite.Transform = matTransform;
-
-            sprite.Draw(color == Color.Black ? blackPixelTexture : whitePixelTexture, color);
-            sprite.End();
-        }
-
-        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color)
-        {
-            DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color);
-        }
-
-        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, RawMatrix transform, Color color)
-        {
-            sprite.Begin();
-
-            Device.VertexShader = null;
-            Device.PixelShader = null;
-
-            Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
-            Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
-            sprite.Transform = transform;
-
-            var fontDimension = font.MeasureText(sprite, text, drawRect, drawFlags);
-            font.DrawText(sprite, text, fontDimension, drawFlags, color);
-            sprite.End();
+            SaveConfig();
         }
 
         private void ResetDevice()
@@ -3359,6 +1963,1470 @@ namespace MMX.Engine
                     sprite.OnDeviceReset();
         }
 
+        public void LoadConfig()
+        {
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
+            {
+                section = new ProgramConfiguratinSection();
+                config.Sections.Add("ProgramConfiguratinSection", section);
+                config.Save();
+            }
+
+            if (section.Left != -1)
+                Form.Left = section.Left;
+
+            if (section.Top != -1)
+                Form.Top = section.Top;
+
+            drawCollisionBox = section.DrawCollisionBox;
+            showColliders = section.ShowColliders;
+            drawMapBounds = section.DrawMapBounds;
+            drawTouchingMapBounds = section.DrawTouchingMapBounds;
+            drawHighlightedPointingTiles = section.DrawHighlightedPointingTiles;
+            drawPlayerOriginAxis = section.DrawPlayerOriginAxis;
+            showInfoText = section.ShowInfoText;
+            showCheckpointBounds = section.ShowCheckpointBounds;
+            showTriggerBounds = section.ShowTriggerBounds;
+            showTriggerCameraLook = section.ShowTriggerCameraLook;
+        }
+
+        public void SaveConfig()
+        {
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
+            {
+                section = new ProgramConfiguratinSection();
+                config.Sections.Add("ProgramConfiguratinSection", section);
+            }
+
+            section.Left = Form.Left;
+            section.Top = Form.Top;
+            section.DrawCollisionBox = drawCollisionBox;
+            section.ShowColliders = showColliders;
+            section.DrawMapBounds = drawMapBounds;
+            section.DrawTouchingMapBounds = drawTouchingMapBounds;
+            section.DrawHighlightedPointingTiles = drawHighlightedPointingTiles;
+            section.DrawPlayerOriginAxis = drawPlayerOriginAxis;
+            section.ShowInfoText = showInfoText;
+            section.ShowCheckpointBounds = showCheckpointBounds;
+            section.ShowTriggerBounds = showTriggerBounds;
+            section.ShowTriggerCameraLook = showTriggerCameraLook;
+
+            config.Save();
+        }
+
+        private void AddChargingEffectFrames(SpriteSheet.FrameSequence sequence, int level)
+        {
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 2), new Vector(27, 46) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, true, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 3), new Vector(27, 45), new Vector(5, 24), new Vector(49, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(6, 24), new Vector(27, 5), new Vector(27, 44), new Vector(48, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 24), new Vector(11, 40), new Vector(43, 8), new Vector(47, 24), new Vector(27, 43), new Vector(28, 6) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 24), new Vector(12, 39), new Vector(42, 9), new Vector(46, 24), new Vector(27, 42), new Vector(28, 7) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(11, 8), new Vector(13, 38), new Vector(41, 10), new Vector(43, 40), new Vector(10, 25), new Vector(27, 41), new Vector(27, 7), new Vector(44, 23) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 1, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(12, 9), new Vector(14, 37), new Vector(40, 11), new Vector(42, 39), new Vector(11, 25), new Vector(28, 9), new Vector(43, 23) }, new bool[] { true, true, true, true, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(13, 10), new Vector(19, 44), new Vector(35, 4), new Vector(41, 38), new Vector(12, 25), new Vector(16, 36), new Vector(39, 13), new Vector(43, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(14, 11), new Vector(19, 43), new Vector(35, 5), new Vector(40, 37), new Vector(13, 25), new Vector(17, 35), new Vector(38, 14), new Vector(42, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 16), new Vector(20, 42), new Vector(34, 6), new Vector(47, 32), new Vector(16, 13), new Vector(18, 34), new Vector(37, 15), new Vector(39, 36) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 16), new Vector(20, 41), new Vector(34, 7), new Vector(46, 32), new Vector(17, 4), new Vector(19, 33), new Vector(36, 16), new Vector(38, 35) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(9, 16), new Vector(19, 4), new Vector(24, 40), new Vector(33, 8), new Vector(35, 44), new Vector(45, 31), new Vector(18, 15), new Vector(37, 34) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(10, 17), new Vector(19, 5), new Vector(21, 39), new Vector(39, 9), new Vector(35, 43), new Vector(44, 30), new Vector(19, 16), new Vector(36, 33) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 32), new Vector(47, 16), new Vector(12, 18), new Vector(21, 7), new Vector(22, 38), new Vector(33, 11), new Vector(35, 43), new Vector(44, 31) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 32), new Vector(46, 16), new Vector(13, 19), new Vector(20, 8), new Vector(22, 37), new Vector(33, 12), new Vector(36, 42), new Vector(43, 30) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(21, 8), new Vector(33, 40), new Vector(10, 32), new Vector(14, 19), new Vector(42, 30), new Vector(46, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(21, 9), new Vector(33, 39), new Vector(11, 32), new Vector(15, 20), new Vector(41, 29), new Vector(45, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(11, 29), new Vector(43, 17), new Vector(23, 10) }, new bool[] { true, true, false }, new int[] { 1, 1, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(13, 30), new Vector(42, 19) }, new bool[] { true, true }, new int[] { 1, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(14, 29), new Vector(41, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(15, 29), new Vector(40, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+            sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 1), new Vector(27, 47) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
+            sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
+        }
+
+        public void StartFading(Color color, int frames, bool fadeIn, Action onFadingComplete = null)
+        {
+            Fading = true;
+            FadingColor = color;
+            FadingFrames = frames;
+            FadingLevel = fadeIn ? 1 : 0;
+            FadeIn = fadeIn;
+            FadingTick = 0;
+            OnFadingComplete = onFadingComplete;
+        }
+
+        public void StartFading(Color color, int frames, Action onFadingComplete = null)
+        {
+            StartFading(color, frames, false, onFadingComplete);
+        }
+
+        public void StartFadingOST(float volume, int frames, bool fadeIn, Action onFadingComplete = null)
+        {
+            FadingOST = true;
+            FadingOSTInitialVolume = soundChannels[3].player.Volume;
+            FadingOSTVolume = volume;
+            FadingOSTFrames = frames;
+            FadingOSTLevel = fadeIn ? 1 : 0;
+            FadeInOST = fadeIn;
+            FadingOSTTick = 0;
+            OnFadingOSTComplete = onFadingComplete;
+        }
+
+        public void StartFadingOST(float volume, int frames, Action onFadingComplete = null)
+        {
+            StartFadingOST(volume, frames, false, onFadingComplete);
+        }
+
+        public static uint NextHighestPowerOfTwo(uint v)
+        {
+            v--;
+            v |= v >> 1;
+            v |= v >> 2;
+            v |= v >> 4;
+            v |= v >> 8;
+            v |= v >> 16;
+            v++;
+
+            return v;
+        }
+
+        private static readonly byte[] EMPTY_TEXTURE_DATA = new byte[4096];
+
+        private static void ZeroDataRect(DataRectangle dataRect, int length)
+        {
+            int remaining = length;
+            IntPtr ptr = dataRect.DataPointer;
+            while (remaining > 0)
+            {
+                int bytesToCopy = remaining > EMPTY_TEXTURE_DATA.Length ? EMPTY_TEXTURE_DATA.Length : remaining;
+                Marshal.Copy(EMPTY_TEXTURE_DATA, 0, ptr, bytesToCopy);
+                ptr += bytesToCopy;
+                remaining -= bytesToCopy;
+            }
+        }
+
+        private static void FillRegion(DataRectangle dataRect, int length, MMXBox box, int paletteIndex)
+        {
+            int dstX = (int) box.Left;
+            int dstY = (int) box.Top;
+            int width = (int) box.Width;
+            int height = (int) box.Height;
+
+            using var dstDS = new DataStream(dataRect.DataPointer, length * sizeof(byte), true, true);
+            for (int y = dstY; y < dstY + height; y++)
+            {
+                for (int x = dstX; x < dstX + width; x++)
+                {
+                    dstDS.Seek(y * dataRect.Pitch + x * sizeof(byte), SeekOrigin.Begin);
+                    dstDS.Write((byte) paletteIndex);
+                }
+            }
+        }
+
+        private static void DrawChargingPointLevel1Small(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 1);
+        }
+
+        private static void DrawChargingPointLevel1Large(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 1);
+        }
+
+        private static void DrawChargingPointLevel2Small1(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 2);
+        }
+
+        private static void DrawChargingPointLevel2Small2(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 3);
+
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y - 1, 1, 1), 4);
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y + 1, 1, 1), 4);
+            FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y, 1, 1), 4);
+            FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y, 1, 1), 4);
+
+            FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y - 1, 1, 1), 5);
+            FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y - 1, 1, 1), 5);
+            FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y + 1, 1, 1), 5);
+            FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y + 1, 1, 1), 5);
+        }
+
+        private static void DrawChargingPointLevel2Large1(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 2);
+        }
+
+        private static void DrawChargingPointLevel2Large2(DataRectangle dataRect, int length, Vector point)
+        {
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 3);
+
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y - 1, 2, 1), 4);
+            FillRegion(dataRect, length, new MMXBox(point.X, point.Y + 2, 2, 1), 4);
+            FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y, 1, 2), 4);
+            FillRegion(dataRect, length, new MMXBox(point.X + 2, point.Y, 1, 2), 4);
+        }
+
+        private static void DrawChargingPointSmall(DataRectangle dataRect, int length, Vector point, int level, int type)
+        {
+            switch (type)
+            {
+                case 1:
+                    switch (level)
+                    {
+                        case 1:
+                            DrawChargingPointLevel1Small(dataRect, length, point);
+                            break;
+
+                        case 2:
+                            DrawChargingPointLevel2Small1(dataRect, length, point);
+                            break;
+                    }
+
+                    break;
+
+                case 2:
+                    switch (level)
+                    {
+                        case 1:
+                            DrawChargingPointLevel1Small(dataRect, length, point);
+                            break;
+
+                        case 2:
+                            DrawChargingPointLevel2Small2(dataRect, length, point);
+                            break;
+                    }
+
+                    break;
+            }
+        }
+
+        private static void DrawChargingPointLarge(DataRectangle dataRect, int length, Vector point, int level, int type)
+        {
+            switch (type)
+            {
+                case 1:
+                    switch (level)
+                    {
+                        case 1:
+                            DrawChargingPointLevel1Large(dataRect, length, point);
+                            break;
+
+                        case 2:
+                            DrawChargingPointLevel2Large1(dataRect, length, point);
+                            break;
+                    }
+
+                    break;
+
+                case 2:
+                    switch (level)
+                    {
+                        case 1:
+                            DrawChargingPointLevel1Large(dataRect, length, point);
+                            break;
+
+                        case 2:
+                            DrawChargingPointLevel2Large2(dataRect, length, point);
+                            break;
+                    }
+
+                    break;
+            }
+        }
+
+        private Texture CreateChargingTexture(Vector[] points, bool[] large, int[] types, int level)
+        {
+            int width1 = (int) NextHighestPowerOfTwo(CHARGING_EFFECT_HITBOX_SIZE);
+            int height1 = (int) NextHighestPowerOfTwo(CHARGING_EFFECT_HITBOX_SIZE);
+            int length = width1 * height1;
+
+            var result = new Texture(Device, width1, height1, 1, Usage.None, Format.L8, Pool.Managed);
+            DataRectangle rect = result.LockRectangle(0, D3D9LockFlags.Discard);
+
+            ZeroDataRect(rect, length);
+
+            for (int i = 0; i < points.Length; i++)
+                if (large[i])
+                    DrawChargingPointLarge(rect, length, points[i], level, types[i]);
+                else
+                    DrawChargingPointSmall(rect, length, points[i], level, types[i]);
+
+            result.UnlockRectangle(0);
+            return result;
+        }
+
+        public Texture CreateImageTextureFromFile(string filePath)
+        {
+            var result = Texture.FromFile(Device, filePath, Usage.None, Pool.SystemMemory);
+            return result;
+        }
+
+        public Texture CreateImageTextureFromStream(Stream stream)
+        {
+            var result = Texture.FromStream(Device, stream, Usage.None, Pool.SystemMemory);
+            return result;
+        }
+
+        private static void WriteVertex(DataStream vbData, float x, float y, float u, float v)
+        {
+            vbData.Write(x - 0 * 0.5f);
+            vbData.Write(y - 0 * 0.5f);
+            vbData.Write(0f);
+            vbData.Write(0xffffffff);
+            vbData.Write(u);
+            vbData.Write(v);
+        }
+
+        public static void SetupQuad(VertexBuffer vb)
+        {
+            DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, D3D9LockFlags.None);
+
+            WriteVertex(vbData, 0, 0, 0, 0);
+            WriteVertex(vbData, 1, 0, 1, 0);
+            WriteVertex(vbData, 1, -1, 1, 1);
+            WriteVertex(vbData, 0, -1, 0, 1);
+
+            vb.Unlock();
+        }
+
+        public void RenderSprite(Texture texture, Texture palette, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
+        {
+            RectangleF rDest = WorldBoxToScreen(box);
+
+            var matScaling = Matrix.Scaling(4, 4, 1);
+
+            sprite.Begin(SpriteFlags.AlphaBlend);
+
+            Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
+            Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+            Device.SetSamplerState(0, SamplerState.MipFilter, TextureFilter.None);
+
+            Device.PixelShader = PixelShader;
+
+            if (palette != null)
+            {
+                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, true);
+                Device.SetTexture(1, palette);
+            }
+            else
+                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
+
+            if (Fading)
+            {
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingLevel);
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingColor.ToVector4());
+            }
+            else
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
+
+            for (int i = 0; i < repeatX; i++)
+                for (int j = 0; j < repeatY; j++)
+                {
+                    float x = rDest.Left + i * rDest.Width;
+                    float y = rDest.Top + j * rDest.Height;
+                    var matTranslation = Matrix.Translation(x, y, 0);
+                    Matrix matTransform = matTranslation * transform * matScaling;
+                    sprite.Transform = matTransform;
+                    sprite.Draw(texture, Color.FromRgba(0xffffffff));
+                }
+
+            sprite.End();
+        }
+
+        public void RenderSprite(Texture texture, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
+        {
+            RenderSprite(texture, null, box, transform, repeatX, repeatY);
+        }
+
+        public void RenderSprite(Texture texture, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
+        {
+            var description = texture.GetLevelDescription(0);
+            RenderSprite(texture, null, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
+        }
+
+        public void RenderSprite(Texture texture, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
+        {
+            var description = texture.GetLevelDescription(0);
+            RenderSprite(texture, null, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
+        }
+
+        public void RenderSprite(Texture texture, Texture palette, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
+        {
+            var description = texture.GetLevelDescription(0);
+            RenderSprite(texture, palette, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
+        }
+
+        public void RenderSprite(Texture texture, Texture palette, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
+        {
+            var description = texture.GetLevelDescription(0);
+            RenderSprite(texture, palette, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
+        }
+
+        private void AddEntity(Entity entity)
+        {
+            if (entityCount == MAX_ENTITIES)
+                throw new IndexOutOfRangeException("Max entities reached the limit.");
+
+            if (lastEntity != null)
+                lastEntity.next = entity;
+
+            entity.previous = lastEntity;
+            entity.next = null;
+
+            firstEntity ??= entity;
+            lastEntity = entity;
+
+            entity.Index = firstFreeEntityIndex;
+            entities[firstFreeEntityIndex++] = entity;
+            entityCount++;
+
+            for (int i = firstFreeEntityIndex; i < MAX_ENTITIES; i++)
+                if (entities[i] == null)
+                {
+                    firstFreeEntityIndex = i;
+                    break;
+                }
+
+            if (entity is Sprite sprite)
+            {
+                if (sprite is HUD hud)
+                    huds.Add(hud);
+                else
+                    sprites.Add(sprite);
+            }
+        }
+
+        private void RemoveEntity(int index)
+        {
+            var entity = entities[index];
+
+            if (entity is Sprite sprite)
+            {
+                if (sprite is HUD hud)
+                    huds.Remove(hud);
+                else
+                    sprites.Remove(sprite);
+            }
+
+            var next = entity.next;
+            var previous = entity.previous;
+
+            if (next != null)
+                next.previous = previous;
+
+            if (previous != null)
+                previous.next = next;
+
+            if (entity == firstEntity)
+                firstEntity = next;
+
+            if (entity == lastEntity)
+                lastEntity = previous;
+
+            entities[index] = null;
+            entityCount--;
+
+            if (index < firstFreeEntityIndex)
+                firstFreeEntityIndex = index;
+        }
+
+        private void ClearEntities()
+        {
+            foreach (var entity in addedEntities)
+                if (entity is Sprite sprite)
+                    DisposeResource(sprite);
+
+            for (var entity = firstEntity; entity != null; entity = entity.next)
+                if (entity is Sprite sprite)
+                    DisposeResource(sprite);
+
+            for (int i = 0; i < MAX_ENTITIES; i++)
+                entities[i] = null;
+
+            addedEntities.Clear();
+            removedEntities.Clear();
+            sprites.Clear();
+            huds.Clear();
+            freezingSpriteExceptions.Clear();
+
+            firstFreeEntityIndex = 0;
+            entityCount = 0;
+            firstEntity = null;
+            lastEntity = null;
+        }
+
+        private void RemoveEntity(Entity entity)
+        {
+            RemoveEntity(entity.Index);
+        }
+
+        private void OnSpawningBlackScreenComplete()
+        {
+            soundChannels[3].player.Volume = 0.5f;
+
+            if (ENABLE_OST && romLoaded && mmx.Type == 0 && mmx.Level == 8)
+                PlayOST(18, 83, 50.152);
+
+            StartFading(Color.Black, 26, true, StartReadyHUD);
+        }
+
+        private bool OnFrame()
+        {
+            bool nextFrame = !frameAdvance;
+            Keys keys = Keys.NONE;
+
+            if (Form.Focused)
+            {
+                keyboard.Poll();
+                var state = keyboard.GetCurrentState();
+
+                if (state.IsPressed(Key.Left))
+                    keys |= Keys.LEFT;
+
+                if (state.IsPressed(Key.Up))
+                    keys |= Keys.UP;
+
+                if (state.IsPressed(Key.Right))
+                    keys |= Keys.RIGHT;
+
+                if (state.IsPressed(Key.Down))
+                    keys |= Keys.DOWN;
+
+                if (state.IsPressed(Key.V))
+                    keys |= Keys.SHOT;
+
+                if (state.IsPressed(Key.C))
+                    keys |= Keys.JUMP;
+
+                if (state.IsPressed(Key.X))
+                    keys |= Keys.DASH;
+
+                if (state.IsPressed(Key.D))
+                    keys |= Keys.WEAPON;
+
+                if (state.IsPressed(Key.L))
+                    keys |= Keys.LWS;
+
+                if (state.IsPressed(Key.R))
+                    keys |= Keys.RWS;
+
+                if (state.IsPressed(Key.Return))
+                    keys |= Keys.START;
+
+                if (state.IsPressed(Key.Escape))
+                    keys |= Keys.SELECT;
+
+                if (state.IsPressed(Key.Backslash) && state.IsPressed(Key.LeftControl))
+                {
+                    if (!wasPressingToggleFrameAdvance)
+                    {
+                        wasPressingToggleFrameAdvance = true;
+                        frameAdvance = !frameAdvance;
+                        nextFrame = !frameAdvance;
+                    }
+                }
+                else
+                    wasPressingToggleFrameAdvance = false;
+
+                if (state.IsPressed(Key.Backslash) && !state.IsPressed(Key.LeftControl))
+                {
+                    if (!wasPressingNextFrame)
+                    {
+                        wasPressingNextFrame = true;
+                        frameAdvance = true;
+                        nextFrame = true;
+                    }
+                }
+                else
+                    wasPressingNextFrame = false;
+
+                if (state.IsPressed(Key.F5) && !state.IsPressed(Key.LeftShift))
+                {
+                    if (!wasPressingSaveState)
+                    {
+                        wasPressingSaveState = true;
+                        SaveState();
+                    }
+                }
+                else
+                    wasPressingSaveState = false;
+
+                if (state.IsPressed(Key.F7) && !state.IsPressed(Key.LeftShift))
+                {
+                    if (!wasPressingLoadState)
+                    {
+                        wasPressingLoadState = true;
+                        LoadState();
+                    }
+                }
+                else
+                    wasPressingLoadState = false;
+
+                if (state.IsPressed(Key.Equals))
+                {
+                    if (!wasPressingNextSlot)
+                    {
+                        wasPressingNextSlot = true;
+                        currentSaveSlot++;
+                        if (currentSaveSlot >= SAVE_SLOT_COUNT)
+                            currentSaveSlot = 0;
+                    }
+                }
+                else
+                    wasPressingNextSlot = false;
+
+                if (state.IsPressed(Key.Minus))
+                {
+                    if (!wasPressingPreviousSlot)
+                    {
+                        wasPressingPreviousSlot = true;
+                        currentSaveSlot--;
+                        if (currentSaveSlot < 0)
+                            currentSaveSlot = SAVE_SLOT_COUNT - 1;
+                    }
+                }
+                else
+                    wasPressingPreviousSlot = false;
+
+                if (state.IsPressed(Key.N))
+                {
+                    if (!wasPressingToggleNoClip)
+                    {
+                        wasPressingToggleNoClip = true;
+                        if (Player != null)
+                            Player.NoClip = !Player.NoClip;
+                    }
+                }
+                else
+                    wasPressingToggleNoClip = false;
+
+                if (state.IsPressed(Key.M))
+                {
+                    if (!wasPressingToggleCameraConstraints)
+                    {
+                        wasPressingToggleCameraConstraints = true;
+                        NoCameraConstraints = !NoCameraConstraints;
+                    }
+                }
+                else
+                    wasPressingToggleCameraConstraints = false;
+
+                if (state.IsPressed(Key.D1))
+                {
+                    if (!wasPressingToggleDrawCollisionBox)
+                    {
+                        wasPressingToggleDrawCollisionBox = true;
+                        drawCollisionBox = !drawCollisionBox;
+                    }
+                }
+                else
+                    wasPressingToggleDrawCollisionBox = false;
+
+                if (state.IsPressed(Key.D2))
+                {
+                    if (!wasPressingToggleShowColliders)
+                    {
+                        wasPressingToggleShowColliders = true;
+                        showColliders = !showColliders;
+                    }
+                }
+                else
+                    wasPressingToggleShowColliders = false;
+
+                if (state.IsPressed(Key.D3))
+                {
+                    if (!wasPressingToggleDrawMapBounds)
+                    {
+                        wasPressingToggleDrawMapBounds = true;
+                        drawMapBounds = !drawMapBounds;
+                    }
+                }
+                else
+                    wasPressingToggleDrawMapBounds = false;
+
+                if (state.IsPressed(Key.D4))
+                {
+                    if (!wasPressingToggleDrawTouchingMapBounds)
+                    {
+                        wasPressingToggleDrawTouchingMapBounds = true;
+                        drawTouchingMapBounds = !drawTouchingMapBounds;
+                    }
+                }
+                else
+                    wasPressingToggleDrawTouchingMapBounds = false;
+
+                if (state.IsPressed(Key.D5))
+                {
+                    if (!wasPressingToggleDrawHighlightedPointingTiles)
+                    {
+                        wasPressingToggleDrawHighlightedPointingTiles = true;
+                        drawHighlightedPointingTiles = !drawHighlightedPointingTiles;
+                    }
+                }
+                else
+                    wasPressingToggleDrawHighlightedPointingTiles = false;
+
+                if (state.IsPressed(Key.D6))
+                {
+                    if (!wasPressingToggleDrawPlayerOriginAxis)
+                    {
+                        wasPressingToggleDrawPlayerOriginAxis = true;
+                        drawPlayerOriginAxis = !drawPlayerOriginAxis;
+                    }
+                }
+                else
+                    wasPressingToggleDrawPlayerOriginAxis = false;
+
+                if (state.IsPressed(Key.D7))
+                {
+                    if (!wasPressingToggleShowInfoText)
+                    {
+                        wasPressingToggleShowInfoText = true;
+                        showInfoText = !showInfoText;
+                    }
+                }
+                else
+                    wasPressingToggleShowInfoText = false;
+
+                if (state.IsPressed(Key.D8))
+                {
+                    if (!wasPressingToggleShowCheckpointBounds)
+                    {
+                        wasPressingToggleShowCheckpointBounds = true;
+                        showCheckpointBounds = !showCheckpointBounds;
+                    }
+                }
+                else
+                    wasPressingToggleShowCheckpointBounds = false;
+
+                if (state.IsPressed(Key.D9))
+                {
+                    if (!wasPressingToggleShowTriggerBounds)
+                    {
+                        wasPressingToggleShowTriggerBounds = true;
+                        showTriggerBounds = !showTriggerBounds;
+                    }
+                }
+                else
+                    wasPressingToggleShowTriggerBounds = false;
+
+                if (state.IsPressed(Key.D0))
+                {
+                    if (!wasPressingToggleShowTriggerCameraLook)
+                    {
+                        wasPressingToggleShowTriggerCameraLook = true;
+                        showTriggerCameraLook = !showTriggerCameraLook;
+                    }
+                }
+                else
+                    wasPressingToggleShowTriggerCameraLook = false;
+
+                if (state.IsPressed(Key.F1))
+                {
+                    if (!wasPressingToggleDrawBackground)
+                    {
+                        wasPressingToggleDrawBackground = true;
+                        drawBackground = !drawBackground;
+                    }
+                }
+                else
+                    wasPressingToggleDrawBackground = false;
+
+                if (state.IsPressed(Key.F2))
+                {
+                    if (!wasPressingToggleDrawDownLayer)
+                    {
+                        wasPressingToggleDrawDownLayer = true;
+                        drawDownLayer = !drawDownLayer;
+                    }
+                }
+                else
+                    wasPressingToggleDrawDownLayer = false;
+
+                if (state.IsPressed(Key.F3))
+                {
+                    if (!wasPressingToggleDrawUpLayer)
+                    {
+                        wasPressingToggleDrawUpLayer = true;
+                        drawUpLayer = !drawUpLayer;
+                    }
+                }
+                else
+                    wasPressingToggleDrawUpLayer = false;
+
+                if (state.IsPressed(Key.F4))
+                {
+                    if (!wasPressingToggleDrawSprites)
+                    {
+                        wasPressingToggleDrawSprites = true;
+                        drawSprites = !drawSprites;
+                    }
+                }
+                else
+                    wasPressingToggleDrawSprites = false;
+
+                if (joystick != null)
+                {
+                    try
+                    {
+                        joystick.Poll();
+                        var joyState = joystick.GetCurrentState();
+                        bool[] buttons = joyState.Buttons;
+                        bool reverseButtons = joystick.Capabilities.ButtonCount == 14;
+                        if (buttons != null && buttons.Length > 0)
+                        {
+                            if (reverseButtons ? buttons[0] : buttons[2])
+                                keys |= Keys.SHOT;
+
+                            if (reverseButtons ? buttons[1] : buttons[0])
+                                keys |= Keys.JUMP;
+
+                            if (reverseButtons ? buttons[2] : buttons[1])
+                                keys |= Keys.DASH;
+
+                            if (buttons[7])
+                                keys |= Keys.START;
+                        }
+
+                        int[] pov = joyState.PointOfViewControllers;
+                        if (pov != null && pov.Length > 0)
+                        {
+                            switch (pov[0])
+                            {
+                                case 0:
+                                    keys |= Keys.UP;
+                                    break;
+
+                                case 4500:
+                                    keys |= Keys.UP | Keys.RIGHT;
+                                    break;
+
+                                case 9000:
+                                    keys |= Keys.RIGHT;
+                                    break;
+
+                                case 13500:
+                                    keys |= Keys.DOWN | Keys.RIGHT;
+                                    break;
+
+                                case 18000:
+                                    keys |= Keys.DOWN;
+                                    break;
+
+                                case 22500:
+                                    keys |= Keys.DOWN | Keys.LEFT;
+                                    break;
+
+                                case 27000:
+                                    keys |= Keys.LEFT;
+                                    break;
+
+                                case 31500:
+                                    keys |= Keys.UP | Keys.LEFT;
+                                    break;
+                            }
+                        }
+                    }
+                    catch (SharpDXException e)
+                    {
+                        MessageBox.Show(e.Message);
+                        joystick = null;
+                    }
+                }
+            }
+
+            if (!nextFrame)
+                return false;
+
+            FrameCounter++;
+
+            if (Fading)
+            {
+                FadingTick++;
+                if (FadingTick > FadingFrames)
+                {
+                    Fading = false;
+                    OnFadingComplete?.Invoke();
+                }
+                else
+                {
+                    FadingLevel = (float) FadingTick / FadingFrames;
+                    if (FadeIn)
+                        FadingLevel = 1 - FadingLevel;
+                }
+            }
+
+            if (FadingOST)
+            {
+                FadingOSTTick++;
+                if (FadingOSTTick > FadingOSTFrames)
+                {
+                    FadingOST = false;
+                    OnFadingOSTComplete?.Invoke();
+                }
+                else
+                {
+                    FadingOSTLevel = (float) FadingOSTTick / FadingOSTFrames;
+                    if (FadeInOST)
+                        FadingOSTLevel = 1 - FadingOSTLevel;
+
+                    soundChannels[3].player.Volume = FadingOSTInitialVolume * (1 - FadingOSTLevel) + FadingOSTVolume * FadingOSTLevel;
+                }
+            }
+
+            if (SpawningBlackScreen)
+            {
+                SpawningBlackScreenFrameCounter++;
+                if (SpawningBlackScreenFrameCounter >= SPAWNING_BLACK_SCREEN_FRAMES)
+                {
+                    SpawningBlackScreen = false;
+                    OnSpawningBlackScreenComplete();
+                }
+            }
+
+            if (DyingEffectActive)
+            {
+                if (DyingEffectFrameCounter % 32 == 0)
+                    CreateXDieExplosionEffect(DyingEffectFrameCounter % 64 == 0 ? 0 : System.Math.PI / 8);
+                else if (DyingEffectFrameCounter == 1)
+                    CreateXDieExplosionEffect(System.Math.PI / 8);
+
+                DyingEffectFrameCounter++;
+            }
+
+            if (Freezing)
+            {
+                if (FreezingFrameCounter >= FreezingFrames)
+                {
+                    Freezing = false;
+                    OnFreezeComplete?.Invoke();
+                }
+                else
+                    FreezingFrameCounter++;
+            }
+
+            if (!loadingLevel)
+            {
+                // TODO : Please, optmize me!
+                for (int i = 0; i < respawnableEntities.Count; i++)
+                {
+                    var (entity, origin, wasVisible) = respawnableEntities[i];
+                    if (origin < World.Camera.ExtendedBoundingBox)
+                    {
+                        if (!wasVisible)
+                        {
+                            if (!entity.Alive)
+                            {
+                                if (entity is Item item && item.Collected)
+                                    continue;
+
+                                entity.Origin = origin;
+                                entity.Spawn();
+                            }
+                        }
+
+                        respawnableEntities[i] = (entity, origin, true);
+                    }
+                    else
+                        respawnableEntities[i] = (entity, origin, false);
+                }
+
+                if (addedEntities.Count > 0)
+                {
+                    for (int i = 0; i < addedEntities.Count; i++)
+                    {
+                        var added = addedEntities[i];
+                        AddEntity(added);
+                        added.OnSpawn();
+                        added.PostSpawn();
+                    }
+
+                    addedEntities.Clear();
+                }
+
+                Player?.PushKeys(keys);
+
+                if (Freezing)
+                    return false;
+
+                if (paused || Player != null && Player.Freezed && (!FreezingSprites || freezingSpriteExceptions.Contains(Player)))
+                    Player?.OnFrame();
+                else
+                {
+                    if (FreezingSprites)
+                    {
+                        for (var entity = firstEntity; entity != null; entity = entity.next)
+                            if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
+                                entity.OnFrame();
+                    }
+                    else
+                        for (var entity = firstEntity; entity != null; entity = entity.next)
+                            entity.OnFrame();
+
+                    if (removedEntities.Count > 0)
+                    {
+                        for (int i = 0; i < removedEntities.Count; i++)
+                        {
+                            var removed = removedEntities[i];
+
+                            foreach (Entity child in removed.childs)
+                                child.parent = null;
+
+                            removed.childs.Clear();
+                            removed.Alive = false;
+                            removed.Dispose();
+
+                            RemoveEntity(removed);
+
+                            DisposeResource(removed);
+                        }
+
+                        removedEntities.Clear();
+                    }
+                }
+
+                World.OnFrame();
+            }
+
+            if (changeLevel)
+            {
+                changeLevel = false;
+                LoadLevel(levelToChange);
+            }
+
+            if (gameOver)
+            {
+
+            }
+
+            return true;
+        }
+
+        public static Vector2 ToVector2(Vector v)
+        {
+            return new((float) v.X, (float) v.Y);
+        }
+
+        public static Vector3 ToVector3(Vector v)
+        {
+            return new((float) v.X, (float) v.Y, 0);
+        }
+
+        public static Rectangle ToRectangle(MMXBox box)
+        {
+            return new((int) box.Left, (int) box.Top, (int) box.Width, (int) box.Height);
+        }
+
+        public static RectangleF ToRectangleF(MMXBox box)
+        {
+            return new((float) box.Left, (float) box.Top, (float) box.Width, (float) box.Height);
+        }
+
+        public Vector2 WorldVectorToScreen(Vector v)
+        {
+            return ToVector2((v - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
+        }
+
+        public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
+        {
+            return WorldVectorToScreen(new Vector(x, y));
+        }
+
+        public Vector ScreenPointToVector(int x, int y)
+        {
+            return ScreenPointToVector(new Point(x, y));
+        }
+
+        public Vector ScreenPointToVector(Point p)
+        {
+            return (new Vector(p.X, p.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
+        }
+
+        public Vector ScreenVector2ToWorld(Vector2 v)
+        {
+            return (new Vector(v.X, v.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
+        }
+
+        public RectangleF WorldBoxToScreen(MMXBox box)
+        {
+            return ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
+        }
+
+        public void TogglePauseGame()
+        {
+            if (paused)
+                ContinueGame();
+            else
+                PauseGame();
+        }
+
+        public void PauseGame()
+        {
+            paused = true;
+        }
+
+        public void ContinueGame()
+        {
+            paused = false;
+        }
+
+        public void NextLevel()
+        {
+            changeLevel = true;
+            levelToChange = (ushort) (currentLevel + 1);
+        }
+
+        internal void OnGameOver()
+        {
+            gameOver = true;
+        }
+
+        public void SpawnPlayer()
+        {
+            Vector spawnPos;
+            Vector cameraPos;
+            if (romLoaded)
+            {
+                spawnPos = mmx.CharacterPos + Vector.DOWN_VECTOR * (HITBOX_HEIGHT + 1);
+                cameraPos = mmx.CameraPos;
+            }
+            else
+            {
+                spawnPos = new Vector(SCREEN_WIDTH * 0.5f, 0);
+                cameraPos = new Vector(SCREEN_WIDTH * 0.5f, 0);
+            }
+
+            World.Camera.RightTop = cameraPos;
+
+            SpawnX(spawnPos);
+            CreateHP();
+
+            World.Camera.FocusOn = Player;
+
+            CurrentCheckpoint = checkpoints.Count > 0 ? checkpoints[mmx.Point] : null;
+        }
+
+        public void LoadLevel()
+        {
+            LoadLevel(currentLevel, (ushort) (CurrentCheckpoint != null ? CurrentCheckpoint.Index : 0));
+        }
+
+        public void LoadLevel(ushort level, ushort checkpoint = 0)
+        {
+            paused = false;
+            lock (this)
+            {
+                loadingLevel = true;
+
+                UnloadLevel();
+
+                currentLevel = level;
+
+                if (romLoaded)
+                {
+                    mmx.SetLevel(level, checkpoint);
+
+                    mmx.LoadLevel();
+                    mmx.LoadEvents(this);
+                    mmx.LoadToWorld(this, false);
+
+                    mmx.LoadBackground();
+                    mmx.LoadToWorld(this, true);
+
+                    CurrentCheckpoint = checkpoints[mmx.Point];
+                    CameraConstraintsBox = CurrentCheckpoint.BoundingBox;
+                }
+                else
+                    CameraConstraintsBox = World.BoundingBox;
+
+                World.Tessellate();
+
+                loadingLevel = false;
+                respawning = false;
+
+                if (ENABLE_SPAWNING_BLACK_SCREEN)
+                {
+                    SpawningBlackScreen = true;
+                    SpawningBlackScreenFrameCounter = 0;
+                }
+                else
+                    OnSpawningBlackScreenComplete();
+
+                World.Camera.FocusOn = null;
+                var cameraPos = romLoaded ? mmx.CameraPos : Vector.NULL_VECTOR;
+                World.Camera.LeftTop = cameraPos;
+            }
+        }
+
+        private void UnloadLevel()
+        {
+            ClearEntities();
+
+            DisposeResource(World);
+
+            checkpoints.Clear();
+            respawnableEntities.Clear();
+            partition.Clear();
+
+            lastLives = Player != null ? Player.Lives : X_INITIAL_LIVES;
+            Player = null;
+            ReadyHUD = null;
+            HP = null;
+
+            long currentMemoryUsage = GC.GetTotalMemory(true);
+            long delta = currentMemoryUsage - lastCurrentMemoryUsage;
+            Debug.WriteLine("**************************Total memory: {0}({1}{2})", currentMemoryUsage, delta > 0 ? "+" : delta < 0 ? "-" : "", delta);
+            lastCurrentMemoryUsage = currentMemoryUsage;
+        }
+
+        internal void UpdateScale()
+        {
+            FixedSingle width = Form.ClientSize.Width;
+            FixedSingle height = Form.ClientSize.Height;
+
+            Vector drawOrigin;
+            /*if (width / height < SIZE_RATIO)
+            {
+                drawScale = width / DEFAULT_CLIENT_WIDTH;
+                MMXFloat newHeight = drawScale * DEFAULT_CLIENT_HEIGHT;
+                drawOrigin = new MMXVector(0, (height - newHeight) / 2);
+                height = newHeight;
+            }
+            else
+            {
+                drawScale = height / DEFAULT_CLIENT_HEIGHT;
+                MMXFloat newWidth = drawScale * DEFAULT_CLIENT_WIDTH;
+                drawOrigin = new MMXVector((width - newWidth) / 2, 0);
+                width = newWidth;
+            }*/
+            drawOrigin = Vector.NULL_VECTOR;
+
+            drawBox = new MMXBox(drawOrigin.X, drawOrigin.Y, width, height);
+        }
+
+        private void DrawSlopeMap(MMXBox box, RightTriangle triangle, float strokeWidth)
+        {
+            Vector tv1 = triangle.Origin;
+            Vector tv2 = triangle.HCathetusVertex;
+            Vector tv3 = triangle.VCathetusVertex;
+
+            DrawLine(tv2, tv3, strokeWidth, TOUCHING_MAP_COLOR);
+
+            FixedSingle h = tv1.Y - box.Top;
+            FixedSingle H = MAP_SIZE - h;
+            if (H > 0)
+            {
+                if (triangle.HCathetusVector.X < 0)
+                {
+                    DrawLine(tv2, box.LeftBottom, strokeWidth, TOUCHING_MAP_COLOR);
+                    DrawLine(tv3, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
+                }
+                else
+                {
+                    DrawLine(tv3, box.LeftBottom, strokeWidth, TOUCHING_MAP_COLOR);
+                    DrawLine(tv2, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
+                }
+
+                DrawLine(box.LeftBottom, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
+            }
+            else
+            {
+                DrawLine(tv3, tv1, strokeWidth, TOUCHING_MAP_COLOR);
+                DrawLine(tv1, tv2, strokeWidth, TOUCHING_MAP_COLOR);
+            }
+        }
+
+        private void DrawHighlightMap(int row, int col, CollisionData collisionData)
+        {
+            MMXBox mapBox = GetMapBoundingBox(row, col);
+            if (IsSolidBlock(collisionData))
+                DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
+            else if (IsSlope(collisionData))
+            {
+                RightTriangle st = MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
+                DrawSlopeMap(mapBox, st, 4);
+            }
+        }
+
+        private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, MMXBox collisionBox, bool ignoreSlopes = false)
+        {
+            var halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
+            var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
+
+            MMXBox mapBox = GetMapBoundingBox(row, col);
+            if (IsSolidBlock(collisionData) && HasIntersection(mapBox, collisionBox))
+                DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
+            else if (!ignoreSlopes && IsSlope(collisionData))
+            {
+                RightTriangle st = MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
+                Vector hv = st.HCathetusVector;
+                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, EPSLON, true) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, EPSLON, true))
+                    DrawSlopeMap(mapBox, st, 4);
+            }
+        }
+
+        private void CheckAndDrawTouchingMaps(MMXBox collisionBox, bool ignoreSlopes = false)
+        {
+            Cell start = GetMapCellFromPos(collisionBox.LeftTop);
+            Cell end = GetMapCellFromPos(collisionBox.RightBottom);
+
+            int startRow = start.Row;
+            int startCol = start.Col;
+
+            if (startRow < 0)
+                startRow = 0;
+
+            if (startRow >= World.MapRowCount)
+                startRow = World.MapRowCount - 1;
+
+            if (startCol < 0)
+                startCol = 0;
+
+            if (startCol >= World.MapColCount)
+                startCol = World.MapColCount - 1;
+
+            int endRow = end.Row;
+            int endCol = end.Col;
+
+            if (endRow < 0)
+                endRow = 0;
+
+            if (endRow >= World.MapRowCount)
+                endRow = World.MapRowCount - 1;
+
+            if (endCol < 0)
+                endCol = 0;
+
+            if (endCol >= World.MapColCount)
+                endCol = World.MapColCount - 1;
+
+            for (int row = startRow; row <= endRow; row++)
+                for (int col = startCol; col <= endCol; col++)
+                {
+                    var v = new Vector(col * MAP_SIZE, row * MAP_SIZE);
+                    Map map = World.GetMapFrom(v);
+                    if (map != null)
+                        CheckAndDrawTouchingMap(row, col, map.CollisionData, collisionBox, ignoreSlopes);
+                }
+        }
+
+        public void DrawLine(Vector from, Vector to, float width, Color color)
+        {
+            DrawLine(WorldVectorToScreen(from), WorldVectorToScreen(to), width, color);
+        }
+
+        public void DrawLine(Vector2 from, Vector2 to, float width, Color color)
+        {
+            from *= 4;
+            to *= 4;
+
+            line.Width = width;
+
+            line.Begin();
+            line.Draw(new Vector2[] { from, to }, color);
+            line.End();
+        }
+
+        public void DrawRectangle(MMXBox box, float borderWith, Color color)
+        {
+            DrawRectangle(WorldBoxToScreen(box), borderWith, color);
+        }
+
+        public void DrawRectangle(RectangleF rect, float borderWith, Color color)
+        {
+            rect = new RectangleF(rect.X * 4, rect.Y * 4, rect.Width * 4, rect.Height * 4);
+
+            line.Width = borderWith;
+
+            line.Begin();
+            line.Draw(new Vector2[] { rect.TopLeft, rect.TopRight, rect.BottomRight, rect.BottomLeft, rect.TopLeft }, color);
+            line.End();
+        }
+
+        public void FillRectangle(MMXBox box, Color color)
+        {
+            FillRectangle(WorldBoxToScreen(box), color);
+        }
+
+        public void FillRectangle(RectangleF rect, Color color, bool usePixelShader = false)
+        {
+            float x = 4 * rect.Left;
+            float y = 4 * rect.Top;
+
+            var matScaling = Matrix.Scaling(4 * rect.Width, 4 * rect.Height, 1);
+            var matTranslation = Matrix.Translation(x, y, 0);
+            Matrix matTransform = matScaling * matTranslation;
+
+            sprite.Begin(SpriteFlags.AlphaBlend);
+
+            Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
+            Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+
+            Device.VertexShader = null;
+
+            if (usePixelShader)
+            {
+                Device.PixelShader = PixelShader;
+                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
+
+                if (Fading)
+                {
+                    PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingLevel);
+                    PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingColor.ToVector4());
+                }
+                else
+                    PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
+            }
+
+            sprite.Transform = matTransform;
+
+            sprite.Draw(color == Color.Black ? blackPixelTexture : whitePixelTexture, color);
+            sprite.End();
+        }
+
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color)
+        {
+            DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color);
+        }
+
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, RawMatrix transform, Color color)
+        {
+            sprite.Begin();
+
+            Device.VertexShader = null;
+            Device.PixelShader = null;
+
+            Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
+            Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+            sprite.Transform = transform;
+
+            var fontDimension = font.MeasureText(sprite, text, drawRect, drawFlags);
+            font.DrawText(sprite, text, fontDimension, drawFlags, color);
+            sprite.End();
+        }
+
         private static void DisposeResource(IDisposable resource)
         {
             try
@@ -3668,7 +3736,6 @@ namespace MMX.Engine
 
                 RectangleF drawRect = RenderRectangle;
 
-
                 if (drawPlayerOriginAxis && Player != null)
                 {
                     Vector2 v = WorldVectorToScreen(Player.Origin);
@@ -3719,50 +3786,6 @@ namespace MMX.Engine
                         Player?.PostThink();
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            foreach (var (channel, stream, _) in soundChannels)
-            {
-                DisposeResource(stream);
-                DisposeResource(channel);
-            }
-
-            soundChannels.Clear();
-
-            foreach (var stream in soundStreams)
-                DisposeResource(stream);
-
-            soundStreams.Clear();
-
-            DisposeResource(World);
-            DisposeResource(Player);
-            DisposeResource(mmx);
-            DisposeDevice();
-            DisposeResource(Direct3D);
-
-            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
-            {
-                section = new ProgramConfiguratinSection();
-                config.Sections.Add("ProgramConfiguratinSection", section);
-            }
-
-            section.Left = Form.Left;
-            section.Top = Form.Top;
-            section.DrawCollisionBox = drawCollisionBox;
-            section.ShowColliders = showColliders;
-            section.DrawMapBounds = drawMapBounds;
-            section.DrawTouchingMapBounds = drawTouchingMapBounds;
-            section.DrawHighlightedPointingTiles = drawHighlightedPointingTiles;
-            section.DrawPlayerOriginAxis = drawPlayerOriginAxis;
-            section.ShowInfoText = showInfoText;
-            section.ShowCheckpointBounds = showCheckpointBounds;
-            section.ShowTriggerBounds = showTriggerBounds;
-            section.ShowTriggerCameraLook = showTriggerCameraLook;
-
-            config.Save();
         }
 
         public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
@@ -3823,7 +3846,7 @@ namespace MMX.Engine
         private void SaveState(BinaryWriter writer)
         {
             var seedArrayInfo = typeof(Random).GetField("SeedArray", BindingFlags.NonPublic | BindingFlags.Instance);
-            var seedArray = seedArrayInfo.GetValue(random) as int[];
+            var seedArray = seedArrayInfo.GetValue(RNG) as int[];
             writer.Write(seedArray.Length);
             for (int i = 0; i < seedArray.Length; i++)
                 writer.Write(seedArray[i]);
@@ -3849,7 +3872,7 @@ namespace MMX.Engine
                 seedArray[i] = reader.ReadInt32();
 
             var seedArrayInfo = typeof(Random).GetField("SeedArray", BindingFlags.NonPublic | BindingFlags.Instance);
-            seedArrayInfo.SetValue(random, seedArray);
+            seedArrayInfo.SetValue(RNG, seedArray);
 
             int checkPointIndex = reader.ReadInt32();
             currentCheckpoint = checkPointIndex != -1 ? checkpoints[checkPointIndex] : null;
@@ -3918,22 +3941,37 @@ namespace MMX.Engine
             return trigger;
         }
 
-        public Enemy AddEnemy(ushort id, ushort subid, Vector origin)
+        public Sprite AddObjectEvent(ushort id, ushort subid, Vector origin)
         {
-            if (!ENABLE_ENEMIES)
-                return null;
+            return !ENABLE_ENEMIES
+                ? null
+                : id switch
+                {
+                    0x02 => AddBoss(origin), // Penguin
+                    0x09 => AddDriller(origin),
+                    0x2D or 0x50 => AddBat(origin),
+                    0x2F => AddRideArmor(subid, origin),
+                    0x4D => AddCapsule(subid, origin),
+                    _ => AddDriller(origin)
+                };
+        }
 
-            switch (id)
-            {
-                case 0x09:
-                    return AddDriller(origin);
+        public Boss AddBoss(Vector origin)
+        {
+            // TODO : Implement
+            return null;
+        }
 
-                case 0x2D:
-                case 0x50:
-                    return AddBat(origin);
-            }
+        public Sprite AddRideArmor(ushort subid, Vector origin)
+        {
+            // TODO : Implement
+            return null;
+        }
 
-            return id != 0x4D && (id != 0x2F || subid == 0) ? AddDriller(origin) : null;
+        public Sprite AddCapsule(ushort subid, Vector origin)
+        {
+            // TODO : Implement
+            return null;
         }
 
         public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
@@ -3956,16 +3994,16 @@ namespace MMX.Engine
                 if (constraint.Y == 0)
                 {
                     if (constraint.X < 0)
-                        minX = cameraConstraintOrigin.X + constraint.X;
+                        minX = CameraConstraintsOrigin.X + constraint.X;
                     else
-                        maxX = cameraConstraintOrigin.X + constraint.X;
+                        maxX = CameraConstraintsOrigin.X + constraint.X;
                 }
                 else if (constraint.X == 0)
                 {
                     if (constraint.Y < 0)
-                        minY = cameraConstraintOrigin.Y + constraint.Y;
+                        minY = CameraConstraintsOrigin.Y + constraint.Y;
                     else
-                        maxY = cameraConstraintOrigin.Y + constraint.Y;
+                        maxY = CameraConstraintsOrigin.Y + constraint.Y;
                 }
             }
 
@@ -3980,7 +4018,7 @@ namespace MMX.Engine
 
         public void SetCameraConstraints(Vector origin, IEnumerable<Vector> extensions)
         {
-            cameraConstraintOrigin = origin;
+            CameraConstraintsOrigin = origin;
 
             cameraConstraints.Clear();
             cameraConstraints.AddRange(extensions);

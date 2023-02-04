@@ -247,15 +247,15 @@ namespace MMX.Engine
             sequences = new Dictionary<string, FrameSequence>();
         }
 
-        public SpriteSheet(GameEngine engine, string name, Texture texture, bool disposeTexture = false, bool precache = false) :
-            this(engine, name, precache)
+        public SpriteSheet(GameEngine engine, string name, Texture texture, bool disposeTexture = false, bool precache = false)
+            : this(engine, name, precache)
         {
             CurrentTexture = texture;
             DisposeTexture = disposeTexture;
         }
 
-        public SpriteSheet(GameEngine engine, string name, string imageFileName, bool precache = false) :
-            this(engine, name, precache)
+        public SpriteSheet(GameEngine engine, string name, string imageFileName, bool precache = false)
+            : this(engine, name, precache)
         {
             DisposeTexture = true;
             LoadFromFile(imageFileName);

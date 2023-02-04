@@ -31,7 +31,6 @@
             PaletteIndex = 3;
         }
 
-
         protected internal override void OnSpawn()
         {
             base.OnSpawn();

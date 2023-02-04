@@ -13,14 +13,14 @@ namespace MMX.Engine.Entities.Triggers
 
         public int ConstraintCount => constraints.Count;
 
-        public CameraLockTrigger(GameEngine engine, Box boudingBox) :
-            base(engine, boudingBox, TouchingKind.VECTOR)
+        public CameraLockTrigger(GameEngine engine, Box boudingBox)
+            : base(engine, boudingBox, TouchingKind.VECTOR)
         {
             constraints = new List<Vector>();
         }
 
-        public CameraLockTrigger(GameEngine engine, Box boudingBox, IEnumerable<Vector> constraints) :
-            base(engine, boudingBox, TouchingKind.VECTOR)
+        public CameraLockTrigger(GameEngine engine, Box boudingBox, IEnumerable<Vector> constraints)
+            : base(engine, boudingBox, TouchingKind.VECTOR)
         {
             this.constraints = new List<Vector>(constraints);
         }

@@ -203,18 +203,18 @@ namespace MMX.Engine
 
         public bool TouchingWaterSurface => (innerMaskFlags & CollisionFlags.WATER_SURFACE) != 0;
 
-        public BoxCollider(Box box, bool useCollisionPlacements = false) :
-            this(null, box, MASK_SIZE, 0, 0, useCollisionPlacements)
+        public BoxCollider(Box box, bool useCollisionPlacements = false)
+            : this(null, box, MASK_SIZE, 0, 0, useCollisionPlacements)
         {
         }
 
-        public BoxCollider(Box box, FixedSingle maskSize, bool useCollisionPlacements = false) :
-            this(null, box, maskSize, 0, 0, useCollisionPlacements)
+        public BoxCollider(Box box, FixedSingle maskSize, bool useCollisionPlacements = false)
+            : this(null, box, maskSize, 0, 0, useCollisionPlacements)
         {
         }
 
-        public BoxCollider(MMXWorld world, Box box, bool useCollisionPlacements = false) :
-            this(world, box, MASK_SIZE, 0, 0, useCollisionPlacements)
+        public BoxCollider(MMXWorld world, Box box, bool useCollisionPlacements = false)
+            : this(world, box, MASK_SIZE, 0, 0, useCollisionPlacements)
         {
         }
 

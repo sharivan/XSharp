@@ -33,8 +33,8 @@ namespace MMX.Engine.World
         private Scene[,] scenes;
         private Scene[,] backgroundScenes;
 
-        internal World(GameEngine engine, int sceneRowCount, int sceneColCount) :
-            this(engine, sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
+        internal World(GameEngine engine, int sceneRowCount, int sceneColCount)
+            : this(engine, sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
         {
         }
 

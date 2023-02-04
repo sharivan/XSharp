@@ -25,8 +25,8 @@ namespace MMX.Engine.Entities.Weapons
 
         public bool Hitting => GetState<SemiChargedState>() == SemiChargedState.HITTING;
 
-        internal BusterSemiCharged(GameEngine engine, Player shooter, string name, Vector origin, Direction direction) :
-            base(engine, shooter, name, origin, direction, 1)
+        internal BusterSemiCharged(GameEngine engine, Player shooter, string name, Vector origin, Direction direction)
+            : base(engine, shooter, name, origin, direction, 1)
         {
             SetupStateArray(typeof(SemiChargedState));
             RegisterState(SemiChargedState.FIRING, OnStartFiring, null, null, "SemiChargedShotFiring");

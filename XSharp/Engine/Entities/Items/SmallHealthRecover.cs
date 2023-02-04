@@ -1,5 +1,4 @@
-﻿using MMX.Engine.Entities.Enemies;
-using MMX.Geometry;
+﻿using MMX.Geometry;
 
 using static MMX.Engine.Consts;
 

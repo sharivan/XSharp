@@ -1,5 +1,4 @@
 ﻿using MMX.Geometry;
-using MMX.Math;
 
 namespace MMX.Engine.Entities.Effects
 {
@@ -42,13 +41,13 @@ namespace MMX.Engine.Entities.Effects
         {
             MaxFrames = maxFrames;
             FramesPerCicle = framesPerCicle;
-            MaxRadius = maxRadius;            
+            MaxRadius = maxRadius;
             Phase = phase;
             SparkCount = sparkCount;
         }
 
-        public XDieExplosion(GameEngine engine, string name, Vector origin, double phase) :
-            this(engine, name, origin, 68, 128, 140, phase, 8)
+        public XDieExplosion(GameEngine engine, string name, Vector origin, double phase)
+            : this(engine, name, origin, 68, 128, 140, phase, 8)
         {
         }
 

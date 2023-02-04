@@ -350,7 +350,7 @@ namespace MMX.Engine
         // Startup
 
         public const bool ENABLE_ENEMIES = true;
-        public const bool ENABLE_SPAWNING_BLACK_SCREEN = true;
+        public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
         public const bool ENABLE_OST = true;
 
         public const bool LOAD_ROM = true;

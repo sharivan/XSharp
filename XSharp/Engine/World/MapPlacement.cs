@@ -30,8 +30,8 @@ namespace MMX.Engine.World
 
         public CollisionData CollisionData => map != null ? map.CollisionData : CollisionData.BACKGROUND;
 
-        internal MapPlacement(World world, int row, int col, Map map) :
-            this(world, new Cell(row, col), map)
+        internal MapPlacement(World world, int row, int col, Map map)
+            : this(world, new Cell(row, col), map)
         {
         }
 

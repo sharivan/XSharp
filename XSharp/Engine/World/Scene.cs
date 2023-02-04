@@ -1,5 +1,4 @@
 ﻿using MMX.Geometry;
-using NAudio.Gui;
 using SharpDX;
 using SharpDX.Direct3D9;
 using System;
@@ -279,7 +278,7 @@ namespace MMX.Engine.World
                                 GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                             }
                     }
-                } 
+                }
 
             layers[0].Unlock();
             layers[1].Unlock();

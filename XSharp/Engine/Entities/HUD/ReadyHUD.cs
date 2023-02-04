@@ -1,7 +1,4 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-
-using static MMX.Engine.Consts;
+﻿using static MMX.Engine.Consts;
 
 namespace MMX.Engine.Entities.HUD
 {

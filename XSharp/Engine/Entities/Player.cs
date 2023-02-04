@@ -1,8 +1,6 @@
 ﻿using MMX.Engine.Entities.Effects;
-using MMX.Engine.Entities.Objects;
 using MMX.Geometry;
 using MMX.Math;
-using SharpDX;
 using System;
 using System.IO;
 using static MMX.Engine.Consts;
@@ -267,7 +265,7 @@ namespace MMX.Engine.Entities
             get => lives;
             set
             {
-                if (value < MIN_LIVES || value > MAX_LIVES)
+                if (value is < MIN_LIVES or > MAX_LIVES)
                     return;
 
                 lives = value;
@@ -683,7 +681,7 @@ namespace MMX.Engine.Entities
             FixedSingle y = origin.Y;
 
             Box limit = Engine.World.BoundingBox;
-            if (!CrossingBossDoor && !Engine.noCameraConstraints && !Engine.World.Camera.NoConstraints)
+            if (!CrossingBossDoor && !Engine.NoCameraConstraints && !Engine.World.Camera.NoConstraints)
                 limit &= Engine.CameraConstraintsBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE);
 
             Box collisionBox = origin + GetCollisionBox();
@@ -1381,13 +1379,9 @@ namespace MMX.Engine.Entities
             bool cwjl = CanWallJumpLeft();
             bool cwjr = CanWallJumpRight();
 
-            if (PressingLeft && cwjl)
-                return Direction.LEFT;
-
-            if (PressingRight && cwjr)
-                return Direction.RIGHT;
-
-            return cwjr ? Direction.RIGHT : cwjl ? Direction.LEFT : Direction.NONE;
+            return PressingLeft && cwjl
+                ? Direction.LEFT
+                : PressingRight && cwjr ? Direction.RIGHT : cwjr ? Direction.RIGHT : cwjl ? Direction.LEFT : Direction.NONE;
         }
 
         private void SetAirStateAnimation(bool forceGoingUp = false)
