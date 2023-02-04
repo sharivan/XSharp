@@ -1818,7 +1818,11 @@ namespace XSharp.Engine.Entities
         {
             CrossingBossDoor = true;
             CheckCollisionWithWorld = false;
-            Invincible = true;            
+            Invincible = true;
+            Blinking = false;
+            WallJumping = false;
+            jumping = false;
+            baseHSpeed = WALKING_SPEED;
             Velocity = Vector.NULL_VECTOR;
         }
 
@@ -1828,9 +1832,6 @@ namespace XSharp.Engine.Entities
             CheckCollisionWithWorld = true;
             Invincible = false;
             Velocity = Vector.NULL_VECTOR;
-            WallJumping = false;
-            jumping = false;
-            baseHSpeed = WALKING_SPEED;
 
             if (Landed)
                 SetStandState();
