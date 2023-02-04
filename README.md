@@ -41,20 +41,26 @@ Shortcut Keys:
 
 Modifications currently in progress:
 
-- More maps for testing.
+- Bosses.
+- Lua scripting support, allowing devs and mappers customize levels, enemies, etc.
+- Own level format (instead loading from rom of original games). This step is neeeded to make the level editor.
+- More levels for testing.
 - More types of enemies.
 - Armors.
+- Water graphics.
+- Slippery physics (present in Crystal Snail and Blizzard Buffalo stages).
+- Conveyor physics (present in Mammoth and Sigma 3 stages).
+- Solid based sprites (elevators, moving platforms, etc).
 
 Some Pending Fixes:
 
-- Fix ladders.
 - Fix background position in some levels.
 - Fix triggers and camera lock in some levels.
+- Fix camera transitions.
 
 Future additions:
 
-- Map editor.
-- Bosses.
+- Level editor.
 - Pause menu.
 - Weapons.
 - Demo recorder.
