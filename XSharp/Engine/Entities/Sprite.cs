@@ -206,6 +206,12 @@ namespace MMX.Engine.Entities
 
         public Texture Palette => Engine.GetPalette(PaletteIndex);
 
+        public bool Animating
+        {
+            get;
+            set;
+        } = true;
+
         protected Sprite(string name, Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
             : base(name, origin)
         {
@@ -452,6 +458,7 @@ namespace MMX.Engine.Entities
             base.OnSpawn();
 
             Visible = true;
+            Animating = true;
             CheckCollisionWithWorld = true;
             solid = true;
             Velocity = Vector.NULL_VECTOR;
@@ -1023,8 +1030,9 @@ namespace MMX.Engine.Entities
             if (Blinking && blinkExpires > 0 && Engine.FrameCounter >= blinkExpires)
                 Blinking = false;
 
-            foreach (Animation animation in animations)
-                animation.NextFrame();
+            if (Animating)
+                foreach (Animation animation in animations)
+                    animation.NextFrame();
         }
 
         protected virtual void OnBlink(bool blinkOn)

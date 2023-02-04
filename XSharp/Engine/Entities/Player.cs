@@ -1304,12 +1304,6 @@ namespace MMX.Engine.Entities
             }
         }
 
-        protected internal override void PostThink()
-        {
-            if (!CrossingBossDoor)
-                base.PostThink();
-        }
-
         private Vector GetShotOrigin()
         {
             return state switch
@@ -1433,6 +1427,11 @@ namespace MMX.Engine.Entities
 
         protected internal override void OnAnimationEnd(Animation animation)
         {
+            base.OnAnimationEnd(animation);
+
+            if (CrossingBossDoor && !ContainsAnimationIndex(PlayerState.PRE_DASH, animation.Index, true))
+                return;
+
             if (ContainsAnimationIndex(PlayerState.SPAWN_END, animation.Index))
             {
                 spawning = false;

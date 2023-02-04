@@ -166,9 +166,8 @@ namespace MMX.Engine
 
         // Bat
 
-        public static readonly FixedSingle BAT_ATTACK_VELOCITY_X = 181 / 256.0;
-        public static readonly FixedSingle BAT_ATTACK_VELOCITY_Y = 181 / 256.0;
-        public static readonly FixedSingle BAT_ESCAPE_VELOCITY_Y = 512 / 256.0;
+        public static readonly FixedSingle BAT_ATTACK_SPEED = 256 / 256.0;
+        public static readonly FixedSingle BAT_ESCAPE_SPEED = 512 / 256.0;
         public const int BAT_HEALTH = 3;
         public static readonly FixedSingle BAT_CONTACT_DAMAGE = 1;
 
@@ -353,7 +352,7 @@ namespace MMX.Engine
         // Startup
 
         public const bool ENABLE_ENEMIES = true;
-        public const bool ENABLE_SPAWNING_BLACK_SCREEN = true;
+        public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
         public const bool ENABLE_OST = true;
 
         public const bool LOAD_ROM = true;
@@ -361,6 +360,6 @@ namespace MMX.Engine
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
         public const int INITIAL_LEVEL = 8;
-        public const int INITIAL_CHECKPOINT = 0;
+        public const int INITIAL_CHECKPOINT = 2;
     }
 }

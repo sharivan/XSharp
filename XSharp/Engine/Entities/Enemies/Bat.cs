@@ -70,7 +70,7 @@ namespace MMX.Engine.Entities.Enemies
 
         protected override void OnHurt(Sprite victim, FixedSingle damage)
         {
-            Velocity = BAT_ESCAPE_VELOCITY_Y * Vector.UP_VECTOR;
+            Velocity = BAT_ESCAPE_SPEED * Vector.UP_VECTOR;
             State = BatState.ESCAPING;
         }
 
@@ -95,15 +95,13 @@ namespace MMX.Engine.Entities.Enemies
 
         private void OnAttacking(EntityState state, long frameCounter)
         {
-            Vector playerOrigin = Engine.Player.Origin;
-            FixedSingle dx = playerOrigin.X - Origin.X;
-            FixedSingle dy = playerOrigin.Y - Origin.Y;
-            Velocity = (dx.Signal * BAT_ATTACK_VELOCITY_X, dy.Signal * BAT_ATTACK_VELOCITY_Y);
+            Vector delta = Engine.Player.Origin - Origin;
+            Velocity = BAT_ATTACK_SPEED * delta.Versor(STEP_SIZE);
         }
 
         private void OnEscaping(EntityState state, long frameCounter)
         {
-            Velocity = BAT_ESCAPE_VELOCITY_Y * Vector.UP_VECTOR;
+            Velocity = BAT_ESCAPE_SPEED * Vector.UP_VECTOR;
         }
 
         protected override bool PreThink()

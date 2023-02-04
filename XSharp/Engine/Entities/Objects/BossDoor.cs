@@ -91,7 +91,9 @@ namespace MMX.Engine.Entities.Objects
                 Engine.World.Camera.NoConstraints = true;
                 Engine.World.Camera.FocusOn = null;
                 player.StartBossDoorCrossing();
+                Engine.KillAllAliveEnemiesAndWeapons();
                 Engine.FreezeSprites(player, effect);
+                Engine.Player.Animating = false;
 
                 if (!Bidirectional)
                     Enabled = false;
@@ -120,6 +122,8 @@ namespace MMX.Engine.Entities.Objects
 
         internal void OnStartPlayerCrossing()
         {
+            Engine.Player.Animating = true;
+
             Cell sceneCell = GetSceneCellFromPos(Engine.Player.Origin);
             Box sceneBox = GetSceneBoundingBox(sceneCell);
             Engine.World.Camera.MoveToLeftTop(sceneBox.LeftTop + (SCENE_SIZE, 0), 1.5);

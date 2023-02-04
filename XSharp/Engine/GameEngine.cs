@@ -1401,10 +1401,10 @@ namespace MMX.Engine
             sequence.CollisionBox = dashingCollisionBox;
             sequence.AddFrame(4, 12, 76, 335, 37, 31, 3);
 
-            sequence = xSpriteSheet.AddFrameSquence("Dashing", 0);
+            sequence = xSpriteSheet.AddFrameSquence("Dashing");
             sequence.BoudingBoxOriginOffset = dashingOffset;
             sequence.CollisionBox = dashingCollisionBox;
-            sequence.AddFrame(14, 7, 34, 341, 38, 26);
+            sequence.AddFrame(14, 7, 34, 341, 38, 26, 1, true);
 
             sequence = xSpriteSheet.AddFrameSquence("ShootDashing");
             sequence.BoudingBoxOriginOffset = dashingOffset;
@@ -2971,7 +2971,7 @@ namespace MMX.Engine
                 for (int i = 0; i < respawnableEntities.Count; i++)
                 {
                     var (entity, origin, wasVisible) = respawnableEntities[i];
-                    if (origin < World.Camera.ExtendedBoundingBox)
+                    if (origin <= World.Camera.ExtendedBoundingBox)
                     {
                         if (!wasVisible)
                         {
@@ -2983,9 +2983,11 @@ namespace MMX.Engine
                                 entity.Origin = origin;
                                 entity.Spawn();
                             }
+                            else
+                                respawnableEntities[i] = (entity, origin, true);
                         }
-
-                        respawnableEntities[i] = (entity, origin, true);
+                        else
+                            respawnableEntities[i] = (entity, origin, true);
                     }
                     else
                         respawnableEntities[i] = (entity, origin, false);
@@ -4767,6 +4769,27 @@ namespace MMX.Engine
         public void UnfreezeSprites()
         {
             FreezingSprites = false;
+        }
+
+        public void KillAllAliveEnemies()
+        {
+            for (Entity entity = firstEntity; entity != null; entity = entity.next)
+                if (entity is Enemy)
+                    entity.Kill();
+        }
+
+        public void KillAllAliveWeapons()
+        {
+            for (Entity entity = firstEntity; entity != null; entity = entity.next)
+                if (entity is Weapon)
+                    entity.Kill();
+        }
+
+        public void KillAllAliveEnemiesAndWeapons()
+        {
+            for (Entity entity = firstEntity; entity != null; entity = entity.next)
+                if (entity is Weapon || entity is Weapon)
+                    entity.Kill();
         }
     }
 }

@@ -268,6 +268,15 @@ namespace MMX.Geometry
         /// Normaliza o vetor
         /// </summary>
         /// <returns>O vetor normalizado</returns>
+        public Vector Versor(FixedSingle epslon)
+        {
+            if (X.Abs <= epslon &&  Y.Abs <= epslon)
+                return NULL_VECTOR;
+
+            FixedSingle abs = Length;
+            return new Vector(X / abs, Y / abs);
+        }
+
         public Vector Versor()
         {
             if (IsNull)
