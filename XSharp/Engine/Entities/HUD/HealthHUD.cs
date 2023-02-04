@@ -1,8 +1,8 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using static MMX.Engine.Consts;
+﻿using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.HUD
+namespace XSharp.Engine.Entities.HUD
 {
     public class HealthHUD : HUD
     {
@@ -61,9 +61,9 @@ namespace MMX.Engine.Entities.HUD
             MiddleAnimation.RepeatY = (int) Value;
         }
 
-        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+        protected override void OnCreateAnimation(int animationIndex, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
         {
-            base.OnCreateAnimation(animationIndex, sheet, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
+            base.OnCreateAnimation(animationIndex, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
 
             switch (frameSequenceName)
             {

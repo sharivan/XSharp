@@ -1,18 +1,4 @@
-﻿using MMX.Engine.Entities;
-using MMX.Engine.Entities.Effects;
-using MMX.Engine.Entities.Enemies;
-using MMX.Engine.Entities.Enemies.Bosses;
-using MMX.Engine.Entities.HUD;
-using MMX.Engine.Entities.Items;
-using MMX.Engine.Entities.Objects;
-using MMX.Engine.Entities.Triggers;
-using MMX.Engine.Entities.Weapons;
-using MMX.Engine.Sound;
-using MMX.Engine.World;
-using MMX.Geometry;
-using MMX.Math;
-using MMX.ROM;
-using NAudio.Wave;
+﻿using NAudio.Wave;
 using NLua;
 using SharpDX;
 using SharpDX.Direct3D9;
@@ -27,20 +13,35 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using static MMX.Engine.Consts;
-using static MMX.Engine.World.World;
+using XSharp.Engine.Entities;
+using XSharp.Engine.Entities.Effects;
+using XSharp.Engine.Entities.Enemies;
+using XSharp.Engine.Entities.Enemies.Bosses;
+using XSharp.Engine.Entities.HUD;
+using XSharp.Engine.Entities.Items;
+using XSharp.Engine.Entities.Objects;
+using XSharp.Engine.Entities.Triggers;
+using XSharp.Engine.Entities.Weapons;
+using XSharp.Engine.Graphics;
+using XSharp.Engine.Sound;
+using XSharp.Engine.World;
+using XSharp.Geometry;
+using XSharp.Math;
+using XSharp.ROM;
+using static XSharp.Engine.Consts;
+using static XSharp.Engine.World.World;
 using Configuration = System.Configuration.Configuration;
 using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using Device9 = SharpDX.Direct3D9.Device;
 using DeviceType = SharpDX.Direct3D9.DeviceType;
 using DXSprite = SharpDX.Direct3D9.Sprite;
-using MMXBox = MMX.Geometry.Box;
-using MMXWorld = MMX.Engine.World.World;
+using MMXBox = XSharp.Geometry.Box;
+using MMXWorld = XSharp.Engine.World.World;
 using ResultCode = SharpDX.Direct3D9.ResultCode;
-using SoundStream = MMX.Engine.Sound.SoundStream;
-using Sprite = MMX.Engine.Entities.Sprite;
+using SoundStream = XSharp.Engine.Sound.SoundStream;
+using Sprite = XSharp.Engine.Entities.Sprite;
 
-namespace MMX.Engine
+namespace XSharp.Engine
 {
     public sealed class ProgramConfiguratinSection : ConfigurationSection
     {
@@ -321,6 +322,8 @@ namespace MMX.Engine
         private EffectHandle fadingColorHandle;
 
         private readonly List<SpriteSheet> spriteSheets;
+        private readonly Dictionary<string, SpriteSheet> spriteSheetsByName;
+
         private readonly List<Texture> palettes;
 
         private readonly List<WaveStream> soundStreams;
@@ -383,7 +386,7 @@ namespace MMX.Engine
         private bool wasPressingToggleDrawUpLayer;
         private bool wasPressingToggleDrawSprites;
 
-        private readonly MMXCore mmx;
+        private MMXCore mmx;
         private bool romLoaded;
 
         private readonly DirectInput directInput;
@@ -837,6 +840,8 @@ namespace MMX.Engine
             freezingSpriteExceptions = new List<Sprite>();
 
             spriteSheets = new List<SpriteSheet>();
+            spriteSheetsByName = new Dictionary<string, SpriteSheet>();
+
             palettes = new List<Texture>();
 
             soundStreams = new List<WaveStream>();
@@ -844,19 +849,19 @@ namespace MMX.Engine
 
             lua = new Lua();
             lua.LoadCLRPackage(); // TODO : This can be DANGEROUS! Fix in the future by adding restrictions on the scripting.
-            lua.DoString(@"import ('XSharp', 'MMX')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Effects')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Enemies')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Enemies.Bosses')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.HUD')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Items')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Objects')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Triggers')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Weapons')");
-            lua.DoString(@"import ('XSharp', 'MMX.Engine.Sound')");
-            lua.DoString(@"import('XSharp', 'MMX.Engine.World')");
+            lua.DoString(@"import ('XSharp', 'XSharp')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Effects')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Enemies')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Enemies.Bosses')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.HUD')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Items')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Objects')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Triggers')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Weapons')");
+            lua.DoString(@"import ('XSharp', 'XSharp.Engine.Sound')");
+            lua.DoString(@"import('XSharp', 'XSharp.Engine.World')");
             lua["engine"] = this;
 
             presentationParams = new PresentParameters
@@ -871,8 +876,7 @@ namespace MMX.Engine
                 BackBufferWidth = Form.ClientSize.Width
             };
 
-            Direct3D = new Direct3D();
-            ResetDevice();
+            Direct3D = new Direct3D();            
 
             NoCameraConstraints = NO_CAMERA_CONSTRAINTS;
 
@@ -1032,20 +1036,6 @@ namespace MMX.Engine
             DrawScale = DEFAULT_DRAW_SCALE;
             UpdateScale();
 
-            if (LOAD_ROM)
-            {
-                mmx = new MMXCore();
-                mmx.LoadNewRom(@"resources\roms\" + ROM_NAME);
-                mmx.Init();
-
-                if (mmx.CheckROM() != 0)
-                {
-                    romLoaded = true;
-                    mmx.LoadFont();
-                    mmx.LoadProperties();
-                }
-            }
-
             LoadConfig();
 
             Running = true;
@@ -1204,44 +1194,34 @@ namespace MMX.Engine
             var dashingCollisionBox = new MMXBox(new Vector(-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT + 3));
 
             // 0
-            var xSpriteSheet = new SpriteSheet(this, "X", true, true);
-            spriteSheets.Add(xSpriteSheet);
+            var xSpriteSheet = AddSpriteSheet("X", true, true);
 
             // 1
-            var xWeaponsSpriteSheet = new SpriteSheet(this, "X Weapons", true, true);
-            spriteSheets.Add(xWeaponsSpriteSheet);
+            var xWeaponsSpriteSheet = AddSpriteSheet("X Weapons", true, true);
 
             // 2
-            var xEffectsSpriteSheet = new SpriteSheet(this, "X Effects", true, true);
-            spriteSheets.Add(xEffectsSpriteSheet);
+            var xEffectsSpriteSheet = AddSpriteSheet("X Effects", true, true);
 
             // 3
-            var xChargingEffectsSpriteSheet = new SpriteSheet(this, "X Charging Effects", true, false);
-            spriteSheets.Add(xChargingEffectsSpriteSheet);
+            var xChargingEffectsSpriteSheet = AddSpriteSheet("X Charging Effects", true, false);
 
             // 4
-            var drillerSpriteSheet = new SpriteSheet(this, "Driller", true, true);
-            spriteSheets.Add(drillerSpriteSheet);
+            var drillerSpriteSheet = AddSpriteSheet("Driller", true, true);
 
             // 5
-            var explosionSpriteSheet = new SpriteSheet(this, "Explosion", true, true);
-            spriteSheets.Add(explosionSpriteSheet);
+            var explosionSpriteSheet = AddSpriteSheet("Explosion", true, true);
 
             // 6
-            var hpSpriteSheet = new SpriteSheet(this, "HP", true, true);
-            spriteSheets.Add(hpSpriteSheet);
+            var hpSpriteSheet = AddSpriteSheet("HP", true, true);
 
             // 7
-            var readySpriteSheet = new SpriteSheet(this, "Ready", true, true);
-            spriteSheets.Add(readySpriteSheet);
+            var readySpriteSheet = AddSpriteSheet("Ready", true, true);
 
             // 8
-            var batSpriteSheet = new SpriteSheet(this, "Bat", true, true);
-            spriteSheets.Add(batSpriteSheet);
+            var batSpriteSheet = AddSpriteSheet("Bat", true, true);
 
             // 9
-            var bossDoorSpriteSheet = new SpriteSheet(this, "Boos Door", true, true);
-            spriteSheets.Add(bossDoorSpriteSheet);
+            var bossDoorSpriteSheet = AddSpriteSheet("Boos Door", true, true);
 
             // Setup frame sequences (animations)
 
@@ -3473,7 +3453,9 @@ namespace MMX.Engine
             {
                 resource?.Dispose();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void DisposeDevice()
@@ -3481,10 +3463,12 @@ namespace MMX.Engine
             foreach (var spriteSheet in spriteSheets)
                 DisposeResource(spriteSheet);
 
+            spriteSheets.Clear();
+            spriteSheetsByName.Clear();
+
             foreach (var palette in palettes)
                 DisposeResource(palette);
 
-            spriteSheets.Clear();
             palettes.Clear();
 
             World?.OnDisposeDevice();
@@ -4433,6 +4417,22 @@ namespace MMX.Engine
 
         private void Execute()
         {
+            ResetDevice();
+
+            if (LOAD_ROM)
+            {
+                mmx = new MMXCore();
+                mmx.LoadNewRom(@"resources\roms\" + ROM_NAME);
+                mmx.Init();
+
+                if (mmx.CheckROM() != 0)
+                {
+                    romLoaded = true;
+                    mmx.LoadFont();
+                    mmx.LoadProperties();
+                }
+            }
+
             LoadLevel(INITIAL_LEVEL, INITIAL_CHECKPOINT);
 
             if (romLoaded)
@@ -4445,9 +4445,50 @@ namespace MMX.Engine
             }
         }
 
-        internal SpriteSheet GetSpriteSheet(int spriteSheetIndex)
+        public SpriteSheet AddSpriteSheet(string name, bool disposeTexture = false, bool precache = false)
+        {
+            var result = new SpriteSheet(name, disposeTexture, precache)
+            {
+                Index = spriteSheets.Count
+            };
+
+            spriteSheets.Add(result);
+            spriteSheetsByName.Add(name, result);
+            return result;
+        }
+
+        public SpriteSheet AddSpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false)
+        {
+            var result = new SpriteSheet(name, texture, disposeTexture, precache)
+            {
+                Index = spriteSheets.Count
+            };
+
+            spriteSheets.Add(result);
+            spriteSheetsByName.Add(name, result);
+            return result;
+        }
+
+        public SpriteSheet AddSpriteSheet(string name, string imageFileName, bool precache = false)
+        {
+            var result = new SpriteSheet(name, imageFileName, precache)
+            {
+                Index = spriteSheets.Count
+            };
+
+            spriteSheets.Add(result);
+            spriteSheetsByName.Add(name, result);
+            return result;
+        }
+
+        public SpriteSheet GetSpriteSheet(int spriteSheetIndex)
         {
             return spriteSheets[spriteSheetIndex];
+        }
+
+        public SpriteSheet GetSpriteSheetByName(string name)
+        {
+            return spriteSheetsByName[name];
         }
 
         internal Texture GetPalette(int paletteIndex)

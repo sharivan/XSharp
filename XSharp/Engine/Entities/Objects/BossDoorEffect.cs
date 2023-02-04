@@ -1,7 +1,7 @@
-﻿using MMX.Engine.Entities.Effects;
-using MMX.Geometry;
+﻿using XSharp.Engine.Entities.Effects;
+using XSharp.Geometry;
 
-namespace MMX.Engine.Entities.Objects
+namespace XSharp.Engine.Entities.Objects
 {
     internal class BossDoorEffect : SpriteEffect
     {
@@ -24,7 +24,7 @@ namespace MMX.Engine.Entities.Objects
             RegisterState(BossDoorState.CLOSED, OnStartClosed, null, null, "Closed");
             RegisterState(BossDoorState.OPENING, OnStartOpening, OnOpening, null, "Opening");
             RegisterState(BossDoorState.PLAYER_CROSSING, OnStartPlayerCrossing, OnPlayerCrossing, null, "PlayerCrossing");
-            RegisterState(BossDoorState.CLOSING, OnStartClosing, OnClosing, null, "Closing");
+            RegisterState(BossDoorState.CLOSING, OnStartClosing, OnClosing, OnEndClosing, "Closing");
         }
 
         public BossDoorEffect(BossDoor door, Vector origin) : this(null, door, origin)
@@ -64,6 +64,11 @@ namespace MMX.Engine.Entities.Objects
         private void OnClosing(EntityState state, long frameCounter)
         {
             Door?.OnClosing(frameCounter);
+        }
+
+        private void OnEndClosing(EntityState state)
+        {
+            Door.OnEndClosing();
         }
 
         protected internal override void OnAnimationEnd(Animation animation)

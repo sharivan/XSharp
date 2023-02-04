@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace MMX.ROM
+namespace XSharp.ROM
 {
     public class MegaEDCore : IDisposable
     {

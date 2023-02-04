@@ -1,12 +1,13 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.Direct3D9;
 using System.IO;
-using MMXBox = MMX.Geometry.Box;
-using Sprite = MMX.Engine.Entities.Sprite;
+using XSharp.Engine.Graphics;
+using XSharp.Geometry;
+using XSharp.Math;
+using MMXBox = XSharp.Geometry.Box;
+using Sprite = XSharp.Engine.Entities.Sprite;
 
-namespace MMX.Engine
+namespace XSharp.Engine
 {
     public delegate void AnimationFrameEvent(Animation animation, int frameSequenceIndex);
 

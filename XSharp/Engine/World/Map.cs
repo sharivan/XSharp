@@ -1,9 +1,9 @@
-﻿using MMX.Geometry;
-using SharpDX;
-using static MMX.Engine.Consts;
-using MMXBox = MMX.Geometry.Box;
+﻿using SharpDX;
+using XSharp.Geometry;
+using static XSharp.Engine.Consts;
+using MMXBox = XSharp.Geometry.Box;
 
-namespace MMX.Engine.World
+namespace XSharp.Engine.World
 {
     public class Map
     {

@@ -1,6 +1,6 @@
-﻿using static MMX.Engine.Consts;
+﻿using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.HUD
+namespace XSharp.Engine.Entities.HUD
 {
     public class ReadyHUD : HUD
     {

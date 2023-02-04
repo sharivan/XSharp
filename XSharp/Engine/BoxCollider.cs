@@ -1,10 +1,10 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using System.Collections.Generic;
-using static MMX.Engine.Consts;
-using MMXWorld = MMX.Engine.World.World;
+﻿using System.Collections.Generic;
+using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
+using MMXWorld = XSharp.Engine.World.World;
 
-namespace MMX.Engine
+namespace XSharp.Engine
 {
     public class BoxCollider
     {

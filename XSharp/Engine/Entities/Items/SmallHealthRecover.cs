@@ -1,8 +1,8 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-using static MMX.Engine.Consts;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.Items
+namespace XSharp.Engine.Entities.Items
 {
     public enum SmallHealthRecoverState
     {

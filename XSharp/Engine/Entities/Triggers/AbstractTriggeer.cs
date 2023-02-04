@@ -1,7 +1,7 @@
-﻿using MMX.Geometry;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using XSharp.Geometry;
 
-namespace MMX.Engine.Entities.Triggers
+namespace XSharp.Engine.Entities.Triggers
 {
     public delegate void TriggerEvent(AbstractTrigger source, Entity activator);
 

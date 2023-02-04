@@ -127,6 +127,9 @@
     <Compile Include="Engine\Entities\Triggers\CheckpointTriggerOnce.cs" />
     <Compile Include="Engine\Entities\Triggers\SplitterTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\Trigger.cs" />
+    <Compile Include="Engine\Graphics\Palette.cs" />
+    <Compile Include="Engine\Graphics\Tilemap.cs" />
+    <Compile Include="Engine\Graphics\Tileset.cs" />
     <Compile Include="Engine\Sound\SoundPlayer.cs" />
     <Compile Include="Engine\World\Block.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Boss.cs" />
@@ -155,7 +158,7 @@
     <Compile Include="Engine\World\Scene.cs" />
     <Compile Include="Engine\World\Camera.cs" />
     <Compile Include="Engine\Entities\Sprite.cs" />
-    <Compile Include="Engine\SpriteSheet.cs" />
+    <Compile Include="Engine\Graphics\SpriteSheet.cs" />
     <Compile Include="Engine\World\Tile.cs" />
     <Compile Include="Engine\World\Cell.cs" />
     <Compile Include="Engine\Utils.cs" />

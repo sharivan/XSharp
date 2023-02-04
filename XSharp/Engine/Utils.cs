@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MMX.Engine
+namespace XSharp.Engine
 {
     public static class Utils
     {

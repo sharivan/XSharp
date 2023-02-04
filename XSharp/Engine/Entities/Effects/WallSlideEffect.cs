@@ -1,6 +1,6 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-namespace MMX.Engine.Entities.Effects
+namespace XSharp.Engine.Entities.Effects
 {
     public class WallSlideEffect : SpriteEffect
     {

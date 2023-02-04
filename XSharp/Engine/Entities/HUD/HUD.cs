@@ -1,6 +1,6 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-namespace MMX.Engine.Entities.HUD
+namespace XSharp.Engine.Entities.HUD
 {
     public class HUD : Sprite
     {

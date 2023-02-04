@@ -1,4 +1,4 @@
-﻿namespace MMX.Engine.World
+﻿namespace XSharp.Engine.World
 {
     public readonly struct Cell
     {

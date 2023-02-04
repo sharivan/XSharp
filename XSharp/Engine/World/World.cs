@@ -1,13 +1,13 @@
-﻿using MMX.Engine.Entities;
-using MMX.Geometry;
-using MMX.Math;
-using SharpDX.Direct3D9;
+﻿using SharpDX.Direct3D9;
 using System;
 using System.Collections.Generic;
-using static MMX.Engine.Consts;
-using MMXBox = MMX.Geometry.Box;
+using XSharp.Engine.Entities;
+using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
+using MMXBox = XSharp.Geometry.Box;
 
-namespace MMX.Engine.World
+namespace XSharp.Engine.World
 {
     public class World : IDisposable
     {

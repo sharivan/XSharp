@@ -1,8 +1,8 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-using static MMX.Engine.Consts;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.Items
+namespace XSharp.Engine.Entities.Items
 {
     public enum BigAmmoRecoverState
     {
@@ -12,7 +12,7 @@ namespace MMX.Engine.Entities.Items
 
     public class BigAmmoRecover : Item
     {
-        public BigAmmoRecover(string name, Vector origin, int durationFrames = 0) 
+        public BigAmmoRecover(string name, Vector origin, int durationFrames = 0)
             : base(name, origin, durationFrames, 1, false, "BigAmmoRecover")
         {
         }

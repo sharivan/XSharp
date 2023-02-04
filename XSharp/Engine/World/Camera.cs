@@ -1,9 +1,9 @@
-﻿using MMX.Engine.Entities;
-using MMX.Geometry;
-using MMX.Math;
-using static MMX.Engine.Consts;
+﻿using XSharp.Engine.Entities;
+using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.World
+namespace XSharp.Engine.World
 {
     public class Camera
     {

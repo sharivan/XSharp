@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace MMX.Math
+namespace XSharp.Math
 {
     public struct FixedSingle : IComparable<FixedSingle>
     {

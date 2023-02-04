@@ -1,9 +1,9 @@
-﻿using MMX.Geometry;
-using MMX.Math;
+﻿using XSharp.Geometry;
+using XSharp.Math;
 
-using static MMX.Engine.Consts;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.Enemies
+namespace XSharp.Engine.Entities.Enemies
 {
     public abstract class Enemy : Sprite
     {
@@ -51,7 +51,7 @@ namespace MMX.Engine.Entities.Enemies
 
         public float TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeUpDropOdd + NothingDropOdd;
 
-        protected Enemy(string name, Vector origin, int spriteSheetIndex, bool directional = false) 
+        protected Enemy(string name, Vector origin, int spriteSheetIndex, bool directional = false)
             : base(name, origin, spriteSheetIndex, directional)
         {
         }

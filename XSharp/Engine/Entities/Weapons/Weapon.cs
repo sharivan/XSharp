@@ -1,8 +1,8 @@
-﻿using MMX.Engine.Entities.Enemies;
-using MMX.Geometry;
-using MMX.Math;
+﻿using XSharp.Engine.Entities.Enemies;
+using XSharp.Geometry;
+using XSharp.Math;
 
-namespace MMX.Engine.Entities.Weapons
+namespace XSharp.Engine.Entities.Weapons
 {
     public abstract class Weapon : Sprite
     {

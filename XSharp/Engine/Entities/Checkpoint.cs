@@ -1,6 +1,6 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-namespace MMX.Engine.Entities
+namespace XSharp.Engine.Entities
 {
     public class Checkpoint : Entity
     {

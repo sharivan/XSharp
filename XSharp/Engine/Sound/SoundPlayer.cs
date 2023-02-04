@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 
-namespace MMX.Engine.Sound
+namespace XSharp.Engine.Sound
 {
     public enum SoundFormat
     {

@@ -1,11 +1,11 @@
-﻿using MMX.Engine.Entities.Triggers;
-using MMX.Engine.World;
-using MMX.Geometry;
+﻿using XSharp.Engine.Entities.Triggers;
+using XSharp.Engine.World;
+using XSharp.Geometry;
 
-using static MMX.Engine.Consts;
-using static MMX.Engine.World.World;
+using static XSharp.Engine.Consts;
+using static XSharp.Engine.World.World;
 
-namespace MMX.Engine.Entities.Objects
+namespace XSharp.Engine.Entities.Objects
 {
     public enum BossDoorState
     {
@@ -92,8 +92,14 @@ namespace MMX.Engine.Entities.Objects
                 Engine.World.Camera.FocusOn = null;
                 player.StartBossDoorCrossing();
                 Engine.KillAllAliveEnemiesAndWeapons();
-                Engine.FreezeSprites(player, effect);
+                
+                if (player.ChargingEffect != null)
+                    Engine.FreezeSprites(player, effect, player.ChargingEffect);
+                else
+                    Engine.FreezeSprites(player, effect);
+
                 Engine.Player.Animating = false;
+                Engine.Player.InputLocked = true;
 
                 if (!Bidirectional)
                     Enabled = false;
@@ -130,8 +136,8 @@ namespace MMX.Engine.Entities.Objects
 
             if (ClosingHugeSound)
             {
-                Engine.CameraConstraintsOrigin += (SCENE_SIZE, 0);
-                Engine.CameraConstraintsBox += (SCENE_SIZE, 0);
+                Engine.CameraConstraintsOrigin = Engine.CurrentCheckpoint.Origin + (SCENE_SIZE, 0);
+                Engine.CameraConstraintsBox = Engine.CurrentCheckpoint.BoundingBox + (SCENE_SIZE, 0);
             }
 
             PlayerCrossingEvent?.Invoke(this);
@@ -159,6 +165,14 @@ namespace MMX.Engine.Entities.Objects
 
         internal void OnClosing(long frameCounter)
         {
+        }
+
+        internal void OnEndClosing()
+        {
+            if (!ClosingHugeSound)
+                Engine.Player.Invincible = false;
+
+            Engine.Player.InputLocked = false;
         }
     }
 }

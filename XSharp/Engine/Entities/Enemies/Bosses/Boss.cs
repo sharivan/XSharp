@@ -1,6 +1,6 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-namespace MMX.Engine.Entities.Enemies.Bosses
+namespace XSharp.Engine.Entities.Enemies.Bosses
 {
     public abstract class Boss : Enemy
     {

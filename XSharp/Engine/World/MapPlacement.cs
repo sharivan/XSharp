@@ -1,8 +1,8 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-using static MMX.Engine.Consts;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.World
+namespace XSharp.Engine.World
 {
     public readonly struct MapPlacement
     {

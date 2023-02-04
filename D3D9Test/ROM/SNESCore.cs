@@ -3,7 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 
-namespace MMX.ROM
+namespace XSharp.ROM
 {
     public struct Interrupts
     {

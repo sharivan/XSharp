@@ -7,7 +7,7 @@ using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.Windows;
 
-using MMX.ROM;
+using XSharp.ROM;
 
 using Color = SharpDX.Color;
 

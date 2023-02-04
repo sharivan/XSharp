@@ -1,13 +1,13 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.Direct3D9;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using MMXBox = MMX.Geometry.Box;
+using XSharp.Geometry;
+using XSharp.Math;
+using MMXBox = XSharp.Geometry.Box;
 
-namespace MMX.Engine
+namespace XSharp.Engine.Graphics
 {
     public class SpriteSheet : IDisposable
     {
@@ -194,9 +194,12 @@ namespace MMX.Engine
         private readonly List<Frame> frames;
         private readonly Dictionary<string, FrameSequence> sequences;
 
-        public GameEngine Engine
+        public GameEngine Engine => GameEngine.Engine;
+
+        public int Index
         {
             get;
+            internal set;
         }
 
         public string Name
@@ -236,9 +239,8 @@ namespace MMX.Engine
 
         public int FrameSequenceCount => sequences.Count;
 
-        public SpriteSheet(GameEngine engine, string name, bool disposeTexture = false, bool precache = false)
+        public SpriteSheet(string name, bool disposeTexture = false, bool precache = false)
         {
-            Engine = engine;
             Name = name;
             Precache = precache;
             DisposeTexture = disposeTexture;
@@ -247,15 +249,15 @@ namespace MMX.Engine
             sequences = new Dictionary<string, FrameSequence>();
         }
 
-        public SpriteSheet(GameEngine engine, string name, Texture texture, bool disposeTexture = false, bool precache = false)
-            : this(engine, name, precache)
+        public SpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false)
+            : this(name, precache)
         {
             CurrentTexture = texture;
             DisposeTexture = disposeTexture;
         }
 
-        public SpriteSheet(GameEngine engine, string name, string imageFileName, bool precache = false)
-            : this(engine, name, precache)
+        public SpriteSheet(string name, string imageFileName, bool precache = false)
+            : this(name, precache)
         {
             DisposeTexture = true;
             LoadFromFile(imageFileName);

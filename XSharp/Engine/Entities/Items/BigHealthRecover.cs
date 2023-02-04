@@ -1,8 +1,8 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-using static MMX.Engine.Consts;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.Items
+namespace XSharp.Engine.Entities.Items
 {
     public enum BigHealthRecoverState
     {
@@ -18,7 +18,7 @@ namespace MMX.Engine.Entities.Items
             set => SetState(value);
         }
 
-        public BigHealthRecover(string name, Vector origin, int durationFrames = 0) 
+        public BigHealthRecover(string name, Vector origin, int durationFrames = 0)
             : base(name, origin, durationFrames, 1, false, "BigHealthRecoverDropping", "BigHealthRecoverIdle")
         {
             SetupStateArray(typeof(BigHealthRecoverState));

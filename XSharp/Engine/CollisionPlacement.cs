@@ -1,7 +1,7 @@
-﻿using MMX.Engine.World;
-using MMXWorld = MMX.Engine.World.World;
+﻿using XSharp.Engine.World;
+using MMXWorld = XSharp.Engine.World.World;
 
-namespace MMX.Engine
+namespace XSharp.Engine
 {
     public readonly struct CollisionPlacement
     {

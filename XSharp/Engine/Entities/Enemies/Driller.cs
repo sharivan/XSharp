@@ -1,8 +1,8 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using static MMX.Engine.Consts;
+﻿using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.Enemies
+namespace XSharp.Engine.Entities.Enemies
 {
     public enum DrillerState
     {

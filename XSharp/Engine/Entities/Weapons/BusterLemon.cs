@@ -1,10 +1,10 @@
-﻿using MMX.Engine.Entities.Enemies;
-using MMX.Geometry;
-using MMX.Math;
+﻿using XSharp.Engine.Entities.Enemies;
+using XSharp.Geometry;
+using XSharp.Math;
 
-using static MMX.Engine.Consts;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.Weapons
+namespace XSharp.Engine.Entities.Weapons
 {
     public enum LemonState
     {

@@ -1,12 +1,11 @@
-﻿using MMX.Geometry;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using XSharp.Geometry;
+using static XSharp.Engine.Consts;
+using static XSharp.Engine.World.World;
 
-using static MMX.Engine.Consts;
-using static MMX.Engine.World.World;
-
-namespace MMX.Engine.Entities
+namespace XSharp.Engine.Entities
 {
     public enum VectorKind
     {

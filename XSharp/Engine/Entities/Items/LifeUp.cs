@@ -1,12 +1,12 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-using static MMX.Engine.Consts;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.Items
+namespace XSharp.Engine.Entities.Items
 {
     public class LifeUp : Item
     {
-        public LifeUp(string name, Vector origin, int durationFrames = 0) 
+        public LifeUp(string name, Vector origin, int durationFrames = 0)
             : base(name, origin, durationFrames, 1, false, "LifeUp")
         {
         }

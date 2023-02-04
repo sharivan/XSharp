@@ -7,21 +7,21 @@
     MegaEDX v1.3: https://github.com/rbrummett/megaedx_v1.3
  */
 
-using MMX.Engine;
-using MMX.Engine.Entities.Triggers;
-using MMX.Engine.World;
-using MMX.Geometry;
-using MMX.Math;
 using SharpDX;
 using SharpDX.Direct3D9;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using static MMX.Engine.Consts;
-using MMXBox = MMX.Geometry.Box;
+using XSharp.Engine;
+using XSharp.Engine.Entities.Triggers;
+using XSharp.Engine.World;
+using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
+using MMXBox = XSharp.Geometry.Box;
 
-namespace MMX.ROM
+namespace XSharp.ROM
 {
     public struct STileInfo
     {

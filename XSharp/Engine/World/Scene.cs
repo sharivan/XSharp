@@ -1,12 +1,12 @@
-﻿using MMX.Geometry;
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.Direct3D9;
 using System;
 using System.Collections.Generic;
-using static MMX.Engine.Consts;
-using MMXBox = MMX.Geometry.Box;
+using XSharp.Geometry;
+using static XSharp.Engine.Consts;
+using MMXBox = XSharp.Geometry.Box;
 
-namespace MMX.Engine.World
+namespace XSharp.Engine.World
 {
     public class Scene : IDisposable
     {

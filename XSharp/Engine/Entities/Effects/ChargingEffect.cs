@@ -1,4 +1,4 @@
-﻿namespace MMX.Engine.Entities.Effects
+﻿namespace XSharp.Engine.Entities.Effects
 {
     public class ChargingEffect : SpriteEffect
     {

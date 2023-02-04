@@ -1,11 +1,11 @@
-﻿using MMX.Math;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using XSharp.Math;
 
-namespace MMX.Geometry
+namespace XSharp.Geometry
 {
     public enum GeometryType
     {
@@ -270,7 +270,7 @@ namespace MMX.Geometry
         /// <returns>O vetor normalizado</returns>
         public Vector Versor(FixedSingle epslon)
         {
-            if (X.Abs <= epslon &&  Y.Abs <= epslon)
+            if (X.Abs <= epslon && Y.Abs <= epslon)
                 return NULL_VECTOR;
 
             FixedSingle abs = Length;

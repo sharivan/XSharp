@@ -1,14 +1,15 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using SharpDX.Direct3D9;
+﻿using SharpDX.Direct3D9;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using static MMX.Engine.Consts;
-using static MMX.Engine.World.World;
-using Box = MMX.Geometry.Box;
+using XSharp.Engine.Graphics;
+using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
+using static XSharp.Engine.World.World;
+using Box = XSharp.Geometry.Box;
 
-namespace MMX.Engine.Entities
+namespace XSharp.Engine.Entities
 {
     public delegate void SpriteEvent(Sprite source);
     public delegate void TakeDamageEvent(Sprite source, Sprite attacker, FixedSingle damage);
@@ -32,7 +33,7 @@ namespace MMX.Engine.Entities
         public event SpriteEvent LandedEvent;
         public event SpriteEvent BrokeEvent;
 
-        protected List<Animation> animations;
+        private List<Animation> animations;
         private int currentAnimationIndex = -1;
         protected bool solid;
         private bool fading;
@@ -54,12 +55,29 @@ namespace MMX.Engine.Entities
         private bool blinkOn;
         private long blinkExpires;
 
-        private readonly Dictionary<string, int> animationNames;
+        private readonly Dictionary<string, List<Animation>> animationsByName;
+
+        public SpriteSheet SpriteSheet => Engine.GetSpriteSheet(SpriteSheetIndex);
 
         public int SpriteSheetIndex
         {
             get;
             private set;
+        }
+
+        public string SpriteSheetName
+        {
+            get
+            {
+                var spriteSheet = Engine.GetSpriteSheet(SpriteSheetIndex);
+                return spriteSheet?.Name;
+            }
+
+            set
+            {
+                var spriteSheet = Engine.GetSpriteSheetByName(value);
+                SpriteSheetIndex = spriteSheet != null ? spriteSheet.Index : -1;
+            }
         }
 
         public bool Directional
@@ -69,8 +87,6 @@ namespace MMX.Engine.Entities
         }
 
         public Direction Direction { get; set; } = Direction.RIGHT;
-
-        public SpriteSheet Sheet => Engine.GetSpriteSheet(SpriteSheetIndex);
 
         public string InitialAnimationName
         {
@@ -121,6 +137,8 @@ namespace MMX.Engine.Entities
                 blinking = value;
             }
         }
+
+        public IEnumerable<Animation> Animations => animations;
 
         public bool InvisibleOnCurrentFrame
         {
@@ -224,14 +242,14 @@ namespace MMX.Engine.Entities
 
             animations = new List<Animation>();
 
-            this.animationNames = new Dictionary<string, int>();
+            this.animationsByName = new Dictionary<string, List<Animation>>();
 
             if (animationNames != null)
                 foreach (var animationName in animationNames)
-                    this.animationNames.Add(animationName, -1);
+                    this.animationsByName.Add(animationName, new());
             else
-                foreach (var frameSequenceName in Sheet.FrameSequenceNames)
-                    this.animationNames.Add(frameSequenceName, -1);
+                foreach (var frameSequenceName in SpriteSheet.FrameSequenceNames)
+                    this.animationsByName.Add(frameSequenceName, new());
         }
 
         protected Sprite(Vector origin, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
@@ -251,7 +269,7 @@ namespace MMX.Engine.Entities
 
         public int GetAnimationIndex(string animationName)
         {
-            return animationNames.TryGetValue(animationName, out int result) ? result : -1;
+            return animationsByName.TryGetValue(animationName, out List<Animation> animations) ? animations.Count > 0 ? animations[0].Index : -1 : -1;
         }
 
         protected override Type GetStateType()
@@ -395,9 +413,9 @@ namespace MMX.Engine.Entities
             writer.Write(broke);
         }
 
-        protected internal Animation CurrentAnimation => GetAnimation(currentAnimationIndex);
+        public Animation CurrentAnimation => GetAnimation(currentAnimationIndex);
 
-        protected internal int CurrentAnimationIndex
+        public int CurrentAnimationIndex
         {
             get => currentAnimationIndex;
             set
@@ -428,7 +446,7 @@ namespace MMX.Engine.Entities
             }
         }
 
-        protected virtual void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
+        protected virtual void OnCreateAnimation(int animationIndex, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
         {
         }
 
@@ -526,10 +544,10 @@ namespace MMX.Engine.Entities
             collider = new BoxCollider(Engine.World, CollisionBox, GetMaskSize(), GetSideColliderTopOffset(), GetSideColliderBottomOffset(), IsUsingCollisionPlacements());
 
             int animationIndex = 0;
-            var names = new List<string>(animationNames.Keys);
+            var names = new List<string>(animationsByName.Keys);
             foreach (var animationName in names)
             {
-                SpriteSheet.FrameSequence sequence = Sheet.GetFrameSequence(animationName);
+                SpriteSheet.FrameSequence sequence = SpriteSheet.GetFrameSequence(animationName);
                 string frameSequenceName = sequence.Name;
                 Vector offset = Vector.NULL_VECTOR;
                 int count = 1;
@@ -540,20 +558,21 @@ namespace MMX.Engine.Entities
                 bool startOn = true;
                 bool add = true;
 
-                OnCreateAnimation(animationIndex, Sheet, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
+                OnCreateAnimation(animationIndex, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
 
                 if (add)
                 {
                     int ai = animationIndex;
                     for (int i = 0; i < count; i++)
                     {
-                        animations.Add(new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, offset, repeatX, repeatY, initialFrame, startVisible, startOn));
-                        animationNames[animationName] = ai;
+                        var animation = new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, offset, repeatX, repeatY, initialFrame, startVisible, startOn);
+                        animations.Add(animation);
+                        animationsByName[animationName].Add(animation);
                         animationIndex++;
                     }
                 }
                 else
-                    animationNames.Remove(animationName);
+                    animationsByName.Remove(animationName);
             }
         }
 
@@ -989,20 +1008,39 @@ namespace MMX.Engine.Entities
 
         public int GetAnimationIndexByName(string name)
         {
-            for (int i = 0; i < animations.Count; i++)
-            {
-                var animation = animations[i];
-                if (animation.FrameSequenceName == name)
-                    return i;
-            }
-
-            return -1;
+            Animation animation = GetFirstAnimationByName(name);
+            return animation != null ? animation.Index : -1;
         }
 
-        public Animation GetAnimationByName(string name)
+        public IEnumerable<Animation> GetAnimationsByName(string name)
         {
-            int index = GetAnimationIndexByName(name);
-            return index >= 0 ? animations[index] : null;
+            return animationsByName.TryGetValue(name, out List<Animation> animations) ? animations : null;
+        }
+
+        public Animation GetFirstAnimationByName(string name)
+        {
+            return animationsByName.TryGetValue(name, out List<Animation> animations) ? animations.Count > 0 ? animations[0] : null : null;
+        }
+
+        public void SetCurrentAnimationByName(string name)
+        {
+            Animation animation = GetFirstAnimationByName(name);
+            CurrentAnimationIndex = animation != null ? animation.Index : -1;
+        }
+
+        public void SetAnimationsVisibility(string name, bool visible)
+        {
+            if (!animationsByName.TryGetValue(name, out List<Animation> animations))
+                return;
+
+            foreach (var animation in animations)
+                animation.Visible = visible;
+        }
+
+        public void SetAnimationsVisibilityExclusively(string name, bool visible)
+        {
+            foreach (var animation in animations)
+                animation.Visible = animation.FrameSequenceName == name ? visible : !visible;
         }
 
         protected override bool PreThink()

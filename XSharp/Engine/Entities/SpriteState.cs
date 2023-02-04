@@ -1,4 +1,4 @@
-﻿namespace MMX.Engine.Entities
+﻿namespace XSharp.Engine.Entities
 {
     public class SpriteState : EntityState
     {

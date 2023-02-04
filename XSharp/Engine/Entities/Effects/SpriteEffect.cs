@@ -1,7 +1,7 @@
-﻿using MMX.Geometry;
-using MMX.Math;
+﻿using XSharp.Geometry;
+using XSharp.Math;
 
-namespace MMX.Engine.Entities.Effects
+namespace XSharp.Engine.Entities.Effects
 {
     public class SpriteEffect : Sprite
     {
@@ -10,7 +10,7 @@ namespace MMX.Engine.Entities.Effects
         {
         }
 
-        public SpriteEffect(string name, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames) 
+        public SpriteEffect(string name, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames)
             : this(name, origin, spriteSheetIndex, animationNames, animationNames[0], directional) { }
 
         public override FixedSingle GetGravity()

@@ -1,4 +1,4 @@
-﻿namespace MMX.Engine
+﻿namespace XSharp.Engine
 {
     public enum Direction
     {

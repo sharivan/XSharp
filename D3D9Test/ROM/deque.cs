@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace MMX.ROM
+namespace XSharp.ROM
 {
     [Serializable]
     [ComVisible(false)]

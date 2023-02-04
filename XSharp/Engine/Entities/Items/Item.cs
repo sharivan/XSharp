@@ -1,8 +1,8 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-using static MMX.Engine.Consts;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities.Items
+namespace XSharp.Engine.Entities.Items
 {
     public class Item : Sprite
     {
@@ -24,13 +24,13 @@ namespace MMX.Engine.Entities.Items
             private set;
         } = false;
 
-        public Item(string name, Vector origin, int durationFrames, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false) 
+        public Item(string name, Vector origin, int durationFrames, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
             : base(name, origin, spriteSheetIndex, animationNames, initialAnimationName, directional)
         {
             DurationFrames = durationFrames;
         }
 
-        public Item(string name, Vector origin, int durationFrames, int spriteSheetIndex, bool directional = false, params string[] animationNames) 
+        public Item(string name, Vector origin, int durationFrames, int spriteSheetIndex, bool directional = false, params string[] animationNames)
             : base(name, origin, spriteSheetIndex, directional, animationNames)
         {
             DurationFrames = durationFrames;

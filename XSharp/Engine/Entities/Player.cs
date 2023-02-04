@@ -1,11 +1,11 @@
-﻿using MMX.Engine.Entities.Effects;
-using MMX.Geometry;
-using MMX.Math;
-using System;
+﻿using System;
 using System.IO;
-using static MMX.Engine.Consts;
+using XSharp.Engine.Entities.Effects;
+using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
 
-namespace MMX.Engine.Entities
+namespace XSharp.Engine.Entities
 {
     public enum PlayerState
     {
@@ -38,7 +38,6 @@ namespace MMX.Engine.Entities
     {
         private int lives;
 
-        private bool inputLocked;
         private readonly Keys[] keyBuffer = new Keys[KEY_BUFFER_COUNT];
         protected bool death;
 
@@ -63,7 +62,6 @@ namespace MMX.Engine.Entities
         private bool charging;
         private int chargingFrameCounter;
         internal bool shootingCharged;
-        private ChargingEffect chargingEffect;
 
         private bool spawnSoundPlayed;
 
@@ -93,7 +91,7 @@ namespace MMX.Engine.Entities
                 writer.Write((int) keyBuffer[i]);
 
             writer.Write(Lives);
-            writer.Write(inputLocked);
+            writer.Write(InputLocked);
             writer.Write(death);
 
             writer.Write(jumping);
@@ -123,7 +121,7 @@ namespace MMX.Engine.Entities
                 keyBuffer[i] = (Keys) reader.ReadInt32();
 
             Lives = reader.ReadInt32();
-            inputLocked = reader.ReadBoolean();
+            InputLocked = reader.ReadBoolean();
             death = reader.ReadBoolean();
 
             jumping = reader.ReadBoolean();
@@ -255,9 +253,8 @@ namespace MMX.Engine.Entities
 
         public bool InputLocked
         {
-            get => inputLocked;
-
-            set => inputLocked = true;
+            get;
+            set;
         }
 
         public int Lives
@@ -274,81 +271,87 @@ namespace MMX.Engine.Entities
 
         public bool Tired => Health / Engine.HealthCapacity < X_TIRED_PERCENTAGE;
 
-        public bool PressingNothing => Keys == 0;
+        public bool PressingNothing => InputLocked || Keys == 0;
 
-        public bool PressingNoLeftRight => !PressingLeft && !PressingRight;
+        public bool PressingNoLeftRight => !InputLocked && !PressingLeft && !PressingRight;
 
-        public bool PressingLeft => !inputLocked && GetKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.LEFT);
+        public bool PressingLeft => !InputLocked && GetKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.LEFT);
 
-        public bool WasPressingLeft => !inputLocked && GetLastKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.LEFT);
+        public bool WasPressingLeft => !InputLocked && GetLastKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.LEFT);
 
         public bool PressedLeft => !WasPressingLeft && PressingLeft;
 
-        public bool PressingRight => !inputLocked && GetKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.RIGHT);
+        public bool PressingRight => !InputLocked && GetKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.RIGHT);
 
-        public bool WasPressingRight => !inputLocked && GetLastKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.RIGHT);
+        public bool WasPressingRight => !InputLocked && GetLastKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.RIGHT);
 
         public bool PressedRight => !WasPressingRight && PressingRight;
 
-        public bool PressingDown => !inputLocked && GetKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.DOWN);
+        public bool PressingDown => !InputLocked && GetKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.DOWN);
 
-        public bool WasPressingDown => !inputLocked && GetLastKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.DOWN);
+        public bool WasPressingDown => !InputLocked && GetLastKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.DOWN);
 
         public bool PressedDown => !WasPressingDown && PressingDown;
 
-        public bool PressingUp => !inputLocked && GetKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.UP);
+        public bool PressingUp => !InputLocked && GetKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.UP);
 
-        public bool WasPressingUp => !inputLocked && GetLastKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.UP);
+        public bool WasPressingUp => !InputLocked && GetLastKeys(INPUT_MOVEMENT_LATENCY).HasFlag(Keys.UP);
 
         public bool PressedUp => !WasPressingUp && PressingUp;
 
-        public bool PressingShot => !inputLocked && Keys.HasFlag(Keys.SHOT);
+        public bool PressingShot => !InputLocked && Keys.HasFlag(Keys.SHOT);
 
-        public bool WasPressingShot => !inputLocked && LastKeys.HasFlag(Keys.SHOT);
+        public bool WasPressingShot => !InputLocked && LastKeys.HasFlag(Keys.SHOT);
 
         public bool PressedShot => !WasPressingShot && PressingShot;
 
-        public bool PressingWeapon => !inputLocked && Keys.HasFlag(Keys.WEAPON);
+        public bool PressingWeapon => !InputLocked && Keys.HasFlag(Keys.WEAPON);
 
-        public bool WasPressingWeapon => !inputLocked && LastKeys.HasFlag(Keys.WEAPON);
+        public bool WasPressingWeapon => !InputLocked && LastKeys.HasFlag(Keys.WEAPON);
 
         public bool PressedWeapon => !WasPressingWeapon && PressingWeapon;
 
-        public bool PressingJump => !inputLocked && Keys.HasFlag(Keys.JUMP);
+        public bool PressingJump => !InputLocked && Keys.HasFlag(Keys.JUMP);
 
-        public bool WasPressingJump => !inputLocked && LastKeys.HasFlag(Keys.JUMP);
+        public bool WasPressingJump => !InputLocked && LastKeys.HasFlag(Keys.JUMP);
 
         public bool PressedJump => !WasPressingJump && PressingJump;
 
-        public bool PressingDash => !inputLocked && Keys.HasFlag(Keys.DASH);
+        public bool PressingDash => !InputLocked && Keys.HasFlag(Keys.DASH);
 
-        public bool WasPressingDash => !inputLocked && LastKeys.HasFlag(Keys.DASH);
+        public bool WasPressingDash => !InputLocked && LastKeys.HasFlag(Keys.DASH);
 
         public bool PressedDash => !WasPressingDash && PressingDash;
 
-        public bool PressingLWeaponSwitch => !inputLocked && Keys.HasFlag(Keys.LWS);
+        public bool PressingLWeaponSwitch => !InputLocked && Keys.HasFlag(Keys.LWS);
 
-        public bool WasPressingLWeaponSwitch => !inputLocked && LastKeys.HasFlag(Keys.LWS);
+        public bool WasPressingLWeaponSwitch => !InputLocked && LastKeys.HasFlag(Keys.LWS);
 
         public bool PressedLWeaponSwitch => !WasPressingLWeaponSwitch && PressingLWeaponSwitch;
 
-        public bool PressingRWeaponSwitch => !inputLocked && Keys.HasFlag(Keys.RWS);
+        public bool PressingRWeaponSwitch => !InputLocked && Keys.HasFlag(Keys.RWS);
 
-        public bool WasPressingRWeaponSwitch => !inputLocked && LastKeys.HasFlag(Keys.RWS);
+        public bool WasPressingRWeaponSwitch => !InputLocked && LastKeys.HasFlag(Keys.RWS);
 
         public bool PressedRWeaponSwitch => !WasPressingRWeaponSwitch && PressingRWeaponSwitch;
 
-        public bool PressingStart => !inputLocked && Keys.HasFlag(Keys.START);
+        public bool PressingStart => !InputLocked && Keys.HasFlag(Keys.START);
 
-        public bool WasPressingStart => !inputLocked && LastKeys.HasFlag(Keys.START);
+        public bool WasPressingStart => !InputLocked && LastKeys.HasFlag(Keys.START);
 
         public bool PressedStart => !WasPressingStart && PressingStart;
 
-        public bool PressingSelect => !inputLocked && Keys.HasFlag(Keys.SELECT);
+        public bool PressingSelect => !InputLocked && Keys.HasFlag(Keys.SELECT);
 
-        public bool WasPressingSelect => !inputLocked && LastKeys.HasFlag(Keys.SELECT);
+        public bool WasPressingSelect => !InputLocked && LastKeys.HasFlag(Keys.SELECT);
 
         public bool PressedSelect => !WasPressingSelect && PressingSelect;
+
+        public ChargingEffect ChargingEffect
+        {
+            get;
+            private set;
+        }
 
         protected override FixedSingle GetTerminalDownwardSpeed()
         {
@@ -1189,7 +1192,7 @@ namespace MMX.Engine.Entities
                     }
                 }
 
-                if (!TakingDamage)
+                if (!TakingDamage && !InputLocked)
                 {
                     if (PressingShot)
                     {
@@ -1235,10 +1238,10 @@ namespace MMX.Engine.Entities
                                     int frame = chargingFrameCounter - 4;
                                     PaletteIndex = (frame & 2) is 0 or 1 ? 1 : 0;
 
-                                    chargingEffect ??= Engine.StartChargingEffect(this);
+                                    ChargingEffect ??= Engine.StartChargingEffect(this);
 
                                     if (frame == 60)
-                                        chargingEffect.Level = 2;
+                                        ChargingEffect.Level = 2;
                                 }
                             }
                         }
@@ -1253,10 +1256,10 @@ namespace MMX.Engine.Entities
 
                         PaletteIndex = 0;
 
-                        if (chargingEffect != null)
+                        if (ChargingEffect != null)
                         {
-                            chargingEffect.KillOnNextFrame();
-                            chargingEffect = null;
+                            ChargingEffect.KillOnNextFrame();
+                            ChargingEffect = null;
                         }
 
                         if (!spawning && charging && chargingFrameCounter >= 4 && shots < MAX_SHOTS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
@@ -1581,9 +1584,9 @@ namespace MMX.Engine.Entities
             animationIndices[(int) state, shooting ? 1 : tired ? 2 : 0] = animationIndex;
         }
 
-        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+        protected override void OnCreateAnimation(int animationIndex, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
         {
-            base.OnCreateAnimation(animationIndex, sheet, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
+            base.OnCreateAnimation(animationIndex, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
             startOn = false; // Por padrão, a animação de um jogador começa parada.
             startVisible = false;
 
@@ -1780,10 +1783,10 @@ namespace MMX.Engine.Entities
             Freezed = true;
             charging = false;
 
-            if (chargingEffect != null)
+            if (ChargingEffect != null)
             {
-                chargingEffect.KillOnNextFrame();
-                chargingEffect = null;
+                ChargingEffect.KillOnNextFrame();
+                ChargingEffect = null;
             }
 
             SetState(PlayerState.DYING, 0);
@@ -1811,20 +1814,28 @@ namespace MMX.Engine.Entities
             // TODO : Implement
         }
 
-        public void StartBossDoorCrossing()
+        internal void StartBossDoorCrossing()
         {
             CrossingBossDoor = true;
             CheckCollisionWithWorld = false;
-            Invincible = true;
+            Invincible = true;            
             Velocity = Vector.NULL_VECTOR;
         }
 
-        public void StopBossDoorCrossing()
+        internal void StopBossDoorCrossing()
         {
             CrossingBossDoor = false;
             CheckCollisionWithWorld = true;
             Invincible = false;
             Velocity = Vector.NULL_VECTOR;
+            WallJumping = false;
+            jumping = false;
+            baseHSpeed = WALKING_SPEED;
+
+            if (Landed)
+                SetStandState();
+            else
+                SetAirStateAnimation();
         }
     }
 }

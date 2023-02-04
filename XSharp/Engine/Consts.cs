@@ -1,9 +1,8 @@
-﻿using MMX.Geometry;
-using MMX.Math;
+﻿using SharpDX;
+using XSharp.Geometry;
+using XSharp.Math;
 
-using SharpDX;
-
-namespace MMX.Engine
+namespace XSharp.Engine
 {
     public class Consts
     {

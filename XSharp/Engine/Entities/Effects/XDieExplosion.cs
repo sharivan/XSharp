@@ -1,6 +1,6 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-namespace MMX.Engine.Entities.Effects
+namespace XSharp.Engine.Entities.Effects
 {
     public class XDieExplosion : SpriteEffect
     {
@@ -78,9 +78,9 @@ namespace MMX.Engine.Entities.Effects
                 Kill();
         }
 
-        protected override void OnCreateAnimation(int animationIndex, SpriteSheet sheet, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+        protected override void OnCreateAnimation(int animationIndex, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
         {
-            base.OnCreateAnimation(animationIndex, sheet, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
+            base.OnCreateAnimation(animationIndex, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
 
             switch (frameSequenceName)
             {

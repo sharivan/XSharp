@@ -1,6 +1,6 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-namespace MMX.Engine.Entities.Logical
+namespace XSharp.Engine.Entities.Logical
 {
     public abstract class LogicalEntity : Entity
     {

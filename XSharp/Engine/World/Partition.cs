@@ -1,11 +1,10 @@
-﻿using MMX.Engine.Entities;
-using MMX.Geometry;
-using MMX.Math;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using XSharp.Engine.Entities;
+using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
 
-using static MMX.Engine.Consts;
-
-namespace MMX.Engine.World
+namespace XSharp.Engine.World
 {
     /// <summary>
     /// Partição da área de desenho do jogo.

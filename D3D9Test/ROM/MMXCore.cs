@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 
-namespace MMX.ROM
+namespace XSharp.ROM
 {
     public struct STileInfo
     {

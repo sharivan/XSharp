@@ -1,8 +1,7 @@
-﻿using MMX.Geometry;
-using MMX.Math;
-using SharpDX.Direct3D9;
+﻿using XSharp.Geometry;
+using XSharp.Math;
 
-namespace MMX.Engine.Entities.Logical
+namespace XSharp.Engine.Entities.Logical
 {
     public delegate void LogicalLineToEvent(LogicalLineTo source);
 

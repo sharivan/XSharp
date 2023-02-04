@@ -1,4 +1,4 @@
-﻿namespace MMX.Engine.Entities
+﻿namespace XSharp.Engine.Entities
 {
     public delegate void EntityStateEvent(EntityState state);
     public delegate void EntityStateFrameEvent(EntityState state, long frameCounter);

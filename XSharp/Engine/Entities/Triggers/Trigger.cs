@@ -1,6 +1,6 @@
-﻿using MMX.Geometry;
+﻿using XSharp.Geometry;
 
-namespace MMX.Engine.Entities.Triggers
+namespace XSharp.Engine.Entities.Triggers
 {
     public class Trigger : AbstractTrigger
     {
