@@ -57,9 +57,11 @@ Some Pending Fixes:
 - Fix background position in some levels.
 - Fix triggers and camera lock in some levels.
 - Fix camera transitions.
+- Fix the collision with some parts of the levels, for example in the top igloo (containing the heart tank) of Penguin's stage.
 
 Future additions:
 
+- Further polishing of physics.
 - Level editor.
 - Pause menu.
 - Weapons.
