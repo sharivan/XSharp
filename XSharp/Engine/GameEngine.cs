@@ -4829,7 +4829,7 @@ namespace XSharp.Engine
         public void KillAllAliveEnemiesAndWeapons()
         {
             for (Entity entity = firstEntity; entity != null; entity = entity.next)
-                if (entity is Weapon || entity is Weapon)
+                if (entity is Enemy or Weapon)
                     entity.Kill();
         }
     }
