@@ -16,7 +16,7 @@ namespace MMX.Engine.Entities.Objects
             set => SetState(value);
         }
 
-        public BossDoorEffect(GameEngine engine, string name, BossDoor door, Vector origin) : base(engine, name, origin, 9, false, "Closed", "Opening", "PlayerCrossing", "Closing")
+        public BossDoorEffect(string name, BossDoor door, Vector origin) : base(name, origin, 9, false, "Closed", "Opening", "PlayerCrossing", "Closing")
         {
             Door = door;
 
@@ -27,7 +27,7 @@ namespace MMX.Engine.Entities.Objects
             RegisterState(BossDoorState.CLOSING, OnStartClosing, OnClosing, null, "Closing");
         }
 
-        public BossDoorEffect(GameEngine engine, BossDoor door, Vector origin) : this(engine, engine.GetExclusiveName(nameof(BossDoorEffect)), door, origin)
+        public BossDoorEffect(BossDoor door, Vector origin) : this(null, door, origin)
         {
         }
 

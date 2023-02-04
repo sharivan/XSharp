@@ -40,6 +40,7 @@ namespace MMX.Engine.Entities
         public event EntityActivatorEvent TouchingEvent;
         public event EntityActivatorEvent EndTouchEvent;
 
+        private string name;
         private Vector origin;
         internal Entity parent;
         private readonly List<Entity> touchingEntities;
@@ -60,10 +61,7 @@ namespace MMX.Engine.Entities
         private BoxKind boxKind;
         private BoxKind lastBoxKind;
 
-        public GameEngine Engine
-        {
-            get;
-        }
+        public GameEngine Engine => GameEngine.Engine;
 
         public int Index
         {
@@ -73,8 +71,8 @@ namespace MMX.Engine.Entities
 
         public string Name
         {
-            get;
-            set;
+            get => name;
+            set => name = value ?? Engine.GetExclusiveName(GetType().Name);
         }
 
         public Entity Parent
@@ -123,17 +121,17 @@ namespace MMX.Engine.Entities
 
         public Box LastBoundingBox => LastOrigin + GetBoundingBox();
 
-        public Box HitBox
+        public Box Hitbox
         {
-            get => Origin + GetHitBox();
+            get => Origin + GetHitbox();
             set
             {
-                SetHitBox(value - value.Origin);
+                SetHitbox(value - value.Origin);
                 SetOrigin(value.Origin);
             }
         }
 
-        public Box LastHitBox => LastOrigin + GetHitBox();
+        public Box LastHitBox => LastOrigin + GetHitbox();
 
         public bool Alive
         {
@@ -203,9 +201,8 @@ namespace MMX.Engine.Entities
 
         protected EntityState CurrentState => stateArray != null && CurrentStateID >= 0 ? stateArray[CurrentStateID] : null;
 
-        protected Entity(GameEngine engine, string name, Vector origin)
+        protected Entity(string name, Vector origin)
         {
-            Engine = engine;
             Name = name;
             this.origin = origin;
 
@@ -215,7 +212,7 @@ namespace MMX.Engine.Entities
             states = new List<EntityState>();
         }
 
-        protected Entity(GameEngine engine, Vector origin) : this(engine, engine.GetExclusiveName("Entity"), origin)
+        protected Entity(Vector origin) : this(null, origin)
         {
         }
 
@@ -354,7 +351,7 @@ namespace MMX.Engine.Entities
             {
                 VectorKind.ORIGIN => Origin,
                 VectorKind.BOUDINGBOX_CENTER => BoundingBox.Center,
-                VectorKind.HITBOX_CENTER => HitBox.Center,
+                VectorKind.HITBOX_CENTER => Hitbox.Center,
                 _ => Vector.NULL_VECTOR
             };
         }
@@ -372,7 +369,7 @@ namespace MMX.Engine.Entities
 
         protected abstract Box GetBoundingBox();
 
-        protected virtual Box GetHitBox()
+        protected virtual Box GetHitbox()
         {
             return GetBoundingBox();
         }
@@ -381,7 +378,7 @@ namespace MMX.Engine.Entities
         {
         }
 
-        protected virtual void SetHitBox(Box hitbox)
+        protected virtual void SetHitbox(Box hitbox)
         {
         }
 
@@ -390,7 +387,7 @@ namespace MMX.Engine.Entities
             return kind switch
             {
                 BoxKind.BOUDINGBOX => BoundingBox,
-                BoxKind.HITBOX => HitBox,
+                BoxKind.HITBOX => Hitbox,
                 _ => Box.EMPTY_BOX,
             };
         }
@@ -440,7 +437,7 @@ namespace MMX.Engine.Entities
 
             if (CheckCollisionWithEntities)
             {
-                List<Entity> touching = Engine.partition.Query(HitBox, this, childs, BoxKind.HITBOX);
+                List<Entity> touching = Engine.partition.Query(Hitbox, this, childs, BoxKind.HITBOX);
 
                 int count = touchingEntities.Count;
                 for (int i = 0; i < count; i++)

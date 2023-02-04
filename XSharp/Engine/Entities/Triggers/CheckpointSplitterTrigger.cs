@@ -46,8 +46,8 @@ namespace MMX.Engine.Entities.Triggers
             private set;
         }
 
-        public CheckpointSplitterTrigger(GameEngine engine, Box box, Checkpoint checkpoint, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL, SplitterTriggerDirection checkpointDirection = SplitterTriggerDirection.FORWARD)
-            : base(engine, box, orientation)
+        public CheckpointSplitterTrigger(Box box, Checkpoint checkpoint, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL, SplitterTriggerDirection checkpointDirection = SplitterTriggerDirection.FORWARD)
+            : base(box, orientation)
         {
             Checkpoint = checkpoint;
             CheckpointDirection = checkpointDirection;

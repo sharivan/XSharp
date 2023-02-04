@@ -8,13 +8,13 @@ namespace MMX.Engine.Entities.Effects
         {
             return player.Direction switch
             {
-                Direction.LEFT => player.HitBox.LeftTop + (-5, 25),
-                Direction.RIGHT => player.HitBox.RightTop + (5, 25),
+                Direction.LEFT => player.Hitbox.LeftTop + (-5, 25),
+                Direction.RIGHT => player.Hitbox.RightTop + (5, 25),
                 _ => Vector.NULL_VECTOR,
             };
         }
 
-        public WallSlideEffect(GameEngine engine, string name, Player player) : base(engine, name, GetOrigin(player), 2, true, "WallSlideEffect")
+        public WallSlideEffect(string name, Player player) : base(name, GetOrigin(player), 2, true, "WallSlideEffect")
         {
         }
 

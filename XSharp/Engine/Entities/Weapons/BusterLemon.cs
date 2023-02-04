@@ -20,8 +20,8 @@ namespace MMX.Engine.Entities.Weapons
 
         new public Player Shooter => (Player) base.Shooter;
 
-        internal BusterLemon(GameEngine engine, Player shooter, string name, Vector origin, Direction direction, bool dashLemon)
-            : base(engine, shooter, name, origin, direction, 1)
+        internal BusterLemon(Player shooter, string name, Vector origin, Direction direction, bool dashLemon)
+            : base(shooter, name, origin, direction, 1)
         {
             this.dashLemon = dashLemon;
 
@@ -90,8 +90,8 @@ namespace MMX.Engine.Entities.Weapons
             {
                 if (entity != null)
                 {
-                    Box otherHitbox = entity.HitBox;
-                    Vector center = HitBox.Center;
+                    Box otherHitbox = entity.Hitbox;
+                    Vector center = Hitbox.Center;
                     FixedSingle x = Direction == Direction.RIGHT ? otherHitbox.Left : otherHitbox.Right;
                     FixedSingle y = center.Y < otherHitbox.Top ? otherHitbox.Top : center.Y > otherHitbox.Bottom ? otherHitbox.Bottom : Origin.Y;
                     Origin = (x, y);

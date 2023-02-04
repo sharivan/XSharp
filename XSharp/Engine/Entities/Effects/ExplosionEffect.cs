@@ -4,7 +4,7 @@ namespace MMX.Engine.Entities.Effects
 {
     internal class ExplosionEffect : SpriteEffect
     {
-        public ExplosionEffect(GameEngine engine, string name, Vector origin) : base(engine, name, origin, 5, false, "Explosion")
+        public ExplosionEffect(string name, Vector origin) : base(name, origin, 5, false, "Explosion")
         {
         }
 

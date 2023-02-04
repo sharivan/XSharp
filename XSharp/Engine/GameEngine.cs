@@ -90,7 +90,7 @@ namespace MMX.Engine
         }
 
         [ConfigurationProperty("drawCollisionBox",
-            DefaultValue = DEBUG_DRAW_COLLISION_BOX,
+            DefaultValue = DEBUG_DRAW_HITBOX,
             IsRequired = false
             )]
         public bool DrawCollisionBox
@@ -189,8 +189,33 @@ namespace MMX.Engine
         }
     }
 
-    public class GameEngine : IDisposable
+    public class GameEngine
     {
+        public static GameEngine Engine
+        {
+            get;
+            private set;
+        }
+
+        public static void Initialize(Form form)
+        {
+            Engine = new GameEngine(form);
+        }
+
+        public static void Run()
+        {
+            Engine.Execute();
+        }
+
+        public static void Dispose()
+        {
+            if (Engine != null)
+            {
+                Engine.Unload();
+                Engine = null;
+            }
+        }
+
         public const VertexFormat D3DFVF_TLVERTEX = VertexFormat.Position | VertexFormat.Diffuse | VertexFormat.Texture1;
         public const int VERTEX_SIZE = 5 * sizeof(float) + sizeof(int);
 
@@ -371,7 +396,8 @@ namespace MMX.Engine
         private bool drawX = true;
         private bool drawUpLayer = true;
 
-        private bool drawCollisionBox = DEBUG_DRAW_COLLISION_BOX;
+        private bool drawHitbox = DEBUG_DRAW_HITBOX;
+        private bool showDrawBox = DEBUG_SHOW_BOUNDING_BOX;
         private bool showColliders = DEBUG_SHOW_COLLIDERS;
         private bool drawMapBounds = DEBUG_DRAW_MAP_BOUNDS;
         private bool drawTouchingMapBounds = DEBUG_HIGHLIGHT_TOUCHING_MAPS;
@@ -801,7 +827,7 @@ namespace MMX.Engine
             get;
         }
 
-        public GameEngine(Form form)
+        private GameEngine(Form form)
         {
             Form = form;
 
@@ -817,6 +843,21 @@ namespace MMX.Engine
             soundChannels = new List<(WaveOutEvent, SoundStream, bool)>();
 
             lua = new Lua();
+            lua.LoadCLRPackage(); // TODO : This can be DANGEROUS! Fix in the future by adding restrictions on the scripting.
+            lua.DoString(@"import ('XSharp', 'MMX')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Effects')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Enemies')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Enemies.Bosses')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.HUD')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Items')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Objects')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Triggers')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Entities.Weapons')");
+            lua.DoString(@"import ('XSharp', 'MMX.Engine.Sound')");
+            lua.DoString(@"import('XSharp', 'MMX.Engine.World')");
+            lua["engine"] = this;
 
             presentationParams = new PresentParameters
             {
@@ -1005,17 +1046,12 @@ namespace MMX.Engine
                 }
             }
 
-            LoadLevel(INITIAL_LEVEL, INITIAL_CHECKPOINT);
-
-            if (romLoaded)
-                mmx.UpdateVRAMCache();
-
             LoadConfig();
 
             Running = true;
         }
 
-        public void Dispose()
+        private void Unload()
         {
             UnloadLevel();
 
@@ -1979,7 +2015,7 @@ namespace MMX.Engine
             if (section.Top != -1)
                 Form.Top = section.Top;
 
-            drawCollisionBox = section.DrawCollisionBox;
+            drawHitbox = section.DrawCollisionBox;
             showColliders = section.ShowColliders;
             drawMapBounds = section.DrawMapBounds;
             drawTouchingMapBounds = section.DrawTouchingMapBounds;
@@ -2002,7 +2038,7 @@ namespace MMX.Engine
 
             section.Left = Form.Left;
             section.Top = Form.Top;
-            section.DrawCollisionBox = drawCollisionBox;
+            section.DrawCollisionBox = drawHitbox;
             section.ShowColliders = showColliders;
             section.DrawMapBounds = drawMapBounds;
             section.DrawTouchingMapBounds = drawTouchingMapBounds;
@@ -2638,7 +2674,7 @@ namespace MMX.Engine
                     if (!wasPressingToggleDrawCollisionBox)
                     {
                         wasPressingToggleDrawCollisionBox = true;
-                        drawCollisionBox = !drawCollisionBox;
+                        drawHitbox = !drawHitbox;
                     }
                 }
                 else
@@ -2861,6 +2897,8 @@ namespace MMX.Engine
                 return false;
 
             FrameCounter++;
+
+            //lua.DoString("if engine.Player ~= null then engine.Player:ShootLemon() end");
 
             if (Fading)
             {
@@ -3561,9 +3599,9 @@ namespace MMX.Engine
                     }
                 }
 
-                if (drawCollisionBox || showTriggerBounds)
+                if (drawHitbox || showDrawBox || showTriggerBounds)
                 {
-                    List<Entity> entities = partition.Query(World.BoundingBox, BoxKind.HITBOX);
+                    List<Entity> entities = partition.Query(World.BoundingBox, (drawHitbox || showTriggerBounds ? BoxKind.HITBOX : BoxKind.NONE) | (showDrawBox ? BoxKind.BOUDINGBOX : BoxKind.NONE));
                     foreach (Entity entity in entities)
                     {
                         if (!entity.Alive || entity == Player)
@@ -3571,12 +3609,23 @@ namespace MMX.Engine
 
                         switch (entity)
                         {
-                            case Sprite sprite when drawCollisionBox && sprite is not HUD && sprite is not SpriteEffect:
+                            case Sprite sprite when sprite is not HUD and not SpriteEffect:
                             {
-                                MMXBox collisionBox = sprite.CollisionBox;
-                                var rect = WorldBoxToScreen(collisionBox);
-                                DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
-                                FillRectangle(rect, HITBOX_COLOR);
+                                if (drawHitbox)
+                                {
+                                    MMXBox hitbox = sprite.Hitbox;
+                                    var rect = WorldBoxToScreen(hitbox);
+                                    DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
+                                    FillRectangle(rect, HITBOX_COLOR);
+                                }
+
+                                if (showDrawBox)
+                                {
+                                    MMXBox drawBox = sprite.DrawBox;
+                                    var rect = WorldBoxToScreen(drawBox);
+                                    DrawRectangle(rect, 1, BOUNDING_BOX_BORDER_COLOR);
+                                    FillRectangle(rect, BOUNDING_BOX_COLOR);
+                                }
 
                                 if (showColliders)
                                 {
@@ -3592,7 +3641,7 @@ namespace MMX.Engine
 
                             case AbstractTrigger trigger when showTriggerBounds:
                             {
-                                var rect = WorldBoxToScreen(trigger.HitBox);
+                                var rect = WorldBoxToScreen(trigger.Hitbox);
 
                                 if (trigger is not ChangeDynamicPropertyTrigger)
                                 {
@@ -3673,12 +3722,20 @@ namespace MMX.Engine
                         CheckAndDrawTouchingMaps(collisionBox + Vector.DOWN_VECTOR);
                     }
 
-                    if (drawCollisionBox)
+                    if (drawHitbox)
                     {
-                        MMXBox hitbox = Player.HitBox;
+                        MMXBox hitbox = Player.Hitbox;
                         var rect = WorldBoxToScreen(hitbox);
                         DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
                         FillRectangle(rect, HITBOX_COLOR);
+                    }
+
+                    if (showDrawBox)
+                    {
+                        MMXBox drawBox = Player.DrawBox;
+                        var rect = WorldBoxToScreen(drawBox);
+                        DrawRectangle(rect, 1, BOUNDING_BOX_BORDER_COLOR);
+                        FillRectangle(rect, BOUNDING_BOX_COLOR);
                     }
 
                     if (showColliders)
@@ -3921,14 +3978,14 @@ namespace MMX.Engine
 
         public ChangeDynamicPropertyTrigger AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation)
         {
-            var trigger = new ChangeDynamicPropertyTrigger(this, new MMXBox(origin, new Vector(-SCREEN_WIDTH / 2, -SCREEN_HEIGHT / 2), new Vector(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)), prop, forward, backward, orientation);
+            var trigger = new ChangeDynamicPropertyTrigger(new MMXBox(origin, new Vector(-SCREEN_WIDTH / 2, -SCREEN_HEIGHT / 2), new Vector(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)), prop, forward, backward, orientation);
             trigger.Spawn();
             return trigger;
         }
 
         public Checkpoint AddCheckpoint(ushort index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
         {
-            var checkpoint = new Checkpoint(this, index, boundingBox, characterPos, cameraPos, backgroundPos, forceBackground, scroll);
+            var checkpoint = new Checkpoint(index, boundingBox, characterPos, cameraPos, backgroundPos, forceBackground, scroll);
             checkpoints.Add(checkpoint);
             checkpoint.Spawn();
             return checkpoint;
@@ -3936,7 +3993,7 @@ namespace MMX.Engine
 
         public CheckpointTriggerOnce AddCheckpointTrigger(ushort index, Vector origin)
         {
-            var trigger = new CheckpointTriggerOnce(this, new MMXBox(origin, new Vector(0, -SCREEN_HEIGHT / 2), new Vector(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)), checkpoints[index]);
+            var trigger = new CheckpointTriggerOnce(new MMXBox(origin, new Vector(0, -SCREEN_HEIGHT / 2), new Vector(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)), checkpoints[index]);
             trigger.Spawn();
             return trigger;
         }
@@ -3976,7 +4033,7 @@ namespace MMX.Engine
 
         public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
         {
-            var trigger = new CameraLockTrigger(this, boundingBox, extensions);
+            var trigger = new CameraLockTrigger(boundingBox, extensions);
             trigger.Spawn();
             return trigger;
         }
@@ -4053,81 +4110,81 @@ namespace MMX.Engine
 
         internal void ShootLemon(Player shooter, Vector origin, Direction direction, bool dashLemon)
         {
-            var lemon = new BusterLemon(this, shooter, "X Buster Lemon", origin, direction, dashLemon);
+            var lemon = new BusterLemon(shooter, "X Buster Lemon", origin, direction, dashLemon);
             lemon.Spawn();
         }
 
         internal void ShootSemiCharged(Player shooter, Vector origin, Direction direction)
         {
-            var semiCharged = new BusterSemiCharged(this, shooter, "X Buster Semi Charged", origin, direction);
+            var semiCharged = new BusterSemiCharged(shooter, "X Buster Semi Charged", origin, direction);
             semiCharged.Spawn();
         }
 
         internal void ShootCharged(Player shooter, Vector origin, Direction direction)
         {
-            var semiCharged = new BusterCharged(this, shooter, "X Buster Charged", origin, direction);
+            var semiCharged = new BusterCharged(shooter, "X Buster Charged", origin, direction);
             semiCharged.Spawn();
         }
 
         internal ChargingEffect StartChargingEffect(Player player)
         {
-            var effect = new ChargingEffect(this, "X Charging Effect", player);
+            var effect = new ChargingEffect("X Charging Effect", player);
             effect.Spawn();
             return effect;
         }
 
         internal DashSparkEffect StartDashSparkEffect(Player player)
         {
-            var effect = new DashSparkEffect(this, "X Dash Spark Effect", player);
+            var effect = new DashSparkEffect("X Dash Spark Effect", player);
             effect.Spawn();
             return effect;
         }
 
         internal DashSmokeEffect StartDashSmokeEffect(Player player)
         {
-            var effect = new DashSmokeEffect(this, "X Dash Smoke Effect", player);
+            var effect = new DashSmokeEffect("X Dash Smoke Effect", player);
             effect.Spawn();
             return effect;
         }
 
         internal WallSlideEffect StartWallSlideEffect(Player player)
         {
-            var effect = new WallSlideEffect(this, "X Wall Slide Effect", player);
+            var effect = new WallSlideEffect("X Wall Slide Effect", player);
             effect.Spawn();
             return effect;
         }
 
         internal WallKickEffect StartWallKickEffect(Player player)
         {
-            var effect = new WallKickEffect(this, "X Wall Kick Effect", player);
+            var effect = new WallKickEffect("X Wall Kick Effect", player);
             effect.Spawn();
             return effect;
         }
 
         internal ExplosionEffect CreateExplosionEffect(Vector origin)
         {
-            var effect = new ExplosionEffect(this, "Explosion Effect", origin);
+            var effect = new ExplosionEffect("Explosion Effect", origin);
             effect.Spawn();
             return effect;
         }
 
         private XDieExplosion CreateXDieExplosionEffect(double phase)
         {
-            var effect = new XDieExplosion(this, "X Die Explosion Effect", Player.HitBox.Center, phase);
+            var effect = new XDieExplosion("X Die Explosion Effect", Player.Hitbox.Center, phase);
             effect.Spawn();
             return effect;
         }
 
         public Driller AddDriller(Vector origin)
         {
-            var driller = new Driller(this, "Driller", origin);
+            var driller = new Driller("Driller", origin);
             respawnableEntities.Add((driller, origin, false));
             return driller;
         }
 
         public Bat AddBat(Vector origin)
         {
-            var bat = new Bat(this, "Bat", origin);
+            var bat = new Bat("Bat", origin);
             respawnableEntities.Add((bat, origin, false));
             return bat;
         }
@@ -4137,7 +4194,7 @@ namespace MMX.Engine
             if (Player != null)
                 RemoveEntity(Player);
 
-            Player = new Player(this, "X", origin);
+            Player = new Player("X", origin);
             Player.Spawn();
             Player.Lives = lastLives;
         }
@@ -4147,7 +4204,7 @@ namespace MMX.Engine
             if (HP != null)
                 RemoveEntity(HP);
 
-            HP = new HealthHUD(this, "HP");
+            HP = new HealthHUD("HP");
             HP.Spawn();
         }
 
@@ -4156,7 +4213,7 @@ namespace MMX.Engine
             if (ReadyHUD != null)
                 RemoveEntity(ReadyHUD);
 
-            ReadyHUD = new ReadyHUD(this, "Ready");
+            ReadyHUD = new ReadyHUD("Ready");
             ReadyHUD.Spawn();
         }
 
@@ -4372,8 +4429,13 @@ namespace MMX.Engine
             }
         }
 
-        public void Run()
+        private void Execute()
         {
+            LoadLevel(INITIAL_LEVEL, INITIAL_CHECKPOINT);
+
+            if (romLoaded)
+                mmx.UpdateVRAMCache();
+
             while (Running)
             {
                 // Main loop
@@ -4468,84 +4530,84 @@ namespace MMX.Engine
 
         public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames)
         {
-            var drop = new SmallHealthRecover(this, "Small Health Recover", origin, durationFrames);
+            var drop = new SmallHealthRecover("Small Health Recover", origin, durationFrames);
             drop.Spawn();
             return drop;
         }
 
         public BigHealthRecover DropBigHealthRecover(Vector origin, int durationFrames)
         {
-            var drop = new BigHealthRecover(this, "Big Health Recover", origin, durationFrames);
+            var drop = new BigHealthRecover("Big Health Recover", origin, durationFrames);
             drop.Spawn();
             return drop;
         }
 
         public SmallAmmoRecover DropSmallAmmoRecover(Vector origin, int durationFrames)
         {
-            var drop = new SmallAmmoRecover(this, "Small Ammo Recover", origin, durationFrames);
+            var drop = new SmallAmmoRecover("Small Ammo Recover", origin, durationFrames);
             drop.Spawn();
             return drop;
         }
 
         public BigAmmoRecover DropBigAmmoRecover(Vector origin, int durationFrames)
         {
-            var drop = new BigAmmoRecover(this, "Big Ammo Recover", origin, durationFrames);
+            var drop = new BigAmmoRecover("Big Ammo Recover", origin, durationFrames);
             drop.Spawn();
             return drop;
         }
 
         public LifeUp DropLifeUp(Vector origin, int durationFrames)
         {
-            var drop = new LifeUp(this, "Life Up", origin, durationFrames);
+            var drop = new LifeUp("Life Up", origin, durationFrames);
             drop.Spawn();
             return drop;
         }
 
         public SmallHealthRecover AddSmallHealthRecover(Vector origin)
         {
-            var item = new SmallHealthRecover(this, "Small Health Recover", origin, -1);
+            var item = new SmallHealthRecover("Small Health Recover", origin, -1);
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public BigHealthRecover AddBigHealthRecover(Vector origin)
         {
-            var item = new BigHealthRecover(this, "Big Health Recover", origin, -1);
+            var item = new BigHealthRecover("Big Health Recover", origin, -1);
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public SmallAmmoRecover AddSmallAmmoRecover(Vector origin)
         {
-            var item = new SmallAmmoRecover(this, "Small Ammo Recover", origin, -1);
+            var item = new SmallAmmoRecover("Small Ammo Recover", origin, -1);
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public BigAmmoRecover AddBigAmmoRecover(Vector origin)
         {
-            var item = new BigAmmoRecover(this, "Big Ammo Recover", origin, -1);
+            var item = new BigAmmoRecover("Big Ammo Recover", origin, -1);
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public LifeUp AddLifeUp(Vector origin)
         {
-            var item = new LifeUp(this, "Life Up", origin, -1);
+            var item = new LifeUp("Life Up", origin, -1);
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public HeartTank AddHeartTank(Vector origin)
         {
-            var item = new HeartTank(this, "Heart Tank", origin);
+            var item = new HeartTank("Heart Tank", origin);
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public SubTankItem AddSubTank(Vector origin)
         {
-            var item = new SubTankItem(this, "Sub Tank", origin);
+            var item = new SubTankItem("Sub Tank", origin);
             respawnableEntities.Add((item, origin, false));
             return item;
         }
@@ -4607,7 +4669,7 @@ namespace MMX.Engine
 
         internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
         {
-            var door = new BossDoor(this, "Boss Door", pos);
+            var door = new BossDoor("Boss Door", pos);
             door.Spawn();
             door.Bidirectional = true;
 

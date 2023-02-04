@@ -6,7 +6,8 @@ namespace MMX.Engine.Entities.Items
 {
     public class LifeUp : Item
     {
-        public LifeUp(GameEngine engine, string name, Vector origin, int durationFrames = 0) : base(engine, name, origin, durationFrames, 1, false, "LifeUp")
+        public LifeUp(string name, Vector origin, int durationFrames = 0) 
+            : base(name, origin, durationFrames, 1, false, "LifeUp")
         {
         }
 

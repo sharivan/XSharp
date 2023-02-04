@@ -12,7 +12,8 @@ namespace MMX.Engine.Entities.Items
 
     public class BigAmmoRecover : Item
     {
-        public BigAmmoRecover(GameEngine engine, string name, Vector origin, int durationFrames = 0) : base(engine, name, origin, durationFrames, 1, false, "BigAmmoRecover")
+        public BigAmmoRecover(string name, Vector origin, int durationFrames = 0) 
+            : base(name, origin, durationFrames, 1, false, "BigAmmoRecover")
         {
         }
 

@@ -30,7 +30,31 @@ namespace MMX.Engine
             get
             {
                 var frame = sequence[currentSequenceIndex];
-                return Sprite.Origin + Offset + frame.BoundingBox;
+                var box = Sprite.Origin + Offset + frame.BoundingBox;
+
+                FixedSingle drawScale = Sprite.Engine.DrawScale;
+                if (drawScale != 1)
+                    box.Scale(drawScale);
+
+                if (Rotation != FixedSingle.ZERO)
+                {
+                    var ltRotatedDiff = box.LeftTop.Rotate(box.Origin, Rotation) - box.Origin;
+                    var rbRotatedDiff = box.RightBottom.Rotate(box.Origin, Rotation) - box.Origin;
+                    Vector mins = (FixedSingle.Min(ltRotatedDiff.X, rbRotatedDiff.X), FixedSingle.Min(ltRotatedDiff.Y, rbRotatedDiff.Y));
+                    Vector maxs = (FixedSingle.Max(ltRotatedDiff.X, rbRotatedDiff.X), FixedSingle.Max(ltRotatedDiff.Y, rbRotatedDiff.Y));
+                    box = (box.Origin, mins, maxs);
+                }
+
+                if (Scale != FixedSingle.ONE)
+                    box = box.Scale(Scale);
+
+                if (Flipped)
+                    box = box.Flip();
+
+                if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
+                    box = box.Mirror();
+
+                return box;
             }
         }
 

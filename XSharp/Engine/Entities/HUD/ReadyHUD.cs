@@ -4,7 +4,7 @@ namespace MMX.Engine.Entities.HUD
 {
     public class ReadyHUD : HUD
     {
-        public ReadyHUD(GameEngine engine, string name) : base(engine, name, READY_OFFSET, 7)
+        public ReadyHUD(string name) : base(name, READY_OFFSET, 7)
         {
         }
 
