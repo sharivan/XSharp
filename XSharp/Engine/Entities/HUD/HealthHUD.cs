@@ -38,8 +38,10 @@ namespace XSharp.Engine.Entities.HUD
 
         protected Animation BottomAnimation => GetAnimation(bottomAnimationIndex);
 
-        public HealthHUD(string name) : base(name, (HP_LEFT, GetTop()), 6)
+        public HealthHUD()
         {
+            Offset = (HP_LEFT, GetTop());
+            SpriteSheetIndex = 6;
         }
 
         protected internal override void OnSpawn()

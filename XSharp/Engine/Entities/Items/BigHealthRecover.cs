@@ -18,9 +18,12 @@ namespace XSharp.Engine.Entities.Items
             set => SetState(value);
         }
 
-        public BigHealthRecover(string name, Vector origin, int durationFrames = 0)
-            : base(name, origin, durationFrames, 1, false, "BigHealthRecoverDropping", "BigHealthRecoverIdle")
+        public BigHealthRecover()
         {
+            SpriteSheetIndex = 1;
+
+            SetAnimationNames("BigHealthRecoverDropping", "BigHealthRecoverIdle");
+
             SetupStateArray(typeof(BigHealthRecoverState));
             RegisterState(BigHealthRecoverState.DROPPING, null, "BigHealthRecoverDropping");
             RegisterState(BigHealthRecoverState.IDLE, null, "BigHealthRecoverIdle");

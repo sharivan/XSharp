@@ -4,8 +4,12 @@ namespace XSharp.Engine.Entities.Items
 {
     public class SubTankItem : Item
     {
-        public SubTankItem(string name, Vector origin) : base(name, origin, -1, 1, false, "SubTank")
+        public SubTankItem()
         {
+            SpriteSheetIndex = 1;
+            DurationFrames = 0;
+
+            SetAnimationNames("SubTank");
         }
 
         protected internal override void OnSpawn()

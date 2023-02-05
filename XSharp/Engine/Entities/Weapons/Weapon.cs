@@ -9,6 +9,7 @@ namespace XSharp.Engine.Entities.Weapons
         public Sprite Shooter
         {
             get;
+            protected set;
         }
 
         public FixedSingle BaseDamage => GetBaseDamage();
@@ -19,11 +20,9 @@ namespace XSharp.Engine.Entities.Weapons
             set;
         }
 
-        protected Weapon(Sprite shooter, string name, Vector origin, Direction direction, int spriteSheetIndex) : base(name, origin, spriteSheetIndex, true)
+        protected Weapon()
         {
-            Shooter = shooter;
-            Direction = direction;
-
+            Directional = true;
             CanGoOutOfMapBounds = true;
         }
 

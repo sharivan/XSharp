@@ -4,19 +4,19 @@ using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Items
 {
-    public class Item : Sprite
+    public abstract class Item : Sprite
     {
         public int DurationFrames
         {
             get;
             set;
-        }
+        } = ITEM_DURATION_FRAMES;
 
         public int DurationFrameCounter
         {
             get;
             set;
-        }
+        } = 0;
 
         public bool Collected
         {
@@ -24,16 +24,9 @@ namespace XSharp.Engine.Entities.Items
             private set;
         } = false;
 
-        public Item(string name, Vector origin, int durationFrames, int spriteSheetIndex, string[] animationNames = null, string initialAnimationName = null, bool directional = false)
-            : base(name, origin, spriteSheetIndex, animationNames, initialAnimationName, directional)
+        protected Item()
         {
-            DurationFrames = durationFrames;
-        }
-
-        public Item(string name, Vector origin, int durationFrames, int spriteSheetIndex, bool directional = false, params string[] animationNames)
-            : base(name, origin, spriteSheetIndex, directional, animationNames)
-        {
-            DurationFrames = durationFrames;
+            Directional = false;
         }
 
         protected internal override void OnSpawn()

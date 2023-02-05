@@ -21,27 +21,6 @@ namespace XSharp.Engine.World
         /// <typeparam name="U">Tipo da entidade (deve descender da classe Sprite)</typeparam>
         private class PartitionCell<U> where U : Entity
         {
-            private static int ToIndex(BoxKind kind)
-            {
-                int x = (int) kind;
-
-                // Map a bit value mod
-                // 37 to its position
-                int[] lookup = {32, 0, 1, 26, 2, 23,
-                    27, 0, 3, 16, 24, 30,
-                    28, 11, 0, 13, 4, 7,
-                    17, 0, 25, 22, 31, 15,
-                    29, 10, 12, 6, 0, 21,
-                    14, 9, 5, 20, 8, 19, 18};
-
-                // Only difference between
-                // (x and -x) is the value
-                // of signed magnitude
-                // (leftmostbit) negative
-                // numbers signed bit is 1
-                return lookup[(-x & x) % 37];
-            }
-
             readonly Partition<U> partition; // Partição a qual esta célula pertence
             readonly Box box; // Retângulo que delimita a célula
             readonly List<U>[] values;
@@ -64,7 +43,7 @@ namespace XSharp.Engine.World
 
             public void Insert(U value, BoxKind kind)
             {
-                int index = ToIndex(kind);
+                int index = kind.ToIndex();
                 List<U> list = values[index];
                 if (!list.Contains(value))
                     list.Add(value);
@@ -72,7 +51,7 @@ namespace XSharp.Engine.World
 
             public void Query(Box box, List<U> result, U exclude, List<U> addictionalExclusionList, BoxKind kind)
             {
-                int index = ToIndex(kind);
+                int index = kind.ToIndex();
                 List<U> list = values[index];
 
                 // Verifica a lista de entidades da célula
@@ -106,7 +85,7 @@ namespace XSharp.Engine.World
             /// <param name="value">Entidade a ser atualizada nesta célula</param>
             public void Update(U value, BoxKind kind)
             {
-                int index = ToIndex(kind);
+                int index = kind.ToIndex();
                 List<U> list = values[index];
 
                 Box intersection = value.GetBox(kind) & box; // Calcula a interecção
@@ -124,7 +103,7 @@ namespace XSharp.Engine.World
             /// <param name="value">Entidade a ser removida</param>
             public void Remove(U value, BoxKind kind)
             {
-                int index = ToIndex(kind);
+                int index = kind.ToIndex();
                 values[index].Remove(value);
             }
 
@@ -132,8 +111,8 @@ namespace XSharp.Engine.World
             {
                 for (int i = 0; i < BOXKIND_COUNT; i++)
                 {
-                    var kind = (BoxKind) (1 << i);
-                    int index = ToIndex(kind);
+                    var kind = i.ToBoxKind();
+                    int index = kind.ToIndex();
                     values[index].Remove(value);
                 }
             }
@@ -143,7 +122,7 @@ namespace XSharp.Engine.World
             /// </summary>
             public void Clear(BoxKind kind)
             {
-                int index = ToIndex(kind);
+                int index = kind.ToIndex();
                 values[index].Clear();
             }
 
@@ -151,8 +130,8 @@ namespace XSharp.Engine.World
             {
                 for (int i = 0; i < BOXKIND_COUNT; i++)
                 {
-                    var kind = (BoxKind) (1 << i);
-                    int index = ToIndex(kind);
+                    var kind = i.ToBoxKind();
+                    int index = kind.ToIndex();
                     values[index].Clear();
                 }
             }
@@ -162,7 +141,7 @@ namespace XSharp.Engine.World
             /// </summary>
             public int Count(BoxKind kind)
             {
-                int index = ToIndex(kind);
+                int index = kind.ToIndex();
                 return values[index].Count;
             }
 
@@ -194,7 +173,7 @@ namespace XSharp.Engine.World
         /// <param name="rows">Número de linhas da subdivisão da partição</param>
         /// <param name="cols">Número de colunas da subdivisão da partição</param>
         public Partition(FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height, int rows, int cols)
-        : this(new Box(new Vector(left, top), Vector.NULL_VECTOR, new Vector(width, height)), rows, cols)
+            : this(new Box(new Vector(left, top), Vector.NULL_VECTOR, new Vector(width, height)), rows, cols)
         {
         }
 
@@ -224,10 +203,10 @@ namespace XSharp.Engine.World
         {
             for (int i = 0; i < BOXKIND_COUNT; i++)
             {
-                if (((1 << i) & (int) kind) == 0)
+                if (!kind.ContainsFlag(i))
                     continue;
 
-                var k = (BoxKind) (1 << i);
+                var k = i.ToBoxKind();
 
                 Box box = item.GetBox(k);
 
@@ -327,10 +306,10 @@ namespace XSharp.Engine.World
 
             for (int i = 0; i < BOXKIND_COUNT; i++)
             {
-                if (((1 << i) & (int) kind) == 0)
+                if (!kind.ContainsFlag(i))
                     continue;
 
-                var k = (BoxKind) (1 << i);
+                var k = i.ToBoxKind();
 
                 // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
                 for (int col = startCol; col <= endCol; col++)
@@ -348,34 +327,32 @@ namespace XSharp.Engine.World
         /// <param name="item">Entidade a ser atualizada dentro da partição</param>
         public void Update(T item, BoxKind kind = BoxKind.ALL, bool force = false)
         {
-            Vector delta = item.Origin - item.LastOrigin; // Obtém o vetor de deslocamento da entidade desde o último tick
-
-            if (!force && delta == Vector.NULL_VECTOR) // Se a entidade não se deslocou desde o último tick então não há nada o que se fazer aqui
-                return;
-
             for (int i = 0; i < BOXKIND_COUNT; i++)
             {
-                if (((1 << i) & (int) kind) == 0)
+                if (!kind.ContainsFlag(i))
                     continue;
 
-                var k = (BoxKind) (1 << i);
+                var k = i.ToBoxKind();
 
+                Box lastBox = item.GetLastBox(k);
                 Box box = item.GetBox(k);
-                Box box0 = box - delta;
+
+                if (!force && lastBox == box) // Se a entidade não se deslocou desde o último tick então não há nada o que se fazer aqui
+                    continue;
 
                 // Calcula os máximos e mínimos absolutos do retângulo que delimita esta partição
                 Vector lt = this.box.LeftTop;
                 Vector rb = this.box.RightBottom;
 
                 // Calcula os máximos e mínimos absolutos do rêtângulo de desenho anterior da entidade
-                Vector queryOldLT = box0.LeftTop;
-                Vector queryOldRB = box0.RightBottom;
+                Vector queryLastLT = lastBox.LeftTop;
+                Vector queryLastRB = lastBox.RightBottom;
 
                 // Calcula os máximos e mínimos absolutos do retângulo de desenho atual da entidade
-                Vector queryNewLT = box.LeftTop;
-                Vector queryNewRB = box.RightBottom;
+                Vector queryLT = box.LeftTop;
+                Vector queryRB = box.RightBottom;
 
-                int startCol = ((FixedSingle.Min(queryOldLT.X, queryNewLT.X) - lt.X) / cellWidth).Floor(); // Calcula a coluna da primeira célula para qual deverá ser verificada
+                int startCol = ((FixedSingle.Min(queryLastLT.X, queryLT.X) - lt.X) / cellWidth).Floor(); // Calcula a coluna da primeira célula para qual deverá ser verificada
 
                 if (startCol < 0)
                     startCol = 0;
@@ -383,7 +360,7 @@ namespace XSharp.Engine.World
                 if (startCol >= cols)
                     startCol = cols - 1;
 
-                int startRow = ((FixedSingle.Min(queryOldLT.Y, queryNewLT.Y) - lt.Y) / cellHeight).Floor(); // Calcula a linha da primeira célula para a qual deverá ser verificada
+                int startRow = ((FixedSingle.Min(queryLastLT.Y, queryLT.Y) - lt.Y) / cellHeight).Floor(); // Calcula a linha da primeira célula para a qual deverá ser verificada
 
                 if (startRow < 0)
                     startRow = 0;
@@ -391,7 +368,7 @@ namespace XSharp.Engine.World
                 if (startRow >= rows)
                     startRow = rows - 1;
 
-                int endCol = ((FixedSingle.Max(queryOldRB.X, queryNewRB.X) - lt.X - 1) / cellWidth).Ceil(); // Calcula a coluna da útlima célula para qual deverá ser verificada
+                int endCol = ((FixedSingle.Max(queryLastRB.X, queryRB.X) - lt.X - 1) / cellWidth).Ceil(); // Calcula a coluna da útlima célula para qual deverá ser verificada
 
                 if (endCol < 0)
                     endCol = 0;
@@ -399,7 +376,7 @@ namespace XSharp.Engine.World
                 if (endCol >= cols)
                     endCol = cols - 1;
 
-                int endRow = ((FixedSingle.Max(queryOldRB.Y, queryNewRB.Y) - lt.Y - 1) / cellHeight).Ceil(); // Calcula a linha da última célula para qual deverá ser verificada
+                int endRow = ((FixedSingle.Max(queryLastRB.Y, queryRB.Y) - lt.Y - 1) / cellHeight).Ceil(); // Calcula a linha da última célula para qual deverá ser verificada
 
                 if (endRow < 0)
                     endRow = 0;
@@ -443,10 +420,10 @@ namespace XSharp.Engine.World
         {
             for (int i = 0; i < BOXKIND_COUNT; i++)
             {
-                if (((1 << i) & (int) kind) == 0)
+                if (!kind.ContainsFlag(i))
                     continue;
 
-                var k = (BoxKind) (1 << i);
+                var k = i.ToBoxKind();
 
                 Box box = item.GetBox(k);
 
@@ -514,10 +491,10 @@ namespace XSharp.Engine.World
                     {
                         for (int i = 0; i < BOXKIND_COUNT; i++)
                         {
-                            if (((1 << i) & (int) kind) == 0)
+                            if (!kind.ContainsFlag(i))
                                 continue;
 
-                            var k = (BoxKind) (1 << i);
+                            var k = i.ToBoxKind();
                             cells[col, row].Clear(k);
                         }
 

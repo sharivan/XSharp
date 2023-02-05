@@ -1,5 +1,8 @@
-﻿namespace XSharp.Engine
+﻿using System;
+
+namespace XSharp.Engine
 {
+    [Flags]
     public enum Direction
     {
         NONE = 0, // Nenhuma

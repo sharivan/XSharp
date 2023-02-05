@@ -14,8 +14,25 @@ namespace XSharp.Engine.Entities.Effects
             };
         }
 
-        public DashSmokeEffect(string name, Player player) : base(name, GetOrigin(player), 2, false, "DashSmokeEffect")
+        private Player player;
+
+        public Player Player
         {
+            get => player;
+            set
+            {
+                player = value;
+                if (value != null)
+                    Origin = GetOrigin(value);
+            }
+        }
+
+        public DashSmokeEffect()
+        {
+            SpriteSheetIndex = 2;
+            Directional = false;
+
+            SetAnimationNames("DashSmokeEffect");
         }
 
         protected internal override void OnAnimationEnd(Animation animation)

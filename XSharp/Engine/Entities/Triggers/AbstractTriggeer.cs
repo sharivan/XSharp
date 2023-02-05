@@ -13,7 +13,7 @@ namespace XSharp.Engine.Entities.Triggers
 
     public abstract class AbstractTrigger : Entity
     {
-        private Box boundingBox;
+        private Box boundingBox = Box.EMPTY_BOX;
         private readonly List<Entity> triggerings;
 
         public event TriggerEvent StartTriggerEvent;
@@ -22,7 +22,7 @@ namespace XSharp.Engine.Entities.Triggers
 
         public bool Enabled
         {
-            get => CheckCollisionWithEntities;
+            get => CheckTouchingEntities;
             set
             {
                 if (Alive && !value)
@@ -33,7 +33,7 @@ namespace XSharp.Engine.Entities.Triggers
                     triggerings.Clear();
                 }
 
-                CheckCollisionWithEntities = value;
+                CheckTouchingEntities = value;
             }
         }
 
@@ -47,13 +47,13 @@ namespace XSharp.Engine.Entities.Triggers
         {
             get;
             set;
-        }
+        } = TouchingKind.BOX;
 
         public VectorKind VectorKind
         {
             get;
             set;
-        }
+        } = VectorKind.ORIGIN;
 
         public bool Once => MaxTriggers == 1;
 
@@ -63,27 +63,9 @@ namespace XSharp.Engine.Entities.Triggers
             protected set;
         } = 0;
 
-        protected AbstractTrigger(string name, Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
-            : base(name, boundingBox.Origin)
+        protected AbstractTrigger()
         {
-            TouchingKind = touchingKind;
-            VectorKind = vectorKind;
-
             triggerings = new List<Entity>();
-
-            SetBoundingBox(boundingBox);
-        }
-
-        protected AbstractTrigger(Box boundingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
-            : this(null, boundingBox, touchingKind, vectorKind)
-        {
-        }
-
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
-
-            Enabled = true;
         }
 
         protected override void OnStartTouch(Entity entity)

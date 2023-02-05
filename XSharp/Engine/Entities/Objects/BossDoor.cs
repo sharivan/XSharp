@@ -67,9 +67,19 @@ namespace XSharp.Engine.Entities.Objects
             set;
         } = true;
 
-        public BossDoor(string name, Vector origin) : base(name, GetTriggerBoudingBox(origin), TouchingKind.BOX)
+        public BossDoor(string name, Vector origin)
         {
-            effect = new BossDoorEffect(this, origin);
+            BoundingBox = GetTriggerBoudingBox(origin);
+
+            effect = new BossDoorEffect()
+            {
+                Door = this,
+                Origin = origin
+            };
+        }
+
+        public BossDoor(Vector origin) : this(null, origin)
+        {
         }
 
         protected internal override void OnSpawn()
@@ -100,7 +110,7 @@ namespace XSharp.Engine.Entities.Objects
                 Engine.World.Camera.FocusOn = null;
                 player.StartBossDoorCrossing();
                 Engine.KillAllAliveEnemiesAndWeapons();
-                
+
                 if (player.ChargingEffect != null)
                     Engine.FreezeSprites(player, effect, player.ChargingEffect);
                 else

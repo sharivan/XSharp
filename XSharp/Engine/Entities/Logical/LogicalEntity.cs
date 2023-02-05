@@ -10,11 +10,7 @@ namespace XSharp.Engine.Entities.Logical
             set;
         }
 
-        public LogicalEntity(Vector origin) : this(null, origin)
-        {
-        }
-
-        public LogicalEntity(string name, Vector origin) : base(name, origin)
+        protected LogicalEntity()
         {
         }
 

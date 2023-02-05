@@ -51,9 +51,9 @@ namespace XSharp.Engine.Entities.Enemies
 
         public float TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeUpDropOdd + NothingDropOdd;
 
-        protected Enemy(string name, Vector origin, int spriteSheetIndex, bool directional = false)
-            : base(name, origin, spriteSheetIndex, directional)
+        protected Enemy()
         {
+            Directional = true;
         }
 
         protected override Box GetCollisionBox()
@@ -64,7 +64,7 @@ namespace XSharp.Engine.Entities.Enemies
 
         protected override void OnTouching(Entity entity)
         {
-            if (entity is Player player)
+            if (ContactDamage > 0 && entity is Player player)
                 Hurt(player, ContactDamage);
 
             base.OnTouching(entity);

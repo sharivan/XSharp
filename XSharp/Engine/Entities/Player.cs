@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using XSharp.Engine.Entities.Effects;
+using XSharp.Engine.World;
 using XSharp.Geometry;
 using XSharp.Math;
 using static XSharp.Engine.Consts;
@@ -59,7 +60,7 @@ namespace XSharp.Engine.Entities
         private Direction stateDirection;
         internal int shots;
         private int shotFrameCounter;
-        private bool charging;        
+        private bool charging;
         private int chargingFrameCounter;
         private int chargingFrameCounter2;
         internal bool shootingCharged;
@@ -76,12 +77,10 @@ namespace XSharp.Engine.Entities
             private set;
         }
 
-        internal Player(string name, Vector origin) : base(name, origin, 0, true)
+        internal Player()
         {
-        }
-
-        internal Player(Vector origin) : this(null, origin)
-        {
+            SpriteSheetIndex = 0;
+            Directional = true;
         }
 
         public override void SaveState(BinaryWriter writer)
@@ -418,7 +417,7 @@ namespace XSharp.Engine.Entities
             {
                 Box collisionBox = CollisionBox;
                 collider.Box = collisionBox;
-                collider.AdjustOnTheFloor(MAP_SIZE);
+                collider.AdjustOnTheFloor(QUERY_MAX_DISTANCE);
                 Vector delta = collider.Box.Origin - collisionBox.Origin;
                 Origin += delta;
             }
@@ -510,6 +509,7 @@ namespace XSharp.Engine.Entities
             spawning = true;
 
             CheckCollisionWithWorld = false;
+            CheckCollisionWithSolidSprites = false;
             PaletteIndex = 0;
             Velocity = TELEPORT_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
             Lives = X_INITIAL_LIVES;
@@ -737,14 +737,23 @@ namespace XSharp.Engine.Entities
                         if (Engine.CurrentCheckpoint != null)
                         {
                             if (Origin.Y >= Engine.CurrentCheckpoint.BoundingBox.Top + SCREEN_HEIGHT / 2)
+                            {
                                 CheckCollisionWithWorld = true;
+                                CheckCollisionWithSolidSprites = true;
+                            }
+                            else
+                            {
+                                CheckCollisionWithWorld = true;
+                                CheckCollisionWithSolidSprites = true;
+                            }
                         }
-                        else
-                            CheckCollisionWithWorld = true;
                     }
                 }
                 else
+                {
                     CheckCollisionWithWorld = true;
+                    CheckCollisionWithSolidSprites = true;
+                }
 
                 if (NoClip)
                 {
@@ -890,7 +899,7 @@ namespace XSharp.Engine.Entities
                                     if (!Shooting)
                                     {
                                         Box ladderCollisionBox = Hitbox.ClipTop(HITBOX_HEIGHT - 5);
-                                        CollisionFlags flags = Engine.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, true);
+                                        CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, this, CheckCollisionWithWorld, CheckCollisionWithSolidSprites);
                                         if (flags.HasFlag(CollisionFlags.TOP_LADDER))
                                         {
                                             if (!TopLadderClimbing && !TopLadderDescending)
@@ -914,7 +923,7 @@ namespace XSharp.Engine.Entities
                                 else if (!OnLadder)
                                 {
                                     Box ladderCollisionBox = Hitbox.ClipTop(15);
-                                    CollisionFlags flags = Engine.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, true);
+                                    CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, this, CheckCollisionWithWorld, CheckCollisionWithSolidSprites);
                                     if (flags.HasFlag(CollisionFlags.LADDER))
                                     {
                                         Velocity = Vector.NULL_VECTOR;
@@ -944,7 +953,7 @@ namespace XSharp.Engine.Entities
                                         else
                                         {
                                             Box ladderCollisionBox = Hitbox.ClipTop(15);
-                                            CollisionFlags flags = Engine.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, true);
+                                            CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, this, CheckCollisionWithWorld, CheckCollisionWithSolidSprites);
                                             if (!flags.HasFlag(CollisionFlags.LADDER))
                                             {
                                                 if (Landed)
@@ -1237,7 +1246,7 @@ namespace XSharp.Engine.Entities
                         int chargingFrameCounter = this.chargingFrameCounter;
                         this.charging = false;
                         this.chargingFrameCounter = 0;
-                        this.chargingFrameCounter2 = 0;
+                        chargingFrameCounter2 = 0;
 
                         PaletteIndex = 0;
 
@@ -1366,13 +1375,13 @@ namespace XSharp.Engine.Entities
         private bool CanWallJumpLeft()
         {
             Box collisionBox = Collider.LeftCollider.ExtendLeftFixed(8).ClipTop(-2 + (256 - 32) * MASK_SIZE);
-            return Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true).HasFlag(CollisionFlags.BLOCK);
+            return Engine.World.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, this, CheckCollisionWithWorld, CheckCollisionWithSolidSprites).HasFlag(CollisionFlags.BLOCK);
         }
 
         private bool CanWallJumpRight()
         {
             Box collisionBox = Collider.RightCollider.ExtendRightFixed(8).ClipTop(-2 + (256 - 32) * MASK_SIZE);
-            return Engine.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, true).HasFlag(CollisionFlags.BLOCK);
+            return Engine.World.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, this, CheckCollisionWithWorld, CheckCollisionWithSolidSprites).HasFlag(CollisionFlags.BLOCK);
         }
 
         public Direction GetWallJumpDir()
@@ -1822,6 +1831,7 @@ namespace XSharp.Engine.Entities
         {
             CrossingBossDoor = true;
             CheckCollisionWithWorld = false;
+            CheckCollisionWithSolidSprites = false;
             Invincible = true;
             Blinking = false;
             WallJumping = false;
@@ -1834,6 +1844,7 @@ namespace XSharp.Engine.Entities
         {
             CrossingBossDoor = false;
             CheckCollisionWithWorld = true;
+            CheckCollisionWithSolidSprites = true;
             Invincible = false;
             Velocity = Vector.NULL_VECTOR;
 

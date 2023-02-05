@@ -5,6 +5,20 @@ namespace XSharp.Engine.Graphics
 {
     public class Palette : IDisposable
     {
+        internal string name;
+
+        public int Index
+        {
+            get;
+            internal set;
+        }
+
+        public string Name
+        {
+            get => name;
+            set => GameEngine.Engine.UpdatePaletteName(this, value);
+        }
+
         public Texture Texture
         {
             get;
@@ -16,6 +30,7 @@ namespace XSharp.Engine.Graphics
 
         public void Dispose()
         {
+            Texture?.Dispose();
         }
     }
 }

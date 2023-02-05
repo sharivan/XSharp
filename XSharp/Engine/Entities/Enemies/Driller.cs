@@ -24,8 +24,12 @@ namespace XSharp.Engine.Entities.Enemies
             set => SetState(value);
         }
 
-        public Driller(string name, Vector origin) : base(name, origin, 4, true)
+        public Driller()
         {
+            SpriteSheetIndex = 4;
+
+            SetAnimationNames("Idle", "Drilling", "Jumping", "Landing");
+
             SetupStateArray(typeof(DrillerState));
             RegisterState(DrillerState.IDLE, OnIdle, "Idle");
             RegisterState(DrillerState.DRILLING, OnDrilling, "Drilling");
@@ -53,6 +57,16 @@ namespace XSharp.Engine.Entities.Enemies
             LifeUpDropOdd = 1;
 
             State = DrillerState.IDLE;
+        }
+
+        protected override Box GetCollisionBox()
+        {
+            return (Vector.NULL_VECTOR, new Vector(-16, -24), new Vector(16, 0));
+        }
+
+        protected override Box GetHitbox()
+        {
+            return State == DrillerState.DRILLING ? (Vector.NULL_VECTOR, new Vector(-16, -24), new Vector(32, 0)) : (Vector.NULL_VECTOR, new Vector(-16, -24), new Vector(16, 0));
         }
 
         protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)

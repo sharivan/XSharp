@@ -51,7 +51,7 @@ namespace XSharp.Engine.World
             }
         }
 
-        internal Map(World world, int id, CollisionData collisionData = CollisionData.BACKGROUND)
+        internal Map(World world, int id, CollisionData collisionData = CollisionData.NONE)
         {
             World = world;
             ID = id;

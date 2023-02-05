@@ -15,11 +15,7 @@ namespace XSharp.Engine.Entities.Logical
             set;
         }
 
-        public LogicalBranch(Vector origin) : this(null, origin)
-        {
-        }
-
-        public LogicalBranch(string name, Vector origin) : base(name, origin)
+        public LogicalBranch()
         {
         }
 

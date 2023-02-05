@@ -25,8 +25,12 @@ namespace XSharp.Engine.Entities.Enemies
             }
         }
 
-        public Bat(string name, Vector origin) : base(name, origin, 8)
+        public Bat()
         {
+            SpriteSheetIndex = 8;
+
+            SetAnimationNames("Idle", "Attacking");
+
             SetupStateArray(typeof(BatState));
             RegisterState(BatState.IDLE, OnIdle, "Idle");
             RegisterState(BatState.ATTACKING, OnAttacking, "Attacking");

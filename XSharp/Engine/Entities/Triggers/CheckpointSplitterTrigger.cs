@@ -14,13 +14,13 @@ namespace XSharp.Engine.Entities.Triggers
         {
             get;
             set;
-        }
+        } = SplitterTriggerDirection.FORWARD;
 
         public Checkpoint LastCheckpoint
         {
             get;
             private set;
-        }
+        } = null;
 
         public Box LastCameraConstraintBox
         {
@@ -46,12 +46,8 @@ namespace XSharp.Engine.Entities.Triggers
             private set;
         }
 
-        public CheckpointSplitterTrigger(Box box, Checkpoint checkpoint, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL, SplitterTriggerDirection checkpointDirection = SplitterTriggerDirection.FORWARD)
-            : base(box, orientation)
+        public CheckpointSplitterTrigger()
         {
-            Checkpoint = checkpoint;
-            CheckpointDirection = checkpointDirection;
-            LastCheckpoint = null;
         }
 
         protected override void OnSplitterTriggerEvent(Entity obj, SplitterTriggerDirection direction)

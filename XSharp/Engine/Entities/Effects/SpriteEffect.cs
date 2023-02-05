@@ -3,15 +3,11 @@ using XSharp.Math;
 
 namespace XSharp.Engine.Entities.Effects
 {
-    public class SpriteEffect : Sprite
+    public abstract class SpriteEffect : Sprite
     {
-        public SpriteEffect(string name, Vector origin, int spriteSheetIndex, string[] animationNames, string initialAnimationName, bool directional = false)
-            : base(name, origin, spriteSheetIndex, animationNames, initialAnimationName, directional)
+        protected SpriteEffect()
         {
         }
-
-        public SpriteEffect(string name, Vector origin, int spriteSheetIndex, bool directional = false, params string[] animationNames)
-            : this(name, origin, spriteSheetIndex, animationNames, animationNames[0], directional) { }
 
         public override FixedSingle GetGravity()
         {
@@ -23,7 +19,7 @@ namespace XSharp.Engine.Entities.Effects
             base.OnSpawn();
 
             CheckCollisionWithWorld = false;
-            CheckCollisionWithEntities = false;
+            CheckTouchingEntities = false;
         }
     }
 }

@@ -4,8 +4,12 @@ namespace XSharp.Engine.Entities.Effects
 {
     internal class ExplosionEffect : SpriteEffect
     {
-        public ExplosionEffect(string name, Vector origin) : base(name, origin, 5, false, "Explosion")
+        public ExplosionEffect()
         {
+            SpriteSheetIndex = 5;
+            Directional = false;
+
+            SetAnimationNames("Explosion");
         }
 
         protected internal override void OnSpawn()

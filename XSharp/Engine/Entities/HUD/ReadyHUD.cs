@@ -4,8 +4,10 @@ namespace XSharp.Engine.Entities.HUD
 {
     public class ReadyHUD : HUD
     {
-        public ReadyHUD(string name) : base(name, READY_OFFSET, 7)
+        public ReadyHUD()
         {
+            Offset = READY_OFFSET;
+            SpriteSheetIndex = 7;
         }
 
         protected internal override void OnSpawn()

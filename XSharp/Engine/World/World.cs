@@ -1,4 +1,6 @@
-﻿using SharpDX.Direct3D9;
+﻿using SharpDX;
+using SharpDX.Direct3D9;
+using SharpDX.Mathematics.Interop;
 using System;
 using System.Collections.Generic;
 using XSharp.Engine.Entities;
@@ -33,15 +35,15 @@ namespace XSharp.Engine.World
         private Scene[,] scenes;
         private Scene[,] backgroundScenes;
 
-        internal World(GameEngine engine, int sceneRowCount, int sceneColCount)
-            : this(engine, sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
+        private CollisionChecker collisionChecker;
+
+        internal World(int sceneRowCount, int sceneColCount)
+            : this(sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
         {
         }
 
-        internal World(GameEngine engine, int sceneRowCount, int sceneColCount, int backgroundSceneRowCount, int backgroundSceneColCount)
+        internal World(int sceneRowCount, int sceneColCount, int backgroundSceneRowCount, int backgroundSceneColCount)
         {
-            Engine = engine;
-
             SceneRowCount = sceneRowCount;
             SceneColCount = sceneColCount;
             this.backgroundSceneRowCount = backgroundSceneRowCount;
@@ -60,14 +62,13 @@ namespace XSharp.Engine.World
 
             scenes = new Scene[sceneRowCount, sceneColCount];
             backgroundScenes = new Scene[backgroundSceneRowCount, backgroundSceneColCount];
+
+            collisionChecker = new CollisionChecker();
         }
 
-        public GameEngine Engine
-        {
-            get;
-        }
+        public GameEngine Engine => GameEngine.Engine;
 
-        public Device Device => Engine.Device;
+        public Device Device => GameEngine.Engine.Device;
 
         public int Width => SceneColCount * SCENE_SIZE;
 
@@ -148,7 +149,7 @@ namespace XSharp.Engine.World
             return result;
         }
 
-        public Map AddMap(CollisionData collisionData = CollisionData.BACKGROUND, bool background = false)
+        public Map AddMap(CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             int id = background ? backgroundMapList.Count : mapList.Count;
             var result = new Map(this, id, collisionData);
@@ -213,7 +214,7 @@ namespace XSharp.Engine.World
             return result;
         }
 
-        public Map AddMap(Vector pos, CollisionData collisionData = CollisionData.BACKGROUND, bool background = false)
+        public Map AddMap(Vector pos, CollisionData collisionData = CollisionData.NONE, bool background = false)
         {
             Map result = AddMap(collisionData, background);
             SetMap(pos, result, background);
@@ -694,560 +695,6 @@ namespace XSharp.Engine.World
             return GetSceneBoundingBox(GetSceneCellFromPos(pos));
         }
 
-        public static bool IsSolidBlock(CollisionData collisionData)
-        {
-            return collisionData switch
-            {
-                CollisionData.MUD => true,
-                CollisionData.TOP_MUD => true,
-                CollisionData.LAVA => true,
-                CollisionData.SOLID2 => true,
-                CollisionData.SOLID3 => true,
-                CollisionData.UNCLIMBABLE_SOLID => true,
-                CollisionData.LEFT_CONVEYOR => true,
-                CollisionData.RIGHT_CONVEYOR => true,
-                CollisionData.UP_SLOPE_BASE => true,
-                CollisionData.DOWN_SLOPE_BASE => true,
-                CollisionData.SOLID => true,
-                CollisionData.BREAKABLE => true,
-                CollisionData.NON_LETHAL_SPIKE => true,
-                CollisionData.LETHAL_SPIKE => true,
-                CollisionData.SLIPPERY_SLOPE_BASE => true,
-                CollisionData.SLIPPERY => true,
-                CollisionData.DOOR => true,
-                _ => false,
-            };
-        }
-
-        public static bool IsSlope(CollisionData collisionData)
-        {
-            return collisionData is >= CollisionData.SLOPE_16_8 and <= CollisionData.SLOPE_0_4 or
-                >= CollisionData.LEFT_CONVEYOR_SLOPE_16_12 and <= CollisionData.RIGHT_CONVEYOR_SLOPE_0_4 or
-                >= CollisionData.SLIPPERY_SLOPE_16_8 and <= CollisionData.SLIPPERY_SLOPE_0_4;
-        }
-
-        internal static RightTriangle MakeSlopeTriangle(int left, int right)
-        {
-            return left < right
-                ? new RightTriangle(new Vector(0, right), MAP_SIZE, left - right)
-                : new RightTriangle(new Vector(MAP_SIZE, left), -MAP_SIZE, right - left);
-        }
-
-        internal static RightTriangle MakeSlopeTriangle(CollisionData collisionData)
-        {
-            return collisionData switch
-            {
-                CollisionData.SLOPE_16_8 => MakeSlopeTriangle(16, 8),
-                CollisionData.SLOPE_8_0 => MakeSlopeTriangle(8, 0),
-                CollisionData.SLOPE_8_16 => MakeSlopeTriangle(8, 16),
-                CollisionData.SLOPE_0_8 => MakeSlopeTriangle(0, 8),
-                CollisionData.SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-                CollisionData.SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-                CollisionData.SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-                CollisionData.SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-                CollisionData.SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-                CollisionData.SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-                CollisionData.SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-                CollisionData.SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-
-                CollisionData.LEFT_CONVEYOR_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-                CollisionData.LEFT_CONVEYOR_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-                CollisionData.LEFT_CONVEYOR_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-                CollisionData.LEFT_CONVEYOR_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-
-                CollisionData.RIGHT_CONVEYOR_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-                CollisionData.RIGHT_CONVEYOR_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-                CollisionData.RIGHT_CONVEYOR_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-                CollisionData.RIGHT_CONVEYOR_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-
-                CollisionData.SLIPPERY_SLOPE_16_8 => MakeSlopeTriangle(16, 8),
-                CollisionData.SLIPPERY_SLOPE_8_0 => MakeSlopeTriangle(8, 0),
-                CollisionData.SLIPPERY_SLOPE_8_16 => MakeSlopeTriangle(8, 16),
-                CollisionData.SLIPPERY_SLOPE_0_8 => MakeSlopeTriangle(0, 8),
-                CollisionData.SLIPPERY_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-                CollisionData.SLIPPERY_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-                CollisionData.SLIPPERY_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-                CollisionData.SLIPPERY_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-                CollisionData.SLIPPERY_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-                CollisionData.SLIPPERY_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-                CollisionData.SLIPPERY_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-                CollisionData.SLIPPERY_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-
-                _ => RightTriangle.EMPTY,
-            };
-        }
-
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return GetCollisionFlags(collisionBox, null, out RightTriangle slopeTriangle, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return GetCollisionFlags(collisionBox, placements, out RightTriangle slopeTriangle, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return GetCollisionFlags(collisionBox, null, out slopeTriangle, ignore, preciseCollisionCheck);
-        }
-
-        public static bool HasIntersection(MMXBox box1, MMXBox box2)
-        {
-            return (box1 & box2).IsValid(EPSLON);
-        }
-
-        public static bool HasIntersection(MMXBox box, RightTriangle slope)
-        {
-            return slope.HasIntersectionWith(box, EPSLON, true);
-        }
-
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            slopeTriangle = RightTriangle.EMPTY;
-
-            Cell start = GetMapCellFromPos(collisionBox.LeftTop);
-            Cell end = GetMapCellFromPos(collisionBox.RightBottom);
-
-            int startRow = start.Row;
-            int startCol = start.Col;
-
-            if (startRow < 0)
-                startRow = 0;
-
-            if (startRow >= MapRowCount)
-                startRow = MapRowCount - 1;
-
-            if (startCol < 0)
-                startCol = 0;
-
-            if (startCol >= MapColCount)
-                startCol = MapColCount - 1;
-
-            int endRow = end.Row;
-            int endCol = end.Col;
-
-            if (endRow < 0)
-                endRow = 0;
-
-            if (endRow >= MapRowCount)
-                endRow = MapRowCount - 1;
-
-            if (endCol < 0)
-                endCol = 0;
-
-            if (endCol >= MapColCount)
-                endCol = MapColCount - 1;
-
-            CollisionFlags result = CollisionFlags.NONE;
-            for (int row = startRow; row <= endRow; row++)
-                for (int col = startCol; col <= endCol; col++)
-                {
-                    var v = new Vector(col * MAP_SIZE, row * MAP_SIZE);
-                    Map map = GetMapFrom(v);
-                    if (map != null)
-                    {
-                        MMXBox mapBox = GetMapBoundingBox(row, col);
-                        CollisionData collisionData = map.CollisionData;
-
-                        if (collisionData == CollisionData.BACKGROUND || !HasIntersection(mapBox, collisionBox))
-                            continue;
-
-                        bool hasIntersection = HasIntersection(collisionBox, mapBox);
-                        if (IsSolidBlock(collisionData) && hasIntersection && !ignore.HasFlag(CollisionFlags.BLOCK))
-                        {
-                            if (collisionData == CollisionData.UNCLIMBABLE_SOLID)
-                            {
-                                if (!ignore.HasFlag(CollisionFlags.UNCLIMBABLE))
-                                {
-                                    placements?.Add(new CollisionPlacement(this, CollisionFlags.BLOCK, row, col, map));
-                                    result |= CollisionFlags.BLOCK | CollisionFlags.UNCLIMBABLE;
-                                }
-                            }
-                            else
-                            {
-                                placements?.Add(new CollisionPlacement(this, CollisionFlags.BLOCK, row, col, map));
-                                result |= CollisionFlags.BLOCK;
-                            }
-                        }
-                        else if (collisionData == CollisionData.LADDER && hasIntersection && !ignore.HasFlag(CollisionFlags.LADDER))
-                        {
-                            placements?.Add(new CollisionPlacement(this, CollisionFlags.LADDER, row, col, map));
-
-                            result |= CollisionFlags.LADDER;
-                        }
-                        else if (collisionData == CollisionData.TOP_LADDER && hasIntersection && !ignore.HasFlag(CollisionFlags.TOP_LADDER))
-                        {
-                            placements?.Add(new CollisionPlacement(this, CollisionFlags.TOP_LADDER, row, col, map));
-
-                            result |= CollisionFlags.TOP_LADDER;
-                        }
-                        else if (collisionData == CollisionData.WATER && hasIntersection && !ignore.HasFlag(CollisionFlags.WATER))
-                        {
-                            placements?.Add(new CollisionPlacement(this, CollisionFlags.WATER, row, col, map));
-
-                            result |= CollisionFlags.WATER;
-                        }
-                        else if (collisionData == CollisionData.WATER_SURFACE && hasIntersection && !ignore.HasFlag(CollisionFlags.WATER_SURFACE))
-                        {
-                            placements?.Add(new CollisionPlacement(this, CollisionFlags.WATER_SURFACE, row, col, map));
-
-                            result |= CollisionFlags.WATER_SURFACE;
-                        }
-                        else if (!ignore.HasFlag(CollisionFlags.SLOPE) && IsSlope(collisionData))
-                        {
-                            RightTriangle st = MakeSlopeTriangle(collisionData) + v;
-                            if (preciseCollisionCheck)
-                            {
-                                if (HasIntersection(collisionBox, st))
-                                {
-                                    placements?.Add(new CollisionPlacement(this, CollisionFlags.BLOCK, row, col, map));
-
-                                    slopeTriangle = st;
-                                    result |= CollisionFlags.SLOPE;
-                                }
-                            }
-                            else if (hasIntersection)
-                            {
-                                placements?.Add(new CollisionPlacement(this, CollisionFlags.BLOCK, row, col, map));
-
-                                slopeTriangle = st;
-                                result |= CollisionFlags.SLOPE;
-                            }
-                        }
-                    }
-                }
-
-            return result;
-        }
-
-        public CollisionFlags ComputedLandedState(MMXBox box, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return ComputedLandedState(box, placements, out RightTriangle slope, MASK_SIZE, ignore);
-        }
-
-        public CollisionFlags ComputedLandedState(MMXBox box, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return ComputedLandedState(box, null, out slope, MASK_SIZE, ignore);
-        }
-
-        public CollisionFlags ComputedLandedState(MMXBox box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return ComputedLandedState(box, null, out slope, maskSize, ignore);
-        }
-
-        private readonly List<CollisionPlacement> bottomPlacementsDisplacedHalfLeft = new();
-        private readonly List<CollisionPlacement> bottomPlacementsDisplacedHalfRight = new();
-
-        public CollisionFlags ComputedLandedState(MMXBox box, List<CollisionPlacement> placements, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            slope = RightTriangle.EMPTY;
-
-            MMXBox bottomMask = box.ClipTop(box.Height - maskSize);
-            MMXBox bottomMaskDisplaced = bottomMask + maskSize * Vector.DOWN_VECTOR;
-
-            MMXBox bottomMaskDisplacedHalfLeft = bottomMaskDisplaced.HalfLeft();
-            MMXBox bottomMaskDisplacedHalfRight = bottomMaskDisplaced.HalfRight();
-
-            if (placements != null)
-            {
-                bottomPlacementsDisplacedHalfLeft.Clear();
-                bottomPlacementsDisplacedHalfRight.Clear();
-            }
-
-            CollisionFlags bottomLeftDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfLeft, bottomPlacementsDisplacedHalfLeft, out RightTriangle leftDisplaceSlope, ignore, true);
-            CollisionFlags bottomRightDisplacedCollisionFlags = GetCollisionFlags(bottomMaskDisplacedHalfRight, bottomPlacementsDisplacedHalfRight, out RightTriangle rightDisplaceSlope, ignore, true);
-
-            if (!CanBlockTheMove(bottomLeftDisplacedCollisionFlags) && !CanBlockTheMove(bottomRightDisplacedCollisionFlags))
-                return CollisionFlags.NONE;
-
-            if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && !bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
-            {
-                if (!CanBlockTheMove(bottomLeftDisplacedCollisionFlags) && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
-                {
-                    placements?.AddRange(bottomPlacementsDisplacedHalfRight);
-
-                    return bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
-                }
-
-                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && !CanBlockTheMove(bottomRightDisplacedCollisionFlags))
-                {
-                    placements?.AddRange(bottomPlacementsDisplacedHalfLeft);
-
-                    return bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
-                    ;
-                }
-
-                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
-                {
-                    if (placements != null)
-                    {
-                        placements.AddRange(bottomPlacementsDisplacedHalfLeft);
-                        placements.AddRange(bottomPlacementsDisplacedHalfRight);
-                    }
-
-                    return bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
-                }
-            }
-            else
-            {
-                MMXBox bottomMaskHalfLeft = bottomMask.HalfLeft();
-                MMXBox bottomMaskHalfRight = bottomMask.HalfRight();
-
-                CollisionFlags bottomLeftCollisionFlags = GetCollisionFlags(bottomMaskHalfLeft, out RightTriangle leftSlope, ignore, true);
-                CollisionFlags bottomRightCollisionFlags = GetCollisionFlags(bottomMaskHalfRight, out RightTriangle rightSlope, ignore, true);
-
-                if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
-                {
-                    if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK))
-                    {
-                        placements?.AddRange(bottomPlacementsDisplacedHalfLeft);
-
-                        return CollisionFlags.BLOCK;
-                    }
-
-                    if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER))
-                    {
-                        placements?.AddRange(bottomPlacementsDisplacedHalfLeft);
-
-                        return CollisionFlags.TOP_LADDER;
-                    }
-
-                    if (rightDisplaceSlope.HCathetusSign > 0)
-                    {
-                        placements?.AddRange(bottomPlacementsDisplacedHalfRight);
-
-                        slope = rightDisplaceSlope;
-                        return CollisionFlags.SLOPE;
-                    }
-
-                    return CollisionFlags.NONE;
-                }
-
-                if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && !bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
-                {
-                    if (bottomRightDisplacedCollisionFlags == CollisionFlags.BLOCK)
-                    {
-                        placements?.AddRange(bottomPlacementsDisplacedHalfRight);
-
-                        return CollisionFlags.BLOCK;
-                    }
-
-                    if (bottomRightDisplacedCollisionFlags == CollisionFlags.TOP_LADDER)
-                    {
-                        placements?.AddRange(bottomPlacementsDisplacedHalfRight);
-
-                        return CollisionFlags.TOP_LADDER;
-                    }
-
-                    if (leftDisplaceSlope.HCathetusSign < 0)
-                    {
-                        placements?.AddRange(bottomPlacementsDisplacedHalfLeft);
-
-                        slope = leftDisplaceSlope;
-                        return CollisionFlags.SLOPE;
-                    }
-
-                    return CollisionFlags.NONE;
-                }
-
-                if (bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
-                {
-                    if (placements != null)
-                    {
-                        placements.AddRange(bottomPlacementsDisplacedHalfLeft);
-                        placements.AddRange(bottomPlacementsDisplacedHalfRight);
-                    }
-
-                    slope = leftDisplaceSlope;
-                    return CollisionFlags.SLOPE;
-                }
-            }
-
-            return CollisionFlags.NONE;
-        }
-
-        public MMXBox MoveContactFloor(MMXBox box, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveContactFloor(box, out RightTriangle slope, QUERY_MAX_DISTANCE, maskSize, ignore);
-        }
-
-        public MMXBox MoveContactFloor(MMXBox box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveContactFloor(box, out RightTriangle slope, maxDistance, maskSize, ignore);
-        }
-
-        public MMXBox MoveContactFloor(MMXBox box, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveContactFloor(box, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
-
-        public MMXBox MoveContactFloor(MMXBox box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            slope = RightTriangle.EMPTY;
-
-            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_DOWN_VECTOR)
-            {
-                if (CanBlockTheMove(ComputedLandedState(box, out slope, maskSize, ignore)))
-                    break;
-            }
-
-            return box;
-        }
-
-        public bool TryMoveContactFloor(MMXBox box, out MMXBox newBox, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return TryMoveContactFloor(box, out newBox, out RightTriangle slope, maxDistance, maskSize, ignore);
-        }
-
-        public bool TryMoveContactFloor(MMXBox box, out MMXBox newBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return TryMoveContactFloor(box, out newBox, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
-
-        public bool TryMoveContactFloor(MMXBox box, out MMXBox newBox, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            slope = RightTriangle.EMPTY;
-            newBox = MMXBox.EMPTY_BOX;
-
-            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_DOWN_VECTOR)
-            {
-                if (CanBlockTheMove(ComputedLandedState(box, out slope, maskSize, ignore)))
-                {
-                    newBox = box;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public bool TryMoveContactSlope(MMXBox box, out MMXBox newBox, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return TryMoveContactSlope(box, out newBox, out RightTriangle slope, maxDistance, maskSize, ignore);
-        }
-
-        public bool TryMoveContactSlope(MMXBox box, out MMXBox newBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return TryMoveContactSlope(box, out newBox, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
-
-        public bool TryMoveContactSlope(MMXBox box, out MMXBox newBox, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            slope = RightTriangle.EMPTY;
-            newBox = MMXBox.EMPTY_BOX;
-
-            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_DOWN_VECTOR)
-            {
-                if (ComputedLandedState(box, out slope, maskSize, ignore).HasFlag(CollisionFlags.SLOPE))
-                {
-                    newBox = box;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public MMXBox AdjustOnTheFloor(MMXBox box, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return AdjustOnTheFloor(box, out RightTriangle slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
-
-        public MMXBox AdjustOnTheFloor(MMXBox box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return AdjustOnTheFloor(box, out RightTriangle slope, maxDistance, maskSize, ignore);
-        }
-
-        public MMXBox AdjustOnTheFloor(MMXBox box, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return AdjustOnTheFloor(box, out slope, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
-
-        public MMXBox AdjustOnTheFloor(MMXBox box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            if (!CanBlockTheMove(ComputedLandedState(box, out slope, maskSize, ignore)))
-                return box;
-
-            slope = RightTriangle.EMPTY;
-
-            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, box += STEP_UP_VECTOR)
-            {
-                if (!CanBlockTheMove(ComputedLandedState(box + STEP_UP_VECTOR, out RightTriangle slope2, maskSize, ignore)))
-                    break;
-
-                slope = slope2;
-            }
-
-            return box;
-        }
-
-        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveUntilIntersect(box, dir, null, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
-
-        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveUntilIntersect(box, dir, null, maxDistance, maskSize, ignore);
-        }
-
-        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return MoveUntilIntersect(box, dir, placements, QUERY_MAX_DISTANCE, MASK_SIZE, ignore);
-        }
-
-        public MMXBox MoveUntilIntersect(MMXBox box, Vector dir, List<CollisionPlacement> placements, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            Vector deltaDir = GetStepVector(dir);
-            FixedSingle step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs;
-            MMXBox lastBox = box;
-            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += step, box += deltaDir)
-            {
-                if (CanBlockTheMove(GetCollisionFlags(box, placements, ignore, true)))
-                    break;
-
-                lastBox = box;
-            }
-
-            return box;
-        }
-
-        private static Vector GetStepVector(Vector dir)
-        {
-            if (dir.X == 0)
-                return dir.Y > 0 ? STEP_DOWN_VECTOR : dir.Y < 0 ? STEP_UP_VECTOR : Vector.NULL_VECTOR;
-
-            if (dir.Y == 0)
-                return dir.X > 0 ? STEP_RIGHT_VECTOR : dir.X < 0 ? STEP_LEFT_VECTOR : Vector.NULL_VECTOR;
-
-            FixedSingle x = dir.X;
-            FixedSingle xm = x.Abs;
-            FixedSingle y = dir.Y;
-
-            return new Vector(x.Signal * STEP_SIZE, y / xm * STEP_SIZE);
-        }
-
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return GetCollisionFlags(collisionBox + dir, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return GetCollisionFlags(collisionBox + dir, out slopeTriangle, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return GetCollisionFlags(collisionBox + dir, placements, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return GetCollisionFlags(collisionBox + dir, placements, out slopeTriangle, ignore, preciseCollisionCheck);
-        }
-
         internal void Tessellate()
         {
             foreach (Scene scene in sceneList)
@@ -1269,6 +716,12 @@ namespace XSharp.Engine.World
         public static bool CanBlockTheMove(CollisionFlags flags)
         {
             return flags is not CollisionFlags.NONE and not CollisionFlags.WATER and not CollisionFlags.WATER_SURFACE;
+        }
+
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, Entities.Sprite ignoreSprite = null, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+        {
+            collisionChecker.Setup(collisionBox, ignore, ignoreSprite, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false, true);
+            return collisionChecker.GetCollisionFlags();
         }
     }
 }

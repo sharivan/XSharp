@@ -4,8 +4,12 @@ namespace XSharp.Engine.Entities.Items
 {
     public class HeartTank : Item
     {
-        public HeartTank(string name, Vector origin) : base(name, origin, -1, 1, false, "HeartTank")
+        public HeartTank()
         {
+            DurationFrames = 0;
+            SpriteSheetIndex = 1;
+
+            SetAnimationNames("HeartTank");
         }
 
         protected internal override void OnSpawn()

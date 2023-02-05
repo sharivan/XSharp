@@ -8,6 +8,7 @@ namespace XSharp.Engine.Entities.Objects
         public BossDoor Door
         {
             get;
+            internal set;
         }
 
         public BossDoorState State
@@ -16,19 +17,18 @@ namespace XSharp.Engine.Entities.Objects
             set => SetState(value);
         }
 
-        public BossDoorEffect(string name, BossDoor door, Vector origin) : base(name, origin, 9, false, "Closed", "Opening", "PlayerCrossing", "Closing")
+        public BossDoorEffect()
         {
-            Door = door;
+            SpriteSheetIndex = 9;
+            Directional = false;
+
+            SetAnimationNames("Closed", "Opening", "PlayerCrossing", "Closing");
 
             SetupStateArray(typeof(BossDoorState));
             RegisterState(BossDoorState.CLOSED, OnStartClosed, null, null, "Closed");
             RegisterState(BossDoorState.OPENING, OnStartOpening, OnOpening, null, "Opening");
             RegisterState(BossDoorState.PLAYER_CROSSING, OnStartPlayerCrossing, OnPlayerCrossing, null, "PlayerCrossing");
             RegisterState(BossDoorState.CLOSING, OnStartClosing, null, OnEndClosing, "Closing");
-        }
-
-        public BossDoorEffect(BossDoor door, Vector origin) : this(null, door, origin)
-        {
         }
 
         private void OnStartClosed(EntityState state)

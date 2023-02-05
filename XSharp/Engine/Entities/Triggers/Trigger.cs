@@ -16,8 +16,7 @@ namespace XSharp.Engine.Entities.Triggers
             set => base.MaxTriggers = value;
         }
 
-        public Trigger(Box boudingBox, TouchingKind touchingKind = TouchingKind.VECTOR, VectorKind vectorKind = VectorKind.ORIGIN)
-            : base(boudingBox, touchingKind, vectorKind)
+        public Trigger()
         {
         }
     }

@@ -6,9 +6,11 @@ namespace XSharp.Engine.Entities.Items
 {
     public class LifeUp : Item
     {
-        public LifeUp(string name, Vector origin, int durationFrames = 0)
-            : base(name, origin, durationFrames, 1, false, "LifeUp")
+        public LifeUp()
         {
+            SpriteSheetIndex = 1;
+
+            SetAnimationNames("LifeUp");
         }
 
         protected internal override void OnSpawn()

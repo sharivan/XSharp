@@ -6,9 +6,20 @@
 
         private bool soundPlayed;
 
+        private Player charger;
+
         public Player Charger
         {
-            get;
+            get => charger;
+            set
+            {
+                charger = value;
+                if (value != null)
+                {
+                    Origin = value.Hitbox.Center;
+                    Direction = value.Direction;
+                }
+            }
         }
 
         public int Level
@@ -25,10 +36,13 @@
             }
         }
 
-        public ChargingEffect(string name, Player charger) : base(name, charger.Hitbox.Center, 3, true, "ChargingLevel1", "ChargingLevel2")
+        public ChargingEffect()
         {
-            Charger = charger;
+            SpriteSheetIndex = 3;
+            Directional = true;
             PaletteIndex = 3;
+
+            SetAnimationNames("ChargingLevel1", "ChargingLevel2");
         }
 
         protected internal override void OnSpawn()

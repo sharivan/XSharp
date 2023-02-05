@@ -14,13 +14,13 @@ namespace XSharp.Engine.Entities.Triggers
         {
             get;
             private set;
-        }
+        } = false;
 
         public Checkpoint LastCheckpoint
         {
             get;
             private set;
-        }
+        } = null;
 
         public Box LastCameraConstraintBox
         {
@@ -46,12 +46,9 @@ namespace XSharp.Engine.Entities.Triggers
             private set;
         }
 
-        public CheckpointTriggerOnce(Box box, Checkpoint checkpoint)
-            : base(box, TouchingKind.VECTOR)
+        public CheckpointTriggerOnce()
         {
-            Checkpoint = checkpoint;
-            Triggered = false;
-            LastCheckpoint = null;
+            TouchingKind = TouchingKind.VECTOR;
         }
 
         protected override void OnStartTrigger(Entity obj)

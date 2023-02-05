@@ -1,4 +1,4 @@
-﻿namespace XSharp.Engine
+﻿namespace XSharp.Engine.World
 {
     public enum CollisionFlags
     {

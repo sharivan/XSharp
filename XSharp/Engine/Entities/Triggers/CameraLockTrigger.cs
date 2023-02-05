@@ -13,16 +13,11 @@ namespace XSharp.Engine.Entities.Triggers
 
         public int ConstraintCount => constraints.Count;
 
-        public CameraLockTrigger(Box boudingBox)
-            : base(boudingBox, TouchingKind.VECTOR)
+        public CameraLockTrigger()
         {
-            constraints = new List<Vector>();
-        }
+            TouchingKind = TouchingKind.VECTOR;
 
-        public CameraLockTrigger(Box boudingBox, IEnumerable<Vector> constraints)
-            : base(boudingBox, TouchingKind.VECTOR)
-        {
-            this.constraints = new List<Vector>(constraints);
+            constraints = new List<Vector>();
         }
 
         protected override void OnStartTrigger(Entity obj)
@@ -36,6 +31,16 @@ namespace XSharp.Engine.Entities.Triggers
         public void AddConstraint(Vector constraint)
         {
             constraints.Add(constraint);
+        }
+
+        public void AddConstraints(IEnumerable<Vector> constraints)
+        {
+            this.constraints.AddRange(constraints);
+        }
+
+        public void AddConstraints(params Vector[] constraints)
+        {
+            this.constraints.AddRange(constraints);
         }
 
         public Vector GetConstraint(int index)

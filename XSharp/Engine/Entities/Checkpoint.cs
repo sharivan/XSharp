@@ -9,44 +9,41 @@ namespace XSharp.Engine.Entities
         public ushort Point
         {
             get;
+            set;
         }
 
         public Vector CharacterPos
         {
             get;
+            set;
         }
 
         public Vector CameraPos
         {
             get;
+            set;
         }
 
         public Vector BackgroundPos
         {
             get;
+            set;
         }
 
         public Vector ForceBackground
         {
             get;
+            set;
         }
 
         public uint Scroll
         {
             get;
+            set;
         }
 
-        public Checkpoint(ushort point, Box boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
-            : base("Checkpoint #" + point, boundingBox.Origin)
+        public Checkpoint()
         {
-            Point = point;
-            CharacterPos = characterPos;
-            CameraPos = cameraPos;
-            BackgroundPos = backgroundPos;
-            ForceBackground = forceBackground;
-            Scroll = scroll;
-
-            SetBoundingBox(boundingBox);
         }
 
         protected override Box GetBoundingBox()
@@ -56,7 +53,7 @@ namespace XSharp.Engine.Entities
 
         protected override void SetBoundingBox(Box boundingBox)
         {
-            this.boundingBox = boundingBox - boundingBox.Origin;
+            this.boundingBox = boundingBox;
         }
     }
 }

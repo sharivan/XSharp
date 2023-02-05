@@ -12,9 +12,11 @@ namespace XSharp.Engine.Entities.Items
 
     public class SmallAmmoRecover : Item
     {
-        public SmallAmmoRecover(string name, Vector origin, int durationFrames = 0)
-            : base(name, origin, durationFrames, 1, false, "SmallAmmoRecover")
+        public SmallAmmoRecover()
         {
+            SpriteSheetIndex = 1;
+
+            SetAnimationNames("SmallAmmoRecover");
         }
 
         protected internal override void OnSpawn()

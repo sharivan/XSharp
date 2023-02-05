@@ -2,30 +2,23 @@
 
 namespace XSharp.Engine.Entities.HUD
 {
-    public class HUD : Sprite
+    public abstract class HUD : Sprite
     {
         public Vector Offset
         {
             get; set;
         }
 
-        public HUD(string name, Vector offset, int spriteSheetIndex, string[] animationNames, string initialAnimationName)
-            : base(name, GameEngine.Engine.World.Camera.LeftTop + offset, spriteSheetIndex, animationNames, initialAnimationName, false)
+        protected HUD()
         {
-            Offset = offset;
-        }
-
-        public HUD(string name, Vector offset, int spriteSheetIndex, params string[] animationNames)
-            : base(name, GameEngine.Engine.World.Camera.LeftTop + offset, spriteSheetIndex, false, animationNames)
-        {
-            Offset = offset;
+            Directional = false;
         }
 
         protected internal override void OnSpawn()
         {
             base.OnSpawn();
 
-            CheckCollisionWithEntities = false;
+            CheckTouchingEntities = false;
             CheckCollisionWithWorld = false;
             Static = true;
         }

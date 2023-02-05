@@ -23,12 +23,11 @@ namespace XSharp.Engine.Entities.Triggers
         public SplitterTriggerOrientation Orientation
         {
             get; set;
-        }
+        } = SplitterTriggerOrientation.VERTICAL;
 
-        public SplitterTrigger(Box box, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL, VectorKind vectorKind = VectorKind.ORIGIN)
-            : base(box, TouchingKind.VECTOR, vectorKind)
+        public SplitterTrigger()
         {
-            Orientation = orientation;
+            TouchingKind = TouchingKind.VECTOR;
         }
 
         protected virtual void OnSplitterTriggerEvent(Entity target, SplitterTriggerDirection side)

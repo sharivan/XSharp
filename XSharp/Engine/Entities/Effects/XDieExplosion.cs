@@ -36,19 +36,12 @@ namespace XSharp.Engine.Entities.Effects
             set;
         }
 
-        public XDieExplosion(string name, Vector origin, int maxFrames, int framesPerCicle, double maxRadius, double phase, int sparkCount)
-            : base(name, origin, 0, false, "DyingExplosion")
+        public XDieExplosion()
         {
-            MaxFrames = maxFrames;
-            FramesPerCicle = framesPerCicle;
-            MaxRadius = maxRadius;
-            Phase = phase;
-            SparkCount = sparkCount;
-        }
+            SpriteSheetIndex = 0;
+            Directional = false;
 
-        public XDieExplosion(string name, Vector origin, double phase)
-            : this(name, origin, 68, 128, 140, phase, 8)
-        {
+            SetAnimationNames("DyingExplosion");
         }
 
         protected internal override void OnSpawn()

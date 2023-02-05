@@ -34,7 +34,7 @@ namespace XSharp.Engine
 
         // Engine
 
-        public const int BOXKIND_COUNT = 2;
+        public const int BOXKIND_COUNT = 3;
 
         public const int TILE_SIZE = 8;
         public const int MAP_SIZE = TILE_SIZE * 2; // In pixels
@@ -351,7 +351,7 @@ namespace XSharp.Engine
         // Startup
 
         public const bool ENABLE_ENEMIES = true;
-        public const bool ENABLE_SPAWNING_BLACK_SCREEN = true;
+        public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
         public const bool ENABLE_OST = true;
 
         public const bool LOAD_ROM = true;
@@ -359,6 +359,6 @@ namespace XSharp.Engine
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
         public const int INITIAL_LEVEL = 8;
-        public const int INITIAL_CHECKPOINT = 2;
+        public const int INITIAL_CHECKPOINT = 0;
     }
 }

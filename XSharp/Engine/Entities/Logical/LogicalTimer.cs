@@ -18,15 +18,10 @@ namespace XSharp.Engine.Entities.Logical
         {
             get;
             private set;
-        }
+        } = 0;
 
-        public LogicalTimer(Vector origin, int interval) : this(null, origin, interval)
+        public LogicalTimer()
         {
-        }
-
-        public LogicalTimer(string name, Vector origin, int interval) : base(name, origin)
-        {
-            Interval = interval;
         }
 
         public void Reset()

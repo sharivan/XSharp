@@ -18,7 +18,11 @@ namespace XSharp.Engine.Entities.Weapons
     {
         private Entity hitEntity;
 
-        new public Player Shooter => (Player) base.Shooter;
+        new public Player Shooter
+        {
+            get => (Player) base.Shooter;
+            internal set => base.Shooter = value;
+        }
 
         public bool Firing => GetState<ChargedState>() == ChargedState.FIRING;
 
@@ -26,9 +30,10 @@ namespace XSharp.Engine.Entities.Weapons
 
         public bool Hitting => GetState<ChargedState>() == ChargedState.HITTING;
 
-        internal BusterCharged(Player shooter, string name, Vector origin, Direction direction)
-            : base(shooter, name, origin, direction, 1)
+        public BusterCharged()
         {
+            SpriteSheetIndex = 1;
+
             SetupStateArray(typeof(ChargedState));
             RegisterState(ChargedState.FIRING, OnStartFiring, null, null, "ChargedShotFiring");
             RegisterState(ChargedState.SHOOTING, OnStartShooting, OnShooting, null, "ChargedShot");

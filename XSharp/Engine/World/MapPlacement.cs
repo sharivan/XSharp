@@ -26,9 +26,9 @@ namespace XSharp.Engine.World
 
         public Box BoudingBox => World.GetMapBoundingBox(Cell);
 
-        public RightTriangle SlopeTriangle => World.MakeSlopeTriangle(CollisionData) + LeftTop;
+        public RightTriangle SlopeTriangle => CollisionChecker.MakeSlopeTriangle(CollisionData) + LeftTop;
 
-        public CollisionData CollisionData => map != null ? map.CollisionData : CollisionData.BACKGROUND;
+        public CollisionData CollisionData => map != null ? map.CollisionData : CollisionData.NONE;
 
         internal MapPlacement(World world, int row, int col, Map map)
             : this(world, new Cell(row, col), map)

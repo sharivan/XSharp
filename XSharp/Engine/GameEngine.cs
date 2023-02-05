@@ -332,6 +332,7 @@ namespace XSharp.Engine
         internal Partition<Entity> partition;
         private readonly List<Checkpoint> checkpoints;
         private readonly Entity[] entities;
+        private readonly Dictionary<string, Entity> entitiesByName;
         private int firstFreeEntityIndex;
         private Entity firstEntity;
         private Entity lastEntity;
@@ -876,7 +877,7 @@ namespace XSharp.Engine
                 BackBufferWidth = Form.ClientSize.Width
             };
 
-            Direct3D = new Direct3D();            
+            Direct3D = new Direct3D();
 
             NoCameraConstraints = NO_CAMERA_CONSTRAINTS;
 
@@ -1013,13 +1014,14 @@ namespace XSharp.Engine
                 joystick.Acquire();
             }
 
-            World = new MMXWorld(this, 32, 32);
+            World = new MMXWorld(32, 32);
             partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
             CameraConstraintsBox = World.BoundingBox;
 
             RNG = new Random();
             checkpoints = new List<Checkpoint>();
             entities = new Entity[MAX_ENTITIES];
+            entitiesByName = new Dictionary<string, Entity>();
             addedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
             respawnableEntities = new List<(Entity, Vector, bool)>();
@@ -2416,6 +2418,10 @@ namespace XSharp.Engine
 
             entity.Index = firstFreeEntityIndex;
             entities[firstFreeEntityIndex++] = entity;
+
+            if (entity.Name is not null and not "")
+                entitiesByName.Add(entity.Name, entity);
+
             entityCount++;
 
             for (int i = firstFreeEntityIndex; i < MAX_ENTITIES; i++)
@@ -2462,6 +2468,10 @@ namespace XSharp.Engine
                 lastEntity = previous;
 
             entities[index] = null;
+
+            if (entity.Name is not null and not "")
+                entitiesByName.Remove(entity.Name);
+
             entityCount--;
 
             if (index < firstFreeEntityIndex)
@@ -2483,6 +2493,7 @@ namespace XSharp.Engine
 
             addedEntities.Clear();
             removedEntities.Clear();
+            entitiesByName.Clear();
             sprites.Clear();
             huds.Clear();
             freezingSpriteExceptions.Clear();
@@ -3281,11 +3292,11 @@ namespace XSharp.Engine
         private void DrawHighlightMap(int row, int col, CollisionData collisionData)
         {
             MMXBox mapBox = GetMapBoundingBox(row, col);
-            if (IsSolidBlock(collisionData))
+            if (CollisionChecker.IsSolidBlock(collisionData))
                 DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
-            else if (IsSlope(collisionData))
+            else if (CollisionChecker.IsSlope(collisionData))
             {
-                RightTriangle st = MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
+                RightTriangle st = CollisionChecker.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
                 DrawSlopeMap(mapBox, st, 4);
             }
         }
@@ -3296,11 +3307,11 @@ namespace XSharp.Engine
             var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
 
             MMXBox mapBox = GetMapBoundingBox(row, col);
-            if (IsSolidBlock(collisionData) && HasIntersection(mapBox, collisionBox))
+            if (CollisionChecker.IsSolidBlock(collisionData) && CollisionChecker.HasIntersection(mapBox, collisionBox))
                 DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
-            else if (!ignoreSlopes && IsSlope(collisionData))
+            else if (!ignoreSlopes && CollisionChecker.IsSlope(collisionData))
             {
-                RightTriangle st = MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
+                RightTriangle st = CollisionChecker.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
                 Vector hv = st.HCathetusVector;
                 if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, EPSLON, true) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, EPSLON, true))
                     DrawSlopeMap(mapBox, st, 4);
@@ -3615,7 +3626,7 @@ namespace XSharp.Engine
 
                                 if (showColliders)
                                 {
-                                    BoxCollider collider = sprite.Collider;
+                                    SpriteCollider collider = sprite.Collider;
                                     FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
                                     FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
                                     FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
@@ -3726,7 +3737,7 @@ namespace XSharp.Engine
 
                     if (showColliders)
                     {
-                        BoxCollider collider = Player.Collider;
+                        SpriteCollider collider = Player.Collider;
                         FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
                         FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
                         FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
@@ -3831,61 +3842,6 @@ namespace XSharp.Engine
             }
         }
 
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return World.GetTouchingFlags(collisionBox, dir, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return World.GetTouchingFlags(collisionBox, dir, out slopeTriangle, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return World.GetTouchingFlags(collisionBox, dir, placements, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetTouchingFlags(MMXBox collisionBox, Vector dir, List<CollisionPlacement> placements, out RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return World.GetTouchingFlags(collisionBox, dir, placements, out slopeTriangle, ignore, preciseCollisionCheck);
-        }
-
-        public MMXBox MoveContactFloor(MMXBox box, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return World.MoveContactFloor(box, maxDistance, maskSize, ignore);
-        }
-
-        public MMXBox MoveContactFloor(MMXBox box, out RightTriangle slope, FixedSingle maxDistance, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return World.MoveContactFloor(box, out slope, maxDistance, maskSize, ignore);
-        }
-
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return World.GetCollisionFlags(collisionBox, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return World.GetCollisionFlags(collisionBox, out slope, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return World.GetCollisionFlags(collisionBox, placements, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, List<CollisionPlacement> placements, out RightTriangle slope, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
-        {
-            return World.GetCollisionFlags(collisionBox, placements, out slope, ignore, preciseCollisionCheck);
-        }
-
-        public CollisionFlags ComputedLandedState(MMXBox box, out RightTriangle slope, FixedSingle maskSize, CollisionFlags ignore = CollisionFlags.NONE)
-        {
-            return World.ComputedLandedState(box, out slope, maskSize, ignore);
-        }
-
         private void SaveState(BinaryWriter writer)
         {
             var seedArrayInfo = typeof(Random).GetField("SeedArray", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -3964,14 +3920,33 @@ namespace XSharp.Engine
 
         public ChangeDynamicPropertyTrigger AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation)
         {
-            var trigger = new ChangeDynamicPropertyTrigger(new MMXBox(origin, new Vector(-SCREEN_WIDTH / 2, -SCREEN_HEIGHT / 2), new Vector(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)), prop, forward, backward, orientation);
+            var trigger = new ChangeDynamicPropertyTrigger()
+            {
+                BoundingBox = (origin, (-SCREEN_WIDTH / 2, -SCREEN_HEIGHT / 2), (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)),
+                Property = prop,
+                Forward = forward,
+                Backward = backward,
+                Orientation = orientation
+
+            };
+
             trigger.Spawn();
             return trigger;
         }
 
         public Checkpoint AddCheckpoint(ushort index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
         {
-            var checkpoint = new Checkpoint(index, boundingBox, characterPos, cameraPos, backgroundPos, forceBackground, scroll);
+            var checkpoint = new Checkpoint()
+            {
+                Point = index,
+                BoundingBox = boundingBox,
+                CharacterPos = characterPos,
+                CameraPos = cameraPos,
+                BackgroundPos = backgroundPos,
+                ForceBackground = forceBackground,
+                Scroll = scroll
+            };
+
             checkpoints.Add(checkpoint);
             checkpoint.Spawn();
             return checkpoint;
@@ -3979,7 +3954,12 @@ namespace XSharp.Engine
 
         public CheckpointTriggerOnce AddCheckpointTrigger(ushort index, Vector origin)
         {
-            var trigger = new CheckpointTriggerOnce(new MMXBox(origin, new Vector(0, -SCREEN_HEIGHT / 2), new Vector(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)), checkpoints[index]);
+            var trigger = new CheckpointTriggerOnce()
+            {
+                BoundingBox = (origin, (0, -SCREEN_HEIGHT / 2), (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)),
+                Checkpoint = checkpoints[index]
+            };
+
             trigger.Spawn();
             return trigger;
         }
@@ -4019,7 +3999,13 @@ namespace XSharp.Engine
 
         public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
         {
-            var trigger = new CameraLockTrigger(boundingBox, extensions);
+            var trigger = new CameraLockTrigger()
+            {
+                BoundingBox = boundingBox
+            };
+
+            trigger.AddConstraints(extensions);
+
             trigger.Spawn();
             return trigger;
         }
@@ -4096,81 +4082,137 @@ namespace XSharp.Engine
 
         internal void ShootLemon(Player shooter, Vector origin, Direction direction, bool dashLemon)
         {
-            var lemon = new BusterLemon(shooter, "X Buster Lemon", origin, direction, dashLemon);
+            var lemon = new BusterLemon()
+            {
+                Shooter = shooter,
+                Origin = origin,
+                Direction = direction,
+                DashLemon = dashLemon
+            };
+
             lemon.Spawn();
         }
 
         internal void ShootSemiCharged(Player shooter, Vector origin, Direction direction)
         {
-            var semiCharged = new BusterSemiCharged(shooter, "X Buster Semi Charged", origin, direction);
+            var semiCharged = new BusterSemiCharged()
+            {
+                Shooter = shooter,
+                Origin = origin,
+                Direction = direction
+            };
+
             semiCharged.Spawn();
         }
 
         internal void ShootCharged(Player shooter, Vector origin, Direction direction)
         {
-            var semiCharged = new BusterCharged(shooter, "X Buster Charged", origin, direction);
+            var semiCharged = new BusterCharged()
+            {
+                Shooter = shooter,
+                Origin = origin,
+                Direction = direction
+            };
+
             semiCharged.Spawn();
         }
 
         internal ChargingEffect StartChargingEffect(Player player)
         {
-            var effect = new ChargingEffect("X Charging Effect", player);
+            var effect = new ChargingEffect()
+            {
+                Charger = player
+            };
+
             effect.Spawn();
             return effect;
         }
 
         internal DashSparkEffect StartDashSparkEffect(Player player)
         {
-            var effect = new DashSparkEffect("X Dash Spark Effect", player);
+            var effect = new DashSparkEffect()
+            {
+                Player = player
+            };
+
             effect.Spawn();
             return effect;
         }
 
         internal DashSmokeEffect StartDashSmokeEffect(Player player)
         {
-            var effect = new DashSmokeEffect("X Dash Smoke Effect", player);
+            var effect = new DashSmokeEffect()
+            {
+                Player = player
+            };
+
             effect.Spawn();
             return effect;
         }
 
         internal WallSlideEffect StartWallSlideEffect(Player player)
         {
-            var effect = new WallSlideEffect("X Wall Slide Effect", player);
+            var effect = new WallSlideEffect()
+            {
+                Player = player
+            };
+
             effect.Spawn();
             return effect;
         }
 
         internal WallKickEffect StartWallKickEffect(Player player)
         {
-            var effect = new WallKickEffect("X Wall Kick Effect", player);
+            var effect = new WallKickEffect()
+            {
+                Player = player
+            };
+
             effect.Spawn();
             return effect;
         }
 
         internal ExplosionEffect CreateExplosionEffect(Vector origin)
         {
-            var effect = new ExplosionEffect("Explosion Effect", origin);
+            var effect = new ExplosionEffect()
+            {
+                Origin = origin
+            };
+
             effect.Spawn();
             return effect;
         }
 
         private XDieExplosion CreateXDieExplosionEffect(double phase)
         {
-            var effect = new XDieExplosion("X Die Explosion Effect", Player.Hitbox.Center, phase);
+            var effect = new XDieExplosion()
+            {
+                Origin = Player.Hitbox.Center,
+                Phase = phase
+            };
+
             effect.Spawn();
             return effect;
         }
 
         public Driller AddDriller(Vector origin)
         {
-            var driller = new Driller("Driller", origin);
+            var driller = new Driller()
+            {
+                Origin = origin
+            };
+
             respawnableEntities.Add((driller, origin, false));
             return driller;
         }
 
         public Bat AddBat(Vector origin)
         {
-            var bat = new Bat("Bat", origin);
+            var bat = new Bat()
+            {
+                Origin = origin
+            };
+
             respawnableEntities.Add((bat, origin, false));
             return bat;
         }
@@ -4180,7 +4222,12 @@ namespace XSharp.Engine
             if (Player != null)
                 RemoveEntity(Player);
 
-            Player = new Player("X", origin);
+            Player = new Player()
+            {
+                Name = "X",
+                Origin = origin
+            };
+
             Player.Spawn();
             Player.Lives = lastLives;
         }
@@ -4190,7 +4237,11 @@ namespace XSharp.Engine
             if (HP != null)
                 RemoveEntity(HP);
 
-            HP = new HealthHUD("HP");
+            HP = new HealthHUD()
+            {
+                Name = "HP"
+            };
+
             HP.Spawn();
         }
 
@@ -4199,7 +4250,11 @@ namespace XSharp.Engine
             if (ReadyHUD != null)
                 RemoveEntity(ReadyHUD);
 
-            ReadyHUD = new ReadyHUD("Ready");
+            ReadyHUD = new ReadyHUD()
+            {
+                Name = "Ready"
+            };
+
             ReadyHUD.Spawn();
         }
 
@@ -4573,84 +4628,142 @@ namespace XSharp.Engine
 
         public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames)
         {
-            var drop = new SmallHealthRecover("Small Health Recover", origin, durationFrames);
+            var drop = new SmallHealthRecover()
+            {
+                Origin = origin,
+                DurationFrames = durationFrames
+            };
+
             drop.Spawn();
             return drop;
         }
 
         public BigHealthRecover DropBigHealthRecover(Vector origin, int durationFrames)
         {
-            var drop = new BigHealthRecover("Big Health Recover", origin, durationFrames);
+            var drop = new BigHealthRecover()
+            {
+                Origin = origin,
+                DurationFrames = durationFrames
+            };
+
             drop.Spawn();
             return drop;
         }
 
         public SmallAmmoRecover DropSmallAmmoRecover(Vector origin, int durationFrames)
         {
-            var drop = new SmallAmmoRecover("Small Ammo Recover", origin, durationFrames);
+            var drop = new SmallAmmoRecover()
+            {
+                Origin = origin,
+                DurationFrames = durationFrames
+            };
+
             drop.Spawn();
             return drop;
         }
 
         public BigAmmoRecover DropBigAmmoRecover(Vector origin, int durationFrames)
         {
-            var drop = new BigAmmoRecover("Big Ammo Recover", origin, durationFrames);
+            var drop = new BigAmmoRecover()
+            {
+                Origin = origin,
+                DurationFrames = durationFrames
+            };
+
             drop.Spawn();
             return drop;
         }
 
         public LifeUp DropLifeUp(Vector origin, int durationFrames)
         {
-            var drop = new LifeUp("Life Up", origin, durationFrames);
+            var drop = new LifeUp()
+            {
+                Origin = origin,
+                DurationFrames = durationFrames
+            };
+
             drop.Spawn();
             return drop;
         }
 
         public SmallHealthRecover AddSmallHealthRecover(Vector origin)
         {
-            var item = new SmallHealthRecover("Small Health Recover", origin, -1);
+            var item = new SmallHealthRecover()
+            {
+                Origin = origin,
+                DurationFrames = 0
+            };
+
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public BigHealthRecover AddBigHealthRecover(Vector origin)
         {
-            var item = new BigHealthRecover("Big Health Recover", origin, -1);
+            var item = new BigHealthRecover()
+            {
+                Origin = origin,
+                DurationFrames = 0
+            };
+
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public SmallAmmoRecover AddSmallAmmoRecover(Vector origin)
         {
-            var item = new SmallAmmoRecover("Small Ammo Recover", origin, -1);
+            var item = new SmallAmmoRecover()
+            {
+                Origin = origin,
+                DurationFrames = 0
+            };
+
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public BigAmmoRecover AddBigAmmoRecover(Vector origin)
         {
-            var item = new BigAmmoRecover("Big Ammo Recover", origin, -1);
+            var item = new BigAmmoRecover()
+            {
+                Origin = origin,
+                DurationFrames = 0
+            };
+
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public LifeUp AddLifeUp(Vector origin)
         {
-            var item = new LifeUp("Life Up", origin, -1);
+            var item = new LifeUp()
+            {
+                Origin = origin,
+                DurationFrames = 0
+            };
+
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public HeartTank AddHeartTank(Vector origin)
         {
-            var item = new HeartTank("Heart Tank", origin);
+            var item = new HeartTank()
+            {
+                Origin = origin
+            };
+
             respawnableEntities.Add((item, origin, false));
             return item;
         }
 
         public SubTankItem AddSubTank(Vector origin)
         {
-            var item = new SubTankItem("Sub Tank", origin);
+            var item = new SubTankItem()
+            {
+                Origin = origin
+            };
+
             respawnableEntities.Add((item, origin, false));
             return item;
         }
@@ -4712,7 +4825,7 @@ namespace XSharp.Engine
 
         internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
         {
-            var door = new BossDoor("Boss Door", pos);
+            var door = new BossDoor(pos);
             door.Spawn();
             door.Bidirectional = true;
 
@@ -4786,15 +4899,13 @@ namespace XSharp.Engine
             }
         }
 
-        public string GetExclusiveName(string prefix)
+        public string GetEntityExclusiveName(string prefix, bool startWithCounterSuffix = false, int startCounterSuffix = 1)
         {
-            // TODO : Improve this using hashtables, please!
+            int counter = startCounterSuffix;
+            string possibleName = startWithCounterSuffix ? prefix + counter++ : prefix;
 
-            int counter = 0;
-            string possibleName = prefix + counter++;
-            for (Entity entity = firstEntity; entity != null; entity = entity.next)
-                if (entity.Name == possibleName)
-                    possibleName = prefix + counter++;
+            for (Entity entity = GetEntityByname(prefix); entity != null; entity = GetEntityByname(possibleName))
+                possibleName = prefix + counter++;
 
             return possibleName;
         }
@@ -4831,6 +4942,34 @@ namespace XSharp.Engine
             for (Entity entity = firstEntity; entity != null; entity = entity.next)
                 if (entity is Enemy or Weapon)
                     entity.Kill();
+        }
+
+        public Entity GetEntityByname(string name)
+        {
+            return entitiesByName.TryGetValue(name, out Entity result) ? result : null;
+        }
+
+        internal void UpdatePaletteName(Palette palette, string name)
+        {
+        }
+
+        internal void UpdateEntityName(Entity entity, string name)
+        {
+            if (name == entity.Name)
+                return;
+
+            if (entitiesByName.ContainsKey(name))
+                throw new DuplicateEntityNameException(name);
+
+            if (entity.Alive)
+            {
+                if (entity.Name is not null and not "")
+                    entitiesByName.Remove(entity.Name);
+
+                entitiesByName.Add(name, entity);
+            }
+
+            entity.name = name;
         }
     }
 }

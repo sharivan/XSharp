@@ -92,8 +92,10 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Engine\Animation.cs" />
+    <Compile Include="Engine\Entities\Animation.cs" />
+    <Compile Include="Engine\Entities\BoxKind.cs" />
     <Compile Include="Engine\Entities\Checkpoint.cs" />
+    <Compile Include="Engine\Entities\DuplicateEntityNameException.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalBranch.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalEntity.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalLineTo.cs" />
@@ -127,23 +129,26 @@
     <Compile Include="Engine\Entities\Triggers\CheckpointTriggerOnce.cs" />
     <Compile Include="Engine\Entities\Triggers\SplitterTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\Trigger.cs" />
+    <Compile Include="Engine\Entities\VectorKind.cs" />
     <Compile Include="Engine\Graphics\Palette.cs" />
     <Compile Include="Engine\Graphics\Tilemap.cs" />
     <Compile Include="Engine\Graphics\Tileset.cs" />
     <Compile Include="Engine\Sound\SoundPlayer.cs" />
     <Compile Include="Engine\World\Block.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Boss.cs" />
-    <Compile Include="Engine\BoxCollider.cs" />
+    <Compile Include="Engine\World\SpriteCollider.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterCharged.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterLemon.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterSemiCharged.cs" />
     <Compile Include="Engine\Entities\Effects\ChargingEffect.cs" />
-    <Compile Include="Engine\CollisionPlacement.cs" />
-    <Compile Include="Engine\CollisionFlags.cs" />
-    <Compile Include="Engine\CollisionData.cs" />
+    <Compile Include="Engine\World\CollisionPlacement.cs" />
+    <Compile Include="Engine\World\CollisionFlags.cs" />
+    <Compile Include="Engine\World\CollisionData.cs" />
     <Compile Include="Engine\Consts.cs" />
-    <Compile Include="Engine\Direction.cs" />
+    <Compile Include="Engine\Entities\Direction.cs" />
     <Compile Include="Engine\Entities\Enemies\Enemy.cs" />
+    <Compile Include="Engine\World\CollisionChecker.cs" />
+    <Compile Include="Engine\World\ExtendedCollisionChecker.cs" />
     <Compile Include="Engine\World\MapPlacement.cs" />
     <Compile Include="Engine\Entities\Triggers\AbstractTriggeer.cs" />
     <Compile Include="Engine\GameEngine.cs" />
@@ -161,7 +166,6 @@
     <Compile Include="Engine\Graphics\SpriteSheet.cs" />
     <Compile Include="Engine\World\Tile.cs" />
     <Compile Include="Engine\World\Cell.cs" />
-    <Compile Include="Engine\Utils.cs" />
     <Compile Include="Engine\World\World.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

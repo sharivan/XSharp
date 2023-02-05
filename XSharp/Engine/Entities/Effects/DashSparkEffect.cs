@@ -38,10 +38,30 @@ namespace XSharp.Engine.Entities.Effects
             }
         }
 
-        public DashSparkEffect(string name, Player player) : base(name, GetOrigin(player), 2, true, "PreDashSparkEffect", "DashSparkEffect")
+        private Player player;
+
+        public Player Player
         {
-            Direction = player.Direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
-            Parent = player;
+            get => player;
+            set
+            {
+                player = value;
+                if (value != null)
+                {
+                    Origin = GetOrigin(value);
+                    Direction = value.Direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
+                }
+
+                Parent = value;
+            }
+        }
+
+        public DashSparkEffect()
+        {
+            SpriteSheetIndex = 2;
+            Directional = true;
+
+            SetAnimationNames("PreDashSparkEffect", "DashSparkEffect");
         }
 
         protected internal override void OnAnimationEnd(Animation animation)

@@ -14,7 +14,26 @@ namespace XSharp.Engine.Entities.Effects
             };
         }
 
-        public WallKickEffect(string name, Player player) : base(name, GetOrigin(player), 2, false, "WallKickEffect") { }
+        private Player player;
+
+        public Player Player
+        {
+            get => player;
+            set
+            {
+                player = value;
+                if (value != null)
+                    Origin = GetOrigin(value);
+            }
+        }
+
+        public WallKickEffect()
+        {
+            SpriteSheetIndex = 2;
+            Directional = false;
+
+            SetAnimationNames("WallKickEffect");
+        }
 
         protected internal override void OnAnimationEnd(Animation animation)
         {

@@ -2,7 +2,7 @@
 {
     public enum CollisionData
     {
-        BACKGROUND = 0x00,
+        NONE = 0x00,
         SLOPE_16_8 = 0x01,
         SLOPE_8_0 = 0x02,
         SLOPE_8_16 = 0x03,

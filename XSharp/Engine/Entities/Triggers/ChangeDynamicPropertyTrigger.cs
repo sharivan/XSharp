@@ -26,12 +26,8 @@ namespace XSharp.Engine.Entities.Triggers
             get; set;
         }
 
-        public ChangeDynamicPropertyTrigger(Box box, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation = SplitterTriggerOrientation.VERTICAL)
-            : base(box, orientation)
+        public ChangeDynamicPropertyTrigger()
         {
-            Property = prop;
-            Forward = forward;
-            Backward = backward;
         }
 
         private void ChangeProperty(int value)

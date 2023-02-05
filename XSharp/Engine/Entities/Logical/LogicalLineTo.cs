@@ -23,11 +23,7 @@ namespace XSharp.Engine.Entities.Logical
             set;
         }
 
-        public LogicalLineTo(Vector origin) : this(null, origin)
-        {
-        }
-
-        public LogicalLineTo(string name, Vector origin) : base(name, origin)
+        public LogicalLineTo()
         {
         }
 

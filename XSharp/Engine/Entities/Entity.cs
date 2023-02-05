@@ -1,29 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using XSharp.Engine.World;
 using XSharp.Geometry;
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.World.World;
 
 namespace XSharp.Engine.Entities
 {
-    public enum VectorKind
-    {
-        NONE = 0,
-        ORIGIN = 1,
-        BOUDINGBOX_CENTER = 2,
-        HITBOX_CENTER = 4,
-        ALL = 255
-    }
-
-    public enum BoxKind
-    {
-        NONE = 0,
-        BOUDINGBOX = 1,
-        HITBOX = 2,
-        ALL = 255
-    }
-
     public delegate void EntityEvent(Entity source);
     public delegate void EntityActivatorEvent(Entity source, Entity activator);
 
@@ -39,9 +23,10 @@ namespace XSharp.Engine.Entities
         public event EntityActivatorEvent TouchingEvent;
         public event EntityActivatorEvent EndTouchEvent;
 
-        private string name;
-        private Vector origin;
-        internal Entity parent;
+        internal string name = null;
+        private Vector origin = Vector.NULL_VECTOR;
+        internal Entity parent = null;
+
         private readonly List<Entity> touchingEntities;
         internal readonly List<Entity> childs;
 
@@ -55,10 +40,11 @@ namespace XSharp.Engine.Entities
         private int currentStateID;
 
         private bool visible;
-        private bool checkCollisionWithEntities;
+        private bool checkTouchingEntities;
 
         private BoxKind boxKind;
         private BoxKind lastBoxKind;
+        private Box[] lastBox;
 
         public GameEngine Engine => GameEngine.Engine;
 
@@ -71,7 +57,7 @@ namespace XSharp.Engine.Entities
         public string Name
         {
             get => name;
-            set => name = value ?? Engine.GetExclusiveName(GetType().Name);
+            set => GameEngine.Engine.UpdateEntityName(this, value);
         }
 
         public Entity Parent
@@ -113,8 +99,8 @@ namespace XSharp.Engine.Entities
             get => Origin + GetBoundingBox();
             set
             {
-                SetBoundingBox(value - value.Origin);
                 SetOrigin(value.Origin);
+                SetBoundingBox(value - value.Origin);   
             }
         }
 
@@ -166,14 +152,14 @@ namespace XSharp.Engine.Entities
             private set;
         }
 
-        public bool Offscreen => !HasIntersection(BoundingBox, Engine.World.Camera.ExtendedBoundingBox);
+        public bool Offscreen => !CollisionChecker.HasIntersection(BoundingBox, Engine.World.Camera.ExtendedBoundingBox);
 
-        public bool CheckCollisionWithEntities
+        public bool CheckTouchingEntities
         {
-            get => checkCollisionWithEntities;
+            get => checkTouchingEntities;
             set
             {
-                checkCollisionWithEntities = value;
+                checkTouchingEntities = value;
                 UpdatePartition();
             }
         }
@@ -200,19 +186,14 @@ namespace XSharp.Engine.Entities
 
         protected EntityState CurrentState => stateArray != null && CurrentStateID >= 0 ? stateArray[CurrentStateID] : null;
 
-        protected Entity(string name, Vector origin)
+        protected Entity()
         {
-            Name = name;
-            this.origin = origin;
-
             touchingEntities = new List<Entity>();
             childs = new List<Entity>();
 
             states = new List<EntityState>();
-        }
 
-        protected Entity(Vector origin) : this(null, origin)
-        {
+            lastBox = new Box[BOXKIND_COUNT];
         }
 
         protected void SetupStateArray(int count)
@@ -381,7 +362,7 @@ namespace XSharp.Engine.Entities
         {
         }
 
-        public Box GetBox(BoxKind kind)
+        public virtual Box GetBox(BoxKind kind)
         {
             return kind switch
             {
@@ -391,6 +372,11 @@ namespace XSharp.Engine.Entities
             };
         }
 
+        public Box GetLastBox(BoxKind kind)
+        {
+            return lastBox[kind.ToIndex()];
+        }
+
         public virtual void LoadState(BinaryReader reader)
         {
             origin = new Vector(reader);
@@ -398,7 +384,7 @@ namespace XSharp.Engine.Entities
             Alive = reader.ReadBoolean();
             MarkedToRemove = reader.ReadBoolean();
             Respawnable = reader.ReadBoolean();
-            CheckCollisionWithEntities = reader.ReadBoolean();
+            CheckTouchingEntities = reader.ReadBoolean();
         }
 
         public virtual void SaveState(BinaryWriter writer)
@@ -408,7 +394,7 @@ namespace XSharp.Engine.Entities
             writer.Write(Alive);
             writer.Write(MarkedToRemove);
             writer.Write(Respawnable);
-            writer.Write(CheckCollisionWithEntities);
+            writer.Write(CheckTouchingEntities);
         }
 
         public override string ToString()
@@ -434,7 +420,7 @@ namespace XSharp.Engine.Entities
             Think();
             CurrentState?.OnFrame();
 
-            if (CheckCollisionWithEntities)
+            if (CheckTouchingEntities)
             {
                 List<Entity> touching = Engine.partition.Query(Hitbox, this, childs, BoxKind.HITBOX);
 
@@ -530,7 +516,7 @@ namespace XSharp.Engine.Entities
             lastBoxKind = BoxKind.NONE;
             Spawning = true;
             Visible = false;
-            CheckCollisionWithEntities = true;
+            CheckTouchingEntities = true;
             frameToKill = -1;
             currentStateID = -1;
             MarkedToRemove = false;
@@ -561,12 +547,17 @@ namespace XSharp.Engine.Entities
             VisibleChangedEvent?.Invoke(this);
         }
 
+        protected virtual BoxKind ComputeBoxKind()
+        {
+            return (Visible ? BoxKind.BOUDINGBOX : BoxKind.NONE) | (CheckTouchingEntities ? BoxKind.HITBOX : BoxKind.NONE);
+        }
+
         protected virtual void UpdatePartition(bool force = false)
         {
             if (!Alive)
                 return;
 
-            boxKind = (Visible ? BoxKind.BOUDINGBOX : BoxKind.NONE) | (CheckCollisionWithEntities ? BoxKind.HITBOX : BoxKind.NONE);
+            boxKind = ComputeBoxKind();
 
             if (lastBoxKind == BoxKind.NONE && boxKind != BoxKind.NONE)
                 Engine.partition.Insert(this, boxKind);
@@ -576,7 +567,7 @@ namespace XSharp.Engine.Entities
             {
                 for (int i = 0; i < BOXKIND_COUNT; i++)
                 {
-                    var k = (BoxKind) (1 << i);
+                    var k = i.ToBoxKind();
                     if (boxKind.HasFlag(k) && !lastBoxKind.HasFlag(k))
                         Engine.partition.Insert(this, k);
                     else if (!boxKind.HasFlag(k) && lastBoxKind.HasFlag(k))
@@ -589,6 +580,16 @@ namespace XSharp.Engine.Entities
                 Engine.partition.Update(this, boxKind, force);
 
             lastBoxKind = boxKind;
+            UpdateLastBoxes();
+        }
+
+        private void UpdateLastBoxes()
+        {
+            for (int i = 0; i < BOXKIND_COUNT; i++)
+            {
+                var kind = i.ToBoxKind();
+                lastBox[i] = GetBox(kind);
+            }
         }
     }
 }

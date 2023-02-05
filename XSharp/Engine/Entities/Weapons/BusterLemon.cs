@@ -14,16 +14,23 @@ namespace XSharp.Engine.Entities.Weapons
 
     public class BusterLemon : Weapon
     {
-        private readonly bool dashLemon;
-
         private bool reflected;
 
-        new public Player Shooter => (Player) base.Shooter;
-
-        internal BusterLemon(Player shooter, string name, Vector origin, Direction direction, bool dashLemon)
-            : base(shooter, name, origin, direction, 1)
+        new public Player Shooter
         {
-            this.dashLemon = dashLemon;
+            get => (Player) base.Shooter;
+            internal set => base.Shooter = value;
+        }
+
+        public bool DashLemon
+        {
+            get;
+            internal set;
+        }
+
+        public BusterLemon()
+        {
+            SpriteSheetIndex = 1;
 
             SetupStateArray(typeof(LemonState));
             RegisterState(LemonState.SHOOTING, OnStartShot, OnShooting, null, "LemonShot");
@@ -32,7 +39,7 @@ namespace XSharp.Engine.Entities.Weapons
 
         public override FixedSingle GetGravity()
         {
-            return reflected && dashLemon && GetState<LemonState>() != LemonState.EXPLODING ? GRAVITY : FixedSingle.ZERO;
+            return reflected && DashLemon && GetState<LemonState>() != LemonState.EXPLODING ? GRAVITY : FixedSingle.ZERO;
         }
 
         protected override Box GetCollisionBox()
@@ -42,7 +49,7 @@ namespace XSharp.Engine.Entities.Weapons
 
         protected override FixedSingle GetBaseDamage()
         {
-            return dashLemon ? 2 * LEMON_DAMAGE : LEMON_DAMAGE;
+            return DashLemon ? 2 * LEMON_DAMAGE : LEMON_DAMAGE;
         }
 
         protected internal override void OnSpawn()
@@ -50,7 +57,7 @@ namespace XSharp.Engine.Entities.Weapons
             base.OnSpawn();
 
             CheckCollisionWithWorld = false;
-            Velocity = new Vector(Direction == Direction.LEFT ? (dashLemon ? -LEMON_TERMINAL_SPEED : -LEMON_INITIAL_SPEED) : (dashLemon ? LEMON_TERMINAL_SPEED : LEMON_INITIAL_SPEED), 0);
+            Velocity = new Vector(Direction == Direction.LEFT ? (DashLemon ? -LEMON_TERMINAL_SPEED : -LEMON_INITIAL_SPEED) : (DashLemon ? LEMON_TERMINAL_SPEED : LEMON_INITIAL_SPEED), 0);
 
             SetState(LemonState.SHOOTING);
         }

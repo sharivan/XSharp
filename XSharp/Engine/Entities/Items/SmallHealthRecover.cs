@@ -18,8 +18,12 @@ namespace XSharp.Engine.Entities.Items
             set => SetState(value);
         }
 
-        public SmallHealthRecover(string name, Vector origin, int durationFrames = 0) : base(name, origin, durationFrames, 1, false, "SmallHealthRecoverDropping", "SmallHealthRecoverIdle")
+        public SmallHealthRecover()
         {
+            SpriteSheetIndex = 1;
+
+            SetAnimationNames("SmallHealthRecoverDropping", "SmallHealthRecoverIdle");
+
             SetupStateArray(typeof(SmallHealthRecoverState));
             RegisterState(SmallHealthRecoverState.DROPPING, null, "SmallHealthRecoverDropping");
             RegisterState(SmallHealthRecoverState.IDLE, null, "SmallHealthRecoverIdle");
