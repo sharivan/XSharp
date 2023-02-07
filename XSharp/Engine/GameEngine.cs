@@ -17,6 +17,7 @@ using XSharp.Engine.Entities;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Enemies;
 using XSharp.Engine.Entities.Enemies.Bosses;
+using XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 using XSharp.Engine.Entities.HUD;
 using XSharp.Engine.Entities.Items;
 using XSharp.Engine.Entities.Objects;
@@ -220,87 +221,6 @@ namespace XSharp.Engine
         public const VertexFormat D3DFVF_TLVERTEX = VertexFormat.Position | VertexFormat.Diffuse | VertexFormat.Texture1;
         public const int VERTEX_SIZE = 5 * sizeof(float) + sizeof(int);
 
-        private static readonly byte[] VERTEX_SHADER_BYTECODE = new byte[]
-        {
-              0,   2, 254, 255, 254, 255,
-             20,   0,  67,  84,  65,  66,
-             28,   0,   0,   0,  35,   0,
-              0,   0,   0,   2, 254, 255,
-              0,   0,   0,   0,   0,   0,
-              0,   0,   0,   1,   0,   0,
-             28,   0,   0,   0, 118, 115,
-             95,  50,  95,  48,   0,  77,
-            105,  99, 114, 111, 115, 111,
-            102, 116,  32,  40,  82,  41,
-             32,  72,  76,  83,  76,  32,
-             83, 104,  97, 100, 101, 114,
-             32,  67, 111, 109, 112, 105,
-            108, 101, 114,  32,  49,  48,
-             46,  49,   0, 171,  81,   0,
-              0,   5,   0,   0,  15, 160,
-              0,   0,   0,   0,   0,   0,
-              0,   0,   0,   0,   0,   0,
-              0,   0,   0,   0,   1,   0,
-              0,   2,   0,   0,  15, 192,
-              0,   0,   0, 160, 255, 255,
-              0,   0
-        };
-
-        private static readonly byte[] PIXEL_SHADER_BYTECODE = new byte[]
-        {
-              0,   2, 255, 255, 254, 255,
-             42,   0,  67,  84,  65,  66,
-             28,   0,   0,   0, 123,   0,
-              0,   0,   0,   2, 255, 255,
-              2,   0,   0,   0,  28,   0,
-              0,   0,   0,   1,   0,   0,
-            116,   0,   0,   0,  68,   0,
-              0,   0,   3,   0,   0,   0,
-              1,   0,   0,   0,  76,   0,
-              0,   0,   0,   0,   0,   0,
-             92,   0,   0,   0,   3,   0,
-              1,   0,   1,   0,   0,   0,
-            100,   0,   0,   0,   0,   0,
-              0,   0, 105, 109,  97, 103,
-            101,   0, 171, 171,   4,   0,
-             12,   0,   1,   0,   1,   0,
-              1,   0,   0,   0,   0,   0,
-              0,   0, 112,  97, 108, 101,
-            116, 116, 101,   0,   4,   0,
-             11,   0,   1,   0,   1,   0,
-              1,   0,   0,   0,   0,   0,
-              0,   0, 112, 115,  95,  50,
-             95,  48,   0,  77, 105,  99,
-            114, 111, 115, 111, 102, 116,
-             32,  40,  82,  41,  32,  72,
-             76,  83,  76,  32,  83, 104,
-             97, 100, 101, 114,  32,  67,
-            111, 109, 112, 105, 108, 101,
-            114,  32,  49,  48,  46,  49,
-              0, 171,  81,   0,   0,   5,
-              0,   0,  15, 160,   0,   0,
-            127,  63,   0,   0,   0,  59,
-              0,   0,   0,   0,   0,   0,
-              0,   0,  31,   0,   0,   2,
-              0,   0,   0, 128,   0,   0,
-              3, 176,  31,   0,   0,   2,
-              0,   0,   0, 144,   0,   8,
-             15, 160,  31,   0,   0,   2,
-              0,   0,   0, 144,   1,   8,
-             15, 160,  66,   0,   0,   3,
-              0,   0,  15, 128,   0,   0,
-            228, 176,   0,   8, 228, 160,
-              4,   0,   0,   4,   0,   0,
-              3, 128,   0,   0,   0, 128,
-              0,   0,   0, 160,   0,   0,
-             85, 160,  66,   0,   0,   3,
-              0,   0,  15, 128,   0,   0,
-            228, 128,   1,   8, 228, 160,
-              1,   0,   0,   2,   0,   8,
-             15, 128,   0,   0, 228, 128,
-            255, 255,   0,   0
-        };
-
         private PresentParameters presentationParams;
         private DXSprite sprite;
         private Line line;
@@ -330,6 +250,7 @@ namespace XSharp.Engine
         private readonly List<(WaveOutEvent player, SoundStream stream, bool initialized)> soundChannels;
 
         internal Partition<Entity> partition;
+        private readonly HashSet<Entity> resultSet;
         private readonly List<Checkpoint> checkpoints;
         private readonly Entity[] entities;
         private readonly Dictionary<string, Entity> entitiesByName;
@@ -339,7 +260,7 @@ namespace XSharp.Engine
         private int entityCount;
         internal List<Entity> addedEntities;
         internal List<Entity> removedEntities;
-        internal List<(Entity entity, Vector origin, bool wasVisible)> respawnableEntities;
+        internal Dictionary<Entity, RespawnEntry> respawnableEntities;
         private readonly List<Sprite> freezingSpriteExceptions;
         private readonly List<Sprite> sprites;
         private readonly List<HUD> huds;
@@ -420,7 +341,7 @@ namespace XSharp.Engine
         private double nextTick = 0;
         private readonly double tick = 1000D / TICKRATE;
 
-        public Form Form
+        public Control Control
         {
             get;
         }
@@ -456,7 +377,7 @@ namespace XSharp.Engine
             private set;
         }
 
-        public HealthHUD HP
+        public PlayerHealthHUD HP
         {
             get;
             private set;
@@ -594,7 +515,7 @@ namespace XSharp.Engine
                 currentCheckpoint = value;
                 if (currentCheckpoint != null)
                 {
-                    CameraConstraintsBox = currentCheckpoint.BoundingBox;
+                    CameraConstraintsBox = currentCheckpoint.Hitbox;
 
                     if (romLoaded)
                     {
@@ -826,14 +747,50 @@ namespace XSharp.Engine
             private set;
         }
 
+        public Action DelayedAction
+        {
+            get;
+            private set;
+        } = null;
+
+        public int DelayedActionFrames
+        {
+            get;
+            private set;
+        } = 0;
+
+        public int DelayedActionFrameCounter
+        {
+            get;
+            private set;
+        } = 0;
+
         public Random RNG
         {
             get;
         }
 
-        private GameEngine(Form form)
+        public Boss Boss
         {
-            Form = form;
+            get;
+            private set;
+        }
+
+        public bool BossBattle
+        {
+            get;
+            private set;
+        } = false;
+
+        public bool BossIntroducing
+        {
+            get;
+            private set;
+        } = false;
+
+        private GameEngine(Control control)
+        {
+            Control = control;
 
             clock.Start();
             fpsTimer.Start();
@@ -873,8 +830,8 @@ namespace XSharp.Engine
                 AutoDepthStencilFormat = Format.D16,
                 EnableAutoDepthStencil = true,
                 BackBufferFormat = Format.X8R8G8B8,
-                BackBufferHeight = Form.ClientSize.Height,
-                BackBufferWidth = Form.ClientSize.Width
+                BackBufferHeight = Control.ClientSize.Height,
+                BackBufferWidth = Control.ClientSize.Width
             };
 
             Direct3D = new Direct3D();
@@ -993,6 +950,22 @@ namespace XSharp.Engine
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Door Closing.wav", SoundFormat.WAVE);
             soundStreams.Add(stream);
 
+            // 24
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\19 - Boss Intro.mp3", SoundFormat.MP3);
+            soundStreams.Add(stream);
+
+            // 25
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\20 - Boss Battle.mp3", SoundFormat.MP3);
+            soundStreams.Add(stream);
+
+            // 26
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\21 - Boss Defeated.mp3", SoundFormat.MP3);
+            soundStreams.Add(stream);
+
+            // 27
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\31 - MMX - Big Hit.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
             directInput = new DirectInput();
 
             keyboard = new Keyboard(directInput);
@@ -1014,17 +987,13 @@ namespace XSharp.Engine
                 joystick.Acquire();
             }
 
-            World = new MMXWorld(32, 32);
-            partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
-            CameraConstraintsBox = World.BoundingBox;
-
             RNG = new Random();
             checkpoints = new List<Checkpoint>();
             entities = new Entity[MAX_ENTITIES];
             entitiesByName = new Dictionary<string, Entity>();
             addedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
-            respawnableEntities = new List<(Entity, Vector, bool)>();
+            respawnableEntities = new Dictionary<Entity, RespawnEntry>();
             sprites = new List<Sprite>();
             huds = new List<HUD>();
 
@@ -1038,9 +1007,12 @@ namespace XSharp.Engine
             DrawScale = DEFAULT_DRAW_SCALE;
             UpdateScale();
 
-            LoadConfig();
-
             Running = true;
+
+            World = new MMXWorld(32, 32);
+            partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
+            resultSet = new HashSet<Entity>();
+            CameraConstraintsBox = World.BoundingBox;
         }
 
         private void Unload()
@@ -1065,8 +1037,6 @@ namespace XSharp.Engine
             DisposeResource(mmx);
             DisposeDevice();
             DisposeResource(Direct3D);
-
-            SaveConfig();
         }
 
         private void ResetDevice()
@@ -1074,7 +1044,7 @@ namespace XSharp.Engine
             DisposeDevice();
 
             // Creates the Device
-            var device = new Device9(Direct3D, 0, DeviceType.Hardware, Form.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
+            var device = new Device9(Direct3D, 0, DeviceType.Hardware, Control.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
             Device = device;
 
             var function = ShaderBytecode.CompileFromFile("PaletteShader.hlsl", "main", "ps_2_0");
@@ -1189,6 +1159,10 @@ namespace XSharp.Engine
             var batPalette = CreatePalette(BAT_PALETTE);
             palettes.Add(batPalette);
 
+            // 7
+            var penguinPalette = CreatePalette(PENGUIN_PALETTE);
+            palettes.Add(penguinPalette);
+
             // Create sprite sheets
             var normalOffset = new Vector(HITBOX_WIDTH * 0.5, HITBOX_HEIGHT + 3) - (0, 17);
             var normalCollisionBox = new MMXBox(new Vector(-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 3), Vector.NULL_VECTOR, new Vector(HITBOX_WIDTH, HITBOX_HEIGHT + 3));
@@ -1224,6 +1198,9 @@ namespace XSharp.Engine
 
             // 9
             var bossDoorSpriteSheet = AddSpriteSheet("Boos Door", true, true);
+
+            // 10
+            var penguinSpriteSheet = AddSpriteSheet("Penguin", true, true);
 
             // Setup frame sequences (animations)
 
@@ -1846,7 +1823,7 @@ namespace XSharp.Engine
             explosionSpriteSheet.ReleaseCurrentTexture();
 
             // HP
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.HP.png"))
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.HUD.HP.png"))
             {
                 var texture = CreateImageTextureFromStream(stream);
                 hpSpriteSheet.CurrentTexture = texture;
@@ -1864,10 +1841,34 @@ namespace XSharp.Engine
             sequence = hpSpriteSheet.AddFrameSquence("HPMiddleEmpty");
             sequence.AddFrame(0, 22, 14, 2, 1, true, OriginPosition.LEFT_TOP);
 
+            sequence = hpSpriteSheet.AddFrameSquence("RideArmor");
+            sequence.AddFrame(14, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("Zero");
+            sequence.AddFrame(26, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("X1Boss");
+            sequence.AddFrame(38, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("Boss");
+            sequence.AddFrame(50, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("Doppler");
+            sequence.AddFrame(14, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("W");
+            sequence.AddFrame(26, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("DopplerPrototype");
+            sequence.AddFrame(38, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+            sequence = hpSpriteSheet.AddFrameSquence("X");
+            sequence.AddFrame(50, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
             hpSpriteSheet.ReleaseCurrentTexture();
 
             // Ready
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Ready.png"))
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.HUD.Ready.png"))
             {
                 var texture = CreateImageTextureFromStream(stream);
                 readySpriteSheet.CurrentTexture = texture;
@@ -1962,6 +1963,158 @@ namespace XSharp.Engine
 
             bossDoorSpriteSheet.ReleaseCurrentTexture();
 
+            // Penguin
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.Bosses.X1.Penguin.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                penguinSpriteSheet.CurrentTexture = texture;
+            }
+
+            penguinSpriteSheet.CurrentPalette = penguinPalette;
+
+            // 0
+            sequence = penguinSpriteSheet.AddFrameSquence("FallingIntroducing");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_COLLISION_BOX.Mins;
+            sequence.CollisionBox = PENGUIN_COLLISION_BOX;
+            sequence.AddFrame(2, 15, 170, 20, 35, 44, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("LandingIntroducing");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_COLLISION_BOX.Mins;
+            sequence.CollisionBox = PENGUIN_COLLISION_BOX;
+            sequence.AddFrame(7, 1, 136, 172, 39, 35, 6);
+            sequence.AddFrame(6, -2, 96, 175, 38, 32, 6);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Introducing");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_COLLISION_BOX.Mins;
+            sequence.CollisionBox = PENGUIN_COLLISION_BOX;
+            sequence.AddFrame(6, 2, 6, 177, 38, 36, 6);
+            sequence.AddFrame(7, 0, 136, 172, 39, 35, 6);
+            sequence.AddFrame(6, -2, 96, 175, 38, 32, 5);
+            sequence.AddFrame(3, 3, 48, 76, 42, 37, 5);
+            sequence.AddFrame(3, 3, 94, 76, 43, 37, 5);
+            sequence.AddFrame(7, 2, 141, 77, 39, 36, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("IntroducingEnd");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_COLLISION_BOX.Mins;
+            sequence.CollisionBox = PENGUIN_COLLISION_BOX;
+            sequence.AddFrame(6, 2, 184, 77, 38, 36, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Idle");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(10, 4, 6, 77, 38, 36, 15);
+            sequence.AddFrame(10, 4, 184, 77, 38, 36, 15);
+            sequence.AddFrame(10, 4, 6, 77, 38, 36, 15);
+            sequence.AddFrame(10, 4, 184, 77, 38, 36, 15);
+            sequence.AddFrame(10, 4, 6, 77, 38, 36, 7);
+            sequence.AddFrame(11, 3, 136, 172, 39, 35, 7, true);
+            sequence.AddFrame(10, 4, 6, 77, 38, 36, 7);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("ShootingIce");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(11, 3, 136, 172, 39, 35, 6);
+            sequence.AddFrame(7, 5, 48, 76, 42, 37, 5);
+            sequence.AddFrame(7, 5, 94, 76, 43, 37, 5);
+            sequence.AddFrame(16, 3, 132, 129, 42, 35, 5);
+            sequence.AddFrame(14, 3, 174, 129, 43, 35, 5);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("PreSliding");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(7, 5, 48, 76, 42, 37, 11);
+            sequence.AddFrame(7, 5, 94, 76, 43, 37, 11);
+            sequence.AddFrame(8, 3, 90, 130, 37, 34, 7);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Sliding");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_SLIDE_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_SLIDE_HITBOX;
+            sequence.AddFrame(0, 9, 221, 133, 40, 31, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Blowing");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(7, 5, 48, 76, 42, 37, 11);
+            sequence.AddFrame(7, 5, 94, 76, 43, 37, 11);
+            sequence.AddFrame(16, 3, 132, 129, 42, 35, 4, true);
+            sequence.AddFrame(14, 3, 174, 129, 43, 35, 4);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("PreJumping");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(5, 0, 96, 175, 38, 32, 5);
+            sequence.AddFrame(8, 6, 8, 127, 36, 38, 5);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Jumping");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(5, -7, 47, 127, 37, 38, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Falling");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(5, 14, 184, 77, 38, 36, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Landing");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(11, 3, 136, 172, 39, 35, 6);
+            sequence.AddFrame(10, 0, 96, 175, 38, 32, 6);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Hanging");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(5, 16, 12, 4, 34, 60, 8);
+            sequence.AddFrame(5, 16, 54, 4, 34, 58, 8);
+            sequence.AddFrame(5, 16, 95, 4, 32, 60, 8);
+            sequence.AddFrame(6, 17, 131, 4, 32, 60, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("TakingDamage");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(15, 3, 9, 169, 35, 41, 21);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("InFlames");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_HITBOX;
+            sequence.AddFrame(16, 7, 52, 165, 38, 47, 21);
+
+            penguinSpriteSheet.CurrentPalette = null;
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Ice");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_ICE_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_ICE_HITBOX;
+            sequence.AddFrame(0, 0, 57, 232, 14, 14, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("IceFragment");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_ICE_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_ICE_HITBOX;
+            sequence.AddFrame(0, 0, 58, 216, 8, 8, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Sculpture");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_ICE_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_ICE_HITBOX;
+            sequence.AddFrame(0, 0, 80, 233, 15, 16, 1);
+            sequence.AddFrame(0, 0, 103, 224, 23, 24, 1);
+            sequence.AddFrame(0, 0, 133, 217, 28, 32, 1);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Lever");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_ICE_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_ICE_HITBOX;
+            sequence.AddFrame(0, 0, 169, 225, 10, 16, 1, true);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("Snow");
+            sequence.BoudingBoxOriginOffset = -PENGUIN_ICE_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_ICE_HITBOX;
+            sequence.AddFrame(0, 0, 189, 216, 16, 17, 1);
+            sequence.AddFrame(0, 0, 208, 216, 17, 17, 1);
+            sequence.AddFrame(0, 0, 229, 217, 14, 14, 1);
+            sequence.AddFrame(0, 0, 192, 235, 14, 15, 1);
+            sequence.AddFrame(0, 0, 209, 235, 15, 15, 1);
+            sequence.AddFrame(0, 0, 228, 236, 17, 17, 1);
+
+            penguinSpriteSheet.ReleaseCurrentTexture();
+
             // Load tiles & object positions from the ROM (if exist)
 
             if (romLoaded)
@@ -1992,10 +2145,10 @@ namespace XSharp.Engine
             }
 
             if (section.Left != -1)
-                Form.Left = section.Left;
+                Control.Left = section.Left;
 
             if (section.Top != -1)
-                Form.Top = section.Top;
+                Control.Top = section.Top;
 
             drawHitbox = section.DrawCollisionBox;
             showColliders = section.ShowColliders;
@@ -2018,8 +2171,8 @@ namespace XSharp.Engine
                 config.Sections.Add("ProgramConfiguratinSection", section);
             }
 
-            section.Left = Form.Left;
-            section.Top = Form.Top;
+            section.Left = Control.Left;
+            section.Top = Control.Top;
             section.DrawCollisionBox = drawHitbox;
             section.ShowColliders = showColliders;
             section.DrawMapBounds = drawMapBounds;
@@ -2404,6 +2557,9 @@ namespace XSharp.Engine
 
         private void AddEntity(Entity entity)
         {
+            if (entity.Index >= 0)
+                return;
+
             if (entityCount == MAX_ENTITIES)
                 throw new IndexOutOfRangeException("Max entities reached the limit.");
 
@@ -2440,9 +2596,9 @@ namespace XSharp.Engine
             }
         }
 
-        private void RemoveEntity(int index)
+        private void RemoveEntity(Entity entity)
         {
-            var entity = entities[index];
+            int index = entity.Index;
 
             if (entity is Sprite sprite)
             {
@@ -2451,6 +2607,15 @@ namespace XSharp.Engine
                 else
                     sprites.Remove(sprite);
             }
+
+            entity.Cleanup();
+            entity.Alive = false;
+            entity.DeathFrame = FrameCounter;
+
+            if (!entity.Respawnable)
+                Engine.partition.Remove(entity);
+            else
+                entity.Origin = respawnableEntities[entity].Origin;
 
             var next = entity.next;
             var previous = entity.previous;
@@ -2472,6 +2637,7 @@ namespace XSharp.Engine
             if (entity.Name is not null and not "")
                 entitiesByName.Remove(entity.Name);
 
+            entity.Index = -1;
             entityCount--;
 
             if (index < firstFreeEntityIndex)
@@ -2480,33 +2646,32 @@ namespace XSharp.Engine
 
         private void ClearEntities()
         {
-            foreach (var entity in addedEntities)
-                if (entity is Sprite sprite)
-                    DisposeResource(sprite);
-
-            for (var entity = firstEntity; entity != null; entity = entity.next)
-                if (entity is Sprite sprite)
-                    DisposeResource(sprite);
-
             for (int i = 0; i < MAX_ENTITIES; i++)
-                entities[i] = null;
+            {
+                var entity = entities[i];
+                if (entity != null)
+                {
+                    foreach (Entity child in entity.childs)
+                        child.parent = null;
 
+                    entity.childs.Clear();
+                    entities[i] = null;
+                }
+            }
+
+            respawnableEntities.Clear();
             addedEntities.Clear();
             removedEntities.Clear();
             entitiesByName.Clear();
             sprites.Clear();
             huds.Clear();
             freezingSpriteExceptions.Clear();
+            partition.Clear();
 
             firstFreeEntityIndex = 0;
             entityCount = 0;
             firstEntity = null;
             lastEntity = null;
-        }
-
-        private void RemoveEntity(Entity entity)
-        {
-            RemoveEntity(entity.Index);
         }
 
         private void OnSpawningBlackScreenComplete()
@@ -2519,12 +2684,12 @@ namespace XSharp.Engine
             StartFading(Color.Black, 26, true, StartReadyHUD);
         }
 
-        private bool OnFrame()
+        private Keys HandleInput(out bool nextFrame)
         {
-            bool nextFrame = !frameAdvance;
             Keys keys = Keys.NONE;
+            nextFrame = !frameAdvance;
 
-            if (Form.Focused)
+            if (Control.Focused)
             {
                 keyboard.Poll();
                 var state = keyboard.GetCurrentState();
@@ -2884,13 +3049,11 @@ namespace XSharp.Engine
                 }
             }
 
-            if (!nextFrame)
-                return false;
+            return keys;
+        }
 
-            FrameCounter++;
-
-            //lua.DoString("if engine.Player ~= null then engine.Player:ShootLemon() end");
-
+        private void HandleScreenEffects()
+        {
             if (Fading)
             {
                 FadingTick++;
@@ -2956,34 +3119,33 @@ namespace XSharp.Engine
                     FreezingFrameCounter++;
             }
 
+            if (DelayedAction != null)
+            {
+                if (DelayedActionFrameCounter >= DelayedActionFrames)
+                {
+                    DelayedAction?.Invoke();
+                    DelayedAction = null;
+                }
+                else
+                    DelayedActionFrameCounter++;
+            }
+        }
+
+        private bool OnFrame()
+        {
+            Keys keys = HandleInput(out bool nextFrame);
+
+            if (!nextFrame)
+                return false;
+
+            FrameCounter++;
+
+            //lua.DoString("if engine.Player ~= null then engine.Player:ShootLemon() end");
+
+            HandleScreenEffects();
+
             if (!loadingLevel)
             {
-                // TODO : Please, optmize me!
-                for (int i = 0; i < respawnableEntities.Count; i++)
-                {
-                    var (entity, origin, wasVisible) = respawnableEntities[i];
-                    if (origin <= World.Camera.ExtendedBoundingBox)
-                    {
-                        if (!wasVisible)
-                        {
-                            if (!entity.Alive)
-                            {
-                                if (entity is Item item && item.Collected)
-                                    continue;
-
-                                entity.Origin = origin;
-                                entity.Spawn();
-                            }
-                            else
-                                respawnableEntities[i] = (entity, origin, true);
-                        }
-                        else
-                            respawnableEntities[i] = (entity, origin, true);
-                    }
-                    else
-                        respawnableEntities[i] = (entity, origin, false);
-                }
-
                 if (addedEntities.Count > 0)
                 {
                     for (int i = 0; i < addedEntities.Count; i++)
@@ -3003,35 +3165,32 @@ namespace XSharp.Engine
                     return false;
 
                 if (paused || Player != null && Player.Freezed && (!FreezingSprites || freezingSpriteExceptions.Contains(Player)))
+                {
                     Player?.OnFrame();
+                    World.Camera.OnFrame();
+                }
                 else
                 {
                     if (FreezingSprites)
                     {
                         for (var entity = firstEntity; entity != null; entity = entity.next)
                             if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
-                                entity.OnFrame();
+                                if (entity != World.Camera)
+                                    entity.OnFrame();
                     }
                     else
                         for (var entity = firstEntity; entity != null; entity = entity.next)
-                            entity.OnFrame();
+                            if (entity != World.Camera)
+                                entity.OnFrame();
+
+                    World.Camera.OnFrame();
 
                     if (removedEntities.Count > 0)
                     {
                         for (int i = 0; i < removedEntities.Count; i++)
                         {
                             var removed = removedEntities[i];
-
-                            foreach (Entity child in removed.childs)
-                                child.parent = null;
-
-                            removed.childs.Clear();
-                            removed.Alive = false;
-                            removed.Dispose();
-
                             RemoveEntity(removed);
-
-                            DisposeResource(removed);
                         }
 
                         removedEntities.Clear();
@@ -3187,7 +3346,7 @@ namespace XSharp.Engine
                     mmx.LoadToWorld(this, true);
 
                     CurrentCheckpoint = checkpoints[mmx.Point];
-                    CameraConstraintsBox = CurrentCheckpoint.BoundingBox;
+                    CameraConstraintsBox = CurrentCheckpoint.Hitbox;
                 }
                 else
                     CameraConstraintsBox = World.BoundingBox;
@@ -3196,6 +3355,8 @@ namespace XSharp.Engine
 
                 loadingLevel = false;
                 respawning = false;
+
+                World.Camera.Spawn();
 
                 if (ENABLE_SPAWNING_BLACK_SCREEN)
                 {
@@ -3234,8 +3395,8 @@ namespace XSharp.Engine
 
         internal void UpdateScale()
         {
-            FixedSingle width = Form.ClientSize.Width;
-            FixedSingle height = Form.ClientSize.Height;
+            FixedSingle width = Control.ClientSize.Width;
+            FixedSingle height = Control.ClientSize.Height;
 
             Vector drawOrigin;
             /*if (width / height < SIZE_RATIO)
@@ -3543,7 +3704,7 @@ namespace XSharp.Engine
                 var fps = 1000.0 * fpsFrames / fpsTimer.ElapsedMilliseconds;
 
                 // Update window title with FPS once every second
-                Form.Text = $"X# - FPS: {fps:F2} ({fpsTimer.ElapsedMilliseconds / fpsFrames:F2}ms/frame)";
+                Control.Text = $"X# - FPS: {fps:F2} ({fpsTimer.ElapsedMilliseconds / fpsFrames:F2}ms/frame)";
 
                 // Restart the FPS counter
                 fpsTimer.Reset();
@@ -3583,13 +3744,14 @@ namespace XSharp.Engine
                 if (drawSprites)
                 {
                     // Render sprites
-                    List<Entity> entities = partition.Query(World.Camera.BoundingBox, BoxKind.BOUDINGBOX);
-                    foreach (Entity entity in entities)
+                    resultSet.Clear();
+                    partition.Query(resultSet, World.Camera.BoundingBox, BoxKind.BOUDINGBOX);
+                    foreach (Entity entity in resultSet)
                     {
                         if (!entity.Alive || entity == Player)
                             continue;
 
-                        if (entity is not Sprite sprite || sprite is HUD)
+                        if (entity is not Sprite sprite || !sprite.Visible || sprite is HUD)
                             continue;
 
                         sprite.Render();
@@ -3598,10 +3760,11 @@ namespace XSharp.Engine
 
                 if (drawHitbox || showDrawBox || showTriggerBounds)
                 {
-                    List<Entity> entities = partition.Query(World.BoundingBox, (drawHitbox || showTriggerBounds ? BoxKind.HITBOX : BoxKind.NONE) | (showDrawBox ? BoxKind.BOUDINGBOX : BoxKind.NONE));
-                    foreach (Entity entity in entities)
+                    resultSet.Clear();
+                    partition.Query(resultSet, World.BoundingBox, (drawHitbox || showTriggerBounds ? BoxKind.HITBOX : BoxKind.NONE) | (showDrawBox ? BoxKind.BOUDINGBOX : BoxKind.NONE), false);
+                    foreach (Entity entity in resultSet)
                     {
-                        if (!entity.Alive || entity == Player)
+                        if (entity == Player)
                             continue;
 
                         switch (entity)
@@ -3612,8 +3775,25 @@ namespace XSharp.Engine
                                 {
                                     MMXBox hitbox = sprite.Hitbox;
                                     var rect = WorldBoxToScreen(hitbox);
-                                    DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
-                                    FillRectangle(rect, HITBOX_COLOR);
+
+                                    if (!entity.Alive)
+                                    {
+                                        if (entity.Respawnable)
+                                        {
+                                            DrawRectangle(rect, 1, DEAD_RESPAWNABLE_HITBOX_BORDER_COLOR);
+                                            FillRectangle(rect, DEAD_RESPAWNABLE_HITBOX_COLOR);
+                                        }
+                                        else
+                                        {
+                                            DrawRectangle(rect, 1, DEAD_HITBOX_BORDER_COLOR);
+                                            FillRectangle(rect, DEAD_HITBOX_COLOR);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
+                                        FillRectangle(rect, HITBOX_COLOR);
+                                    }
                                 }
 
                                 if (showDrawBox)
@@ -3636,13 +3816,13 @@ namespace XSharp.Engine
                                 break;
                             }
 
-                            case AbstractTrigger trigger when showTriggerBounds:
+                            case BaseTrigger trigger when showTriggerBounds:
                             {
                                 var rect = WorldBoxToScreen(trigger.Hitbox);
 
                                 if (trigger is not ChangeDynamicPropertyTrigger)
                                 {
-                                    if (Player != null && trigger.IsTriggering(Player))
+                                    if (Player != null && trigger.IsTouching(Player))
                                         FillRectangle(rect, TRIGGER_BOX_COLOR);
                                 }
 
@@ -3665,7 +3845,7 @@ namespace XSharp.Engine
 
                                     case ChangeDynamicPropertyTrigger changeDynamicPropertyTrigger:
                                     {
-                                        var box = changeDynamicPropertyTrigger.BoundingBox;
+                                        var box = changeDynamicPropertyTrigger.Hitbox;
                                         var origin = box.Origin;
                                         var mins = box.Mins;
                                         var maxs = box.Maxs;
@@ -3747,7 +3927,7 @@ namespace XSharp.Engine
 
                 if (drawHighlightedPointingTiles)
                 {
-                    System.Drawing.Point cursorPos = Form.PointToClient(Cursor.Position);
+                    System.Drawing.Point cursorPos = Control.PointToClient(Cursor.Position);
                     Vector v = ScreenPointToVector(cursorPos.X / 4, cursorPos.Y / 4);
                     DrawText($"Mouse Pos: X: {v.X} Y: {v.Y}", highlightMapTextFont, new RectangleF(0, 0, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
@@ -3803,7 +3983,7 @@ namespace XSharp.Engine
                 }
 
                 if (showCheckpointBounds && currentCheckpoint != null)
-                    DrawRectangle(WorldBoxToScreen(currentCheckpoint.BoundingBox), 4, Color.Yellow);
+                    DrawRectangle(WorldBoxToScreen(currentCheckpoint.Hitbox), 4, Color.Yellow);
 
                 if (showInfoText && Player != null)
                 {
@@ -3922,7 +4102,7 @@ namespace XSharp.Engine
         {
             var trigger = new ChangeDynamicPropertyTrigger()
             {
-                BoundingBox = (origin, (-SCREEN_WIDTH / 2, -SCREEN_HEIGHT / 2), (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)),
+                Hitbox = (origin, (-SCREEN_WIDTH / 2, -SCREEN_HEIGHT / 2), (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)),
                 Property = prop,
                 Forward = forward,
                 Backward = backward,
@@ -3939,7 +4119,7 @@ namespace XSharp.Engine
             var checkpoint = new Checkpoint()
             {
                 Point = index,
-                BoundingBox = boundingBox,
+                Hitbox = boundingBox,
                 CharacterPos = characterPos,
                 CameraPos = cameraPos,
                 BackgroundPos = backgroundPos,
@@ -3956,7 +4136,7 @@ namespace XSharp.Engine
         {
             var trigger = new CheckpointTriggerOnce()
             {
-                BoundingBox = (origin, (0, -SCREEN_HEIGHT / 2), (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)),
+                Hitbox = (origin, (0, -SCREEN_HEIGHT / 2), (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)),
                 Checkpoint = checkpoints[index]
             };
 
@@ -3970,7 +4150,7 @@ namespace XSharp.Engine
                 ? null
                 : id switch
                 {
-                    0x02 => AddBoss(origin), // Penguin
+                    0x02 when mmx.Type == 0 && mmx.Level == 8 => AddPenguin(origin), // Penguin
                     0x09 => AddDriller(origin),
                     0x2D or 0x50 => AddBat(origin),
                     0x2F => AddRideArmor(subid, origin),
@@ -3979,10 +4159,16 @@ namespace XSharp.Engine
                 };
         }
 
-        public Boss AddBoss(Vector origin)
+        internal Penguin AddPenguin(Vector origin)
         {
-            // TODO : Implement
-            return null;
+            var penguin = new Penguin()
+            {
+                Origin = origin
+            };
+
+            Boss = penguin;
+
+            return penguin;
         }
 
         public Sprite AddRideArmor(ushort subid, Vector origin)
@@ -4001,7 +4187,7 @@ namespace XSharp.Engine
         {
             var trigger = new CameraLockTrigger()
             {
-                BoundingBox = boundingBox
+                Hitbox = boundingBox
             };
 
             trigger.AddConstraints(extensions);
@@ -4086,7 +4272,6 @@ namespace XSharp.Engine
             {
                 Shooter = shooter,
                 Origin = origin,
-                Direction = direction,
                 DashLemon = dashLemon
             };
 
@@ -4098,8 +4283,7 @@ namespace XSharp.Engine
             var semiCharged = new BusterSemiCharged()
             {
                 Shooter = shooter,
-                Origin = origin,
-                Direction = direction
+                Origin = origin
             };
 
             semiCharged.Spawn();
@@ -4110,8 +4294,7 @@ namespace XSharp.Engine
             var semiCharged = new BusterCharged()
             {
                 Shooter = shooter,
-                Origin = origin,
-                Direction = direction
+                Origin = origin
             };
 
             semiCharged.Spawn();
@@ -4202,7 +4385,7 @@ namespace XSharp.Engine
                 Origin = origin
             };
 
-            respawnableEntities.Add((driller, origin, false));
+            driller.Place();
             return driller;
         }
 
@@ -4213,7 +4396,7 @@ namespace XSharp.Engine
                 Origin = origin
             };
 
-            respawnableEntities.Add((bat, origin, false));
+            bat.Place();
             return bat;
         }
 
@@ -4237,7 +4420,7 @@ namespace XSharp.Engine
             if (HP != null)
                 RemoveEntity(HP);
 
-            HP = new HealthHUD()
+            HP = new PlayerHealthHUD()
             {
                 Name = "HP"
             };
@@ -4496,7 +4679,7 @@ namespace XSharp.Engine
             while (Running)
             {
                 // Main loop
-                RenderLoop.Run(Form, Render);
+                RenderLoop.Run(Control, Render);
             }
         }
 
@@ -4694,7 +4877,7 @@ namespace XSharp.Engine
                 DurationFrames = 0
             };
 
-            respawnableEntities.Add((item, origin, false));
+            item.Place();
             return item;
         }
 
@@ -4706,7 +4889,7 @@ namespace XSharp.Engine
                 DurationFrames = 0
             };
 
-            respawnableEntities.Add((item, origin, false));
+            item.Place();
             return item;
         }
 
@@ -4718,7 +4901,7 @@ namespace XSharp.Engine
                 DurationFrames = 0
             };
 
-            respawnableEntities.Add((item, origin, false));
+            item.Place();
             return item;
         }
 
@@ -4730,7 +4913,7 @@ namespace XSharp.Engine
                 DurationFrames = 0
             };
 
-            respawnableEntities.Add((item, origin, false));
+            item.Place();
             return item;
         }
 
@@ -4742,7 +4925,7 @@ namespace XSharp.Engine
                 DurationFrames = 0
             };
 
-            respawnableEntities.Add((item, origin, false));
+            item.Place();
             return item;
         }
 
@@ -4753,7 +4936,7 @@ namespace XSharp.Engine
                 Origin = origin
             };
 
-            respawnableEntities.Add((item, origin, false));
+            item.Place();
             return item;
         }
 
@@ -4764,7 +4947,7 @@ namespace XSharp.Engine
                 Origin = origin
             };
 
-            respawnableEntities.Add((item, origin, false));
+            item.Place();
             return item;
         }
 
@@ -4830,7 +5013,7 @@ namespace XSharp.Engine
             door.Bidirectional = true;
 
             bool secondDoor = (eventSubId & 0x80) != 0;
-            door.ClosingHugeSound = secondDoor;
+            door.StartBossBattle = secondDoor;
             door.OpeningEvent += (BossDoor source) => DoorOpening(secondDoor);
             door.ClosedEvent += (BossDoor source) => DoorClosing(secondDoor);
 
@@ -4970,6 +5153,40 @@ namespace XSharp.Engine
             }
 
             entity.name = name;
+        }
+
+        public void PlayBossIntroOST()
+        {
+            PlayOST(24, 13, 6.328125);
+        }
+
+        public void PlayBossBatleOST()
+        {
+            PlayOST(25, 28.808, 6.328125);
+        }
+
+        public void PlayBossDefeatedOST()
+        {
+            PlayOST(26);
+        }
+
+        internal void StartBossBattle()
+        {
+            if (romLoaded && Boss != null)
+            {
+                BossBattle = true;
+                BossIntroducing = true;
+                PlayBossIntroOST();
+
+                DoDelayedAction(64, () => Boss.Spawn());               
+            }
+        }
+
+        public void DoDelayedAction(int frames, Action action)
+        {
+            DelayedAction = action;
+            DelayedActionFrames = frames;
+            DelayedActionFrameCounter = 0;
         }
     }
 }

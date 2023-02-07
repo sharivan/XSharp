@@ -16,7 +16,7 @@ namespace XSharp.Engine.Entities.Triggers
 
     public delegate void SplitterTriggerEvent(SplitterTrigger source, Entity activator, SplitterTriggerDirection direction);
 
-    public class SplitterTrigger : AbstractTrigger
+    public class SplitterTrigger : BaseTrigger
     {
         public event SplitterTriggerEvent SplitterTriggerEvent;
 
@@ -39,8 +39,8 @@ namespace XSharp.Engine.Entities.Triggers
         {
             base.OnTrigger(entity);
 
-            Vector targetOrigin = entity.GetVector(VectorKind);
-            Vector targetLastOrigin = entity.GetLastVector(VectorKind);
+            Vector targetOrigin = entity.GetVector(TouchingVectorKind);
+            Vector targetLastOrigin = entity.GetLastVector(TouchingVectorKind);
 
             switch (Orientation)
             {

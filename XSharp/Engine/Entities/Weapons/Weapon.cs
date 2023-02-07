@@ -35,28 +35,25 @@ namespace XSharp.Engine.Entities.Weapons
         {
             base.OnSpawn();
 
+            KillOnOffscreen = true;
             Damage = GetBaseDamage();
         }
 
         public virtual void Hit(Enemy enemy)
         {
-            Hurt(enemy, Damage);
+            if (Damage > 0)
+            {
+                Engine.PlaySound(1, 8);
+                Hurt(enemy, Damage);
+            }
         }
 
         protected override void OnStartTouch(Entity entity)
         {
-            if (entity is Enemy enemy)
-                Hit(enemy);
-
             base.OnStartTouch(entity);
-        }
 
-        protected override void Think()
-        {
-            base.Think();
-
-            if (Offscreen)
-                KillOnNextFrame();
+            if (Alive && !MarkedToRemove && entity is Enemy enemy)
+                Hit(enemy);
         }
     }
 }

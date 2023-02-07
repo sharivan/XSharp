@@ -43,8 +43,30 @@ namespace XSharp.Engine.World
                 CollisionData.NON_LETHAL_SPIKE => true,
                 CollisionData.LETHAL_SPIKE => true,
                 CollisionData.SLIPPERY_SLOPE_BASE => true,
-                CollisionData.SLIPPERY => true,
+                CollisionData.SLIPPERY_BORDER_FLOOR => true,
+                CollisionData.SLIPPERY_FLOOR => true,
                 CollisionData.DOOR => true,
+                _ => false,
+            };
+        }
+
+        public static bool IsMud(CollisionData collisionData)
+        {
+            return collisionData switch
+            {
+                CollisionData.MUD => true,
+                CollisionData.TOP_MUD => true,
+                _ => false,
+            };
+        }
+
+        public static bool IsSlipperyFloor(CollisionData collisionData)
+        {
+            return collisionData switch
+            {
+                CollisionData.SLIPPERY_SLOPE_BASE => true,
+                CollisionData.SLIPPERY_BORDER_FLOOR => true,
+                CollisionData.SLIPPERY_FLOOR => true,
                 _ => false,
             };
         }
@@ -54,6 +76,26 @@ namespace XSharp.Engine.World
             return collisionData is >= CollisionData.SLOPE_16_8 and <= CollisionData.SLOPE_0_4 or
                 >= CollisionData.LEFT_CONVEYOR_SLOPE_16_12 and <= CollisionData.RIGHT_CONVEYOR_SLOPE_0_4 or
                 >= CollisionData.SLIPPERY_SLOPE_16_8 and <= CollisionData.SLIPPERY_SLOPE_0_4;
+        }
+
+        public static bool IsSlipperySlope(CollisionData collisionData)
+        {
+            return collisionData is >= CollisionData.SLIPPERY_SLOPE_16_8 and <= CollisionData.SLIPPERY_SLOPE_0_4;
+        }
+
+        public static bool IsConveyorSlope(CollisionData collisionData)
+        {
+            return collisionData is >= CollisionData.LEFT_CONVEYOR_SLOPE_16_12 and <= CollisionData.RIGHT_CONVEYOR_SLOPE_0_4;
+        }
+
+        public static bool IsWater(CollisionData collisionData)
+        {
+            return collisionData switch
+            {
+                CollisionData.WATER => true,
+                CollisionData.WATER_SURFACE => true,
+                _ => false,
+            };
         }
 
         public static RightTriangle MakeSlopeTriangle(int left, int right)
@@ -197,6 +239,8 @@ namespace XSharp.Engine.World
         protected RightTriangle slopeTriangle;
         protected List<CollisionPlacement> placements;
 
+        private HashSet<Entity> resultSet;
+
         public Box TestBox
         {
             get;
@@ -256,6 +300,7 @@ namespace XSharp.Engine.World
         public CollisionChecker()
         {
             placements = new List<CollisionPlacement>();
+            resultSet = new HashSet<Entity>();
         }
 
         public virtual void Setup(Box testBox, CollisionFlags ignoreFlags, Sprite ignoreSprite, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
@@ -351,8 +396,9 @@ namespace XSharp.Engine.World
 
             if (CheckWithSolidSprites)
             {
-                List<Entity> entities = Engine.partition.Query(TestBox, BoxKind.COLLISIONBOX);
-                foreach (var entity in entities)
+                resultSet.Clear();
+                Engine.partition.Query(resultSet, TestBox, BoxKind.COLLISIONBOX);
+                foreach (var entity in resultSet)
                     if (entity is Entities.Sprite sprite && sprite != IgnoreSprite && sprite.CollisionData != CollisionData.NONE)
                     {
                         CollisionFlags collisionResult = TestCollision(sprite.CollisionBox, sprite.CollisionData, TestBox, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags, PreciseCollisionCheck);
@@ -366,6 +412,7 @@ namespace XSharp.Engine.World
             return result;
         }
 
+        // TODO : Optmize it, can be terribly slow!
         public Box MoveUntilIntersect(Vector dir, FixedSingle maxDistance)
         {
             Vector deltaDir = GetStepVector(dir);

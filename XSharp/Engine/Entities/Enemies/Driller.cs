@@ -80,10 +80,10 @@ namespace XSharp.Engine.Entities.Enemies
         public void FaceToPlayer(Player player)
         {
             var playerOrigin = player.Origin;
-            if (Direction == Direction.LEFT && Origin.X < playerOrigin.X)
-                Direction = Direction.RIGHT;
-            else if (Direction == Direction.RIGHT && Origin.X > playerOrigin.X)
-                Direction = Direction.LEFT;
+            if (Direction != DefaultDirection && Origin.X < playerOrigin.X)
+                Direction = DefaultDirection;
+            else if (Direction == DefaultDirection && Origin.X > playerOrigin.X)
+                Direction = DefaultDirection.Oposite();
         }
 
         protected override void OnLanded()

@@ -1,4 +1,5 @@
-﻿using XSharp.Geometry;
+﻿using SharpDX;
+using XSharp.Geometry;
 using XSharp.Math;
 
 using static XSharp.Engine.Consts;
@@ -54,6 +55,7 @@ namespace XSharp.Engine.Entities.Enemies
         protected Enemy()
         {
             Directional = true;
+            CanGoOutOfMapBounds = true;
         }
 
         protected override Box GetCollisionBox()
@@ -62,17 +64,33 @@ namespace XSharp.Engine.Entities.Enemies
             return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
         }
 
+        protected internal override void OnSpawn()
+        {
+            base.OnSpawn();
+
+            KillOnOffscreen = true;
+        }
+
+        protected virtual void OnContactDamage(Player player)
+        {
+            Hurt(player, ContactDamage);
+        }
+
         protected override void OnTouching(Entity entity)
         {
             if (ContactDamage > 0 && entity is Player player)
-                Hurt(player, ContactDamage);
+                OnContactDamage(player);
 
             base.OnTouching(entity);
         }
 
+        protected virtual void OnDamaged()
+        {            
+        }
+
         protected override void OnTakeDamagePost(Sprite attacker, FixedSingle damage)
         {
-            Engine.PlaySound(2, 8);
+            OnDamaged();
             base.OnTakeDamagePost(attacker, damage);
         }
 
@@ -111,14 +129,6 @@ namespace XSharp.Engine.Entities.Enemies
             random -= BigAmmoDropOdd;
             if (random < LifeUpDropOdd)
                 Engine.DropLifeUp(Hitbox.Center, ITEM_DURATION_FRAMES);
-        }
-
-        protected override void Think()
-        {
-            base.Think();
-
-            if (Offscreen)
-                KillOnNextFrame();
         }
     }
 }

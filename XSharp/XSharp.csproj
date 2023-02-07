@@ -92,10 +92,20 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Engine\BitSet.cs" />
     <Compile Include="Engine\Entities\Animation.cs" />
     <Compile Include="Engine\Entities\BoxKind.cs" />
     <Compile Include="Engine\Entities\Checkpoint.cs" />
     <Compile Include="Engine\Entities\DuplicateEntityNameException.cs" />
+    <Compile Include="Engine\Entities\EnableDisable.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\BossHealthHUD.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\Penguin.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIce.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIceFragment.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinLever.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinSculpture.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinSnow.cs" />
+    <Compile Include="Engine\Entities\HUD\PlayerHealthHUD.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalBranch.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalEntity.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalLineTo.cs" />
@@ -122,6 +132,7 @@
     <Compile Include="Engine\Entities\Items\SmallAmmoRecover.cs" />
     <Compile Include="Engine\Entities\Items\SmallHealthRecover.cs" />
     <Compile Include="Engine\Entities\Items\SubTankItem.cs" />
+    <Compile Include="Engine\Entities\RespawnEntry.cs" />
     <Compile Include="Engine\Entities\SpriteState.cs" />
     <Compile Include="Engine\Entities\Triggers\CameraLockTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\ChangeDynamicPropertyTrigger.cs" />
@@ -129,6 +140,11 @@
     <Compile Include="Engine\Entities\Triggers\CheckpointTriggerOnce.cs" />
     <Compile Include="Engine\Entities\Triggers\SplitterTrigger.cs" />
     <Compile Include="Engine\Entities\Triggers\Trigger.cs" />
+    <Compile Include="Engine\Entities\Triggers\TriggerHurt.cs" />
+    <Compile Include="Engine\Entities\Triggers\TriggerMultiple.cs" />
+    <Compile Include="Engine\Entities\Triggers\TriggerOnce.cs" />
+    <Compile Include="Engine\Entities\Triggers\TriggerPush.cs" />
+    <Compile Include="Engine\Entities\Triggers\TriggerTeleport.cs" />
     <Compile Include="Engine\Entities\VectorKind.cs" />
     <Compile Include="Engine\Graphics\Palette.cs" />
     <Compile Include="Engine\Graphics\Tilemap.cs" />
@@ -150,7 +166,7 @@
     <Compile Include="Engine\World\CollisionChecker.cs" />
     <Compile Include="Engine\World\ExtendedCollisionChecker.cs" />
     <Compile Include="Engine\World\MapPlacement.cs" />
-    <Compile Include="Engine\Entities\Triggers\AbstractTriggeer.cs" />
+    <Compile Include="Engine\Entities\Triggers\BaseTriggeer.cs" />
     <Compile Include="Engine\GameEngine.cs" />
     <Compile Include="Engine\Keys.cs" />
     <Compile Include="Engine\World\Map.cs" />
@@ -201,9 +217,15 @@
     <Content Include="resources\sounds\ost\mmx\16 - Spark Mandrill.mp3" />
     <Content Include="resources\sounds\ost\mmx\17 - Storm Eagle.mp3" />
     <Content Include="resources\sounds\ost\mmx\18 - Armored Armadillo.mp3" />
-    <Content Include="resources\sounds\ost\mmx\19 - Boss Intro.mp3" />
-    <Content Include="resources\sounds\ost\mmx\20 - Boss Battle.mp3" />
-    <Content Include="resources\sounds\ost\mmx\21 - Boss Defeated.mp3" />
+    <Content Include="resources\sounds\ost\mmx\19 - Boss Intro.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\sounds\ost\mmx\20 - Boss Battle.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\sounds\ost\mmx\21 - Boss Defeated.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\ost\mmx\22 - Weapon Screen.mp3" />
     <Content Include="resources\sounds\ost\mmx\23 - Stage Select 2.mp3" />
     <Content Include="resources\sounds\ost\mmx\24 - Sigma Fortress 1.mp3" />
@@ -218,6 +240,15 @@
     <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
     <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
     <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
+    <EmbeddedResource Include="resources\sprites\HUD\HP.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\HUD\Ready.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\Enemies\Bosses\X1\Penguin.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Objects\BossDoor.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -226,12 +257,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\tiles\white_pixel.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Ready.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\X\HP.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Effects\Explosion.png">

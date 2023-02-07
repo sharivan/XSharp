@@ -2,7 +2,7 @@
 
 namespace XSharp.Engine.Entities.Triggers
 {
-    public class Trigger : AbstractTrigger
+    public class Trigger : BaseTrigger
     {
         public new bool Once
         {

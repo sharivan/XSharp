@@ -761,7 +761,7 @@ namespace XSharp.Geometry
 
             var x = (FixedSingle) ((B2 * C1 - B1 * C2) / D);
             var y = (FixedSingle) ((A2 * C1 - A1 * C2) / D);
-            var v = new Vector(x, y);
+            Vector v = (x, y);
 
             if (!Contains(v))
                 return GeometryType.EMPTY;
@@ -777,7 +777,7 @@ namespace XSharp.Geometry
 
         public Box WrappingBox()
         {
-            return new(Start, Vector.NULL_VECTOR, End - Start);
+            return (Start, Vector.NULL_VECTOR, End - Start);
         }
 
         public override bool Equals(object obj)
@@ -1625,6 +1625,34 @@ namespace XSharp.Geometry
         public Box ScaleInverse(FixedSingle divisor)
         {
             return ScaleInverse(Vector.NULL_VECTOR, divisor, divisor);
+        }
+
+        public Box RestrictIn(Box box)
+        {
+            FixedSingle x = box.Origin.X;
+            FixedSingle y = box.Origin.Y;
+
+            FixedSingle minX = box.Left;
+            FixedSingle limitLeft = Left;
+            if (minX < limitLeft)
+                x -= minX - limitLeft;
+
+            FixedSingle minY = box.Top;
+            FixedSingle limitTop = Top;
+            if (minY < limitTop)
+                y -= minY - limitTop;
+
+            FixedSingle maxX = box.Right;
+            FixedSingle limitRight = Right;
+            if (maxX > limitRight)
+                x += limitRight - maxX;
+
+            FixedSingle maxY = box.Bottom;
+            FixedSingle limitBottom = Bottom;
+            if (maxY > limitBottom)
+                y += limitBottom - maxY;
+
+            return ((x, y), box.Mins, box.Maxs);
         }
 
         public GeometryType Type => type;

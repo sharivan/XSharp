@@ -4,7 +4,13 @@ namespace XSharp.Engine.Entities
 {
     public class Checkpoint : Entity
     {
-        private Box boundingBox;
+        private Box hitbox;
+
+        new public Box Hitbox
+        {
+            get => base.Hitbox;
+            set => base.Hitbox = value;
+        }
 
         public ushort Point
         {
@@ -46,14 +52,21 @@ namespace XSharp.Engine.Entities
         {
         }
 
-        protected override Box GetBoundingBox()
+        protected override Box GetHitbox()
         {
-            return boundingBox;
+            return hitbox;
         }
 
-        protected override void SetBoundingBox(Box boundingBox)
+        protected internal override void OnSpawn()
         {
-            this.boundingBox = boundingBox;
+            base.OnSpawn();
+
+            CheckTouchingEntities = false;
+        }
+
+        protected override void SetHitbox(Box hitbox)
+        {
+            this.hitbox = hitbox;
         }
     }
 }

@@ -16,6 +16,7 @@ namespace XSharp.Engine.World
             rightChecker = new CollisionChecker();
         }
 
+        // TODO : In the future, refactor this to make it simpler and more effective at the same time.
         public CollisionFlags ComputeLandedState()
         {
             Box bottomMask = TestBox.ClipTop(TestBox.Height - MaskSize);
@@ -150,6 +151,7 @@ namespace XSharp.Engine.World
             return CollisionFlags.NONE;
         }
 
+        // TODO : Optmize it, can be terribly slow!
         public Box MoveContactFloor(FixedSingle maxDistance)
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
@@ -161,6 +163,7 @@ namespace XSharp.Engine.World
             return TestBox;
         }
 
+        // TODO : Optmize it, can be terribly slow!
         public bool TryMoveContactFloor(FixedSingle maxDistance)
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
@@ -170,6 +173,7 @@ namespace XSharp.Engine.World
             return false;
         }
 
+        // TODO : Optmize it, can be terribly slow!
         public bool TryMoveContactSlope(FixedSingle maxDistance)
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
@@ -179,6 +183,7 @@ namespace XSharp.Engine.World
             return false;
         }
 
+        // TODO : Optmize it, can be terribly slow!
         public Box AdjustOnTheFloor(FixedSingle maxDistance)
         {
             if (!CanBlockTheMove(ComputeLandedState()))

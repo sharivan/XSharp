@@ -3,13 +3,13 @@ using XSharp.Geometry;
 
 namespace XSharp.Engine.Entities.Triggers
 {
-    public class CameraLockTrigger : AbstractTrigger
+    public class CameraLockTrigger : BaseTrigger
     {
         private readonly List<Vector> constraints;
 
         public IEnumerable<Vector> Constraints => constraints;
 
-        public Vector ConstraintOrigin => BoundingBox.Center;
+        public Vector ConstraintOrigin => Hitbox.Center;
 
         public int ConstraintCount => constraints.Count;
 

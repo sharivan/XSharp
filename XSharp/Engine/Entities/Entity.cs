@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using XSharp.Engine.Entities.Enemies;
 using XSharp.Engine.World;
 using XSharp.Geometry;
 using static XSharp.Engine.Consts;
@@ -8,10 +10,16 @@ using static XSharp.Engine.World.World;
 
 namespace XSharp.Engine.Entities
 {
+    public enum TouchingKind
+    {
+        VECTOR,
+        BOX
+    }
+
     public delegate void EntityEvent(Entity source);
     public delegate void EntityActivatorEvent(Entity source, Entity activator);
 
-    public abstract class Entity : IDisposable
+    public abstract class Entity
     {
         public event EntityEvent SpawnEvent;
         public event EntityEvent DeathEvent;
@@ -27,8 +35,9 @@ namespace XSharp.Engine.Entities
         private Vector origin = Vector.NULL_VECTOR;
         internal Entity parent = null;
 
-        private readonly List<Entity> touchingEntities;
+        internal readonly List<Entity> touchingEntities;
         internal readonly List<Entity> childs;
+        private readonly HashSet<Entity> resultSet;
 
         internal Entity previous;
         internal Entity next;
@@ -39,8 +48,8 @@ namespace XSharp.Engine.Entities
         private EntityState[] stateArray;
         private int currentStateID;
 
-        private bool visible;
-        private bool checkTouchingEntities;
+        private bool checkTouchingEntities = true;
+        private bool checkTouchingWithDeadEntities = false;
 
         private BoxKind boxKind;
         private BoxKind lastBoxKind;
@@ -52,7 +61,7 @@ namespace XSharp.Engine.Entities
         {
             get;
             internal set;
-        }
+        } = -1;
 
         public string Name
         {
@@ -94,29 +103,18 @@ namespace XSharp.Engine.Entities
             private set;
         }
 
-        public Box BoundingBox
+        public virtual Box Hitbox
         {
-            get => Origin + GetBoundingBox();
-            set
+            get => Origin + (!Alive && Respawnable ? GetDeadBox() : GetHitbox());
+            protected set
             {
-                SetOrigin(value.Origin);
-                SetBoundingBox(value - value.Origin);   
-            }
-        }
-
-        public Box LastBoundingBox => LastOrigin + GetBoundingBox();
-
-        public Box Hitbox
-        {
-            get => Origin + GetHitbox();
-            set
-            {
+                BeginUpdate();
                 SetHitbox(value - value.Origin);
                 SetOrigin(value.Origin);
+                EndUpdate();
+                UpdatePartition();
             }
         }
-
-        public Box LastHitBox => LastOrigin + GetHitbox();
 
         public bool Alive
         {
@@ -133,18 +131,38 @@ namespace XSharp.Engine.Entities
         public bool Respawnable
         {
             get;
-            set;
-        }
+            private set;
+        } = false;
 
-        public bool Visible
+        public int MinimumIntervalToRespawn
         {
-            get => visible;
-            set
-            {
-                visible = value;
-                UpdatePartition();
-            }
-        }
+            get;
+            protected set;
+        } = 4;
+
+        public int MinimumIntervalToKillOnOffScreen
+        {
+            get;
+            protected set;
+        } = 4;
+
+        public long SpawnFrame
+        {
+            get;
+            private set;
+        } = 0;
+
+        public long DeathFrame
+        {
+            get;
+            internal set;
+        } = 0;
+
+        public bool Updating
+        {
+            get;
+            private set;
+        } = false;
 
         public bool Spawning
         {
@@ -152,14 +170,34 @@ namespace XSharp.Engine.Entities
             private set;
         }
 
-        public bool Offscreen => !CollisionChecker.HasIntersection(BoundingBox, Engine.World.Camera.ExtendedBoundingBox);
-
         public bool CheckTouchingEntities
         {
             get => checkTouchingEntities;
-            set
+            protected set
             {
                 checkTouchingEntities = value;
+                UpdatePartition();
+            }
+        }
+
+        public TouchingKind TouchingKind
+        {
+            get;
+            set;
+        } = TouchingKind.BOX;
+
+        public VectorKind TouchingVectorKind
+        {
+            get;
+            set;
+        } = VectorKind.ORIGIN;
+
+        public bool CheckTouchingWithDeadEntities
+        {
+            get => checkTouchingWithDeadEntities;
+            protected set
+            {
+                checkTouchingWithDeadEntities = value;
                 UpdatePartition();
             }
         }
@@ -186,10 +224,17 @@ namespace XSharp.Engine.Entities
 
         protected EntityState CurrentState => stateArray != null && CurrentStateID >= 0 ? stateArray[CurrentStateID] : null;
 
+        public bool KillOnOffscreen
+        {
+            get;
+            protected set;
+        } = false;
+
         protected Entity()
         {
             touchingEntities = new List<Entity>();
             childs = new List<Entity>();
+            resultSet = new HashSet<Entity>();
 
             states = new List<EntityState>();
 
@@ -325,37 +370,31 @@ namespace XSharp.Engine.Entities
             return false;
         }
 
-        public Vector GetVector(VectorKind kind)
+        public virtual Vector GetVector(VectorKind kind)
         {
             return kind switch
             {
                 VectorKind.ORIGIN => Origin,
-                VectorKind.BOUDINGBOX_CENTER => BoundingBox.Center,
                 VectorKind.HITBOX_CENTER => Hitbox.Center,
                 _ => Vector.NULL_VECTOR
             };
         }
 
-        public Vector GetLastVector(VectorKind kind)
+        public virtual Vector GetLastVector(VectorKind kind)
         {
             return kind switch
             {
                 VectorKind.ORIGIN => LastOrigin,
-                VectorKind.BOUDINGBOX_CENTER => LastBoundingBox.Center,
-                VectorKind.HITBOX_CENTER => LastHitBox.Center,
+                VectorKind.HITBOX_CENTER => GetLastBox(BoxKind.HITBOX).Center,
                 _ => Vector.NULL_VECTOR
             };
         }
 
-        protected abstract Box GetBoundingBox();
+        protected abstract Box GetHitbox();
 
-        protected virtual Box GetHitbox()
+        protected virtual Box GetDeadBox()
         {
-            return GetBoundingBox();
-        }
-
-        protected virtual void SetBoundingBox(Box boudingBox)
-        {
+            return GetHitbox();
         }
 
         protected virtual void SetHitbox(Box hitbox)
@@ -364,12 +403,7 @@ namespace XSharp.Engine.Entities
 
         public virtual Box GetBox(BoxKind kind)
         {
-            return kind switch
-            {
-                BoxKind.BOUDINGBOX => BoundingBox,
-                BoxKind.HITBOX => Hitbox,
-                _ => Box.EMPTY_BOX,
-            };
+            return kind == BoxKind.HITBOX ? Hitbox : Box.EMPTY_BOX;
         }
 
         public Box GetLastBox(BoxKind kind)
@@ -402,6 +436,17 @@ namespace XSharp.Engine.Entities
             return $"{GetType().Name}[{Name}, {Origin}]";
         }
 
+        private bool CheckTouching(Entity entity)
+        {
+            if (TouchingKind == TouchingKind.VECTOR)
+            {
+                Vector v = entity.GetVector(TouchingVectorKind);
+                return v <= Hitbox;
+            }
+
+            return true;
+        }
+
         protected internal virtual void OnFrame()
         {
             if (frameToKill > 0 && Engine.FrameCounter >= frameToKill)
@@ -411,44 +456,64 @@ namespace XSharp.Engine.Entities
                 return;
             }
 
-            if (!Alive)
+            if (KillOnOffscreen && Engine.FrameCounter - SpawnFrame >= MinimumIntervalToKillOnOffScreen && IsOffscreen(VectorKind.ORIGIN))
+            {
+                Kill();
+                return;
+            }
+
+            if (!Alive || MarkedToRemove)
                 return;
 
             if (!PreThink())
                 return;
 
+            if (!Alive || MarkedToRemove)
+                return;
+
             Think();
+
+            if (!Alive || MarkedToRemove)
+                return;
+
             CurrentState?.OnFrame();
+
+            if (!Alive || MarkedToRemove)
+                return;
 
             if (CheckTouchingEntities)
             {
-                List<Entity> touching = Engine.partition.Query(Hitbox, this, childs, BoxKind.HITBOX);
+                resultSet.Clear();
+                Engine.partition.Query(resultSet, Hitbox, this, childs, BoxKind.HITBOX, !CheckTouchingWithDeadEntities);
 
-                int count = touchingEntities.Count;
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < touchingEntities.Count; i++)
                 {
                     Entity entity = touchingEntities[i];
-                    int index = touching.IndexOf(entity);
 
-                    if (index == -1)
+                    if (!CheckTouching(entity) || !resultSet.Contains(entity))
                     {
                         touchingEntities.RemoveAt(i);
                         i--;
-                        count--;
                         OnEndTouch(entity);
                     }
-                    else if (entity.Alive && !entity.MarkedToRemove)
+                    else if ((CheckTouchingWithDeadEntities || entity.Alive && !entity.MarkedToRemove) && CheckTouching(entity))
                     {
-                        touching.RemoveAt(index);
+                        resultSet.Remove(entity);
                         OnTouching(entity);
                     }
+
+                    if (!Alive || MarkedToRemove)
+                        return;
                 }
 
-                foreach (Entity entity in touching)
-                    if (entity.Alive && !entity.MarkedToRemove)
+                foreach (Entity entity in resultSet)
+                    if ((CheckTouchingWithDeadEntities || entity.Alive && !entity.MarkedToRemove) && CheckTouching(entity))
                     {
                         touchingEntities.Add(entity);
                         OnStartTouch(entity);
+
+                        if (!Alive || MarkedToRemove)
+                            return;
                     }
             }
         }
@@ -484,10 +549,6 @@ namespace XSharp.Engine.Entities
             PostThinkEvent?.Invoke(this);
         }
 
-        public virtual void Dispose()
-        {
-        }
-
         public virtual void Kill()
         {
             if (!Alive || MarkedToRemove)
@@ -495,9 +556,23 @@ namespace XSharp.Engine.Entities
 
             MarkedToRemove = true;
             Engine.removedEntities.Add(this);
-            Engine.partition.Remove(this);
 
             OnDeath();
+        }
+
+        protected internal virtual void Cleanup()
+        {
+            foreach (Entity child in childs)
+                child.parent = null;
+
+            childs.Clear();
+            touchingEntities.Clear();
+
+            Parent = null;
+            frameToKill = -1;
+            currentStateID = -1;
+            MarkedToRemove = false;
+            Spawning = false;
         }
 
         public void KillOnNextFrame()
@@ -512,10 +587,10 @@ namespace XSharp.Engine.Entities
 
         public virtual void Spawn()
         {
+            SpawnFrame = Engine.FrameCounter;
             boxKind = BoxKind.NONE;
             lastBoxKind = BoxKind.NONE;
             Spawning = true;
-            Visible = false;
             CheckTouchingEntities = true;
             frameToKill = -1;
             currentStateID = -1;
@@ -533,7 +608,7 @@ namespace XSharp.Engine.Entities
             Spawning = false;
             Alive = true;
 
-            UpdatePartition();
+            UpdatePartition(true);
         }
 
         protected virtual void OnDeath()
@@ -549,12 +624,22 @@ namespace XSharp.Engine.Entities
 
         protected virtual BoxKind ComputeBoxKind()
         {
-            return (Visible ? BoxKind.BOUDINGBOX : BoxKind.NONE) | (CheckTouchingEntities ? BoxKind.HITBOX : BoxKind.NONE);
+            return Respawnable || CheckTouchingEntities ? BoxKind.HITBOX : BoxKind.NONE;
         }
 
-        protected virtual void UpdatePartition(bool force = false)
+        public void BeginUpdate()
         {
-            if (!Alive)
+            Updating = true;
+        }
+
+        public void EndUpdate()
+        {
+            Updating = false;
+        }
+
+        protected internal virtual void UpdatePartition(bool force = false)
+        {
+            if (Updating || !Respawnable && !Alive)
                 return;
 
             boxKind = ComputeBoxKind();
@@ -590,6 +675,36 @@ namespace XSharp.Engine.Entities
                 var kind = i.ToBoxKind();
                 lastBox[i] = GetBox(kind);
             }
+        }
+
+        public bool IsOffscreen(VectorKind kind, bool extendedCamera = true)
+        {
+            return GetVector(kind) > (extendedCamera ? Engine.World.Camera.ExtendedBoundingBox : Engine.World.Camera.BoundingBox);
+        }
+
+        public bool IsOffscreen(BoxKind kind, bool extendedCamera = true)
+        {
+            return !CollisionChecker.HasIntersection(GetBox(kind), extendedCamera ? Engine.World.Camera.ExtendedBoundingBox : Engine.World.Camera.BoundingBox);
+        }
+
+        public virtual void Place()
+        {
+            Respawnable = true;
+
+            if (!Engine.respawnableEntities.ContainsKey(this))
+                Engine.respawnableEntities.Add(this, new RespawnEntry(this, Origin));
+
+            UpdatePartition(true);
+        }
+
+        public virtual void Unplace()
+        {
+            Respawnable = false;
+
+            if (Engine.respawnableEntities.ContainsKey(this))
+                Engine.respawnableEntities.Remove(this);
+
+            UpdatePartition(true);
         }
     }
 }

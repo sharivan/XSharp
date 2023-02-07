@@ -56,6 +56,7 @@ namespace XSharp.Engine.Entities.Weapons
         {
             base.OnSpawn();
 
+            Direction = Shooter.WallSliding ? Shooter.Direction.Oposite() : Shooter.Direction;
             CheckCollisionWithWorld = false;
             Velocity = new Vector(Direction == Direction.LEFT ? (DashLemon ? -LEMON_TERMINAL_SPEED : -LEMON_INITIAL_SPEED) : (DashLemon ? LEMON_TERMINAL_SPEED : LEMON_INITIAL_SPEED), 0);
 
@@ -95,6 +96,8 @@ namespace XSharp.Engine.Entities.Weapons
         {
             if (GetState<LemonState>() != LemonState.EXPLODING)
             {
+                Damage = 0;
+
                 if (entity != null)
                 {
                     Box otherHitbox = entity.Hitbox;

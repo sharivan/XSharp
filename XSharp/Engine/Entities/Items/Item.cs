@@ -34,6 +34,7 @@ namespace XSharp.Engine.Entities.Items
             base.OnSpawn();
 
             DurationFrameCounter = 0;
+            KillOnOffscreen = true;
         }
 
         protected virtual void OnCollecting(Player player)
@@ -58,8 +59,11 @@ namespace XSharp.Engine.Entities.Items
 
             if (DurationFrames > 0)
             {
-                if (Offscreen || DurationFrameCounter >= DurationFrames)
+                if (DurationFrameCounter >= DurationFrames)
+                {
                     Kill();
+                    return;
+                }
 
                 if (!Blinking && DurationFrameCounter >= DurationFrames - ITEM_BLINKING_FRAMES)
                     Blinking = true;

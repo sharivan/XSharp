@@ -77,6 +77,36 @@ namespace XSharp.Engine.Entities
             private set;
         }
 
+        new public bool Invincible
+        {
+            get => base.Invincible;
+            set => base.Invincible = value;
+        }
+
+        new public bool Animating
+        {
+            get => base.Animating;
+            set => base.Animating = value;
+        }
+
+        new public Vector Velocity
+        {
+            get => base.Velocity;
+            set => base.Velocity = value;
+        }
+
+        new public bool NoClip
+        {
+            get => base.NoClip;
+            set => base.NoClip = value;
+        }
+
+        new public FixedSingle Health
+        {
+            get => base.Health;
+            set => base.Health = value;
+        }
+
         internal Player()
         {
             SpriteSheetIndex = 0;
@@ -145,7 +175,7 @@ namespace XSharp.Engine.Entities
 
         protected override Box GetCollisionBox()
         {
-            return new Box((-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT - 4), Vector.NULL_VECTOR, (HITBOX_WIDTH, HITBOX_HEIGHT + 4)) + (0, 17);
+            return new Box(Vector.NULL_VECTOR, (-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT * 0.5 - 1), (HITBOX_WIDTH * 0.5, HITBOX_HEIGHT * 0.5 + 3));
         }
 
         protected override Box GetHitbox()
@@ -681,36 +711,12 @@ namespace XSharp.Engine.Entities
 
         protected override void OnBeforeMove(ref Vector origin)
         {
-            FixedSingle x = origin.X;
-            FixedSingle y = origin.Y;
-
             Box limit = Engine.World.BoundingBox;
             if (!CrossingBossDoor && !Engine.NoCameraConstraints && !Engine.World.Camera.NoConstraints)
                 limit &= Engine.CameraConstraintsBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE);
 
-            Box collisionBox = origin + GetCollisionBox();
-
-            FixedSingle minX = collisionBox.Left;
-            FixedSingle limitLeft = limit.Left;
-            if (minX < limitLeft)
-                x -= minX - limitLeft;
-
-            FixedSingle minY = collisionBox.Top;
-            FixedSingle limitTop = limit.Top;
-            if (minY < limitTop)
-                y -= minY - limitTop;
-
-            FixedSingle maxX = collisionBox.Right;
-            FixedSingle limitRight = limit.Right;
-            if (maxX > limitRight)
-                x += limitRight - maxX;
-
-            FixedSingle maxY = collisionBox.Bottom;
-            FixedSingle limitBottom = limit.Bottom;
-            if (maxY > limitBottom)
-                y += limitBottom - maxY;
-
-            origin = new Vector(x, y);
+            Vector delta = origin - Origin;
+            origin = limit.RestrictIn(CollisionBox + delta).Origin;
         }
 
         protected override void Think()
@@ -736,15 +742,15 @@ namespace XSharp.Engine.Entities
                     {
                         if (Engine.CurrentCheckpoint != null)
                         {
-                            if (Origin.Y >= Engine.CurrentCheckpoint.BoundingBox.Top + SCREEN_HEIGHT / 2)
+                            if (Origin.Y >= Engine.CurrentCheckpoint.Hitbox.Top + SCREEN_HEIGHT / 2)
                             {
                                 CheckCollisionWithWorld = true;
                                 CheckCollisionWithSolidSprites = true;
                             }
                             else
                             {
-                                CheckCollisionWithWorld = true;
-                                CheckCollisionWithSolidSprites = true;
+                                CheckCollisionWithWorld = false;
+                                CheckCollisionWithSolidSprites = false;
                             }
                         }
                     }

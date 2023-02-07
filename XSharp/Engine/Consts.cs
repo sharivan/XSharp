@@ -156,6 +156,10 @@ namespace XSharp.Engine
 
         // Enemies
 
+        public const int BOSS_HP = 32;
+        public const int DEFAULT_BOSS_INVINCIBILITY_TIME = 68;
+        public static readonly FixedSingle BOSS_HP_LEFT = 233;
+
         // Driller
 
         public static readonly FixedSingle DRILLER_JUMP_VELOCITY_X = 384 / 256.0;
@@ -169,6 +173,37 @@ namespace XSharp.Engine
         public static readonly FixedSingle BAT_ESCAPE_SPEED = 512 / 256.0;
         public const int BAT_HEALTH = 3;
         public static readonly FixedSingle BAT_CONTACT_DAMAGE = 1;
+
+        // Penguin
+
+        public static readonly Box PENGUIN_COLLISION_BOX = (Vector.NULL_VECTOR, (-14, -17), (14, 17));
+        public static readonly Box PENGUIN_SLIDE_COLLISION_BOX = (Vector.NULL_VECTOR, (-21, -5), (21, 17));
+        public static readonly Box PENGUIN_HITBOX = (Vector.NULL_VECTOR, (-10, -15), (10, 15));
+        public static readonly Box PENGUIN_SLIDE_HITBOX = (Vector.NULL_VECTOR, (-17, -9), (17, 9));
+
+        public static readonly FixedSingle PENGUIN_KNOCKBACK_SPEED_X = 1;
+        public static readonly FixedSingle PENGUIN_KNOCKBACK_SPEED_Y = 545 / 256.0;
+
+        public static readonly FixedSingle PENGUIN_SLIDE_INITIAL_SPEED = 1536 / 256.0;
+        public static readonly FixedSingle PENGUIN_SLIDE_DECELARATION = 16 / 256.0;
+
+        public static readonly FixedSingle PENGUIN_CEIL_LEVER_OFFSET = 1;
+        public static readonly Box PENGUIN_CEIL_LEVER_HITBOX = (Vector.NULL_VECTOR, (-13, -12), (13, 12));
+
+        public static readonly Box PENGUIN_SNOW_HITBOX = (Vector.NULL_VECTOR, (-4, -4), (4, 4));
+        public static readonly FixedSingle PENGUIN_SNOW_SPEED = 51 / 256.0;
+        public static readonly Box PENGUIN_BLOW_HITBOX = (Vector.NULL_VECTOR, (-13, -6), (13, 6));
+        public static readonly FixedSingle PENGUIN_BLOW_DISTANCE_FROM_HITBOX = 29;
+
+        public static readonly Box PENGUIN_SCULPTURE_HITBOX = (Vector.NULL_VECTOR, (-8, -16), (8, 16));
+        public static readonly FixedSingle PENGUIN_SCULPTURE_INITIAL_DISTANCE_FROM_SNOW = 23;
+
+        public static readonly Box PENGUIN_ICE_HITBOX = (Vector.NULL_VECTOR, (-5, -5), (5, 5));
+        public static readonly FixedSingle PENGUIN_ICE_SPEED = 1024 / 256.0;
+        public static readonly FixedSingle PENGUIN_ICE_SPEED2_X = 512 / 256.0;
+        public static readonly FixedSingle PENGUIN_ICE_SPEED2_Y = 545 / 256.0;
+        public static readonly FixedSingle PENGUIN_ICE_BUMO_SPEED2_Y = 395 / 256.0;
+        public static readonly Vector PENGUIN_ICE_SHOT_ORIGIN_OFFSET = (21, 6);
 
         // Render
 
@@ -197,6 +232,10 @@ namespace XSharp.Engine
 
         public static readonly Color HITBOX_COLOR = Color.FromRgba(0x8000ff00);
         public static readonly Color HITBOX_BORDER_COLOR = Color.Green;
+        public static readonly Color DEAD_HITBOX_COLOR = Color.FromRgba(0x800000ff);
+        public static readonly Color DEAD_HITBOX_BORDER_COLOR = Color.Red;
+        public static readonly Color DEAD_RESPAWNABLE_HITBOX_COLOR = Color.FromRgba(0x80ff0000);
+        public static readonly Color DEAD_RESPAWNABLE_HITBOX_BORDER_COLOR = Color.Blue;
         public static readonly Color BOUNDING_BOX_COLOR = Color.FromRgba(0x80ff0000);
         public static readonly Color BOUNDING_BOX_BORDER_COLOR = Color.Red;
         public static readonly Color DOWN_COLLIDER_COLOR = Color.Green;
@@ -348,6 +387,43 @@ namespace XSharp.Engine
             new Color(40, 40, 40, 255), // 15
         };
 
+        public static readonly Color[] PENGUIN_PALETTE = new Color[]
+        {
+            Color.Transparent, // 0
+            Color.FromBgra(0xFF303040), // 1
+            Color.FromBgra(0xFF3870F0), // 2
+            Color.FromBgra(0xFFD08050), // 3
+            Color.FromBgra(0xFFF8B050), // 4
+            Color.FromBgra(0xFFF0F0F0), // 5           
+            Color.FromBgra(0xFFB0B0C8), // 6
+            Color.FromBgra(0xFF686880), // 7
+            Color.FromBgra(0xFF185068), // 8
+            Color.FromBgra(0xFF205898), // 9
+            Color.FromBgra(0xFFF03808), // A
+            Color.FromBgra(0xFFA83008), // B
+            Color.FromBgra(0xFF683010), // C
+            Color.FromBgra(0xFF9870D8), // D
+            Color.FromBgra(0xFF6848B8), // E
+            Color.FromBgra(0xFF282828), // F
+
+            Color.Transparent, // 10
+            Color.FromBgra(0xFF404800), // 11
+            Color.FromBgra(0xFFF8F8F8), // 12
+            Color.FromBgra(0xFFC8D8E0), // 13
+            Color.FromBgra(0xFF98C0D0), // 14
+            Color.FromBgra(0xFF70A8B8), // 15
+            Color.FromBgra(0xFF4090A8), // 16
+            Color.FromBgra(0xFF187898), // 17
+            Color.FromBgra(0xFF185058), // 18
+            Color.FromBgra(0xFF803090), // 19
+            Color.FromBgra(0xFFB0F8F8), // 1A
+            Color.FromBgra(0xFFA8F8F8), // 1B
+            Color.FromBgra(0xFFA0F8F8), // 1C
+            Color.FromBgra(0xFF98F8F8), // 1D
+            Color.FromBgra(0xFF90F8F8), // 1E
+            Color.FromBgra(0xFF88F8F8) // 1F
+        };
+
         // Startup
 
         public const bool ENABLE_ENEMIES = true;
@@ -359,6 +435,6 @@ namespace XSharp.Engine
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
         public const int INITIAL_LEVEL = 8;
-        public const int INITIAL_CHECKPOINT = 0;
+        public const int INITIAL_CHECKPOINT = 2;
     }
 }

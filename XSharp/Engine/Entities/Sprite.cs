@@ -1,8 +1,10 @@
 ﻿using SharpDX.Direct3D9;
+using SharpDX.DirectSound;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows.Forms;
 using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
 using XSharp.Geometry;
@@ -19,7 +21,7 @@ namespace XSharp.Engine.Entities
     public delegate void HealthChangedEvent(Sprite source, FixedSingle health);
     public delegate void AnimationEndEvent(Sprite source, Animation animation);
 
-    public abstract class Sprite : Entity, IDisposable
+    public abstract class Sprite : Entity
     {
         public event TakeDamageEvent TakeDamageEvent;
         public event HurtEvent HurtEvent;
@@ -35,8 +37,10 @@ namespace XSharp.Engine.Entities
         public event SpriteEvent LandedEvent;
         public event SpriteEvent BrokeEvent;
 
+        private bool visible = true;
         private List<Animation> animations;
         private int currentAnimationIndex = -1;
+
         private bool fading;
         private bool fadingIn;
         private int fadingTime;
@@ -53,8 +57,24 @@ namespace XSharp.Engine.Entities
         private long invincibleExpires;
         protected bool broke;
         private bool blinking;
-        private bool blinkOn;
-        private long blinkExpires;
+        private int blinkFrameCounter = 0;
+        private long blinkFrames;
+
+        public bool Visible
+        {
+            get => visible;
+            set
+            {
+                visible = value;
+                UpdatePartition();
+            }
+        }
+
+        public bool ResourcesCreated
+        {
+            get;
+            private set;
+        } = false;
 
         private readonly Dictionary<string, List<Animation>> animationsByName;
 
@@ -74,7 +94,7 @@ namespace XSharp.Engine.Entities
                 return spriteSheet?.Name;
             }
 
-            set
+            protected set
             {
                 var spriteSheet = Engine.GetSpriteSheetByName(value);
                 SpriteSheetIndex = spriteSheet != null ? spriteSheet.Index : -1;
@@ -90,37 +110,43 @@ namespace XSharp.Engine.Entities
         public Direction Direction
         {
             get;
-            set;
+            protected set;
+        } = Direction.RIGHT;
+
+        public Direction DefaultDirection
+        {
+            get;
+            protected set;
         } = Direction.RIGHT;
 
         public CollisionData CollisionData
         {
             get;
-            set;
+            protected set;
         } = CollisionData.NONE;
 
         public bool PushSprites
         {
             get;
-            set;
+            protected set;
         } = false;
 
         public bool Inertial
         {
             get;
-            set;
+            protected set;
         } = false;
 
         public bool CanSmash
         {
             get;
-            set;
+            protected set;
         } = false;
 
         public string InitialAnimationName
         {
             get;
-            set;
+            protected set;
         } = null;
 
         public int InitialAnimationIndex => InitialAnimationName != null ? GetAnimationIndex(InitialAnimationName) : -1;
@@ -130,13 +156,13 @@ namespace XSharp.Engine.Entities
         public bool Static
         {
             get;
-            set;
+            protected set;
         }
 
         public bool NoClip
         {
             get;
-            set;
+            protected set;
         }
 
         public bool Moving => moving;
@@ -146,7 +172,7 @@ namespace XSharp.Engine.Entities
         public bool Invincible
         {
             get => invincible;
-            set
+            protected set
             {
                 if (!invincible && value)
                     MakeInvincible();
@@ -158,7 +184,7 @@ namespace XSharp.Engine.Entities
         public bool Blinking
         {
             get => blinking;
-            set
+            protected set
             {
                 if (!blinking && value)
                     MakeBlinking();
@@ -172,13 +198,13 @@ namespace XSharp.Engine.Entities
         public bool InvisibleOnCurrentFrame
         {
             get;
-            set;
+            protected set;
         }
 
         public FixedSingle Health
         {
             get => health;
-            set
+            protected set
             {
                 health = value;
                 OnHealthChanged(health);
@@ -191,7 +217,7 @@ namespace XSharp.Engine.Entities
         public Vector Velocity
         {
             get => vel;
-            set
+            protected set
             {
                 LastVelocity = vel;
                 vel = value;
@@ -207,9 +233,43 @@ namespace XSharp.Engine.Entities
         public Vector AdictionalVelocity
         {
             get;
-            set;
+            internal set;
         }
 
+        public virtual Box BoundingBox
+        {
+            get => Origin + (Directional && Direction == DefaultDirection ? GetBoundingBox() : GetBoundingBox().Mirror());
+            protected set
+            {
+                Box collisionBox = value - value.Origin;
+                BeginUpdate();
+                SetBoundingBox(Directional && Direction == DefaultDirection ? collisionBox : collisionBox.Mirror());
+                SetOrigin(value.Origin);
+                EndUpdate();
+                UpdatePartition();
+            }
+        }
+
+        public override Box Hitbox
+        {
+            get
+            {
+                Box box = !Alive && Respawnable ? GetDeadBox() : GetHitbox();
+                return Origin + (Directional && Direction == DefaultDirection ? box : box.Mirror());
+            }
+
+            protected set
+            {
+                Box hitbox = value - value.Origin;
+                BeginUpdate();
+                SetHitbox(Directional && Direction == DefaultDirection ? hitbox : hitbox.Mirror());
+                SetOrigin(value.Origin);
+                EndUpdate();
+                UpdatePartition();
+            }
+        }
+
+        public virtual Box CollisionBox => Origin + (Directional && Direction == DefaultDirection ? GetCollisionBox() : GetCollisionBox().Mirror());
 
         public SpriteCollider Collider
         {
@@ -227,13 +287,13 @@ namespace XSharp.Engine.Entities
         public bool CheckCollisionWithWorld
         {
             get => collider.CheckCollisionWithWorld;
-            set => collider.CheckCollisionWithWorld = value;
+            protected set => collider.CheckCollisionWithWorld = value;
         }
 
         public bool CheckCollisionWithSolidSprites
         {
             get => collider.CheckCollisionWithSolidSprites;
-            set => collider.CheckCollisionWithSolidSprites = value;
+            protected set => collider.CheckCollisionWithSolidSprites = value;
         }
 
         public bool BlockedUp => !NoClip && collider.BlockedUp;
@@ -255,13 +315,13 @@ namespace XSharp.Engine.Entities
         public bool CanGoOutOfMapBounds
         {
             get;
-            set;
-        }
+            protected set;
+        } = true;
 
         public int PaletteIndex
         {
             get;
-            set;
+            protected set;
         } = -1;
 
         public Texture Palette => Engine.GetPalette(PaletteIndex);
@@ -269,7 +329,7 @@ namespace XSharp.Engine.Entities
         public bool Animating
         {
             get;
-            set;
+            protected set;
         } = true;
 
         protected Sprite()
@@ -376,6 +436,7 @@ namespace XSharp.Engine.Entities
         {
             base.LoadState(reader);
 
+            Visible = reader.ReadBoolean();
             currentAnimationIndex = reader.ReadInt32();
             Opacity = reader.ReadSingle();
 
@@ -410,6 +471,7 @@ namespace XSharp.Engine.Entities
         {
             base.SaveState(writer);
 
+            writer.Write(Visible);
             writer.Write(currentAnimationIndex);
             writer.Write(Opacity);
 
@@ -500,9 +562,77 @@ namespace XSharp.Engine.Entities
             elapsed = 0;
         }
 
+        public override Vector GetVector(VectorKind kind)
+        {
+            return kind switch
+            {
+                VectorKind.BOUDINGBOX_CENTER => BoundingBox.Center,
+                VectorKind.COLLISIONBOX_CENTER => CollisionBox.Center,
+                _ => base.GetVector(kind)
+            };
+        }
+
+        public override Vector GetLastVector(VectorKind kind)
+        {
+            return kind switch
+            {
+                VectorKind.BOUDINGBOX_CENTER => GetLastBox(BoxKind.BOUDINGBOX).Center,
+                VectorKind.COLLISIONBOX_CENTER => GetLastBox(BoxKind.COLLISIONBOX).Center,
+                _ => base.GetLastVector(kind)
+            };
+        }
+
         public override Box GetBox(BoxKind kind)
         {
-            return kind == BoxKind.COLLISIONBOX ? CollisionBox : base.GetBox(kind);
+            return kind switch
+            {
+                BoxKind.BOUDINGBOX => BoundingBox,
+                BoxKind.COLLISIONBOX => CollisionBox,
+                _ => base.GetBox(kind)
+            };
+        }
+
+        protected virtual Box GetBoundingBox()
+        {
+            return (Directional && Direction == DefaultDirection ? DrawBox : DrawBox.Mirror()) - Origin;
+        }
+
+        protected virtual void SetBoundingBox(Box boudingBox)
+        {
+        }
+
+        protected override Box GetHitbox()
+        {
+            return GetCollisionBox();
+        }
+
+        protected override Box GetDeadBox()
+        {
+            if (animations.Count == 0)
+                return base.GetDeadBox();
+
+            Box drawBox;
+            if (InitialAnimationName != null)
+                drawBox = GetFirstAnimationByName(InitialAnimationName).DrawBox;
+            else if (InitialAnimationIndex >= 0)
+                drawBox = animations[InitialAnimationIndex].DrawBox;
+            else
+                drawBox = animations[0].DrawBox;
+
+            return (Directional && Direction == DefaultDirection ? drawBox : drawBox.Mirror()) - Origin;
+        }
+
+        protected virtual Box GetCollisionBox()
+        {
+            if (!MultiAnimation)
+                return CurrentAnimation != null ? CurrentAnimation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
+
+            Box result = Box.EMPTY_BOX;
+            foreach (var animation in animations)
+                if (animation.Visible)
+                    result |= animation.CurrentFrameCollisionBox;
+
+            return result;
         }
 
         protected internal override void OnSpawn()
@@ -578,9 +708,10 @@ namespace XSharp.Engine.Entities
             return new SpriteCollider(this, CollisionBox, GetMaskSize(), GetSideColliderTopOffset(), GetSideColliderBottomOffset(), IsUsingCollisionPlacements(), true, false);
         }
 
-        public override void Spawn()
+        protected internal virtual void CreateResources()
         {
-            base.Spawn();
+            if (ResourcesCreated)
+                return;
 
             collider = CreateCollider();
 
@@ -618,6 +749,20 @@ namespace XSharp.Engine.Entities
                 else
                     animationsByName.Remove(animationName);
             }
+
+            ResourcesCreated = true;
+        }
+
+        public override void Spawn()
+        {
+            base.Spawn();
+            CreateResources();
+        }
+
+        public override void Place()
+        {
+            CreateResources();
+            base.Place();
         }
 
         protected virtual bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
@@ -679,40 +824,13 @@ namespace XSharp.Engine.Entities
         public void MakeBlinking(int frames = 0)
         {
             blinking = true;
-            blinkOn = false;
-            blinkExpires = frames > 0 ? Engine.FrameCounter + frames : 0;
+            blinkFrameCounter = 0;
+            blinkFrames = frames;
         }
 
         protected virtual bool ShouldCollide(Sprite sprite)
         {
             return false;
-        }
-
-        protected override Box GetBoundingBox()
-        {
-            return DrawBox - Origin;
-        }
-
-        protected override Box GetHitbox()
-        {
-            return GetCollisionBox();
-        }
-
-        public Box CollisionBox => Origin + GetCollisionBox();
-
-        public Box LastCollisionBox => LastOrigin + GetCollisionBox();
-
-        protected virtual Box GetCollisionBox()
-        {
-            if (!MultiAnimation)
-                return CurrentAnimation != null ? CurrentAnimation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
-
-            Box result = Box.EMPTY_BOX;
-            foreach (var animation in animations)
-                if (animation.Visible)
-                    result |= animation.CurrentFrameCollisionBox;
-
-            return result;
         }
 
         private void MoveAlongSlope(SpriteCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)
@@ -954,10 +1072,9 @@ namespace XSharp.Engine.Entities
 
             if (delta != Vector.NULL_VECTOR)
             {
-                Vector newOrigin = Origin + delta;
+                Vector newOrigin = CanGoOutOfMapBounds ? Origin + delta : Engine.World.BoundingBox.RestrictIn(CollisionBox + delta).Origin;
 
-                if (!CanGoOutOfMapBounds)
-                    OnBeforeMove(ref newOrigin);
+                OnBeforeMove(ref newOrigin);
 
                 Vector lastOrigin = Origin;
                 Origin = newOrigin;
@@ -1100,6 +1217,9 @@ namespace XSharp.Engine.Entities
         {
             if (!Static && !Engine.Paused)
                 DoPhysics();
+
+            if (Blinking)
+                OnBlink(blinkFrameCounter);
         }
 
         protected internal override void PostThink()
@@ -1112,29 +1232,32 @@ namespace XSharp.Engine.Entities
             if (Invincible && invincibleExpires > 0 && Engine.FrameCounter >= invincibleExpires)
                 Invincible = false;
 
-            if (Blinking && blinkExpires > 0 && Engine.FrameCounter >= blinkExpires)
+            if (Blinking && blinkFrames > 0 && blinkFrameCounter >= blinkFrames)
+            {
                 Blinking = false;
+                OnEndBlink();
+            }
+            else
+                blinkFrameCounter++;
 
             if (Animating)
                 foreach (Animation animation in animations)
                     animation.NextFrame();
         }
 
-        protected virtual void OnBlink(bool blinkOn)
+        protected virtual void OnBlink(int frameCounter)
         {
-            InvisibleOnCurrentFrame = !blinkOn;
+            InvisibleOnCurrentFrame = frameCounter % 2 == 0;
+        }
+
+        protected virtual void OnEndBlink()
+        {
         }
 
         public virtual void Render()
         {
-            if (!Alive || !Visible)
-                return;
-
-            if (Blinking)
-            {
-                blinkOn = !blinkOn;
-                OnBlink(blinkOn);
-            }
+            if (!Alive || MarkedToRemove || !Visible)
+                return;            
 
             if (!InvisibleOnCurrentFrame)
                 foreach (Animation animation in animations)
@@ -1195,6 +1318,23 @@ namespace XSharp.Engine.Entities
                 Kill();
             }
         }
+        protected internal override void Cleanup()
+        {
+            base.Cleanup();
+
+            CurrentAnimationIndex = -1;
+            fading = false;
+            fadingIn = false;
+            fadingTime = -1;
+            moving = false;
+            invincible = false;
+            invincibleExpires = -1;
+            blinking = false;
+            blinkFrames = -1;
+            NoClip = false;
+            InvisibleOnCurrentFrame = false;
+        }
+
 
         internal void OnDeviceReset()
         {
@@ -1204,7 +1344,9 @@ namespace XSharp.Engine.Entities
 
         protected override BoxKind ComputeBoxKind()
         {
-            return (CollisionChecker.IsSolidBlock(CollisionData) ? BoxKind.COLLISIONBOX : BoxKind.NONE) | base.ComputeBoxKind();
+            return (CollisionChecker.IsSolidBlock(CollisionData) ? BoxKind.COLLISIONBOX : BoxKind.NONE)
+                | (Visible ? BoxKind.BOUDINGBOX : BoxKind.NONE)
+                | base.ComputeBoxKind();
         }
     }
 }

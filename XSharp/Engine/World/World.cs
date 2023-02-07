@@ -49,7 +49,11 @@ namespace XSharp.Engine.World
             this.backgroundSceneRowCount = backgroundSceneRowCount;
             this.backgroundSceneColCount = backgroundSceneColCount;
 
-            Camera = new Camera(this, SCREEN_WIDTH, SCREEN_HEIGHT);
+            Camera = new Camera()
+            {
+                Width = SCREEN_WIDTH,
+                Height = SCREEN_HEIGHT
+            };
 
             tileList = new List<Tile>();
             backgroundTileList = new List<Tile>();
@@ -538,7 +542,6 @@ namespace XSharp.Engine.World
 
         public void OnFrame()
         {
-            Camera.OnFrame();
         }
 
         public static Cell GetTileCellFromPos(Vector pos)

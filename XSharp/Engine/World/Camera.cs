@@ -5,17 +5,16 @@ using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.World
 {
-    public class Camera
+    public class Camera : Entity
     {
-        private Vector lastCenter;
-        private Vector center;
-        private Entity focusOn;
+        private Entity focusOn = null;
 
+        private Vector lastCenter = Vector.NULL_VECTOR;
+        private Vector vel = Vector.NULL_VECTOR;
         private FixedSingle moveDistance;
         private FixedSingle moveStep;
         private Vector moveToCenter;
-        private bool moveToFocus;
-        private Vector vel;
+        private bool moveToFocus = false;
 
         public bool NoConstraints
         {
@@ -23,69 +22,154 @@ namespace XSharp.Engine.World
             set;
         }
 
-        internal Camera(World world, FixedSingle width, FixedSingle height)
-        {
-            World = world;
-            Width = width;
-            Height = height;
-
-            lastCenter = Vector.NULL_VECTOR;
-            center = new Vector(width / 2, height / 2);
-            vel = Vector.NULL_VECTOR;
-            focusOn = null;
-            SmoothOnNextMove = false;
-            SmoothSpeed = DASH_SPEED;
-            moveToFocus = false;
-            MovingSpeed = 0;
-        }
-
-        internal Camera(World world, Camera other)
-        {
-            World = world;
-            Width = other.Width;
-            Height = other.Height;
-
-            lastCenter = other.lastCenter;
-            center = other.center;
-            vel = other.vel;
-            focusOn = other.focusOn;
-            SmoothOnNextMove = false;
-            SmoothSpeed = DASH_SPEED;
-            moveToFocus = false;
-            MovingSpeed = 0;
-        }
-
-        public World World
-        {
-            get;
-        }
-
         public FixedSingle Width
         {
-            get;
+            get => Size.X;
+            set => Size = (value, Height);
         }
 
         public FixedSingle Height
         {
-            get;
+            get => Size.Y;
+            set => Size = (Width, value);
         }
+
+        public Vector Size
+        {
+            get;
+            set;
+        }
+
+        public World World => GameEngine.Engine.World;
 
         public bool SmoothOnNextMove
         {
             get;
             set;
-        }
+        } = false;
 
         public FixedSingle SmoothSpeed
         {
             get;
             set;
-        }
+        } = DASH_SPEED;
 
         public FixedSingle MovingSpeed
         {
             get;
             private set;
+        } = 0;
+
+        public Vector LeftTop
+        {
+            get => Origin - Size * FixedSingle.HALF;
+            set => Center = value + Size * FixedSingle.HALF;
+        }
+
+        public Vector LeftMiddle
+        {
+            get => (Center.X - Width * FixedSingle.HALF, Center.Y);
+            set => Center = (value.X + Width * FixedSingle.HALF, value.Y);
+        }
+
+        public Vector LeftBottom
+        {
+            get => (Center.X - Width * FixedSingle.HALF, Center.Y + Height * FixedSingle.HALF);
+            set => Center = (value.X + Width * FixedSingle.HALF, value.Y - Height * FixedSingle.HALF);
+        }
+
+        public Vector MiddleTop
+        {
+            get => (Center.X, Center.Y - Height * FixedSingle.HALF);
+            set => Center = (value.X, value.Y + Height * FixedSingle.HALF);
+        }
+
+        public Vector Center
+        {
+            get => Origin;
+            set
+            {
+                if (focusOn != null)
+                    return;
+
+                SetCenter(value);
+            }
+        }
+
+        public Vector MiddleBottom
+        {
+            get => (Center.X, Center.Y + Height * FixedSingle.HALF);
+            set => Center = (value.X, value.Y - Height * FixedSingle.HALF);
+        }
+
+        public Vector RightTop
+        {
+            get => (Center.X + Width * FixedSingle.HALF, Center.Y - Height * FixedSingle.HALF);
+            set => Center = (value.X - Width * FixedSingle.HALF, value.Y + Height * FixedSingle.HALF);
+        }
+
+        public Vector RightMiddle
+        {
+            get => (Center.X + Width * FixedSingle.HALF, Center.Y);
+            set => Center = (value.X - Width * FixedSingle.HALF, value.Y);
+        }
+
+        public Vector RightBottom
+        {
+            get => Center + Size * FixedSingle.HALF;
+            set => Center = value - Size * FixedSingle.HALF;
+        }
+
+        public Entity FocusOn
+        {
+            get => focusOn;
+            set
+            {
+                focusOn = value;
+                if (focusOn != null)
+                    SetCenter(focusOn.Origin);
+            }
+        }
+
+        public Box BoundingBox
+        {
+            get
+            {
+                Vector sv2 = Size * FixedSingle.HALF;
+                return new Box(Center, -sv2, sv2);
+            }
+        }
+
+        public Box ExtendedBoundingBox
+        {
+            get
+            {
+                Vector sv2 = Size * FixedSingle.HALF + EXTENDED_BORDER_SCREEN_OFFSET;
+                return new Box(Center, -sv2, sv2);
+            }
+        }
+
+        public Vector Velocity
+        {
+            get => vel;
+            set
+            {
+                vel = value;
+                moveStep = vel.Length;
+            }
+        }
+
+        public bool Moving => moveDistance > STEP_SIZE;
+
+        internal Camera()
+        {
+            TouchingKind = TouchingKind.VECTOR;
+        }
+
+        protected override Box GetHitbox()
+        {
+            var box = ExtendedBoundingBox;
+            return box - box.Origin;
         }
 
         private void SetCenter(Vector v)
@@ -116,120 +200,17 @@ namespace XSharp.Engine.World
             else if (y > maxY)
                 y = maxY;
 
-            center = new Vector(x, y);
+            Origin = new Vector(x, y);
         }
-
-        public Vector LeftTop
-        {
-            get => center - SizeVector / 2;
-            set => Center = value + SizeVector / 2;
-        }
-
-        public Vector LeftMiddle
-        {
-            get => (center.X - Width / 2, center.Y);
-            set => Center = (value.X + Width / 2, value.Y);
-        }
-
-        public Vector LeftBottom
-        {
-            get => (center.X - Width / 2, center.Y + Height / 2);
-            set => Center = (value.X + Width / 2, value.Y - Height / 2);
-        }
-
-        public Vector MiddleTop
-        {
-            get => (center.X, center.Y - Height / 2);
-            set => Center = (value.X, value.Y + Height / 2);
-        }
-
-        public Vector Center
-        {
-            get => center;
-            set
-            {
-                if (focusOn != null)
-                    return;
-
-                SetCenter(value);
-            }
-        }
-
-        public Vector MiddleBottom
-        {
-            get => (center.X, center.Y + Height / 2);
-            set => Center = (value.X, value.Y - Height / 2);
-        }
-
-        public Vector RightTop
-        {
-            get => (center.X + Width / 2, center.Y - Height / 2);
-            set => Center = (value.X - Width / 2, value.Y + Height / 2);
-        }
-
-        public Vector RightMiddle
-        {
-            get => (center.X + Width / 2, center.Y);
-            set => Center = (value.X - Width / 2, value.Y);
-        }
-
-        public Vector RightBottom
-        {
-            get => center + SizeVector / 2;
-            set => Center = value - SizeVector / 2;
-        }
-
-        public Entity FocusOn
-        {
-            get => focusOn;
-            set
-            {
-                focusOn = value;
-                if (focusOn != null)
-                    SetCenter(focusOn.Origin);
-            }
-        }
-
-        public Vector SizeVector => new(Width, Height);
-
-        public Box BoundingBox
-        {
-            get
-            {
-                Vector sv2 = SizeVector / 2;
-                return new Box(center, -sv2, sv2);
-            }
-        }
-
-        public Box ExtendedBoundingBox
-        {
-            get
-            {
-                Vector sv2 = SizeVector / 2 + EXTENDED_BORDER_SCREEN_OFFSET;
-                return new Box(center, -sv2, sv2);
-            }
-        }
-
-        public Vector Velocity
-        {
-            get => vel;
-            set
-            {
-                vel = value;
-                moveStep = vel.Length;
-            }
-        }
-
-        public bool Moving => moveDistance > STEP_SIZE;
 
         public void MoveToLeftTop(Vector dest)
         {
-            MoveToCenter(dest + SizeVector / 2, SmoothSpeed);
+            MoveToCenter(dest + Size * FixedSingle.HALF, SmoothSpeed);
         }
 
         public void MoveToLeftTop(Vector dest, FixedSingle speed)
         {
-            MoveToCenter(dest + SizeVector / 2, speed);
+            MoveToCenter(dest + Size * FixedSingle.HALF, speed);
         }
 
         public void MoveToCenter(Vector dest)
@@ -242,7 +223,7 @@ namespace XSharp.Engine.World
             if (speed <= STEP_SIZE)
                 return;
 
-            Vector delta = dest - center;
+            Vector delta = dest - Center;
             FixedSingle moveDistance = delta.Length;
             if (moveDistance <= STEP_SIZE)
             {
@@ -267,11 +248,11 @@ namespace XSharp.Engine.World
             }
             else
             {
-                Vector oldCenter = center;
-                Vector newCenter = center + vel;
+                Vector oldCenter = Center;
+                Vector newCenter = Center + vel;
                 SetCenter(newCenter);
 
-                if (center == oldCenter)
+                if (Center == oldCenter)
                 {
                     this.moveDistance = 0;
                     MovingSpeed = 0;
@@ -290,7 +271,7 @@ namespace XSharp.Engine.World
                 return;
 
             Vector dest = focusOn.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR;
-            Vector delta = dest - center;
+            Vector delta = dest - Center;
             FixedSingle moveDistance = delta.Length;
             if (moveDistance <= STEP_SIZE)
             {
@@ -315,11 +296,11 @@ namespace XSharp.Engine.World
             }
             else
             {
-                Vector oldCenter = center;
-                Vector newCenter = center + vel;
+                Vector oldCenter = Center;
+                Vector newCenter = Center + vel;
                 SetCenter(newCenter);
 
-                if (center == oldCenter)
+                if (Center == oldCenter)
                 {
                     this.moveDistance = 0;
                     MovingSpeed = 0;
@@ -347,15 +328,25 @@ namespace XSharp.Engine.World
             return VisibleBox(box).IsValid(EPSLON);
         }
 
-        public void OnFrame()
+        protected internal override void OnSpawn()
         {
+            base.OnSpawn();
+
+            CheckTouchingEntities = true;
+            CheckTouchingWithDeadEntities = true;
+        }
+
+        protected internal override void OnFrame()
+        {
+            base.OnFrame();
+
             if (Moving)
             {
-                Vector oldCenter = center;
-                Vector newCenter = center + vel;
+                Vector oldCenter = Center;
+                Vector newCenter = Center + vel;
                 SetCenter(newCenter);
 
-                if (center == oldCenter)
+                if (Center == oldCenter)
                 {
                     moveDistance = 0;
                     MovingSpeed = 0;
@@ -377,8 +368,24 @@ namespace XSharp.Engine.World
                     SetCenter(focusOn.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR);
             }
 
-            if (center != lastCenter)
-                lastCenter = center;
+            if (Center != lastCenter)
+                lastCenter = Center;
+        }
+
+        protected override void OnStartTouch(Entity entity)
+        {
+            base.OnStartTouch(entity);
+
+            if (entity.Alive || entity.Spawning || !entity.Respawnable)
+                return;
+
+            if (Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn && !entity.IsOffscreen(VectorKind.ORIGIN))
+            {
+                if (entity is Sprite sprite)
+                    sprite.Visible = true;
+
+                entity.Spawn();
+            }
         }
     }
 }

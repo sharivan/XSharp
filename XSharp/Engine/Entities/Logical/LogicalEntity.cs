@@ -2,7 +2,7 @@
 
 namespace XSharp.Engine.Entities.Logical
 {
-    public abstract class LogicalEntity : Entity
+    public abstract class LogicalEntity : Entity, IEnableDisable
     {
         public bool Enabled
         {
@@ -14,7 +14,7 @@ namespace XSharp.Engine.Entities.Logical
         {
         }
 
-        protected override Box GetBoundingBox()
+        protected override Box GetHitbox()
         {
             return Box.EMPTY_BOX;
         }

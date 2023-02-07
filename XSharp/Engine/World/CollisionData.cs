@@ -96,6 +96,7 @@
         SLIPPERY_SLOPE_4_8 = 0x8B,
         SLIPPERY_SLOPE_0_4 = 0x8C,
         SLIPPERY_SLOPE_BASE = 0xBA,
-        SLIPPERY = 0xBB
+        SLIPPERY_BORDER_FLOOR = 0xBB,
+        SLIPPERY_FLOOR = 0xBE
     }
 }

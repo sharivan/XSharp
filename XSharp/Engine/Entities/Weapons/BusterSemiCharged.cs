@@ -60,6 +60,7 @@ namespace XSharp.Engine.Entities.Weapons
         {
             base.OnSpawn();
 
+            Direction = Shooter.WallSliding ? Shooter.Direction.Oposite() : Shooter.Direction;
             CheckCollisionWithWorld = false;
             Velocity = Vector.NULL_VECTOR;
 
@@ -122,17 +123,18 @@ namespace XSharp.Engine.Entities.Weapons
 
             if (!enemy.Broke)
             {
+                Damage = 0;
                 hitEntity = enemy;
                 SetState(SemiChargedState.HITTING);
             }
         }
 
-        public override void Dispose()
+        protected override void OnDeath()
         {
             Shooter.shots--;
             Shooter.shootingCharged = false;
 
-            base.Dispose();
+            base.OnDeath();
         }
 
         protected internal override void OnAnimationEnd(Animation animation)

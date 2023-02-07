@@ -8,6 +8,11 @@ namespace XSharp
 {
     static class Program
     {
+        static private void Form_Load(object sender, EventArgs e)
+        {
+            GameEngine.Engine.LoadConfig();
+        }
+
         static private void Form_Resize(object sender, EventArgs e)
         {
             //if (engine != null)
@@ -17,6 +22,7 @@ namespace XSharp
         static private void Form_Closing(object sender, EventArgs e)
         {
             GameEngine.Engine.Running = false;
+            GameEngine.Engine.SaveConfig();
         }
 
         /// <summary>
@@ -27,10 +33,12 @@ namespace XSharp
         {
             var form = new RenderForm("X#")
             {
+                StartPosition = FormStartPosition.Manual,
                 ClientSize = new System.Drawing.Size((int) (DEFAULT_CLIENT_WIDTH * 4), (int) (DEFAULT_CLIENT_HEIGHT * 4))
             };
 
-            form.Resize += new EventHandler(Form_Resize);
+            form.Load += new EventHandler(Form_Load);
+            form.Resize += new EventHandler(Form_Resize);            
             form.FormClosing += new FormClosingEventHandler(Form_Closing);
 
 

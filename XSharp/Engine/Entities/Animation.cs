@@ -52,7 +52,7 @@ namespace XSharp.Engine
                 if (Flipped)
                     box = box.Flip();
 
-                if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
+                if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
                     box = box.Mirror();
 
                 return box;
@@ -254,8 +254,8 @@ namespace XSharp.Engine
                 var collisionBox = sequence[currentSequenceIndex].CollisionBox;
 
                 if (Flipped)
-                    collisionBox = Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT ? collisionBox.Flip().Mirror() : collisionBox.Flip();
-                else if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
+                    collisionBox = Mirrored || Sprite.Directional && Sprite.Direction == Sprite.DefaultDirection ? collisionBox.Flip() : collisionBox.Flip().Mirror();
+                else if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
                     collisionBox = collisionBox.Mirror();
 
                 return collisionBox;
@@ -344,7 +344,9 @@ namespace XSharp.Engine
                 if (!animationEndFired)
                 {
                     animationEndFired = true;
-                    Sprite.OnAnimationEnd(this);
+
+                    if (Sprite.MultiAnimation || Sprite.CurrentAnimation == this)
+                        Sprite.OnAnimationEnd(this);
                 }
 
                 if (sequence.LoopFromSequenceIndex != -1) // e se a animação está em looping, então o próximo frame deverá ser o primeiro frame da animação (não o frame inicial, definido por initialFrame)
@@ -386,12 +388,12 @@ namespace XSharp.Engine
 
             if (Flipped)
             {
-                if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
+                if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
                     transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, -1, 1) * Matrix.Translation(center3);
                 else
                     transform *= Matrix.Translation(-center3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(center3);
             }
-            else if (Mirrored || Sprite.Directional && Sprite.Direction == Direction.LEFT)
+            else if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
                 transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(center3);
 
             Sprite.Engine.RenderSprite(texture, Sprite.Palette, drawBox.LeftTop, transform, RepeatX, RepeatY);

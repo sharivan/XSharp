@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using XSharp.Engine.Entities;
 using XSharp.Geometry;
 using XSharp.Math;
@@ -13,51 +14,55 @@ namespace XSharp.Engine.World
     /// <typeparam name="T">Tipo da entidade (deve descender da classe Sprite)</typeparam>
     internal class Partition<T> where T : Entity
     {
+        private const int MIN_QUAD_SIZE = MAP_SIZE;
+
         /// <summary>
         /// Elemento/Célula de uma partição.
         /// A partição é dividida em uma matriz bidimensional de células onde cada uma delas são retângulos iguais.
         /// Cada célula armazena uma lista de entidades que possuem intersecção não vazia com ela, facilitando assim a busca por entidades que possuem intersecção não vazia com um retângulo dado.
         /// </summary>
         /// <typeparam name="U">Tipo da entidade (deve descender da classe Sprite)</typeparam>
-        private class PartitionCell<U> where U : Entity
+        private class PartitionQuad<U> where U : Entity
         {
             readonly Partition<U> partition; // Partição a qual esta célula pertence
             readonly Box box; // Retângulo que delimita a célula
-            readonly List<U>[] values;
+            readonly HashSet<U>[] values;
+
 
             /// <summary>
             /// Cria uma nova célula para a partição
             /// </summary>
             /// <param name="partition">Partição a qual esta célula pertence</param>
             /// <param name="box">Retângulo que delimita esta célula</param>
-            public PartitionCell(Partition<U> partition, Box box)
+            public PartitionQuad(Partition<U> partition, Box box)
             {
                 this.partition = partition;
                 this.box = box;
 
-                values = new List<U>[BOXKIND_COUNT];
+                values = new HashSet<U>[BOXKIND_COUNT];
 
                 for (int i = 0; i < BOXKIND_COUNT; i++)
-                    values[i] = new List<U>();
+                    values[i] = new HashSet<U>();
             }
 
             public void Insert(U value, BoxKind kind)
             {
                 int index = kind.ToIndex();
-                List<U> list = values[index];
-                if (!list.Contains(value))
-                    list.Add(value);
+                HashSet<U> list = values[index];
+                list.Add(value);
             }
 
-            public void Query(Box box, List<U> result, U exclude, List<U> addictionalExclusionList, BoxKind kind)
+            public void Query(Box box, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
             {
+                if (!(box & this.box).IsValid())
+                    return;
+
                 int index = kind.ToIndex();
-                List<U> list = values[index];
+                HashSet<U> list = values[index];
 
                 // Verifica a lista de entidades da célula
-                for (int i = 0; i < list.Count; i++)
+                foreach (U value in list)
                 {
-                    U value = list[i];
                     if (exclude != null && exclude.Equals(value))
                         continue;
 
@@ -66,16 +71,8 @@ namespace XSharp.Engine.World
 
                     Box intersection = value.GetBox(kind) & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
 
-                    if (intersection.IsValid() && !result.Contains(value)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
-                    {
-                        if (value.Alive)
-                            result.Add(value); // adiciona esta entidade à lista
-                        else
-                        {
-                            Remove(value);
-                            i--;
-                        }
-                    }
+                    if (intersection.IsValid() && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                        result.Add(value); // adiciona esta entidade à lista
                 }
             }
 
@@ -86,14 +83,14 @@ namespace XSharp.Engine.World
             public void Update(U value, BoxKind kind)
             {
                 int index = kind.ToIndex();
-                List<U> list = values[index];
+                HashSet<U> list = values[index];
 
                 Box intersection = value.GetBox(kind) & box; // Calcula a interecção
                 bool intersectionNull = !intersection.IsValid();
 
-                if (!intersectionNull && !list.Contains(value)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
+                if (!intersectionNull) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
                     list.Add(value); // então adiciona-a em sua lista de entidades
-                else if (intersectionNull && list.Contains(value)) // Senão, se a intesecção for vazia e esta entidade ainda está contida neta célula
+                else // Senão, se a intesecção for vazia e esta entidade ainda está contida neta célula
                     list.Remove(value); // remove-a da sua lista de entidades
             }
 
@@ -159,7 +156,7 @@ namespace XSharp.Engine.World
         private readonly int rows; // Número de linhas da subdivisão
         private readonly int cols; // Número de colunas da subdivisão
 
-        private readonly PartitionCell<T>[,] cells; // Matriz da partição
+        private readonly PartitionQuad<T>[,] cells; // Matriz da partição
         private readonly FixedSingle cellWidth; // Largura de cada subdivisão
         private readonly FixedSingle cellHeight; // Altura de cada subdivisão
 
@@ -192,7 +189,7 @@ namespace XSharp.Engine.World
             cellWidth = box.Width / cols; // Calcula a largura de cada subdivisão
             cellHeight = box.Height / rows; // Calcula a altura de cada subdivisão
 
-            cells = new PartitionCell<T>[cols, rows]; // Cria a matriz de subdivisões
+            cells = new PartitionQuad<T>[cols, rows]; // Cria a matriz de subdivisões
         }
 
         /// <summary>
@@ -238,33 +235,33 @@ namespace XSharp.Engine.World
                 for (int col = startCol; col <= endCol; col++)
                     for (int row = startRow; row <= endRow; row++)
                     {
-                        var box1 = new Box(new Vector(lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
-                        Box intersection = box1 & box; // Calcula a intesecção
+                        var cellBox = new Box((lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, (cellWidth, cellHeight));
+                        Box intersection = cellBox & box; // Calcula a intersecção desta célula com o retângulo de desenho atual da entidade
 
-                        if (!intersection.IsValid()) // Se a intesecção for vazia, não precisa adicionar a entidade a célula
+                        if (!intersection.IsValid()) // Se ela for vazia, não há nada o que fazer nesta célula
                             continue;
 
                         if (cells[col, row] == null) // Verifica se a célula já foi criada antes, caso não tenha sido ainda então a cria
-                            cells[col, row] = new PartitionCell<T>(this, box1);
+                            cells[col, row] = new PartitionQuad<T>(this, cellBox);
 
                         cells[col, row].Insert(item, k); // Insere a entidade na célula
                     }
             }
         }
 
-        public List<T> Query(Box box, BoxKind kind = BoxKind.ALL)
+        public int Query(HashSet<T> resultSet, Box box, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
-            return Query(box, null, null, kind);
+            return Query(resultSet, box, null, null, kind, aliveOnly);
         }
 
-        public List<T> Query(Box box, T exclude, BoxKind kind = BoxKind.ALL)
+        public int Query(HashSet<T> resultSet, Box box, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
-            return Query(box, exclude, null, kind);
+            return Query(resultSet, box, exclude, null, kind, aliveOnly);
         }
 
-        public List<T> Query(Box box, List<T> exclusionList, BoxKind kind = BoxKind.ALL)
+        public int Query(HashSet<T> resultSet, Box box, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
-            return Query(box, null, exclusionList, kind);
+            return Query(resultSet, box, null, exclusionList, kind, aliveOnly);
         }
 
         /// <summary>
@@ -272,10 +269,8 @@ namespace XSharp.Engine.World
         /// </summary>
         /// <param name="box"></param>
         /// <returns></returns>
-        public List<T> Query(Box box, T exclude, List<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL)
+        public int Query(HashSet<T> resultSet, Box box, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
-            var result = new List<T>();
-
             // Calcula os máximos e mínimos absulutos do retângulo que delimita esta partição
             Vector lt = this.box.LeftTop;
             Vector rb = this.box.RightBottom;
@@ -314,10 +309,10 @@ namespace XSharp.Engine.World
                 // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
                 for (int col = startCol; col <= endCol; col++)
                     for (int row = startRow; row <= endRow; row++)
-                        cells[col, row]?.Query(box, result, exclude, addictionalExclusionList, k); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
+                        cells[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, k, aliveOnly); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
             }
 
-            return result;
+            return resultSet.Count;
         }
 
         /// <summary>
@@ -397,15 +392,15 @@ namespace XSharp.Engine.World
                         else
                         {
                             // Senão...
-                            var box1 = new Box(new Vector(lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
-                            Box intersection = box1 & box; // Calcula a intersecção desta célula com o retângulo de desenho atual da entidade
+                            var cellBox = new Box(new Vector(lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
+                            Box intersection = cellBox & box; // Calcula a intersecção desta célula com o retângulo de desenho atual da entidade
 
                             if (!intersection.IsValid()) // Se ela for vazia, não há nada o que fazer nesta célula
                                 continue;
 
                             // Senão...
                             if (cells[col, row] == null) // Verifica se a célula é nula
-                                cells[col, row] = new PartitionCell<T>(this, box1); // Se for, cria uma nova célula nesta posição
+                                cells[col, row] = new PartitionQuad<T>(this, cellBox); // Se for, cria uma nova célula nesta posição
 
                             cells[col, row].Insert(item, k); // e finalmente insere a entidade nesta célula
                         }

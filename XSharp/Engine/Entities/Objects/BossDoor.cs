@@ -23,7 +23,7 @@ namespace XSharp.Engine.Entities.Objects
 
     public delegate void BossDoorEvent(BossDoor source);
 
-    public class BossDoor : AbstractTrigger
+    public class BossDoor : BaseTrigger
     {
         private static Box GetTriggerBoudingBox(Vector origin)
         {
@@ -55,26 +55,21 @@ namespace XSharp.Engine.Entities.Objects
             set => effect.State = value;
         }
 
-        public bool ClosingHugeSound
+        public bool StartBossBattle
         {
             get;
             set;
         }
 
-        public bool UnlockInputAfterClosing
-        {
-            get;
-            set;
-        } = true;
-
         public BossDoor(string name, Vector origin)
         {
-            BoundingBox = GetTriggerBoudingBox(origin);
+            Hitbox = GetTriggerBoudingBox(origin);
 
             effect = new BossDoorEffect()
             {
                 Door = this,
-                Origin = origin
+                Origin = origin,
+                Visible = false
             };
         }
 
@@ -87,8 +82,6 @@ namespace XSharp.Engine.Entities.Objects
             base.OnSpawn();
 
             effect.Spawn();
-
-            UnlockInputAfterClosing = true;
 
             State = BossDoorState.CLOSED;
         }
@@ -152,10 +145,10 @@ namespace XSharp.Engine.Entities.Objects
             Box sceneBox = GetSceneBoundingBox(sceneCell);
             Engine.World.Camera.MoveToLeftTop(sceneBox.LeftTop + (SCENE_SIZE, 0), 1.5);
 
-            if (ClosingHugeSound)
+            if (StartBossBattle)
             {
                 Engine.CameraConstraintsOrigin = Engine.CurrentCheckpoint.Origin + (SCENE_SIZE, 0);
-                Engine.CameraConstraintsBox = Engine.CurrentCheckpoint.BoundingBox + (SCENE_SIZE, 0);
+                Engine.CameraConstraintsBox = Engine.CurrentCheckpoint.Hitbox + (SCENE_SIZE, 0);
             }
 
             PlayerCrossingEvent?.Invoke(this);
@@ -177,17 +170,19 @@ namespace XSharp.Engine.Entities.Objects
 
         internal void OnStartClosing()
         {
-            Engine.PlaySound(0, ClosingHugeSound ? 23 : 22, true);
+            Engine.PlaySound(0, StartBossBattle ? 23 : 22, true);
             ClosingEvent?.Invoke(this);
         }
 
         internal void OnEndClosing()
         {
-            if (!ClosingHugeSound)
+            if (StartBossBattle)
+                Engine.StartBossBattle();
+            else
+            {
                 Engine.Player.Invincible = false;
-
-            if (UnlockInputAfterClosing)
                 Engine.Player.InputLocked = false;
+            }
         }
     }
 }

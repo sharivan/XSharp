@@ -6,7 +6,8 @@ namespace XSharp.Engine.Entities.HUD
     {
         public Vector Offset
         {
-            get; set;
+            get;
+            set;
         }
 
         protected HUD()
@@ -28,7 +29,7 @@ namespace XSharp.Engine.Entities.HUD
             Origin = Engine.World.Camera.LeftTop + Offset;
         }
 
-        protected override void UpdatePartition(bool force = false)
+        protected internal override void UpdatePartition(bool force = false)
         {
         }
     }

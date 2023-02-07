@@ -1,34 +1,85 @@
-﻿using XSharp.Geometry;
+﻿using System.Drawing;
+using XSharp.Geometry;
 using XSharp.Math;
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.HUD
 {
+    public enum HUDImage
+    {
+        NONE = -1,
+        RIDE_ARMOR = 0,
+        ZERO = 1,
+        X1_BOSS = 2,
+        BOSS = 3,
+        DOPPLER = 4,
+        W = 5,
+        DOPPLER_PROTOTYPE = 6,
+        X = 7
+    }
+
     public class HealthHUD : HUD
     {
-        private static FixedSingle GetValue()
+        private static FixedSingle GetHeight(FixedSingle capacity)
         {
-            return GameEngine.Engine.Player != null ? GameEngine.Engine.Player.Health : 0;
+            return 4 + 2 * capacity + 16;
         }
 
-        private static FixedSingle GetHeight()
+        private static FixedSingle GetTop(FixedSingle capacity)
         {
-            return 4 + 2 * GameEngine.Engine.HealthCapacity + 16;
+            return HP_BOTTOM - GetHeight(capacity);
         }
 
-        private static FixedSingle GetTop()
-        {
-            return HP_BOTTOM - GetHeight();
-        }
+        private HUDImage image = HUDImage.NONE;
 
         private int topAnimationIndex;
         private int middleAnimationIndex;
         private int middleEmptyAnimationIndex;
         private int bottomAnimationIndex;
+        private int[] hudImageAnimationIndex;
 
-        public FixedSingle Capacity => Engine.HealthCapacity;
+        public FixedSingle Left
+        {
+            get;
+            protected set;
+        }
 
-        public FixedSingle Value => GetValue();
+        public FixedSingle Capacity
+        {
+            get;
+            protected set;
+        }
+
+        public FixedSingle Value
+        {
+            get;
+            protected set;
+        }
+
+        public HUDImage Image
+        {
+            get => image;
+
+            protected set
+            {
+                if (ResourcesCreated && value != image)
+                {
+                    if (image != HUDImage.NONE)
+                    {
+                        Animation animation = GetAnimation(hudImageAnimationIndex[(int) image]);
+                        animation.Visible = false;
+                    }
+
+                    if (value != HUDImage.NONE)
+                    {
+                        Animation animation = GetAnimation(hudImageAnimationIndex[(int) value]);
+                        animation.Visible = true;
+                    }
+                }
+
+                image = value;
+            }
+        }
 
         protected Animation TopAnimation => GetAnimation(topAnimationIndex);
 
@@ -38,10 +89,13 @@ namespace XSharp.Engine.Entities.HUD
 
         protected Animation BottomAnimation => GetAnimation(bottomAnimationIndex);
 
-        public HealthHUD()
+        protected Animation ImageAnimation => Image != HUDImage.NONE ? GetAnimation(hudImageAnimationIndex[(int) Image]) : null;
+
+        protected HealthHUD()
         {
-            Offset = (HP_LEFT, GetTop());
             SpriteSheetIndex = 6;
+
+            hudImageAnimationIndex = new int[8];
         }
 
         protected internal override void OnSpawn()
@@ -49,13 +103,23 @@ namespace XSharp.Engine.Entities.HUD
             base.OnSpawn();
 
             MultiAnimation = true;
+
+            if (Image != HUDImage.NONE)
+            {
+                Animation animation = GetAnimation(hudImageAnimationIndex[(int) Image]);
+                animation.Visible = true;
+            }
         }
 
         protected internal override void UpdateOrigin()
         {
-            Offset = (HP_LEFT, GetTop());
+            Offset = (Left, GetTop(Capacity));
 
             base.UpdateOrigin();
+
+            var imageAnimation = ImageAnimation;
+            if (imageAnimation != null)
+                imageAnimation.Offset = (1, 2 * Capacity + 6);
 
             BottomAnimation.Offset = (0, 2 * Capacity + 4);
             MiddleEmptyAnimation.RepeatY = (int) (Capacity - Value);
@@ -92,6 +156,54 @@ namespace XSharp.Engine.Entities.HUD
                     startOn = true;
                     startVisible = true;
                     bottomAnimationIndex = animationIndex;
+                    break;
+
+                case "RideArmor":
+                    startOn = true;
+                    startVisible = Image == HUDImage.RIDE_ARMOR;
+                    hudImageAnimationIndex[(int) HUDImage.RIDE_ARMOR] = animationIndex;
+                    break;
+
+                case "Zero":
+                    startOn = true;
+                    startVisible = Image == HUDImage.ZERO;
+                    hudImageAnimationIndex[(int) HUDImage.ZERO] = animationIndex;
+                    break;
+
+                case "X1Boss":
+                    startOn = true;
+                    startVisible = Image == HUDImage.X1_BOSS;
+                    hudImageAnimationIndex[(int) HUDImage.X1_BOSS] = animationIndex;
+                    break;
+
+                case "Boss":
+                    startOn = true;
+                    startVisible = Image == HUDImage.BOSS;
+                    hudImageAnimationIndex[(int) HUDImage.BOSS] = animationIndex;
+                    break;
+
+                case "Doppler":
+                    startOn = true;
+                    startVisible = Image == HUDImage.DOPPLER;
+                    hudImageAnimationIndex[(int) HUDImage.DOPPLER] = animationIndex;
+                    break;
+
+                case "W":
+                    startOn = true;
+                    startVisible = Image == HUDImage.W;
+                    hudImageAnimationIndex[(int) HUDImage.W] = animationIndex;
+                    break;
+
+                case "DopplerPrototype":
+                    startOn = true;
+                    startVisible = Image == HUDImage.DOPPLER_PROTOTYPE;
+                    hudImageAnimationIndex[(int) HUDImage.DOPPLER_PROTOTYPE] = animationIndex;
+                    break;
+
+                case "X":
+                    startOn = true;
+                    startVisible = Image == HUDImage.X;
+                    hudImageAnimationIndex[(int) HUDImage.X] = animationIndex;
                     break;
 
                 default:
