@@ -1,6 +1,4 @@
-﻿using XSharp.Geometry;
-
-namespace XSharp.Engine.Entities.Logical
+﻿namespace XSharp.Engine.Entities.Logical
 {
     public delegate void LogicalBranchEvent(LogicalBranch source);
 

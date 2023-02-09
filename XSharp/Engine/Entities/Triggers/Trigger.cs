@@ -1,6 +1,4 @@
-﻿using XSharp.Geometry;
-
-namespace XSharp.Engine.Entities.Triggers
+﻿namespace XSharp.Engine.Entities.Triggers
 {
     public class Trigger : BaseTrigger
     {

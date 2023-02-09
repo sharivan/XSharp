@@ -1,5 +1,4 @@
 ﻿using XSharp.Engine.Entities.Effects;
-using XSharp.Geometry;
 
 namespace XSharp.Engine.Entities.Objects
 {
@@ -25,18 +24,18 @@ namespace XSharp.Engine.Entities.Objects
             SetAnimationNames("Closed", "Opening", "PlayerCrossing", "Closing");
 
             SetupStateArray(typeof(BossDoorState));
-            RegisterState(BossDoorState.CLOSED, OnStartClosed, null, null, "Closed");
+            RegisterState(BossDoorState.CLOSED, OnStartClosed, "Closed");
             RegisterState(BossDoorState.OPENING, OnStartOpening, OnOpening, null, "Opening");
             RegisterState(BossDoorState.PLAYER_CROSSING, OnStartPlayerCrossing, OnPlayerCrossing, null, "PlayerCrossing");
             RegisterState(BossDoorState.CLOSING, OnStartClosing, null, OnEndClosing, "Closing");
         }
 
-        private void OnStartClosed(EntityState state)
+        private void OnStartClosed(EntityState state, EntityState lastState)
         {
             Door?.OnStartClosed();
         }
 
-        private void OnStartOpening(EntityState state)
+        private void OnStartOpening(EntityState state, EntityState lastState)
         {
             Door.OnStartOpening();
         }
@@ -46,7 +45,7 @@ namespace XSharp.Engine.Entities.Objects
             Door?.OnOpening(frameCounter);
         }
 
-        private void OnStartPlayerCrossing(EntityState state)
+        private void OnStartPlayerCrossing(EntityState state, EntityState lastState)
         {
             Door?.OnStartPlayerCrossing();
         }
@@ -56,7 +55,7 @@ namespace XSharp.Engine.Entities.Objects
             Door?.OnPlayerCrossing(frameCounter);
         }
 
-        private void OnStartClosing(EntityState state)
+        private void OnStartClosing(EntityState state, EntityState lastState)
         {
             Door?.OnStartClosing();
         }

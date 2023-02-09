@@ -1,11 +1,8 @@
-﻿using SharpDX;
-using SharpDX.Direct3D9;
-using SharpDX.Mathematics.Interop;
+﻿using SharpDX.Direct3D9;
 using System;
 using System.Collections.Generic;
 using XSharp.Engine.Entities;
 using XSharp.Geometry;
-using XSharp.Math;
 using static XSharp.Engine.Consts;
 using MMXBox = XSharp.Geometry.Box;
 
@@ -37,6 +34,11 @@ namespace XSharp.Engine.World
 
         private CollisionChecker collisionChecker;
 
+        public FadingSettings FadingSettings
+        {
+            get;
+        }
+
         internal World(int sceneRowCount, int sceneColCount)
             : this(sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
         {
@@ -54,6 +56,8 @@ namespace XSharp.Engine.World
                 Width = SCREEN_WIDTH,
                 Height = SCREEN_HEIGHT
             };
+
+            FadingSettings = new FadingSettings();
 
             tileList = new List<Tile>();
             backgroundTileList = new List<Tile>();
@@ -505,7 +509,7 @@ namespace XSharp.Engine.World
                     {
                         Vector sceneLT = (col * SCENE_SIZE, row * SCENE_SIZE);
                         MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                        Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, BackgroundTilemap, BackgroundPalette, sceneBox + screenDelta);
+                        Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, BackgroundTilemap, BackgroundPalette, FadingSettings, sceneBox + screenDelta);
                     }
                 }
             }
@@ -534,7 +538,7 @@ namespace XSharp.Engine.World
                     {
                         var sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
                         MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                        Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, ForegroundTilemap, ForegroundPalette, sceneBox);
+                        Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, ForegroundTilemap, ForegroundPalette, FadingSettings, sceneBox);
                     }
                 }
             }
@@ -542,6 +546,7 @@ namespace XSharp.Engine.World
 
         public void OnFrame()
         {
+            FadingSettings.OnFrame();
         }
 
         public static Cell GetTileCellFromPos(Vector pos)

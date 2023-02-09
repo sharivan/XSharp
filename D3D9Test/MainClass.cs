@@ -297,7 +297,7 @@ namespace D3D9Test
         }
 
         [STAThread]
-        static void Main(string[] args)
+        static void Main()
         {
             var app = new MainClass();
             app.Run();

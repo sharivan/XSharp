@@ -21,6 +21,7 @@ using XSharp.Math;
 using static XSharp.Engine.Consts;
 using MMXBox = XSharp.Geometry.Box;
 
+#pragma warning disable IDE0060 // Remover o parâmetro não utilizado
 namespace XSharp.ROM
 {
     public struct STileInfo
@@ -2930,7 +2931,6 @@ namespace XSharp.ROM
 
         internal void SwitchLevelEvent(bool ev)
         {
-
         }
 
         private Map[] maps;
@@ -3403,3 +3403,4 @@ namespace XSharp.ROM
         }
     }
 }
+#pragma warning restore IDE0060 // Remover o parâmetro não utilizado

@@ -38,9 +38,8 @@ namespace XSharp
             };
 
             form.Load += new EventHandler(Form_Load);
-            form.Resize += new EventHandler(Form_Resize);            
+            form.Resize += new EventHandler(Form_Resize);
             form.FormClosing += new FormClosingEventHandler(Form_Closing);
-
 
             try
             {

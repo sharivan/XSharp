@@ -1,6 +1,4 @@
-﻿using XSharp.Geometry;
-
-using static XSharp.Engine.Consts;
+﻿using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Items
 {
@@ -25,8 +23,8 @@ namespace XSharp.Engine.Entities.Items
             SetAnimationNames("SmallHealthRecoverDropping", "SmallHealthRecoverIdle");
 
             SetupStateArray(typeof(SmallHealthRecoverState));
-            RegisterState(SmallHealthRecoverState.DROPPING, null, "SmallHealthRecoverDropping");
-            RegisterState(SmallHealthRecoverState.IDLE, null, "SmallHealthRecoverIdle");
+            RegisterState(SmallHealthRecoverState.DROPPING, "SmallHealthRecoverDropping");
+            RegisterState(SmallHealthRecoverState.IDLE, "SmallHealthRecoverIdle");
         }
 
         protected internal override void OnSpawn()

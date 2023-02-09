@@ -1,6 +1,4 @@
-﻿using XSharp.Geometry;
-
-using static XSharp.Engine.Consts;
+﻿using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Items
 {

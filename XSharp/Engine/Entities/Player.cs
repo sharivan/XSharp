@@ -31,8 +31,8 @@ namespace XSharp.Engine.Entities
         TAKING_DAMAGE = 18,
         DYING = 19,
         VICTORY = 20,
-        PRE_TELEPORTING = 20,
-        TELEPORTING = 21
+        PRE_TELEPORTING = 21,
+        TELEPORTING = 22
     }
 
     public class Player : Sprite
@@ -106,6 +106,12 @@ namespace XSharp.Engine.Entities
             get => base.Health;
             set => base.Health = value;
         }
+
+        public bool CanGoOutOfCameraBounds
+        {
+            get;
+            protected internal set;
+        } = false;
 
         internal Player()
         {
@@ -386,7 +392,7 @@ namespace XSharp.Engine.Entities
         protected override FixedSingle GetTerminalDownwardSpeed()
         {
             return spawning || teleporting ?
-                TELEPORT_DOWNWARD_SPEED :
+                TELEPORT_SPEED :
                 WallSliding ?
                 (Underwater ? UNDERWATER_WALL_SLIDE_SPEED : WALL_SLIDE_SPEED) :
                 base.GetTerminalDownwardSpeed();
@@ -532,6 +538,12 @@ namespace XSharp.Engine.Entities
             return true;
         }
 
+        protected override void OnOffScreen()
+        {
+            if (teleporting)
+                Engine.OnPlayerTeleported();
+        }
+
         protected internal override void OnSpawn()
         {
             base.OnSpawn();
@@ -541,11 +553,12 @@ namespace XSharp.Engine.Entities
             CheckCollisionWithWorld = false;
             CheckCollisionWithSolidSprites = false;
             PaletteIndex = 0;
-            Velocity = TELEPORT_DOWNWARD_SPEED * Vector.DOWN_VECTOR;
+            Velocity = TELEPORT_SPEED * Vector.DOWN_VECTOR;
             Lives = X_INITIAL_LIVES;
             Health = Engine.HealthCapacity;
             Freezed = false;
             CrossingBossDoor = false;
+            CanGoOutOfCameraBounds = false;
 
             ResetKeys();
 
@@ -560,11 +573,11 @@ namespace XSharp.Engine.Entities
 
         protected override void OnDeath()
         {
+            // TODO : Implement the remaining
+
             Lives--;
 
             base.OnDeath();
-
-            Engine.OnGameOver();
         }
 
         private void TryMoveLeft(bool standOnly = false)
@@ -712,7 +725,7 @@ namespace XSharp.Engine.Entities
         protected override void OnBeforeMove(ref Vector origin)
         {
             Box limit = Engine.World.BoundingBox;
-            if (!CrossingBossDoor && !Engine.NoCameraConstraints && !Engine.World.Camera.NoConstraints)
+            if (!CanGoOutOfCameraBounds && !CrossingBossDoor && !Engine.NoCameraConstraints && !Engine.World.Camera.NoConstraints)
                 limit &= Engine.CameraConstraintsBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE);
 
             Vector delta = origin - Origin;
@@ -1330,15 +1343,15 @@ namespace XSharp.Engine.Entities
         {
             return state switch
             {
-                PlayerState.STAND or PlayerState.LAND => new Vector(9, 9),
-                PlayerState.WALK => new Vector(18, 8),
-                PlayerState.JUMP or PlayerState.WALL_JUMP or PlayerState.GOING_UP or PlayerState.FALL => new Vector(18, 9),
-                PlayerState.PRE_DASH => new Vector(21, -3),
-                PlayerState.DASH => new Vector(26, 1),
-                PlayerState.POST_DASH => new Vector(24, 9),
-                PlayerState.LADDER => new Vector(9, 6),
-                PlayerState.WALL_SLIDE when wallSlideFrameCounter >= 11 => new Vector(9, 11),
-                _ => new Vector(9, 9),
+                PlayerState.STAND or PlayerState.LAND => new Vector(7, 9),
+                PlayerState.WALK => new Vector(16, 8),
+                PlayerState.JUMP or PlayerState.WALL_JUMP or PlayerState.GOING_UP or PlayerState.FALL => new Vector(16, 9),
+                PlayerState.PRE_DASH => new Vector(19, -3),
+                PlayerState.DASH => new Vector(24, 1),
+                PlayerState.POST_DASH => new Vector(22, 9),
+                PlayerState.LADDER => new Vector(7, 6),
+                PlayerState.WALL_SLIDE when wallSlideFrameCounter >= 11 => new Vector(7, 11),
+                _ => new Vector(7, 9),
             };
         }
 
@@ -1346,36 +1359,36 @@ namespace XSharp.Engine.Entities
         {
             shots++;
 
-            Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5);
+            Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX.Width * 0.5, LEMON_HITBOX.Height * 0.5);
             Direction direction = Direction;
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            Engine.ShootLemon(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction, baseHSpeed == DASH_SPEED);
+            Engine.ShootLemon(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), baseHSpeed == DASH_SPEED);
         }
 
         public void ShootSemiCharged()
         {
             shots++;
 
-            Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5);
+            Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX.Width * 0.5, LEMON_HITBOX.Height * 0.5);
             Direction direction = Direction;
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            Engine.ShootSemiCharged(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
+            Engine.ShootSemiCharged(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y));
         }
 
         public void ShootCharged()
         {
             shots++;
 
-            Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5);
+            Vector shotOrigin = GetShotOrigin() + new Vector(LEMON_HITBOX.Width * 0.5, LEMON_HITBOX.Height * 0.5);
             Direction direction = Direction;
             if (state == PlayerState.WALL_SLIDE)
                 direction = direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
 
-            Engine.ShootCharged(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y), direction);
+            Engine.ShootCharged(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y));
         }
 
         private bool CanWallJumpLeft()
@@ -1559,6 +1572,7 @@ namespace XSharp.Engine.Entities
             {
                 if (teleporting)
                 {
+                    InputLocked = true;
                     Invincible = true;
                     SetState(PlayerState.PRE_TELEPORTING, 0);
                     PlaySound(17);
@@ -1566,13 +1580,16 @@ namespace XSharp.Engine.Entities
                 else
                 {
                     Invincible = false;
+                    InputLocked = false;
                     SetStandState();
                 }
             }
             else if (ContainsAnimationIndex(PlayerState.PRE_TELEPORTING, animation.Index, false))
             {
                 Invincible = true;
-                Velocity = TELEPORT_DOWNWARD_SPEED * Vector.UP_VECTOR;
+                Velocity = TELEPORT_SPEED * Vector.UP_VECTOR;
+                CheckCollisionWithSolidSprites = false;
+                CheckCollisionWithWorld = false;
                 SetState(PlayerState.TELEPORTING, 0);
             }
         }
@@ -1580,12 +1597,14 @@ namespace XSharp.Engine.Entities
         public void StartVictoryPosing()
         {
             Invincible = true;
+            InputLocked = true;
             SetState(PlayerState.VICTORY, 0);
             PlaySound(16);
         }
 
         public void StartTeleporting(bool withVictoryPose)
         {
+            CanGoOutOfCameraBounds = true;
             teleporting = true;
 
             if (withVictoryPose)
@@ -1593,6 +1612,7 @@ namespace XSharp.Engine.Entities
             else
             {
                 Invincible = true;
+                InputLocked = true;
                 SetState(PlayerState.PRE_TELEPORTING, 0);
                 PlaySound(17);
             }
@@ -1770,7 +1790,7 @@ namespace XSharp.Engine.Entities
 
         protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
         {
-            if (TakingDamage)
+            if (TakingDamage || Invincible || NoClip)
                 return false;
 
             Invincible = true;

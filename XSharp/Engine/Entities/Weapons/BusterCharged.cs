@@ -35,10 +35,10 @@ namespace XSharp.Engine.Entities.Weapons
             SpriteSheetIndex = 1;
 
             SetupStateArray(typeof(ChargedState));
-            RegisterState(ChargedState.FIRING, OnStartFiring, null, null, "ChargedShotFiring");
+            RegisterState(ChargedState.FIRING, OnStartFiring, "ChargedShotFiring");
             RegisterState(ChargedState.SHOOTING, OnStartShooting, OnShooting, null, "ChargedShot");
-            RegisterState(ChargedState.HITTING, OnStartHitting, null, null, "ChargedShotHit");
-            RegisterState(ChargedState.EXPLODING, OnStartExploding, null, null, "ChargedShotExplode");
+            RegisterState(ChargedState.HITTING, OnStartHitting, "ChargedShotHit");
+            RegisterState(ChargedState.EXPLODING, OnStartExploding, "ChargedShotExplode");
         }
 
         public override FixedSingle GetGravity()
@@ -70,10 +70,11 @@ namespace XSharp.Engine.Entities.Weapons
 
         private void OnStartFiring(EntityState state)
         {
-            Engine.PlaySound(1, 2);
+            if (Engine.Boss != null && !Engine.Boss.Exploding)
+                Engine.PlaySound(1, 2);
         }
 
-        private void OnStartShooting(EntityState state)
+        private void OnStartShooting(EntityState state, EntityState lastState)
         {
             if (Direction == Direction.LEFT)
             {
@@ -92,7 +93,7 @@ namespace XSharp.Engine.Entities.Weapons
             Velocity = Direction == Direction.LEFT ? CHARGED_SPEED * Vector.LEFT_VECTOR : CHARGED_SPEED * Vector.RIGHT_VECTOR;
         }
 
-        private void OnStartHitting(EntityState state)
+        private void OnStartHitting(EntityState state, EntityState lastState)
         {
             if (hitEntity != null)
             {
@@ -106,21 +107,20 @@ namespace XSharp.Engine.Entities.Weapons
             Velocity = Vector.NULL_VECTOR;
         }
 
-        private void OnStartExploding(EntityState state)
+        private void OnStartExploding(EntityState state, EntityState lastState)
         {
             Velocity = Vector.NULL_VECTOR;
         }
 
-        public void Explode()
+        public override void Reflect()
         {
+            Engine.PlaySound(1, 33);
             SetState(ChargedState.EXPLODING);
         }
 
-        public override void Hit(Enemy enemy)
+        protected internal override void OnHit(Enemy enemy, FixedSingle damage)
         {
-            base.Hit(enemy);
-
-            if (!enemy.Broke)
+            if (!enemy.Broke && enemy.Health > damage)
             {
                 Damage = 0;
                 hitEntity = enemy;

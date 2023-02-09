@@ -34,10 +34,10 @@ namespace XSharp.Engine.Entities.Weapons
             SpriteSheetIndex = 1;
 
             SetupStateArray(typeof(SemiChargedState));
-            RegisterState(SemiChargedState.FIRING, OnStartFiring, null, null, "SemiChargedShotFiring");
+            RegisterState(SemiChargedState.FIRING, OnStartFiring, "SemiChargedShotFiring");
             RegisterState(SemiChargedState.SHOOTING, OnStartShooting, OnShooting, null, "SemiChargedShot");
-            RegisterState(SemiChargedState.HITTING, OnStartHitting, null, null, "SemiChargedShotHit");
-            RegisterState(SemiChargedState.EXPLODING, OnStartExploding, null, null, "SemiChargedShotExplode");
+            RegisterState(SemiChargedState.HITTING, OnStartHitting, "SemiChargedShotHit");
+            RegisterState(SemiChargedState.EXPLODING, OnStartExploding, "SemiChargedShotExplode");
         }
 
         public override FixedSingle GetGravity()
@@ -67,12 +67,13 @@ namespace XSharp.Engine.Entities.Weapons
             SetState(SemiChargedState.FIRING);
         }
 
-        private void OnStartFiring(EntityState state)
+        private void OnStartFiring(EntityState state, EntityState lastState)
         {
-            Engine.PlaySound(1, 1);
+            if (Engine.Boss != null && !Engine.Boss.Exploding)
+                Engine.PlaySound(1, 1);
         }
 
-        private void OnStartShooting(EntityState state)
+        private void OnStartShooting(EntityState state, EntityState lastState)
         {
             if (Direction == Direction.LEFT)
             {
@@ -93,7 +94,7 @@ namespace XSharp.Engine.Entities.Weapons
                 Velocity = new Vector(Velocity.X > 0 ? LEMON_TERMINAL_SPEED : -LEMON_TERMINAL_SPEED, Velocity.Y);
         }
 
-        private void OnStartHitting(EntityState state)
+        private void OnStartHitting(EntityState state, EntityState lastState)
         {
             if (hitEntity != null)
             {
@@ -107,25 +108,26 @@ namespace XSharp.Engine.Entities.Weapons
             Velocity = Vector.NULL_VECTOR;
         }
 
-        private void OnStartExploding(EntityState state)
+        private void OnStartExploding(EntityState state, EntityState lastState)
         {
             Velocity = Vector.NULL_VECTOR;
         }
 
-        public void Explode()
+        public override void Reflect()
         {
+            Engine.PlaySound(1, 33);
             SetState(SemiChargedState.EXPLODING);
         }
 
-        public override void Hit(Enemy enemy)
+        protected internal override void OnHit(Enemy enemy, FixedSingle damage)
         {
-            base.Hit(enemy);
-
-            if (!enemy.Broke)
+            if (!enemy.Broke && enemy.Health > damage)
             {
                 Damage = 0;
                 hitEntity = enemy;
                 SetState(SemiChargedState.HITTING);
+
+                base.OnHit(enemy, damage);
             }
         }
 

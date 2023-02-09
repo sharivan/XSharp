@@ -11,7 +11,7 @@ namespace XSharp.Engine.Entities.HUD
         }
 
         protected internal override void UpdateOrigin()
-        {           
+        {
             Capacity = Engine.HealthCapacity;
             Value = Engine.Player != null ? Engine.Player.Health : 0;
 

@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using XSharp.Engine.Entities;
 using XSharp.Geometry;
 using XSharp.Math;
@@ -14,8 +13,6 @@ namespace XSharp.Engine.World
     /// <typeparam name="T">Tipo da entidade (deve descender da classe Sprite)</typeparam>
     internal class Partition<T> where T : Entity
     {
-        private const int MIN_QUAD_SIZE = MAP_SIZE;
-
         /// <summary>
         /// Elemento/Célula de uma partição.
         /// A partição é dividida em uma matriz bidimensional de células onde cada uma delas são retângulos iguais.
@@ -24,19 +21,15 @@ namespace XSharp.Engine.World
         /// <typeparam name="U">Tipo da entidade (deve descender da classe Sprite)</typeparam>
         private class PartitionQuad<U> where U : Entity
         {
-            readonly Partition<U> partition; // Partição a qual esta célula pertence
             readonly Box box; // Retângulo que delimita a célula
             readonly HashSet<U>[] values;
-
 
             /// <summary>
             /// Cria uma nova célula para a partição
             /// </summary>
-            /// <param name="partition">Partição a qual esta célula pertence</param>
             /// <param name="box">Retângulo que delimita esta célula</param>
-            public PartitionQuad(Partition<U> partition, Box box)
+            public PartitionQuad(Box box)
             {
-                this.partition = partition;
                 this.box = box;
 
                 values = new HashSet<U>[BOXKIND_COUNT];
@@ -242,7 +235,7 @@ namespace XSharp.Engine.World
                             continue;
 
                         if (cells[col, row] == null) // Verifica se a célula já foi criada antes, caso não tenha sido ainda então a cria
-                            cells[col, row] = new PartitionQuad<T>(this, cellBox);
+                            cells[col, row] = new PartitionQuad<T>(cellBox);
 
                         cells[col, row].Insert(item, k); // Insere a entidade na célula
                     }
@@ -400,7 +393,7 @@ namespace XSharp.Engine.World
 
                             // Senão...
                             if (cells[col, row] == null) // Verifica se a célula é nula
-                                cells[col, row] = new PartitionQuad<T>(this, cellBox); // Se for, cria uma nova célula nesta posição
+                                cells[col, row] = new PartitionQuad<T>(cellBox); // Se for, cria uma nova célula nesta posição
 
                             cells[col, row].Insert(item, k); // e finalmente insere a entidade nesta célula
                         }

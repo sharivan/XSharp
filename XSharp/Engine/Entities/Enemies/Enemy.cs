@@ -1,4 +1,4 @@
-﻿using SharpDX;
+﻿using XSharp.Engine.Entities.Weapons;
 using XSharp.Geometry;
 using XSharp.Math;
 
@@ -8,6 +8,12 @@ namespace XSharp.Engine.Entities.Enemies
 {
     public abstract class Enemy : Sprite
     {
+        public bool ReflectShots
+        {
+            get;
+            protected set;
+        } = false;
+
         public FixedSingle ContactDamage
         {
             get;
@@ -85,7 +91,38 @@ namespace XSharp.Engine.Entities.Enemies
         }
 
         protected virtual void OnDamaged()
-        {            
+        {
+        }
+
+        protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
+        {
+            if (ReflectShots)
+            {
+                if (attacker is Weapon weapon)
+                    weapon.Reflect();
+
+                damage = 0;
+                return false;
+            }
+
+            if (Invincible)
+            {
+                if (attacker is Weapon weapon)
+                    weapon.OnHit(this, damage);
+
+                damage = 0;
+                return false;
+            }
+
+            if (base.OnTakeDamage(attacker, ref damage))
+            {
+                if (attacker is Weapon weapon)
+                    weapon.OnHit(this, damage);
+
+                return true;
+            }
+
+            return false;
         }
 
         protected override void OnTakeDamagePost(Sprite attacker, FixedSingle damage)

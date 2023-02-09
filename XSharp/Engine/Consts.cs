@@ -15,7 +15,7 @@ namespace XSharp.Engine
         public static readonly FixedSingle TICK = 1D / TICKRATE;
 
         // Sprite
-        // 
+         
         public const int DEFAULT_INVINCIBLE_TIME = 60;
         public const int DEFAULT_HEALTH = 16;
 
@@ -64,7 +64,7 @@ namespace XSharp.Engine
         public static readonly FixedSingle GRAVITY = 0.25;
         public static readonly FixedSingle UNDERWATER_GRAVITY = 33 / 256.0;
         public static readonly FixedSingle TERMINAL_DOWNWARD_SPEED = 5.75;
-        public static readonly FixedSingle TELEPORT_DOWNWARD_SPEED = 8;
+        public static readonly FixedSingle TELEPORT_SPEED = 8;
         public static readonly FixedSingle UNDERWATER_TERMINAL_DOWNWARD_SPEED = 737 / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_JUMP = (1363 + 0 * 64) / 256.0;
         public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = (1417 + 1 * 64) / 256.0;
@@ -92,26 +92,24 @@ namespace XSharp.Engine
         public static readonly FixedSingle NO_CLIP_SPEED = 6;
         public static readonly FixedSingle NO_CLIP_SPEED_BOOST = 2.5 * NO_CLIP_SPEED;
         public static readonly FixedSingle CROSSING_BOOS_DOOR_SPEED = 116 / 256.0;
+
         public const int MAX_SHOTS = 3;
-        public const int LEMON_HITBOX_WIDTH = 8;
-        public const int LEMON_HITBOX_HEIGHT = 8;
+
+        public static readonly Box LEMON_HITBOX = (Vector.NULL_VECTOR, (-4, -4), (4, 4));
         public static readonly FixedSingle LEMON_INITIAL_SPEED = 1024 / 256.0;
         public static readonly FixedSingle LEMON_ACCELERATION = 64 / 256.0;
         public static readonly FixedSingle LEMON_TERMINAL_SPEED = 1536 / 256.0;
         public static readonly FixedSingle LEMON_REFLECTION_VSPEED = -768 / 256.0;
-        public const int SEMI_CHARGED_HITBOX_WIDTH_1 = 18;
-        public const int SEMI_CHARGED_HITBOX_HEIGHT_1 = 18;
-        public const int SEMI_CHARGED_HITBOX_WIDTH_2 = 26;
-        public const int SEMI_CHARGED_HITBOX_HEIGHT_2 = 26;
-        public const int SEMI_CHARGED_HITBOX_WIDTH_3 = 32;
-        public const int SEMI_CHARGED_HITBOX_HEIGHT_3 = 18;
+
+        public static readonly Box SEMI_CHARGED_HITBOX1 = (Vector.NULL_VECTOR, (-9, -9), (9, 9));
+        public static readonly Box SEMI_CHARGED_HITBOX2 = (Vector.NULL_VECTOR, (-13, -13), (13, 13));
+        public static readonly Box SEMI_CHARGED_HITBOX3 = (Vector.NULL_VECTOR, (-16, -9), (16, 9));
         public static readonly FixedSingle SEMI_CHARGED_INITIAL_SPEED = 1536 / 256.0;
         public static readonly FixedSingle CHARGED_SPEED = 2048 / 256.0;
-        public const int CHARGED_HITBOX_WIDTH_1 = 26;
-        public const int CHARGED_HITBOX_HEIGHT_1 = 18;
-        public const int CHARGED_HITBOX_WIDTH_2 = 48;
-        public const int CHARGED_HITBOX_HEIGHT_2 = 36;
+
         public const int CHARGING_EFFECT_HITBOX_SIZE = 52;
+        public static readonly Box CHARGED_HITBOX1 = (Vector.NULL_VECTOR, (-13, -9), (13, 9));
+        public static readonly Box CHARGED_HITBOX2 = (Vector.NULL_VECTOR, (-24, -18), (24, 18));
         public static readonly Box CHARGING_EFFECT_HITBOX = (Vector.NULL_VECTOR, (-CHARGING_EFFECT_HITBOX_SIZE / 2, -CHARGING_EFFECT_HITBOX_SIZE / 2), (CHARGING_EFFECT_HITBOX_SIZE / 2, CHARGING_EFFECT_HITBOX_SIZE / 2));
 
         // X
@@ -176,10 +174,13 @@ namespace XSharp.Engine
 
         // Penguin
 
-        public static readonly Box PENGUIN_COLLISION_BOX = (Vector.NULL_VECTOR, (-14, -17), (14, 17));
-        public static readonly Box PENGUIN_SLIDE_COLLISION_BOX = (Vector.NULL_VECTOR, (-21, -5), (21, 17));
-        public static readonly Box PENGUIN_HITBOX = (Vector.NULL_VECTOR, (-10, -15), (10, 15));
-        public static readonly Box PENGUIN_SLIDE_HITBOX = (Vector.NULL_VECTOR, (-17, -9), (17, 9));
+        public static readonly Box PENGUIN_COLLISION_BOX = ((0, 2), (-14, -17), (14, 17));
+        public static readonly Box PENGUIN_HITBOX = ((0, 2), (-10, -15), (10, 15));
+        public static readonly Box PENGUIN_JUMP_HITBOX = ((2, -12), (-9, -12), (9, 12));
+        public static readonly Box PENGUIN_SLIDE_HITBOX = ((-8, 8), (-17, -9), (17, 9));
+
+        public const int PENGUIN_JUMP_FRAMES = 68;
+        public static readonly FixedSingle PENGUIN_JUMP_SPEED_Y = 2174 / 256.0;
 
         public static readonly FixedSingle PENGUIN_KNOCKBACK_SPEED_X = 1;
         public static readonly FixedSingle PENGUIN_KNOCKBACK_SPEED_Y = 545 / 256.0;
@@ -205,6 +206,8 @@ namespace XSharp.Engine
         public static readonly FixedSingle PENGUIN_ICE_BUMO_SPEED2_Y = 395 / 256.0;
         public static readonly Vector PENGUIN_ICE_SHOT_ORIGIN_OFFSET = (21, 6);
 
+        public static readonly Box PENGUIN_ICE_FRAGMENT_HITBOX = (Vector.NULL_VECTOR, (-4, -4), (4, 4));
+
         // Render
 
         public static readonly Vector DEFAULT_DRAW_ORIGIN = Vector.NULL_VECTOR;
@@ -214,6 +217,7 @@ namespace XSharp.Engine
         public static readonly Vector DEFAULT_CLIENT_SIZE = (DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
         public static readonly Box DEFAULT_CLIENT_BOX = (DEFAULT_DRAW_ORIGIN.X, DEFAULT_DRAW_ORIGIN.Y, DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
         public const bool VSYNC = false;
+        public const bool SPRITE_SAMPLER_STATE_LINEAR = false;
 
         // Debug
 
@@ -274,7 +278,23 @@ namespace XSharp.Engine
             new Color(128, 64, 32, 255), // 12
             new Color(240, 240, 240, 255), // 13
             new Color(152, 152, 152, 255), // 14
-            new Color(24, 24, 24, 255) // 15
+            new Color(24, 24, 24, 255), // 15
+            Color.Transparent, // 16
+            new Color(248, 248, 248, 255), // 17
+            new Color(240, 248, 248, 255), // 18
+            new Color(232, 248, 248, 255), // 19
+            new Color(224, 248, 248, 255), // 20
+            new Color(216, 248, 248, 255), // 21
+            new Color(208, 248, 248, 255), // 22
+            new Color(200, 248, 248, 255), // 23
+            new Color(192, 248, 248, 255), // 24
+            new Color(184, 248, 248, 255), // 25
+            new Color(176, 248, 248, 255), // 26
+            new Color(168, 248, 248, 255), // 27
+            new Color(160, 248, 248, 255), // 28
+            new Color(152, 248, 248, 255), // 29
+            new Color(144, 248, 248, 255), // 30
+            new Color(136, 248, 248, 255) // 31
         };
 
         public static readonly Color[] CHARGE_LEVEL_1_PALETTE = new Color[]

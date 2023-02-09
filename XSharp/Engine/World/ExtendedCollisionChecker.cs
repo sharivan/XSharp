@@ -6,12 +6,12 @@ using static XSharp.Engine.Consts;
 namespace XSharp.Engine.World
 {
     public class ExtendedCollisionChecker : CollisionChecker
-    {               
+    {
         private CollisionChecker leftChecker;
         private CollisionChecker rightChecker;
 
         public ExtendedCollisionChecker()
-        {           
+        {
             leftChecker = new CollisionChecker();
             rightChecker = new CollisionChecker();
         }

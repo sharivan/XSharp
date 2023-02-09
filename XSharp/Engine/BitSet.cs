@@ -28,7 +28,7 @@ namespace XSharp.Engine
         {
             int slot = index / BitCount;
             int bit = index - slot;
-            bits[slot] |= (1L << bit);
+            bits[slot] |= 1L << bit;
         }
 
         public void Reset(int index)

@@ -25,8 +25,6 @@ namespace XSharp.Engine.World
         private CollisionFlags rightMaskFlags;
         private CollisionFlags innerMaskFlags;
 
-        private RightTriangle landedSlope;
-
         private bool leftMaskComputed;
         private bool upMaskComputed;
         private bool rightMaskComputed;
@@ -207,7 +205,11 @@ namespace XSharp.Engine.World
 
         public bool LandedOnTopLadder => DownMaskFlags == CollisionFlags.TOP_LADDER;
 
-        public RightTriangle LandedSlope => landedSlope;
+        public RightTriangle LandedSlope
+        {
+            get;
+            private set;
+        }
 
         public bool Underwater => (innerMaskFlags & CollisionFlags.WATER) != 0;
 
@@ -235,7 +237,7 @@ namespace XSharp.Engine.World
                 MaskSize = maskSize,
                 IgnoreSprite = owner,
                 CheckWithWorld = checkCollisionWithWorld,
-                CheckWithSolidSprites= checkCollisionWithSolidSprites
+                CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
 
             upCollisionChecker = new ExtendedCollisionChecker()
@@ -309,8 +311,8 @@ namespace XSharp.Engine.World
             DownMaskFlags = downCollisionChecker.ComputeLandedState();
             if (DownMaskFlags == CollisionFlags.SLOPE)
             {
-                landedSlope = downCollisionChecker.SlopeTriangle;
-                ClipFromSlope(landedSlope);
+                LandedSlope = downCollisionChecker.SlopeTriangle;
+                ClipFromSlope(LandedSlope);
             }
 
             upMaskFlags = upCollisionChecker.GetCollisionFlags();

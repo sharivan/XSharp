@@ -77,15 +77,6 @@ namespace XSharp.Engine.Entities.Enemies
             return base.OnTakeDamage(attacker, ref damage);
         }
 
-        public void FaceToPlayer(Player player)
-        {
-            var playerOrigin = player.Origin;
-            if (Direction != DefaultDirection && Origin.X < playerOrigin.X)
-                Direction = DefaultDirection;
-            else if (Direction == DefaultDirection && Origin.X > playerOrigin.X)
-                Direction = DefaultDirection.Oposite();
-        }
-
         protected override void OnLanded()
         {
             if (State == DrillerState.JUMPING)
@@ -97,13 +88,20 @@ namespace XSharp.Engine.Entities.Enemies
             }
         }
 
+        protected override void OnBlockedUp()
+        {
+            base.OnBlockedUp();
+
+            Velocity = Vector.NULL_VECTOR;
+        }
+
         private void OnIdle(EntityState state, long frameCounter)
         {
             if (Landed && Engine.Player != null)
             {
                 if (frameCounter >= 12)
                 {
-                    FaceToPlayer(Engine.Player);
+                    FaceToPlayer();
 
                     if ((Engine.Player.Origin.X - Origin.X).Abs <= 50)
                         State = DrillerState.DRILLING;
@@ -139,7 +137,7 @@ namespace XSharp.Engine.Entities.Enemies
             if (frameCounter >= 12 && (Engine.Player.Origin.X - Origin.X).Abs > 50)
                 State = DrillerState.IDLE;
             else
-                FaceToPlayer(Engine.Player);
+                FaceToPlayer();
         }
 
         protected override bool PreThink()

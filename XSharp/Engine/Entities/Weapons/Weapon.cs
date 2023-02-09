@@ -1,5 +1,4 @@
 ﻿using XSharp.Engine.Entities.Enemies;
-using XSharp.Geometry;
 using XSharp.Math;
 
 namespace XSharp.Engine.Entities.Weapons
@@ -39,13 +38,23 @@ namespace XSharp.Engine.Entities.Weapons
             Damage = GetBaseDamage();
         }
 
-        public virtual void Hit(Enemy enemy)
+        protected override void OnHurt(Sprite victim, FixedSingle damage)
+        {
+            base.OnHurt(victim, damage);
+
+            if (victim is Enemy enemy)
+                OnHit(enemy, damage);
+        }
+
+        protected internal virtual void OnHit(Enemy enemy, FixedSingle damage)
+        {
+            Engine.PlaySound(1, 8);
+        }
+
+        public void Hit(Enemy enemy)
         {
             if (Damage > 0)
-            {
-                Engine.PlaySound(1, 8);
                 Hurt(enemy, Damage);
-            }
         }
 
         protected override void OnStartTouch(Entity entity)
@@ -54,6 +63,10 @@ namespace XSharp.Engine.Entities.Weapons
 
             if (Alive && !MarkedToRemove && entity is Enemy enemy)
                 Hit(enemy);
+        }
+
+        public virtual void Reflect()
+        {
         }
     }
 }

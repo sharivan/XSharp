@@ -1,15 +1,25 @@
 ﻿using XSharp.Geometry;
+using XSharp.Math;
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 {
     public class PenguinIce : Enemy
     {
+        private FixedSingle speed;
+        private bool bumped;
+
         public Penguin Shooter
         {
             get;
             internal set;
         }
+
+        public bool Bump
+        {
+            get;
+            internal set;
+        } = false;
 
         public PenguinIce()
         {
@@ -27,8 +37,46 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         public void Explode()
         {
-            // TODO : Implement
+            Engine.PlaySound(4, 30);
+
+            var fragment = new PenguinIceExplosionEffect()
+            {
+                Origin = Origin,
+                InitialVelocity = (-PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED)
+            };
+
+            fragment.Spawn();
+
+            fragment = new PenguinIceExplosionEffect()
+            {
+                Origin = Origin,
+                InitialVelocity = (PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED)
+            };
+
+            fragment.Spawn();
+
+            fragment = new PenguinIceExplosionEffect()
+            {
+                Origin = Origin,
+                InitialVelocity = (-PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED * FixedSingle.HALF)
+            };
+
+            fragment.Spawn();
+
+            fragment = new PenguinIceExplosionEffect()
+            {
+                Origin = Origin,
+                InitialVelocity = (PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED * FixedSingle.HALF)
+            };
+
+            fragment.Spawn();
+
             Kill();
+        }
+
+        public override FixedSingle GetGravity()
+        {
+            return Bump ? base.GetGravity() : 0;
         }
 
         protected internal override void OnSpawn()
@@ -36,9 +84,26 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             base.OnSpawn();
 
             Direction = Shooter.Direction;
-            Origin = Shooter.Origin + (Shooter.Direction == Shooter.DefaultDirection ? -PENGUIN_ICE_SHOT_ORIGIN_OFFSET.X : PENGUIN_ICE_SHOT_ORIGIN_OFFSET.X, PENGUIN_ICE_SHOT_ORIGIN_OFFSET.Y);
+            Origin = (Shooter.Direction == Shooter.DefaultDirection ? Shooter.Hitbox.Left - PENGUIN_ICE_SHOT_ORIGIN_OFFSET.X : Shooter.Hitbox.Right + PENGUIN_ICE_SHOT_ORIGIN_OFFSET.X, Shooter.Hitbox.Top + PENGUIN_ICE_SHOT_ORIGIN_OFFSET.Y);
+            ReflectShots = true;
+
+            bumped = false;
+            speed = Bump ? PENGUIN_ICE_SPEED2_X : PENGUIN_ICE_SPEED;
 
             SetCurrentAnimationByName("Ice");
+        }
+
+        protected override void OnLanded()
+        {
+            base.OnLanded();
+
+            if (!bumped)
+            {
+                Velocity = (Velocity.X, -PENGUIN_ICE_SPEED2_X);
+                bumped = true;
+            }
+            else
+                Velocity = Velocity.XVector;
         }
 
         protected override void OnBlockedLeft()
@@ -66,7 +131,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             base.Think();
 
-            Velocity = PENGUIN_ICE_SPEED * (Shooter.Direction == Shooter.DefaultDirection ? Vector.LEFT_VECTOR : Vector.RIGHT_VECTOR);
+            Velocity = (Direction == Direction.RIGHT ? speed : -speed, Velocity.Y);
         }
     }
 }

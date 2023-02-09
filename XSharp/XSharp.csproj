@@ -98,9 +98,11 @@
     <Compile Include="Engine\Entities\Checkpoint.cs" />
     <Compile Include="Engine\Entities\DuplicateEntityNameException.cs" />
     <Compile Include="Engine\Entities\EnableDisable.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\BossExplosionEffect.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\BossHealthHUD.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\Penguin.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIce.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIceExplosionEffect.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIceFragment.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinLever.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinSculpture.cs" />
@@ -146,6 +148,7 @@
     <Compile Include="Engine\Entities\Triggers\TriggerPush.cs" />
     <Compile Include="Engine\Entities\Triggers\TriggerTeleport.cs" />
     <Compile Include="Engine\Entities\VectorKind.cs" />
+    <Compile Include="Engine\FadingSettings.cs" />
     <Compile Include="Engine\Graphics\Palette.cs" />
     <Compile Include="Engine\Graphics\Tilemap.cs" />
     <Compile Include="Engine\Graphics\Tileset.cs" />
@@ -191,6 +194,12 @@
     <Compile Include="ROM\MegaEDCore.cs" />
     <Compile Include="ROM\MMXCore.cs" />
     <Compile Include="ROM\SNESCore.cs" />
+    <Content Include="resources\sounds\mmx\Boss Explosion.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\sounds\mmx\Boss Final Explode.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\mmx\Door Closing.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -438,9 +447,15 @@
     <Content Include="resources\sounds\mmx\33 - MMX - Energy Tank Full.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\34 - MMX - Ice.wav" />
-    <Content Include="resources\sounds\mmx\35 - MMX - Ice Freeze.wav" />
-    <Content Include="resources\sounds\mmx\36 - MMX - Ice Break.wav" />
+    <Content Include="resources\sounds\mmx\34 - MMX - Ice.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\sounds\mmx\35 - MMX - Ice Freeze.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\sounds\mmx\36 - MMX - Ice Break.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\mmx\37 - MMX - Alert 1.wav" />
     <Content Include="resources\sounds\mmx\38 - MMX - Alert 2.wav" />
     <Content Include="resources\sounds\mmx\39 - MMX - Armadillo Charge.wav" />
@@ -458,7 +473,9 @@
     </Content>
     <Content Include="resources\sounds\mmx\50 - MMX - Bulldozer .wav" />
     <Content Include="resources\sounds\mmx\51 - MMX - Can%27t Exit.wav" />
-    <Content Include="resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav" />
+    <Content Include="resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\mmx\53 - MMX - Door Open.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -507,7 +524,9 @@
     <Content Include="resources\sounds\mmx\88 - MMX - Mechanical Hum 3.wav" />
     <Content Include="resources\sounds\mmx\89 - MMX - Misc. dash, jump, move %281%29.wav" />
     <Content Include="resources\sounds\mmx\90 - MMX - Misc. dash, jump, move %282%29.wav" />
-    <Content Include="resources\sounds\mmx\91 - MMX - Misc. dash, jump, move %283%29.wav" />
+    <Content Include="resources\sounds\mmx\91 - MMX - Misc. dash, jump, move %283%29.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\mmx\92 - MMX - Misc. dash, jump, move %284%29.wav" />
     <Content Include="resources\sounds\mmx\93 - MMX - Misc. dash, jump, move %285%29.wav" />
     <Content Include="resources\sounds\mmx\94 - MMX - Misc. dash, jump, move %286%29.wav" />

@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using XSharp.Engine.Entities.Enemies;
 using XSharp.Engine.World;
 using XSharp.Geometry;
 using static XSharp.Engine.Consts;
-using static XSharp.Engine.World.World;
 
 namespace XSharp.Engine.Entities
 {
@@ -34,6 +31,8 @@ namespace XSharp.Engine.Entities
         internal string name = null;
         private Vector origin = Vector.NULL_VECTOR;
         internal Entity parent = null;
+
+        private bool wasOffScreen;
 
         internal readonly List<Entity> touchingEntities;
         internal readonly List<Entity> childs;
@@ -211,13 +210,13 @@ namespace XSharp.Engine.Entities
             {
                 if (currentStateID != value)
                 {
-                    EntityState state = CurrentState;
-                    state?.OnEnd();
+                    EntityState lastState = CurrentState;
+                    lastState?.OnEnd();
 
                     currentStateID = value;
 
-                    state = CurrentState;
-                    state?.OnStart();
+                    EntityState currentState = CurrentState;
+                    currentState?.OnStart(lastState);
                 }
             }
         }
@@ -252,6 +251,11 @@ namespace XSharp.Engine.Entities
             SetupStateArray(Enum.GetNames(t).Length);
         }
 
+        protected void SetupStateArray<T>() where T : Enum
+        {
+            SetupStateArray(typeof(T));
+        }
+
         protected virtual Type GetStateType()
         {
             return typeof(EntityState);
@@ -261,7 +265,11 @@ namespace XSharp.Engine.Entities
         {
         }
 
-        protected EntityState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd)
+        protected virtual void OnRegisterSubState(EntitySubState subState)
+        {
+        }
+
+        protected EntityState RegisterState(int id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int subStateCount)
         {
             Type stateType = GetStateType();
             var state = (EntityState) Activator.CreateInstance(stateType);
@@ -272,6 +280,9 @@ namespace XSharp.Engine.Entities
             state.FrameEvent += onFrame;
             state.EndEvent += onEnd;
 
+            if (subStateCount > 0)
+                state.InitializeSubStates(subStateCount);
+
             states.Add(state);
             stateArray[id] = state;
             OnRegisterState(state);
@@ -279,29 +290,74 @@ namespace XSharp.Engine.Entities
             return state;
         }
 
-        protected EntityState RegisterState(int id, EntityStateFrameEvent onFrame)
+        protected EntityState RegisterState(int id, EntityStateStartEvent onStart, int subStateCount)
         {
-            return RegisterState(id, null, onFrame, null);
+            return RegisterState(id, onStart, null, null, subStateCount);
         }
 
-        protected EntityState RegisterState(int id)
+        protected EntityState RegisterState(int id, EntityStateFrameEvent onFrame, int subStateCount)
         {
-            return RegisterState(id, null, null, null);
+            return RegisterState(id, null, onFrame, null, subStateCount);
         }
 
-        protected EntityState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd) where T : Enum
+        protected EntityState RegisterState(int id, EntityStateEndEvent onEnd, int subStateCount)
         {
-            return RegisterState((int) (object) id, onStart, onFrame, onEnd);
+            return RegisterState(id, null, null, onEnd, subStateCount);
+        }
+
+        protected EntityState RegisterState(int id, int subStateCount)
+        {
+            return RegisterState(id, null, null, null, subStateCount);
+        }
+
+        protected EntityState RegisterState<T>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd) where T : Enum
+        {
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, 0);
+        }
+
+        protected EntityState RegisterState<T>(T id, EntityStateStartEvent onStart) where T : Enum
+        {
+            return RegisterState((int) (object) id, onStart, null, null, 0);
         }
 
         protected EntityState RegisterState<T>(T id, EntityStateFrameEvent onFrame) where T : Enum
         {
-            return RegisterState((int) (object) id, null, onFrame, null);
+            return RegisterState((int) (object) id, null, onFrame, null, 0);
+        }
+
+        protected EntityState RegisterState<T>(T id, EntityStateEndEvent onEnd) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, null, onEnd, 0);
         }
 
         protected EntityState RegisterState<T>(T id) where T : Enum
         {
-            return RegisterState((int) (object) id, null, null, null);
+            return RegisterState((int) (object) id, null, null, null, 0);
+        }
+
+        protected EntityState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames(typeof(U)).Length);
+        }
+
+        protected EntityState RegisterState<T, U>(T id, EntityStateStartEvent onStart) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames(typeof(U)).Length);
+        }
+
+        protected EntityState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames(typeof(U)).Length);
+        }
+
+        protected EntityState RegisterState<T, U>(T id, EntityStateEndEvent onEnd) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames(typeof(U)).Length);
+        }
+
+        protected EntityState RegisterState<T, U>(T id) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length);
         }
 
         protected void UnregisterState(int id)
@@ -456,7 +512,13 @@ namespace XSharp.Engine.Entities
                 return;
             }
 
-            if (KillOnOffscreen && Engine.FrameCounter - SpawnFrame >= MinimumIntervalToKillOnOffScreen && IsOffscreen(VectorKind.ORIGIN))
+            bool offScreen = IsOffscreen(VectorKind.ORIGIN);
+            if (offScreen && !wasOffScreen)
+                OnOffScreen();
+
+            wasOffScreen = offScreen;
+
+            if (KillOnOffscreen && Engine.FrameCounter - SpawnFrame >= MinimumIntervalToKillOnOffScreen && offScreen)
             {
                 Kill();
                 return;
@@ -573,6 +635,7 @@ namespace XSharp.Engine.Entities
             currentStateID = -1;
             MarkedToRemove = false;
             Spawning = false;
+            wasOffScreen = false;
         }
 
         public void KillOnNextFrame()
@@ -595,6 +658,7 @@ namespace XSharp.Engine.Entities
             frameToKill = -1;
             currentStateID = -1;
             MarkedToRemove = false;
+            wasOffScreen = false;
             Engine.addedEntities.Add(this);
         }
 
@@ -620,6 +684,10 @@ namespace XSharp.Engine.Entities
         {
             // TODO : Implement call to this and implement OnInvisible()
             VisibleChangedEvent?.Invoke(this);
+        }
+
+        protected virtual void OnOffScreen()
+        {            
         }
 
         protected virtual BoxKind ComputeBoxKind()
@@ -705,6 +773,26 @@ namespace XSharp.Engine.Entities
                 Engine.respawnableEntities.Remove(this);
 
             UpdatePartition(true);
+        }
+
+        public Direction GetHorizontalDirection(Vector pos)
+        {
+            return Origin.X < pos.X ? Direction.LEFT : Direction.RIGHT;
+        }
+
+        public Direction GetVerticalDirection(Vector pos)
+        {
+            return Origin.Y < pos.Y ? Direction.UP : Direction.DOWN;
+        }
+
+        public Direction GetHorizontalDirection(Entity entity)
+        {
+            return GetHorizontalDirection(entity.Origin);
+        }
+
+        public Direction GetVerticalDirection(Entity entity)
+        {
+            return GetVerticalDirection(entity.Origin);
         }
     }
 }

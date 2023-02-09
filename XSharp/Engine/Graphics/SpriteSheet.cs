@@ -35,7 +35,7 @@ namespace XSharp.Engine.Graphics
                 set;
             }
 
-            public Vector BoudingBoxOriginOffset
+            public Vector OriginOffset
             {
                 get;
                 set;
@@ -95,12 +95,12 @@ namespace XSharp.Engine.Graphics
                 return frame;
             }
 
-            public Frame AddFrame(FixedSingle bbOriginXOff, FixedSingle bbOriginYOff, int bbLeft, int bbTop, int bbWidth, int bbHeight, int count = 1, bool loopPoint = false)
+            public Frame AddFrame(FixedSingle originOffsetX, FixedSingle originOffsetY, int left, int top, int width, int height, int count = 1, bool loopPoint = false)
             {
                 if (loopPoint)
                     LoopFromSequenceIndex = frames.Count;
 
-                var boundingBox = new MMXBox(bbLeft + bbOriginXOff + BoudingBoxOriginOffset.X, bbTop + bbOriginYOff + BoudingBoxOriginOffset.Y, bbLeft, bbTop, bbWidth, bbHeight);
+                var boundingBox = new MMXBox(left + originOffsetX + OriginOffset.X, top + originOffsetY + OriginOffset.Y, left, top, width, height);
                 Frame frame = Sheet.AddFrame(boundingBox, CollisionBox);
                 AddRepeated(frame, count);
                 return frame;

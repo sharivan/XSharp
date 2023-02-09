@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
+﻿namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 {
     public class PenguinIceFragment : Sprite
     {

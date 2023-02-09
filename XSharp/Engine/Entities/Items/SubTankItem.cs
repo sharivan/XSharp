@@ -1,6 +1,4 @@
-﻿using XSharp.Geometry;
-
-namespace XSharp.Engine.Entities.Items
+﻿namespace XSharp.Engine.Entities.Items
 {
     public class SubTankItem : Item
     {

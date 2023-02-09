@@ -42,9 +42,14 @@ namespace XSharp.Engine.Entities.Weapons
             return reflected && DashLemon && GetState<LemonState>() != LemonState.EXPLODING ? GRAVITY : FixedSingle.ZERO;
         }
 
+        protected override Box GetHitbox()
+        {
+            return LEMON_HITBOX;
+        }
+
         protected override Box GetCollisionBox()
         {
-            return new(Vector.NULL_VECTOR, new Vector(-LEMON_HITBOX_WIDTH * 0.5, -LEMON_HITBOX_HEIGHT * 0.5), new Vector(LEMON_HITBOX_WIDTH * 0.5, LEMON_HITBOX_HEIGHT * 0.5));
+            return LEMON_HITBOX;
         }
 
         protected override FixedSingle GetBaseDamage()
@@ -63,7 +68,7 @@ namespace XSharp.Engine.Entities.Weapons
             SetState(LemonState.SHOOTING);
         }
 
-        private void OnStartShot(EntityState state)
+        private void OnStartShot(EntityState state, EntityState lastState)
         {
             if (!Shooter.shootingCharged)
                 Engine.PlaySound(1, 0);
@@ -86,9 +91,8 @@ namespace XSharp.Engine.Entities.Weapons
             KillOnNextFrame();
         }
 
-        public override void Hit(Enemy enemy)
+        protected internal override void OnHit(Enemy enemy, FixedSingle damage)
         {
-            base.Hit(enemy);
             Explode(enemy);
         }
 
@@ -112,12 +116,14 @@ namespace XSharp.Engine.Entities.Weapons
             }
         }
 
-        public void Reflect()
+        public override void Reflect()
         {
             if (!reflected && GetState<LemonState>() != LemonState.EXPLODING)
             {
+                Damage = 0;
                 reflected = true;
                 Velocity = new Vector(-Velocity.X, LEMON_REFLECTION_VSPEED);
+                Engine.PlaySound(1, 33);
             }
         }
 

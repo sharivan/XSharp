@@ -372,8 +372,8 @@ namespace XSharp.Engine
             Texture texture = frame.Texture;
 
             MMXBox drawBox = Sprite.Origin + Offset + srcBox;
-            Vector2 center = Sprite.Engine.WorldVectorToScreen(drawBox.Origin);
-            var center3 = new Vector3(center.X, center.Y, 0);
+            Vector2 origin = Sprite.Engine.WorldVectorToScreen(drawBox.Origin);
+            var origin3 = new Vector3(origin.X, origin.Y, 0);
 
             Matrix transform = Matrix.Identity;
 
@@ -381,22 +381,22 @@ namespace XSharp.Engine
             transform *= Matrix.Scaling(drawScale);
 
             if (Rotation != FixedSingle.ZERO)
-                transform *= Matrix.Translation(-center3) * Matrix.RotationZ((float) Rotation) * Matrix.Translation(center3);
+                transform *= Matrix.Translation(-origin3) * Matrix.RotationZ((float) Rotation) * Matrix.Translation(origin3);
 
             if (Scale != FixedSingle.ONE)
-                transform *= Matrix.Translation(-center3) * Matrix.Scaling((float) Scale) * Matrix.Translation(center3);
+                transform *= Matrix.Translation(-origin3) * Matrix.Scaling((float) Scale) * Matrix.Translation(origin3);
 
             if (Flipped)
             {
                 if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
-                    transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, -1, 1) * Matrix.Translation(center3);
+                    transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, -1, 1) * Matrix.Translation(origin3);
                 else
-                    transform *= Matrix.Translation(-center3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(center3);
+                    transform *= Matrix.Translation(-origin3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(origin3);
             }
             else if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
-                transform *= Matrix.Translation(-center3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(center3);
+                transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(origin3);
 
-            Sprite.Engine.RenderSprite(texture, Sprite.Palette, drawBox.LeftTop, transform, RepeatX, RepeatY);
+            Sprite.Engine.RenderSprite(texture, Sprite.Palette, Sprite.FadingSettings, drawBox.LeftTop, transform, RepeatX, RepeatY);
         }
 
         internal void OnDeviceReset()

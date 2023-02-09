@@ -1,5 +1,4 @@
-﻿using XSharp.Geometry;
-using XSharp.Math;
+﻿using XSharp.Math;
 
 namespace XSharp.Engine.Entities.Logical
 {

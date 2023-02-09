@@ -1,10 +1,7 @@
 ﻿using SharpDX.Direct3D9;
-using SharpDX.DirectSound;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Windows.Forms;
 using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
 using XSharp.Geometry;
@@ -40,11 +37,6 @@ namespace XSharp.Engine.Entities
         private bool visible = true;
         private List<Animation> animations;
         private int currentAnimationIndex = -1;
-
-        private bool fading;
-        private bool fadingIn;
-        private int fadingTime;
-        private int elapsed;
 
         protected SpriteCollider collider;
 
@@ -193,6 +185,11 @@ namespace XSharp.Engine.Entities
             }
         }
 
+        public FadingSettings FadingSettings
+        {
+            get;
+        }
+
         public IEnumerable<Animation> Animations => animations;
 
         public bool InvisibleOnCurrentFrame
@@ -336,6 +333,8 @@ namespace XSharp.Engine.Entities
         {
             animations = new List<Animation>();
             animationsByName = new Dictionary<string, List<Animation>>();
+
+            FadingSettings = new FadingSettings();
         }
 
         public void SetAnimationNames(params string[] animationNames)
@@ -366,70 +365,160 @@ namespace XSharp.Engine.Entities
             return typeof(SpriteState);
         }
 
-        protected SpriteState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, int animationIndex, int initialFrame = 0)
+        protected SpriteState RegisterState(int id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int subStateCount, int animationIndex, int initialFrame = 0)
         {
-            var state = (SpriteState) RegisterState(id, onStart, onFrame, onEnd);
+            var state = (SpriteState) base.RegisterState(id, onStart, onFrame, onEnd, subStateCount);
             state.AnimationIndex = animationIndex;
             state.InitialFrame = initialFrame;
             return state;
         }
 
-        protected SpriteState RegisterState(int id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, string animationName, int initialFrame = 0)
+        protected SpriteState RegisterState(int id, EntityStateStartEvent onStart, int subStateCount, int animationIndex, int initialFrame = 0)
         {
-            var state = (SpriteState) RegisterState(id, onStart, onFrame, onEnd);
+            return RegisterState(id, onStart, null, null, subStateCount, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, int subStateCount, int animationIndex, int initialFrame = 0)
+        {
+            return RegisterState(id, null, onFrame, null, subStateCount, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState(int id, EntityStateEndEvent onEnd, int subStateCount, int animationIndex, int initialFrame = 0)
+        {
+            return RegisterState(id, null, null, onEnd, subStateCount, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState(int id, int subStateCount, int animationIndex, int initialFrame = 0)
+        {
+            return RegisterState(id, null, null, null, subStateCount, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum
+        {
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, 0, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, int animationIndex, int initialFrame = 0) where T : Enum
+        {
+            return RegisterState((int) (object) id, onStart, null, null, 0, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, onFrame, null, 0, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T>(T id, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, null, onEnd, 0, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T>(T id, int animationIndex, int initialFrame = 0) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, null, null, 0, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        }
+
+        protected SpriteState RegisterState(int id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int subStateCount, string animationName, int initialFrame = 0)
+        {
+            var state = (SpriteState) base.RegisterState(id, onStart, onFrame, onEnd, subStateCount);
             state.AnimationName = animationName;
             state.InitialFrame = initialFrame;
             return state;
         }
 
-        protected SpriteState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum
+        protected SpriteState RegisterState(int id, EntityStateStartEvent onStart, int subStateCount, string animationName, int initialFrame = 0)
         {
-            return RegisterState((int) (object) id, onStart, onFrame, onEnd, animationIndex, initialFrame);
+            return RegisterState(id, onStart, null, null, subStateCount, animationName, initialFrame);
         }
 
-        protected SpriteState RegisterState<T>(T id, EntityStateEvent onStart, EntityStateFrameEvent onFrame, EntityStateEvent onEnd, string animationName, int initialFrame = 0) where T : Enum
+        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, int subStateCount, string animationName, int initialFrame = 0)
         {
-            return RegisterState((int) (object) id, onStart, onFrame, onEnd, animationName, initialFrame);
+            return RegisterState(id, null, onFrame, null, subStateCount, animationName, initialFrame);
         }
 
-        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0)
+        protected SpriteState RegisterState(int id, EntityStateEndEvent onEnd, int subStateCount, string animationName, int initialFrame = 0)
         {
-            return RegisterState(id, null, onFrame, null, animationIndex, initialFrame);
+            return RegisterState(id, null, null, onEnd, subStateCount, animationName, initialFrame);
         }
 
-        protected SpriteState RegisterState(int id, int animationIndex, int initialFrame = 0)
+        protected SpriteState RegisterState(int id, int subStateCount, string animationName, int initialFrame = 0)
         {
-            return RegisterState(id, null, null, null, animationIndex, initialFrame);
+            return RegisterState(id, null, null, null, subStateCount, animationName, initialFrame);
         }
 
-        protected SpriteState RegisterState(int id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0)
+        protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : Enum
         {
-            return RegisterState(id, null, onFrame, null, animationName, initialFrame);
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, 0, animationName, initialFrame);
         }
 
-        protected SpriteState RegisterState(int id, string animationName, int initialFrame = 0)
+        protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, string animationName, int initialFrame = 0) where T : Enum
         {
-            return RegisterState(id, null, null, null, animationName, initialFrame);
-        }
-
-        protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : Enum
-        {
-            return RegisterState((int) (object) id, null, onFrame, null, animationIndex, initialFrame);
-        }
-
-        protected SpriteState RegisterState<T>(T id, int animationIndex, int initialFrame = 0) where T : Enum
-        {
-            return RegisterState((int) (object) id, null, null, null, animationIndex, initialFrame);
+            return RegisterState((int) (object) id, onStart, null, null, 0, animationName, initialFrame);
         }
 
         protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0) where T : Enum
         {
-            return RegisterState((int) (object) id, null, onFrame, null, animationName, initialFrame);
+            return RegisterState((int) (object) id, null, onFrame, null, 0, animationName, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T>(T id, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : Enum
+        {
+            return RegisterState((int) (object) id, null, null, onEnd, 0, animationName, initialFrame);
         }
 
         protected SpriteState RegisterState<T>(T id, string animationName, int initialFrame = 0) where T : Enum
         {
-            return RegisterState((int) (object) id, null, null, null, animationName, initialFrame);
+            return RegisterState((int) (object) id, null, null, null, 0, animationName, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
+        }
+
+        protected SpriteState RegisterState<T, U>(T id, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+        {
+            return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
         }
 
         public override void LoadState(BinaryReader reader)
@@ -448,10 +537,6 @@ namespace XSharp.Engine.Entities
             }
 
             CollisionData = (CollisionData) reader.ReadByte();
-            fading = reader.ReadBoolean();
-            fadingIn = reader.ReadBoolean();
-            fadingTime = reader.ReadInt32();
-            elapsed = reader.ReadInt32();
             CheckCollisionWithWorld = reader.ReadBoolean();
 
             vel = new Vector(reader);
@@ -485,10 +570,6 @@ namespace XSharp.Engine.Entities
                 writer.Write(0);
 
             writer.Write((byte) CollisionData);
-            writer.Write(fading);
-            writer.Write(fadingIn);
-            writer.Write(fadingTime);
-            writer.Write(elapsed);
             writer.Write(CheckCollisionWithWorld);
 
             vel.Write(writer);
@@ -505,6 +586,8 @@ namespace XSharp.Engine.Entities
         }
 
         public Animation CurrentAnimation => GetAnimation(currentAnimationIndex);
+
+        public string CurrentAnimationName => CurrentAnimation?.FrameSequenceName;
 
         public int CurrentAnimationIndex
         {
@@ -544,22 +627,6 @@ namespace XSharp.Engine.Entities
         public override string ToString()
         {
             return $"{GetType().Name}[{Name}, {Origin}]";
-        }
-
-        public void FadeIn(int time)
-        {
-            fading = true;
-            fadingIn = true;
-            fadingTime = time;
-            elapsed = 0;
-        }
-
-        public void FadeOut(int time)
-        {
-            fading = true;
-            fadingIn = false;
-            fadingTime = time;
-            elapsed = 0;
         }
 
         public override Vector GetVector(VectorKind kind)
@@ -611,13 +678,9 @@ namespace XSharp.Engine.Entities
             if (animations.Count == 0)
                 return base.GetDeadBox();
 
-            Box drawBox;
-            if (InitialAnimationName != null)
-                drawBox = GetFirstAnimationByName(InitialAnimationName).DrawBox;
-            else if (InitialAnimationIndex >= 0)
-                drawBox = animations[InitialAnimationIndex].DrawBox;
-            else
-                drawBox = animations[0].DrawBox;
+            Box drawBox = InitialAnimationName != null
+                ? GetFirstAnimationByName(InitialAnimationName).DrawBox
+                : InitialAnimationIndex >= 0 ? animations[InitialAnimationIndex].DrawBox : animations[0].DrawBox;
 
             return (Directional && Direction == DefaultDirection ? drawBox : drawBox.Mirror()) - Origin;
         }
@@ -656,6 +719,8 @@ namespace XSharp.Engine.Entities
             invincibilityFrames = DEFAULT_INVINCIBLE_TIME;
             broke = false;
             MultiAnimation = false;
+
+            FadingSettings.Reset();
 
             CurrentAnimationIndex = InitialAnimationIndex;
             CurrentAnimation?.StartFromBegin();
@@ -767,7 +832,7 @@ namespace XSharp.Engine.Entities
 
         protected virtual bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
         {
-            return true;
+            return !Invincible && !NoClip;
         }
 
         protected virtual void OnTakeDamagePost(Sprite attacker, FixedSingle damage)
@@ -793,7 +858,7 @@ namespace XSharp.Engine.Entities
             if (!victim.Alive || victim.broke || victim.MarkedToRemove || health <= 0)
                 return;
 
-            if (!victim.Invincible && !victim.NoClip && victim.OnTakeDamage(this, ref damage))
+            if (victim.OnTakeDamage(this, ref damage))
             {
                 FixedSingle h = victim.health;
                 h -= damage;
@@ -1186,10 +1251,13 @@ namespace XSharp.Engine.Entities
             return animationsByName.TryGetValue(name, out List<Animation> animations) ? animations.Count > 0 ? animations[0] : null : null;
         }
 
-        public void SetCurrentAnimationByName(string name)
+        public void SetCurrentAnimationByName(string name, int startIndex = -1)
         {
             Animation animation = GetFirstAnimationByName(name);
             CurrentAnimationIndex = animation != null ? animation.Index : -1;
+
+            if (startIndex >= 0)
+                CurrentAnimation?.Start(startIndex);
         }
 
         public void SetAnimationsVisibility(string name, bool visible)
@@ -1257,7 +1325,7 @@ namespace XSharp.Engine.Entities
         public virtual void Render()
         {
             if (!Alive || MarkedToRemove || !Visible)
-                return;            
+                return;
 
             if (!InvisibleOnCurrentFrame)
                 foreach (Animation animation in animations)
@@ -1323,9 +1391,6 @@ namespace XSharp.Engine.Entities
             base.Cleanup();
 
             CurrentAnimationIndex = -1;
-            fading = false;
-            fadingIn = false;
-            fadingTime = -1;
             moving = false;
             invincible = false;
             invincibleExpires = -1;
@@ -1333,8 +1398,8 @@ namespace XSharp.Engine.Entities
             blinkFrames = -1;
             NoClip = false;
             InvisibleOnCurrentFrame = false;
+            FadingSettings.Reset();
         }
-
 
         internal void OnDeviceReset()
         {
@@ -1347,6 +1412,29 @@ namespace XSharp.Engine.Entities
             return (CollisionChecker.IsSolidBlock(CollisionData) ? BoxKind.COLLISIONBOX : BoxKind.NONE)
                 | (Visible ? BoxKind.BOUDINGBOX : BoxKind.NONE)
                 | base.ComputeBoxKind();
+        }
+
+        public void FaceToPosition(Vector pos)
+        {
+            var faceDirection = GetHorizontalDirection(pos);
+
+            if (Direction == faceDirection)
+                Direction = Direction.Oposite();
+        }
+
+        public void FaceToEntity(Entity entity)
+        {
+            FaceToPosition(entity.Origin);
+        }
+
+        public void FaceToPlayer()
+        {
+            FaceToEntity(Engine.Player);
+        }
+
+        public void FaceToScreenCenter()
+        {
+            FaceToPosition(Engine.World.Camera.Center);
         }
     }
 }
