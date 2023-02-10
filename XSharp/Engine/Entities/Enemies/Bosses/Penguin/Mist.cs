@@ -45,6 +45,16 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             Offset = (MistDirection == Direction.RIGHT ? -SCENE_SIZE : 0, -SCENE_SIZE);
         }
 
+        private void PlaySnowSoundLoop()
+        {
+            Engine.PlaySound(5, 36, 1.2, 0.128);
+        }
+
+        private void FinishSnowSoundLoop()
+        {
+            Engine.ClearSoundLoopPoint(5, 36, true);
+        }
+
         protected internal override void OnSpawn()
         {
             base.OnSpawn();
@@ -87,13 +97,21 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         public void Play()
         {
-            Visible = true;
-            ResetOffset();
+            if (!Visible)
+            {
+                Visible = true;
+                PlaySnowSoundLoop();
+                ResetOffset();
+            }
         }
 
         public void Stop()
         {
-            Visible = false;
+            if (Visible)
+            {
+                Visible = false;
+                FinishSnowSoundLoop();
+            }
         }
     }
 }

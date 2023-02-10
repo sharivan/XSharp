@@ -212,7 +212,7 @@ namespace D3D9Test
         private static void WriteVertex(DataStream vbData, float x, float y, float u, float v)
         {
             vbData.Write(x - 0.5f);
-            vbData.Write(y - 0.5f);
+            vbData.Write(y + 0.5f);
             vbData.Write(1f);
             vbData.Write(0xffffffff);
             vbData.Write(u);

@@ -400,7 +400,7 @@ namespace XSharp.Engine.Entities
         protected virtual void SetOrigin(Vector origin)
         {
             LastOrigin = this.origin;
-            this.origin = origin;
+            this.origin = origin.TruncFracPart();
 
             UpdatePartition();
 

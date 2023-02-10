@@ -259,36 +259,37 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
                 }
 
 
-                if (ExplodingFrameCounter is >= (30 * 5) and < (30 * 5 + 12))
+                if (ExplodingFrameCounter is >= (30 * 5) and < (30 * 5 + 12)) // Blink white three times between frames 150 and 162, each blink taking two frames, two frames between each blink.
                 {
-                    int frame = ExplodingFrameCounter - 155;
+                    int frame = ExplodingFrameCounter - 30 * 5;
                     if (frame % 4 is 0 or 1)
                     {
-                        Engine.FadingSettings.FadingLevel = 1;
+                        Engine.FadingSettings.FadingLevel = new Vector4(1, 1, 1, 0);
                         Engine.FadingSettings.FadingColor = Color.White;
                     }
                     else
-                        Engine.FadingSettings.FadingLevel = 0;
+                        Engine.FadingSettings.FadingLevel = Vector4.Zero;
                 }
-                else if (ExplodingFrameCounter is >= (33 * 5) and < (33 * 5 + 60))
+                else if (ExplodingFrameCounter is >= (33 * 5) and < (33 * 5 + 60)) // On frame 162, start tilemaps fading to white and boss fading to black. Fading take 60 frames.
                 {
                     float fadingLevel = (ExplodingFrameCounter - 33 * 5) / 59f;
 
-                    Engine.World.FadingSettings.FadingLevel = fadingLevel;
+                    Engine.World.FadingSettings.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
                     Engine.World.FadingSettings.FadingColor = Color.White;
 
-                    FadingSettings.FadingLevel = fadingLevel;
+                    FadingSettings.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
                     FadingSettings.FadingColor = Color.Black;
                 }
-                else if (ExplodingFrameCounter is >= (71 * 5) and < (71 * 5 + 30))
+                else if (ExplodingFrameCounter is >= (71 * 5) and < (71 * 5 + 30)) // On frame 355, start fading boss from black to transparent. This fading take 30 frames. 
                 {
-                    float alpha = 1 - (ExplodingFrameCounter - 71 * 5) / 29f;
-                    FadingSettings.FadingColor = new Color(0, 0, 0, alpha);
+                    float fadingLevel = (ExplodingFrameCounter - 71 * 5) / 29f;
+                    FadingSettings.FadingLevel = new Vector4(1, 1, 1, fadingLevel);
+                    FadingSettings.FadingColor = Color.Transparent;
                 }
-                else if (ExplodingFrameCounter is >= (78 * 5) and < (78 * 5 + 32))
+                else if (ExplodingFrameCounter is >= (78 * 5) and < (78 * 5 + 32)) // On frame 390, fade out back the tilemaps
                 {
                     float fadingLevel = 1 - (ExplodingFrameCounter - 78 * 5) / 31f;
-                    Engine.World.FadingSettings.FadingLevel = fadingLevel;
+                    Engine.World.FadingSettings.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
                     Engine.World.FadingSettings.FadingColor = Color.White;
                 }
                 else if (ExplodingFrameCounter >= 78 * 5 + 32 + 2 * 60)
@@ -341,7 +342,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
 
         public virtual void Explode()
         {
-            if (Alive && !MarkedToRemove && !Exploding)
+            if (Alive && !Exploding)
             {
                 if (LockPlayerOnDefeat)
                 {

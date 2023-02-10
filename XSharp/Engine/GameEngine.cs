@@ -601,7 +601,7 @@ namespace XSharp.Engine
             private set;
         } = 0;
 
-        public FadingSettings FadingSettings
+        public FadingControl FadingSettings
         {
             get;
         }
@@ -790,7 +790,7 @@ namespace XSharp.Engine
             soundStreams = new List<WaveStream>();
             soundChannels = new List<(WaveOutEvent, SoundStream, bool)>();
 
-            FadingSettings = new FadingSettings();
+            FadingSettings = new FadingControl();
 
             lua = new Lua();
             lua.LoadCLRPackage(); // TODO : This can be DANGEROUS! Fix in the future by adding restrictions on the scripting.
@@ -1084,7 +1084,7 @@ namespace XSharp.Engine
             var device = new Device9(Direct3D, 0, DeviceType.Hardware, Control.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
             Device = device;
 
-            var function = ShaderBytecode.CompileFromFile("PaletteShader.hlsl", "main", "ps_2_0");
+            var function = ShaderBytecode.CompileFromFile("PixelShadder.hlsl", "main", "ps_2_0");
             PixelShader = new PixelShader(device, function);
 
             hasPaletteHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "hasPalette");
@@ -2522,8 +2522,8 @@ namespace XSharp.Engine
 
         private static void WriteVertex(DataStream vbData, float x, float y, float u, float v)
         {
-            vbData.Write(x - 0 * 0.5f);
-            vbData.Write(y - 0 * 0.5f);
+            vbData.Write(x);
+            vbData.Write(y);
             vbData.Write(0f);
             vbData.Write(0xffffffff);
             vbData.Write(u);
@@ -2549,7 +2549,7 @@ namespace XSharp.Engine
             vb.Unlock();
         }
 
-        public void RenderSprite(Texture texture, Texture palette, FadingSettings fadingSettings, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
+        public void RenderSprite(Texture texture, Texture palette, FadingControl fadingSettings, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             RectangleF rDest = WorldBoxToScreen(box);
 
@@ -2578,7 +2578,7 @@ namespace XSharp.Engine
                 PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingSettings.FadingColor.ToVector4());
             }
             else
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
 
             for (int i = 0; i < repeatX; i++)
                 for (int j = 0; j < repeatY; j++)
@@ -2594,30 +2594,30 @@ namespace XSharp.Engine
             sprite.End();
         }
 
-        public void RenderSprite(Texture texture, FadingSettings fadingSettings, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
+        public void RenderSprite(Texture texture, FadingControl fadingSettings, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             RenderSprite(texture, null, fadingSettings, box, transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, FadingSettings fadingSettings, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
+        public void RenderSprite(Texture texture, FadingControl fadingSettings, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
             RenderSprite(texture, null, fadingSettings, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, FadingSettings fadingSettings, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
+        public void RenderSprite(Texture texture, FadingControl fadingSettings, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
             RenderSprite(texture, null, fadingSettings, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, Texture palette, FadingSettings fadingSettings, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
+        public void RenderSprite(Texture texture, Texture palette, FadingControl fadingSettings, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
             RenderSprite(texture, palette, fadingSettings, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, Texture palette, FadingSettings fadingSettings, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
+        public void RenderSprite(Texture texture, Texture palette, FadingControl fadingSettings, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
             RenderSprite(texture, palette, fadingSettings, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
@@ -2755,7 +2755,8 @@ namespace XSharp.Engine
             if (ENABLE_OST && romLoaded && mmx.Type == 0 && mmx.Level == 8)
                 PlayOST(18, 83, 50.152);
 
-            FadingSettings.Start(Color.Black, 26, true, StartReadyHUD);
+            FadingSettings.Reset();
+            FadingSettings.Start(Color.Black, 26, FadingFlags.ALPHA, FadingFlags.ALPHA, StartReadyHUD);
         }
 
         private Keys HandleInput(out bool nextFrame)
@@ -3637,7 +3638,7 @@ namespace XSharp.Engine
             FillRectangle(WorldBoxToScreen(box), color);
         }
 
-        public void FillRectangle(RectangleF rect, Color color, FadingSettings fadingSettings = null)
+        public void FillRectangle(RectangleF rect, Color color, FadingControl fadingSettings = null)
         {
             float x = 4 * rect.Left;
             float y = 4 * rect.Top;
@@ -3762,13 +3763,8 @@ namespace XSharp.Engine
             Device.PixelShader = PixelShader;
             PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
 
-            if (FadingSettings.Fading)
-            {
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingSettings.FadingLevel);
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingSettings.FadingColor.ToVector4());
-            }
-            else
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
+            PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingSettings.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingSettings.FadingColor.ToVector4());
 
             var matScaling = Matrix.Scaling(0.25f, 0.25f, 1);
             var matTranslation = Matrix.Translation(-1 * SCREEN_WIDTH * 0.5F, +1 * SCREEN_HEIGHT * 0.5F, 1);
@@ -4384,7 +4380,7 @@ namespace XSharp.Engine
 
             CameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
 
-            if ((Player.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR - World.Camera.Center).Length > STEP_SIZE)
+            if ((Player.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR - World.Camera.Center).Length.TruncFracPart() >= STEP_SIZE)
             {
                 World.Camera.SmoothOnNextMove = true;
                 World.Camera.SmoothSpeed = NO_CLIP_SPEED;
@@ -4609,7 +4605,7 @@ namespace XSharp.Engine
             WriteVertex(vbData, (float) r2.X, (float) r2.Y, (float) t2.X, (float) t2.Y);
         }
 
-        public static void WriteSquare(DataStream vbData, Vector vSource, Vector vDest, Vector srcSize, Vector dstSize)
+        public static void WriteSquare(DataStream vbData, Vector vSource, Vector vDest, Vector srcSize, Vector dstSize, bool flipped = false, bool mirrored = false)
         {
             if (vSource.X < 0 || vSource.X > 1 || vSource.Y < 0 || vSource.Y > 1)
                 throw new Exception();
@@ -4636,11 +4632,32 @@ namespace XSharp.Engine
             if (t3.X < 0 || t3.X > 1 || t3.Y < 0 || t3.Y > 1)
                 throw new Exception();
 
-            WriteTriangle(vbData, r0, r1, r2, t0, t1, t2);
-            WriteTriangle(vbData, r0, r2, r3, t0, t2, t3);
+            if (flipped)
+            {
+                if (mirrored)
+                {
+                    WriteTriangle(vbData, r0, r1, r2, t2, t3, t0);
+                    WriteTriangle(vbData, r0, r2, r3, t2, t0, t1);
+                }
+                else
+                {
+                    WriteTriangle(vbData, r0, r1, r2, t3, t2, t1);
+                    WriteTriangle(vbData, r0, r2, r3, t3, t1, t0);
+                }
+            }
+            else if (mirrored)
+            {
+                WriteTriangle(vbData, r0, r1, r2, t1, t0, t3);
+                WriteTriangle(vbData, r0, r2, r3, t1, t3, t2);
+            }
+            else
+            {
+                WriteTriangle(vbData, r0, r1, r2, t0, t1, t2);
+                WriteTriangle(vbData, r0, r2, r3, t0, t2, t3);
+            }
         }
 
-        public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, Texture texture, Texture palette, FadingSettings fadingSettings, MMXBox box)
+        public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, Texture texture, Texture palette, FadingControl fadingSettings, MMXBox box)
         {
             Device.SetStreamSource(0, vb, 0, vertexSize);
 
@@ -4650,7 +4667,6 @@ namespace XSharp.Engine
             float y = -rDest.Top + (float) World.Camera.Height * 0.5f;
 
             var matScaling = Matrix.Scaling(1, 1, 1);
-            //var matTranslation = Matrix.Translation(x, y, 1);
             var matTranslation = Matrix.Translation(x, y, 0);
             Matrix matTransform = matScaling * matTranslation;
 
@@ -4676,7 +4692,7 @@ namespace XSharp.Engine
                 PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingSettings.FadingColor.ToVector4());
             }
             else
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, 0);
+                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
 
             Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
@@ -5012,7 +5028,8 @@ namespace XSharp.Engine
             DyingEffectActive = false;
             respawning = true;
             UnloadLevel();
-            FadingSettings.Start(Color.White, 28, true, LoadLevel);
+            FadingSettings.Reset();
+            FadingSettings.Start(Color.Black, 28, FadingFlags.COLORS, FadingFlags.COLORS, LoadLevel);
 
             if (ENABLE_OST)
                 StartFadingOST(0, 60, () => soundChannels[3].player.Stop());
@@ -5022,6 +5039,7 @@ namespace XSharp.Engine
         {
             DyingEffectActive = true;
             DyingEffectFrameCounter = 0;
+            FadingSettings.Reset();
             FadingSettings.Start(Color.White, 132, ReloadLevelTransition);
         }
 
@@ -5439,7 +5457,8 @@ namespace XSharp.Engine
 
         internal void OnPlayerTeleported()
         {
-            FadingSettings.Start(Color.Black, 60, ReloadLevel);
+            FadingSettings.Reset();
+            FadingSettings.Start(Color.Black, 60, FadingFlags.COLORS, FadingFlags.COLORS, ReloadLevel);
         }
 
         internal void UpdateSpriteLayer(Sprite sprite, int layer)
@@ -5448,13 +5467,11 @@ namespace XSharp.Engine
             {
                 huds[hud.Layer].Remove(hud);
                 huds[layer].Add(hud);
-                hud.layer = layer;
             }
             else
             {
                 sprites[sprite.Layer].Remove(sprite);
                 sprites[layer].Add(sprite);
-                sprite.layer = layer;
             }
         }
     }

@@ -9,7 +9,6 @@ namespace XSharp.Engine.World
     {
         private Entity focusOn = null;
 
-        private Vector lastCenter = Vector.NULL_VECTOR;
         private Vector vel = Vector.NULL_VECTOR;
         private FixedSingle moveDistance;
         private FixedSingle moveStep;
@@ -154,12 +153,12 @@ namespace XSharp.Engine.World
             get => vel;
             set
             {
-                vel = value;
-                moveStep = vel.Length;
+                vel = value.TruncFracPart();
+                moveStep = vel.Length.TruncFracPart();
             }
         }
 
-        public bool Moving => moveDistance > STEP_SIZE;
+        public bool Moving => moveDistance >= STEP_SIZE;
 
         internal Camera()
         {
@@ -177,7 +176,12 @@ namespace XSharp.Engine.World
             SetCenter(v.X, v.Y);
         }
 
-        private void SetCenter(FixedSingle x, FixedSingle y)
+        public Vector ClampToBounds(Vector v)
+        {
+            return ClampToBounds(v.X, v.Y);
+        }
+
+        public Vector ClampToBounds(FixedSingle x, FixedSingle y)
         {
             Vector minCameraPos = World.Engine.MinCameraPos;
             Vector maxCameraPos = World.Engine.MaxCameraPos;
@@ -200,7 +204,12 @@ namespace XSharp.Engine.World
             else if (y > maxY)
                 y = maxY;
 
-            Origin = new Vector(x, y);
+            return (x, y);
+        }
+
+        private void SetCenter(FixedSingle x, FixedSingle y)
+        {
+            Origin = ClampToBounds(x, y);
         }
 
         public void MoveToLeftTop(Vector dest)
@@ -220,12 +229,13 @@ namespace XSharp.Engine.World
 
         public void MoveToCenter(Vector dest, FixedSingle speed)
         {
-            if (speed <= STEP_SIZE)
+            if (speed < STEP_SIZE)
                 return;
 
+            dest = ClampToBounds(dest.TruncFracPart());
             Vector delta = dest - Center;
-            FixedSingle moveDistance = delta.Length;
-            if (moveDistance <= STEP_SIZE)
+            FixedSingle moveDistance = delta.Length.TruncFracPart();
+            if (moveDistance < STEP_SIZE)
             {
                 this.moveDistance = 0;
                 MovingSpeed = 0;
@@ -233,13 +243,13 @@ namespace XSharp.Engine.World
                 return;
             }
 
-            MovingSpeed = speed;
+            MovingSpeed = speed.TruncFracPart();
             this.moveDistance = moveDistance;
-            vel = delta * (speed / moveDistance);
-            moveStep = vel.Length;
+            vel = (delta * (speed / moveDistance)).TruncFracPart();
+            moveStep = vel.Length.TruncFracPart();
 
             this.moveDistance -= moveStep;
-            if (this.moveDistance <= STEP_SIZE)
+            if (this.moveDistance < STEP_SIZE)
             {
                 SetCenter(dest);
                 this.moveDistance = 0;
@@ -252,7 +262,7 @@ namespace XSharp.Engine.World
                 Vector newCenter = Center + vel;
                 SetCenter(newCenter);
 
-                if (Center == oldCenter)
+                if ((Center - oldCenter).Length.TruncFracPart() < STEP_SIZE)
                 {
                     this.moveDistance = 0;
                     MovingSpeed = 0;
@@ -267,13 +277,14 @@ namespace XSharp.Engine.World
 
         public void MoveToFocus(FixedSingle speed)
         {
-            if (speed <= STEP_SIZE || focusOn == null)
+            if (speed < STEP_SIZE || focusOn == null)
                 return;
 
-            Vector dest = focusOn.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR;
+            Vector dest = focusOn.Origin;
+            dest = ClampToBounds(dest);
             Vector delta = dest - Center;
-            FixedSingle moveDistance = delta.Length;
-            if (moveDistance <= STEP_SIZE)
+            FixedSingle moveDistance = delta.Length.TruncFracPart();
+            if (moveDistance < STEP_SIZE)
             {
                 this.moveDistance = 0;
                 MovingSpeed = 0;
@@ -281,13 +292,13 @@ namespace XSharp.Engine.World
                 return;
             }
 
-            MovingSpeed = speed;
+            MovingSpeed = speed.TruncFracPart();
             this.moveDistance = moveDistance;
-            vel = delta * (speed / moveDistance);
-            moveStep = vel.Length;
+            vel = (delta * (speed / moveDistance)).TruncFracPart();
+            moveStep = vel.Length.TruncFracPart();
 
             this.moveDistance -= moveStep;
-            if (this.moveDistance <= STEP_SIZE)
+            if (this.moveDistance < STEP_SIZE)
             {
                 SetCenter(dest);
                 this.moveDistance = 0;
@@ -300,7 +311,7 @@ namespace XSharp.Engine.World
                 Vector newCenter = Center + vel;
                 SetCenter(newCenter);
 
-                if (Center == oldCenter)
+                if ((Center - oldCenter).Length.TruncFracPart() < STEP_SIZE)
                 {
                     this.moveDistance = 0;
                     MovingSpeed = 0;
@@ -346,7 +357,7 @@ namespace XSharp.Engine.World
                 Vector newCenter = Center + vel;
                 SetCenter(newCenter);
 
-                if (Center == oldCenter)
+                if ((Center - oldCenter).Length.TruncFracPart() < STEP_SIZE)
                 {
                     moveDistance = 0;
                     MovingSpeed = 0;
@@ -365,11 +376,11 @@ namespace XSharp.Engine.World
                     MoveToFocus(SmoothSpeed);
                 }
                 else
-                    SetCenter(focusOn.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR);
+                {
+                    var focusOrigin = focusOn.Origin;
+                    SetCenter(focusOrigin);
+                }
             }
-
-            if (Center != lastCenter)
-                lastCenter = Center;
         }
 
         protected override void OnStartTouch(Entity entity)

@@ -116,7 +116,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             wasShootingIce = false;
             iceCount = 0;
             Direction = Direction.LEFT;
-            MaxHealth = BOSS_HP;
+            MaxHealth = 1; //BOSS_HP;
 
             mist.Spawn();
 
@@ -273,12 +273,27 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
         }
 
+        private void PlayBlowingSoundLoop()
+        {
+            Engine.PlaySound(5, 29, 2.3305, 0.03018);
+        }
+
+        private void FinishBlowingSoundLoop()
+        {
+            Engine.ClearSoundLoopPoint(5, 29, true);
+        }
+
+        private void StopBlowingSound()
+        {
+            Engine.StopSound(5, 29);
+        }
+
         private void OnBlowing(EntityState state, long frameCounter)
         {
             switch (frameCounter)
             {
                 case PENGUIN_SHOT_START_FRAME:
-                    Engine.PlaySound(4, 29);
+                    PlayBlowingSoundLoop();
                     break;
 
                 case PENGUIN_BLOW_FRAMES_TO_SPAWN_SCULPTURES:
@@ -299,6 +314,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                     break;
 
                 case PENGUIN_BLOW_FRAMES:
+                    FinishBlowingSoundLoop();
                     State = PenguinState.IDLE;
                     break;
             }
@@ -395,8 +411,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                     snowing = true;
                     snowingFrameCounter = 0;
                     mist.MistDirection = Direction;
-                    mist.Play();
-                    PlaySnowSoundLoop();
+                    mist.Play();                   
                     break;
 
                 case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG + PENGUIN_FRAMES_BEFORE_STOP_HANGING:
@@ -427,26 +442,18 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         }
 
         private void OnStartDying(EntityState state, EntityState lastState)
-        {
+        {           
             BreakSculptures();
             lever.Hide();
-        }
-
-        private void PlaySnowSoundLoop()
-        {
-            Engine.PlaySound(5, 36, 1.2, 0.128);
-        }
-
-        private void FinishSnowSoundLoop()
-        {
-            Engine.ClearSoundLoopPoint(5, 36, true);
+            mist.Stop();
+            Engine.Player.AdictionalVelocity = Vector.NULL_VECTOR;
         }
 
         protected override void Think()
         {
             if (snowing)
             {
-                var adictionalVelocity = (Direction == Direction.LEFT ? -PENGUIN_HANGING_SNOWING_SPEED_X : PENGUIN_HANGING_SNOWING_SPEED_X, 0);
+                var adictionalVelocity = (mist.MistDirection == Direction.LEFT ? -PENGUIN_HANGING_SNOWING_SPEED_X : PENGUIN_HANGING_SNOWING_SPEED_X, 0);
                 Engine.Player.AdictionalVelocity = adictionalVelocity;
 
                 if (sculpture1.Alive && !sculpture1.MarkedToRemove && !sculpture1.Broke)
@@ -458,7 +465,6 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                 snowingFrameCounter++;
                 if (snowingFrameCounter == PENGUIN_MIST_FRAMES)
                 {
-                    FinishSnowSoundLoop();
                     mist.Stop();
                     snowing = false;
                 }
@@ -525,6 +531,9 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         protected override void OnDying()
         {
+            StopBlowingSound();
+            hanging = false;
+            snowing = false;            
             Velocity = Vector.NULL_VECTOR;
             State = PenguinState.DYING;
         }

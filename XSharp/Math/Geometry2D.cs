@@ -448,6 +448,11 @@ namespace XSharp.Geometry
             return ScaleInverse(divisor, divisor);
         }
 
+        public Vector TruncFracPart(int bits = 8)
+        {
+            return (X.TruncFracPart(bits), Y.TruncFracPart(bits));
+        }
+
         public GeometryType Type => type;
 
         /// <summary>

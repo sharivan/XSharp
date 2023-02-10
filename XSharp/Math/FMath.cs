@@ -115,6 +115,11 @@ namespace XSharp.Math
                 : RawFracPart > 1 << (FIXED_BITS_COUNT - 1) ? intPart - 1 : intPart;
         }
 
+        public FixedSingle TruncFracPart(int bits = 8)
+        {
+            return new FixedSingle(RawValue & (-1 << (FIXED_BITS_COUNT - bits)));
+        }
+
         public FixedSingle Sqrt()
         {
             return System.Math.Sqrt(DoubleValue);
@@ -387,6 +392,11 @@ namespace XSharp.Math
             return Signal >= 0
                 ? RawFracPart > 1 << (FIXED_BITS_COUNT - 1) ? intPart + 1 : intPart
                 : RawFracPart > 1 << (FIXED_BITS_COUNT - 1) ? intPart - 1 : intPart;
+        }
+
+        public FixedSingle TruncFracPart(int bits = 8)
+        {
+            return new FixedSingle(RawValue & (-1 << (FIXED_BITS_COUNT - bits)));
         }
 
         public FixedDouble Sqrt()

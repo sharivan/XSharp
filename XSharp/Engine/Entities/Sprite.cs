@@ -35,7 +35,7 @@ namespace XSharp.Engine.Entities
         public event SpriteEvent BrokeEvent;
 
         private bool visible = true;
-        internal int layer = 0;
+        private int layer = 0;
         private List<Animation> animations;
         private int currentAnimationIndex = -1;
 
@@ -69,7 +69,9 @@ namespace XSharp.Engine.Entities
             set
             {
                 if (Alive && layer != value)
-                    Engine.UpdateSpriteLayer(this, layer);
+                    Engine.UpdateSpriteLayer(this, value);
+
+                layer = value;
             }
         }
 
@@ -196,7 +198,7 @@ namespace XSharp.Engine.Entities
             }
         }
 
-        public FadingSettings FadingSettings
+        public FadingControl FadingSettings
         {
             get;
         }
@@ -228,7 +230,7 @@ namespace XSharp.Engine.Entities
             protected set
             {
                 LastVelocity = vel;
-                vel = value;
+                vel = value.TruncFracPart();
             }
         }
 
@@ -351,7 +353,7 @@ namespace XSharp.Engine.Entities
             animations = new List<Animation>();
             animationsByName = new Dictionary<string, List<Animation>>();
 
-            FadingSettings = new FadingSettings();
+            FadingSettings = new FadingControl();
         }
 
         public void SetAnimationNames(params string[] animationNames)

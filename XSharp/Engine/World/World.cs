@@ -34,7 +34,7 @@ namespace XSharp.Engine.World
 
         private CollisionChecker collisionChecker;
 
-        public FadingSettings FadingSettings
+        public FadingControl FadingSettings
         {
             get;
         }
@@ -57,7 +57,7 @@ namespace XSharp.Engine.World
                 Height = SCREEN_HEIGHT
             };
 
-            FadingSettings = new FadingSettings();
+            FadingSettings = new FadingControl();
 
             tileList = new List<Tile>();
             backgroundTileList = new List<Tile>();

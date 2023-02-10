@@ -371,9 +371,10 @@ namespace XSharp.Engine
             MMXBox srcBox = frame.BoundingBox;
             Texture texture = frame.Texture;
 
-            MMXBox drawBox = Sprite.Origin + Offset + srcBox;
-            Vector2 origin = Sprite.Engine.WorldVectorToScreen(drawBox.Origin);
-            var origin3 = new Vector3(origin.X, origin.Y, 0);
+            Vector origin = Sprite.Origin + Offset;
+            MMXBox drawBox = origin + srcBox;
+            Vector2 translatedOrigin = Sprite.Engine.WorldVectorToScreen(drawBox.Origin);
+            var origin3 = new Vector3(translatedOrigin.X, translatedOrigin.Y, 0);
 
             Matrix transform = Matrix.Identity;
 

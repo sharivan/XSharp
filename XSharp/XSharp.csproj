@@ -150,7 +150,7 @@
     <Compile Include="Engine\Entities\Triggers\TriggerPush.cs" />
     <Compile Include="Engine\Entities\Triggers\TriggerTeleport.cs" />
     <Compile Include="Engine\Entities\VectorKind.cs" />
-    <Compile Include="Engine\FadingSettings.cs" />
+    <Compile Include="Engine\FadingControl.cs" />
     <Compile Include="Engine\Graphics\Palette.cs" />
     <Compile Include="Engine\Graphics\Tilemap.cs" />
     <Compile Include="Engine\Graphics\Tileset.cs" />
@@ -344,7 +344,7 @@
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="PaletteShader.hlsl">
+    <Content Include="PixelShadder.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

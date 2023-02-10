@@ -2942,7 +2942,6 @@ namespace XSharp.ROM
 
         private int Transform(int color, bool notTransparent)
         {
-            //return !transparent ? 0 : (int) (Expand(color & 0x1F) | (Expand((color & 0x3E0) >> 5) << 8) | (Expand((color & 0x7C00) >> 10) << 16) | 0xFF000000);
             return !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
         }
 
@@ -2963,9 +2962,6 @@ namespace XSharp.ROM
                     writter.Write(v);
                 }
             }
-
-            //if (!notNull)
-            //    return null;
 
             Tile wtile = world.AddTile(imageData, background);
             return wtile;

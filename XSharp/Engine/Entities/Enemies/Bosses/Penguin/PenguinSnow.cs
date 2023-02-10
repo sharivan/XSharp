@@ -19,6 +19,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         public PenguinSnow()
         {
+            Layer = 1;
             Directional = true;
             SpriteSheetIndex = 10;
             ContactDamage = 0;

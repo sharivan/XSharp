@@ -156,16 +156,8 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             base.OnStartTouch(entity);
 
-            switch (entity)
-            {
-                case PenguinIce:
-                    Break();
-                    break;
-
-                case Penguin penguin when penguin.State == PenguinState.SLIDING:
-                    Break();
-                    break;
-            }
+            if (entity is Penguin)
+                Break();
         }
     }
 }
