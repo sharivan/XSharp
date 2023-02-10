@@ -28,7 +28,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         private bool wasShootingIce;
         private int iceCount;
         private PenguinLever lever;
-        private SnowHUD snow;
+        private Mist mist;
         private PenguinSculpture sculpture1;
         private PenguinSculpture sculpture2;
         private PenguinFrozenBlock frozenBlock;
@@ -67,7 +67,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             RegisterState(PenguinState.DYING, OnStartDying, "Dying");
 
             lever = new PenguinLever();
-            snow = new SnowHUD();
+            mist = new Mist();
 
             sculpture1 = new PenguinSculpture()
             {
@@ -118,7 +118,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             Direction = Direction.LEFT;
             MaxHealth = BOSS_HP;
 
-            snow.Spawn();
+            mist.Spawn();
 
             SetState(PenguinState.INTRODUCING);
         }
@@ -127,7 +127,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             sculpture1.Kill();
             sculpture2.Kill();
-            snow.Kill();
+            mist.Kill();
             lever.Kill();
 
             base.OnDeath();
@@ -242,8 +242,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                                 break;
 
                             case 4:
-                                if (!(sculpture1.Alive && !sculpture1.MarkedToRemove && !sculpture1.Broke
-                                    || sculpture2.Alive && !sculpture2.MarkedToRemove && !sculpture2.Broke))
+                                if (!AllSculpturesAlive())
                                     State = PenguinState.BLOWING;
 
                                 break;
@@ -253,6 +252,11 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                     }
                 }
             }
+        }
+
+        private bool AllSculpturesAlive()
+        {
+            return sculpture1.Alive && sculpture2.Alive;
         }
 
         private void OnShootingIce(EntityState state, long frameCounter)
@@ -280,11 +284,18 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                 case PENGUIN_BLOW_FRAMES_TO_SPAWN_SCULPTURES:
                     BreakSculptures();
 
-                    sculpture1.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.Y);
-                    sculpture1.Spawn();
+                    if (!sculpture1.Alive)
+                    {
+                        sculpture1.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.Y);
+                        sculpture1.Spawn();
+                    }
 
-                    sculpture2.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.Y);
-                    sculpture2.Spawn();
+                    if (!sculpture2.Alive)
+                    {
+                        sculpture2.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.Y);
+                        sculpture2.Spawn();
+                    }
+
                     break;
 
                 case PENGUIN_BLOW_FRAMES:
@@ -383,8 +394,8 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                 case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG + PENGUIN_FRAMES_BEFORE_SNOW_AFTER_HANGING:
                     snowing = true;
                     snowingFrameCounter = 0;
-                    snow.SnowDirection = Direction;
-                    snow.Play();
+                    mist.MistDirection = Direction;
+                    mist.Play();
                     PlaySnowSoundLoop();
                     break;
 
@@ -445,10 +456,10 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                     sculpture2.AdictionalVelocity = adictionalVelocity;
 
                 snowingFrameCounter++;
-                if (snowingFrameCounter == PENGUIN_SNOW_FRAMES)
+                if (snowingFrameCounter == PENGUIN_MIST_FRAMES)
                 {
                     FinishSnowSoundLoop();
-                    snow.Stop();
+                    mist.Stop();
                     snowing = false;
                 }
             }
@@ -520,7 +531,8 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         public void FreezePlayer()
         {
-            if (!frozenBlock.Alive)
+            if (Alive && !Exploding && !Broke && !frozenBlock.Alive 
+                && !Engine.Player.TakingDamage && !Engine.Player.Blinking)
                 frozenBlock.Spawn();
         }
     }

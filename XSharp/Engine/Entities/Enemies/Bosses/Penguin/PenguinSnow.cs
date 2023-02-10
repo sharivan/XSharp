@@ -62,7 +62,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             Velocity = (Direction == Direction.RIGHT ? PENGUIN_SNOW_SPEED : -PENGUIN_SNOW_SPEED, 0);
 
             frameCounter++;
-            if (frameCounter >= PENGUIN_SNOW_SHOT_FRAMES)
+            if (frameCounter >= PENGUIN_SNOW_FRAMES)
                 Kill();
         }
 

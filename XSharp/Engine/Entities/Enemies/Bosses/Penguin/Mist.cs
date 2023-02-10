@@ -5,7 +5,7 @@ using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 {
-    public class SnowHUD : HUD.HUD
+    public class Mist : HUD.HUD
     {
         public FixedSingle Speed
         {
@@ -13,7 +13,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             set;
         } = 2;
 
-        public Direction SnowDirection
+        public Direction MistDirection
         {
             get;
             set;
@@ -27,12 +27,12 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         public bool Playing => Visible;
 
-        public SnowHUD()
+        public Mist()
         {
             SpriteSheetIndex = 11;
             Directional = false;
 
-            SetAnimationNames("Snow");
+            SetAnimationNames("Mist");
         }
 
         protected override Box GetBoundingBox()
@@ -42,7 +42,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         private void ResetOffset()
         {
-            Offset = (SnowDirection == Direction.RIGHT ? -SCENE_SIZE : 0, -SCENE_SIZE);
+            Offset = (MistDirection == Direction.RIGHT ? -SCENE_SIZE : 0, -SCENE_SIZE);
         }
 
         protected internal override void OnSpawn()
@@ -59,7 +59,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             if (!Visible)
                 return;
 
-            Offset += (SnowDirection == Direction.RIGHT ? Speed : -Speed, Speed);
+            Offset += (MistDirection == Direction.RIGHT ? Speed : -Speed, Speed);
             if (Offset.Y >= 0)
                 ResetOffset();
 
@@ -72,7 +72,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
             switch (frameSequenceName)
             {
-                case "Snow":
+                case "Mist":
                     startOn = true;
                     startVisible = true;
                     repeatX = 2;

@@ -10,6 +10,7 @@ namespace XSharp.Engine.Entities
 {
     public enum PlayerState
     {
+        NONE = -1,
         SPAWN = 0,
         SPAWN_END = 1,
         STAND = 2,
@@ -56,7 +57,8 @@ namespace XSharp.Engine.Entities
 
         private bool wasBlockedLeft;
         private bool wasBlockedRight;
-        private PlayerState state;
+        private PlayerState state = PlayerState.NONE;
+        private PlayerState forcedState = PlayerState.NONE;
         private Direction stateDirection;
         internal int shots;
         private int shotFrameCounter;
@@ -112,6 +114,22 @@ namespace XSharp.Engine.Entities
             get;
             protected internal set;
         } = false;
+
+        public PlayerState ForcedState
+        {
+            get => forcedState;
+            set
+            {
+                forcedState = value;
+                SetState(forcedState, 0);
+            }
+        }
+
+        public PlayerState ForcedStateException
+        {
+            get;
+            set;
+        } = PlayerState.NONE;
 
         internal Player()
         {
@@ -411,6 +429,9 @@ namespace XSharp.Engine.Entities
 
         protected void SetState(PlayerState state, Direction direction, int startAnimationIndex = -1)
         {
+            if (state == PlayerState.NONE || forcedState != PlayerState.NONE && state != ForcedStateException && state != forcedState)
+                return;
+
             this.state = state;
             stateDirection = direction;
             CurrentAnimationIndex = GetAnimationIndex(state, Shooting);
@@ -525,7 +546,8 @@ namespace XSharp.Engine.Entities
             {
                 if (!TakingDamage)
                 {
-                    PlaySound(6);
+                    if (!ContainsAnimationIndex(PlayerState.LAND, CurrentAnimationIndex, true))
+                        PlaySound(6);
 
                     if (PressingLeft)
                         TryMoveLeft();
@@ -1803,19 +1825,14 @@ namespace XSharp.Engine.Entities
             return spawning || teleporting || WallJumping && wallJumpFrameCounter < 7 || WallSliding || OnLadder || Dying || CrossingBossDoor ? 0 : base.GetGravity();
         }
 
-        private Direction GetDamageDirection(Sprite attacker)
-        {
-            return Origin.X < attacker.Origin.X ? Direction.RIGHT : Direction.LEFT;
-        }
-
         protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
         {
-            if (TakingDamage || Invincible || NoClip)
+            if (TakingDamage || Dying || Invincible || NoClip)
                 return false;
 
-            Invincible = true;
+            //Invincible = true;
 
-            Direction direction = GetDamageDirection(attacker);
+            Direction direction = GetHorizontalDirection(attacker).Oposite();
             if (direction != Direction.NONE)
                 Direction = direction;
 
@@ -1823,12 +1840,13 @@ namespace XSharp.Engine.Entities
 
             WallJumping = false;
 
-            if (Health - damage > 0)
+            if (attacker.KnockPlayerOnHurt)
             {
                 Velocity = (Direction == Direction.RIGHT ? INITIAL_DAMAGE_RECOIL_SPEED_X : -INITIAL_DAMAGE_RECOIL_SPEED_X, INITIAL_DAMAGE_RECOIL_SPEED_Y);
                 SetState(PlayerState.TAKING_DAMAGE, 0);
             }
-            else
+
+            if (Health > 0 && Health - damage <= 0)
                 Velocity = Vector.NULL_VECTOR;
 
             return true;

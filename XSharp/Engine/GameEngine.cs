@@ -265,8 +265,8 @@ namespace XSharp.Engine
         internal List<Entity> removedEntities;
         internal Dictionary<Entity, RespawnEntry> respawnableEntities;
         private readonly List<Sprite> freezingSpriteExceptions;
-        private readonly List<Sprite> sprites;
-        private readonly List<HUD> huds;
+        private readonly List<Sprite>[] sprites;
+        private readonly List<HUD>[] huds;
         private ushort currentLevel;
         private bool changeLevel;
         private ushort levelToChange;
@@ -1025,8 +1025,14 @@ namespace XSharp.Engine
             addedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
             respawnableEntities = new Dictionary<Entity, RespawnEntry>();
-            sprites = new List<Sprite>();
-            huds = new List<HUD>();
+            sprites = new List<Sprite>[NUM_SPRITE_LAYERS];
+            huds = new List<HUD>[NUM_SPRITE_LAYERS];
+
+            for (int i = 0; i < sprites.Length; i++)
+                sprites[i] = new List<Sprite>();
+
+            for (int i = 0; i < huds.Length; i++)
+                huds[i] = new List<HUD>();
 
             firstFreeEntityIndex = 0;
             firstEntity = null;
@@ -1238,7 +1244,7 @@ namespace XSharp.Engine
             var penguinSpriteSheet = AddSpriteSheet("Penguin", true, true);
 
             // 11
-            var snowSpriteSheet = AddSpriteSheet("Snow", true, true);
+            var mistSpriteSheet = AddSpriteSheet("Mist", true, true);
 
             // Setup frame sequences (animations)
 
@@ -2165,18 +2171,18 @@ namespace XSharp.Engine
             penguinSpriteSheet.ReleaseCurrentTexture();
 
             // Snow
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Snow.png"))
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Mist.png"))
             {
                 var texture = CreateImageTextureFromStream(stream);
-                snowSpriteSheet.CurrentTexture = texture;
+                mistSpriteSheet.CurrentTexture = texture;
             }
 
-            sequence = snowSpriteSheet.AddFrameSquence("Snow");
+            sequence = mistSpriteSheet.AddFrameSquence("Mist");
             sequence.OriginOffset = Vector.NULL_VECTOR;
             sequence.CollisionBox = (Vector.NULL_VECTOR, Vector.NULL_VECTOR, (SCENE_SIZE, SCENE_SIZE));
             sequence.AddFrame(0, 0, 0, 0, 256, 256, 1, true);
 
-            snowSpriteSheet.ReleaseCurrentTexture();
+            mistSpriteSheet.ReleaseCurrentTexture();
 
             // Load tiles & object positions from the ROM (if exist)
 
@@ -2652,9 +2658,9 @@ namespace XSharp.Engine
             if (entity is Sprite sprite)
             {
                 if (sprite is HUD hud)
-                    huds.Add(hud);
-                else if (sprite is not Entities.Player)
-                    sprites.Add(sprite);
+                    huds[sprite.Layer].Add(hud);
+                else
+                    sprites[sprite.Layer].Add(sprite);
             }
         }
 
@@ -2665,9 +2671,9 @@ namespace XSharp.Engine
             if (entity is Sprite sprite)
             {
                 if (sprite is HUD hud)
-                    huds.Remove(hud);
-                else if (sprite is not Entities.Player)
-                    sprites.Remove(sprite);
+                    huds[sprite.Layer].Remove(hud);
+                else
+                    sprites[sprite.Layer].Remove(sprite);
             }
 
             entity.Cleanup();
@@ -2721,12 +2727,16 @@ namespace XSharp.Engine
                 }
             }
 
+            foreach (var layer in sprites)
+                layer.Clear();
+
+            foreach (var layer in huds)
+                layer.Clear();
+
             respawnableEntities.Clear();
             addedEntities.Clear();
             removedEntities.Clear();
             entitiesByName.Clear();
-            sprites.Clear();
-            huds.Clear();
             freezingSpriteExceptions.Clear();
             partition.Clear();
 
@@ -2738,6 +2748,8 @@ namespace XSharp.Engine
 
         private void OnSpawningBlackScreenComplete()
         {
+            FadingOST = false;
+            FadingOSTLevel = 0;
             soundChannels[3].player.Volume = 0.5f;
 
             if (ENABLE_OST && romLoaded && mmx.Type == 0 && mmx.Level == 8)
@@ -3815,20 +3827,13 @@ namespace XSharp.Engine
             Device.SetTransform(TransformState.View, Matrix.Identity);
 
             var backBuffer = Device.GetRenderTarget(0);
-
             var worldSurface = worldTexture.GetSurfaceLevel(0);
-            Device.SetRenderTarget(0, worldSurface);
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
-
             var spritesSurface = spritesTexture.GetSurfaceLevel(0);
-            Device.SetRenderTarget(0, spritesSurface);
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
-
-            Device.SetRenderTarget(0, backBuffer);
 
             if (World != null)
             {
                 Device.SetRenderTarget(0, worldSurface);
+                Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
 
                 if (drawBackground)
                 {
@@ -3842,28 +3847,64 @@ namespace XSharp.Engine
                 Device.SetRenderTarget(0, backBuffer);
                 DrawTexture(worldTexture);
 
-                Device.SetRenderTarget(0, spritesSurface);
-
                 if (drawSprites)
                 {
-                    // Render sprites
-                    foreach (var sprite in sprites)
+                    Device.SetRenderTarget(0, spritesSurface);
+                    Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
+
+                    // Render down layer sprites
+                    foreach (var sprite in sprites[0])
                     {
                         if (!sprite.Alive || !sprite.Visible || sprite.IsOffscreen(BoxKind.BOUDINGBOX))
                             continue;
 
-                        sprite.Render();
+                        if (sprite == Player)
+                        {
+                            if (drawX)
+                                sprite.Render();
+                        }
+                        else
+                            sprite.Render();
                     }
+
+                    Device.SetRenderTarget(0, backBuffer);
+                    DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
                 }
 
-                if (drawX)
+                if (drawUpLayer)
                 {
-                    // Render X
-                    Player?.Render();
+                    Device.SetRenderTarget(0, worldSurface);
+                    Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
+
+                    World.RenderForeground(1);
+
+                    Device.SetRenderTarget(0, backBuffer);
+                    DrawTexture(worldTexture);
                 }
 
-                Device.SetRenderTarget(0, backBuffer);
-                DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
+                if (drawSprites)
+                {
+                    Device.SetRenderTarget(0, spritesSurface);
+                    Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
+
+                    // Render up layer sprites
+                    foreach (var sprite in sprites[1])
+                    {
+                        if (!sprite.Alive || !sprite.Visible || sprite.IsOffscreen(BoxKind.BOUDINGBOX))
+                            continue;
+
+                        if (sprite == Player)
+                        {
+                            if (drawX)
+                                sprite.Render();
+                        }
+                        else
+                            sprite.Render();
+                    }
+
+                    Device.SetRenderTarget(0, backBuffer);
+                    DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
+                }
 
                 if (drawHitbox || showDrawBox || showTriggerBounds)
                 {
@@ -3982,25 +4023,15 @@ namespace XSharp.Engine
                     }
                 }
 
-                if (drawUpLayer)
-                {
-                    Device.SetRenderTarget(0, worldSurface);
-                    Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
-
-                    World.RenderForeground(1);
-
-                    Device.SetRenderTarget(0, backBuffer);
-                    DrawTexture(worldTexture);
-                }
-
                 Device.SetRenderTarget(0, spritesSurface);
                 Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
 
-                foreach (HUD hud in huds)
-                {
-                    hud.UpdateOrigin();
-                    hud.Render();
-                }
+                foreach (var layer in huds)
+                    foreach (var hud in layer)
+                    {
+                        hud.UpdateOrigin();
+                        hud.Render();
+                    }
 
                 Device.SetRenderTarget(0, backBuffer);
                 DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
@@ -4284,7 +4315,7 @@ namespace XSharp.Engine
         {
             var penguin = new Penguin()
             {
-                Origin = origin,           
+                Origin = origin,
             };
 
             penguin.BossDefeatedEvent += OnBossDefeated;
@@ -5409,6 +5440,22 @@ namespace XSharp.Engine
         internal void OnPlayerTeleported()
         {
             FadingSettings.Start(Color.Black, 60, ReloadLevel);
+        }
+
+        internal void UpdateSpriteLayer(Sprite sprite, int layer)
+        {
+            if (sprite is HUD hud)
+            {
+                huds[hud.Layer].Remove(hud);
+                huds[layer].Add(hud);
+                hud.layer = layer;
+            }
+            else
+            {
+                sprites[sprite.Layer].Remove(sprite);
+                sprites[layer].Add(sprite);
+                sprite.layer = layer;
+            }
         }
     }
 }

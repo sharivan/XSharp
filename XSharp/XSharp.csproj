@@ -108,7 +108,7 @@
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinLever.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinSculpture.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinSnow.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\SnowHUD.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\Mist.cs" />
     <Compile Include="Engine\Entities\HUD\PlayerHealthHUD.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalBranch.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalEntity.cs" />
@@ -251,7 +251,7 @@
     <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
     <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
     <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
-    <EmbeddedResource Include="resources\sprites\Effects\Snow.png">
+    <EmbeddedResource Include="resources\sprites\Effects\Mist.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\HUD\HP.png">

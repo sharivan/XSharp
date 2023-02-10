@@ -187,7 +187,7 @@ namespace XSharp.Engine
         public const int PENGUIN_FRAMES_TO_HANG = 32;
         public const int PENGUIN_FRAMES_BEFORE_SNOW_AFTER_HANGING = 27;
         public const int PENGUIN_FRAMES_BEFORE_STOP_HANGING = 56;
-        public const int PENGUIN_SNOW_FRAMES = 120;
+        public const int PENGUIN_MIST_FRAMES = 120;
         public static readonly FixedSingle PENGUIN_HANGING_JUMP_SPEED_Y = 2014 / 256.0;
         public static readonly Vector PENGUIN_HANGING_OFFSET = (10, 24);
         public static readonly FixedSingle PENGUIN_HANGING_SNOWING_SPEED_X = 512 / 256.0;
@@ -199,8 +199,9 @@ namespace XSharp.Engine
         public static readonly FixedSingle PENGUIN_SLIDE_DECELARATION = 16 / 256.0;
 
         public const int PENGUIN_SHOT_START_FRAME = 16;
+        public static readonly Vector PENGUIN_SHOT_ORIGIN_OFFSET = (26, -2);
 
-        public const int PENGUIN_SNOW_SHOT_FRAMES = 40;
+        public const int PENGUIN_SNOW_FRAMES = 40;
         public static readonly Box PENGUIN_SNOW_HITBOX = (Vector.NULL_VECTOR, (-5, -5), (5, 5));
         public static readonly FixedSingle PENGUIN_SNOW_SPEED = 512 / 256.0;
         public static readonly Box PENGUIN_BLOW_HITBOX = (Vector.NULL_VECTOR, (-13, -6), (13, 6));
@@ -218,8 +219,7 @@ namespace XSharp.Engine
         public static readonly FixedSingle PENGUIN_ICE_SPEED = 1024 / 256.0;
         public static readonly FixedSingle PENGUIN_ICE_SPEED2_X = 512 / 256.0;
         public static readonly FixedSingle PENGUIN_ICE_SPEED2_Y = 545 / 256.0;
-        public static readonly FixedSingle PENGUIN_ICE_BUMO_SPEED2_Y = 395 / 256.0;
-        public static readonly Vector PENGUIN_SHOT_ORIGIN_OFFSET = (26, -2);
+        public static readonly FixedSingle PENGUIN_ICE_BUMO_SPEED2_Y = 395 / 256.0;       
 
         public static readonly Box PENGUIN_ICE_FRAGMENT_HITBOX = (Vector.NULL_VECTOR, (-4, -4), (4, 4));
 
@@ -231,6 +231,18 @@ namespace XSharp.Engine
         public static readonly Box PENGUIN_FROZEN_BLOCK_HITBOX = ((0, -1), (-6, -14), (6, 14));
 
         // Render
+
+        // Layers:
+        // 0 - Background down layer
+        // 1 - Background up layer
+        // 2 - Foreground down layer
+        // 3 - Foreground up layer
+        // 4 - HUD down layer
+        // 5 - HUD up layer
+        // 6 - Unused
+        // 7 - Unused
+        public const int NUM_LAYERS = 8;
+        public const int NUM_SPRITE_LAYERS = 2;
 
         public static readonly Vector DEFAULT_DRAW_ORIGIN = Vector.NULL_VECTOR;
         public static readonly FixedSingle DEFAULT_DRAW_SCALE = 1;
@@ -469,7 +481,7 @@ namespace XSharp.Engine
         // Startup
 
         public const bool ENABLE_ENEMIES = true;
-        public const bool ENABLE_SPAWNING_BLACK_SCREEN = true;
+        public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
         public const bool ENABLE_OST = true;
 
         public const bool LOAD_ROM = true;
@@ -477,6 +489,6 @@ namespace XSharp.Engine
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
         public const int INITIAL_LEVEL = 8;
-        public const int INITIAL_CHECKPOINT = 0;
+        public const int INITIAL_CHECKPOINT = 2;
     }
 }

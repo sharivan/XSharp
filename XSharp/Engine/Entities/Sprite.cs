@@ -35,6 +35,7 @@ namespace XSharp.Engine.Entities
         public event SpriteEvent BrokeEvent;
 
         private bool visible = true;
+        internal int layer = 0;
         private List<Animation> animations;
         private int currentAnimationIndex = -1;
 
@@ -59,6 +60,16 @@ namespace XSharp.Engine.Entities
             {
                 visible = value;
                 UpdatePartition();
+            }
+        }
+
+        public int Layer
+        {
+            get => layer;
+            set
+            {
+                if (Alive && layer != value)
+                    Engine.UpdateSpriteLayer(this, layer);
             }
         }
 
@@ -327,6 +338,12 @@ namespace XSharp.Engine.Entities
         {
             get;
             protected set;
+        } = true;
+
+        public bool KnockPlayerOnHurt
+        {
+            get;
+            set;
         } = true;
 
         protected Sprite()

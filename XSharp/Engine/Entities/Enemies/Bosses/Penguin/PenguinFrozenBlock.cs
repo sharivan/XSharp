@@ -1,4 +1,5 @@
-﻿using XSharp.Geometry;
+﻿using SharpDX;
+using XSharp.Geometry;
 using XSharp.Math;
 using static XSharp.Engine.Consts;
 
@@ -20,8 +21,10 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         public PenguinFrozenBlock()
         {
+            Layer = 1;
             Directional = true;
             SpriteSheetIndex = 10;
+            CollisionData = CollisionData.SOLID;
 
             SetAnimationNames("FrozenBlock");
         }
@@ -42,7 +45,11 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                 return;
 
             Parent = null;
-            Engine.Player.InputLocked = false;
+
+            var player = Engine.Player;
+            player.ForcedStateException = PlayerState.NONE;
+            player.ForcedState = PlayerState.NONE;
+            player.InputLocked = false;
 
             Exploding = true;
             Engine.PlaySound(4, 31);
@@ -87,6 +94,9 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             base.OnSpawn();
 
             var player = Engine.Player;
+            player.ForcedStateException = PlayerState.TAKING_DAMAGE;
+            player.ForcedState = PlayerState.STAND;
+            player.Velocity = Vector.NULL_VECTOR;
             player.InputLocked = true;
             player.TakeDamageEvent += OnPlayerTakedamage;
             Origin = player.Origin;
@@ -110,15 +120,20 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             base.OnDeath();
 
-            Engine.Player.InputLocked = false;
-            Engine.Player.TakeDamageEvent -= OnPlayerTakedamage;
+            var player = Engine.Player;
+            player.ForcedStateException = PlayerState.NONE;
+            player.ForcedState = PlayerState.NONE;
+            player.InputLocked = false;
+            player.TakeDamageEvent -= OnPlayerTakedamage;
         }
 
         protected override void Think()
         {
             base.Think();
 
-            if (Engine.Player.Keys != Engine.Player.LastKeys)
+            if ((Engine.Player.Keys.HasActionOrMovement()
+                || Engine.Player.LastKeys.HasActionOrMovement())
+                && Engine.Player.Keys != Engine.Player.LastKeys)
             {
                 Hits++;
 
