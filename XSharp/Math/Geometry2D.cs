@@ -1504,38 +1504,50 @@ namespace XSharp.Geometry
 
         public Box Mirror()
         {
-            return Mirror(0);
+            return Mirror(Origin.X);
         }
 
-        public Box Flip()
+        public Box Mirror(Vector origin)
         {
-            return Flip(0);
+            return Mirror(origin.X);
         }
 
         public Box Mirror(FixedSingle x)
         {
             FixedSingle originX = Origin.X;
-            x += originX;
             FixedSingle minsX = originX + Mins.X;
             FixedSingle maxsX = originX + Maxs.X;
 
-            FixedSingle newMinsX = 2 * x - maxsX;
-            FixedSingle newMaxsX = 2 * x - minsX;
+            x *= 2;
+            FixedSingle newOriginX = x - originX;
+            FixedSingle newMinsX = x - minsX;
+            FixedSingle newMaxsX = x - maxsX;
 
-            return new Box(Origin, new Vector(newMinsX - originX, Mins.Y), new Vector(newMaxsX - originX, Maxs.Y));
+            return new Box((newOriginX, Origin.Y), new Vector(newMaxsX - newOriginX, Mins.Y), new Vector(newMinsX - newOriginX, Maxs.Y));
+        }
+
+        public Box Flip()
+        {
+            return Flip(Origin.Y);
+        }
+
+        public Box Flip(Vector origin)
+        {
+            return Flip(origin.Y);
         }
 
         public Box Flip(FixedSingle y)
         {
             FixedSingle originY = Origin.Y;
-            y += originY;
             FixedSingle minsY = originY + Mins.Y;
             FixedSingle maxsY = originY + Maxs.Y;
 
-            FixedSingle newMinsY = 2 * y - maxsY;
-            FixedSingle newMaxsY = 2 * y - minsY;
+            y *= 2;
+            FixedSingle newOriginY = y - originY;
+            FixedSingle newMinsY = y - minsY;
+            FixedSingle newMaxsY = y - maxsY;
 
-            return new Box(Origin, new Vector(Mins.X, newMinsY - originY), new Vector(Maxs.X, newMaxsY - originY));
+            return new Box((Origin.X, newOriginY), new Vector(Mins.X, newMaxsY - newOriginY), new Vector(Maxs.X, newMinsY - newOriginY));
         }
 
         public Vector GetNormal(BoxSide side)
@@ -1592,14 +1604,14 @@ namespace XSharp.Geometry
             return IsValid(0);
         }
 
-        public Box Scale(Vector center, FixedSingle scaleX, FixedSingle scaleY)
+        public Box Scale(Vector origin, FixedSingle scaleX, FixedSingle scaleY)
         {
-            return new((Origin - center).Scale(scaleX, scaleY) + center, Mins.Scale(scaleX, scaleY), Maxs.Scale(scaleX, scaleY));
+            return new((Origin - origin).Scale(scaleX, scaleY) + origin, Mins.Scale(scaleX, scaleY), Maxs.Scale(scaleX, scaleY));
         }
 
-        public Box Scale(Vector center, FixedSingle scale)
+        public Box Scale(Vector origin, FixedSingle scale)
         {
-            return Scale(center, scale, scale);
+            return Scale(origin, scale, scale);
         }
 
         public Box Scale(FixedSingle scaleX, FixedSingle scaleY)
@@ -1612,14 +1624,14 @@ namespace XSharp.Geometry
             return Scale(Vector.NULL_VECTOR, scale, scale);
         }
 
-        public Box ScaleInverse(Vector center, FixedSingle divisorX, FixedSingle divisorY)
+        public Box ScaleInverse(Vector origin, FixedSingle divisorX, FixedSingle divisorY)
         {
-            return new((Origin - center).ScaleInverse(divisorX, divisorY) + center, Mins.ScaleInverse(divisorX, divisorY), Maxs.ScaleInverse(divisorX, divisorY));
+            return new((Origin - origin).ScaleInverse(divisorX, divisorY) + origin, Mins.ScaleInverse(divisorX, divisorY), Maxs.ScaleInverse(divisorX, divisorY));
         }
 
-        public Box ScaleInverse(Vector center, FixedSingle divisor)
+        public Box ScaleInverse(Vector origin, FixedSingle divisor)
         {
-            return ScaleInverse(center, divisor, divisor);
+            return ScaleInverse(origin, divisor, divisor);
         }
 
         public Box ScaleInverse(FixedSingle divisorX, FixedSingle divisorY)

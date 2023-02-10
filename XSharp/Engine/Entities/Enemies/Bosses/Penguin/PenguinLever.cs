@@ -20,7 +20,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             get;
             private set;
-        }
+        } = PenguinLeverState.IDLE;
 
         public PenguinLever()
         {
@@ -46,14 +46,25 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
             CheckCollisionWithWorld = false;
 
-            showingFrameCounter = 0;
-
-            State = PenguinLeverState.SHOWING;
+            Show();
         }
 
-        internal void Hide()
+        public void Show()
         {
-            State = PenguinLeverState.HIDING;
+            if (State == PenguinLeverState.IDLE)
+            {
+                showingFrameCounter = 0;
+                State = PenguinLeverState.SHOWING;
+            }
+        }
+
+        public void Hide()
+        {
+            if (State == PenguinLeverState.IDLE)
+            {
+                showingFrameCounter = 0;
+                State = PenguinLeverState.HIDING;
+            }
         }
 
         protected override void Think()
@@ -73,7 +84,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                 case PenguinLeverState.HIDING:
                     showingFrameCounter++;
                     Origin += Vector.UP_VECTOR;
-                    if (showingFrameCounter == 0)
+                    if (showingFrameCounter == PENGUIN_LEVER_MOVING_FRAMES)
                         State = PenguinLeverState.IDLE;
 
                     break;

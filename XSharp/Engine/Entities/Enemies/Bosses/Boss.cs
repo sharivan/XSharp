@@ -167,7 +167,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
             }
         }
 
-        protected override void OnEndBlink()
+        protected override void OnEndBlinking()
         {
             PaletteIndex = bossPaletteIndex;
         }
@@ -346,9 +346,11 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
             {
                 if (LockPlayerOnDefeat)
                 {
-                    Engine.Player.Invincible = true;                    
-                    Engine.Player.InputLocked = true;
-                    Engine.Player.StopMoving();
+                    var player = Engine.Player;
+                    player.Invincible = true;
+                    player.InputLocked = true;
+                    player.Blinking = false;
+                    player.StopMoving();
                 }
 
                 Exploding = true;

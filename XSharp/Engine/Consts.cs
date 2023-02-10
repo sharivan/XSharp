@@ -120,12 +120,15 @@ namespace XSharp.Engine
         public const int HITBOX_WIDTH = 12;
         public const int HITBOX_HEIGHT = 28;
         public static readonly Vector HITBOX_SIZE = (HITBOX_WIDTH, HITBOX_HEIGHT);
+        public static readonly Box HITBOX = (HITBOX_OFFSET, -HITBOX_SIZE * 0.5, HITBOX_SIZE * 0.5);
         public const int DASHING_HITBOX_OFFSET_X = 0;
         public const int DASHING_HITBOX_OFFSET_Y = 5;
         public static readonly Vector DASHING_HITBOX_OFFSET = (DASHING_HITBOX_OFFSET_X, DASHING_HITBOX_OFFSET_Y);
         public const int DASHING_HITBOX_WIDTH = 12;
         public const int DASHING_HITBOX_HEIGHT = 16;
         public static readonly Vector DASHING_HITBOX_SIZE = (DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT);
+        public static readonly Box DASHING_HITBOX = (DASHING_HITBOX_OFFSET, -DASHING_HITBOX_SIZE * 0.5, DASHING_HITBOX_SIZE * 0.5);
+        public static readonly Box COLLISION_BOX = (Vector.NULL_VECTOR, -HITBOX_SIZE * 0.5 - (0, 2), HITBOX_SIZE * 0.5 + (0, 2));
         public const int INPUT_MOVEMENT_LATENCY = 1;
         public static readonly FixedSingle LADDER_OFFSET = 24;
         public static readonly FixedSingle WALL_MAX_DISTANCE_TO_WALL_JUMP = 8;
@@ -164,6 +167,9 @@ namespace XSharp.Engine
         public static readonly FixedSingle DRILLER_JUMP_VELOCITY_Y = -1280 / 256.0;
         public const int DRILLER_HEALTH = 4;
         public static readonly FixedSingle DRILLER_CONTACT_DAMAGE = 2;
+        public static readonly Box DRILLER_HITBOX = ((-2, 0), (-16, -12), (16, 12));
+        public static readonly Box DRILLER_DRILLING_HITBOX = ((8, 0), (-24, -12), (24, 12));
+        public static readonly Box DRILLER_COLLISION_BOX = ((-2, 0), (-16, -12), (16, 12));
 
         // Bat
 

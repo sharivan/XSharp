@@ -116,7 +116,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             wasShootingIce = false;
             iceCount = 0;
             Direction = Direction.LEFT;
-            MaxHealth = 1; //BOSS_HP;
+            MaxHealth = BOSS_HP;
 
             mist.Spawn();
 

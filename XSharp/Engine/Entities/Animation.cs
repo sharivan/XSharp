@@ -26,34 +26,37 @@ namespace XSharp.Engine
             set;
         }
 
+        public Vector DrawOrigin => Sprite.Origin + Offset;
+
         public MMXBox DrawBox
         {
             get
             {
                 var frame = sequence[currentSequenceIndex];
-                var box = Sprite.Origin + Offset + frame.BoundingBox;
+                var drawOrigin = DrawOrigin;
+                var box = drawOrigin + frame.BoundingBox;
 
                 FixedSingle drawScale = Sprite.Engine.DrawScale;
                 if (drawScale != 1)
-                    box.Scale(drawScale);
+                    box.Scale(drawOrigin, drawScale);
 
                 if (Rotation != FixedSingle.ZERO)
                 {
-                    var ltRotatedDiff = box.LeftTop.Rotate(box.Origin, Rotation) - box.Origin;
-                    var rbRotatedDiff = box.RightBottom.Rotate(box.Origin, Rotation) - box.Origin;
+                    var ltRotatedDiff = box.LeftTop.Rotate(drawOrigin, Rotation) - drawOrigin;
+                    var rbRotatedDiff = box.RightBottom.Rotate(drawOrigin, Rotation) - drawOrigin;
                     Vector mins = (FixedSingle.Min(ltRotatedDiff.X, rbRotatedDiff.X), FixedSingle.Min(ltRotatedDiff.Y, rbRotatedDiff.Y));
                     Vector maxs = (FixedSingle.Max(ltRotatedDiff.X, rbRotatedDiff.X), FixedSingle.Max(ltRotatedDiff.Y, rbRotatedDiff.Y));
-                    box = (box.Origin, mins, maxs);
+                    box = (drawOrigin, mins, maxs);
                 }
 
                 if (Scale != FixedSingle.ONE)
-                    box = box.Scale(Scale);
+                    box = box.Scale(drawOrigin, Scale);
 
                 if (Flipped)
-                    box = box.Flip();
+                    box = box.Flip(drawOrigin);
 
                 if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
-                    box = box.Mirror();
+                    box = box.Mirror(drawOrigin);
 
                 return box;
             }
@@ -239,8 +242,7 @@ namespace XSharp.Engine
                 if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
                     return MMXBox.EMPTY_BOX;
 
-                MMXBox boundingBox = sequence[currentSequenceIndex].BoundingBox;
-                return boundingBox;
+                return sequence[currentSequenceIndex].BoundingBox;
             }
         }
 
@@ -251,14 +253,7 @@ namespace XSharp.Engine
                 if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
                     return MMXBox.EMPTY_BOX;
 
-                var collisionBox = sequence[currentSequenceIndex].CollisionBox;
-
-                if (Flipped)
-                    collisionBox = Mirrored || Sprite.Directional && Sprite.Direction == Sprite.DefaultDirection ? collisionBox.Flip() : collisionBox.Flip().Mirror();
-                else if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
-                    collisionBox = collisionBox.Mirror();
-
-                return collisionBox;
+                return sequence[currentSequenceIndex].CollisionBox;
             }
         }
 
@@ -371,7 +366,7 @@ namespace XSharp.Engine
             MMXBox srcBox = frame.BoundingBox;
             Texture texture = frame.Texture;
 
-            Vector origin = Sprite.Origin + Offset;
+            Vector origin = DrawOrigin;
             MMXBox drawBox = origin + srcBox;
             Vector2 translatedOrigin = Sprite.Engine.WorldVectorToScreen(drawBox.Origin);
             var origin3 = new Vector3(translatedOrigin.X, translatedOrigin.Y, 0);

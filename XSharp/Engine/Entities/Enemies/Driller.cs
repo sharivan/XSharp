@@ -61,12 +61,12 @@ namespace XSharp.Engine.Entities.Enemies
 
         protected override Box GetCollisionBox()
         {
-            return (Vector.NULL_VECTOR, new Vector(-16, -24), new Vector(16, 0));
+            return DRILLER_COLLISION_BOX;
         }
 
         protected override Box GetHitbox()
         {
-            return State == DrillerState.DRILLING ? (Vector.NULL_VECTOR, new Vector(-16, -24), new Vector(32, 0)) : (Vector.NULL_VECTOR, new Vector(-16, -24), new Vector(16, 0));
+            return State == DrillerState.DRILLING ? DRILLER_DRILLING_HITBOX : DRILLER_HITBOX;
         }
 
         protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)

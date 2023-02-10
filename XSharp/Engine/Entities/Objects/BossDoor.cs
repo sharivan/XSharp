@@ -180,8 +180,10 @@ namespace XSharp.Engine.Entities.Objects
                 Engine.StartBossBattle();
             else
             {
-                Engine.Player.Invincible = false;
-                Engine.Player.InputLocked = false;
+                var player = Engine.Player;
+                player.Invincible = false;
+                player.Blinking = false;
+                player.InputLocked = false;
             }
         }
     }

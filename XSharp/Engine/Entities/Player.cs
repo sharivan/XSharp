@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Windows.Forms;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.World;
 using XSharp.Geometry;
@@ -83,6 +84,12 @@ namespace XSharp.Engine.Entities
         {
             get => base.Invincible;
             set => base.Invincible = value;
+        }
+
+        new public bool Blinking
+        {
+            get => base.Blinking;
+            set => base.Blinking = value;
         }
 
         new public bool Animating
@@ -199,14 +206,12 @@ namespace XSharp.Engine.Entities
 
         protected override Box GetCollisionBox()
         {
-            return new Box(Vector.NULL_VECTOR, (-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT * 0.5 - 1), (HITBOX_WIDTH * 0.5, HITBOX_HEIGHT * 0.5 + 3));
+            return COLLISION_BOX;
         }
 
         protected override Box GetHitbox()
         {
-            return new Box(Dashing
-                ? (DASHING_HITBOX_OFFSET, (-DASHING_HITBOX_WIDTH * 0.5, -DASHING_HITBOX_HEIGHT * 0.5), (DASHING_HITBOX_WIDTH * 0.5, DASHING_HITBOX_HEIGHT * 0.5))
-                : (HITBOX_OFFSET, (-HITBOX_WIDTH * 0.5, -HITBOX_HEIGHT * 0.5), (HITBOX_WIDTH * 0.5, HITBOX_HEIGHT * 0.5)));
+            return Dashing ? DASHING_HITBOX : HITBOX;
         }
 
         public bool Shooting

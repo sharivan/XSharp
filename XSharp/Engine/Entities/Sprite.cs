@@ -47,11 +47,11 @@ namespace XSharp.Engine.Entities
         protected FixedSingle health;
         private bool invincible;
         private int invincibilityFrames;
-        private long invincibleExpires;
+        private int invincibilityFrameCounter = 0;
         protected bool broke;
         private bool blinking;
+        private int blinkFrames;
         private int blinkFrameCounter = 0;
-        private long blinkFrames;
 
         public bool Visible
         {
@@ -179,10 +179,15 @@ namespace XSharp.Engine.Entities
             get => invincible;
             protected set
             {
-                if (!invincible && value)
+                bool lastInvincible = invincible;
+
+                if (value)
                     MakeInvincible();
 
                 invincible = value;
+
+                if (lastInvincible && !value)
+                    OnEndInvincibility();
             }
         }
 
@@ -191,10 +196,15 @@ namespace XSharp.Engine.Entities
             get => blinking;
             protected set
             {
-                if (!blinking && value)
+                bool lastBlinking = blinking;
+
+                if (value)
                     MakeBlinking();
 
                 blinking = value;
+
+                if (lastBlinking && !value)
+                    OnEndBlinking();
             }
         }
 
@@ -248,14 +258,17 @@ namespace XSharp.Engine.Entities
 
         public virtual Box BoundingBox
         {
-            get => Origin + (Directional && Direction == DefaultDirection ? GetBoundingBox() : GetBoundingBox().Mirror());
+            get
+            {
+                Box box = Origin + GetBoundingBox();
+                return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
+            }
+
             protected set
             {
-                Box collisionBox = value - value.Origin;
-                BeginUpdate();
-                SetBoundingBox(Directional && Direction == DefaultDirection ? collisionBox : collisionBox.Mirror());
-                SetOrigin(value.Origin);
-                EndUpdate();
+                Box collisionBox = Directional && Direction != DefaultDirection ? value.Mirror(Origin) : value;
+                collisionBox -= Origin;
+                SetBoundingBox(collisionBox);
                 UpdatePartition();
             }
         }
@@ -264,22 +277,26 @@ namespace XSharp.Engine.Entities
         {
             get
             {
-                Box box = !Alive && Respawnable ? GetDeadBox() : GetHitbox();
-                return Origin + (Directional && Direction == DefaultDirection ? box : box.Mirror());
+                Box box = Origin + (!Alive && Respawnable ? GetDeadBox() : GetHitbox());
+                return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
             }
 
             protected set
             {
-                Box hitbox = value - value.Origin;
-                BeginUpdate();
-                SetHitbox(Directional && Direction == DefaultDirection ? hitbox : hitbox.Mirror());
-                SetOrigin(value.Origin);
-                EndUpdate();
-                UpdatePartition();
+                Box hitbox = Directional && Direction != DefaultDirection ? value.Mirror(Origin) : value;
+                hitbox -= Origin;
+                SetHitbox(hitbox);
             }
         }
 
-        public virtual Box CollisionBox => Origin + (Directional && Direction == DefaultDirection ? GetCollisionBox() : GetCollisionBox().Mirror());
+        public virtual Box CollisionBox
+        {
+            get
+            {
+                Box box = Origin + GetCollisionBox();
+                return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
+            }
+        }
 
         public SpriteCollider Collider
         {
@@ -567,7 +584,10 @@ namespace XSharp.Engine.Entities
             health = new FixedSingle(reader);
             invincible = reader.ReadBoolean();
             invincibilityFrames = reader.ReadInt32();
-            invincibleExpires = reader.ReadInt64();
+            invincibilityFrameCounter = reader.ReadInt32();
+            blinking = reader.ReadBoolean();
+            blinkFrames = reader.ReadInt32();
+            blinkFrameCounter = reader.ReadInt32();
             broke = reader.ReadBoolean();
         }
 
@@ -600,7 +620,10 @@ namespace XSharp.Engine.Entities
             health.Write(writer);
             writer.Write(invincible);
             writer.Write(invincibilityFrames);
-            writer.Write(invincibleExpires);
+            writer.Write(invincibilityFrameCounter);
+            writer.Write(blinking);
+            writer.Write(blinkFrames);
+            writer.Write(blinkFrameCounter);
             writer.Write(broke);
         }
 
@@ -680,7 +703,7 @@ namespace XSharp.Engine.Entities
 
         protected virtual Box GetBoundingBox()
         {
-            return (Directional && Direction == DefaultDirection ? DrawBox : DrawBox.Mirror()) - Origin;
+            return (Directional && Direction != DefaultDirection ? DrawBox.Mirror(Origin) : DrawBox) - Origin;
         }
 
         protected virtual void SetBoundingBox(Box boudingBox)
@@ -701,7 +724,7 @@ namespace XSharp.Engine.Entities
                 ? GetFirstAnimationByName(InitialAnimationName).DrawBox
                 : InitialAnimationIndex >= 0 ? animations[InitialAnimationIndex].DrawBox : animations[0].DrawBox;
 
-            return (Directional && Direction == DefaultDirection ? drawBox : drawBox.Mirror()) - Origin;
+            return (Directional && Direction != DefaultDirection ? drawBox.Mirror(Origin) : drawBox) - Origin;
         }
 
         protected virtual Box GetCollisionBox()
@@ -899,10 +922,11 @@ namespace XSharp.Engine.Entities
         public void MakeInvincible(int frames = 0, bool blink = false)
         {
             invincible = true;
-            invincibleExpires = frames < 0 ? Engine.FrameCounter + invincibilityFrames : frames > 0 ? Engine.FrameCounter + frames : 0;
+            invincibilityFrames = frames;
+            invincibilityFrameCounter = 0;
 
             if (blink)
-                MakeBlinking(frames < 0 ? invincibilityFrames : frames);
+                MakeBlinking(frames);
         }
 
         public void MakeBlinking(int frames = 0)
@@ -1316,16 +1340,27 @@ namespace XSharp.Engine.Entities
             if (Engine.Paused)
                 return;
 
-            if (Invincible && invincibleExpires > 0 && Engine.FrameCounter >= invincibleExpires)
-                Invincible = false;
-
-            if (Blinking && blinkFrames > 0 && blinkFrameCounter >= blinkFrames)
+            if (Invincible)
             {
-                Blinking = false;
-                OnEndBlink();
+                invincibilityFrameCounter++;
+
+                if (invincibilityFrames > 0 && invincibilityFrameCounter >= invincibilityFrames)
+                {
+                    Invincible = false;
+                    OnEndInvincibility();
+                }
             }
-            else
+
+            if (Blinking)
+            {
                 blinkFrameCounter++;
+
+                if (blinkFrames > 0 && blinkFrameCounter >= blinkFrames)
+                {
+                    Blinking = false;
+                    OnEndBlinking();
+                }
+            }
 
             if (Animating)
                 foreach (Animation animation in animations)
@@ -1337,7 +1372,11 @@ namespace XSharp.Engine.Entities
             InvisibleOnCurrentFrame = frameCounter % 2 == 0;
         }
 
-        protected virtual void OnEndBlink()
+        protected virtual void OnEndInvincibility()
+        {
+        }
+
+        protected virtual void OnEndBlinking()
         {
         }
 
@@ -1412,9 +1451,11 @@ namespace XSharp.Engine.Entities
             CurrentAnimationIndex = -1;
             moving = false;
             invincible = false;
-            invincibleExpires = -1;
+            invincibilityFrames = -1;
+            invincibilityFrameCounter = 0;
             blinking = false;
             blinkFrames = -1;
+            blinkFrameCounter = 0;
             NoClip = false;
             InvisibleOnCurrentFrame = false;
             FadingSettings.Reset();
