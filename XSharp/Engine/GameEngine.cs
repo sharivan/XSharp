@@ -5408,7 +5408,7 @@ namespace XSharp.Engine
 
         internal void OnPlayerTeleported()
         {
-            FadingSettings.Start(Color.Black, 90, ReloadLevel);
+            FadingSettings.Start(Color.Black, 60, ReloadLevel);
         }
     }
 }

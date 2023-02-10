@@ -418,6 +418,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         private void OnStartDying(EntityState state, EntityState lastState)
         {
             BreakSculptures();
+            lever.Hide();
         }
 
         private void PlaySnowSoundLoop()
