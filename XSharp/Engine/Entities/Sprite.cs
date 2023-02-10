@@ -1056,9 +1056,6 @@ namespace XSharp.Engine.Entities
                 lastLanded = Landed;
             }
 
-            Velocity += AdictionalVelocity;
-            AdictionalVelocity = Vector.NULL_VECTOR;
-
             FixedSingle gravity = Gravity;
 
             if (!NoClip && !Static)
@@ -1079,10 +1076,13 @@ namespace XSharp.Engine.Entities
             if (!lastLanded && Velocity.Y > gravity && Velocity.Y < 2 * gravity)
                 Velocity = new Vector(Velocity.X, gravity);
 
-            if (Velocity.IsNull && moving)
+            Vector vel = Velocity + AdictionalVelocity;
+            AdictionalVelocity = Vector.NULL_VECTOR;
+
+            if (vel.IsNull && moving)
                 StopMoving();
 
-            Vector delta = !Static && !Velocity.IsNull ? Velocity : Vector.NULL_VECTOR;
+            Vector delta = !Static && !vel.IsNull ? vel : Vector.NULL_VECTOR;
             if (!delta.IsNull)
             {
                 if (!NoClip && (CheckCollisionWithWorld || CheckCollisionWithSolidSprites))

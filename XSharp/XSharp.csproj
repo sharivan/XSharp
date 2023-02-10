@@ -101,12 +101,14 @@
     <Compile Include="Engine\Entities\Enemies\Bosses\BossExplosionEffect.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\BossHealthHUD.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\Penguin.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinFrozenBlock.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIce.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIceExplosionEffect.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIceFragment.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinLever.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinSculpture.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinSnow.cs" />
+    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\SnowHUD.cs" />
     <Compile Include="Engine\Entities\HUD\PlayerHealthHUD.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalBranch.cs" />
     <Compile Include="Engine\Entities\Logical\LogicalEntity.cs" />
@@ -119,7 +121,7 @@
     <Compile Include="Engine\Entities\Effects\SpriteEffect.cs" />
     <Compile Include="Engine\Entities\Effects\WallKickEffect.cs" />
     <Compile Include="Engine\Entities\Effects\WallSlideEffect.cs" />
-    <Compile Include="Engine\Entities\Effects\XDieExplosion.cs" />
+    <Compile Include="Engine\Entities\HUD\XDieExplosion.cs" />
     <Compile Include="Engine\Entities\Enemies\Bat.cs" />
     <Compile Include="Engine\Entities\Objects\BossDoor.cs" />
     <Compile Include="Engine\Entities\Enemies\Driller.cs" />
@@ -249,6 +251,9 @@
     <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
     <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
     <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
+    <EmbeddedResource Include="resources\sprites\Effects\Snow.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\HUD\HP.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -501,7 +506,9 @@
     <Content Include="resources\sounds\mmx\65 - MMX - Enemy Sound %2802%29.wav" />
     <Content Include="resources\sounds\mmx\66 - MMX - Enemy Sound %2803%29.wav" />
     <Content Include="resources\sounds\mmx\67 - MMX - Enemy Sound %2804%29.wav" />
-    <Content Include="resources\sounds\mmx\68 - MMX - Enemy Sound %2805%29.wav" />
+    <Content Include="resources\sounds\mmx\68 - MMX - Enemy Sound %2805%29.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\mmx\69 - MMX - Enemy Sound %2806%29.wav" />
     <Content Include="resources\sounds\mmx\70 - MMX - Enemy Sound %2807%29.wav" />
     <Content Include="resources\sounds\mmx\71 - MMX - Enemy Sound %2808%29.wav" />

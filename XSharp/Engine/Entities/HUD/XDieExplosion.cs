@@ -1,8 +1,9 @@
-﻿using XSharp.Geometry;
+﻿using XSharp.Engine.World;
+using XSharp.Geometry;
 
-namespace XSharp.Engine.Entities.Effects
+namespace XSharp.Engine.Entities.HUD
 {
-    public class XDieExplosion : SpriteEffect
+    public class XDieExplosion : HUD
     {
         private int frameCounter;
 
@@ -10,35 +11,36 @@ namespace XSharp.Engine.Entities.Effects
         {
             get;
             set;
-        }
+        } = 68;
 
         public int FramesPerCicle
         {
             get;
             set;
-        }
+        } = 128;
 
         public double MaxRadius
         {
             get;
             set;
-        }
+        } = 140;
 
         public double Phase
         {
             get;
             set;
-        }
+        } = 0;
 
         public int SparkCount
         {
             get;
             set;
-        }
+        } = 8;
 
         public XDieExplosion()
         {
             SpriteSheetIndex = 0;
+            PaletteIndex = 0;
             Directional = false;
 
             SetAnimationNames("DyingExplosion");
@@ -48,14 +50,13 @@ namespace XSharp.Engine.Entities.Effects
         {
             base.OnSpawn();
 
-            MultiAnimation = true;
-            PaletteIndex = 0;
+            MultiAnimation = true;           
             frameCounter = 0;
         }
 
-        protected override void Think()
+        protected internal override void UpdateOrigin()
         {
-            base.Think();
+            base.UpdateOrigin();
 
             double radius = (double) frameCounter / MaxFrames * MaxRadius;
             for (int i = 0; i < SparkCount; i++)

@@ -383,6 +383,12 @@ namespace XSharp.Engine.Entities
 
         public bool PressedSelect => !WasPressingSelect && PressingSelect;
 
+        public bool DyeByAbiss
+        {
+            get;
+            private set;
+        }
+
         public ChargingEffect ChargingEffect
         {
             get;
@@ -447,7 +453,7 @@ namespace XSharp.Engine.Entities
                 Velocity = Velocity.XVector;
         }
 
-        private void SetStandState(Direction direction, int startAnimationIndex = 0)
+        public void SetStandState(Direction direction, int startAnimationIndex = 0)
         {
             if (LandedOnTopLadder)
             {
@@ -462,9 +468,21 @@ namespace XSharp.Engine.Entities
             SetState(PlayerState.STAND, direction, startAnimationIndex);
         }
 
-        private void SetStandState(int startAnimationIndex = 0)
+        public void SetStandState(int startAnimationIndex = 0)
         {
             SetStandState(Direction, startAnimationIndex);
+        }
+
+        public void StopMoving()
+        {
+            WallJumping = false;
+            jumping = false;
+            Velocity = Vector.NULL_VECTOR;
+
+            if (Landed)
+                SetStandState();
+            else
+                SetAirStateAnimation();
         }
 
         protected override void OnBlockedLeft()
@@ -559,6 +577,7 @@ namespace XSharp.Engine.Entities
             Freezed = false;
             CrossingBossDoor = false;
             CanGoOutOfCameraBounds = false;
+            DyeByAbiss = false;
 
             ResetKeys();
 
@@ -795,6 +814,7 @@ namespace XSharp.Engine.Entities
                 {
                     if (Origin.Y > Engine.World.Camera.RightBottom.Y + BLOCK_SIZE)
                     {
+                        DyeByAbiss = true;
                         Die();
                         return;
                     }

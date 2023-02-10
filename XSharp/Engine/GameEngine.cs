@@ -833,6 +833,7 @@ namespace XSharp.Engine
             // 2 - Effects (charging, explosions, damage hit, etc)
             // 3 - OST
             // 4 - Enemies (including bosses)
+            // 5 - Ambient
 
             for (int i = 0; i < 8; i++)
             {
@@ -990,6 +991,10 @@ namespace XSharp.Engine
 
             // 35
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Boss Final Explode.wav", SoundFormat.WAVE);
+            soundStreams.Add(stream);
+
+            // 36
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\68 - MMX - Enemy Sound (05).wav", SoundFormat.WAVE);
             soundStreams.Add(stream);
 
             directInput = new DirectInput();
@@ -1231,6 +1236,9 @@ namespace XSharp.Engine
 
             // 10
             var penguinSpriteSheet = AddSpriteSheet("Penguin", true, true);
+
+            // 11
+            var snowSpriteSheet = AddSpriteSheet("Snow", true, true);
 
             // Setup frame sequences (animations)
 
@@ -2085,15 +2093,15 @@ namespace XSharp.Engine
             sequence = penguinSpriteSheet.AddFrameSquence("Hanging");
             sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
             sequence.CollisionBox = PENGUIN_HITBOX;
-            sequence.AddFrame(5, 16, 12, 4, 34, 60, 8);
-            sequence.AddFrame(5, 16, 54, 4, 34, 58, 8);
-            sequence.AddFrame(5, 16, 95, 4, 32, 60, 8);
-            sequence.AddFrame(6, 17, 131, 4, 32, 60, 1, true);
+            sequence.AddFrame(5, 19, 12, 4, 36, 60, 8);
+            sequence.AddFrame(5, 19, 54, 4, 34, 58, 8);
+            sequence.AddFrame(5, 19, 95, 4, 32, 60, 8);
+            sequence.AddFrame(6, 20, 131, 4, 32, 60, 1, true);
 
             sequence = penguinSpriteSheet.AddFrameSquence("TakingDamage");
             sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
             sequence.CollisionBox = PENGUIN_HITBOX;
-            sequence.AddFrame(15, 3, 9, 169, 35, 41, 21);
+            sequence.AddFrame(14, 4, 9, 169, 35, 41, 1, true);
 
             sequence = penguinSpriteSheet.AddFrameSquence("Dying");
             sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
@@ -2118,28 +2126,57 @@ namespace XSharp.Engine
             sequence.AddFrame(0, 0, 58, 216, 8, 8, 1, true);
 
             sequence = penguinSpriteSheet.AddFrameSquence("Sculpture");
-            sequence.OriginOffset = -PENGUIN_ICE_HITBOX.Origin - PENGUIN_ICE_HITBOX.Mins;
-            sequence.CollisionBox = PENGUIN_ICE_HITBOX;
-            sequence.AddFrame(0, 0, 80, 233, 15, 16, 1);
-            sequence.AddFrame(0, 0, 103, 224, 23, 24, 1);
-            sequence.AddFrame(0, 0, 133, 217, 28, 32, 1);
+            sequence.OriginOffset = -PENGUIN_SCULPTURE_HITBOX.Origin - PENGUIN_SCULPTURE_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_SCULPTURE_HITBOX;
+            sequence.AddFrame(-2, -7, 82, 233, 13, 16, 19);
+            sequence.AddFrame(2, -3, 104, 224, 19, 24, 19);
+            sequence.AddFrame(4, -1, 183, 226, 23, 28, 19);
+            sequence.AddFrame(5, 0, 133, 217, 28, 32, 1, true);
 
             sequence = penguinSpriteSheet.AddFrameSquence("Lever");
-            sequence.OriginOffset = -PENGUIN_CEIL_LEVER_HITBOX.Origin - PENGUIN_CEIL_LEVER_HITBOX.Mins;
-            sequence.CollisionBox = PENGUIN_CEIL_LEVER_HITBOX;
-            sequence.AddFrame(0, 0, 169, 225, 10, 16, 1, true);
+            sequence.OriginOffset = -PENGUIN_LEVER_HITBOX.Origin - PENGUIN_LEVER_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_LEVER_HITBOX;
+            sequence.AddFrame(-8, -4, 169, 225, 10, 16, 1, true);
 
             sequence = penguinSpriteSheet.AddFrameSquence("Snow");
             sequence.OriginOffset = -PENGUIN_SNOW_HITBOX.Origin - PENGUIN_SNOW_HITBOX.Mins;
             sequence.CollisionBox = PENGUIN_SNOW_HITBOX;
-            sequence.AddFrame(0, 0, 189, 216, 16, 17, 1);
-            sequence.AddFrame(0, 0, 208, 216, 17, 17, 1);
-            sequence.AddFrame(0, 0, 229, 217, 14, 14, 1);
-            sequence.AddFrame(0, 0, 192, 235, 14, 15, 1);
-            sequence.AddFrame(0, 0, 209, 235, 15, 15, 1);
-            sequence.AddFrame(0, 0, 228, 236, 17, 17, 1);
+            sequence.AddFrame(1, 1, 186, 172, 18, 18, 1, true);
+            sequence.AddFrame(1, 1, 204, 172, 18, 18, 1);
+            sequence.AddFrame(2, 2, 222, 172, 18, 18, 1);
+            sequence.AddFrame(2, 2, 240, 172, 18, 18, 1);
+            sequence.AddFrame(2, 2, 258, 172, 18, 18, 1);
+            sequence.AddFrame(3, 3, 276, 172, 18, 18, 1);
+            sequence.AddFrame(3, 2, 186, 190, 18, 18, 1);
+            sequence.AddFrame(3, 2, 204, 190, 18, 18, 1);
+            sequence.AddFrame(4, 3, 222, 190, 18, 18, 1);
+            sequence.AddFrame(3, 3, 240, 190, 18, 18, 1);
+            sequence.AddFrame(3, 3, 258, 190, 18, 18, 1);
+            sequence.AddFrame(4, 4, 276, 190, 18, 18, 1);
+            sequence.AddFrame(2, 3, 186, 208, 18, 18, 1);
+            sequence.AddFrame(2, 3, 204, 208, 18, 18, 1);
+            sequence.AddFrame(3, 4, 222, 208, 18, 18, 1);
+
+            sequence = penguinSpriteSheet.AddFrameSquence("FrozenBlock");
+            sequence.OriginOffset = -PENGUIN_FROZEN_BLOCK_HITBOX.Origin - PENGUIN_FROZEN_BLOCK_HITBOX.Mins;
+            sequence.CollisionBox = PENGUIN_FROZEN_BLOCK_HITBOX;
+            sequence.AddFrame(14, 3, 6, 216, 37, 38, 1, true);
 
             penguinSpriteSheet.ReleaseCurrentTexture();
+
+            // Snow
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Snow.png"))
+            {
+                var texture = CreateImageTextureFromStream(stream);
+                snowSpriteSheet.CurrentTexture = texture;
+            }
+
+            sequence = snowSpriteSheet.AddFrameSquence("Snow");
+            sequence.OriginOffset = Vector.NULL_VECTOR;
+            sequence.CollisionBox = (Vector.NULL_VECTOR, Vector.NULL_VECTOR, (SCENE_SIZE, SCENE_SIZE));
+            sequence.AddFrame(0, 0, 0, 0, 256, 256, 1, true);
+
+            snowSpriteSheet.ReleaseCurrentTexture();
 
             // Load tiles & object positions from the ROM (if exist)
 
@@ -3111,10 +3148,13 @@ namespace XSharp.Engine
 
             if (DyingEffectActive)
             {
-                if (DyingEffectFrameCounter % 32 == 0)
-                    CreateXDieExplosionEffect(DyingEffectFrameCounter % 64 == 0 ? 0 : System.Math.PI / 8);
-                else if (DyingEffectFrameCounter == 1)
-                    CreateXDieExplosionEffect(System.Math.PI / 8);
+                if (!Player.DyeByAbiss)
+                {
+                    if (DyingEffectFrameCounter % 32 == 0)
+                        CreateXDieExplosionEffect(DyingEffectFrameCounter % 64 == 0 ? 0 : System.Math.PI / 8);
+                    else if (DyingEffectFrameCounter == 1)
+                        CreateXDieExplosionEffect(System.Math.PI / 8);
+                }
 
                 DyingEffectFrameCounter++;
             }
@@ -4460,7 +4500,7 @@ namespace XSharp.Engine
         {
             var effect = new XDieExplosion()
             {
-                Origin = Player.Hitbox.Center,
+                Offset = Player.Origin - World.Camera.LeftTop,
                 Phase = phase
             };
 
@@ -4860,6 +4900,28 @@ namespace XSharp.Engine
         public void PlaySound(int channel, int index, bool ignoreUpdatesUntilPlayed = false)
         {
             PlaySound(channel, index, -1, -1, ignoreUpdatesUntilPlayed);
+        }
+
+        public void ClearSoundLoopPoint(int channel, int index, bool clearStopPoint = false)
+        {
+            var stream = soundStreams[index];
+            var (_, ss, _) = soundChannels[channel];
+
+            if (ss.Source == stream)
+            {
+                ss.LoopPoint = -1;
+                if (clearStopPoint)
+                    ss.StopPoint = -1;
+            }
+        }
+
+        public void ClearSoundStopPoint(int channel, int index)
+        {
+            var stream = soundStreams[index];
+            var (_, ss, _) = soundChannels[channel];
+
+            if (ss.Source == stream)
+                ss.StopPoint = -1;
         }
 
         public void PlayOST(int index, double stopTime, double loopTime)
@@ -5346,7 +5408,7 @@ namespace XSharp.Engine
 
         internal void OnPlayerTeleported()
         {
-            FadingSettings.Start(Color.Black, 120, ReloadLevel);
+            FadingSettings.Start(Color.Black, 90, ReloadLevel);
         }
     }
 }

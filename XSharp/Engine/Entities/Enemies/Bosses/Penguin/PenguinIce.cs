@@ -21,6 +21,12 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             internal set;
         } = false;
 
+        public bool Exploding
+        {
+            get;
+            private set;
+        }
+
         public PenguinIce()
         {
             Directional = true;
@@ -37,6 +43,10 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         public void Explode()
         {
+            if (Exploding)
+                return;
+
+            Exploding = true;
             Engine.PlaySound(4, 30);
 
             var fragment = new PenguinIceExplosionEffect()
@@ -84,9 +94,10 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             base.OnSpawn();
 
             Direction = Shooter.Direction;
-            Origin = (Shooter.Direction == Shooter.DefaultDirection ? Shooter.Hitbox.Left - PENGUIN_ICE_SHOT_ORIGIN_OFFSET.X : Shooter.Hitbox.Right + PENGUIN_ICE_SHOT_ORIGIN_OFFSET.X, Shooter.Hitbox.Top + PENGUIN_ICE_SHOT_ORIGIN_OFFSET.Y);
+            Origin = Shooter.Origin + (Shooter.Direction == Shooter.DefaultDirection ? -PENGUIN_SHOT_ORIGIN_OFFSET.X : PENGUIN_SHOT_ORIGIN_OFFSET.X, PENGUIN_SHOT_ORIGIN_OFFSET.Y);
             ReflectShots = true;
 
+            Exploding = false;
             bumped = false;
             speed = Bump ? PENGUIN_ICE_SPEED2_X : PENGUIN_ICE_SPEED;
 
@@ -132,6 +143,19 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             base.Think();
 
             Velocity = (Direction == Direction.RIGHT ? speed : -speed, Velocity.Y);
+        }
+
+        protected override void OnBroke()
+        {
+            Explode();
+        }
+
+        protected override void OnStartTouch(Entity entity)
+        {
+            base.OnStartTouch(entity);
+
+            if (entity is PenguinSculpture)
+                Break();
         }
     }
 }

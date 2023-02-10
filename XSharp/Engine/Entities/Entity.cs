@@ -745,12 +745,12 @@ namespace XSharp.Engine.Entities
             }
         }
 
-        public bool IsOffscreen(VectorKind kind, bool extendedCamera = true)
+        public virtual bool IsOffscreen(VectorKind kind, bool extendedCamera = true)
         {
             return GetVector(kind) > (extendedCamera ? Engine.World.Camera.ExtendedBoundingBox : Engine.World.Camera.BoundingBox);
         }
 
-        public bool IsOffscreen(BoxKind kind, bool extendedCamera = true)
+        public virtual bool IsOffscreen(BoxKind kind, bool extendedCamera = true)
         {
             return !CollisionChecker.HasIntersection(GetBox(kind), extendedCamera ? Engine.World.Camera.ExtendedBoundingBox : Engine.World.Camera.BoundingBox);
         }

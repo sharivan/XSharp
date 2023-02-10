@@ -172,7 +172,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
             PaletteIndex = bossPaletteIndex;
         }
 
-        protected override void OnDamaged()
+        protected override void OnDamaged(Sprite attacker, FixedSingle damage)
         {
             Engine.PlaySound(2, 27);
             MakeInvincible(InvincibilityFrames);
@@ -325,6 +325,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
 
         protected virtual void OnDying()
         {
+            Engine.StopAllSounds();
             Explode();
         }
 
@@ -332,6 +333,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
         {
             Invincible = true;
             Velocity = Vector.NULL_VECTOR;
+            Engine.StopBossBattleOST();
             Engine.FreezeSprites(60, Explode);
 
             OnDying();
@@ -343,14 +345,13 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
             {
                 if (LockPlayerOnDefeat)
                 {
-                    Engine.Player.Invincible = true;
-                    Engine.Player.Velocity = Vector.NULL_VECTOR;
+                    Engine.Player.Invincible = true;                    
                     Engine.Player.InputLocked = true;
+                    Engine.Player.StopMoving();
                 }
 
                 Exploding = true;
-                ExplodingFrameCounter = 0;
-                Engine.StopAllSounds();
+                ExplodingFrameCounter = 0;              
                 Engine.PlayBossExplosionLoop();              
             }
         }

@@ -90,7 +90,7 @@ namespace XSharp.Engine.Entities.Enemies
             base.OnTouching(entity);
         }
 
-        protected virtual void OnDamaged()
+        protected virtual void OnDamaged(Sprite attacker, FixedSingle damage)
         {
         }
 
@@ -127,7 +127,7 @@ namespace XSharp.Engine.Entities.Enemies
 
         protected override void OnTakeDamagePost(Sprite attacker, FixedSingle damage)
         {
-            OnDamaged();
+            OnDamaged(attacker, damage);
             base.OnTakeDamagePost(attacker, damage);
         }
 
