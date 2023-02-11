@@ -80,7 +80,7 @@ namespace XSharp.Engine.Entities.Objects
             effect = new BossDoorEffect()
             {
                 Door = this,
-                Origin = origin,
+                Origin = (origin.X, origin.Y - 1),
                 Visible = false
             };
         }
