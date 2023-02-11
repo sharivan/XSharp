@@ -15,6 +15,12 @@ namespace XSharp.Engine.Entities.Objects
         CLOSING = 3
     }
 
+    public enum BossDoorOrientation
+    {
+        VERTICAL,
+        HORIZONTAL
+    }
+
     public enum BossDoorDirection
     {
         FORWARD,
@@ -37,17 +43,23 @@ namespace XSharp.Engine.Entities.Objects
 
         private readonly BossDoorEffect effect;
 
+        public BossDoorOrientation Orientation
+        {
+            get;
+            set;
+        } = BossDoorOrientation.VERTICAL;
+
         public BossDoorDirection CrossDirection
         {
             get;
             set;
-        }
+        } = BossDoorDirection.FORWARD;
 
         public bool Bidirectional
         {
             get;
             set;
-        }
+        } = false;
 
         public BossDoorState State
         {
@@ -137,18 +149,39 @@ namespace XSharp.Engine.Entities.Objects
                 Engine.PlaySound(0, 22, true);
         }
 
+        private Vector GetCameraMoveOffset()
+        {
+            switch (Orientation)
+            {
+                case BossDoorOrientation.VERTICAL:
+                    if (CrossDirection == BossDoorDirection.FORWARD)
+                        return (SCREEN_WIDTH, 0);
+
+                    return (-SCREEN_WIDTH, 0);
+
+                case BossDoorOrientation.HORIZONTAL:
+                    if (CrossDirection == BossDoorDirection.FORWARD)
+                        return (0, SCREEN_HEIGHT);
+
+                    return (0, -SCREEN_HEIGHT);
+            }
+
+            return Vector.NULL_VECTOR;
+        }
+
         internal void OnStartPlayerCrossing()
         {
             Engine.Player.Animating = true;
 
             Cell sceneCell = GetSceneCellFromPos(Engine.Player.Origin);
             Box sceneBox = GetSceneBoundingBox(sceneCell);
-            Engine.World.Camera.MoveToLeftTop(sceneBox.LeftTop + (SCENE_SIZE, 0), 1.5);
+            Vector offset = GetCameraMoveOffset();
+            Engine.World.Camera.MoveToLeftTop(sceneBox.LeftTop + offset, CAMERA_SMOOTH_SPEED);
 
             if (StartBossBattle)
             {
-                Engine.CameraConstraintsOrigin = Engine.CurrentCheckpoint.Origin + (SCENE_SIZE, 0);
-                Engine.CameraConstraintsBox = Engine.CurrentCheckpoint.Hitbox + (SCENE_SIZE, 0);
+                Engine.CameraConstraintsOrigin = Engine.CurrentCheckpoint.Origin + offset;
+                Engine.CameraConstraintsBox = Engine.CurrentCheckpoint.Hitbox + offset;
             }
 
             PlayerCrossingEvent?.Invoke(this);

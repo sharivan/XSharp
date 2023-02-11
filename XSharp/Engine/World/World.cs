@@ -235,7 +235,7 @@ namespace XSharp.Engine.World
             Scene scene = background ? backgroundScenes[cell.Row, cell.Col] : scenes[cell.Row, cell.Col];
             scene ??= AddScene(pos, background);
 
-            scene.SetMap(pos - new Vector(cell.Col * SCENE_SIZE, cell.Row * SCENE_SIZE), map);
+            scene.SetMap(pos - GetSceneLeftTop(cell), map);
         }
 
         public void SetBlock(Vector pos, Block block, bool background = false)
@@ -244,7 +244,7 @@ namespace XSharp.Engine.World
             Scene scene = background ? backgroundScenes[cell.Row, cell.Col] : scenes[cell.Row, cell.Col];
             scene ??= AddScene(pos, background);
 
-            scene.SetBlock(pos - new Vector(cell.Col * SCENE_SIZE, cell.Row * SCENE_SIZE), block);
+            scene.SetBlock(pos - GetSceneLeftTop(cell), block);
         }
 
         public void SetScene(Vector pos, Scene scene, bool background = false)
@@ -429,14 +429,15 @@ namespace XSharp.Engine.World
             Vector boxLT = box.LeftTop;
             Vector boxSize = box.DiagonalVector;
 
-            int col = (int) (boxLT.X / MAP_SIZE);
-            int row = (int) (boxLT.Y / MAP_SIZE);
+            Cell cell = GetMapCellFromPos(boxLT);
+            int col = cell.Col;
+            int row = cell.Row;
             int cols = (int) (boxSize.X / MAP_SIZE);
             int rows = (int) (boxSize.Y / MAP_SIZE);
 
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetMap(new Vector((col + c) * MAP_SIZE, (row + r) * MAP_SIZE), map, background);
+                    SetMap(GetMapLeftTop(row + r, col + c), map, background);
         }
 
         public void FillRectangle(MMXBox box, Block block, bool background = false)
@@ -444,14 +445,15 @@ namespace XSharp.Engine.World
             Vector boxLT = box.LeftTop;
             Vector boxSize = box.DiagonalVector;
 
-            int col = (int) (boxLT.X / BLOCK_SIZE);
-            int row = (int) (boxLT.Y / BLOCK_SIZE);
+            Cell cell = GetBlockCellFromPos(boxLT);
+            int col = cell.Col;
+            int row = cell.Row;
             int cols = (int) (boxSize.X / BLOCK_SIZE);
             int rows = (int) (boxSize.Y / BLOCK_SIZE);
 
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetBlock(new Vector((col + c) * BLOCK_SIZE, (row + r) * BLOCK_SIZE), block, background);
+                    SetBlock(GetBlockLeftTop(row + r, col + c), block, background);
         }
 
         public void FillRectangle(MMXBox box, Scene scene, bool background = false)
@@ -459,14 +461,15 @@ namespace XSharp.Engine.World
             Vector boxLT = box.LeftTop;
             Vector boxSize = box.DiagonalVector;
 
-            int col = (int) (boxLT.X / SCENE_SIZE);
-            int row = (int) (boxLT.Y / SCENE_SIZE);
+            Cell cell = GetSceneCellFromPos(boxLT);
+            int col = cell.Col;
+            int row = cell.Row;
             int cols = (int) (boxSize.X / SCENE_SIZE);
             int rows = (int) (boxSize.Y / SCENE_SIZE);
 
             for (int c = 0; c < cols; c++)
                 for (int r = 0; r < rows; r++)
-                    SetScene(new Vector((col + c) * SCENE_SIZE, (row + r) * SCENE_SIZE), scene, background);
+                    SetScene(GetSceneLeftTop(row + r, col + c), scene, background);
         }
 
         public void Dispose()
@@ -507,7 +510,7 @@ namespace XSharp.Engine.World
                     Scene scene = backgroundScenes[row, bkgCol];
                     if (scene != null)
                     {
-                        Vector sceneLT = (col * SCENE_SIZE, row * SCENE_SIZE);
+                        Vector sceneLT = GetSceneLeftTop(row, col);
                         MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
                         Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, BackgroundTilemap, BackgroundPalette, FadingSettings, sceneBox + screenDelta);
                     }
@@ -536,7 +539,7 @@ namespace XSharp.Engine.World
                     Scene scene = scenes[row, col];
                     if (scene != null)
                     {
-                        var sceneLT = new Vector(col * SCENE_SIZE, row * SCENE_SIZE);
+                        var sceneLT = GetSceneLeftTop(row, col);
                         MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
                         Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, ForegroundTilemap, ForegroundPalette, FadingSettings, sceneBox);
                     }
@@ -551,32 +554,32 @@ namespace XSharp.Engine.World
 
         public static Cell GetTileCellFromPos(Vector pos)
         {
-            int col = (int) (pos.X / TILE_SIZE);
-            int row = (int) (pos.Y / TILE_SIZE);
+            int col = (int) ((pos.X - WORLD_OFFSET.X) / TILE_SIZE);
+            int row = (int) ((pos.Y - WORLD_OFFSET.Y) / TILE_SIZE);
 
             return new Cell(row, col);
         }
 
         public static Cell GetMapCellFromPos(Vector pos)
         {
-            int col = (int) (pos.X / MAP_SIZE);
-            int row = (int) (pos.Y / MAP_SIZE);
+            int col = (int) ((pos.X - WORLD_OFFSET.X) / MAP_SIZE);
+            int row = (int) ((pos.Y - WORLD_OFFSET.Y) / MAP_SIZE);
 
             return new Cell(row, col);
         }
 
         public static Cell GetBlockCellFromPos(Vector pos)
         {
-            int col = (int) (pos.X / BLOCK_SIZE);
-            int row = (int) (pos.Y / BLOCK_SIZE);
+            int col = (int) ((pos.X - WORLD_OFFSET.X) / BLOCK_SIZE);
+            int row = (int) ((pos.Y - WORLD_OFFSET.Y) / BLOCK_SIZE);
 
             return new Cell(row, col);
         }
 
         public static Cell GetSceneCellFromPos(Vector pos)
         {
-            int col = (int) (pos.X / SCENE_SIZE);
-            int row = (int) (pos.Y / SCENE_SIZE);
+            int col = (int) ((pos.X - WORLD_OFFSET.X) / SCENE_SIZE);
+            int row = (int) ((pos.Y - WORLD_OFFSET.Y) / SCENE_SIZE);
 
             return new Cell(row, col);
         }
@@ -591,7 +594,7 @@ namespace XSharp.Engine.World
                 return null;
 
             Scene scene = background ? backgroundScenes[row, col] : scenes[row, col];
-            return scene?.GetTileFrom(pos - new Vector(col * SCENE_SIZE, row * SCENE_SIZE));
+            return scene?.GetTileFrom(pos - GetSceneLeftTop(row, col));
         }
 
         public Map GetMapFrom(Vector pos, bool background = false)
@@ -604,7 +607,7 @@ namespace XSharp.Engine.World
                 return null;
 
             Scene scene = background ? backgroundScenes[row, col] : scenes[row, col];
-            return scene?.GetMapFrom(pos - new Vector(col * SCENE_SIZE, row * SCENE_SIZE));
+            return scene?.GetMapFrom(pos - GetSceneLeftTop(row, col));
         }
 
         public Block GetBlockFrom(Vector pos, bool background = false)
@@ -617,7 +620,7 @@ namespace XSharp.Engine.World
                 return null;
 
             Scene scene = background ? backgroundScenes[row, col] : scenes[row, col];
-            return scene?.GetBlockFrom(pos - new Vector(col * SCENE_SIZE, row * SCENE_SIZE));
+            return scene?.GetBlockFrom(pos - GetSceneLeftTop(row, col));
         }
 
         public Scene GetSceneFrom(Vector pos, bool background = false)
@@ -665,22 +668,62 @@ namespace XSharp.Engine.World
 
         public static MMXBox GetTileBoundingBox(Cell pos)
         {
-            return new(pos.Col * TILE_SIZE, pos.Row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            return (pos.Col * TILE_SIZE + WORLD_OFFSET.X, pos.Row * TILE_SIZE + WORLD_OFFSET.Y, TILE_SIZE, TILE_SIZE);
         }
 
         public static MMXBox GetMapBoundingBox(Cell pos)
         {
-            return new(pos.Col * MAP_SIZE, pos.Row * MAP_SIZE, MAP_SIZE, MAP_SIZE);
+            return (pos.Col * MAP_SIZE + WORLD_OFFSET.X, pos.Row * MAP_SIZE + WORLD_OFFSET.Y, MAP_SIZE, MAP_SIZE);
         }
 
         public static MMXBox GetBlockBoundingBox(Cell pos)
         {
-            return new(pos.Col * BLOCK_SIZE, pos.Row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            return (pos.Col * BLOCK_SIZE + WORLD_OFFSET.X, pos.Row * BLOCK_SIZE + WORLD_OFFSET.Y, BLOCK_SIZE, BLOCK_SIZE);
         }
 
         public static MMXBox GetSceneBoundingBox(Cell pos)
         {
-            return new(pos.Col * SCENE_SIZE, pos.Row * SCENE_SIZE, SCENE_SIZE, SCENE_SIZE);
+            return (pos.Col * SCENE_SIZE + WORLD_OFFSET.X, pos.Row * SCENE_SIZE + WORLD_OFFSET.Y, SCENE_SIZE, SCENE_SIZE);
+        }
+
+        public static Vector GetTileLeftTop(int row, int col)
+        {
+            return GetTileLeftTop(new Cell(row, col));
+        }
+
+        public static Vector GetMapLeftTop(int row, int col)
+        {
+            return GetMapLeftTop(new Cell(row, col));
+        }
+
+        public static Vector GetBlockLeftTop(int row, int col)
+        {
+            return GetBlockLeftTop(new Cell(row, col));
+        }
+
+        public static Vector GetSceneLeftTop(int row, int col)
+        {
+            return GetSceneLeftTop(new Cell(row, col));
+        }
+
+        public static Vector GetTileLeftTop(Cell pos)
+        {
+            return (pos.Col * TILE_SIZE + WORLD_OFFSET.X, pos.Row * TILE_SIZE + WORLD_OFFSET.Y);
+        }
+
+        public static Vector GetMapLeftTop(Cell pos)
+        {
+            return (pos.Col * MAP_SIZE + WORLD_OFFSET.X, pos.Row * MAP_SIZE + WORLD_OFFSET.Y);
+        }
+
+        public static Vector GetBlockLeftTop(Cell pos)
+        {
+            return (pos.Col * BLOCK_SIZE + WORLD_OFFSET.X, pos.Row * BLOCK_SIZE + WORLD_OFFSET.Y);
+        }
+
+        public static Vector GetSceneLeftTop(Cell pos)
+        {
+            return (pos.Col * SCENE_SIZE + WORLD_OFFSET.X, pos.Row * SCENE_SIZE + WORLD_OFFSET.Y);
         }
 
         public static MMXBox GetTileBoundingBoxFromPos(Vector pos)

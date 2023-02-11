@@ -121,6 +121,12 @@ namespace XSharp.Engine.Entities
             internal set;
         }
 
+        public bool Dead
+        {
+            get;
+            internal set;
+        }
+
         public bool MarkedToRemove
         {
             get;
@@ -671,6 +677,7 @@ namespace XSharp.Engine.Entities
         {
             Spawning = false;
             Alive = true;
+            Dead = false;
 
             UpdatePartition(true);
         }

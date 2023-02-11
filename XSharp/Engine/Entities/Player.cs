@@ -37,6 +37,7 @@ namespace XSharp.Engine.Entities
         TELEPORTING = 22
     }
 
+    // TODO : This class needs a huge refactor
     public class Player : Sprite
     {
         private int lives;
@@ -984,14 +985,14 @@ namespace XSharp.Engine.Entities
                                 {
                                     if (!Shooting)
                                     {
-                                        Box ladderCollisionBox = Hitbox.ClipTop(HITBOX_HEIGHT - 5);
+                                        Box ladderCollisionBox = Hitbox.ClipTop(HITBOX_SIZE.Y - 5);
                                         CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, this, CheckCollisionWithWorld, CheckCollisionWithSolidSprites);
                                         if (flags.HasFlag(CollisionFlags.TOP_LADDER))
                                         {
                                             if (!TopLadderClimbing && !TopLadderDescending)
                                             {
                                                 Box collisionBox = CollisionBox;
-                                                collider.Box = collisionBox + LADDER_OFFSET * Vector.UP_VECTOR;
+                                                collider.Box = collisionBox + LADDER_MOVE_OFFSET * Vector.UP_VECTOR;
                                                 collider.AdjustOnTheFloor(MAP_SIZE);
                                                 Vector delta = collider.Box.Origin - collisionBox.Origin;
                                                 Origin += delta;
@@ -1613,7 +1614,7 @@ namespace XSharp.Engine.Entities
                 SetStandState();
             else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animation.Index, true))
             {
-                Origin += LADDER_OFFSET * Vector.DOWN_VECTOR;
+                Origin += LADDER_MOVE_OFFSET * Vector.DOWN_VECTOR;
 
                 SetState(PlayerState.LADDER, 0);
 

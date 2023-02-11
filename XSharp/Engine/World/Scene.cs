@@ -10,6 +10,14 @@ namespace XSharp.Engine.World
 {
     public class Scene : IDisposable
     {
+        public static Cell GetBlockCellFromPos(Vector pos)
+        {
+            int col = (int) (pos.X / BLOCK_SIZE);
+            int row = (int) (pos.Y / BLOCK_SIZE);
+
+            return new Cell(row, col);
+        }
+
         public const int TILE_PRIMITIVE_SIZE = 2 * GameEngine.VERTEX_SIZE * 3;
         public const int MAP_PRIMITIVE_SIZE = SIDE_TILES_PER_MAP * SIDE_TILES_PER_MAP * TILE_PRIMITIVE_SIZE;
         public const int BLOCK_PRIMITIVE_SIZE = SIDE_MAPS_PER_BLOCK * SIDE_MAPS_PER_BLOCK * MAP_PRIMITIVE_SIZE;
@@ -52,7 +60,7 @@ namespace XSharp.Engine.World
 
         public Tile GetTileFrom(Vector pos)
         {
-            Cell tsp = World.GetBlockCellFromPos(pos);
+            Cell tsp = GetBlockCellFromPos(pos);
             int row = tsp.Row;
             int col = tsp.Col;
 
@@ -65,7 +73,7 @@ namespace XSharp.Engine.World
 
         public Map GetMapFrom(Vector pos)
         {
-            Cell tsp = World.GetBlockCellFromPos(pos);
+            Cell tsp = GetBlockCellFromPos(pos);
             int row = tsp.Row;
             int col = tsp.Col;
 
@@ -78,7 +86,7 @@ namespace XSharp.Engine.World
 
         public Block GetBlockFrom(Vector pos)
         {
-            Cell tsp = World.GetBlockCellFromPos(pos);
+            Cell tsp = GetBlockCellFromPos(pos);
             int row = tsp.Row;
             int col = tsp.Col;
 
@@ -107,7 +115,7 @@ namespace XSharp.Engine.World
 
         public void SetMap(Vector pos, Map map)
         {
-            Cell cell = World.GetBlockCellFromPos(pos);
+            Cell cell = GetBlockCellFromPos(pos);
             Block block = blocks[cell.Row, cell.Col];
             if (block == null)
             {
@@ -128,7 +136,7 @@ namespace XSharp.Engine.World
 
         public void SetBlock(Vector pos, Block block)
         {
-            Cell cell = World.GetBlockCellFromPos(pos);
+            Cell cell = GetBlockCellFromPos(pos);
             blocks[cell.Row, cell.Col] = block;
 
             if (Tessellated)
@@ -178,7 +186,7 @@ namespace XSharp.Engine.World
 
         private void RefreshLayers(MMXBox box)
         {
-            Cell start = World.GetBlockCellFromPos(box.LeftTop);
+            Cell start = GetBlockCellFromPos(box.LeftTop);
             int startCol = start.Col;
             int startRow = start.Row;
 
@@ -194,7 +202,7 @@ namespace XSharp.Engine.World
             if (startRow > SIDE_BLOCKS_PER_SCENE)
                 startRow = SIDE_BLOCKS_PER_SCENE - 1;
 
-            Cell end = World.GetBlockCellFromPos(box.RightBottom);
+            Cell end = GetBlockCellFromPos(box.RightBottom);
             int endCol = end.Col;
             int endRow = end.Row;
 

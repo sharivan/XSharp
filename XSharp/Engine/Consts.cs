@@ -36,7 +36,7 @@ namespace XSharp.Engine
 
         public const int BOXKIND_COUNT = 3;
 
-        public const int TILE_SIZE = 8;
+        public const int TILE_SIZE = 8; // In pixels
         public const int MAP_SIZE = TILE_SIZE * 2; // In pixels
         public const int BLOCK_SIZE = MAP_SIZE * 2; // In pixels
         public const int SCENE_SIZE = 8 * BLOCK_SIZE; // In pixels
@@ -46,20 +46,22 @@ namespace XSharp.Engine
         public const int SIDE_BLOCKS_PER_SCENE = 8;
 
         public const bool NO_CAMERA_CONSTRAINTS = false;
-        public const int SCREEN_WIDTH = 256;
-        public const int SCREEN_HEIGHT = 224;
-        public static readonly FixedSingle SIZE_RATIO = 8.0 / 7.0;
+        public const int SCREEN_WIDTH = 256; // In pixels
+        public const int SCREEN_HEIGHT = 224; // In pixels
+        public static readonly FixedSingle SIZE_RATIO = (float) SCREEN_WIDTH / SCREEN_HEIGHT;
 
         public static readonly int SIDE_WIDTH_SCENES_PER_SCREEN = ((FixedSingle) SCREEN_WIDTH / SCENE_SIZE).Ceil();
         public static readonly int SIDE_HEIGHT_SCENES_PER_SCREEN = ((FixedSingle) SCREEN_HEIGHT / SCENE_SIZE).Ceil();
 
-        public static readonly Vector EXTENDED_BORDER_SCREEN_OFFSET = (2 * HITBOX_HEIGHT, 2 * HITBOX_HEIGHT);
+        public static readonly Vector EXTENDED_BORDER_SCREEN_OFFSET = (2 * BLOCK_SIZE, 2 * BLOCK_SIZE);
 
         public const int MAX_ENTITIES = 2048;
 
         public const int SPAWNING_BLACK_SCREEN_FRAMES = 120;
 
         // Times are measured in frames, velocity in pixel per frames and accelerations in pixels per frame squared.
+
+        public static readonly Vector WORLD_OFFSET = (0, -1);
 
         public static readonly FixedSingle GRAVITY = 0.25;
         public static readonly FixedSingle UNDERWATER_GRAVITY = 33 / 256.0;
@@ -77,6 +79,7 @@ namespace XSharp.Engine
         public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_1 = 408 / 256.0;
         public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_2 = 456 / 256.0;
         public static readonly FixedSingle DASH_SPEED = 885 / 256.0;
+        public static readonly FixedSingle CAMERA_SMOOTH_SPEED = 2;
         public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_X = -138 / 256.0;
         public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_Y = -512 / 256.0;
         public static readonly Vector INITIAL_DAMAGE_RECOIL_SPEED = (INITIAL_DAMAGE_RECOIL_SPEED_X, INITIAL_DAMAGE_RECOIL_SPEED_Y);
@@ -114,23 +117,15 @@ namespace XSharp.Engine
 
         // X
 
-        public const int HITBOX_OFFSET_X = 0;
-        public const int HITBOX_OFFSET_Y = -1;
-        public static readonly Vector HITBOX_OFFSET = (HITBOX_OFFSET_X, HITBOX_OFFSET_Y);
-        public const int HITBOX_WIDTH = 12;
-        public const int HITBOX_HEIGHT = 28;
-        public static readonly Vector HITBOX_SIZE = (HITBOX_WIDTH, HITBOX_HEIGHT);
+        public static readonly Vector HITBOX_OFFSET = (0, -1);
+        public static readonly Vector HITBOX_SIZE = (12, 28);
         public static readonly Box HITBOX = (HITBOX_OFFSET, -HITBOX_SIZE * 0.5, HITBOX_SIZE * 0.5);
-        public const int DASHING_HITBOX_OFFSET_X = 0;
-        public const int DASHING_HITBOX_OFFSET_Y = 5;
-        public static readonly Vector DASHING_HITBOX_OFFSET = (DASHING_HITBOX_OFFSET_X, DASHING_HITBOX_OFFSET_Y);
-        public const int DASHING_HITBOX_WIDTH = 12;
-        public const int DASHING_HITBOX_HEIGHT = 16;
-        public static readonly Vector DASHING_HITBOX_SIZE = (DASHING_HITBOX_WIDTH, DASHING_HITBOX_HEIGHT);
+        public static readonly Vector DASHING_HITBOX_OFFSET = (0, 5);
+        public static readonly Vector DASHING_HITBOX_SIZE = (12, 16);
         public static readonly Box DASHING_HITBOX = (DASHING_HITBOX_OFFSET, -DASHING_HITBOX_SIZE * 0.5, DASHING_HITBOX_SIZE * 0.5);
         public static readonly Box COLLISION_BOX = (Vector.NULL_VECTOR, -HITBOX_SIZE * 0.5 - (0, 2), HITBOX_SIZE * 0.5 + (0, 2));
         public const int INPUT_MOVEMENT_LATENCY = 1;
-        public static readonly FixedSingle LADDER_OFFSET = 24;
+        public static readonly FixedSingle LADDER_MOVE_OFFSET = 22;
         public static readonly FixedSingle WALL_MAX_DISTANCE_TO_WALL_JUMP = 8;
         public const int X_INITIAL_LIVES = 2;
         public static readonly FixedSingle X_INITIAL_HEALT_CAPACITY = 16;

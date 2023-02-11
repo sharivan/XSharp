@@ -91,7 +91,7 @@ namespace XSharp.Engine.Entities.Enemies
 
         private void OnIdle(EntityState state, long frameCounter)
         {
-            if (frameCounter >= 60 && Origin.DistanceTo(Engine.Player.Origin) <= SCENE_SIZE / 2)
+            if (frameCounter >= 60 && Origin.DistanceTo(Engine.Player.Origin) <= SCENE_SIZE * 0.5)
                 State = BatState.ATTACKING;
             else
                 Velocity = Vector.NULL_VECTOR;

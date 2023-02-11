@@ -79,7 +79,10 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                 Shooter = this
             };
 
-            frozenBlock = new PenguinFrozenBlock();
+            frozenBlock = new PenguinFrozenBlock()
+            {
+                Attacker = this
+            };
         }
 
         public override FixedSingle GetGravity()
@@ -434,16 +437,23 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         private void BreakSculptures()
         {
-            if (sculpture1.Alive && !sculpture1.MarkedToRemove && !sculpture1.Broke)
+            if (sculpture1.Alive)
                 sculpture1.Break();
 
-            if (sculpture2.Alive && !sculpture2.MarkedToRemove && !sculpture2.Broke)
+            if (sculpture2.Alive)
                 sculpture2.Break();
+        }
+
+        private void BreakFrozenBlock()
+        {
+            if (frozenBlock.Alive)
+                frozenBlock.Break();
         }
 
         private void OnStartDying(EntityState state, EntityState lastState)
         {           
             BreakSculptures();
+            BreakFrozenBlock();
             lever.Hide();
             mist.Stop();
             Engine.Player.AdictionalVelocity = Vector.NULL_VECTOR;
@@ -540,7 +550,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         public void FreezePlayer()
         {
-            if (Alive && !Exploding && !Broke && !frozenBlock.Alive 
+            if (Alive && !Exploding && !Broke && !frozenBlock.Alive
                 && !Engine.Player.TakingDamage && !Engine.Player.Blinking)
                 frozenBlock.Spawn();
         }

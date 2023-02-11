@@ -7,6 +7,14 @@ namespace XSharp.Engine.World
 {
     public class Map
     {
+        public static Cell GetTileCellFromPos(Vector pos)
+        {
+            int col = (int) (pos.X / TILE_SIZE);
+            int row = (int) (pos.Y / TILE_SIZE);
+
+            return new Cell(row, col);
+        }
+
         internal Tile[,] tiles;
         internal int[,] palette;
         internal bool[,] flipped;
@@ -66,7 +74,7 @@ namespace XSharp.Engine.World
 
         public Tile GetTileFrom(Vector pos)
         {
-            Cell tsp = World.GetTileCellFromPos(pos);
+            Cell tsp = GetTileCellFromPos(pos);
             int row = tsp.Row;
             int col = tsp.Col;
 
@@ -92,13 +100,13 @@ namespace XSharp.Engine.World
 
         public Tile GetTile(Vector pos)
         {
-            Cell cell = World.GetTileCellFromPos(pos);
+            Cell cell = GetTileCellFromPos(pos);
             return tiles[cell.Row, cell.Col];
         }
 
         public void SetTile(Vector pos, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
         {
-            Cell cell = World.GetTileCellFromPos(pos);
+            Cell cell = GetTileCellFromPos(pos);
             SetTile(cell, tile, palette, flipped, mirrored, upLayer);
         }
 

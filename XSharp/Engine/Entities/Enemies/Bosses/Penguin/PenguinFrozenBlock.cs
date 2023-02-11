@@ -7,6 +7,12 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 {
     public class PenguinFrozenBlock : Sprite
     {
+        public Penguin Attacker
+        {
+            get;
+            internal set;
+        }
+
         public bool Exploding
         {
             get;
@@ -44,12 +50,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             if (Exploding)
                 return;
 
-            Parent = null;
-
-            var player = Engine.Player;
-            player.ForcedStateException = PlayerState.NONE;
-            player.ForcedState = PlayerState.NONE;
-            player.InputLocked = false;
+            DetatchFromPlayer();
 
             Exploding = true;
             Engine.PlaySound(4, 31);
@@ -116,15 +117,25 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             Explode();
         }
 
+        private void DetatchFromPlayer()
+        {
+            var player = Engine.Player;
+            if (Parent == player)
+            {
+                player.ForcedStateException = PlayerState.NONE;
+                player.ForcedState = PlayerState.NONE;
+                player.InputLocked = Attacker.Exploding;
+                player.TakeDamageEvent -= OnPlayerTakedamage;
+
+                Parent = null;
+            }
+        }
+
         protected override void OnDeath()
         {
-            base.OnDeath();
+            DetatchFromPlayer();
 
-            var player = Engine.Player;
-            player.ForcedStateException = PlayerState.NONE;
-            player.ForcedState = PlayerState.NONE;
-            player.InputLocked = false;
-            player.TakeDamageEvent -= OnPlayerTakedamage;
+            base.OnDeath();
         }
 
         protected override void Think()

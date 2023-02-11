@@ -7,6 +7,14 @@ namespace XSharp.Engine.World
 {
     public class Block
     {
+        public static Cell GetMapCellFromPos(Vector pos)
+        {
+            int col = (int) (pos.X / MAP_SIZE);
+            int row = (int) (pos.Y / MAP_SIZE);
+
+            return new Cell(row, col);
+        }
+
         internal Map[,] maps;
 
         public World World
@@ -36,7 +44,7 @@ namespace XSharp.Engine.World
 
         public Tile GetTileFrom(Vector pos)
         {
-            Cell tsp = World.GetMapCellFromPos(pos);
+            Cell tsp = GetMapCellFromPos(pos);
             int row = tsp.Row;
             int col = tsp.Col;
 
@@ -49,7 +57,7 @@ namespace XSharp.Engine.World
 
         public Map GetMapFrom(Vector pos)
         {
-            Cell tsp = World.GetMapCellFromPos(pos);
+            Cell tsp = GetMapCellFromPos(pos);
             int row = tsp.Row;
             int col = tsp.Col;
 
@@ -69,7 +77,7 @@ namespace XSharp.Engine.World
 
         public void SetTile(Vector pos, Tile tile)
         {
-            Cell cell = World.GetMapCellFromPos(pos);
+            Cell cell = GetMapCellFromPos(pos);
             Map map = maps[cell.Row, cell.Col];
             if (map == null)
             {
@@ -82,7 +90,7 @@ namespace XSharp.Engine.World
 
         public void SetMap(Vector pos, Map map)
         {
-            Cell cell = World.GetMapCellFromPos(pos);
+            Cell cell = GetMapCellFromPos(pos);
             maps[cell.Row, cell.Col] = map;
         }
 

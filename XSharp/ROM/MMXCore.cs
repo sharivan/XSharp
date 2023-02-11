@@ -3080,7 +3080,7 @@ namespace XSharp.ROM
             {
                 Map map = maps[index];
                 if (map != null)
-                    world.SetMap(new Vector(x * MAP_SIZE, y * MAP_SIZE), map, background);
+                    world.SetMap(new Vector(x * MAP_SIZE + WORLD_OFFSET.X, y * MAP_SIZE + WORLD_OFFSET.Y), map, background);
             }
         }
 

@@ -379,7 +379,7 @@ namespace XSharp.Engine.World
                 for (int row = startRow; row <= endRow; row++)
                     for (int col = startCol; col <= endCol; col++)
                     {
-                        var mapPos = new Vector(col * MAP_SIZE, row * MAP_SIZE);
+                        var mapPos = World.GetMapLeftTop(row, col);
                         Map map = World.GetMapFrom(mapPos);
                         if (map != null)
                         {
@@ -399,7 +399,7 @@ namespace XSharp.Engine.World
                 resultSet.Clear();
                 Engine.partition.Query(resultSet, TestBox, BoxKind.COLLISIONBOX);
                 foreach (var entity in resultSet)
-                    if (entity is Entities.Sprite sprite && sprite != IgnoreSprite && sprite.CollisionData != CollisionData.NONE)
+                    if (entity is Sprite sprite && sprite != IgnoreSprite && sprite.CollisionData != CollisionData.NONE)
                     {
                         CollisionFlags collisionResult = TestCollision(sprite.CollisionBox, sprite.CollisionData, TestBox, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags, PreciseCollisionCheck);
                         if (collisionResult == CollisionFlags.NONE)

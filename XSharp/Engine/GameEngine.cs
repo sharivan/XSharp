@@ -1256,58 +1256,58 @@ namespace XSharp.Engine
             var sequence = xSpriteSheet.AddFrameSquence("Spawn");
             sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
             sequence.CollisionBox = HITBOX;
-            sequence.AddFrame(-4, 25, 5, 15, 8, 48);
+            sequence.AddFrame(-4, 17, 5, 15, 8, 48);
 
             sequence = xSpriteSheet.AddFrameSquence("SpawnEnd");
             sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
             sequence.CollisionBox = HITBOX;
-            sequence.AddFrame(-4, 32, 5, 15, 8, 48);
-            sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
+            sequence.AddFrame(-4, 17, 5, 15, 8, 48);
+            sequence.AddFrame(3, -2, 19, 34, 22, 29, 2);
             sequence.AddFrame(8, 11, 46, 21, 30, 42);
             sequence.AddFrame(8, 8, 84, 24, 30, 39);
             sequence.AddFrame(8, 5, 120, 27, 30, 36);
-            sequence.AddFrame(8, 4, 156, 28, 30, 34);
+            sequence.AddFrame(8, 3, 156, 28, 30, 34);
             sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
 
             sequence = xSpriteSheet.AddFrameSquence("Stand");
             sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
             sequence.CollisionBox = HITBOX;
-            sequence.AddFrame(9, 3, 226, 29, 30, 34, 80, true);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 295, 29, 30, 34, 8);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 226, 29, 30, 34, 48);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 226, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 295, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 226, 29, 30, 34, 80, true);
+            sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 295, 29, 30, 34, 8);
+            sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 226, 29, 30, 34, 48);
+            sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 295, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 226, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 295, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
 
             sequence = xSpriteSheet.AddFrameSquence("Tired");
             sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
             sequence.CollisionBox = HITBOX;
-            sequence.AddFrame(9, 4, 166, 331, 30, 35, 10, true);
-            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
-            sequence.AddFrame(9, 2, 230, 333, 30, 33, 10);
-            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
-            sequence.AddFrame(9, 4, 166, 331, 30, 35, 10);
-            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
-            sequence.AddFrame(9, 2, 230, 333, 30, 33, 10);
-            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
-            sequence.AddFrame(9, 4, 166, 331, 30, 35, 10);
-            sequence.AddFrame(9, 3, 262, 332, 30, 34, 2);
-            sequence.AddFrame(9, 3, 294, 332, 30, 34, 6);
-            sequence.AddFrame(9, 3, 262, 332, 30, 34, 2);
-            sequence.AddFrame(9, 2, 230, 333, 30, 33, 10);
-            sequence.AddFrame(9, 3, 198, 332, 30, 34, 10);
+            sequence.AddFrame(8, 4, 166, 331, 30, 35, 10, true);
+            sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
+            sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
+            sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
+            sequence.AddFrame(8, 4, 166, 331, 30, 35, 10);
+            sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
+            sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
+            sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
+            sequence.AddFrame(8, 4, 166, 331, 30, 35, 10);
+            sequence.AddFrame(8, 3, 262, 332, 30, 34, 2);
+            sequence.AddFrame(8, 3, 294, 332, 30, 34, 6);
+            sequence.AddFrame(8, 3, 262, 332, 30, 34, 2);
+            sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
+            sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
 
             sequence = xSpriteSheet.AddFrameSquence("Shooting");
             sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
             sequence.CollisionBox = HITBOX;
-            sequence.AddFrame(9, 3, 365, 29, 30, 34, 4);
-            sequence.AddFrame(9, 3, 402, 29, 29, 34, 12, true);
+            sequence.AddFrame(8, 3, 365, 29, 30, 34, 4);
+            sequence.AddFrame(8, 3, 402, 29, 29, 34, 12, true);
 
             sequence = xSpriteSheet.AddFrameSquence("PreWalking");
             sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
@@ -2671,6 +2671,7 @@ namespace XSharp.Engine
 
             entity.Cleanup();
             entity.Alive = false;
+            entity.Dead = true;
             entity.DeathFrame = FrameCounter;
 
             if (!entity.Respawnable)
@@ -3368,7 +3369,7 @@ namespace XSharp.Engine
             Vector cameraPos;
             if (romLoaded)
             {
-                spawnPos = mmx.CharacterPos + Vector.DOWN_VECTOR * (HITBOX_HEIGHT + 1);
+                spawnPos = mmx.CharacterPos;
                 cameraPos = mmx.CameraPos;
             }
             else
@@ -3663,10 +3664,32 @@ namespace XSharp.Engine
 
         public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color)
         {
-            DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color);
+            DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color, out _);
+        }
+
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color, out RawRectangle fontDimension)
+        {
+            DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color, out fontDimension);
         }
 
         public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, RawMatrix transform, Color color)
+        {
+            DrawText(text, font, drawRect, drawFlags, transform, color, out _);
+        }
+
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, float offsetX, float offsetY, Color color)
+        {
+            RawMatrix transform = Matrix.Translation(offsetX, offsetY, 0);
+            DrawText(text, font, drawRect, drawFlags, transform, color, out _);
+        }
+
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, float offsetX, float offsetY, Color color, out RawRectangle fontDimension)
+        {
+            RawMatrix transform = Matrix.Translation(offsetX, offsetY, 0);
+            DrawText(text, font, drawRect, drawFlags, transform, color, out fontDimension);
+        }
+
+        public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, RawMatrix transform, Color color, out RawRectangle fontDimension)
         {
             sprite.Begin();
 
@@ -3677,7 +3700,7 @@ namespace XSharp.Engine
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
             sprite.Transform = transform;
 
-            var fontDimension = font.MeasureText(sprite, text, drawRect, drawFlags);
+            fontDimension = font.MeasureText(sprite, text, drawRect, drawFlags);
             font.DrawText(sprite, text, fontDimension, drawFlags, color);
             sprite.End();
         }
@@ -4128,8 +4151,14 @@ namespace XSharp.Engine
 
                 if (showInfoText && Player != null)
                 {
-                    string text = $"X: {(float) Player.Origin.X * 256} Y: {(float) Player.Origin.Y * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256} Checkpoint: {(currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
-                    DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.Yellow);
+                    string text = $"Checkpoint: {(currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
+                    DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.Yellow, out RawRectangle fontDimension);
+
+                    text = $"Camera: CX: {(float) World.Camera.Left * 256} CY: {(float) World.Camera.Top * 256}";
+                    DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, fontDimension.Top - fontDimension.Bottom, Color.Yellow, out fontDimension);
+
+                    text = $"Player: {(float) Player.Origin.X * 256} Y: {(float) Player.Origin.Y * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256}";
+                    DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, 2 * (fontDimension.Top - fontDimension.Bottom), Color.Yellow, out fontDimension);
                 }
             }
 
@@ -4373,10 +4402,10 @@ namespace XSharp.Engine
 
             CameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
 
-            if ((Player.Origin + HITBOX_HEIGHT * Vector.UP_VECTOR - World.Camera.Center).Length.TruncFracPart() >= STEP_SIZE)
+            if ((Player.Origin - World.Camera.Center).Length.TruncFracPart() >= STEP_SIZE)
             {
                 World.Camera.SmoothOnNextMove = true;
-                World.Camera.SmoothSpeed = NO_CLIP_SPEED;
+                World.Camera.SmoothSpeed = CAMERA_SMOOTH_SPEED;
             }
         }
 

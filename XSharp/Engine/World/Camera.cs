@@ -1,4 +1,5 @@
 ﻿using XSharp.Engine.Entities;
+using XSharp.Engine.Entities.Items;
 using XSharp.Geometry;
 using XSharp.Math;
 using static XSharp.Engine.Consts;
@@ -51,7 +52,7 @@ namespace XSharp.Engine.World
         {
             get;
             set;
-        } = DASH_SPEED;
+        } = CAMERA_SMOOTH_SPEED;
 
         public FixedSingle MovingSpeed
         {
@@ -63,6 +64,18 @@ namespace XSharp.Engine.World
         {
             get => Origin - Size * FixedSingle.HALF;
             set => Center = value + Size * FixedSingle.HALF;
+        }
+
+        public FixedSingle Left
+        {
+            get => LeftTop.X;
+            set => LeftTop = (value, LeftTop.Y);
+        }
+
+        public FixedSingle Top
+        {
+            get => LeftTop.Y;
+            set => LeftTop = (LeftTop.X, value);
         }
 
         public Vector LeftMiddle
@@ -117,6 +130,18 @@ namespace XSharp.Engine.World
         {
             get => Center + Size * FixedSingle.HALF;
             set => Center = value - Size * FixedSingle.HALF;
+        }
+
+        public FixedSingle Right
+        {
+            get => RightBottom.X;
+            set => RightBottom = (value, RightBottom.Y);
+        }
+
+        public FixedSingle Bottom
+        {
+            get => RightBottom.Y;
+            set => RightBottom = (RightBottom.X, value);
         }
 
         public Entity FocusOn
@@ -390,8 +415,11 @@ namespace XSharp.Engine.World
             if (entity.Alive || entity.Spawning || !entity.Respawnable)
                 return;
 
-            if (Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn && !entity.IsOffscreen(VectorKind.ORIGIN))
+            if ((!entity.Dead || Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn) && !entity.IsOffscreen(VectorKind.ORIGIN))
             {
+                if (entity is Item item && item.Collected)
+                    return;
+
                 if (entity is Sprite sprite)
                     sprite.Visible = true;
 

@@ -870,6 +870,9 @@ namespace XSharp.Engine.Entities
         {
             CreateResources();
             base.Place();
+
+            if (!IsOffscreen(VectorKind.ORIGIN))
+                Spawn();
         }
 
         protected virtual bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
