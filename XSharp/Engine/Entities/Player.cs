@@ -296,6 +296,12 @@ namespace XSharp.Engine.Entities
 
         public bool TakingDamage => state == PlayerState.TAKING_DAMAGE;
 
+        public int TakingDamageFrameCounter
+        {
+            get;
+            private set;
+        } = 0;
+
         public bool Dying => state == PlayerState.DYING;
 
         public bool Freezed
@@ -437,6 +443,9 @@ namespace XSharp.Engine.Entities
             if (state == PlayerState.NONE || forcedState != PlayerState.NONE && state != ForcedStateException && state != forcedState)
                 return;
 
+            if (state == PlayerState.STAND)
+                TakingDamageFrameCounter = 0;
+
             this.state = state;
             stateDirection = direction;
             CurrentAnimationIndex = GetAnimationIndex(state, Shooting);
@@ -513,9 +522,14 @@ namespace XSharp.Engine.Entities
 
         protected override void OnBlockedLeft()
         {
-            if (!CrossingBossDoor && !teleporting && !TakingDamage && !Dying)
+            if (!CrossingBossDoor && !teleporting && !Dying)
             {
-                if (Landed)
+                if (TakingDamage)
+                {
+                    if (PressingLeft && TakingDamageFrameCounter >= 4)
+                        OnKnockbackEnd();
+                }
+                else if (Landed)
                     SetStandState();
                 /*else if (WallJumping && wallJumpFrameCounter >= 7)
                 {
@@ -527,9 +541,14 @@ namespace XSharp.Engine.Entities
 
         protected override void OnBlockedRight()
         {
-            if (!CrossingBossDoor && !teleporting && !TakingDamage && !Dying)
+            if (!CrossingBossDoor && !teleporting && !Dying)
             {
-                if (Landed)
+                if (TakingDamage)
+                {
+                    if (PressingRight && TakingDamageFrameCounter >= 4)
+                        OnKnockbackEnd();
+                }
+                else if (Landed)
                     SetStandState();
                 /*else if (WallJumping && wallJumpFrameCounter >= 7)
                 {
@@ -605,6 +624,7 @@ namespace XSharp.Engine.Entities
             CrossingBossDoor = false;
             CanGoOutOfCameraBounds = false;
             DyeByAbiss = false;
+            TakingDamageFrameCounter = 0;
 
             ResetKeys();
 
@@ -763,9 +783,9 @@ namespace XSharp.Engine.Entities
             return INITIAL_UPWARD_SPEED_FROM_JUMP;
         }
 
-        internal void PlaySound(int index)
+        internal void PlaySound(int index, bool ignoreUpdatesUntilFinished = false)
         {
-            Engine.PlaySound(0, index);
+            Engine.PlaySound(0, index, ignoreUpdatesUntilFinished);
         }
 
         protected override void OnBeforeMove(ref Vector origin)
@@ -1266,6 +1286,9 @@ namespace XSharp.Engine.Entities
                                 Engine.StartWallSlideEffect(this);
                         }
                     }
+
+                    if (TakingDamage)
+                        TakingDamageFrameCounter++;
                 }
 
                 if (!TakingDamage && !InputLocked)
@@ -1507,6 +1530,21 @@ namespace XSharp.Engine.Entities
             return animationIndices[(int) state, 0] == index || checkShooting && animationIndices[(int) state, 1] == index;
         }
 
+        private void OnKnockbackEnd()
+        {
+            baseHSpeed = WALKING_SPEED;
+            if (PressingLeft)
+                TryMoveLeft();
+            else if (PressingRight)
+                TryMoveRight();
+            else if (Landed)
+                SetStandState();
+            else
+                SetAirStateAnimation();
+
+            MakeInvincible(60, true);
+        }
+
         protected internal override void OnAnimationEnd(Animation animation)
         {
             base.OnAnimationEnd(animation);
@@ -1590,22 +1628,7 @@ namespace XSharp.Engine.Entities
                     CurrentAnimation.Stop();
             }
             else if (ContainsAnimationIndex(PlayerState.TAKING_DAMAGE, animation.Index, false))
-            {
-                if (Landed)
-                {
-                    baseHSpeed = WALKING_SPEED;
-                    if (PressingLeft)
-                        TryMoveLeft();
-                    else if (PressingRight)
-                        TryMoveRight();
-                    else
-                        SetStandState();
-                }
-                else
-                    SetAirStateAnimation();
-
-                MakeInvincible(60, true);
-            }
+                OnKnockbackEnd();
             else if (ContainsAnimationIndex(PlayerState.DYING, animation.Index, false))
             {
                 Freezed = false;
@@ -1841,7 +1864,7 @@ namespace XSharp.Engine.Entities
             if (direction != Direction.NONE)
                 Direction = direction;
 
-            PlaySound(9);
+            PlaySound(9, true);
 
             WallJumping = false;
 

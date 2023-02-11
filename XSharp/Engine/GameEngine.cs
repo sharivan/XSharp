@@ -4932,14 +4932,14 @@ namespace XSharp.Engine
             player.Play();
         }
 
-        public void PlaySound(int channel, int index, double loopTime, bool ignoreUpdatesUntilPlayed = false)
+        public void PlaySound(int channel, int index, double loopTime, bool ignoreUpdatesUntilFinished = false)
         {
-            PlaySound(channel, index, -1, loopTime, ignoreUpdatesUntilPlayed);
+            PlaySound(channel, index, -1, loopTime, ignoreUpdatesUntilFinished);
         }
 
-        public void PlaySound(int channel, int index, bool ignoreUpdatesUntilPlayed = false)
+        public void PlaySound(int channel, int index, bool ignoreUpdatesUntilFinished = false)
         {
-            PlaySound(channel, index, -1, -1, ignoreUpdatesUntilPlayed);
+            PlaySound(channel, index, -1, -1, ignoreUpdatesUntilFinished);
         }
 
         public void ClearSoundLoopPoint(int channel, int index, bool clearStopPoint = false)

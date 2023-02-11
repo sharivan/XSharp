@@ -1195,16 +1195,16 @@ namespace XSharp.Engine.Entities
 
             if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
             {
-                if (BlockedUp && !lastBlockedUp)
+                if (BlockedUp && (!lastBlockedUp || Velocity.Y < 0))
                     OnBlockedUp();
 
-                if (BlockedLeft && !lastBlockedLeft)
+                if (BlockedLeft && (!lastBlockedLeft || Velocity.X < 0))
                     OnBlockedLeft();
 
-                if (BlockedRight && !lastBlockedRight)
+                if (BlockedRight && (!lastBlockedRight || Velocity.X > 0))
                     OnBlockedRight();
 
-                if (Landed && !lastLanded)
+                if (Landed && (!lastLanded || Velocity.Y > 0))
                     OnLanded();
             }
         }

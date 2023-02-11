@@ -159,10 +159,10 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             base.OnBlockedLeft();
 
-            if (State == PenguinState.SLIDING)
+            if (State == PenguinState.SLIDING && Direction == Direction.LEFT)
             {
-                Velocity = (-Velocity.X, 0);
-                Direction = Direction.Oposite();
+                Velocity = (Velocity.X.Abs, 0);
+                Direction = Direction.RIGHT;
             }
         }
 
@@ -170,10 +170,10 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             base.OnBlockedRight();
 
-            if (State == PenguinState.SLIDING)
+            if (State == PenguinState.SLIDING && Direction == Direction.RIGHT)
             {
-                Velocity = (-Velocity.X, 0);
-                Direction = Direction.Oposite();
+                Velocity = (-Velocity.X.Abs, 0);
+                Direction = Direction.LEFT;
             }
         }
 
