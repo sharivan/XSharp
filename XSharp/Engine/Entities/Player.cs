@@ -1632,7 +1632,7 @@ namespace XSharp.Engine.Entities
             else if (ContainsAnimationIndex(PlayerState.DYING, animation.Index, false))
             {
                 Freezed = false;
-                PlaySound(10);
+                Engine.PlaySound(2, 10);
                 PaletteIndex = 4;
 
                 Engine.StartDyingEffect();
@@ -1864,7 +1864,7 @@ namespace XSharp.Engine.Entities
             if (direction != Direction.NONE)
                 Direction = direction;
 
-            PlaySound(9, true);
+            Engine.PlaySound(2, 9);
 
             WallJumping = false;
 
