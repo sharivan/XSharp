@@ -1,5 +1,4 @@
-﻿using XSharp.Engine.World;
-using XSharp.Geometry;
+﻿using XSharp.Geometry;
 
 namespace XSharp.Engine.Entities.HUD
 {

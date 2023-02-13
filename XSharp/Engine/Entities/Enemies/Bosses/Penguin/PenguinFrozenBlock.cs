@@ -1,5 +1,4 @@
-﻿using SharpDX;
-using XSharp.Geometry;
+﻿using XSharp.Geometry;
 using XSharp.Math;
 using static XSharp.Engine.Consts;
 

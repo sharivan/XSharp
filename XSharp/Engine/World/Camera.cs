@@ -193,7 +193,7 @@ namespace XSharp.Engine.World
         protected override Box GetHitbox()
         {
             var box = ExtendedBoundingBox;
-            return box - box.Origin;
+            return box - Origin;
         }
 
         private void SetCenter(Vector v)
@@ -211,8 +211,8 @@ namespace XSharp.Engine.World
             Vector minCameraPos = World.Engine.MinCameraPos;
             Vector maxCameraPos = World.Engine.MaxCameraPos;
 
-            FixedSingle w2 = Width / 2;
-            FixedSingle h2 = Height / 2;
+            FixedSingle w2 = Width * 0.5;
+            FixedSingle h2 = Height * 0.5;
 
             FixedSingle minX = minCameraPos.X + w2;
             FixedSingle minY = minCameraPos.Y + h2;

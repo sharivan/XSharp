@@ -11,8 +11,8 @@ namespace XSharp.Engine.World
         private bool checkCollisionWithWorld;
         private bool checkCollisionWithSolidSprites;
         private FixedSingle maskSize;
-        private FixedSingle sideCollidersTopOffset;
-        private FixedSingle sideCollidersBottomOffset;
+        private FixedSingle sideCollidersTopClip;
+        private FixedSingle sideCollidersBottomClip;
 
         private ExtendedCollisionChecker leftCollisionChecker;
         private ExtendedCollisionChecker rightCollisionChecker;
@@ -77,24 +77,24 @@ namespace XSharp.Engine.World
             }
         }
 
-        public FixedSingle SideCollidersTopOffset
+        public FixedSingle SideCollidersTopClip
         {
-            get => sideCollidersTopOffset;
+            get => sideCollidersTopClip;
 
             set
             {
-                sideCollidersTopOffset = value;
+                sideCollidersTopClip = value;
                 UpdateColliders();
             }
         }
 
-        public FixedSingle SideCollidersBottomOffset
+        public FixedSingle SideCollidersBottomClip
         {
-            get => sideCollidersBottomOffset;
+            get => sideCollidersBottomClip;
 
             set
             {
-                sideCollidersBottomOffset = value;
+                sideCollidersBottomClip = value;
                 UpdateColliders();
             }
         }
@@ -220,14 +220,14 @@ namespace XSharp.Engine.World
         {
         }
 
-        public SpriteCollider(Sprite owner, Box box, FixedSingle maskSize, FixedSingle sideCollidersTopOffset, FixedSingle sideCollidersBottomOffset, bool useCollisionPlacements = false, bool checkCollisionWithWorld = true, bool checkCollisionWithSolidSprites = false)
+        public SpriteCollider(Sprite owner, Box box, FixedSingle maskSize, FixedSingle sideCollidersTopClip, FixedSingle sideCollidersBottomClip, bool useCollisionPlacements = false, bool checkCollisionWithWorld = true, bool checkCollisionWithSolidSprites = false)
         {
             Owner = owner;
             this.box = box;
             this.maskSize = maskSize;
             UseCollisionPlacements = useCollisionPlacements;
-            this.sideCollidersTopOffset = sideCollidersTopOffset;
-            this.sideCollidersBottomOffset = sideCollidersBottomOffset;
+            this.sideCollidersTopClip = sideCollidersTopClip;
+            this.sideCollidersBottomClip = sideCollidersBottomClip;
             this.checkCollisionWithWorld = checkCollisionWithWorld;
             this.checkCollisionWithSolidSprites = checkCollisionWithSolidSprites;
 
@@ -281,9 +281,9 @@ namespace XSharp.Engine.World
 
         private void UpdateColliders()
         {
-            LeftCollider = new Box(box.Left, box.Top + sideCollidersTopOffset, -maskSize, box.Height + sideCollidersTopOffset + sideCollidersBottomOffset);
-            UpCollider = new Box(box.LeftTop, box.Width, -maskSize);
-            RightCollider = new Box(box.Right, box.Top + sideCollidersTopOffset, maskSize, box.Height + sideCollidersTopOffset + sideCollidersBottomOffset);
+            LeftCollider = new Box(box.Left - maskSize, box.Top + sideCollidersTopClip, maskSize, box.Height - sideCollidersTopClip - sideCollidersBottomClip);
+            UpCollider = new Box(box.Left, box.Top - maskSize, box.Width, maskSize);
+            RightCollider = new Box(box.Right, box.Top + sideCollidersTopClip, maskSize, box.Height - sideCollidersTopClip - sideCollidersBottomClip);
             DownCollider = new Box(box.LeftBottom, box.Width, maskSize);
 
             downCollisionChecker.Setup(DownCollider, CollisionFlags.NONE, Owner, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
@@ -447,7 +447,7 @@ namespace XSharp.Engine.World
                     if (placement.Flags == CollisionFlags.TOP_LADDER)
                     {
                         Box placementBox = placement.BoudingBox;
-                        FixedSingle delta = placementBox.Left + MAP_SIZE / 2 - box.Left - box.Width / 2;
+                        FixedSingle delta = placementBox.Left + MAP_SIZE * 0.5 - box.Left - box.Width * 0.5;
                         box += delta * Vector.RIGHT_VECTOR;
                         UpdateColliders();
                         return;
@@ -461,7 +461,7 @@ namespace XSharp.Engine.World
                     if (placement.Flags == CollisionFlags.LADDER)
                     {
                         Box placementBox = placement.BoudingBox;
-                        FixedSingle delta = placementBox.Left + MAP_SIZE / 2 - box.Left - box.Width / 2;
+                        FixedSingle delta = placementBox.Left + MAP_SIZE * 0.5 - box.Left - box.Width * 0.5;
                         box += delta * Vector.RIGHT_VECTOR;
                         UpdateColliders();
                         return;

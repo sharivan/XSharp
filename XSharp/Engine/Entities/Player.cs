@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Windows.Forms;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.World;
 using XSharp.Geometry;
@@ -81,46 +80,10 @@ namespace XSharp.Engine.Entities
             private set;
         }
 
-        new public bool Invincible
-        {
-            get => base.Invincible;
-            set => base.Invincible = value;
-        }
-
-        new public bool Blinking
-        {
-            get => base.Blinking;
-            set => base.Blinking = value;
-        }
-
-        new public bool Animating
-        {
-            get => base.Animating;
-            set => base.Animating = value;
-        }
-
-        new public Vector Velocity
-        {
-            get => base.Velocity;
-            set => base.Velocity = value;
-        }
-
-        new public bool NoClip
-        {
-            get => base.NoClip;
-            set => base.NoClip = value;
-        }
-
-        new public FixedSingle Health
-        {
-            get => base.Health;
-            set => base.Health = value;
-        }
-
         public bool CanGoOutOfCameraBounds
         {
             get;
-            protected internal set;
+            set;
         } = false;
 
         public PlayerState ForcedState
@@ -588,14 +551,14 @@ namespace XSharp.Engine.Entities
                 SetState(PlayerState.SPAWN_END, 0);
         }
 
-        protected override FixedSingle GetSideColliderTopOffset()
+        protected override FixedSingle GetSideColliderTopClip()
         {
             return 1;
         }
 
-        protected override FixedSingle GetSideColliderBottomOffset()
+        protected override FixedSingle GetSideColliderBottomClip()
         {
-            return -9;
+            return 9;
         }
 
         protected override bool IsUsingCollisionPlacements()
@@ -769,15 +732,12 @@ namespace XSharp.Engine.Entities
 
         private FixedSingle GetInitialJumpSpeed()
         {
-            if (Walking && LandedOnSlope && baseHSpeed > WALKING_SPEED)
+            if (Walking)
             {
-                RightTriangle slope = LandedSlope;
-                FixedSingle ratio = slope.HCathetus / slope.VCathetus;
-
-                if (ratio == 4)
+                if (baseHSpeed == SLOPE_DOWNWARD_WALKING_SPEED_1)
                     return INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1;
 
-                if (ratio == 2)
+                if (baseHSpeed == SLOPE_DOWNWARD_WALKING_SPEED_2)
                     return INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2;
             }
 
@@ -822,7 +782,7 @@ namespace XSharp.Engine.Entities
                     {
                         if (Engine.CurrentCheckpoint != null)
                         {
-                            if (Origin.Y >= Engine.CurrentCheckpoint.Hitbox.Top + SCREEN_HEIGHT / 2)
+                            if (Origin.Y >= Engine.CurrentCheckpoint.Hitbox.Top + SCREEN_HEIGHT * 0.5)
                             {
                                 CheckCollisionWithWorld = true;
                                 CheckCollisionWithSolidSprites = true;
@@ -985,7 +945,7 @@ namespace XSharp.Engine.Entities
                                 {
                                     if (!Shooting)
                                     {
-                                        Box ladderCollisionBox = Hitbox.ClipTop(HITBOX_SIZE.Y - 5);
+                                        Box ladderCollisionBox = Hitbox.ClipTop(HITBOX.Height - 5);
                                         CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, this, CheckCollisionWithWorld, CheckCollisionWithSolidSprites);
                                         if (flags.HasFlag(CollisionFlags.TOP_LADDER))
                                         {

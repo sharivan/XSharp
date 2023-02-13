@@ -107,10 +107,7 @@ namespace XSharp.Engine.Entities
             get => Origin + (!Alive && Respawnable ? GetDeadBox() : GetHitbox());
             protected set
             {
-                BeginUpdate();
-                SetHitbox(value - value.Origin);
-                SetOrigin(value.Origin);
-                EndUpdate();
+                SetHitbox(value - Origin);
                 UpdatePartition();
             }
         }
@@ -142,13 +139,13 @@ namespace XSharp.Engine.Entities
         public int MinimumIntervalToRespawn
         {
             get;
-            protected set;
+            set;
         } = 4;
 
         public int MinimumIntervalToKillOnOffScreen
         {
             get;
-            protected set;
+            set;
         } = 4;
 
         public long SpawnFrame
@@ -178,7 +175,7 @@ namespace XSharp.Engine.Entities
         public bool CheckTouchingEntities
         {
             get => checkTouchingEntities;
-            protected set
+            set
             {
                 checkTouchingEntities = value;
                 UpdatePartition();
@@ -200,7 +197,7 @@ namespace XSharp.Engine.Entities
         public bool CheckTouchingWithDeadEntities
         {
             get => checkTouchingWithDeadEntities;
-            protected set
+            set
             {
                 checkTouchingWithDeadEntities = value;
                 UpdatePartition();
@@ -232,7 +229,7 @@ namespace XSharp.Engine.Entities
         public bool KillOnOffscreen
         {
             get;
-            protected set;
+            set;
         } = false;
 
         protected Entity()

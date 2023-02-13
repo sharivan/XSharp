@@ -30,10 +30,7 @@ namespace XSharp.Geometry
             get;
         }
 
-        FixedDouble Area
-        {
-            get;
-        }
+        bool Contains(Vector point);
     }
 
     public struct EmptyGeometry : IGeometry
@@ -42,9 +39,17 @@ namespace XSharp.Geometry
 
         public FixedSingle Length => FixedSingle.ZERO;
 
-        public FixedDouble Area => FixedDouble.ZERO;
-
         public GeometryType Type => type;
+
+        public bool Contains(Vector point)
+        {
+            return false;
+        }
+
+        public static implicit operator Union(EmptyGeometry geometry)
+        {
+            return new Union();
+        }
     }
 
     public struct Union : IGeometry
@@ -68,8 +73,6 @@ namespace XSharp.Geometry
 
         public FixedSingle Length => throw new NotImplementedException();
 
-        public FixedDouble Area => throw new NotImplementedException();
-
         /// <summary>
         /// Quantidade de partes disjuntas contidas na união
         /// </summary>
@@ -92,6 +95,15 @@ namespace XSharp.Geometry
             hashCode = hashCode * -1521134295 + base.GetHashCode();
             hashCode = hashCode * -1521134295 + EqualityComparer<IGeometry[]>.Default.GetHashCode(parts);
             return hashCode;
+        }
+
+        public bool Contains(Vector point)
+        {
+            foreach (var part in parts)
+                if (part.Contains(point))
+                    return true;
+
+            return false;
         }
 
         /// <summary>
@@ -217,8 +229,6 @@ namespace XSharp.Geometry
         public Vector XVector => new(X, 0);
 
         public Vector YVector => new(0, Y);
-
-        public FixedDouble Area => FixedDouble.ZERO;
 
         /// <summary>
         /// Cria um vetor a partir de duas coordenadas
@@ -451,6 +461,11 @@ namespace XSharp.Geometry
         public Vector TruncFracPart(int bits = 8)
         {
             return (X.TruncFracPart(bits), Y.TruncFracPart(bits));
+        }
+
+        public bool Contains(Vector point)
+        {
+            return this == point;
         }
 
         public GeometryType Type => type;
@@ -822,8 +837,6 @@ namespace XSharp.Geometry
 
         public GeometryType Type => type;
 
-        public FixedDouble Area => FixedDouble.ZERO;
-
         /// <summary>
         /// Verifica se o vetor v está a direita do seguimento de reta s
         /// </summary>
@@ -1109,9 +1122,13 @@ namespace XSharp.Geometry
             return new Matrix2x2(cos, -sin, sin, cos);
         }
     }
-
+                                                                   
     public interface IShape : IGeometry
     {
+        FixedDouble Area
+        {
+            get;
+        }
     }
 
     public enum BoxSide
@@ -1213,11 +1230,11 @@ namespace XSharp.Geometry
 
         public Box((Vector, FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3) { }
 
-        public Box(FixedSingle x, FixedSingle y, FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height)
+        public Box(FixedSingle originX, FixedSingle originY, FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height)
         {
-            Origin = (x, y);
-            Mins = (left - x, top - y);
-            Maxs = (left + width - x, top + height - y);
+            Origin = (originX, originY);
+            Mins = (left - originX, top - originY);
+            Maxs = (left + width - originX, top + height - originY);
         }
 
         public Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4, tuple.Item5, tuple.Item6) { }
@@ -1672,6 +1689,19 @@ namespace XSharp.Geometry
             return ((x, y), box.Mins, box.Maxs);
         }
 
+        public bool Contains(Vector point)
+        {
+            Vector m = Origin + Mins;
+            Vector M = Origin + Maxs;
+
+            Interval interval = m.X <= M.X ? Interval.MakeSemiOpenRightInterval(m.X, M.X) : Interval.MakeSemiOpenLeftInterval(M.X, m.X);
+            if (!interval.Contains(point.X))
+                return false;
+
+            interval = m.Y <= M.Y ? Interval.MakeSemiOpenRightInterval(m.Y, M.Y) : Interval.MakeSemiOpenLeftInterval(M.Y, m.Y);
+            return interval.Contains(point.Y);
+        }
+
         public GeometryType Type => type;
 
         public FixedSingle Length => FixedSingle.TWO * (Width + Height);
@@ -1949,15 +1979,7 @@ namespace XSharp.Geometry
         /// <returns>true se vec estiver contido no interior ou na borda de box, false caso contrário</returns>
         public static bool operator <=(Vector vec, Box box)
         {
-            Vector m = box.Origin + box.Mins;
-            Vector M = box.Origin + box.Maxs;
-
-            Interval interval = m.X <= M.X ? Interval.MakeSemiOpenRightInterval(m.X, M.X) : Interval.MakeSemiOpenLeftInterval(M.X, m.X);
-            if (!interval.Contains(vec.X))
-                return false;
-
-            interval = m.Y <= M.Y ? Interval.MakeSemiOpenRightInterval(m.Y, M.Y) : Interval.MakeSemiOpenLeftInterval(M.Y, m.Y);
-            return interval.Contains(vec.Y);
+            return box.Contains(vec);
         }
 
         /// <summary>
@@ -1990,7 +2012,7 @@ namespace XSharp.Geometry
         /// <returns>true box contém vec em seu interior ou em sua borda, false caso contrário</returns>
         public static bool operator >=(Box box, Vector vec)
         {
-            return vec <= box;
+            return box.Contains(vec);
         }
 
         /// <summary>
@@ -2271,9 +2293,14 @@ namespace XSharp.Geometry
             return PointInTriangle(v, Origin, HCathetusVertex + (epslon, 0), VCathetusVertex + (0, epslon));
         }
 
-        public bool Contains(Vector v, bool excludeHypotenuse = false)
+        public bool Contains(Vector v, bool excludeHypotenuse)
         {
             return Contains(v, 0, excludeHypotenuse);
+        }
+
+        public bool Contains(Vector point)
+        {
+            return Contains(point, false);
         }
 
         public bool HasIntersectionWith(Box box, FixedSingle epslon, bool excludeHypotenuse = false)

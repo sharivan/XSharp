@@ -91,7 +91,7 @@ namespace XSharp.Engine.Entities.Triggers
 
         protected override void SetHitbox(Box hitbox)
         {
-            this.hitbox = hitbox - hitbox.Origin;
+            this.hitbox = hitbox;
         }
     }
 }

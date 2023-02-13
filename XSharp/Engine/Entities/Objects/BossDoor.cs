@@ -73,26 +73,22 @@ namespace XSharp.Engine.Entities.Objects
             set;
         }
 
-        public BossDoor(string name, Vector origin)
+        public BossDoor()
         {
-            Hitbox = GetTriggerBoudingBox(origin);
-
             effect = new BossDoorEffect()
             {
                 Door = this,
-                Origin = (origin.X, origin.Y - 1),
                 Visible = false
             };
-        }
-
-        public BossDoor(Vector origin) : this(null, origin)
-        {
         }
 
         protected internal override void OnSpawn()
         {
             base.OnSpawn();
 
+            Hitbox = GetTriggerBoudingBox(Origin);
+
+            effect.Origin = (Origin.X, Origin.Y - 1);
             effect.Spawn();
 
             State = BossDoorState.CLOSED;

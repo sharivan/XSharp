@@ -3306,7 +3306,7 @@ namespace XSharp.Engine
 
         public Vector2 WorldVectorToScreen(Vector v)
         {
-            return ToVector2((v - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
+            return ToVector2((v - World.Camera.LeftTop) * DrawScale + drawBox.LeftTop);
         }
 
         public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
@@ -3321,17 +3321,17 @@ namespace XSharp.Engine
 
         public Vector ScreenPointToVector(Point p)
         {
-            return (new Vector(p.X, p.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
+            return (new Vector(p.X, p.Y) - drawBox.LeftTop) / DrawScale + World.Camera.LeftTop;
         }
 
         public Vector ScreenVector2ToWorld(Vector2 v)
         {
-            return (new Vector(v.X, v.Y) - drawBox.Origin) / DrawScale + World.Camera.LeftTop;
+            return (new Vector(v.X, v.Y) - drawBox.LeftTop) / DrawScale + World.Camera.LeftTop;
         }
 
         public RectangleF WorldBoxToScreen(MMXBox box)
         {
-            return ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.Origin);
+            return ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.LeftTop);
         }
 
         public void TogglePauseGame()
@@ -3473,14 +3473,14 @@ namespace XSharp.Engine
             {
                 drawScale = width / DEFAULT_CLIENT_WIDTH;
                 MMXFloat newHeight = drawScale * DEFAULT_CLIENT_HEIGHT;
-                drawOrigin = new MMXVector(0, (height - newHeight) / 2);
+                drawOrigin = new MMXVector(0, (height - newHeight) * 0.5);
                 height = newHeight;
             }
             else
             {
                 drawScale = height / DEFAULT_CLIENT_HEIGHT;
                 MMXFloat newWidth = drawScale * DEFAULT_CLIENT_WIDTH;
-                drawOrigin = new MMXVector((width - newWidth) / 2, 0);
+                drawOrigin = new MMXVector((width - newWidth) * 0.5, 0);
                 width = newWidth;
             }*/
             drawOrigin = Vector.NULL_VECTOR;
@@ -3534,8 +3534,8 @@ namespace XSharp.Engine
 
         private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, MMXBox collisionBox, bool ignoreSlopes = false)
         {
-            var halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
-            var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width / 2, collisionBox.Top, collisionBox.Width / 2, collisionBox.Height);
+            var halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
+            var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width * 0.5, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
 
             MMXBox mapBox = GetMapBoundingBox(row, col);
             if (CollisionChecker.IsSolidBlock(collisionData) && CollisionChecker.HasIntersection(mapBox, collisionBox))
@@ -4272,7 +4272,8 @@ namespace XSharp.Engine
         {
             var trigger = new ChangeDynamicPropertyTrigger()
             {
-                Hitbox = (origin, (-SCREEN_WIDTH / 2, -SCREEN_HEIGHT / 2), (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)),
+                Origin = origin,
+                Hitbox = (origin, (-SCREEN_WIDTH * 0.5, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
                 Property = prop,
                 Forward = forward,
                 Backward = backward,
@@ -4289,6 +4290,7 @@ namespace XSharp.Engine
             var checkpoint = new Checkpoint()
             {
                 Point = index,
+                Origin = boundingBox.Origin,
                 Hitbox = boundingBox,
                 CharacterPos = characterPos,
                 CameraPos = cameraPos,
@@ -4306,7 +4308,8 @@ namespace XSharp.Engine
         {
             var trigger = new CheckpointTriggerOnce()
             {
-                Hitbox = (origin, (0, -SCREEN_HEIGHT / 2), (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)),
+                Origin = origin,
+                Hitbox = (origin, (0, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
                 Checkpoint = checkpoints[index]
             };
 
@@ -4344,6 +4347,9 @@ namespace XSharp.Engine
 
         private void OnBossDefeated(Boss boss, Player killer)
         {
+            killer.StopMoving();
+            killer.Invincible = true;
+            killer.InputLocked = true;
             killer.FaceToScreenCenter();
             PlayVictorySound();
             Engine.DoDelayedAction((int) (6.5 * 60), () => killer.StartTeleporting(true));
@@ -4365,6 +4371,7 @@ namespace XSharp.Engine
         {
             var trigger = new CameraLockTrigger()
             {
+                Origin = boundingBox.Origin,
                 Hitbox = boundingBox
             };
 
@@ -4402,6 +4409,7 @@ namespace XSharp.Engine
 
             CameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
 
+            // TODO : Implement posssibility to smooth speed for one direction only
             if ((Player.Origin - World.Camera.Center).Length.TruncFracPart() >= STEP_SIZE)
             {
                 World.Camera.SmoothOnNextMove = true;
@@ -5270,14 +5278,17 @@ namespace XSharp.Engine
 
         internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
         {
-            var door = new BossDoor(pos);
-            door.Spawn();
-            door.Bidirectional = true;
-
             bool secondDoor = (eventSubId & 0x80) != 0;
-            door.StartBossBattle = secondDoor;
+            var door = new BossDoor()
+            {
+                Origin = pos,
+                Bidirectional = false,
+                StartBossBattle = secondDoor
+            };
+
             door.OpeningEvent += (BossDoor source) => DoorOpening(secondDoor);
             door.ClosedEvent += (BossDoor source) => DoorClosing(secondDoor);
+            door.Spawn();
 
             return door;
         }

@@ -88,7 +88,7 @@ namespace XSharp.Engine.Entities
         public int SpriteSheetIndex
         {
             get;
-            protected set;
+            set;
         } = -1;
 
         public string SpriteSheetName
@@ -99,7 +99,7 @@ namespace XSharp.Engine.Entities
                 return spriteSheet?.Name;
             }
 
-            protected set
+            set
             {
                 var spriteSheet = Engine.GetSpriteSheetByName(value);
                 SpriteSheetIndex = spriteSheet != null ? spriteSheet.Index : -1;
@@ -109,49 +109,49 @@ namespace XSharp.Engine.Entities
         public bool Directional
         {
             get;
-            protected set;
+            set;
         } = false;
 
         public Direction Direction
         {
             get;
-            protected set;
+            set;
         } = Direction.RIGHT;
 
         public Direction DefaultDirection
         {
             get;
-            protected set;
+            set;
         } = Direction.RIGHT;
 
         public CollisionData CollisionData
         {
             get;
-            protected set;
+            set;
         } = CollisionData.NONE;
 
         public bool PushSprites
         {
             get;
-            protected set;
+            set;
         } = false;
 
         public bool Inertial
         {
             get;
-            protected set;
+            set;
         } = false;
 
         public bool CanSmash
         {
             get;
-            protected set;
+            set;
         } = false;
 
         public string InitialAnimationName
         {
             get;
-            protected set;
+            set;
         } = null;
 
         public int InitialAnimationIndex => InitialAnimationName != null ? GetAnimationIndex(InitialAnimationName) : -1;
@@ -161,13 +161,13 @@ namespace XSharp.Engine.Entities
         public bool Static
         {
             get;
-            protected set;
+            set;
         }
 
         public bool NoClip
         {
             get;
-            protected set;
+            set;
         }
 
         public bool Moving => moving;
@@ -177,7 +177,7 @@ namespace XSharp.Engine.Entities
         public bool Invincible
         {
             get => invincible;
-            protected set
+            set
             {
                 bool lastInvincible = invincible;
 
@@ -194,7 +194,7 @@ namespace XSharp.Engine.Entities
         public bool Blinking
         {
             get => blinking;
-            protected set
+            set
             {
                 bool lastBlinking = blinking;
 
@@ -218,13 +218,13 @@ namespace XSharp.Engine.Entities
         public bool InvisibleOnCurrentFrame
         {
             get;
-            protected set;
+            set;
         }
 
         public FixedSingle Health
         {
             get => health;
-            protected set
+            set
             {
                 health = value;
                 OnHealthChanged(health);
@@ -237,7 +237,7 @@ namespace XSharp.Engine.Entities
         public Vector Velocity
         {
             get => vel;
-            protected set
+            set
             {
                 LastVelocity = vel;
                 vel = value.TruncFracPart();
@@ -250,11 +250,17 @@ namespace XSharp.Engine.Entities
             private set;
         }
 
-        public Vector AdictionalVelocity
+        public Vector ExternalVelocity
         {
             get;
-            internal set;
-        }
+            set;
+        } = Vector.NULL_VECTOR;
+
+        public bool ResetExternalVelocityOnFrame
+        {
+            get;
+            set;
+        } = true;
 
         public virtual Box BoundingBox
         {
@@ -356,7 +362,7 @@ namespace XSharp.Engine.Entities
         public bool Animating
         {
             get;
-            protected set;
+            set;
         } = true;
 
         public bool KnockPlayerOnHurt
@@ -750,7 +756,7 @@ namespace XSharp.Engine.Entities
             CheckCollisionWithSolidSprites = false;
             CollisionData = CollisionData.NONE;
             Velocity = Vector.NULL_VECTOR;
-            AdictionalVelocity = Vector.NULL_VECTOR;
+            ExternalVelocity = Vector.NULL_VECTOR;
             NoClip = false;
             moving = false;
             Static = false;
@@ -795,12 +801,12 @@ namespace XSharp.Engine.Entities
             return MASK_SIZE;
         }
 
-        protected virtual FixedSingle GetSideColliderTopOffset()
+        protected virtual FixedSingle GetSideColliderTopClip()
         {
             return 0;
         }
 
-        protected virtual FixedSingle GetSideColliderBottomOffset()
+        protected virtual FixedSingle GetSideColliderBottomClip()
         {
             return 0;
         }
@@ -812,7 +818,7 @@ namespace XSharp.Engine.Entities
 
         protected virtual SpriteCollider CreateCollider()
         {
-            return new SpriteCollider(this, CollisionBox, GetMaskSize(), GetSideColliderTopOffset(), GetSideColliderBottomOffset(), IsUsingCollisionPlacements(), true, false);
+            return new SpriteCollider(this, CollisionBox, GetMaskSize(), GetSideColliderTopClip(), GetSideColliderBottomClip(), IsUsingCollisionPlacements(), true, false);
         }
 
         protected internal virtual void CreateResources()
@@ -956,7 +962,7 @@ namespace XSharp.Engine.Entities
             collider.MoveContactSolid(delta, dx.Abs, (goingDown ? Direction.NONE : Direction.UP) | (dxs > 0 ? Direction.RIGHT : Direction.LEFT), CollisionFlags.SLOPE);
 
             if (gravity)
-                collider.MoveContactFloor(TILE_SIZE / 2 * QUERY_MAX_DISTANCE);
+                collider.MoveContactFloor(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
 
             if (collider.Landed)
                 collider.AdjustOnTheFloor();
@@ -976,12 +982,12 @@ namespace XSharp.Engine.Entities
             collider.Translate(dx);
 
             if (collider.Landed)
-                collider.AdjustOnTheFloor(TILE_SIZE / 2 * QUERY_MAX_DISTANCE);
+                collider.AdjustOnTheFloor(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
             else if (gravity && wasLanded)
-                collider.TryMoveContactSlope(TILE_SIZE / 2 * QUERY_MAX_DISTANCE);
+                collider.TryMoveContactSlope(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
 
-            Box union = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
-            CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(union, CollisionFlags.NONE, this, CheckCollisionWithWorld, CheckCollisionWithSolidSprites);
+            Box boxCollider = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
+            CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(boxCollider, CollisionFlags.NONE, this, CheckCollisionWithWorld, CheckCollisionWithSolidSprites);
 
             if (!CanBlockTheMove(collisionFlags))
             {
@@ -1122,8 +1128,8 @@ namespace XSharp.Engine.Entities
             if (!lastLanded && Velocity.Y > gravity && Velocity.Y < 2 * gravity)
                 Velocity = new Vector(Velocity.X, gravity);
 
-            Vector vel = Velocity + AdictionalVelocity;
-            AdictionalVelocity = Vector.NULL_VECTOR;
+            Vector vel = Velocity + ExternalVelocity;
+            ExternalVelocity = Vector.NULL_VECTOR;
 
             if (vel.IsNull && moving)
                 StopMoving();

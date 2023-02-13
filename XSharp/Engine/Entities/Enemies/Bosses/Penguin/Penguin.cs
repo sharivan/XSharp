@@ -1,5 +1,4 @@
-﻿using System;
-using XSharp.Geometry;
+﻿using XSharp.Geometry;
 using XSharp.Math;
 using static XSharp.Engine.Consts;
 
@@ -456,7 +455,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             BreakFrozenBlock();
             lever.Hide();
             mist.Stop();
-            Engine.Player.AdictionalVelocity = Vector.NULL_VECTOR;
+            Engine.Player.ExternalVelocity = Vector.NULL_VECTOR;
         }
 
         protected override void Think()
@@ -464,13 +463,13 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             if (snowing)
             {
                 var adictionalVelocity = (mist.MistDirection == Direction.LEFT ? -PENGUIN_HANGING_SNOWING_SPEED_X : PENGUIN_HANGING_SNOWING_SPEED_X, 0);
-                Engine.Player.AdictionalVelocity = adictionalVelocity;
+                Engine.Player.ExternalVelocity = adictionalVelocity;
 
                 if (sculpture1.Alive && !sculpture1.MarkedToRemove && !sculpture1.Broke)
-                    sculpture1.AdictionalVelocity = adictionalVelocity;
+                    sculpture1.ExternalVelocity = adictionalVelocity;
 
                 if (sculpture2.Alive && !sculpture2.MarkedToRemove && !sculpture2.Broke)
-                    sculpture2.AdictionalVelocity = adictionalVelocity;
+                    sculpture2.ExternalVelocity = adictionalVelocity;
 
                 snowingFrameCounter++;
                 if (snowingFrameCounter == PENGUIN_MIST_FRAMES)

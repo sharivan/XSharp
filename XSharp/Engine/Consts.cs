@@ -4,6 +4,13 @@ using XSharp.Math;
 
 namespace XSharp.Engine
 {
+    public enum CollisionBoxType
+    {
+        X1,
+        X2X3,
+        XSHARP
+    }
+
     public class Consts
     {
         public const int SAVE_SLOT_COUNT = 10;
@@ -113,17 +120,22 @@ namespace XSharp.Engine
         public const int CHARGING_EFFECT_HITBOX_SIZE = 52;
         public static readonly Box CHARGED_HITBOX1 = (Vector.NULL_VECTOR, (-13, -9), (13, 9));
         public static readonly Box CHARGED_HITBOX2 = (Vector.NULL_VECTOR, (-24, -18), (24, 18));
-        public static readonly Box CHARGING_EFFECT_HITBOX = (Vector.NULL_VECTOR, (-CHARGING_EFFECT_HITBOX_SIZE / 2, -CHARGING_EFFECT_HITBOX_SIZE / 2), (CHARGING_EFFECT_HITBOX_SIZE / 2, CHARGING_EFFECT_HITBOX_SIZE / 2));
+        public static readonly Box CHARGING_EFFECT_HITBOX = (Vector.NULL_VECTOR, (-CHARGING_EFFECT_HITBOX_SIZE * 0.5, -CHARGING_EFFECT_HITBOX_SIZE * 0.5), (CHARGING_EFFECT_HITBOX_SIZE * 0.5, CHARGING_EFFECT_HITBOX_SIZE * 0.5));
 
         // X
 
-        public static readonly Vector HITBOX_OFFSET = (0, -1);
-        public static readonly Vector HITBOX_SIZE = (12, 28);
-        public static readonly Box HITBOX = (HITBOX_OFFSET, -HITBOX_SIZE * 0.5, HITBOX_SIZE * 0.5);
-        public static readonly Vector DASHING_HITBOX_OFFSET = (0, 5);
-        public static readonly Vector DASHING_HITBOX_SIZE = (12, 16);
-        public static readonly Box DASHING_HITBOX = (DASHING_HITBOX_OFFSET, -DASHING_HITBOX_SIZE * 0.5, DASHING_HITBOX_SIZE * 0.5);
-        public static readonly Box COLLISION_BOX = (Vector.NULL_VECTOR, -HITBOX_SIZE * 0.5 - (0, 2), HITBOX_SIZE * 0.5 + (0, 2));
+        public const CollisionBoxType COLLISION_BOX_TYPE = CollisionBoxType.XSHARP;
+
+        public static readonly Box HITBOX = ((0, -1), (-6, -14), (6, 14));
+        public static readonly Box DASHING_HITBOX = ((0, 5), (-6, -8), (6, 8));
+        public static readonly Box COLLISION_BOX = COLLISION_BOX_TYPE switch
+        {
+            CollisionBoxType.X1 => ((0, -1), (-7, -17), (7, 17)),
+            CollisionBoxType.X2X3 => ((0, -1), (-6, -17), (6, 17)),
+            CollisionBoxType.XSHARP => ((0, 0), (-6, -16), (6, 16)),
+            _ => Box.EMPTY_BOX
+        };
+
         public const int INPUT_MOVEMENT_LATENCY = 1;
         public static readonly FixedSingle LADDER_MOVE_OFFSET = 22;
         public static readonly FixedSingle WALL_MAX_DISTANCE_TO_WALL_JUMP = 8;
@@ -164,7 +176,8 @@ namespace XSharp.Engine
         public static readonly FixedSingle DRILLER_CONTACT_DAMAGE = 2;
         public static readonly Box DRILLER_HITBOX = ((-2, 0), (-16, -12), (16, 12));
         public static readonly Box DRILLER_DRILLING_HITBOX = ((8, 0), (-24, -12), (24, 12));
-        public static readonly Box DRILLER_COLLISION_BOX = ((-2, 0), (-16, -12), (16, 12));
+        public static readonly Box DRILLER_COLLISION_BOX = ((-2, 0), (-9, -12), (9, 12));
+        public static readonly FixedSingle DRILLER_SIDE_COLLIDER_BOTTOM_CLIP = 6;
 
         // Bat
 
@@ -292,7 +305,7 @@ namespace XSharp.Engine
 
         public static readonly FixedSingle HP_LEFT = 9;
         public static readonly FixedSingle HP_BOTTOM = 96;
-        public static readonly Vector READY_OFFSET = new Vector(SCREEN_WIDTH - 39, SCREEN_HEIGHT - 13) / 2;
+        public static readonly Vector READY_OFFSET = new Vector(SCREEN_WIDTH - 39, SCREEN_HEIGHT - 13) * 0.5;
 
         // Palettes
 

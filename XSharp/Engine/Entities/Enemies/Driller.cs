@@ -59,6 +59,11 @@ namespace XSharp.Engine.Entities.Enemies
             State = DrillerState.IDLE;
         }
 
+        protected override FixedSingle GetSideColliderBottomClip()
+        {
+            return DRILLER_SIDE_COLLIDER_BOTTOM_CLIP;
+        }
+
         protected override Box GetCollisionBox()
         {
             return DRILLER_COLLISION_BOX;
