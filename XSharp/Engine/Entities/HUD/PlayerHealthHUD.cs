@@ -4,7 +4,7 @@ namespace XSharp.Engine.Entities.HUD
 {
     public class PlayerHealthHUD : HealthHUD
     {
-        internal PlayerHealthHUD()
+        public PlayerHealthHUD()
         {
             Left = HP_LEFT;
             Image = HUDImage.X;

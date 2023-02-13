@@ -126,7 +126,7 @@ namespace XSharp.Engine.World
             block.SetMap(pos - new Vector(cell.Col * BLOCK_SIZE, cell.Row * BLOCK_SIZE), map);
 
             if (Tessellated)
-                RefreshLayers((pos, MAP_SIZE, MAP_SIZE));
+                RefreshLayers((pos.X, pos.Y, MAP_SIZE, MAP_SIZE));
         }
 
         public void SetMap(Cell cell, Map map)
@@ -140,7 +140,7 @@ namespace XSharp.Engine.World
             blocks[cell.Row, cell.Col] = block;
 
             if (Tessellated)
-                RefreshLayers((pos, BLOCK_SIZE, BLOCK_SIZE));
+                RefreshLayers((pos.X, pos.Y, BLOCK_SIZE, BLOCK_SIZE));
         }
 
         public void SetBlock(Cell cell, Block block)

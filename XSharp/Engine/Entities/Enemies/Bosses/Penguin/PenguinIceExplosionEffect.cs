@@ -11,7 +11,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             internal set;
         }
 
-        internal PenguinIceExplosionEffect()
+        public PenguinIceExplosionEffect()
         {
             Directional = false;
             SpriteSheetIndex = 10;

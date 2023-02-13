@@ -1,4 +1,5 @@
-﻿using XSharp.Engine.Entities.Triggers;
+﻿using XSharp.Engine.Entities.Enemies;
+using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.World;
 using XSharp.Geometry;
 
@@ -75,11 +76,11 @@ namespace XSharp.Engine.Entities.Objects
 
         public BossDoor()
         {
-            effect = new BossDoorEffect()
+            effect = Engine.CreateEntity<BossDoorEffect>(new
             {
                 Door = this,
                 Visible = false
-            };
+            });
         }
 
         protected internal override void OnSpawn()

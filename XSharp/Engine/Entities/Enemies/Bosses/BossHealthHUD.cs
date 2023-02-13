@@ -12,7 +12,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
             internal set;
         }
 
-        internal BossHealthHUD()
+        public BossHealthHUD()
         {
             Left = BOSS_HP_LEFT;
             Image = HUDImage.BOSS;

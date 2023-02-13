@@ -3,14 +3,19 @@ using NLua;
 using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
+using SharpDX.DirectSound;
 using SharpDX.Mathematics.Interop;
 using SharpDX.Windows;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using XSharp.Engine.Entities;
@@ -28,6 +33,7 @@ using XSharp.Engine.Sound;
 using XSharp.Engine.World;
 using XSharp.Geometry;
 using XSharp.Math;
+using XSharp.Properties;
 using XSharp.ROM;
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.World.World;
@@ -253,7 +259,8 @@ namespace XSharp.Engine
         private readonly List<(WaveOutEvent player, SoundStream stream, bool initialized)> soundChannels;
 
         internal Partition<Entity> partition;
-        private readonly HashSet<Entity> resultSet;
+        private HashSet<Entity> resultSet;
+
         private readonly List<Checkpoint> checkpoints;
         private readonly Entity[] entities;
         private readonly Dictionary<string, Entity> entitiesByName;
@@ -373,6 +380,7 @@ namespace XSharp.Engine
         public MMXWorld World
         {
             get;
+            private set;
         }
 
         public Player Player
@@ -1045,11 +1053,6 @@ namespace XSharp.Engine
             UpdateScale();
 
             Running = true;
-
-            World = new MMXWorld(32, 32);
-            partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
-            resultSet = new HashSet<Entity>();
-            CameraConstraintsBox = World.BoundingBox;
         }
 
         private void Unload()
@@ -2614,6 +2617,48 @@ namespace XSharp.Engine
         {
             var description = texture.GetLevelDescription(0);
             RenderSprite(texture, palette, fadingSettings, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
+        }
+
+        public T CreateEntity<T>(dynamic initParams) where T : Entity
+        {
+            Type type = typeof(T);
+            var entity = Activator.CreateInstance<T>();
+
+            if (initParams != null)
+            {
+                Type attrsType = initParams.GetType();
+                System.Reflection.PropertyInfo[] attributes = attrsType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                foreach (var attr in attributes)
+                {
+                    string attrName = attr.Name;
+                    object value = attr.GetValue(initParams);
+
+                    var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(prop => prop.Name == attrName);
+                    var property = properties.FirstOrDefault(prop => prop.DeclaringType == type) ?? properties.First();
+                    if (property == null)
+                        throw new ArgumentException($"Attribute '{attr}' in entity class '{type.Name}' doesn't exist or isn't public.");
+
+                    if (!property.CanWrite)
+                        throw new ArgumentException($"Attribute '{attr}' is not writable.");
+
+                    Type propertyType = property.PropertyType;
+                    Type valueType = value.GetType();
+                    if (valueType != propertyType && !propertyType.IsAssignableFrom(valueType))
+                    {
+                        TypeConverter conv = TypeDescriptor.GetConverter(propertyType);
+                        value = conv.ConvertFrom(value);
+                    }
+
+                    property.SetValue(entity, value);
+                }
+            }
+
+            return entity;
+        }
+
+        public T CreateEntity<T>() where T : Entity
+        {
+            return CreateEntity<T>(null);
         }
 
         private void AddEntity(Entity entity)
@@ -4270,7 +4315,7 @@ namespace XSharp.Engine
 
         public ChangeDynamicPropertyTrigger AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation)
         {
-            var trigger = new ChangeDynamicPropertyTrigger()
+            var trigger = CreateEntity<ChangeDynamicPropertyTrigger>(new
             {
                 Origin = origin,
                 Hitbox = (origin, (-SCREEN_WIDTH * 0.5, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
@@ -4278,8 +4323,7 @@ namespace XSharp.Engine
                 Forward = forward,
                 Backward = backward,
                 Orientation = orientation
-
-            };
+            });
 
             trigger.Spawn();
             return trigger;
@@ -4287,7 +4331,7 @@ namespace XSharp.Engine
 
         public Checkpoint AddCheckpoint(ushort index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
         {
-            var checkpoint = new Checkpoint()
+            var checkpoint = CreateEntity<Checkpoint>(new
             {
                 Point = index,
                 Origin = boundingBox.Origin,
@@ -4297,7 +4341,7 @@ namespace XSharp.Engine
                 BackgroundPos = backgroundPos,
                 ForceBackground = forceBackground,
                 Scroll = scroll
-            };
+            });
 
             checkpoints.Add(checkpoint);
             checkpoint.Spawn();
@@ -4306,12 +4350,12 @@ namespace XSharp.Engine
 
         public CheckpointTriggerOnce AddCheckpointTrigger(ushort index, Vector origin)
         {
-            var trigger = new CheckpointTriggerOnce()
+            var trigger = CreateEntity<CheckpointTriggerOnce>(new
             {
                 Origin = origin,
                 Hitbox = (origin, (0, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
                 Checkpoint = checkpoints[index]
-            };
+            });
 
             trigger.Spawn();
             return trigger;
@@ -4334,10 +4378,10 @@ namespace XSharp.Engine
 
         internal Penguin AddPenguin(Vector origin)
         {
-            var penguin = new Penguin()
+            var penguin = CreateEntity<Penguin>(new
             {
-                Origin = origin,
-            };
+                Origin = origin
+            });
 
             penguin.BossDefeatedEvent += OnBossDefeated;
             Boss = penguin;
@@ -4369,11 +4413,11 @@ namespace XSharp.Engine
 
         public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
         {
-            var trigger = new CameraLockTrigger()
+            var trigger = CreateEntity<CameraLockTrigger>(new
             {
                 Origin = boundingBox.Origin,
                 Hitbox = boundingBox
-            };
+            });
 
             trigger.AddConstraints(extensions);
 
@@ -4454,44 +4498,44 @@ namespace XSharp.Engine
 
         internal void ShootLemon(Player shooter, Vector origin, bool dashLemon)
         {
-            var lemon = new BusterLemon()
+            var lemon = CreateEntity<BusterLemon>(new
             {
                 Shooter = shooter,
                 Origin = origin,
                 DashLemon = dashLemon
-            };
+            });
 
             lemon.Spawn();
         }
 
         internal void ShootSemiCharged(Player shooter, Vector origin)
         {
-            var semiCharged = new BusterSemiCharged()
+            var semiCharged = CreateEntity<BusterSemiCharged>(new
             {
                 Shooter = shooter,
                 Origin = origin
-            };
+            });
 
             semiCharged.Spawn();
         }
 
         internal void ShootCharged(Player shooter, Vector origin)
         {
-            var semiCharged = new BusterCharged()
+            var charged = CreateEntity<BusterCharged>(new
             {
                 Shooter = shooter,
                 Origin = origin
-            };
+            });
 
-            semiCharged.Spawn();
+            charged.Spawn();
         }
 
         internal ChargingEffect StartChargingEffect(Player player)
         {
-            var effect = new ChargingEffect()
+            var effect = CreateEntity<ChargingEffect>(new
             {
                 Charger = player
-            };
+            });
 
             effect.Spawn();
             return effect;
@@ -4499,10 +4543,10 @@ namespace XSharp.Engine
 
         internal DashSparkEffect StartDashSparkEffect(Player player)
         {
-            var effect = new DashSparkEffect()
+            var effect = CreateEntity<DashSparkEffect>(new
             {
                 Player = player
-            };
+            });
 
             effect.Spawn();
             return effect;
@@ -4510,10 +4554,10 @@ namespace XSharp.Engine
 
         internal DashSmokeEffect StartDashSmokeEffect(Player player)
         {
-            var effect = new DashSmokeEffect()
+            var effect = CreateEntity<DashSmokeEffect>(new
             {
                 Player = player
-            };
+            });
 
             effect.Spawn();
             return effect;
@@ -4521,10 +4565,10 @@ namespace XSharp.Engine
 
         internal WallSlideEffect StartWallSlideEffect(Player player)
         {
-            var effect = new WallSlideEffect()
+            var effect = CreateEntity<WallSlideEffect>(new
             {
                 Player = player
-            };
+            });
 
             effect.Spawn();
             return effect;
@@ -4532,10 +4576,10 @@ namespace XSharp.Engine
 
         internal WallKickEffect StartWallKickEffect(Player player)
         {
-            var effect = new WallKickEffect()
+            var effect = CreateEntity<WallKickEffect>(new
             {
                 Player = player
-            };
+            });
 
             effect.Spawn();
             return effect;
@@ -4543,11 +4587,11 @@ namespace XSharp.Engine
 
         internal ExplosionEffect CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1, int soundChannel = 2)
         {
-            var effect = new ExplosionEffect()
+            var effect = CreateEntity<ExplosionEffect>(new
             {
                 Origin = origin,
                 EffectSound = effectSound
-            };
+            });
 
             effect.Spawn();
             return effect;
@@ -4555,11 +4599,11 @@ namespace XSharp.Engine
 
         private XDieExplosion CreateXDieExplosionEffect(double phase)
         {
-            var effect = new XDieExplosion()
+            var effect = CreateEntity<XDieExplosion>(new
             {
                 Offset = Player.Origin - World.Camera.LeftTop,
                 Phase = phase
-            };
+            });
 
             effect.Spawn();
             return effect;
@@ -4567,10 +4611,10 @@ namespace XSharp.Engine
 
         public Driller AddDriller(Vector origin)
         {
-            var driller = new Driller()
+            var driller = CreateEntity<Driller>(new
             {
                 Origin = origin
-            };
+            });
 
             driller.Place();
             return driller;
@@ -4578,10 +4622,10 @@ namespace XSharp.Engine
 
         public Bat AddBat(Vector origin)
         {
-            var bat = new Bat()
+            var bat = CreateEntity<Bat>(new
             {
                 Origin = origin
-            };
+            });
 
             bat.Place();
             return bat;
@@ -4592,11 +4636,11 @@ namespace XSharp.Engine
             if (Player != null)
                 RemoveEntity(Player);
 
-            Player = new Player()
+            Player = CreateEntity<Player>(new
             {
                 Name = "X",
                 Origin = origin
-            };
+            });
 
             Player.Spawn();
             Player.Lives = lastLives;
@@ -4607,10 +4651,10 @@ namespace XSharp.Engine
             if (HP != null)
                 RemoveEntity(HP);
 
-            HP = new PlayerHealthHUD()
+            HP = CreateEntity<PlayerHealthHUD>(new
             {
                 Name = "HP"
-            };
+            });
 
             HP.Spawn();
         }
@@ -4620,10 +4664,10 @@ namespace XSharp.Engine
             if (ReadyHUD != null)
                 RemoveEntity(ReadyHUD);
 
-            ReadyHUD = new ReadyHUD()
+            ReadyHUD = CreateEntity<ReadyHUD>(new
             {
                 Name = "Ready"
-            };
+            });
 
             ReadyHUD.Spawn();
         }
@@ -4885,6 +4929,11 @@ namespace XSharp.Engine
 
         private void Execute()
         {
+            World = new MMXWorld(32, 32);
+            partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
+            resultSet = new HashSet<Entity>();
+            CameraConstraintsBox = World.BoundingBox;
+
             ResetDevice();
             ReloadLevel();
 
@@ -5075,11 +5124,11 @@ namespace XSharp.Engine
 
         public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames)
         {
-            var drop = new SmallHealthRecover()
+            var drop = CreateEntity<SmallHealthRecover>(new
             {
                 Origin = origin,
                 DurationFrames = durationFrames
-            };
+            });
 
             drop.Spawn();
             return drop;
@@ -5087,11 +5136,11 @@ namespace XSharp.Engine
 
         public BigHealthRecover DropBigHealthRecover(Vector origin, int durationFrames)
         {
-            var drop = new BigHealthRecover()
+            var drop = CreateEntity<BigHealthRecover>(new
             {
                 Origin = origin,
                 DurationFrames = durationFrames
-            };
+            });
 
             drop.Spawn();
             return drop;
@@ -5099,11 +5148,11 @@ namespace XSharp.Engine
 
         public SmallAmmoRecover DropSmallAmmoRecover(Vector origin, int durationFrames)
         {
-            var drop = new SmallAmmoRecover()
+            var drop = CreateEntity<SmallAmmoRecover>(new
             {
                 Origin = origin,
                 DurationFrames = durationFrames
-            };
+            });
 
             drop.Spawn();
             return drop;
@@ -5111,11 +5160,11 @@ namespace XSharp.Engine
 
         public BigAmmoRecover DropBigAmmoRecover(Vector origin, int durationFrames)
         {
-            var drop = new BigAmmoRecover()
+            var drop = CreateEntity<BigAmmoRecover>(new
             {
                 Origin = origin,
                 DurationFrames = durationFrames
-            };
+            });
 
             drop.Spawn();
             return drop;
@@ -5123,11 +5172,11 @@ namespace XSharp.Engine
 
         public LifeUp DropLifeUp(Vector origin, int durationFrames)
         {
-            var drop = new LifeUp()
+            var drop = CreateEntity<LifeUp>(new
             {
                 Origin = origin,
                 DurationFrames = durationFrames
-            };
+            });
 
             drop.Spawn();
             return drop;
@@ -5135,11 +5184,11 @@ namespace XSharp.Engine
 
         public SmallHealthRecover AddSmallHealthRecover(Vector origin)
         {
-            var item = new SmallHealthRecover()
+            var item = CreateEntity<SmallHealthRecover>(new
             {
                 Origin = origin,
                 DurationFrames = 0
-            };
+            });
 
             item.Place();
             return item;
@@ -5147,11 +5196,11 @@ namespace XSharp.Engine
 
         public BigHealthRecover AddBigHealthRecover(Vector origin)
         {
-            var item = new BigHealthRecover()
+            var item = CreateEntity<BigHealthRecover>(new
             {
                 Origin = origin,
                 DurationFrames = 0
-            };
+            });
 
             item.Place();
             return item;
@@ -5159,11 +5208,11 @@ namespace XSharp.Engine
 
         public SmallAmmoRecover AddSmallAmmoRecover(Vector origin)
         {
-            var item = new SmallAmmoRecover()
+            var item = CreateEntity<SmallAmmoRecover>(new
             {
                 Origin = origin,
                 DurationFrames = 0
-            };
+            });
 
             item.Place();
             return item;
@@ -5171,11 +5220,11 @@ namespace XSharp.Engine
 
         public BigAmmoRecover AddBigAmmoRecover(Vector origin)
         {
-            var item = new BigAmmoRecover()
+            var item = CreateEntity<BigAmmoRecover>(new
             {
                 Origin = origin,
                 DurationFrames = 0
-            };
+            });
 
             item.Place();
             return item;
@@ -5183,11 +5232,11 @@ namespace XSharp.Engine
 
         public LifeUp AddLifeUp(Vector origin)
         {
-            var item = new LifeUp()
+            var item = CreateEntity<LifeUp>(new
             {
                 Origin = origin,
                 DurationFrames = 0
-            };
+            });
 
             item.Place();
             return item;
@@ -5195,10 +5244,10 @@ namespace XSharp.Engine
 
         public HeartTank AddHeartTank(Vector origin)
         {
-            var item = new HeartTank()
+            var item = CreateEntity<HeartTank>(new
             {
                 Origin = origin
-            };
+            });
 
             item.Place();
             return item;
@@ -5206,10 +5255,10 @@ namespace XSharp.Engine
 
         public SubTankItem AddSubTank(Vector origin)
         {
-            var item = new SubTankItem()
+            var item = CreateEntity<SubTankItem>(new
             {
                 Origin = origin
-            };
+            });
 
             item.Place();
             return item;
@@ -5279,12 +5328,12 @@ namespace XSharp.Engine
         internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
         {
             bool secondDoor = (eventSubId & 0x80) != 0;
-            var door = new BossDoor()
+            var door = CreateEntity<BossDoor>(new
             {
                 Origin = pos,
                 Bidirectional = false,
                 StartBossBattle = secondDoor
-            };
+            });
 
             door.OpeningEvent += (BossDoor source) => DoorOpening(secondDoor);
             door.ClosedEvent += (BossDoor source) => DoorClosing(secondDoor);

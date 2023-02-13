@@ -51,11 +51,11 @@ namespace XSharp.Engine.World
             this.backgroundSceneRowCount = backgroundSceneRowCount;
             this.backgroundSceneColCount = backgroundSceneColCount;
 
-            Camera = new Camera()
+            Camera = Engine.CreateEntity<Camera>(new
             {
                 Width = SCREEN_WIDTH,
                 Height = SCREEN_HEIGHT
-            };
+            });
 
             FadingSettings = new FadingControl();
 
@@ -74,7 +74,7 @@ namespace XSharp.Engine.World
             collisionChecker = new CollisionChecker();
         }
 
-        public GameEngine Engine => GameEngine.Engine;
+        public static GameEngine Engine => GameEngine.Engine;
 
         public Device Device => GameEngine.Engine.Device;
 

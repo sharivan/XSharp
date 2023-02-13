@@ -1,9 +1,48 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 
 namespace XSharp.Math
 {
+    public class FixedSingleTypeConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        {
+            return sourceType == typeof(int)
+                || sourceType == typeof(float) 
+                || sourceType == typeof(double)
+                || sourceType == typeof(FixedSingle)
+                || base.CanConvertFrom(context, sourceType);
+        }
+
+        public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+        {
+            return value switch
+            {              
+                int => new FixedSingle(Convert.ToInt32(value, culture)),                
+                float => new FixedSingle(Convert.ToSingle(value, culture)),
+                double => new FixedSingle(Convert.ToDouble(value, culture)),
+                FixedSingle => value,
+                _ => base.ConvertFrom(context, culture, value)
+            };
+        }
+
+        public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
+        {
+            return destinationType == typeof(float)
+                ? (float) (FixedSingle) value
+                : destinationType == typeof(double) 
+                ? (double) (FixedSingle) value
+                : destinationType == typeof(FixedSingle)
+                ? value
+                : destinationType == typeof(FixedDouble)
+                ? (FixedDouble) (FixedSingle) value
+                : base.ConvertTo(context, culture, value, destinationType);
+        }
+    }
+
+    [TypeConverter(typeof(FixedSingleTypeConverter))]
     public struct FixedSingle : IComparable<FixedSingle>
     {
         public const int FIXED_BITS_COUNT = 16;
@@ -281,6 +320,40 @@ namespace XSharp.Math
         }
     }
 
+    public class FixedDoubleTypeConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        {
+            return sourceType == typeof(int)
+                || sourceType == typeof(long)
+                || sourceType == typeof(float)
+                || sourceType == typeof(double)
+                || sourceType == typeof(FixedSingle)
+                || base.CanConvertFrom(context, sourceType);
+        }
+
+        public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+        {
+            return value switch
+            {                
+                int => new FixedDouble(Convert.ToInt32(value, culture)),
+                long => new FixedDouble(Convert.ToInt64(value, culture)),
+                float => new FixedDouble(Convert.ToSingle(value, culture)),
+                double => new FixedDouble(Convert.ToDouble(value, culture)),
+                FixedSingle => new FixedDouble(Convert.ToSingle(value, culture)),
+                _ => base.ConvertFrom(context, culture, value)
+            };
+        }
+
+        public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
+        {
+            return destinationType == typeof(double)
+                ? (double) (FixedDouble) value
+                : base.ConvertTo(context, culture, value, destinationType);
+        }
+    }
+
+    [TypeConverter(typeof(FixedDoubleTypeConverter))]
     public struct FixedDouble : IComparable<FixedDouble>
     {
         public const int FIXED_BITS_COUNT = 16;

@@ -65,23 +65,23 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             RegisterState(PenguinState.IN_FLAMES, OnInFlames, "InFlames");
             RegisterState(PenguinState.DYING, OnStartDying, "Dying");
 
-            lever = new PenguinLever();
-            mist = new Mist();
+            lever = Engine.CreateEntity<PenguinLever>();
+            mist = Engine.CreateEntity<Mist>();
 
-            sculpture1 = new PenguinSculpture()
+            sculpture1 = Engine.CreateEntity<PenguinSculpture>(new
             {
                 Shooter = this
-            };
+            });
 
-            sculpture2 = new PenguinSculpture()
+            sculpture2 = Engine.CreateEntity<PenguinSculpture>(new
             {
                 Shooter = this
-            };
+            });
 
-            frozenBlock = new PenguinFrozenBlock()
+            frozenBlock = Engine.CreateEntity<PenguinFrozenBlock>(new
             {
                 Attacker = this
-            };
+            });
         }
 
         public override FixedSingle GetGravity()
@@ -299,8 +299,6 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                     break;
 
                 case PENGUIN_BLOW_FRAMES_TO_SPAWN_SCULPTURES:
-                    BreakSculptures();
-
                     if (!sculpture1.Alive)
                     {
                         sculpture1.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.Y);
@@ -455,7 +453,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             BreakFrozenBlock();
             lever.Hide();
             mist.Stop();
-            Engine.Player.ExternalVelocity = Vector.NULL_VECTOR;
+            Engine.Player.ResetExternalVelocity();
         }
 
         protected override void Think()
@@ -463,13 +461,13 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             if (snowing)
             {
                 var adictionalVelocity = (mist.MistDirection == Direction.LEFT ? -PENGUIN_HANGING_SNOWING_SPEED_X : PENGUIN_HANGING_SNOWING_SPEED_X, 0);
-                Engine.Player.ExternalVelocity = adictionalVelocity;
+                Engine.Player.AddExternalVelocity(adictionalVelocity);
 
                 if (sculpture1.Alive && !sculpture1.MarkedToRemove && !sculpture1.Broke)
-                    sculpture1.ExternalVelocity = adictionalVelocity;
+                    sculpture1.AddExternalVelocity(adictionalVelocity);
 
                 if (sculpture2.Alive && !sculpture2.MarkedToRemove && !sculpture2.Broke)
-                    sculpture2.ExternalVelocity = adictionalVelocity;
+                    sculpture2.AddExternalVelocity(adictionalVelocity);
 
                 snowingFrameCounter++;
                 if (snowingFrameCounter == PENGUIN_MIST_FRAMES)

@@ -54,7 +54,7 @@ namespace XSharp.Engine.Entities
         private BoxKind lastBoxKind;
         private Box[] lastBox;
 
-        public GameEngine Engine => GameEngine.Engine;
+        public static GameEngine Engine => GameEngine.Engine;
 
         public int Index
         {
@@ -241,6 +241,10 @@ namespace XSharp.Engine.Entities
             states = new List<EntityState>();
 
             lastBox = new Box[BOXKIND_COUNT];
+        }
+
+        protected internal virtual void ReadInitParams(dynamic initParams)
+        {
         }
 
         protected void SetupStateArray(int count)

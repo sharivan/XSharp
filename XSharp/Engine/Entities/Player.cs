@@ -102,7 +102,7 @@ namespace XSharp.Engine.Entities
             set;
         } = PlayerState.NONE;
 
-        internal Player()
+        public Player()
         {
             SpriteSheetIndex = 0;
             Directional = true;

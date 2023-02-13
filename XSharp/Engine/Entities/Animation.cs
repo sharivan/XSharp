@@ -239,10 +239,9 @@ namespace XSharp.Engine
         {
             get
             {
-                if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
-                    return MMXBox.EMPTY_BOX;
-
-                return sequence[currentSequenceIndex].BoundingBox;
+                return currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
+                    ? MMXBox.EMPTY_BOX
+                    : sequence[currentSequenceIndex].BoundingBox;
             }
         }
 
@@ -250,10 +249,9 @@ namespace XSharp.Engine
         {
             get
             {
-                if (currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count)
-                    return MMXBox.EMPTY_BOX;
-
-                return sequence[currentSequenceIndex].CollisionBox;
+                return currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
+                    ? MMXBox.EMPTY_BOX
+                    : sequence[currentSequenceIndex].CollisionBox;
             }
         }
 

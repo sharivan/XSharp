@@ -146,11 +146,11 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
 
         protected Boss()
         {
-            healthHUD = new BossHealthHUD
+            healthHUD = Engine.CreateEntity<BossHealthHUD>(new
             {
                 Boss = this,
                 Visible = false
-            };
+            });
         }
 
         protected override void OnBlink(int frameCounter)

@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using XSharp.Engine;
 using XSharp.Math;
 
 namespace XSharp.Geometry
@@ -158,9 +162,52 @@ namespace XSharp.Geometry
         }
     }
 
+    public class VectorTypeConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        {
+            var genericSourceType = sourceType.GetGenericTypeDefinition();
+            return sourceType == typeof(Vector)
+                || (genericSourceType == typeof(ValueTuple<,>) || genericSourceType == typeof(Tuple<,>)
+                ? XSharpTupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
+                : base.CanConvertFrom(context, sourceType));
+        }
+
+        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        {
+            Type sourceType = value.GetType();
+            if (sourceType == typeof(Vector))
+                return value;
+
+            var genericSourceType = sourceType.GetGenericTypeDefinition();
+
+            if (genericSourceType == typeof(ValueTuple<,>) || genericSourceType == typeof(Tuple<,>))
+            {
+                var args = ((ITuple) value).ToArray<FixedSingle>();
+                return new Vector(args[0], args[1]);
+            }
+
+            return base.ConvertFrom(context, culture, value);
+        }
+
+        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        {
+            var vec = (Vector) value;
+            if (destinationType == typeof(Vector))
+                return vec;
+
+            var genericDestinationType = destinationType.GetGenericTypeDefinition();
+
+            return genericDestinationType == typeof(ValueTuple<,>) || genericDestinationType == typeof(Tuple<,>)
+                ? XSharpTupleExtensions.ArrayToTuple(destinationType, vec.X, vec.Y)
+                : base.ConvertTo(context, culture, value, destinationType);
+        }
+    }
+
     /// <summary>
     /// Vetor bidimensional
     /// </summary>
+    [TypeConverter(typeof(VectorTypeConverter))]
     public struct Vector : IGeometry
     {
         public const GeometryType type = GeometryType.VECTOR;
@@ -576,6 +623,12 @@ namespace XSharp.Geometry
         public static implicit operator Vector((FixedSingle, FixedSingle) tuple)
         {
             return new(tuple.Item1, tuple.Item2);
+        }
+
+        public void Deconstruct(out FixedSingle x, out FixedSingle y)
+        {
+            x = X;
+            y = Y;
         }
     }
 
@@ -1152,9 +1205,82 @@ namespace XSharp.Geometry
         RIGHT_BOTTOM = 8
     }
 
+    public class BoxTypeConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        {
+            var genericSourceType = sourceType.GetGenericTypeDefinition();
+            return sourceType == typeof(Box)
+                || (genericSourceType == typeof(ValueTuple<,>) || genericSourceType == typeof(Tuple<,>)
+                ? XSharpTupleExtensions.CanConvertTupleToArray<Vector>(sourceType)
+                : genericSourceType == typeof(ValueTuple<,,>) || genericSourceType == typeof(Tuple<,,>)
+                ? XSharpTupleExtensions.CanConvertTupleToArray<Vector>(sourceType)
+                : genericSourceType == typeof(ValueTuple<,,,>) || genericSourceType == typeof(Tuple<,,,>)
+                ? XSharpTupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
+                : genericSourceType == typeof(ValueTuple<,,,,,>) || genericSourceType == typeof(Tuple<,,,,,>)
+                ? XSharpTupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
+                : base.CanConvertFrom(context, sourceType));
+        }
+
+        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        {
+            Type sourceType = value.GetType();
+            if (sourceType == typeof(Box))
+                return value;
+
+            var genericSourceType = sourceType.GetGenericTypeDefinition();
+
+            if (genericSourceType == typeof(ValueTuple<,>) || genericSourceType == typeof(Tuple<,>))
+            {
+                var args = ((ITuple) value).ToArray<Vector>();
+                return new Box(args[0], args[1]);
+            }
+
+            if (genericSourceType == typeof(ValueTuple<,,>) || genericSourceType == typeof(Tuple<,,>))
+            {
+                var args = ((ITuple) value).ToArray<Vector>();
+                return new Box(args[0], args[1], args[2]);
+            }
+
+            if (genericSourceType == typeof(ValueTuple<,,,>) || genericSourceType == typeof(Tuple<,,,>))
+            {
+                var args = ((ITuple) value).ToArray<FixedSingle>();
+                return new Box(args[0], args[1], args[2], args[3]);
+            }
+
+            if (genericSourceType == typeof(ValueTuple<,,,,,>) || genericSourceType == typeof(Tuple<,,,,,>))
+            {
+                var args = ((ITuple) value).ToArray<FixedSingle>();
+                return new Box(args[0], args[1], args[2], args[3], args[4], args[5]);
+            }
+
+            return base.ConvertFrom(context, culture, value);
+        }
+
+        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        {
+            var box = (Box) value;
+            if (destinationType == typeof(Box))
+                return box;
+
+            var genericDestinationType = destinationType.GetGenericTypeDefinition();
+
+            return genericDestinationType == typeof(ValueTuple<,>) || genericDestinationType == typeof(Tuple<,>)
+                ? XSharpTupleExtensions.ArrayToTuple(destinationType, box.LeftTop, box.RightBottom)
+                : genericDestinationType == typeof(ValueTuple<,,>) || genericDestinationType == typeof(Tuple<,,>)
+                ? XSharpTupleExtensions.ArrayToTuple(destinationType, box.Origin, box.Mins, box.Maxs)
+                : genericDestinationType == typeof(ValueTuple<,,,>) || genericDestinationType == typeof(Tuple<,,,>)
+                ? XSharpTupleExtensions.ArrayToTuple(destinationType, box.Left, box.Top, box.Width, box.Height)
+                : genericDestinationType == typeof(ValueTuple<,,,,,>) || genericDestinationType == typeof(Tuple<,,,,,>)
+                ? XSharpTupleExtensions.ArrayToTuple(destinationType, box.Origin.X, box.Origin.Y, box.Left, box.Top, box.Width, box.Height)
+                : base.ConvertTo(context, culture, value, destinationType);
+        }
+    }
+
     /// <summary>
     /// Retângulo bidimensional com lados paralelos aos eixos coordenados
     /// </summary>
+    [TypeConverter(typeof(BoxTypeConverter))]
     public struct Box : IShape
     {
         public const GeometryType type = GeometryType.BOX;
@@ -2095,11 +2221,6 @@ namespace XSharp.Geometry
             return new(tuple.Item1, tuple.Item2, tuple.Item3);
         }
 
-        public static implicit operator Box((Vector, FixedSingle, FixedSingle) tuple)
-        {
-            return new(tuple.Item1, tuple.Item2, tuple.Item3);
-        }
-
         public static implicit operator Box((FixedSingle, FixedSingle, FixedSingle, FixedSingle) tuple)
         {
             return new(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4);
@@ -2120,11 +2241,6 @@ namespace XSharp.Geometry
             return (box.Origin, box.Mins, box.Maxs);
         }
 
-        public static implicit operator (Vector, FixedSingle, FixedSingle)(Box box)
-        {
-            return (box.LeftTop, box.Width, box.Height);
-        }
-
         public static implicit operator (FixedSingle, FixedSingle, FixedSingle, FixedSingle)(Box box)
         {
             return (box.Left, box.Top, box.Width, box.Height);
@@ -2138,6 +2254,37 @@ namespace XSharp.Geometry
         public static implicit operator (Vector, Vector)(Box box)
         {
             return (box.Origin + box.Mins, box.Origin + box.Maxs);
+        }
+
+        public void Deconstruct(out Vector leftTop, out Vector rightBottom)
+        {
+            leftTop = LeftTop;
+            rightBottom = RightBottom;
+        }
+
+        public void Deconstruct(out Vector origin, out Vector mins, out Vector maxs)
+        {
+            origin = Origin;
+            mins = Mins;
+            maxs = Maxs;
+        }
+
+        public void Deconstruct(out FixedSingle left, out FixedSingle top, out FixedSingle right, out FixedSingle bottom)
+        {
+            left = Left;
+            top = Top;
+            right = Right;
+            bottom = Bottom;
+        }
+
+        public void Deconstruct(out FixedSingle x, out FixedSingle y, out FixedSingle left, out FixedSingle top, out FixedSingle right, out FixedSingle bottom)
+        {
+            x = Origin.X;
+            y = Origin.Y;
+            left = Left;
+            top = Top;
+            right = Right;
+            bottom = Bottom;
         }
     }
 

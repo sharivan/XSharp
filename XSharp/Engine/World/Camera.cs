@@ -185,7 +185,7 @@ namespace XSharp.Engine.World
 
         public bool Moving => moveDistance >= STEP_SIZE;
 
-        internal Camera()
+        public Camera()
         {
             TouchingKind = TouchingKind.VECTOR;
         }

@@ -253,7 +253,7 @@ namespace XSharp.Engine.Entities
         public Vector ExternalVelocity
         {
             get;
-            set;
+            private set;
         } = Vector.NULL_VECTOR;
 
         public bool ResetExternalVelocityOnFrame
@@ -1504,6 +1504,21 @@ namespace XSharp.Engine.Entities
         public void FaceToScreenCenter()
         {
             FaceToPosition(Engine.World.Camera.Center);
+        }
+
+        public void ResetExternalVelocity()
+        {
+            ExternalVelocity = Vector.NULL_VECTOR;
+        }
+
+        public void AddExternalVelocity(Vector velocity)
+        {
+            ExternalVelocity += velocity;
+        }
+
+        public void SubtractExternalVelocity(Vector velocity)
+        {
+            ExternalVelocity -= velocity;
         }
     }
 }
