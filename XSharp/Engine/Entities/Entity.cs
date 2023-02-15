@@ -112,6 +112,8 @@ namespace XSharp.Engine.Entities
             }
         }
 
+        public virtual Box TouchingBox => Origin + GetTouchingBox();
+
         public bool Alive
         {
             get;
@@ -133,7 +135,13 @@ namespace XSharp.Engine.Entities
         public bool Respawnable
         {
             get;
-            private set;
+            set;
+        } = false;
+
+        public bool RespawnOnNear
+        {
+            get;
+            set;
         } = false;
 
         public int MinimumIntervalToRespawn
@@ -460,6 +468,11 @@ namespace XSharp.Engine.Entities
             return GetHitbox();
         }
 
+        protected virtual Box GetTouchingBox()
+        {
+            return GetHitbox();
+        }
+
         protected virtual void SetHitbox(Box hitbox)
         {
         }
@@ -499,7 +512,7 @@ namespace XSharp.Engine.Entities
             return $"{GetType().Name}[{Name}, {Origin}]";
         }
 
-        private bool CheckTouching(Entity entity)
+        protected virtual bool CheckTouching(Entity entity)
         {
             if (TouchingKind == TouchingKind.VECTOR)
             {
@@ -507,7 +520,7 @@ namespace XSharp.Engine.Entities
                 return v <= Hitbox;
             }
 
-            return true;
+            return (Hitbox & entity.Hitbox).IsValid();
         }
 
         protected internal virtual void OnFrame()
@@ -540,32 +553,24 @@ namespace XSharp.Engine.Entities
             if (!Alive || MarkedToRemove)
                 return;
 
-            Think();
-
-            if (!Alive || MarkedToRemove)
-                return;
-
-            CurrentState?.OnFrame();
-
-            if (!Alive || MarkedToRemove)
-                return;
-
             if (CheckTouchingEntities)
             {
                 resultSet.Clear();
-                Engine.partition.Query(resultSet, Hitbox, this, childs, BoxKind.HITBOX, !CheckTouchingWithDeadEntities);
+                Engine.partition.Query(resultSet, TouchingBox, this, childs, BoxKind.HITBOX, !CheckTouchingWithDeadEntities);
 
                 for (int i = 0; i < touchingEntities.Count; i++)
                 {
                     Entity entity = touchingEntities[i];
 
-                    if (!CheckTouching(entity) || !resultSet.Contains(entity))
+                    bool touching = CheckTouching(entity);
+
+                    if (!touching || !resultSet.Contains(entity))
                     {
                         touchingEntities.RemoveAt(i);
                         i--;
                         OnEndTouch(entity);
                     }
-                    else if ((CheckTouchingWithDeadEntities || entity.Alive && !entity.MarkedToRemove) && CheckTouching(entity))
+                    else if (touching && (CheckTouchingWithDeadEntities || entity.Alive && !entity.MarkedToRemove))
                     {
                         resultSet.Remove(entity);
                         OnTouching(entity);
@@ -578,6 +583,9 @@ namespace XSharp.Engine.Entities
                 foreach (Entity entity in resultSet)
                     if ((CheckTouchingWithDeadEntities || entity.Alive && !entity.MarkedToRemove) && CheckTouching(entity))
                     {
+                        if (!Alive || MarkedToRemove)
+                            return;
+
                         touchingEntities.Add(entity);
                         OnStartTouch(entity);
 
@@ -585,6 +593,19 @@ namespace XSharp.Engine.Entities
                             return;
                     }
             }
+
+            if (!Alive || MarkedToRemove)
+                return;
+
+            Think();
+
+            if (!Alive || MarkedToRemove)
+                return;
+
+            CurrentState?.OnFrame();
+
+            if (!Alive || MarkedToRemove)
+                return;
         }
 
         protected virtual void OnStartTouch(Entity entity)
@@ -666,7 +687,7 @@ namespace XSharp.Engine.Entities
             currentStateID = -1;
             MarkedToRemove = false;
             wasOffScreen = false;
-            Engine.addedEntities.Add(this);
+            Engine.spawnedEntities.Add(this);
         }
 
         protected internal virtual void OnSpawn()
@@ -766,9 +787,10 @@ namespace XSharp.Engine.Entities
         public virtual void Place()
         {
             Respawnable = true;
+            RespawnOnNear = true;
 
-            if (!Engine.respawnableEntities.ContainsKey(this))
-                Engine.respawnableEntities.Add(this, new RespawnEntry(this, Origin));
+            if (!Engine.autoRespawnableEntities.ContainsKey(this))
+                Engine.autoRespawnableEntities.Add(this, new RespawnEntry(this, Origin));
 
             UpdatePartition(true);
         }
@@ -776,9 +798,10 @@ namespace XSharp.Engine.Entities
         public virtual void Unplace()
         {
             Respawnable = false;
+            RespawnOnNear = false;
 
-            if (Engine.respawnableEntities.ContainsKey(this))
-                Engine.respawnableEntities.Remove(this);
+            if (Engine.autoRespawnableEntities.ContainsKey(this))
+                Engine.autoRespawnableEntities.Remove(this);
 
             UpdatePartition(true);
         }

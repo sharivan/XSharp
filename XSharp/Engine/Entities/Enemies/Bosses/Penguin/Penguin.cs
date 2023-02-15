@@ -70,17 +70,20 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
             sculpture1 = Engine.CreateEntity<PenguinSculpture>(new
             {
-                Shooter = this
+                Shooter = this,
+                Respawnable= true
             });
 
             sculpture2 = Engine.CreateEntity<PenguinSculpture>(new
             {
-                Shooter = this
+                Shooter = this,
+                Respawnable = true
             });
 
             frozenBlock = Engine.CreateEntity<PenguinFrozenBlock>(new
             {
-                Attacker = this
+                Attacker = this,
+                Respawnable = true
             });
         }
 
@@ -325,11 +328,11 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         private void ShootIce()
         {
-            var ice = new PenguinIce()
+            var ice = Engine.CreateEntity<PenguinIce>(new
             {
                 Shooter = this,
                 Bump = Engine.RNG.Next(2) == 1
-            };
+            });
 
             ice.Spawn();
             iceCount++;
@@ -337,10 +340,10 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         private void ShootSnow()
         {
-            var snow = new PenguinSnow()
+            var snow = Engine.CreateEntity<PenguinSnow>(new
             {
                 Shooter = this
-            };
+            });
 
             snow.Spawn();
         }

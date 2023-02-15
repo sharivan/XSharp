@@ -769,9 +769,21 @@ namespace XSharp.Engine.World
             return flags is not CollisionFlags.NONE and not CollisionFlags.WATER and not CollisionFlags.WATER_SURFACE;
         }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, Entities.Sprite ignoreSprite = null, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false, params Entities.Sprite[] ignoreSprites)
         {
-            collisionChecker.Setup(collisionBox, ignore, ignoreSprite, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false, true);
+            collisionChecker.Setup(collisionBox, ignore, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false, true, ignoreSprites);
+            return collisionChecker.GetCollisionFlags();
+        }
+
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, EntityList<Entities.Sprite> ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+        {
+            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false, true);
+            return collisionChecker.GetCollisionFlags();
+        }
+
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, BitSet ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+        {
+            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false, true);
             return collisionChecker.GetCollisionFlags();
         }
     }

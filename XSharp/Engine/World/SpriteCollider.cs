@@ -46,6 +46,11 @@ namespace XSharp.Engine.World
             }
         }
 
+        public EntityList<Sprite> IgnoreSprites
+        {
+            get;
+        }
+
         public FixedSingle MaskSize
         {
             get => maskSize;
@@ -231,11 +236,12 @@ namespace XSharp.Engine.World
             this.checkCollisionWithWorld = checkCollisionWithWorld;
             this.checkCollisionWithSolidSprites = checkCollisionWithSolidSprites;
 
+            IgnoreSprites = new EntityList<Sprite>(owner);
+
             leftCollisionChecker = new ExtendedCollisionChecker()
             {
                 ComputePlacements = useCollisionPlacements,
                 MaskSize = maskSize,
-                IgnoreSprite = owner,
                 CheckWithWorld = checkCollisionWithWorld,
                 CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
@@ -244,7 +250,6 @@ namespace XSharp.Engine.World
             {
                 ComputePlacements = useCollisionPlacements,
                 MaskSize = maskSize,
-                IgnoreSprite = owner,
                 CheckWithWorld = checkCollisionWithWorld,
                 CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
@@ -253,7 +258,6 @@ namespace XSharp.Engine.World
             {
                 ComputePlacements = useCollisionPlacements,
                 MaskSize = maskSize,
-                IgnoreSprite = owner,
                 CheckWithWorld = checkCollisionWithWorld,
                 CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
@@ -262,7 +266,6 @@ namespace XSharp.Engine.World
             {
                 ComputePlacements = useCollisionPlacements,
                 MaskSize = maskSize,
-                IgnoreSprite = owner,
                 CheckWithWorld = checkCollisionWithWorld,
                 CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
@@ -271,12 +274,22 @@ namespace XSharp.Engine.World
             {
                 ComputePlacements = useCollisionPlacements,
                 MaskSize = maskSize,
-                IgnoreSprite = owner,
                 CheckWithWorld = checkCollisionWithWorld,
                 CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
 
             UpdateColliders();
+        }
+
+        public void ClearIgnoredSprites()
+        {
+            IgnoreSprites.Clear();
+            IgnoreSprites.Add(Owner);
+        }
+
+        public void AddIgnoredSprite(Sprite sprite)
+        {
+            IgnoreSprites.Add(sprite);
         }
 
         private void UpdateColliders()
@@ -286,11 +299,11 @@ namespace XSharp.Engine.World
             RightCollider = new Box(box.Right, box.Top + sideCollidersTopClip, maskSize, box.Height - sideCollidersTopClip - sideCollidersBottomClip);
             DownCollider = new Box(box.LeftBottom, box.Width, maskSize);
 
-            downCollisionChecker.Setup(DownCollider, CollisionFlags.NONE, Owner, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
-            upCollisionChecker.Setup(UpCollider, CollisionFlags.NONE, Owner, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
-            leftCollisionChecker.Setup(LeftCollider, CollisionFlags.NONE, Owner, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
-            rightCollisionChecker.Setup(RightCollider, CollisionFlags.NONE, Owner, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
-            innerCollisionChecker.Setup(box, CollisionFlags.NONE, Owner, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
+            downCollisionChecker.Setup(DownCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
+            upCollisionChecker.Setup(UpCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
+            leftCollisionChecker.Setup(LeftCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
+            rightCollisionChecker.Setup(RightCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
+            innerCollisionChecker.Setup(box, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
 
             UpdateFlags();
         }

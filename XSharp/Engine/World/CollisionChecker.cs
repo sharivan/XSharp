@@ -238,13 +238,18 @@ namespace XSharp.Engine.World
 
         protected RightTriangle slopeTriangle;
         protected List<CollisionPlacement> placements;
-
+        
         private HashSet<Entity> resultSet;
 
         public Box TestBox
         {
             get;
             set;
+        }
+
+        public EntityList<Sprite> IgnoreSprites
+        {
+            get;
         }
 
         public FixedSingle MaskSize
@@ -271,12 +276,6 @@ namespace XSharp.Engine.World
             set;
         } = CollisionFlags.NONE;
 
-        public Sprite IgnoreSprite
-        {
-            get;
-            set;
-        } = null;
-
         public bool PreciseCollisionCheck
         {
             get;
@@ -301,16 +300,16 @@ namespace XSharp.Engine.World
         {
             placements = new List<CollisionPlacement>();
             resultSet = new HashSet<Entity>();
+            IgnoreSprites = new EntityList<Sprite>();
         }
 
-        public virtual void Setup(Box testBox, CollisionFlags ignoreFlags, Sprite ignoreSprite, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
+        public virtual void Setup(Box testBox, CollisionFlags ignoreFlags, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
         {
             if (computePlacements)
                 placements.Clear();
 
             TestBox = testBox;
             IgnoreFlags = ignoreFlags;
-            IgnoreSprite = ignoreSprite;
             MaskSize = maskSize;
             CheckWithWorld = checkWithWorld;
             CheckWithSolidSprites = checkWithSolidSprites;
@@ -318,24 +317,68 @@ namespace XSharp.Engine.World
             PreciseCollisionCheck = preciseCollisionCheck;
         }
 
-        public void Setup(Box testBox)
+        public void Setup(Box testBox, CollisionFlags ignoreFlags, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck, params Sprite[] ignoreSprites)
         {
-            Setup(testBox, CollisionFlags.NONE, null, MASK_SIZE, true, true, false, true);
+            Setup(testBox, ignoreFlags, maskSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
+
+            IgnoreSprites.Clear();
+            IgnoreSprites.AddRange(ignoreSprites);
         }
 
-        public void Setup(Box testBox, Sprite ignoreSprite)
+        public void Setup(Box testBox, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
         {
-            Setup(testBox, CollisionFlags.NONE, ignoreSprite, MASK_SIZE, true, true, false, true);
+            Setup(testBox, ignoreFlags, maskSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
+
+            IgnoreSprites.Clear();
+            IgnoreSprites.AddRange(ignoreSprites);
+        }
+
+        public void Setup(Box testBox, CollisionFlags ignoreFlags, BitSet ignoreSprites, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
+        {
+            Setup(testBox, ignoreFlags, maskSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
+
+            IgnoreSprites.Clear();
+            IgnoreSprites.AddRange(ignoreSprites);
+        }
+
+        public void Setup(Box testBox)
+        {
+            Setup(testBox, CollisionFlags.NONE, MASK_SIZE, true, true, false, true);
+        }
+
+        public void Setup(Box testBox, params Sprite[] ignoreSprites)
+        {
+            Setup(testBox, CollisionFlags.NONE, MASK_SIZE, true, true, false, true, ignoreSprites);
+        }
+
+        public void Setup(Box testBox, EntityList<Sprite> ignoreSprites)
+        {
+            Setup(testBox, CollisionFlags.NONE, ignoreSprites, MASK_SIZE, true, true, false, true);
+        }
+
+        public void Setup(Box testBox, BitSet ignoreSprites)
+        {
+            Setup(testBox, CollisionFlags.NONE, ignoreSprites, MASK_SIZE, true, true, false, true);
         }
 
         public void Setup(Box testBox, CollisionFlags ignoreFlags)
         {
-            Setup(testBox, ignoreFlags, null, MASK_SIZE, true, true, false, true);
+            Setup(testBox, ignoreFlags, MASK_SIZE, true, true, false, true);
         }
 
-        public void Setup(Box testBox, CollisionFlags ignoreFlags, Sprite ignoreSprite)
+        public void Setup(Box testBox, CollisionFlags ignoreFlags, params Sprite[] ignoreSprites)
         {
-            Setup(testBox, ignoreFlags, ignoreSprite, MASK_SIZE, true, true, false, true);
+            Setup(testBox, ignoreFlags, MASK_SIZE, true, true, false, true, ignoreSprites);
+        }
+
+        public void Setup(Box testBox, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites)
+        {
+            Setup(testBox, ignoreFlags, ignoreSprites, MASK_SIZE, true, true, false, true);
+        }
+
+        public void Setup(Box testBox, CollisionFlags ignoreFlags, BitSet ignoreSprites)
+        {
+            Setup(testBox, ignoreFlags, ignoreSprites, MASK_SIZE, true, true, false, true);
         }
 
         public CollisionFlags GetCollisionFlags()
@@ -397,11 +440,11 @@ namespace XSharp.Engine.World
             if (CheckWithSolidSprites)
             {
                 resultSet.Clear();
-                Engine.partition.Query(resultSet, TestBox, BoxKind.COLLISIONBOX);
+                Engine.partition.Query(resultSet, TestBox, BoxKind.HITBOX);
                 foreach (var entity in resultSet)
-                    if (entity is Sprite sprite && sprite != IgnoreSprite && sprite.CollisionData != CollisionData.NONE)
+                    if (entity is Sprite sprite && IsSolidBlock(sprite.CollisionData) && !IgnoreSprites.Contains(sprite))
                     {
-                        CollisionFlags collisionResult = TestCollision(sprite.CollisionBox, sprite.CollisionData, TestBox, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags, PreciseCollisionCheck);
+                        CollisionFlags collisionResult = TestCollision(sprite.Hitbox, sprite.CollisionData, TestBox, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags, PreciseCollisionCheck);
                         if (collisionResult == CollisionFlags.NONE)
                             continue;
 

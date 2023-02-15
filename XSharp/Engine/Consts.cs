@@ -305,7 +305,7 @@ namespace XSharp.Engine
 
         public static readonly FixedSingle HP_LEFT = 9;
         public static readonly FixedSingle HP_BOTTOM = 96;
-        public static readonly Vector READY_OFFSET = new Vector(SCREEN_WIDTH - 39, SCREEN_HEIGHT - 13) * 0.5;
+        public static readonly Vector READY_OFFSET = ((SCREEN_WIDTH - 39) * 0.5, (SCREEN_HEIGHT - 13) * 0.5);
 
         // Palettes
 

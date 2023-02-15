@@ -49,35 +49,35 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             Exploding = true;
             Engine.PlaySound(4, 30);
 
-            var fragment = new PenguinIceExplosionEffect()
+            var fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
             {
-                Origin = Origin,
+                Origin,
                 InitialVelocity = (-PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED)
-            };
+            });
 
             fragment.Spawn();
 
-            fragment = new PenguinIceExplosionEffect()
+            fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
             {
-                Origin = Origin,
+                Origin,
                 InitialVelocity = (PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED)
-            };
+            });
 
             fragment.Spawn();
 
-            fragment = new PenguinIceExplosionEffect()
+            fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
             {
-                Origin = Origin,
+                Origin,
                 InitialVelocity = (-PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED * FixedSingle.HALF)
-            };
+            });
 
             fragment.Spawn();
 
-            fragment = new PenguinIceExplosionEffect()
+            fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
             {
-                Origin = Origin,
+                Origin,
                 InitialVelocity = (PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED * FixedSingle.HALF)
-            };
+            });
 
             fragment.Spawn();
 

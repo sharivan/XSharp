@@ -412,7 +412,7 @@ namespace XSharp.Engine.World
         {
             base.OnStartTouch(entity);
 
-            if (entity.Alive || entity.Spawning || !entity.Respawnable)
+            if (entity.Alive || entity.Spawning || !entity.Respawnable || !entity.RespawnOnNear)
                 return;
 
             if ((!entity.Dead || Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn) && !entity.IsOffscreen(VectorKind.ORIGIN))

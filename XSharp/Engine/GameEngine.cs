@@ -262,15 +262,15 @@ namespace XSharp.Engine
         private HashSet<Entity> resultSet;
 
         private readonly List<Checkpoint> checkpoints;
-        private readonly Entity[] entities;
+        internal readonly Entity[] entities;
         private readonly Dictionary<string, Entity> entitiesByName;
         private int firstFreeEntityIndex;
         private Entity firstEntity;
         private Entity lastEntity;
         private int entityCount;
-        internal List<Entity> addedEntities;
+        internal List<Entity> spawnedEntities;
         internal List<Entity> removedEntities;
-        internal Dictionary<Entity, RespawnEntry> respawnableEntities;
+        internal Dictionary<Entity, RespawnEntry> autoRespawnableEntities;
         private readonly List<Sprite> freezingSpriteExceptions;
         private readonly List<Sprite>[] sprites;
         private readonly List<HUD>[] huds;
@@ -1030,9 +1030,9 @@ namespace XSharp.Engine
             checkpoints = new List<Checkpoint>();
             entities = new Entity[MAX_ENTITIES];
             entitiesByName = new Dictionary<string, Entity>();
-            addedEntities = new List<Entity>();
+            spawnedEntities = new List<Entity>();
             removedEntities = new List<Entity>();
-            respawnableEntities = new Dictionary<Entity, RespawnEntry>();
+            autoRespawnableEntities = new Dictionary<Entity, RespawnEntry>();
             sprites = new List<Sprite>[NUM_SPRITE_LAYERS];
             huds = new List<HUD>[NUM_SPRITE_LAYERS];
 
@@ -2653,6 +2653,7 @@ namespace XSharp.Engine
                 }
             }
 
+            AddEntity(entity);
             return entity;
         }
 
@@ -2692,37 +2693,11 @@ namespace XSharp.Engine
                     firstFreeEntityIndex = i;
                     break;
                 }
-
-            if (entity is Sprite sprite)
-            {
-                if (sprite is HUD hud)
-                    huds[sprite.Layer].Add(hud);
-                else
-                    sprites[sprite.Layer].Add(sprite);
-            }
         }
 
         private void RemoveEntity(Entity entity)
         {
             int index = entity.Index;
-
-            if (entity is Sprite sprite)
-            {
-                if (sprite is HUD hud)
-                    huds[sprite.Layer].Remove(hud);
-                else
-                    sprites[sprite.Layer].Remove(sprite);
-            }
-
-            entity.Cleanup();
-            entity.Alive = false;
-            entity.Dead = true;
-            entity.DeathFrame = FrameCounter;
-
-            if (!entity.Respawnable)
-                Engine.partition.Remove(entity);
-            else
-                entity.Origin = respawnableEntities[entity].Origin;
 
             var next = entity.next;
             var previous = entity.previous;
@@ -2772,8 +2747,8 @@ namespace XSharp.Engine
             foreach (var layer in huds)
                 layer.Clear();
 
-            respawnableEntities.Clear();
-            addedEntities.Clear();
+            autoRespawnableEntities.Clear();
+            spawnedEntities.Clear();
             removedEntities.Clear();
             entitiesByName.Clear();
             freezingSpriteExceptions.Clear();
@@ -3261,17 +3236,25 @@ namespace XSharp.Engine
 
             if (!loadingLevel)
             {
-                if (addedEntities.Count > 0)
+                if (spawnedEntities.Count > 0)
                 {
-                    for (int i = 0; i < addedEntities.Count; i++)
+                    for (int i = 0; i < spawnedEntities.Count; i++)
                     {
-                        var added = addedEntities[i];
-                        AddEntity(added);
+                        var added = spawnedEntities[i];
+
+                        if (added is Sprite sprite)
+                        {
+                            if (sprite is HUD hud)
+                                huds[sprite.Layer].Add(hud);
+                            else
+                                sprites[sprite.Layer].Add(sprite);
+                        }
+
                         added.OnSpawn();
                         added.PostSpawn();
                     }
 
-                    addedEntities.Clear();
+                    spawnedEntities.Clear();
                 }
 
                 Player?.PushKeys(keys);
@@ -3290,13 +3273,15 @@ namespace XSharp.Engine
                     {
                         for (var entity = firstEntity; entity != null; entity = entity.next)
                             if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
-                                if (entity != World.Camera)
+                                if (entity.Alive && entity != World.Camera)
                                     entity.OnFrame();
                     }
                     else
+                    {
                         for (var entity = firstEntity; entity != null; entity = entity.next)
-                            if (entity != World.Camera)
+                            if (entity.Alive && entity != World.Camera)
                                 entity.OnFrame();
+                    }
 
                     World.Camera.OnFrame();
 
@@ -3305,7 +3290,27 @@ namespace XSharp.Engine
                         for (int i = 0; i < removedEntities.Count; i++)
                         {
                             var removed = removedEntities[i];
-                            RemoveEntity(removed);
+
+                            if (removed is Sprite sprite)
+                            {
+                                if (sprite is HUD hud)
+                                    huds[sprite.Layer].Remove(hud);
+                                else
+                                    sprites[sprite.Layer].Remove(sprite);
+                            }
+
+                            removed.Cleanup();
+                            removed.Alive = false;
+                            removed.Dead = true;
+                            removed.DeathFrame = FrameCounter;
+
+                            if (!removed.Respawnable)
+                            {
+                                Engine.partition.Remove(removed);
+                                RemoveEntity(removed);
+                            }
+                            else if (removed.RespawnOnNear)
+                                removed.Origin = autoRespawnableEntities[removed].Origin;
                         }
 
                         removedEntities.Clear();
@@ -3494,7 +3499,7 @@ namespace XSharp.Engine
             DisposeResource(World);
 
             checkpoints.Clear();
-            respawnableEntities.Clear();
+            autoRespawnableEntities.Clear();
             partition.Clear();
 
             lastLives = Player != null ? Player.Lives : X_INITIAL_LIVES;
@@ -4011,7 +4016,7 @@ namespace XSharp.Engine
 
                                 if (showColliders)
                                 {
-                                    SpriteCollider collider = sprite.Collider;
+                                    SpriteCollider collider = sprite.WorldCollider;
                                     FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
                                     FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
                                     FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
@@ -4126,7 +4131,7 @@ namespace XSharp.Engine
 
                     if (showColliders)
                     {
-                        SpriteCollider collider = Player.Collider;
+                        SpriteCollider collider = Player.WorldCollider;
                         FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
                         FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
                         FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
@@ -4334,7 +4339,7 @@ namespace XSharp.Engine
             var checkpoint = CreateEntity<Checkpoint>(new
             {
                 Point = index,
-                Origin = boundingBox.Origin,
+                boundingBox.Origin,
                 Hitbox = boundingBox,
                 CharacterPos = characterPos,
                 CameraPos = cameraPos,
@@ -4415,7 +4420,7 @@ namespace XSharp.Engine
         {
             var trigger = CreateEntity<CameraLockTrigger>(new
             {
-                Origin = boundingBox.Origin,
+                boundingBox.Origin,
                 Hitbox = boundingBox
             });
 

@@ -1795,22 +1795,34 @@ namespace XSharp.Geometry
             FixedSingle minX = box.Left;
             FixedSingle limitLeft = Left;
             if (minX < limitLeft)
-                x -= minX - limitLeft;
+            {
+                minX = limitLeft;
+                x = minX - box.Mins.X;
+            }
 
             FixedSingle minY = box.Top;
             FixedSingle limitTop = Top;
             if (minY < limitTop)
-                y -= minY - limitTop;
+            {
+                minY = limitTop;
+                y = minY - box.Mins.Y;
+            }
 
             FixedSingle maxX = box.Right;
             FixedSingle limitRight = Right;
             if (maxX > limitRight)
-                x += limitRight - maxX;
+            {
+                maxX = limitRight;
+                x = maxX - box.Maxs.X;
+            }
 
             FixedSingle maxY = box.Bottom;
             FixedSingle limitBottom = Bottom;
             if (maxY > limitBottom)
-                y += limitBottom - maxY;
+            {
+                maxY = limitBottom;
+                y = maxY - box.Maxs.Y;
+            }
 
             return ((x, y), box.Mins, box.Maxs);
         }

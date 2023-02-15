@@ -25,8 +25,8 @@ namespace XSharp.Engine.World
             Box bottomMaskDisplacedHalfLeft = bottomMaskDisplaced.HalfLeft();
             Box bottomMaskDisplacedHalfRight = bottomMaskDisplaced.HalfRight();
 
-            leftChecker.Setup(bottomMaskDisplacedHalfLeft, IgnoreFlags, IgnoreSprite, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements, PreciseCollisionCheck);
-            rightChecker.Setup(bottomMaskDisplacedHalfRight, IgnoreFlags, IgnoreSprite, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements, PreciseCollisionCheck);
+            leftChecker.Setup(bottomMaskDisplacedHalfLeft, IgnoreFlags, IgnoreSprites, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements, PreciseCollisionCheck);
+            rightChecker.Setup(bottomMaskDisplacedHalfRight, IgnoreFlags, IgnoreSprites, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements, PreciseCollisionCheck);
 
             CollisionFlags bottomLeftDisplacedCollisionFlags = leftChecker.GetCollisionFlags();
             CollisionFlags bottomRightDisplacedCollisionFlags = rightChecker.GetCollisionFlags();
@@ -69,8 +69,8 @@ namespace XSharp.Engine.World
                 Box bottomMaskHalfLeft = bottomMask.HalfLeft();
                 Box bottomMaskHalfRight = bottomMask.HalfRight();
 
-                leftChecker.Setup(bottomMaskHalfLeft, IgnoreFlags, IgnoreSprite, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements, PreciseCollisionCheck);
-                rightChecker.Setup(bottomMaskHalfRight, IgnoreFlags, IgnoreSprite, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements, PreciseCollisionCheck);
+                leftChecker.Setup(bottomMaskHalfLeft, IgnoreFlags, IgnoreSprites, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements, PreciseCollisionCheck);
+                rightChecker.Setup(bottomMaskHalfRight, IgnoreFlags, IgnoreSprites, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements, PreciseCollisionCheck);
 
                 CollisionFlags bottomLeftCollisionFlags = leftChecker.GetCollisionFlags();
                 CollisionFlags bottomRightCollisionFlags = rightChecker.GetCollisionFlags();

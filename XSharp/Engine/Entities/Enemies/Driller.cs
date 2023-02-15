@@ -47,7 +47,8 @@ namespace XSharp.Engine.Entities.Enemies
 
             PaletteIndex = 5;
             Health = DRILLER_HEALTH;
-            ContactDamage = DRILLER_CONTACT_DAMAGE;
+            ContactDamage = 0;//DRILLER_CONTACT_DAMAGE;
+            CollisionData = CollisionData.SOLID;
 
             NothingDropOdd = 79;
             SmallHealthDropOdd = 10;
