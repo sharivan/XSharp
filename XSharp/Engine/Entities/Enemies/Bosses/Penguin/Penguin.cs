@@ -71,7 +71,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             sculpture1 = Engine.CreateEntity<PenguinSculpture>(new
             {
                 Shooter = this,
-                Respawnable= true
+                Respawnable = true
             });
 
             sculpture2 = Engine.CreateEntity<PenguinSculpture>(new
@@ -227,7 +227,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
                     int value = Engine.RNG.Next(5);
                     while (State == PenguinState.IDLE)
-                    {                        
+                    {
                         switch (value)
                         {
                             case 0:
@@ -414,7 +414,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                     snowing = true;
                     snowingFrameCounter = 0;
                     mist.MistDirection = Direction;
-                    mist.Play();                   
+                    mist.Play();
                     break;
 
                 case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG + PENGUIN_FRAMES_BEFORE_STOP_HANGING:
@@ -451,7 +451,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         }
 
         private void OnStartDying(EntityState state, EntityState lastState)
-        {           
+        {
             BreakSculptures();
             BreakFrozenBlock();
             lever.Hide();
@@ -543,7 +543,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             StopBlowingSound();
             hanging = false;
-            snowing = false;            
+            snowing = false;
             Velocity = Vector.NULL_VECTOR;
             State = PenguinState.DYING;
         }

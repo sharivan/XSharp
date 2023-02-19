@@ -45,9 +45,9 @@ namespace XSharp.Engine.World
                 list.Add(value);
             }
 
-            public void Query(Box box, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            public void Query(Vector v, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
             {
-                if (!(box & this.box).IsValid())
+                if (!box.Contains(v))
                     return;
 
                 int index = kind.ToIndex();
@@ -62,9 +62,73 @@ namespace XSharp.Engine.World
                     if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
                         continue;
 
-                    Box intersection = value.GetBox(kind) & box; // Calcula a intersecção do retângulo de desenho da entidade com o retângulo de pesquisa
+                    if (value.GetBox(kind).Contains(v) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                        result.Add(value); // adiciona esta entidade à lista
+                }
+            }
 
-                    if (intersection.IsValid() && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+            public void Query(LineSegment line, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            {
+                if (!box.HasIntersectionWith(line))
+                    return;
+
+                int index = kind.ToIndex();
+                HashSet<U> list = values[index];
+
+                // Verifica a lista de entidades da célula
+                foreach (U value in list)
+                {
+                    if (exclude != null && exclude.Equals(value))
+                        continue;
+
+                    if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
+                        continue;
+
+                    if (value.GetBox(kind).HasIntersectionWith(line) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                        result.Add(value); // adiciona esta entidade à lista
+                }
+            }
+
+            public void Query(IGeometry geometry, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            {
+                if (!box.HasIntersectionWith(geometry))
+                    return;
+
+                int index = kind.ToIndex();
+                HashSet<U> list = values[index];
+
+                // Verifica a lista de entidades da célula
+                foreach (U value in list)
+                {
+                    if (exclude != null && exclude.Equals(value))
+                        continue;
+
+                    if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
+                        continue;
+
+                    if (value.GetBox(kind).HasIntersectionWith(geometry) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                        result.Add(value); // adiciona esta entidade à lista
+                }
+            }
+
+            public void Query(Box box, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            {
+                if (!box.IsOverlaping(this.box))
+                    return;
+
+                int index = kind.ToIndex();
+                HashSet<U> list = values[index];
+
+                // Verifica a lista de entidades da célula
+                foreach (U value in list)
+                {
+                    if (exclude != null && exclude.Equals(value))
+                        continue;
+
+                    if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
+                        continue;
+
+                    if (value.GetBox(kind).IsOverlaping(box) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                         result.Add(value); // adiciona esta entidade à lista
                 }
             }
@@ -78,10 +142,7 @@ namespace XSharp.Engine.World
                 int index = kind.ToIndex();
                 HashSet<U> list = values[index];
 
-                Box intersection = value.GetBox(kind) & box; // Calcula a interecção
-                bool intersectionNull = !intersection.IsValid();
-
-                if (!intersectionNull) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
+                if (value.GetBox(kind).IsOverlaping(box)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
                     list.Add(value); // então adiciona-a em sua lista de entidades
                 else // Senão, se a intesecção for vazia e esta entidade ainda está contida neta célula
                     list.Remove(value); // remove-a da sua lista de entidades
@@ -229,9 +290,8 @@ namespace XSharp.Engine.World
                     for (int row = startRow; row <= endRow; row++)
                     {
                         var cellBox = new Box((lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, (cellWidth, cellHeight));
-                        Box intersection = cellBox & box; // Calcula a intersecção desta célula com o retângulo de desenho atual da entidade
 
-                        if (!intersection.IsValid()) // Se ela for vazia, não há nada o que fazer nesta célula
+                        if (!cellBox.IsOverlaping(box)) // Se ela for vazia, não há nada o que fazer nesta célula
                             continue;
 
                         if (cells[col, row] == null) // Verifica se a célula já foi criada antes, caso não tenha sido ainda então a cria
@@ -240,6 +300,161 @@ namespace XSharp.Engine.World
                         cells[col, row].Insert(item, k); // Insere a entidade na célula
                     }
             }
+        }
+
+        public int Query(HashSet<T> resultSet, Vector v, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            return Query(resultSet, v, null, null, kind, aliveOnly);
+        }
+
+        public int Query(HashSet<T> resultSet, Vector v, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            return Query(resultSet, v, exclude, null, kind, aliveOnly);
+        }
+
+        public int Query(HashSet<T> resultSet, Vector v, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            return Query(resultSet, v, null, exclusionList, kind, aliveOnly);
+        }
+
+        public int Query(HashSet<T> resultSet, Vector v, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            Vector lt = box.LeftTop;
+
+            int col = ((v.X - lt.X) / cellWidth).Floor();
+
+            if (col < 0)
+                col = 0;
+
+            int row = ((v.Y - lt.Y) / cellHeight).Floor();
+
+            if (row < 0)
+                row = 0;
+
+            for (int i = 0; i < BOXKIND_COUNT; i++)
+            {
+                if (!kind.ContainsFlag(i))
+                    continue;
+
+                var k = i.ToBoxKind();
+                cells[col, row]?.Query(v, resultSet, exclude, addictionalExclusionList, k, aliveOnly);
+            }
+
+            return resultSet.Count;
+        }
+
+        public int Query(HashSet<T> resultSet, LineSegment line, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            return Query(resultSet, line, null, null, kind, aliveOnly);
+        }
+
+        public int Query(HashSet<T> resultSet, LineSegment line, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            return Query(resultSet, line, exclude, null, kind, aliveOnly);
+        }
+
+        public int Query(HashSet<T> resultSet, LineSegment line, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            return Query(resultSet, line, null, exclusionList, kind, aliveOnly);
+        }
+
+        public int Query(HashSet<T> resultSet, LineSegment line, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            var type = box.Intersection(line, out line);
+            if (type == GeometryType.EMPTY)
+                return 0;
+
+            Vector stepVector = CollisionChecker.GetStepVector(line.End - line.Start, cellWidth, cellHeight);
+            FixedSingle stepDistance = stepVector.Length;
+            if (stepDistance == 0)
+                stepDistance = cellWidth;
+
+            FixedSingle tracingDistance = line.Length;
+
+            for (int i = 0; i < BOXKIND_COUNT; i++)
+            {
+                if (!kind.ContainsFlag(i))
+                    continue;
+
+                var k = i.ToBoxKind();
+
+                // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
+                Vector testVector = line.Start;
+                for (FixedSingle distance = 0; distance <= tracingDistance; distance += stepDistance, testVector += stepVector)
+                {
+                    int col = (int) (testVector.X / cellWidth);
+                    int row = (int) (testVector.Y / cellHeight);
+
+                    if (row < 0 || row >= rows || col < 0 || col >= cols)
+                        continue;
+
+                    cells[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, k, aliveOnly); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
+                }
+            }
+
+            return resultSet.Count;
+        }
+
+        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            return Query(resultSet, parallelogram, null, null, kind, aliveOnly);
+        }
+
+        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            return Query(resultSet, parallelogram, exclude, null, kind, aliveOnly);
+        }
+
+        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            return Query(resultSet, parallelogram, null, exclusionList, kind, aliveOnly);
+        }
+
+        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        {
+            Vector stepVector = CollisionChecker.GetHorizontalStepVector(parallelogram.Direction, cellWidth);
+            FixedSingle stepDistance = stepVector.Length;
+            if (stepDistance == 0)
+                stepDistance = cellWidth;
+
+            FixedSingle tracingDistance = parallelogram.Direction.Length;
+            var tracingBox = new Box(parallelogram.Origin, cellWidth, parallelogram.SmallerHeight);
+
+            for (int i = 0; i < BOXKIND_COUNT; i++)
+            {
+                if (!kind.ContainsFlag(i))
+                    continue;
+
+                var k = i.ToBoxKind();
+
+                // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado                
+                for (FixedSingle distance = 0; distance <= tracingDistance; distance += stepDistance, tracingBox += stepVector)
+                {
+                    int startCol = (tracingBox.Left / cellWidth).Floor();
+                    int startRow = (tracingBox.Top / cellHeight).Floor();
+
+                    int endCol = (tracingBox.Right / cellWidth).Ceil();
+                    int endRow = (tracingBox.Bottom / cellHeight).Ceil();
+
+                    if (startCol < 0)
+                        startCol = 0;
+
+                    if (startRow < 0)
+                        startRow = 0;
+
+                    if (endCol >= cols)
+                        endCol = cols - 1;
+
+                    if (endRow >= rows)
+                        endRow = rows - 1;
+
+                    for (int col = startCol; col <= endCol; col++)
+                        for (int row = startRow; row <= endRow; row++)
+                            cells[col, row]?.Query(parallelogram, resultSet, exclude, addictionalExclusionList, k, aliveOnly); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
+                }
+            }
+
+            return resultSet.Count;
         }
 
         public int Query(HashSet<T> resultSet, Box box, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
@@ -266,7 +481,6 @@ namespace XSharp.Engine.World
         {
             // Calcula os máximos e mínimos absulutos do retângulo que delimita esta partição
             Vector lt = this.box.LeftTop;
-            Vector rb = this.box.RightBottom;
 
             // Calcula os máximos e mínimos do retângulo de pesquisa
             Vector queryLT = box.LeftTop;
@@ -386,9 +600,8 @@ namespace XSharp.Engine.World
                         {
                             // Senão...
                             var cellBox = new Box(new Vector(lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
-                            Box intersection = cellBox & box; // Calcula a intersecção desta célula com o retângulo de desenho atual da entidade
 
-                            if (!intersection.IsValid()) // Se ela for vazia, não há nada o que fazer nesta célula
+                            if (!cellBox.IsOverlaping(box)) // Se ela for vazia, não há nada o que fazer nesta célula
                                 continue;
 
                             // Senão...

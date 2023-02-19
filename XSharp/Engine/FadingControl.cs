@@ -119,7 +119,7 @@ namespace XSharp.Engine
         {
             Fading = true;
             Paused = false;
-            FadingColor = new Color(                       
+            FadingColor = new Color(
                         flags.HasFlag(FadingFlags.RED) ? color.R : FadingColor.R,
                         flags.HasFlag(FadingFlags.GREEN) ? color.G : FadingColor.G,
                         flags.HasFlag(FadingFlags.BLUE) ? color.B : FadingColor.B,
