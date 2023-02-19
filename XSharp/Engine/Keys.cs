@@ -16,7 +16,7 @@
         START = 1024,
         SELECT = 2048,
 
-        MOVEMENT_KEYS = LEFT | UP | RIGHT| DOWN,
+        MOVEMENT_KEYS = LEFT | UP | RIGHT | DOWN,
         ACTION_KEYS = SHOT | JUMP | DASH | WEAPON
     }
 

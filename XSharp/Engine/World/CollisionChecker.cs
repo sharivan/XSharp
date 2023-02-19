@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using XSharp.Engine.Entities;
 using XSharp.Geometry;
 using XSharp.Math;
@@ -7,256 +8,344 @@ using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.World
 {
+    [Flags]
+    public enum TracingMode
+    {
+        NONE = 0,
+        HORIZONTAL = 1,
+        VERTICAL = 2,
+        DIAGONAL = 4
+    }
+
+    public class HorizontalParallelogram : GeometrySet
+    {
+        private Box wrappingBox;
+        private RightTriangle triangle1;
+        private RightTriangle triangle2;
+
+        public Box WrappingBox => wrappingBox;
+
+        public Vector LeftTop => wrappingBox.LeftTop;
+
+        public FixedSingle Width => wrappingBox.Width;
+
+        public FixedSingle Height => wrappingBox.Height;
+
+        public Vector Origin
+        {
+            get;
+            private set;
+        }
+
+        public Vector Direction
+        {
+            get;
+            private set;
+        }
+
+        public FixedSingle SmallerHeight
+        {
+            get;
+            private set;
+        }
+
+        public HorizontalParallelogram() : base(SetOperation.INTERSECTION, (Box.EMPTY_BOX, false), (RightTriangle.EMPTY, true), (RightTriangle.EMPTY, true))
+        {
+        }
+
+        public void Setup(Vector origin, Vector direction, FixedSingle smallerHeight)
+        {
+            GeometryOperations.HorizontalParallelogram(origin, direction, smallerHeight, out wrappingBox, out triangle1, out triangle2);
+
+            parts[0] = (wrappingBox, false);
+            parts[1] = (triangle1, true);
+            parts[2] = (triangle2, true);
+
+            Origin = origin;
+            Direction = direction;
+            SmallerHeight = smallerHeight;
+        }
+    }
+
     public class CollisionChecker
     {
-        private static Vector GetStepVector(Vector dir)
+        public static Vector GetHorizontalStepVector(Vector dir, FixedSingle stepWidth)
         {
             if (dir.X == 0)
-                return dir.Y > 0 ? STEP_DOWN_VECTOR : dir.Y < 0 ? STEP_UP_VECTOR : Vector.NULL_VECTOR;
+                return Vector.NULL_VECTOR;
 
             if (dir.Y == 0)
-                return dir.X > 0 ? STEP_RIGHT_VECTOR : dir.X < 0 ? STEP_LEFT_VECTOR : Vector.NULL_VECTOR;
+                return dir.X > 0 ? stepWidth * Vector.RIGHT_VECTOR : dir.X < 0 ? stepWidth * Vector.LEFT_VECTOR : Vector.NULL_VECTOR;
 
             FixedSingle x = dir.X;
             FixedSingle xm = x.Abs;
             FixedSingle y = dir.Y;
 
-            return new Vector(x.Signal * STEP_SIZE, y / xm * STEP_SIZE);
+            return new Vector(x.Signal * stepWidth, y / xm * stepWidth);
         }
 
-        public static bool IsSolidBlock(CollisionData collisionData)
+        public static Vector GetVerticalStepVector(Vector dir, FixedSingle stepHeight)
         {
-            return collisionData switch
+            if (dir.Y == 0)
+                return Vector.NULL_VECTOR;
+
+            if (dir.X == 0)
+                return dir.Y > 0 ? stepHeight * Vector.DOWN_VECTOR : dir.Y < 0 ? stepHeight * Vector.UP_VECTOR : Vector.NULL_VECTOR;
+
+            FixedSingle x = dir.X;
+            FixedSingle y = dir.Y;
+            FixedSingle ym = y.Abs;
+
+            return new Vector(x / ym * stepHeight, y.Signal * stepHeight);
+        }
+
+        public static Vector GetStepVector(Vector dir, FixedSingle stepWidth, FixedSingle stepHeight)
+        {
+            if (dir.X == 0)
+                return dir.Y > 0 ? stepHeight * Vector.DOWN_VECTOR : dir.Y < 0 ? stepHeight * Vector.UP_VECTOR : Vector.NULL_VECTOR;
+
+            if (dir.Y == 0)
+                return dir.X > 0 ? stepWidth * Vector.RIGHT_VECTOR : dir.X < 0 ? stepWidth * Vector.LEFT_VECTOR : Vector.NULL_VECTOR;
+
+            dir = dir.Versor();
+
+            FixedSingle dx = dir.X;
+            FixedSingle dy = dir.Y;
+
+            if (dx < dy)
             {
-                CollisionData.MUD => true,
-                CollisionData.TOP_MUD => true,
-                CollisionData.LAVA => true,
-                CollisionData.SOLID2 => true,
-                CollisionData.SOLID3 => true,
-                CollisionData.UNCLIMBABLE_SOLID => true,
-                CollisionData.LEFT_CONVEYOR => true,
-                CollisionData.RIGHT_CONVEYOR => true,
-                CollisionData.UP_SLOPE_BASE => true,
-                CollisionData.DOWN_SLOPE_BASE => true,
-                CollisionData.SOLID => true,
-                CollisionData.BREAKABLE => true,
-                CollisionData.NON_LETHAL_SPIKE => true,
-                CollisionData.LETHAL_SPIKE => true,
-                CollisionData.SLIPPERY_SLOPE_BASE => true,
-                CollisionData.SLIPPERY_BORDER_FLOOR => true,
-                CollisionData.SLIPPERY_FLOOR => true,
-                CollisionData.DOOR => true,
-                _ => false,
-            };
+                FixedSingle xm = dx.Abs;
+                return (dx.Signal * stepWidth, dy.Signal / xm * stepHeight);
+            }
+
+            FixedSingle ym = dy.Abs;
+            return (dx.Signal / ym * stepWidth, dy.Signal * stepHeight);
         }
 
-        public static bool IsMud(CollisionData collisionData)
+        public static Vector GetStepVector(Vector dir, FixedSingle stepSize)
         {
-            return collisionData switch
-            {
-                CollisionData.MUD => true,
-                CollisionData.TOP_MUD => true,
-                _ => false,
-            };
+            return GetStepVector(dir, stepSize, stepSize);
         }
 
-        public static bool IsSlipperyFloor(CollisionData collisionData)
+        public static bool HasIntersection(Vector v, Box box, BoxSide include = BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER)
         {
-            return collisionData switch
-            {
-                CollisionData.SLIPPERY_SLOPE_BASE => true,
-                CollisionData.SLIPPERY_BORDER_FLOOR => true,
-                CollisionData.SLIPPERY_FLOOR => true,
-                _ => false,
-            };
+            return box.Contains(v, EPSLON, include);
         }
 
-        public static bool IsSlope(CollisionData collisionData)
+        public static bool HasIntersection(Vector v, RightTriangle slope, RightTriangleSide include = RightTriangleSide.HYPOTENUSE)
         {
-            return collisionData is >= CollisionData.SLOPE_16_8 and <= CollisionData.SLOPE_0_4 or
-                >= CollisionData.LEFT_CONVEYOR_SLOPE_16_12 and <= CollisionData.RIGHT_CONVEYOR_SLOPE_0_4 or
-                >= CollisionData.SLIPPERY_SLOPE_16_8 and <= CollisionData.SLIPPERY_SLOPE_0_4;
+            return slope.Contains(v, EPSLON, include);
         }
 
-        public static bool IsSlipperySlope(CollisionData collisionData)
+        public static bool HasIntersection(LineSegment line, Box box, BoxSide include = BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER)
         {
-            return collisionData is >= CollisionData.SLIPPERY_SLOPE_16_8 and <= CollisionData.SLIPPERY_SLOPE_0_4;
+            return box.HasIntersectionWith(line, EPSLON, include);
         }
 
-        public static bool IsConveyorSlope(CollisionData collisionData)
+        public static bool HasIntersection(LineSegment line, RightTriangle slope, RightTriangleSide include = RightTriangleSide.HYPOTENUSE)
         {
-            return collisionData is >= CollisionData.LEFT_CONVEYOR_SLOPE_16_12 and <= CollisionData.RIGHT_CONVEYOR_SLOPE_0_4;
+            return slope.HasIntersectionWith(line, EPSLON, include);
         }
 
-        public static bool IsWater(CollisionData collisionData)
+        public static bool HasIntersection(HorizontalParallelogram parallelogram, Box box)
         {
-            return collisionData switch
-            {
-                CollisionData.WATER => true,
-                CollisionData.WATER_SURFACE => true,
-                _ => false,
-            };
+            return box.HasIntersectionWith(parallelogram);
         }
 
-        public static RightTriangle MakeSlopeTriangle(int left, int right)
+        public static bool HasIntersection(HorizontalParallelogram parallelogram, RightTriangle slope)
         {
-            return left < right
-                ? new RightTriangle(new Vector(0, right), MAP_SIZE, left - right)
-                : new RightTriangle(new Vector(MAP_SIZE, left), -MAP_SIZE, right - left);
-        }
-
-        public static RightTriangle MakeSlopeTriangle(CollisionData collisionData)
-        {
-            return collisionData switch
-            {
-                CollisionData.SLOPE_16_8 => MakeSlopeTriangle(16, 8),
-                CollisionData.SLOPE_8_0 => MakeSlopeTriangle(8, 0),
-                CollisionData.SLOPE_8_16 => MakeSlopeTriangle(8, 16),
-                CollisionData.SLOPE_0_8 => MakeSlopeTriangle(0, 8),
-                CollisionData.SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-                CollisionData.SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-                CollisionData.SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-                CollisionData.SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-                CollisionData.SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-                CollisionData.SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-                CollisionData.SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-                CollisionData.SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-
-                CollisionData.LEFT_CONVEYOR_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-                CollisionData.LEFT_CONVEYOR_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-                CollisionData.LEFT_CONVEYOR_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-                CollisionData.LEFT_CONVEYOR_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-
-                CollisionData.RIGHT_CONVEYOR_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-                CollisionData.RIGHT_CONVEYOR_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-                CollisionData.RIGHT_CONVEYOR_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-                CollisionData.RIGHT_CONVEYOR_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-
-                CollisionData.SLIPPERY_SLOPE_16_8 => MakeSlopeTriangle(16, 8),
-                CollisionData.SLIPPERY_SLOPE_8_0 => MakeSlopeTriangle(8, 0),
-                CollisionData.SLIPPERY_SLOPE_8_16 => MakeSlopeTriangle(8, 16),
-                CollisionData.SLIPPERY_SLOPE_0_8 => MakeSlopeTriangle(0, 8),
-                CollisionData.SLIPPERY_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-                CollisionData.SLIPPERY_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-                CollisionData.SLIPPERY_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-                CollisionData.SLIPPERY_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-                CollisionData.SLIPPERY_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-                CollisionData.SLIPPERY_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-                CollisionData.SLIPPERY_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-                CollisionData.SLIPPERY_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-
-                _ => RightTriangle.EMPTY,
-            };
-        }
-
-        public static bool CanBlockTheMove(CollisionFlags flags)
-        {
-            return flags is not CollisionFlags.NONE and not CollisionFlags.WATER and not CollisionFlags.WATER_SURFACE;
+            return slope.HasIntersectionWith(parallelogram);
         }
 
         public static bool HasIntersection(Box box1, Box box2)
         {
-            return (box1 & box2).IsValid(EPSLON);
+            return box1.IsOverlaping(box2);
         }
 
-        public static bool HasIntersection(Box box, RightTriangle slope)
+        public static bool HasIntersection(Box box, RightTriangle slope, RightTriangleSide include = RightTriangleSide.HYPOTENUSE)
         {
-            return slope.HasIntersectionWith(box, EPSLON, true);
+            return slope.HasIntersectionWith(box, EPSLON, include);
         }
 
-        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, Box collisionBox, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
+        private static CollisionFlags CheckCollisionData(Box box, CollisionData collisionData, List<CollisionPlacement> placements, CollisionFlags ignore)
         {
-            if (collisionData == CollisionData.NONE || !HasIntersection(box, collisionBox))
-                return CollisionFlags.NONE;
-
             CollisionFlags result = CollisionFlags.NONE;
-            bool hasIntersection = HasIntersection(collisionBox, box);
-            if (IsSolidBlock(collisionData) && hasIntersection && !ignore.HasFlag(CollisionFlags.BLOCK))
+            if (collisionData.IsSolidBlock() && !ignore.HasFlag(CollisionFlags.BLOCK))
             {
                 if (collisionData == CollisionData.UNCLIMBABLE_SOLID)
                 {
                     if (!ignore.HasFlag(CollisionFlags.UNCLIMBABLE))
                     {
-                        placements?.Add(new CollisionPlacement(CollisionFlags.BLOCK, box.LeftTop));
+                        placements?.Add(new CollisionPlacement(collisionData, box));
                         result = CollisionFlags.BLOCK | CollisionFlags.UNCLIMBABLE;
                     }
                 }
                 else
                 {
-                    placements?.Add(new CollisionPlacement(CollisionFlags.BLOCK, box.LeftTop));
+                    placements?.Add(new CollisionPlacement(collisionData, box));
                     result = CollisionFlags.BLOCK;
                 }
             }
-            else if (collisionData == CollisionData.LADDER && hasIntersection && !ignore.HasFlag(CollisionFlags.LADDER))
+            else if (collisionData == CollisionData.LADDER && !ignore.HasFlag(CollisionFlags.LADDER))
             {
-                placements?.Add(new CollisionPlacement(CollisionFlags.LADDER, box.LeftTop));
+                placements?.Add(new CollisionPlacement(collisionData, box));
 
                 result = CollisionFlags.LADDER;
             }
-            else if (collisionData == CollisionData.TOP_LADDER && hasIntersection && !ignore.HasFlag(CollisionFlags.TOP_LADDER))
+            else if (collisionData == CollisionData.TOP_LADDER && !ignore.HasFlag(CollisionFlags.TOP_LADDER))
             {
-                placements?.Add(new CollisionPlacement(CollisionFlags.TOP_LADDER, box.LeftTop));
+                placements?.Add(new CollisionPlacement(collisionData, box));
 
                 result = CollisionFlags.TOP_LADDER;
             }
-            else if (collisionData == CollisionData.WATER && hasIntersection && !ignore.HasFlag(CollisionFlags.WATER))
+            else if (collisionData == CollisionData.WATER && !ignore.HasFlag(CollisionFlags.WATER))
             {
-                placements?.Add(new CollisionPlacement(CollisionFlags.WATER, box.LeftTop));
+                placements?.Add(new CollisionPlacement(collisionData, box));
 
                 result = CollisionFlags.WATER;
             }
-            else if (collisionData == CollisionData.WATER_SURFACE && hasIntersection && !ignore.HasFlag(CollisionFlags.WATER_SURFACE))
+            else if (collisionData == CollisionData.WATER_SURFACE && !ignore.HasFlag(CollisionFlags.WATER_SURFACE))
             {
-                placements?.Add(new CollisionPlacement(CollisionFlags.WATER_SURFACE, box.LeftTop));
+                placements?.Add(new CollisionPlacement(collisionData, box));
 
                 result = CollisionFlags.WATER_SURFACE;
             }
-            else if (!ignore.HasFlag(CollisionFlags.SLOPE) && IsSlope(collisionData))
-            {
-                RightTriangle st = MakeSlopeTriangle(collisionData) + box.LeftTop;
-                if (preciseCollisionCheck)
-                {
-                    if (HasIntersection(collisionBox, st))
-                    {
-                        placements?.Add(new CollisionPlacement(CollisionFlags.BLOCK, box.LeftTop));
 
-                        slopeTriangle = st;
-                        result = CollisionFlags.SLOPE;
-                    }
-                }
-                else if (hasIntersection)
+            return result;
+        }
+
+        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, Vector v, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            if (collisionData == CollisionData.NONE || !HasIntersection(v, box))
+                return CollisionFlags.NONE;
+
+            CollisionFlags result = CollisionFlags.NONE;
+            if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
+            {
+                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
+
+                if (HasIntersection(v, st))
                 {
-                    placements?.Add(new CollisionPlacement(CollisionFlags.BLOCK, box.LeftTop));
+                    placements?.Add(new CollisionPlacement(collisionData, st));
 
                     slopeTriangle = st;
                     result = CollisionFlags.SLOPE;
                 }
             }
+            else
+                result = CheckCollisionData(box, collisionData, placements, ignore);
+
+            return result;
+        }
+
+        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, LineSegment line, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            if (collisionData == CollisionData.NONE || !HasIntersection(line, box))
+                return CollisionFlags.NONE;
+
+            CollisionFlags result = CollisionFlags.NONE;
+            if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
+            {
+                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
+
+                if (HasIntersection(line, st))
+                {
+                    placements?.Add(new CollisionPlacement(collisionData, st));
+
+                    slopeTriangle = st;
+                    result = CollisionFlags.SLOPE;
+                }
+            }
+            else
+                result = CheckCollisionData(box, collisionData, placements, ignore);
+
+            return result;
+        }
+
+        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, HorizontalParallelogram parallelogram, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            if (collisionData == CollisionData.NONE || !HasIntersection(parallelogram, box))
+                return CollisionFlags.NONE;
+
+            CollisionFlags result = CollisionFlags.NONE;
+            if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
+            {
+                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
+
+                if (HasIntersection(parallelogram, st))
+                {
+                    placements?.Add(new CollisionPlacement(collisionData, st));
+
+                    slopeTriangle = st;
+                    result = CollisionFlags.SLOPE;
+                }
+            }
+            else
+                result = CheckCollisionData(box, collisionData, placements, ignore);
+
+            return result;
+        }
+
+        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, Box collisionBox, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            if (collisionData == CollisionData.NONE || !HasIntersection(collisionBox, box))
+                return CollisionFlags.NONE;
+
+            CollisionFlags result = CollisionFlags.NONE;
+            if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
+            {
+                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
+
+                if (HasIntersection(collisionBox, st))
+                {
+                    placements?.Add(new CollisionPlacement(collisionData, st));
+
+                    slopeTriangle = st;
+                    result = CollisionFlags.SLOPE;
+                }
+            }
+            else
+                result = CheckCollisionData(box, collisionData, placements, ignore);
 
             return result;
         }
 
         protected RightTriangle slopeTriangle;
         protected List<CollisionPlacement> placements;
-        
+
         private HashSet<Entity> resultSet;
+        private bool tracing;
+
+        public HorizontalParallelogram tracingParallelogram;
+
+        public TouchingKind TestKind
+        {
+            get;
+            set;
+        } = TouchingKind.BOX;
+
+        public Vector TestVector
+        {
+            get;
+            set;
+        } = Vector.NULL_VECTOR;
 
         public Box TestBox
         {
             get;
             set;
-        }
+        } = Box.EMPTY_BOX;
 
         public EntityList<Sprite> IgnoreSprites
         {
             get;
         }
 
-        public FixedSingle MaskSize
+        public FixedSingle StepSize
         {
             get;
             set;
-        } = MASK_SIZE;
+        } = STEP_SIZE;
 
         public bool CheckWithWorld
         {
@@ -276,17 +365,83 @@ namespace XSharp.Engine.World
             set;
         } = CollisionFlags.NONE;
 
-        public bool PreciseCollisionCheck
-        {
-            get;
-            set;
-        } = true;
-
         public bool ComputePlacements
         {
             get;
             set;
         } = false;
+
+        protected TracingMode TracingBoxMode
+        {
+            get;
+            private set;
+        } = TracingMode.NONE;
+
+        public bool TracingBackward
+        {
+            get;
+            private set;
+        } = false;
+
+        public Vector TracingVector
+        {
+            get;
+            private set;
+        } = Vector.NULL_VECTOR;
+
+        public Vector TracingDirection
+        {
+            get;
+            private set;
+        } = Vector.NULL_VECTOR;
+
+        public FixedSingle TracingDistance
+        {
+            get;
+            private set;
+        }
+
+        public Box TracingBox
+        {
+            get;
+            private set;
+        } = Box.EMPTY_BOX;
+
+        public Box NearestObstacleBox
+        {
+            get;
+            private set;
+        } = Box.EMPTY_BOX;
+
+        public RightTriangle NearestObstacleSlope
+        {
+            get;
+            private set;
+        } = RightTriangle.EMPTY;
+
+        public CollisionData NearestObstacleCollisionData
+        {
+            get;
+            private set;
+        } = CollisionData.NONE;
+
+        public FixedSingle NearestDistance
+        {
+            get;
+            protected set;
+        } = 0;
+
+        public FixedSingle NearestBoxDistance
+        {
+            get;
+            protected set;
+        } = 0;
+
+        public FixedSingle NearestSlopeDistance
+        {
+            get;
+            protected set;
+        } = 0;
 
         public IEnumerable<CollisionPlacement> Placements => placements;
 
@@ -301,41 +456,123 @@ namespace XSharp.Engine.World
             placements = new List<CollisionPlacement>();
             resultSet = new HashSet<Entity>();
             IgnoreSprites = new EntityList<Sprite>();
+            tracingParallelogram = new HorizontalParallelogram();
         }
 
-        public virtual void Setup(Box testBox, CollisionFlags ignoreFlags, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
+        public virtual void Setup(Vector testVector, CollisionFlags ignoreFlags, FixedSingle stepSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
         {
             if (computePlacements)
                 placements.Clear();
 
-            TestBox = testBox;
+            TestKind = TouchingKind.VECTOR;
+            TestVector = testVector;
             IgnoreFlags = ignoreFlags;
-            MaskSize = maskSize;
+            StepSize = stepSize;
             CheckWithWorld = checkWithWorld;
             CheckWithSolidSprites = checkWithSolidSprites;
             ComputePlacements = computePlacements;
-            PreciseCollisionCheck = preciseCollisionCheck;
+
+            tracing = false;
         }
 
-        public void Setup(Box testBox, CollisionFlags ignoreFlags, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck, params Sprite[] ignoreSprites)
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, FixedSingle stepSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck, params Sprite[] ignoreSprites)
         {
-            Setup(testBox, ignoreFlags, maskSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
+            Setup(testVector, ignoreFlags, stepSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
+
+            IgnoreSprites.Clear();
+            IgnoreSprites.AddRange(ignoreSprites);
+        }
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites, FixedSingle stepSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
+        {
+            Setup(testVector, ignoreFlags, stepSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
 
             IgnoreSprites.Clear();
             IgnoreSprites.AddRange(ignoreSprites);
         }
 
-        public void Setup(Box testBox, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, BitSet ignoreSprites, FixedSingle stepSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
         {
-            Setup(testBox, ignoreFlags, maskSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
+            Setup(testVector, ignoreFlags, stepSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
 
             IgnoreSprites.Clear();
             IgnoreSprites.AddRange(ignoreSprites);
         }
 
-        public void Setup(Box testBox, CollisionFlags ignoreFlags, BitSet ignoreSprites, FixedSingle maskSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
+        public void Setup(Vector testVector)
         {
-            Setup(testBox, ignoreFlags, maskSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
+            Setup(testVector, CollisionFlags.NONE, STEP_SIZE, true, true, false, true);
+        }
+
+        public void Setup(Vector testVector, params Sprite[] ignoreSprites)
+        {
+            Setup(testVector, CollisionFlags.NONE, STEP_SIZE, true, true, false, true, ignoreSprites);
+        }
+
+        public void Setup(Vector testVector, EntityList<Sprite> ignoreSprites)
+        {
+            Setup(testVector, CollisionFlags.NONE, ignoreSprites, STEP_SIZE, true, true, false, true);
+        }
+
+        public void Setup(Vector testVector, BitSet ignoreSprites)
+        {
+            Setup(testVector, CollisionFlags.NONE, ignoreSprites, STEP_SIZE, true, true, false, true);
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags)
+        {
+            Setup(testVector, ignoreFlags, STEP_SIZE, true, true, false, true);
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, params Sprite[] ignoreSprites)
+        {
+            Setup(testVector, ignoreFlags, STEP_SIZE, true, true, false, true, ignoreSprites);
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites)
+        {
+            Setup(testVector, ignoreFlags, ignoreSprites, STEP_SIZE, true, true, false, true);
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, BitSet ignoreSprites)
+        {
+            Setup(testVector, ignoreFlags, ignoreSprites, STEP_SIZE, true, true, false, true);
+        }
+
+        public virtual void Setup(Box testBox, CollisionFlags ignoreFlags, FixedSingle stepSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
+        {
+            if (computePlacements)
+                placements.Clear();
+
+            TestKind = TouchingKind.BOX;
+            TestBox = testBox;
+            IgnoreFlags = ignoreFlags;
+            StepSize = stepSize;
+            CheckWithWorld = checkWithWorld;
+            CheckWithSolidSprites = checkWithSolidSprites;
+            ComputePlacements = computePlacements;
+
+            tracing = false;
+        }
+
+        public void Setup(Box testBox, CollisionFlags ignoreFlags, FixedSingle stepSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck, params Sprite[] ignoreSprites)
+        {
+            Setup(testBox, ignoreFlags, stepSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
+
+            IgnoreSprites.Clear();
+            IgnoreSprites.AddRange(ignoreSprites);
+        }
+
+        public void Setup(Box testBox, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites, FixedSingle stepSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
+        {
+            Setup(testBox, ignoreFlags, stepSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
+
+            IgnoreSprites.Clear();
+            IgnoreSprites.AddRange(ignoreSprites);
+        }
+
+        public void Setup(Box testBox, CollisionFlags ignoreFlags, BitSet ignoreSprites, FixedSingle stepSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
+        {
+            Setup(testBox, ignoreFlags, stepSize, checkWithWorld, checkWithSolidSprites, computePlacements, preciseCollisionCheck);
 
             IgnoreSprites.Clear();
             IgnoreSprites.AddRange(ignoreSprites);
@@ -343,135 +580,691 @@ namespace XSharp.Engine.World
 
         public void Setup(Box testBox)
         {
-            Setup(testBox, CollisionFlags.NONE, MASK_SIZE, true, true, false, true);
+            Setup(testBox, CollisionFlags.NONE, STEP_SIZE, true, true, false, true);
         }
 
         public void Setup(Box testBox, params Sprite[] ignoreSprites)
         {
-            Setup(testBox, CollisionFlags.NONE, MASK_SIZE, true, true, false, true, ignoreSprites);
+            Setup(testBox, CollisionFlags.NONE, STEP_SIZE, true, true, false, true, ignoreSprites);
         }
 
         public void Setup(Box testBox, EntityList<Sprite> ignoreSprites)
         {
-            Setup(testBox, CollisionFlags.NONE, ignoreSprites, MASK_SIZE, true, true, false, true);
+            Setup(testBox, CollisionFlags.NONE, ignoreSprites, STEP_SIZE, true, true, false, true);
         }
 
         public void Setup(Box testBox, BitSet ignoreSprites)
         {
-            Setup(testBox, CollisionFlags.NONE, ignoreSprites, MASK_SIZE, true, true, false, true);
+            Setup(testBox, CollisionFlags.NONE, ignoreSprites, STEP_SIZE, true, true, false, true);
         }
 
         public void Setup(Box testBox, CollisionFlags ignoreFlags)
         {
-            Setup(testBox, ignoreFlags, MASK_SIZE, true, true, false, true);
+            Setup(testBox, ignoreFlags, STEP_SIZE, true, true, false, true);
         }
 
         public void Setup(Box testBox, CollisionFlags ignoreFlags, params Sprite[] ignoreSprites)
         {
-            Setup(testBox, ignoreFlags, MASK_SIZE, true, true, false, true, ignoreSprites);
+            Setup(testBox, ignoreFlags, STEP_SIZE, true, true, false, true, ignoreSprites);
         }
 
         public void Setup(Box testBox, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites)
         {
-            Setup(testBox, ignoreFlags, ignoreSprites, MASK_SIZE, true, true, false, true);
+            Setup(testBox, ignoreFlags, ignoreSprites, STEP_SIZE, true, true, false, true);
         }
 
         public void Setup(Box testBox, CollisionFlags ignoreFlags, BitSet ignoreSprites)
         {
-            Setup(testBox, ignoreFlags, ignoreSprites, MASK_SIZE, true, true, false, true);
+            Setup(testBox, ignoreFlags, ignoreSprites, STEP_SIZE, true, true, false, true);
         }
 
-        public CollisionFlags GetCollisionFlags()
+        private FixedSingle VectorDistanceTo(Box obstacleBox)
         {
-            Cell start = World.GetMapCellFromPos(TestBox.LeftTop);
-            Cell end = World.GetMapCellFromPos(TestBox.RightBottom);
+            var traceLine = new LineSegment(TracingVector, TracingVector + TracingDirection);
 
-            int startRow = start.Row;
-            int startCol = start.Col;
-
-            if (startRow < 0)
-                startRow = 0;
-
-            if (startRow >= World.MapRowCount)
-                startRow = World.MapRowCount - 1;
-
-            if (startCol < 0)
-                startCol = 0;
-
-            if (startCol >= World.MapColCount)
-                startCol = World.MapColCount - 1;
-
-            int endRow = end.Row;
-            int endCol = end.Col;
-
-            if (endRow < 0)
-                endRow = 0;
-
-            if (endRow >= World.MapRowCount)
-                endRow = World.MapRowCount - 1;
-
-            if (endCol < 0)
-                endCol = 0;
-
-            if (endCol >= World.MapColCount)
-                endCol = World.MapColCount - 1;
-
-            CollisionFlags result = CollisionFlags.NONE;
-
-            if (CheckWithWorld)
-                for (int row = startRow; row <= endRow; row++)
-                    for (int col = startCol; col <= endCol; col++)
-                    {
-                        var mapPos = World.GetMapLeftTop(row, col);
-                        Map map = World.GetMapFrom(mapPos);
-                        if (map != null)
-                        {
-                            Box mapBox = World.GetMapBoundingBox(row, col);
-                            CollisionData collisionData = map.CollisionData;
-
-                            CollisionFlags collisionResult = TestCollision(mapBox, collisionData, TestBox, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags, PreciseCollisionCheck);
-                            if (collisionResult == CollisionFlags.NONE)
-                                continue;
-
-                            result |= collisionResult;
-                        }
-                    }
-
-            if (CheckWithSolidSprites)
+            FixedSingle result = TracingDistance;
+            for (int i = 0; i < 4; i++)
             {
-                resultSet.Clear();
-                Engine.partition.Query(resultSet, TestBox, BoxKind.HITBOX);
-                foreach (var entity in resultSet)
-                    if (entity is Sprite sprite && IsSolidBlock(sprite.CollisionData) && !IgnoreSprites.Contains(sprite))
-                    {
-                        CollisionFlags collisionResult = TestCollision(sprite.Hitbox, sprite.CollisionData, TestBox, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags, PreciseCollisionCheck);
-                        if (collisionResult == CollisionFlags.NONE)
-                            continue;
+                var boxSide = (BoxSide) (1 << i);
+                var side = obstacleBox.GetSideSegment(boxSide);
 
-                        result |= collisionResult;
-                    }
+                var type = side.Intersection(traceLine, out LineSegment intersection);
+                if (type == GeometryType.VECTOR)
+                {
+                    var distance = intersection.Start.DistanceTo(TracingVector);
+                    if (distance < result)
+                        result = distance;
+                }
             }
 
             return result;
         }
 
-        // TODO : Optmize it, can be terribly slow!
-        public Box MoveUntilIntersect(Vector dir, FixedSingle maxDistance)
+        private FixedSingle VectorDistanceTo(Box obstacleBox, RightTriangle obstacleSlope, CollisionData obstacleCollisionData)
         {
-            Vector deltaDir = GetStepVector(dir);
-            FixedSingle step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs;
+            var traceLine = new LineSegment(TracingVector, TracingVector + TracingDirection);
 
-            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += step, TestBox += deltaDir)
-                if (CanBlockTheMove(GetCollisionFlags()))
-                    break;
+            if (obstacleCollisionData.IsSlope())
+            {
+                var hypothenuse = obstacleSlope.HypotenuseLine;
+                var type = hypothenuse.Intersection(traceLine, out LineSegment intersection);
 
-            return TestBox;
+                return type == GeometryType.VECTOR ? intersection.Start.DistanceTo(TracingVector).TruncFracPart() : FixedSingle.MAX_VALUE;
+            }
+
+            return VectorDistanceTo(obstacleBox);
         }
 
-        public CollisionFlags GetTouchingFlags(Vector dir)
+        private FixedSingle BoxDistanceTo(Box obstacleBox)
         {
-            TestBox += dir;
-            return GetCollisionFlags();
+            if (TracingBoxMode == (TracingMode.HORIZONTAL | TracingMode.DIAGONAL))
+            {
+                var tracingLine = new LineSegment(TracingBox.LeftTop, TracingBox.LeftTop + TracingDirection);
+                var x = TracingBackward ? obstacleBox.Left : obstacleBox.Right;
+                var obstacleLine = new LineSegment((x, TestBox.Top), (x, TestBox.Bottom));
+                var type = tracingLine.Intersection(obstacleLine, out tracingLine);
+
+                return type == GeometryType.VECTOR ? tracingLine.Length : TracingDirection.Length + 1;
+            }
+
+            FixedSingle offset = TracingBoxMode == TracingMode.VERTICAL
+                ? TracingBackward
+                    ? obstacleBox.Bottom - TracingBox.Top
+                    : obstacleBox.Top - TracingBox.Bottom
+                : TracingBackward
+                    ? obstacleBox.Right - TracingBox.Left
+                    : obstacleBox.Left - TracingBox.Right;
+
+            return offset.Abs;
+        }
+
+        private FixedSingle BoxDistanceTo(RightTriangle obstacleSlope)
+        {
+            var mb = TracingBox.MiddleBottom;
+            var hypothenuse = obstacleSlope.HypotenuseLine;
+            var bottomLine = new LineSegment(mb, mb + TracingDirection);
+            var type = hypothenuse.Intersection(bottomLine, out LineSegment intersection);
+
+            return TracingBoxMode == TracingMode.VERTICAL
+                ? TracingBackward
+                    ? type == GeometryType.VECTOR ? (intersection.Start.Y - mb.Y).Abs.TruncFracPart() : TracingDirection.Length + 1
+                    : type == GeometryType.VECTOR ? (intersection.Start.Y - mb.Y).Abs.TruncFracPart() : TracingDirection.Length + 1
+                : TracingBackward
+                    ? type == GeometryType.VECTOR ? (intersection.Start.X - mb.X).Abs.TruncFracPart() : TracingDirection.Length + 1
+                    : type == GeometryType.VECTOR ? (intersection.Start.X - mb.X).Abs.TruncFracPart() : TracingDirection.Length + 1;
+        }
+
+        private void CompareVectorAndUpdateWithNearestObstacle(Box obstacleBox, RightTriangle obstacleSlope, CollisionData obstacleCollisionData)
+        {
+            FixedSingle distance = VectorDistanceTo(obstacleBox, obstacleSlope, obstacleCollisionData);
+            if (distance > TracingDistance)
+                return;
+
+            if (distance < NearestDistance)
+            {
+                NearestDistance = distance;
+
+                if (obstacleCollisionData.IsSlope())
+                {
+                    NearestSlopeDistance = distance;
+                    NearestObstacleSlope = obstacleSlope;
+                }
+                else
+                {
+                    NearestBoxDistance = distance;
+                    NearestObstacleBox = obstacleBox;
+                }
+
+                NearestObstacleCollisionData = obstacleCollisionData;
+            }
+        }
+
+        private void CompareBoxAndUpdateWithNearestObstacle(Box obstacleBox, RightTriangle obstacleSlope, CollisionData obstacleCollisionData)
+        {
+            FixedSingle distance = BoxDistanceTo(obstacleBox);
+            if (distance > TracingDistance)
+                return;
+
+            if (distance < NearestBoxDistance)
+            {
+                if (obstacleCollisionData.IsSlope())
+                {
+                    var slopeDistance = BoxDistanceTo(obstacleSlope);
+                    if (slopeDistance < NearestSlopeDistance)
+                    {
+                        NearestDistance = slopeDistance;
+                        NearestSlopeDistance = slopeDistance;
+                        NearestBoxDistance = distance;
+                        NearestObstacleBox = obstacleBox;
+                        NearestObstacleSlope = obstacleSlope;
+                        NearestObstacleCollisionData = obstacleCollisionData;
+                    }
+                }
+                else
+                {
+                    NearestDistance = distance;
+                    NearestBoxDistance = distance;
+                    NearestObstacleBox = obstacleBox;
+                    NearestObstacleCollisionData = obstacleCollisionData;
+                }
+            }
+            else if (distance == NearestBoxDistance && obstacleCollisionData.IsSlope())
+            {
+                distance = BoxDistanceTo(obstacleSlope);
+                if (distance < NearestSlopeDistance)
+                {
+                    NearestDistance = distance;
+                    NearestSlopeDistance = distance;
+                    NearestObstacleBox = obstacleBox;
+                    NearestObstacleSlope = obstacleSlope;
+                    NearestObstacleCollisionData = obstacleCollisionData;
+                }
+            }
+        }
+
+        private CollisionFlags GetCollisionVectorFlags()
+        {
+            CollisionFlags result = CollisionFlags.NONE;
+            NearestObstacleBox = Box.EMPTY_BOX;
+            var tracingLine = new LineSegment(TracingVector, TracingVector + TracingDirection);
+
+            if (CheckWithWorld)
+            {
+                if (tracing)
+                {
+                    Vector stepVector = GetStepVector(TracingDirection, MAP_SIZE);
+                    FixedSingle stepDistance = stepVector.Length;
+                    if (stepDistance == 0)
+                        stepDistance = MAP_SIZE;
+
+                    for (FixedSingle distance = 0; distance <= TracingDistance; distance += stepDistance, TestVector += stepVector)
+                    {
+                        Map map = World.GetMapFrom(TestVector);
+                        if (map != null)
+                        {
+                            Box mapBox = World.GetMapBoundingBox(World.GetMapCellFromPos(TestVector));
+                            CollisionData collisionData = map.CollisionData;
+
+                            CollisionFlags collisionResult = TestCollision(mapBox, collisionData, tracingLine, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                            if (collisionResult == CollisionFlags.NONE)
+                                continue;
+
+                            result |= collisionResult;
+                            CompareVectorAndUpdateWithNearestObstacle(mapBox, slopeTriangle, collisionData);
+                        }
+                    }
+                }
+                else
+                {
+                    Map map = World.GetMapFrom(TestVector);
+                    if (map != null)
+                    {
+                        Box mapBox = World.GetMapBoundingBox(World.GetMapCellFromPos(TestVector));
+                        CollisionData collisionData = map.CollisionData;
+
+                        CollisionFlags collisionResult = TestCollision(mapBox, collisionData, TestVector, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                        if (collisionResult != CollisionFlags.NONE)
+                            result |= collisionResult;
+                    }
+                }
+            }
+
+            if (CheckWithSolidSprites)
+            {
+                resultSet.Clear();
+                if (tracing)
+                {
+                    Engine.partition.Query(resultSet, tracingLine, BoxKind.HITBOX);
+                    foreach (var entity in resultSet)
+                        if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
+                        {
+                            var hitbox = sprite.Hitbox;
+                            var collisionData = sprite.CollisionData;
+                            CollisionFlags collisionResult = TestCollision(hitbox, collisionData, tracingLine, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                            if (collisionResult == CollisionFlags.NONE)
+                                continue;
+
+                            result |= collisionResult;
+                            CompareVectorAndUpdateWithNearestObstacle(hitbox, slopeTriangle, collisionData);
+                        }
+                }
+                else
+                {
+                    Engine.partition.Query(resultSet, TestVector, BoxKind.HITBOX);
+                    foreach (var entity in resultSet)
+                        if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
+                        {
+                            var hitbox = sprite.Hitbox;
+                            var collisionData = sprite.CollisionData;
+                            CollisionFlags collisionResult = TestCollision(hitbox, collisionData, TestVector, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                            if (collisionResult == CollisionFlags.NONE)
+                                continue;
+
+                            result |= collisionResult;
+                        }
+                }
+            }
+
+            return result;
+        }
+
+        private CollisionFlags GetCollisionBoxFlags()
+        {
+            CollisionFlags result = CollisionFlags.NONE;
+            NearestObstacleBox = Box.EMPTY_BOX;
+
+            if (CheckWithWorld)
+            {
+                if (tracing && TracingBoxMode.HasFlag(TracingMode.DIAGONAL))
+                {
+                    Vector stepVector = GetHorizontalStepVector(TracingDirection, MAP_SIZE);
+                    FixedSingle stepDistance = stepVector.Length;
+                    if (stepDistance == 0)
+                        stepDistance = MAP_SIZE;
+
+                    var tracingBox = new Box(tracingParallelogram.Origin, stepDistance, TracingBox.Height);
+                    for (FixedSingle distance = 0; distance <= TracingDistance; distance += stepDistance, tracingBox += stepVector)
+                    {
+                        Cell start = World.GetMapCellFromPos(tracingBox.LeftTop);
+                        Cell end = World.GetMapCellFromPos(tracingBox.RightBottom);
+
+                        int startRow = start.Row;
+                        int startCol = start.Col;
+
+                        if (startRow < 0)
+                            startRow = 0;
+
+                        if (startRow >= World.MapRowCount)
+                            startRow = World.MapRowCount - 1;
+
+                        if (startCol < 0)
+                            startCol = 0;
+
+                        if (startCol >= World.MapColCount)
+                            startCol = World.MapColCount - 1;
+
+                        int endRow = end.Row;
+                        int endCol = end.Col;
+
+                        if (endRow < 0)
+                            endRow = 0;
+
+                        if (endRow >= World.MapRowCount)
+                            endRow = World.MapRowCount - 1;
+
+                        if (endCol < 0)
+                            endCol = 0;
+
+                        if (endCol >= World.MapColCount)
+                            endCol = World.MapColCount - 1;
+
+                        for (int row = startRow; row <= endRow; row++)
+                            for (int col = startCol; col <= endCol; col++)
+                            {
+                                var mapPos = World.GetMapLeftTop(row, col);
+                                Map map = World.GetMapFrom(mapPos);
+                                if (map != null)
+                                {
+                                    Box mapBox = World.GetMapBoundingBox(World.GetMapCellFromPos(TestVector));
+                                    CollisionData collisionData = map.CollisionData;
+
+                                    CollisionFlags collisionResult = TestCollision(mapBox, collisionData, tracingParallelogram, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                                    if (collisionResult == CollisionFlags.NONE)
+                                        continue;
+
+                                    result |= collisionResult;
+                                    CompareVectorAndUpdateWithNearestObstacle(mapBox, slopeTriangle, collisionData);
+                                }
+                            }
+                    }
+                }
+                else
+                {
+                    Cell start = World.GetMapCellFromPos(TestBox.LeftTop);
+                    Cell end = World.GetMapCellFromPos(TestBox.RightBottom);
+
+                    int startRow = start.Row;
+                    int startCol = start.Col;
+
+                    if (startRow < 0)
+                        startRow = 0;
+
+                    if (startRow >= World.MapRowCount)
+                        startRow = World.MapRowCount - 1;
+
+                    if (startCol < 0)
+                        startCol = 0;
+
+                    if (startCol >= World.MapColCount)
+                        startCol = World.MapColCount - 1;
+
+                    int endRow = end.Row;
+                    int endCol = end.Col;
+
+                    if (endRow < 0)
+                        endRow = 0;
+
+                    if (endRow >= World.MapRowCount)
+                        endRow = World.MapRowCount - 1;
+
+                    if (endCol < 0)
+                        endCol = 0;
+
+                    if (endCol >= World.MapColCount)
+                        endCol = World.MapColCount - 1;
+
+                    for (int row = startRow; row <= endRow; row++)
+                        for (int col = startCol; col <= endCol; col++)
+                        {
+                            var mapPos = World.GetMapLeftTop(row, col);
+                            Map map = World.GetMapFrom(mapPos);
+                            if (map != null)
+                            {
+                                Box mapBox = World.GetMapBoundingBox(row, col);
+                                CollisionData collisionData = map.CollisionData;
+
+                                CollisionFlags collisionResult = TestCollision(mapBox, collisionData, TestBox, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                                if (collisionResult == CollisionFlags.NONE)
+                                    continue;
+
+                                result |= collisionResult;
+
+                                if (tracing)
+                                    CompareBoxAndUpdateWithNearestObstacle(mapBox, slopeTriangle, collisionData);
+                            }
+                        }
+                }
+            }
+
+            if (CheckWithSolidSprites)
+            {
+                resultSet.Clear();
+
+                if (tracing && TracingBoxMode.HasFlag(TracingMode.DIAGONAL))
+                {
+                    Engine.partition.Query(resultSet, tracingParallelogram, BoxKind.HITBOX);
+                    foreach (var entity in resultSet)
+                        if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
+                        {
+                            var hitbox = sprite.Hitbox;
+                            var collisionData = sprite.CollisionData;
+                            CollisionFlags collisionResult = TestCollision(hitbox, collisionData, tracingParallelogram, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                            if (collisionResult == CollisionFlags.NONE)
+                                continue;
+
+                            result |= collisionResult;
+
+                            CompareBoxAndUpdateWithNearestObstacle(hitbox, slopeTriangle, collisionData);
+                        }
+                }
+                else
+                {
+                    Engine.partition.Query(resultSet, TestBox, BoxKind.HITBOX);
+                    foreach (var entity in resultSet)
+                        if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
+                        {
+                            var hitbox = sprite.Hitbox;
+                            var collisionData = sprite.CollisionData;
+                            CollisionFlags collisionResult = TestCollision(hitbox, collisionData, TestBox, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+
+                            if (collisionResult == CollisionFlags.NONE)
+                                continue;
+
+                            result |= collisionResult;
+
+                            if (tracing)
+                                CompareBoxAndUpdateWithNearestObstacle(hitbox, slopeTriangle, collisionData);
+                        }
+                }
+            }
+
+            return result;
+        }
+
+        public CollisionFlags GetCollisionFlags()
+        {
+            return TestKind switch
+            {
+                TouchingKind.VECTOR => GetCollisionVectorFlags(),
+                TouchingKind.BOX => GetCollisionBoxFlags(),
+                _ => CollisionFlags.NONE
+            };
+        }
+
+        public CollisionFlags GetTouchingFlagsLeft()
+        {
+            var lastBox = TestBox;
+            TestBox = new Box(TestBox.LeftTop - (StepSize, 0), StepSize, TestBox.Height);
+            var flags = GetCollisionFlags();
+            TestBox = lastBox;
+            return flags;
+        }
+
+        public CollisionFlags GetTouchingFlagsUp()
+        {
+            var lastBox = TestBox;
+            TestBox = new Box(TestBox.LeftTop - (0, StepSize), TestBox.Width, StepSize);
+            var flags = GetCollisionFlags();
+            TestBox = lastBox;
+            return flags;
+        }
+
+        public CollisionFlags GetTouchingFlagsRight()
+        {
+            var lastBox = TestBox;
+            TestBox = new Box(TestBox.RightTop, StepSize, TestBox.Height);
+            var flags = GetCollisionFlags();
+            TestBox = lastBox;
+            return flags;
+        }
+
+        public CollisionFlags GetTouchingFlagsDown()
+        {
+            var lastBox = TestBox;
+            TestBox = new Box(TestBox.LeftBottom, TestBox.Width, StepSize);
+            var flags = GetCollisionFlags();
+            TestBox = lastBox;
+            return flags;
+        }
+
+        public CollisionFlags TraceRay(Vector direction, FixedSingle maxDistance)
+        {
+            if (direction == Vector.NULL_VECTOR || maxDistance <= 0)
+                return CollisionFlags.NONE;
+
+            if (TestKind != TouchingKind.VECTOR)
+            {
+                TestKind = TouchingKind.VECTOR;
+                TestVector = TestBox.Origin;
+            }
+
+            var directionVersor = direction.Versor();
+
+            tracing = true;
+            TracingDistance = maxDistance;
+            NearestDistance = TracingDistance + 1;
+            NearestBoxDistance = NearestDistance;
+            NearestSlopeDistance = NearestDistance;
+            NearestObstacleCollisionData = CollisionData.NONE;
+            TracingVector = TestVector;
+            TracingDirection = maxDistance * directionVersor;
+
+            var flags = GetCollisionFlags();
+            TestVector = TracingVector + (NearestDistance * directionVersor).TruncFracPart();
+            tracing = false;
+
+            return flags;
+        }
+
+        public CollisionFlags MoveContactSolidHorizontal(FixedSingle dx)
+        {
+            if (dx == 0)
+                return CollisionFlags.NONE;
+
+            tracing = true;
+            TestKind = TouchingKind.BOX;
+            TracingDistance = dx.Abs;
+            NearestDistance = TracingDistance + 1;
+            NearestBoxDistance = NearestDistance;
+            NearestSlopeDistance = NearestDistance;
+            NearestObstacleCollisionData = CollisionData.NONE;
+            TracingBox = TestBox;
+            TestBox = new Box(dx < 0 ? TestBox.LeftTop - (TracingDistance, 0) : TestBox.RightTop, TracingDistance, TestBox.Height);
+            TracingBoxMode = TracingMode.HORIZONTAL;
+            TracingBackward = dx < 0;
+            TracingDirection = dx * Vector.RIGHT_VECTOR;
+
+            var flags = GetCollisionFlags();
+            TestBox = TracingBox + (flags != CollisionFlags.NONE ? (dx.Signal * NearestDistance.TruncFracPart(), 0) : (dx, 0));
+
+            tracing = false;
+
+            return flags;
+        }
+
+        public CollisionFlags MoveContactSolidDiagonalHorizontal(Vector direction)
+        {
+            if (direction.X == 0)
+                return CollisionFlags.NONE;
+
+            FixedSingle dx = direction.X;
+
+            tracing = true;
+            TestKind = TouchingKind.BOX;
+            TracingDistance = direction.Length;
+            NearestDistance = TracingDistance + 1;
+            NearestBoxDistance = NearestDistance;
+            NearestSlopeDistance = NearestDistance;
+            NearestObstacleCollisionData = CollisionData.NONE;
+            TracingBox = TestBox;
+            tracingParallelogram.Setup(dx < 0 ? TestBox.LeftTop - (TracingDistance, 0) : TestBox.RightTop, direction, TestBox.Height);
+            TestBox = tracingParallelogram.WrappingBox;
+            TracingBoxMode = TracingMode.HORIZONTAL | TracingMode.DIAGONAL;
+            TracingBackward = dx < 0;
+            TracingDirection = direction;
+
+            var flags = GetCollisionFlags();
+            TestBox = TracingBox + (flags != CollisionFlags.NONE ? direction.VersorScale(NearestDistance).TruncFracPart() : direction);
+
+            tracing = false;
+
+            return flags;
+        }
+
+        public CollisionFlags MoveContactSolidVertical(FixedSingle dy)
+        {
+            if (dy == 0)
+                return CollisionFlags.NONE;
+
+            tracing = true;
+            TestKind = TouchingKind.BOX;
+            TracingDistance = dy.Abs;
+            NearestDistance = TracingDistance + 1;
+            NearestBoxDistance = NearestDistance;
+            NearestSlopeDistance = NearestDistance;
+            NearestObstacleCollisionData = CollisionData.NONE;
+            TracingBox = TestBox;
+            TestBox = new Box(dy < 0 ? TestBox.LeftTop - (0, TracingDistance) : TestBox.LeftBottom, TestBox.Width, TracingDistance);
+            TracingBoxMode = TracingMode.VERTICAL;
+            TracingBackward = dy < 0;
+            TracingDirection = dy * Vector.UP_VECTOR;
+
+            var flags = GetCollisionFlags();
+            TestBox = TracingBox + (flags != CollisionFlags.NONE ? (0, dy.Signal * NearestDistance.TruncFracPart()) : (0, dy));
+
+            tracing = false;
+
+            return flags;
+        }
+
+        public CollisionFlags MoveContactSolidDiagonalVertical(Vector direction)
+        {
+            // TODO : Implement (if needed)
+            throw new NotImplementedException();
+        }
+
+        public CollisionFlags ComputeLandedState()
+        {
+            return ComputeLandedState(out _);
+        }
+
+        private bool IsPerfectlyLandedOnSlope()
+        {
+            var lastTestKind = TestKind;
+            TestVector = TestBox.MiddleBottom;
+            TestKind = TouchingKind.VECTOR;
+
+            var flags = TraceRay(Vector.DOWN_VECTOR, StepSize);
+            TestKind = lastTestKind;
+
+            return flags == CollisionFlags.SLOPE && (TestVector.Y - TestBox.Bottom).Abs < StepSize;
+        }
+
+        public CollisionFlags ComputeLandedState(out bool perfectlyLanded)
+        {
+            if (IsPerfectlyLandedOnSlope())
+            {
+                perfectlyLanded = true;
+                return CollisionFlags.SLOPE;
+            }
+
+            if (GetCollisionFlags().HasFlag(CollisionFlags.SLOPE))
+            {
+                perfectlyLanded = false;
+                return CollisionFlags.SLOPE;
+            }
+
+            IgnoreFlags &= ~CollisionFlags.SLOPE;
+
+            var lastBox = TestBox;
+            var lastIgnoreFlags = IgnoreFlags;
+            var flags = MoveContactSolidVertical(StepSize);
+
+            IgnoreFlags = lastIgnoreFlags;
+            TestBox = lastBox;
+
+            if (flags.CanBlockTheMove(Direction.DOWN))
+            {
+                flags = NearestObstacleCollisionData.ToCollisionFlags();
+                perfectlyLanded = (lastBox.Bottom - NearestObstacleBox.Top).Abs < StepSize;
+                return flags;
+            }
+
+            perfectlyLanded = false;
+            return CollisionFlags.NONE;
+        }
+
+        private CollisionFlags AdjustOnTheSlope(FixedSingle maxDistance)
+        {
+            var line = new LineSegment(TestBox.MiddleBottom, TestBox.MiddleBottom - (0, maxDistance));
+            var type = NearestObstacleSlope.HypotenuseLine.Intersection(line, out LineSegment intersection);
+            if (type == GeometryType.VECTOR)
+            {
+                Vector delta = intersection.Start - TestBox.MiddleBottom;
+                TestBox += delta;
+                return CollisionFlags.SLOPE;
+            }
+
+            return CollisionFlags.NONE;
+        }
+
+        public CollisionFlags AdjustOnTheFloor(FixedSingle maxDistance)
+        {
+            var flags = GetCollisionFlags();
+            if (!flags.CanBlockTheMove(Direction.DOWN))
+                return CollisionFlags.NONE;
+
+            flags = ComputeLandedState();
+            if (flags == CollisionFlags.SLOPE)
+                return AdjustOnTheSlope(maxDistance);
+
+            var lastBox = TestBox;
+            TestBox -= (0, maxDistance);
+            if (MoveContactSolidVertical(maxDistance) == CollisionFlags.NONE)
+                TestBox = lastBox;
+
+            flags = ComputeLandedState(out bool perfectlyLanded);
+            return perfectlyLanded ? flags : CollisionFlags.NONE;
         }
     }
 }

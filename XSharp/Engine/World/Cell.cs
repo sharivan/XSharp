@@ -51,5 +51,11 @@
         {
             return (cell.Row, cell.Col);
         }
+
+        public void Deconstruct(out int row, out int col)
+        {
+            row = Row;
+            col = Col;
+        }
     }
 }

@@ -597,9 +597,9 @@ namespace MegaEDX.ROM
             return expandedROM ? expandedLayoutSize : origLayoutSize[Type, Level];
         }
 
-        internal System.Drawing.Rectangle GetBoundingBox(ref EventInfo e)
+        internal Rectangle GetBoundingBox(ref EventInfo e)
         {
-            var rect = new System.Drawing.Rectangle(0, 0, 0, 0);
+            var rect = new Rectangle(0, 0, 0, 0);
 
             if (e.type == 0x2 && e.eventId == 0 && pLocks != 0)
             {
@@ -627,7 +627,7 @@ namespace MegaEDX.ROM
                     int top = ReadShort(b);
                     b += 2;
 
-                    rect = new System.Drawing.Rectangle(left, top, right - left, bottom - top);
+                    rect = new Rectangle(left, top, right - left, bottom - top);
                 }
             }
             else if (e.type == 0x2 && e.eventId >= 0x15 && e.eventId <= 0x18)
@@ -638,7 +638,7 @@ namespace MegaEDX.ROM
                 int bottom = e.ypos + ((e.eventId & 0x8) == 0 ? 112 : 5);
                 int right = e.xpos + ((e.eventId & 0x8) != 0 ? 128 : 5);
 
-                rect = new System.Drawing.Rectangle(left, top, right - left, bottom - top);
+                rect = new Rectangle(left, top, right - left, bottom - top);
             }
             else if (pSpriteAssembly != 0 && pSpriteOffset[e.type] != 0
                 && (e.type != 1 || Type == 0 && e.eventId == 0x21)
@@ -667,7 +667,7 @@ namespace MegaEDX.ROM
                 uint baseMap = Snes2pc((int) mapAddr);
                 byte tileCnt = rom[baseMap++];
 
-                var boundingBox = new System.Drawing.Rectangle(0, 0, ushort.MaxValue, ushort.MaxValue);
+                var boundingBox = new Rectangle(0, 0, ushort.MaxValue, ushort.MaxValue);
 
                 for (int i = 0; i < tileCnt; ++i)
                 {
@@ -730,7 +730,7 @@ namespace MegaEDX.ROM
                         if (bottom < screenY + 8)
                             bottom = screenY + 8;
 
-                        boundingBox = new System.Drawing.Rectangle(left, top, right - left, bottom - top);
+                        boundingBox = new Rectangle(left, top, right - left, bottom - top);
                     }
                 }
 
@@ -743,7 +743,7 @@ namespace MegaEDX.ROM
                 int bottom = e.ypos + 5;
                 int right = e.xpos + 5;
 
-                rect = new System.Drawing.Rectangle(left, top, right - left, bottom - top);
+                rect = new Rectangle(left, top, right - left, bottom - top);
             }
 
             return rect;
