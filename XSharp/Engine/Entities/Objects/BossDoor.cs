@@ -1,4 +1,5 @@
-﻿using XSharp.Engine.Entities.Triggers;
+﻿using XSharp.Engine.Entities.Enemies;
+using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.World;
 using XSharp.Geometry;
 

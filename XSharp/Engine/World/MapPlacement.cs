@@ -26,7 +26,7 @@ namespace XSharp.Engine.World
 
         public Box BoudingBox => World.GetMapBoundingBox(Cell);
 
-        public RightTriangle SlopeTriangle => CollisionData.MakeSlopeTriangle() + LeftTop;
+        public RightTriangle SlopeTriangle => CollisionChecker.MakeSlopeTriangle(CollisionData) + LeftTop;
 
         public CollisionData CollisionData => map != null ? map.CollisionData : CollisionData.NONE;
 

@@ -49,7 +49,7 @@ namespace XSharp.Engine.Entities.HUD
         {
             base.OnSpawn();
 
-            MultiAnimation = true;
+            MultiAnimation = true;           
             frameCounter = 0;
         }
 

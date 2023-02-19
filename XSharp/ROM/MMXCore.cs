@@ -243,7 +243,7 @@ namespace XSharp.ROM
         private uint numBlocks;
         private uint numDecs;
         private uint numCheckpoints;
-        private uint numGfxIds;
+        private readonly uint numGfxIds;
 
         private int objLoad;
         private int tileLoad;
@@ -567,13 +567,13 @@ namespace XSharp.ROM
 
             for (int i = 0; i < 0x20; i++) // Decompress the 32 colors
                 fontPalCache[i] = Get16Color((uint) (((Type == 0) ? 0x2D140 : (Type == 1) ? 0x2CF20 : (Type == 2) ? 0x632C0 : 0x50000) + i * 2)); // 0x2D3E0
-
             for (int i = 0; i < 0x100; i++)
-            {
-                // Decompress all 256 tiles in ram
+            { // Decompress all 256 tiles in ram
                 int tempChar = (Type == 0) ? i : i + 0x10;
                 Tile2bpp2raw(textCache, i * 0x10, fontCache, tempChar * 0x40 + 0x400);
             }
+
+            return; //why is there a return for a void function that doesn't return anything?
         }
 
         internal uint GetCheckPointPointer(uint p)
@@ -756,6 +756,964 @@ namespace XSharp.ROM
             }
 
             return rect;
+        }
+
+        internal bool ExpandROM()
+        {
+            bool ok = true;
+            uint a = 0;
+
+            switch (Type)
+            {
+                case 0:
+                {
+                    ok &= header.romSize == 0xB;
+                    ok &= romSize == 0x180000;
+                    break;
+                }
+                case 1:
+                {
+                    ok &= header.romSize == 0xB;
+                    ok &= romSize == 0x180000 || romSize == 0x200000 && Compare(0x100000, 0x180000, 0x80000) == 0;
+                    break;
+                }
+                case 2:
+                {
+                    ok &= header.romSize == 0xB;
+                    ok &= romSize == 0x200000;
+                    break;
+                }
+                case 3:
+                {
+                    ok &= header.romSize == 0xC;
+                    ok &= romSize == 0x400000;
+                    break;
+                }
+                default:
+                {
+                    ok = false;
+                    break;
+                }
+            }
+
+            if (Type < 3)
+            {
+                if (ok)
+                {
+                    // make the ROM bigger
+                    // Add 1MB
+                    Fill((uint) romSize, 0xFF, 0x100000);
+                    uint arg1 = (uint) (romSize + 0x8000 - expandedROMHeaderSize);
+                    WriteASCIIString(arg1, expandedROMString);
+                    WriteWord((uint) (romSize + 0x8000 - expandedROMHeaderSize + 0xE), expandedROMVersion);
+                    ushort v = 0x800;
+                    WriteWord((uint) (romSize + 0x8000 - expandedROMHeaderSize + 0x10), v);
+                    v = 0x800;
+                    WriteWord((uint) (romSize + 0x8000 - expandedROMHeaderSize + 0x12), v);
+                    v = 0x10;
+                    WriteWord((uint) (romSize + 0x8000 - expandedROMHeaderSize + 0x14), v);
+                    // sceneUsed already stored in the ROM
+                }
+
+                uint currentOffset = (uint) romSize;
+
+                if (ok)
+                {
+                    // relocate the layout for each level
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        ushort pLevel = (ushort) (i * 3);
+                        var levelLayout = Snes2pc((int) SReadDWord(p_layout[Type] + pLevel));
+                        uint layout = levelLayout;
+
+                        uint count;
+                        for (count = 3; rom[layout + count] != 0xFF; ++count)
+                            ;
+                        count++;
+
+                        if (count <= 0x800)
+                        {
+                            Array.Copy(rom, layout, rom, currentOffset + i * 0x800, count);
+                        }
+                        else
+                        {
+                            ok = false;
+                            break;
+                        }
+                    }
+
+                    currentOffset += 0x10 * 0x800;
+                }
+
+                if (ok)
+                {
+                    // relocate the background layout for each level
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        ushort pLevel = (ushort) (i * 3);
+                        var levelLayout = Snes2pc((int) SReadDWord(p_blayout[Type] + pLevel));
+                        uint layout = levelLayout;
+
+                        uint count;
+                        for (count = 3; rom[layout + count] != 0xFF; ++count)
+                            ;
+                        count++;
+
+                        if (count <= 0x800)
+                        {
+                            Array.Copy(rom, layout, rom, currentOffset + i * 0x800, count);
+                        }
+                        else
+                        {
+                            ok = false;
+                            break;
+                        }
+                    }
+
+                    currentOffset += 0x10 * 0x800;
+                }
+
+                if (ok)
+                {
+                    // copy events.  fix addresses in ROM
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        uint pEvents = Snes2pc((int) (SReadWord((uint) (p_events[Type] + i * 2)) | (eventBank << 16)));
+                        uint pevent = pEvents;
+                        uint peventBase = pevent;
+
+                        uint count = 0;
+
+                        uint blockId = 0xFF;
+                        uint nextBlockId = rom[pevent++];
+                        count++;
+
+                        while (blockId != nextBlockId && blockId < 0x100)
+                        {
+                            bool eventDone = true;
+
+                            blockId = nextBlockId;
+                            do
+                            {
+                                eventDone = (ReadWord(pevent + 5) & 0x8000) != 0;
+
+                                pevent += 7;
+                                count += 7;
+                            } while (!eventDone);
+
+                            // get the next id
+                            nextBlockId = rom[pevent++];
+                            count++;
+                        }
+
+                        if (count <= 0x800)
+                        {
+                            Array.Copy(rom, peventBase, rom, currentOffset + i * 0x800, count);
+                        }
+                        else
+                        {
+                            ok = false;
+                            break;
+                        }
+                    }
+
+                    currentOffset += 0x10 * 0x800;
+                }
+
+                if (ok)
+                {
+                    // relocate the scenes
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        ushort pLevel = (ushort) (i * 3);
+                        uint sceneLayout = Snes2pc((int) SReadDWord(p_scenes[Type] + pLevel));
+                        uint layout = sceneLayout;
+
+                        uint levelLayout = Snes2pc((int) SReadDWord(p_layout[Type] + pLevel));
+                        uint s = rom[levelLayout + 2];
+
+                        // copy the existing scene data
+                        Array.Copy(rom, layout, rom, currentOffset + i * 0x800 * 0x80, s * 0x80);
+                        Array.Clear(rom, (int) (currentOffset + i * 0x800 * 0x80 + s * 0x80), (int) (0x80 * 0x80 - s * 0x80));
+                    }
+
+                    currentOffset += 0x10 * 0x80 * 0x80;
+                }
+
+                if (ok)
+                {
+                    if (Type == 0)
+                    {
+                        if ((ReadWord(Snes2pc(0x80DB92)) != 0x85A9 || ReadWord(Snes2pc(0x80DBD9)) != 0x85A9 || ReadWord(Snes2pc(0x80DD4C)) != 0x85A9)
+                            && (ReadWord(Snes2pc(0x80DB7C)) != 0x85A9 || ReadWord(Snes2pc(0x80DBC3)) != 0x85A9 || ReadWord(Snes2pc(0x80DD36)) != 0x85A9))
+                        {
+                            ok = false;
+                        }
+                    }
+                    else if (Type == 1)
+                    {
+                        if (ReadWord(Snes2pc(0x80DB96)) != 0x29A9 || ReadWord(Snes2pc(0x80DBDD)) != 0x29A9 || ReadWord(Snes2pc(0x80DD44)) != 0x29A9)
+                        {
+                            ok = false;
+                        }
+                    }
+                    else if (Type == 2)
+                    {
+                        // FIXME: X3 has a problem where banks >= 0xC0 don't have RAM shadowed into the lower offsets
+                        // so LDs to ROM intermixed with STs to RAM fail.  This is a problem for the events but not the layout
+                        if (ReadWord(Snes2pc(0x80DD80)) != 0x3CA9 || ReadWord(Snes2pc(0x80DDC7)) != 0x3CA9 || ReadWord(Snes2pc(0x80DF2E)) != 0x3CA9)
+                        {
+                            ok = false;
+                        }
+                    }
+                    else
+                    {
+                        ok = false;
+                    }
+                }
+
+                if (ok)
+                {
+                    uint pEvents = Snes2pc((int) (SReadWord(p_events[Type] + 0x300) | (eventBank << 16)));
+                    uint pevent = pEvents;
+
+                    //for (unsigned i = 0x0; i < 0x2000; i++) {
+                    //	if (*(pevent + i) != 0xFF) {
+                    //		ok = false;
+                    //		break;
+                    //	}
+                    //}
+
+                    uint pFunc = Snes2pc(0x80FF00);
+                    uint func = pFunc;
+                    for (int i = 0x0; i < 0x90; i++)
+                    {
+                        if (rom[func + i] != 0xFF)
+                        {
+                            ok = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (ok)
+                {
+                    expandedROM = true;
+
+                    // remove copy protection crap
+                    if (Type == 0)
+                    {
+                        // reset upgrades
+                        rom[Snes2pc(0x81824E)] = 0x00;
+                        // reset checkpoint
+                        rom[Snes2pc(0x849FC7)] = 0x00;
+                        // 1UP drop reset stage
+                        rom[Snes2pc(0x84A41F)] = 0x00;
+
+                        //*LPBYTE(rom + snes2pc(0x84A47F)) = 0xEA;
+                        //*LPBYTE(rom + snes2pc(0x84A480)) = 0xEA;
+                        //*LPBYTE(rom + snes2pc(0x84A3CC)) = 0x80;
+                    }
+                    else if (Type == 1)
+                    {
+                    }
+                    else if (Type == 2)
+                    {
+                    }
+
+                    // remove old events
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        uint pEvents1 = Snes2pc((int) (SReadWord((uint) (p_events[Type] + i * 2)) | (eventBank << 16)));
+                        uint pevent = pEvents1;
+                        uint peventBase = pevent;
+
+                        uint count = 0;
+
+                        uint blockId = 0xFF;
+                        uint nextBlockId = rom[pevent++];
+                        rom[pevent - 1] = 0xFF;
+                        count++;
+
+                        while (blockId != nextBlockId && blockId < 0x100)
+                        {
+                            bool eventDone = true;
+
+                            blockId = nextBlockId;
+                            do
+                            {
+                                eventDone = (ReadWord(pevent + 5) & 0x8000) != 0;
+
+                                Fill(pevent, 0xFF, 7);
+                                pevent += 7;
+                                count += 7;
+                            } while (!eventDone);
+
+                            // get the next id
+                            nextBlockId = rom[pevent++];
+                            rom[pevent - 1] = 0xFF;
+                            count++;
+                        }
+                    }
+
+                    // layout
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        uint addr = Pc2snes(romSize + i * 0x800);
+
+                        var levelLayout = Snes2pc((int) SReadDWord((uint) (p_layout[Type] + i * 3)));
+                        uint s = rom[levelLayout + 2];
+                        // overwrite the layout data
+                        for (uint l = levelLayout + 3; rom[l] != 0xFF; l++)
+                            rom[l] = 0xFF;
+
+                        Array.Copy(rom, addr, rom, Snes2pc((int) (p_layout[Type] + i * 3)), 3);
+                    }
+
+                    // background layout
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        uint addr = Pc2snes(romSize + 0x8000 + i * 0x800);
+
+                        var levelLayout = Snes2pc((int) SReadDWord((uint) (p_blayout[Type] + i * 3)));
+                        uint s = rom[levelLayout + 2];
+                        // overwrite the layout data
+                        for (uint l = levelLayout + 3; rom[l] != 0xFF; l++)
+                            rom[l] = 0xFF;
+
+                        Array.Copy(rom, addr, rom, Snes2pc((int) (p_blayout[Type] + i * 3)), 3);
+                    }
+
+                    // scenes
+                    uint bank = Pc2snes(romSize + 2 * 0x8000 + 0 * 0x800);
+                    if (Type == 0)
+                    {
+                        eventBank = bank >> 16;
+                        uint offsetAddr = Pc2snes(romSize + 3 * 0x8000 - 2 * 0x10);
+                        if (ReadWord(Snes2pc(0x80DB92)) == 0x85A9 || ReadWord(Snes2pc(0x80DBD9)) == 0x85A9 || ReadWord(Snes2pc(0x80DD4C)) == 0x85A9)
+                        {
+                            // 1.0
+                            WriteWord(Snes2pc(0x80DB92), (ushort) (0xA9 | (eventBank << 8)));
+                            WriteWord(Snes2pc(0x80DBD9), (ushort) (0xA9 | (eventBank << 8)));
+                            WriteWord(Snes2pc(0x80DD4C), (ushort) (0xA9 | (eventBank << 8)));
+                            WriteWord(Snes2pc(0x80DB9E), (ushort) (offsetAddr & 0xFFFF));
+                        }
+                        else
+                        {
+                            // 1.1
+                            WriteWord(Snes2pc(0x80DB7C), (ushort) (0xA9 | (eventBank << 8)));
+                            WriteWord(Snes2pc(0x80DBC3), (ushort) (0xA9 | (eventBank << 8)));
+                            WriteWord(Snes2pc(0x80DD36), (ushort) (0xA9 | (eventBank << 8)));
+                            WriteWord(Snes2pc(0x80DB88), (ushort) (offsetAddr & 0xFFFF));
+                        }
+                    }
+                    else if (Type == 1)
+                    {
+                        eventBank = bank >> 16;
+                        WriteWord(Snes2pc(0x80DB96), (ushort) (0xA9 | (eventBank << 8)));
+                        WriteWord(Snes2pc(0x80DBDD), (ushort) (0xA9 | (eventBank << 8)));
+                        WriteWord(Snes2pc(0x80DD44), (ushort) (0xA9 | (eventBank << 8)));
+
+                        uint offsetAddr = Pc2snes(romSize + 3 * 0x8000 - 2 * 0x10);
+                        WriteWord(Snes2pc(0x80DBA2), (ushort) (offsetAddr & 0xFFFF));
+                    }
+                    else if (Type == 2)
+                    {
+                        eventBank = bank >> 16;
+                        WriteWord(Snes2pc(0x80DD80), (ushort) (0xA9 | (eventBank << 8)));
+                        WriteWord(Snes2pc(0x80DDC7), (ushort) (0xA9 | (eventBank << 8)));
+
+                        uint offsetAddr = Pc2snes(romSize + 3 * 0x8000 - 2 * 0x10);
+                        WriteWord(Snes2pc(0x80DD8C), (ushort) (offsetAddr & 0xFFFF));
+
+                        // swap LD and PLB so LD uses correct bank
+                        WriteWord(Snes2pc(0x80DD83), 0xAEAD);
+                        WriteWord(Snes2pc(0x80DD85), 0xAB1F);
+
+                        // store the bank in the 3rd B for long LD
+                        WriteWord(Snes2pc(0x80DF2E), (ushort) (0xA9 | (eventBank << 8)));
+                        WriteWord(Snes2pc(0x80DF30), 0x1A85);
+
+                        // NOP the push/pull of the bank register 
+                        rom[Snes2pc(0x80DF43)] = 0xEA;
+                        rom[Snes2pc(0x80DF4C)] = 0xEA;
+
+                        // change all the offset LDs to long LDs
+                        rom[Snes2pc(0x80DF34)] = 0xA7;
+                        rom[Snes2pc(0x80DF50)] = 0xB7;
+                        rom[Snes2pc(0x80DF56)] = 0xB7;
+                        rom[Snes2pc(0x80DF5C)] = 0xB7;
+                        rom[Snes2pc(0x80DF62)] = 0xB7;
+                        rom[Snes2pc(0x80DF68)] = 0xB7;
+                        rom[Snes2pc(0x80DF6E)] = 0xB7;
+                    }
+
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        uint addr = Pc2snes(romSize + 3 * 0x8000 + i * 0x800);
+                        uint offsetAddr = Pc2snes(romSize + 3 * 0x8000 - 2 * 0x10);
+                        WriteWord(Snes2pc((uint) (offsetAddr + i * 2)), (ushort) addr);
+                    }
+
+                    // scenes
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        ushort pLevel = (ushort) (i * 3);
+                        var sceneLayout = Snes2pc((int) SReadDWord(p_scenes[Type] + pLevel));
+                        uint layout = sceneLayout;
+
+                        var levelLayout = Snes2pc((int) SReadDWord(p_layout[Type] + pLevel));
+                        uint s = rom[levelLayout + 2];
+
+                        // overwrite the scene data
+                        Fill((int) layout, 0xFF, (int) (s * 0x80));
+
+                        uint addr = Pc2snes(romSize + 3 * 0x8000 + i * 0x80 * 0x80);
+                        WriteWord(Snes2pc((int) (p_scenes[Type] + i * 3)), (ushort) addr);
+                        rom[Snes2pc((int) (p_scenes[Type] + i * 3)) + 2] = (byte) (addr >> 16);
+                        rom[levelLayout + 2] = 0x40;
+                    }
+
+                    // checkpoints
+                    checkpointBank = (Type == 0) ? 0x93 : ((p_events[Type]) >> 16);
+                    // copy the current checkpoints table
+                    uint pEvents = Snes2pc((int) ((Type == 0 ? 0x93AD00 : p_events[Type]) + 0x300));
+                    uint pnewBase = pEvents;
+                    byte[] pointers = new byte[0x10 + 0x10 * 0x20];
+
+                    // fix the level base pointers
+                    for (int j = 0; j < 0x10; j++)
+                    {
+                        pointers[j * 2] = (byte) ((0x10 + j * 0x10) * 2);
+                    }
+
+                    var offsetSet = new HashSet<uint>();
+
+                    ushort checkpointBaseOffset = (ushort) ((Type == 0 ? 0xAD00 : (p_events[Type] & 0xFFFF)) + 0x300 - (p_checkp[Type] & 0xFFFF));
+
+                    for (int i = 0; i < numLevels; ++i)
+                    {
+                        ushort levelValue = SReadWord((uint) (p_checkp[Type] + i * 2));
+                        uint levelOffset = Snes2pc((int) (p_checkp[Type] + levelValue));
+                        uint pLevel = levelOffset;
+
+                        ushort endValue = (ushort) ((Type == 0) ? 0x0072 : (Type == 1) ? 0x0098 : 0x0088);
+                        for (int j = 0; j < numLevels; j++)
+                        {
+                            ushort tempValue = SReadWord((uint) (p_checkp[Type] + j * 2));
+                            if (levelValue < tempValue && tempValue < endValue)
+                            {
+                                endValue = tempValue;
+                            }
+                        }
+
+                        uint endOffset = Snes2pc((int) (p_checkp[Type] + endValue));
+                        uint pEnd = endOffset;
+
+                        uint count = 0;
+                        while (pLevel < pEnd && count < 0x10)
+                        {
+                            ushort checkpointValue = rom[pLevel++];
+
+                            offsetSet.Add(checkpointValue);
+                            WriteWord(pointers, (uint) ((0x10 + i * 0x10 + count) * 2), (ushort) (checkpointBaseOffset + checkpointValue));
+
+                            count++;
+                        }
+                        // set remaining counts as last
+                        Fill(pointers, (uint) ((0x10 + i * 0x10 + count) * 2), 0xFF, (int) ((0x10 - count) * 2));
+                    }
+                    // copy existing checkpoints
+                    Copy(Snes2pc((int) p_checkp[Type]), pnewBase, (Type == 0) ? 0x56E : (Type == 1) ? 0x9B1 : 0x728);
+                    // copy new pointer table in
+                    uint checkpointTableBase = Snes2pc((int) p_checkp[Type]);
+                    Array.Copy(pointers, 0, rom, checkpointTableBase, pointers.Length);
+
+                    if (Type == 0)
+                    {
+                        // write new base function
+                        Copy(Snes2pc(0x80E68E), Snes2pc(0x80FF00), 0x22);
+                        Fill(Snes2pc(0x80E68E), 0xFF, 0x22);
+                        // set new bank
+                        WriteWord(Snes2pc(0x80FF22), (ushort) (0xA9 | (checkpointBank << 8)));
+                        rom[Snes2pc(0x80FF24)] = 0x48;
+                        rom[Snes2pc(0x80FF25)] = 0xAB;
+                        // add back RTS
+                        rom[Snes2pc(0x80FF26)] = 0x60;
+                        // change all instances of JMP
+                        WriteWord(Snes2pc(0x809DA4), 0xFF00);
+                        WriteWord(Snes2pc(0x80E602), 0xFF00);
+                        WriteWord(Snes2pc(0x80E679), 0xFF00);
+                        //*LPWORD(rom + snes2pc(0x80E681)) = 0xFF00;
+
+                        // revert bank + RTL
+
+                        // fix other functions
+                        //1
+                        // revert bank + JMP + RTS
+                        WriteWord(Snes2pc(0x80FF27), 0xA9 | (0x06 << 8));
+                        rom[Snes2pc(0x80FF29)] = 0x48;
+                        rom[Snes2pc(0x80FF2A)] = 0xAB;
+                        // JSR
+                        rom[Snes2pc(0x80FF2B)] = 0x20;
+                        WriteWord(Snes2pc(0x80FF2C), 0xB117);
+                        // RTS
+                        rom[Snes2pc(0x80FF2E)] = 0x60;
+                        // FIX JMP
+                        WriteWord(Snes2pc(0x809DD1), 0xFF27);
+
+                        //2
+                        // revert bank + JMP + RTS
+                        rom[Snes2pc(0x80FF2F)] = 0xE2;
+                        rom[Snes2pc(0x80FF30)] = 0x20;
+                        WriteWord(Snes2pc(0x80FF31), 0xA9 | (0x06 << 8));
+                        rom[Snes2pc(0x80FF33)] = 0x48;
+                        rom[Snes2pc(0x80FF34)] = 0xAB;
+                        rom[Snes2pc(0x80FF35)] = 0xC2;
+                        rom[Snes2pc(0x80FF36)] = 0x20;
+                        // JSL
+                        WriteDWord(Snes2pc(0x80FF37), 0x0180E322);
+                        // RTS
+                        rom[Snes2pc(0x80FF3B)] = 0x60;
+                        // FIX JMP
+                        WriteDWord(Snes2pc(0x80E66D), 0xEAFF2F20);
+
+                        //3
+                        rom[Snes2pc(0x80E68C)] = 0xE2;
+                        rom[Snes2pc(0x80E68D)] = 0x20;
+                        WriteWord(Snes2pc(0x80E68E), 0xA9 | (0x06 << 8));
+                        rom[Snes2pc(0x80E690)] = 0x48;
+                        rom[Snes2pc(0x80E691)] = 0xAB;
+                        rom[Snes2pc(0x80E692)] = 0xC2;
+                        rom[Snes2pc(0x80E693)] = 0x20;
+                        // PLP + RTL
+                        rom[Snes2pc(0x80E694)] = 0x28;
+                        rom[Snes2pc(0x80E695)] = 0x6B;
+                    }
+                    else if (Type == 1)
+                    {
+                        // write new base function
+                        Copy(Snes2pc(0x80E690), Snes2pc(0x80FF00), 0x22);
+                        Fill(Snes2pc(0x80E690), 0xFF, 0x22);
+                        // set new bank
+                        WriteWord(Snes2pc(0x80FF22), (ushort) (0xA9 | (checkpointBank << 8)));
+                        rom[Snes2pc(0x80FF24)] = 0x48;
+                        rom[Snes2pc(0x80FF25)] = 0xAB;
+                        // add back RTS
+                        rom[Snes2pc(0x80FF26)] = 0x60;
+                        // change all instances of JMP
+                        WriteWord(Snes2pc(0x809D79), 0xFF00);
+                        WriteWord(Snes2pc(0x80E5ED), 0xFF00);
+                        WriteWord(Snes2pc(0x80E661), 0xFF00);
+                        WriteWord(Snes2pc(0x80E681), 0xFF00);
+
+                        // revert bank + RTL
+
+                        // fix other functions
+                        //1
+                        // revert bank + JMP + RTS
+                        WriteWord(Snes2pc(0x80FF27), 0xA9 | (0x06 << 8));
+                        rom[Snes2pc(0x80FF29)] = 0x48;
+                        rom[Snes2pc(0x80FF2A)] = 0xAB;
+                        // JSR
+                        rom[Snes2pc(0x80FF2B)] = 0x20;
+                        WriteWord(Snes2pc(0x80FF2C), 0xADD3);
+                        // RTS
+                        rom[Snes2pc(0x80FF2E)] = 0x60;
+                        // FIX JMP
+                        WriteWord(Snes2pc(0x809DA7), 0xFF27);
+
+                        //2
+                        // revert bank + JMP + RTS
+                        rom[Snes2pc(0x80FF2F)] = 0xE2;
+                        rom[Snes2pc(0x80FF30)] = 0x20;
+                        WriteWord(Snes2pc(0x80FF31), 0xA9 | (0x06 << 8));
+                        rom[Snes2pc(0x80FF33)] = 0x48;
+                        rom[Snes2pc(0x80FF34)] = 0xAB;
+                        rom[Snes2pc(0x80FF35)] = 0xC2;
+                        rom[Snes2pc(0x80FF36)] = 0x20;
+                        // JSL
+                        WriteDWord(Snes2pc(0x80FF37), 0x01820B22);
+                        // RTS
+                        rom[Snes2pc(0x80FF3B)] = 0x60;
+                        // FIX JMP
+                        WriteDWord(Snes2pc(0x80E655), 0xEAFF2F20);
+
+                        //3
+                        WriteWord(Snes2pc(0x80E679), 0x80 | (0x13 << 8));
+
+                        //4
+                        rom[Snes2pc(0x80E68E)] = 0xE2;
+                        rom[Snes2pc(0x80E68F)] = 0x20;
+                        WriteWord(Snes2pc(0x80E690), 0xA9 | (0x06 << 8));
+                        rom[Snes2pc(0x80E692)] = 0x48;
+                        rom[Snes2pc(0x80E693)] = 0xAB;
+                        rom[Snes2pc(0x80E694)] = 0xC2;
+                        rom[Snes2pc(0x80E695)] = 0x20;
+                        // PLP + RTL
+                        rom[Snes2pc(0x80E696)] = 0x28;
+                        rom[Snes2pc(0x80E697)] = 0x6B;
+                    }
+                    else if (Type == 2)
+                    {
+                        // write new base function
+                        Copy(Snes2pc(0x80E601), Snes2pc(0x80FF00), 0x22);
+                        Fill(Snes2pc(0x80E601), 0xFF, 0x22);
+                        // set new bank
+                        WriteWord(Snes2pc(0x80FF22), (ushort) (0xA9 | (checkpointBank << 8)));
+                        rom[Snes2pc(0x80FF24)] = 0x48;
+                        rom[Snes2pc(0x80FF25)] = 0xAB;
+                        // add back RTS
+                        rom[Snes2pc(0x80FF26)] = 0x60;
+                        // change all instances of JMP
+                        WriteWord(Snes2pc(0x80A1E5), 0xFF00);
+                        WriteWord(Snes2pc(0x80E558), 0xFF00);
+                        WriteWord(Snes2pc(0x80E5D2), 0xFF00);
+                        WriteWord(Snes2pc(0x80E5F2), 0xFF00);
+
+                        // revert bank + RTL
+
+                        // fix other functions
+                        //1
+                        // revert bank + JMP + RTS
+                        WriteWord(Snes2pc(0x80FF27), 0xA9 | (0x06 << 8));
+                        rom[Snes2pc(0x80FF29)] = 0x48;
+                        rom[Snes2pc(0x80FF2A)] = 0xAB;
+                        // JSR
+                        rom[Snes2pc(0x80FF2B)] = 0x20;
+                        WriteWord(Snes2pc(0x80FF2C), 0xB297);
+                        // RTS
+                        rom[Snes2pc(0x80FF2E)] = 0x60;
+                        // FIX JMP
+                        WriteWord(Snes2pc(0x80A213), 0xFF27);
+
+                        //2
+                        // revert bank + JMP + RTS
+                        rom[Snes2pc(0x80FF2F)] = 0xE2;
+                        rom[Snes2pc(0x80FF30)] = 0x20;
+                        WriteWord(Snes2pc(0x80FF31), 0xA9 | (0x06 << 8));
+                        rom[Snes2pc(0x80FF33)] = 0x48;
+                        rom[Snes2pc(0x80FF34)] = 0xAB;
+                        rom[Snes2pc(0x80FF35)] = 0xC2;
+                        rom[Snes2pc(0x80FF36)] = 0x20;
+                        // JSL
+                        WriteDWord(Snes2pc(0x80FF37), 0x01827C22);
+                        // RTS
+                        rom[Snes2pc(0x80FF3B)] = 0x60;
+                        // FIX JMP
+                        WriteDWord(Snes2pc(0x80E5C6), 0xEAFF2F20);
+
+                        //3
+                        WriteWord(Snes2pc(0x80E5EA), 0x80 | (0x13 << 8));
+
+                        //4
+                        rom[Snes2pc(0x80E5FF)] = 0xE2;
+                        rom[Snes2pc(0x80E600)] = 0x20;
+                        WriteWord(Snes2pc(0x80E601), 0xA9 | (0x06 << 8));
+                        rom[Snes2pc(0x80E603)] = 0x48;
+                        rom[Snes2pc(0x80E604)] = 0xAB;
+                        rom[Snes2pc(0x80E605)] = 0xC2;
+                        rom[Snes2pc(0x80E606)] = 0x20;
+                        // PLP + RTL
+                        rom[Snes2pc(0x80E607)] = 0x28;
+                        rom[Snes2pc(0x80E608)] = 0x6B;
+                    }
+
+                    // <camera locks>
+                    // format of new camera lock:
+                    // AA BB CC DD EE FF GG HH
+                    // A = right
+                    // B = left
+                    // C = bottom
+                    // D = top
+                    // E = right lock
+                    // F = left lock
+                    // G = bottom lock
+                    // H = top lock
+                    lockBank = Pc2snes(currentOffset) >> 16;
+                    Fill(currentOffset, 0x0, 0x8000);
+                    // copy the border lock to new flattened format
+                    var nextAddress = new Dictionary<uint, uint>();
+                    for (int i = 0; i < numLevels; i++)
+                    {
+                        uint pB = SReadWord((uint) (p_borders[Type] + i * 2)) | ((p_borders[Type] >> 16) << 16);
+                        uint pBNext = SReadWord((uint) (p_borders[Type] + (i + 1) * 2)) | ((p_borders[Type] >> 16) << 16);
+
+                        if (nextAddress.ContainsKey(pB))
+                        {
+                            pBNext = nextAddress[pB];
+                        }
+                        else if (nextAddress.ContainsKey(pBNext))
+                        {
+                            pBNext = (uint) (pB + (Type == 0 ? 0x0 : Type == 1 ? 0x0 : 0x20));
+                        }
+
+                        nextAddress[pB] = pBNext;
+
+                        for (int j = 0; j < (pBNext - pB) / 2; j++)
+                        {
+                            uint borderAddress = SReadWord((uint) (pB + j * 2)) | ((p_borders[Type] >> 16) << 16);
+                            uint b = Snes2pc((int) borderAddress);
+
+                            for (int k = 0; k < 4; k++)
+                            {
+                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + k * 2), ReadWord(b));
+                                b += 2;
+                            }
+
+                            uint newOffset = 0;
+                            while (rom[b] != 0)
+                            {
+                                // load and save lock in proper spot
+                                uint lockOffset = rom[b];
+                                uint offset = (lockOffset - 1) << 2;
+
+                                ushort camOffset = ReadWord(pLocks + offset + 0x0);
+                                ushort camValue = ReadWord(pLocks + offset + 0x2);
+
+                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + 0x8 + newOffset), camOffset);
+                                newOffset += 2;
+                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + 0x8 + newOffset), camValue);
+                                newOffset += 2;
+
+                                b++;
+                            }
+
+                            for (; newOffset < 0x18; newOffset += 2)
+                            {
+                                WriteWord((uint) (currentOffset + i * 0x800 + j * 0x20 + 0x8 + newOffset), 0x0);
+                            }
+                        }
+                    }
+
+                    currentOffset += 0x8000;
+                    // write new code
+                    // fix jump table
+                    WriteWord(Snes2pc(Type == 0 ? 0x81F6B6 : Type == 1 ? 0x82EB2D : 0x83DD87), (ushort) (ReadWord(Snes2pc(Type == 0 ? 0x81F6B6 : Type == 1 ? 0x82EB2D : 0x83DD87)) - 0x2)); // TYPE
+
+                    a = (uint) (Type == 0 ? 0x81F6C4 : Type == 1 ? 0x82EB3B : 0x83DD95); // TYPE
+                                                                                         // 1 ASL
+                    rom[Snes2pc((int) a++)] = 0x0A;
+                    // 1 ASL
+                    rom[Snes2pc((int) a++)] = 0x0A;
+                    // 1 ASL
+                    rom[Snes2pc((int) a++)] = 0x0A;
+                    // 1 ASL
+                    rom[Snes2pc((int) a++)] = 0x0A;
+                    // 2 STA 0
+                    rom[Snes2pc((int) a++)] = 0x8D;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    // 3 LDA $1F7A
+                    rom[Snes2pc((int) a++)] = 0xAD;
+                    WriteWord(Snes2pc((int) a++), (ushort) (Type == 0 ? 0x1F7A : Type == 1 ? 0x1FAD : 0x1FAE)); // TYPE
+                    a++;
+                    // 3 AND #FF
+                    rom[Snes2pc((int) a++)] = 0x29;
+                    rom[Snes2pc((int) a++)] = 0xFF;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    // 1 XBA
+                    rom[Snes2pc((int) a++)] = 0xEB;
+                    // 1 ASL
+                    rom[Snes2pc((int) a++)] = 0x0A;
+                    // 1 ASL
+                    rom[Snes2pc((int) a++)] = 0x0A;
+                    // 1 ASL
+                    rom[Snes2pc((int) a++)] = 0x0A;
+                    // 3 ADC 0
+                    rom[Snes2pc((int) a++)] = 0x6D;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    // 2 STA D,4
+                    rom[Snes2pc((int) a++)] = 0x85;
+                    rom[Snes2pc((int) a++)] = 0x04;
+
+                    // 2 REP #30
+                    rom[Snes2pc((int) a++)] = 0xC2;
+                    rom[Snes2pc((int) a++)] = 0x20 | 0x10;
+                    // 2 LDX D,4
+                    rom[Snes2pc((int) a++)] = 0xA6;
+                    rom[Snes2pc((int) a++)] = 0x04;
+                    // 3 LDA $0BAD
+                    rom[Snes2pc((int) a++)] = 0xAD;
+                    WriteWord(Snes2pc((int) a++), (ushort) (Type == 0 ? 0x0BAD : Type == 1 ? 0x9DD : 0x9DD)); // TYPE
+                    a++;
+                    // 4 CMP BANK:8000,X
+                    rom[Snes2pc((int) a++)] = 0xDF;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    // 2 BCS
+                    rom[Snes2pc((int) a++)] = 0xB0;
+                    rom[Snes2pc((int) a++)] = 0x2F; // FIXME
+                                                    // 4 CMP BANK:8002,X
+                    rom[Snes2pc((int) a++)] = 0xDF;
+                    rom[Snes2pc((int) a++)] = 0x02;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    // 2 BCC
+                    rom[Snes2pc((int) a++)] = 0x90;
+                    rom[Snes2pc((int) a++)] = 0x29; // FIXME
+                                                    // 3 LDA $0BB0
+                    rom[Snes2pc((int) a++)] = 0xAD;
+                    WriteWord(Snes2pc((int) a++), (ushort) (Type == 0 ? 0x0BB0 : Type == 1 ? 0x9E0 : 0x9E0)); // TYPE
+                    a++;
+                    // 4 CMP BANK:8004,X
+                    rom[Snes2pc((int) a++)] = 0xDF;
+                    rom[Snes2pc((int) a++)] = 0x04;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    // 2 BCS
+                    rom[Snes2pc((int) a++)] = 0xB0;
+                    rom[Snes2pc((int) a++)] = 0x20; // FIXME
+                                                    // 4 CMP BANK:8006,X
+                    rom[Snes2pc((int) a++)] = 0xDF;
+                    rom[Snes2pc((int) a++)] = 0x06;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    // 2 BCC
+                    rom[Snes2pc((int) a++)] = 0x90;
+                    rom[Snes2pc((int) a++)] = 0x1A; // FIXME
+                                                    // 3 LDA #2
+                    rom[Snes2pc((int) a++)] = 0xA9;
+                    rom[Snes2pc((int) a++)] = 0x02;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    // 3 STA $1E52
+                    rom[Snes2pc((int) a++)] = 0x8D;
+                    WriteWord(Snes2pc((int) a++), (ushort) (Type == 0 ? 0x1E52 : Type == 1 ? 0x1E62 : 0x1E62)); // TYPE
+                    a++;
+
+                    //// 3 JMP FFD0
+                    //*LPBYTE(rom + snes2pc(a++)) = 0x4C;
+                    //*LPBYTE(rom + snes2pc(a++)) = 0xD0;
+                    //*LPBYTE(rom + snes2pc(a++)) = 0xFF;
+                    //// 2 SEP #30,$20
+                    //*LPBYTE(rom + snes2pc(a++)) = 0xE2;
+                    //*LPBYTE(rom + snes2pc(a++)) = 0x20 | 0x10;
+                    //// 1 RTS
+                    //*LPBYTE(rom + snes2pc(a++)) = 0x60;
+                    //// @ FFD0
+                    //a = 0x81FFD0;
+
+                    // 4 LDA BANK:8008,X
+                    rom[Snes2pc((int) a++)] = 0xBF;
+                    rom[Snes2pc((int) a++)] = 0x08;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    // 2 BEQ
+                    rom[Snes2pc((int) a++)] = 0xF0;
+                    rom[Snes2pc((int) a++)] = 0x0E; // FIXME
+                                                    // 1 TAY
+                    rom[Snes2pc((int) a++)] = 0xA8;
+                    // 1 INX
+                    rom[Snes2pc((int) a++)] = 0xE8;
+                    // 1 INX
+                    rom[Snes2pc((int) a++)] = 0xE8;
+                    // 4 LDA BANK:8008,X
+                    rom[Snes2pc((int) a++)] = 0xBF;
+                    rom[Snes2pc((int) a++)] = 0x08;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    // 1 INX
+                    rom[Snes2pc((int) a++)] = 0xE8;
+                    // 1 INX
+                    rom[Snes2pc((int) a++)] = 0xE8;
+                    // 3 STA addr,Y
+                    rom[Snes2pc((int) a++)] = 0x99;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    // 2 BRA
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = 0xEC; // FIXME
+
+                    // 2 SEP #20,#10
+                    rom[Snes2pc((int) a++)] = 0xE2;
+                    rom[Snes2pc((int) a++)] = 0x20 | 0x10;
+                    // 1 RTS
+                    rom[Snes2pc((int) a++)] = 0x60;
+
+                    // fix the event ending functions
+                    WriteWord(Snes2pc(Type == 0 ? 0x81F6B1 : Type == 1 ? 0x82EB27 : 0x83DD81), (ushort) (ReadWord(Snes2pc(Type == 0 ? 0x81F6B1 : Type == 1 ? 0x82EB27 : 0x83DD81)) - 0x4)); // TYPE
+                    a = (uint) (Type == 0 ? 0x81F722 : Type == 1 ? 0x82EB99 : 0x83DDF3); // TYPE
+                    Copy(Snes2pc((int) (a - 0)), Snes2pc((int) (a - 1)), 0x41);
+                    Copy(Snes2pc((int) (a - 1)), Snes2pc((int) (a - 2)), 0x36);
+                    Copy(Snes2pc((int) (a - 2)), Snes2pc((int) (a - 3)), 0x20);
+                    Copy(Snes2pc((int) (a - 3)), Snes2pc((int) (a - 4)), 0x15);
+                    a += 0x0F; // 0x81F731;
+                    rom[Snes2pc((int) a++)] = 0xBF;
+                    rom[Snes2pc((int) a++)] = 0x00;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    a += 0x08; // 0x81F73D;
+                    rom[Snes2pc((int) a++)] = 0xBF;
+                    rom[Snes2pc((int) a++)] = 0x02;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    a += 0x13; //  0x81F754;
+                    rom[Snes2pc((int) a++)] = 0xBF;
+                    rom[Snes2pc((int) a++)] = 0x04;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    a += 0x08; // 0x81F760;
+                    rom[Snes2pc((int) a++)] = 0xBF;
+                    rom[Snes2pc((int) a++)] = 0x06;
+                    rom[Snes2pc((int) a++)] = 0x80;
+                    rom[Snes2pc((int) a++)] = (byte) lockBank;
+                    // fix branches 0x64
+                    rom[Snes2pc((int) (a - 0x2C))] += 0x3; // 0x81F738
+                    rom[Snes2pc((int) (a - 0x28))] += 0x1; // 0x81F73C
+                    rom[Snes2pc((int) (a - 0x20))] += 0x2; // 0x81F744
+                    rom[Snes2pc((int) (a - 0x09))] += 0x1; // 0x81F75B
+                    rom[Snes2pc((int) (a - 0x05))] += 0x1; // 0x81F75F
+
+                    header.romSize++;
+                    romSize += 0x100000;
+                    expandedLayoutSize = 0x800;
+                    expandedEventSize = 0x800;
+                    expandedCheckpointSize = 0x10;
+                    expandedLayoutScenes = 0x40;
+                    expandedVersion = expandedROMVersion;
+                }
+            }
+            else
+            {
+                if (ok)
+                {
+                    // make the ROM bigger
+                    // Add 1MB
+                    Fill(romSize, 0xFF, 0x200000);
+                    WriteASCIIString((uint) (romSize + 0x8000 - expandedROMHeaderSize), expandedROMString);
+                    WriteWord((uint) (romSize + 0x8000 - expandedROMHeaderSize + 0xE), expandedROMVersion);
+                    ushort v = 0x800;
+                    WriteWord((uint) (romSize + 0x8000 - expandedROMHeaderSize + 0x10), v);
+                    v = 0x800;
+                    WriteWord((uint) (romSize + 0x8000 - expandedROMHeaderSize + 0x12), v);
+                    v = 0x10;
+                    WriteWord((uint) (romSize + 0x8000 - expandedROMHeaderSize + 0x14), v);
+                    // sceneUsed already stored in the ROM
+
+                    // copy startup code
+                    Copy(0x8000, romSize + 0x8000, 0x8000);
+                }
+
+                uint currentOffset = (uint) (romSize + 0x10000);
+
+                if (ok)
+                {
+                    expandedROM = true;
+
+                    header.romSize++;
+                    header.mapMode |= 0x4;
+                    romSize += 0x200000;
+                    expandedLayoutSize = 0x800;
+                    expandedEventSize = 0x800;
+                    expandedCheckpointSize = 0x0;
+                    expandedLayoutScenes = 0x40;
+                    expandedVersion = expandedROMVersion;
+                }
+            }
+
+            return ok;
         }
 
         internal void LoadGFXs()
@@ -1280,10 +2238,8 @@ namespace XSharp.ROM
             {
                 if (p_borders[Type] != 0)
                     pBorders = SReadWord((uint) (p_borders[Type] + Level * 2)) | ((p_borders[Type] >> 16) << 16);
-
                 if (p_locks[Type] != 0)
                     pLocks = Snes2pc(p_locks[Type]);
-
                 if (p_capsulepos[Type] != 0)
                     pCapsulePos = Snes2pc(p_capsulepos[Type]);
 
@@ -1641,139 +2597,159 @@ namespace XSharp.ROM
 
         internal void LoadGraphicsChange()
         {
-            // just setup the palette for now
-            graphicsToPalette.Clear();
-            graphicsToAssembly.Clear();
 
-            ushort levelOffset = ReadWord(pGfxObj + (uint) Level * 2);
-            ushort objOffset = ReadWord(pGfxObj + levelOffset + 0 * 2);
+        }
 
-            // add 0
-            uint graphicsNum = rom[pGfxObj + objOffset];
-            while (graphicsNum != 0xFF)
+        internal void SaveLevel()
+        {
+
+        }
+
+        internal void SaveTiles()
+        {
+
+        }
+
+        internal uint SaveEvents(bool sizeOnly = false)
+        {
+            if (p_events[Type] == 0)
+                return 0;
+
+            uint size = 0;
+
+            if (Type < 3)
             {
-                if (!graphicsToPalette.ContainsKey(graphicsNum))
-                {
-                    uint palOffset = ReadWord(pGfxPal + objOffset);
-                    graphicsToPalette[graphicsNum] = palOffset;
-                }
+                uint pEvents = Snes2pc(SReadWord((uint) ((expandedROM ? ((eventBank << 16) | 0xFFE0) : p_events[Type]) + Level * 2)) | (eventBank << 16));
+                uint pevent = pEvents;
 
-                objOffset += 6;
-                graphicsNum = rom[pGfxObj + objOffset];
-            }
+                uint blockId = 0;
+                uint lastBlockId = 0;
 
-            numGfxIds = 0;
-            uint numBossTeleports = 0;
-            foreach (var eventList in eventTable)
-            {
-                foreach (var ev in eventList)
+                foreach (var eventList in eventTable)
                 {
-                    if (ev.type == 0x2 && (ev.eventId == 0x15 || ev.eventId == 0x18))
+                    if (eventList.Count > 0)
                     {
-                        uint subId = ev.eventSubId;
+                        size += (uint) (7 * eventList.Count + 1);
+                    }
 
-                        if (((subId >> 0) & 0xF) >= numGfxIds)
-                            numGfxIds = ((subId >> 0) & 0xF) + 1;
+                    if (!sizeOnly)
+                    {
+                        bool firstEvent = true;
 
-                        if (((subId >> 4) & 0xF) >= numGfxIds)
-                            numGfxIds = ((subId >> 4) & 0xF) + 1;
-
-                        for (uint i = 0; i < 2; i++)
+                        foreach (var e in eventList)
                         {
-                            objOffset = ReadWord(pGfxObj + levelOffset + (uint) ((ev.eventSubId >> (byte) (i * 4)) & 0xF) * 2);
-
-                            graphicsNum = rom[pGfxObj + objOffset];
-                            while (graphicsNum != 0xFF)
+                            if (firstEvent)
                             {
-                                if (!graphicsToPalette.ContainsKey(graphicsNum))
-                                {
-                                    uint palOffset = rom[pGfxPal + objOffset];
-                                    graphicsToPalette[graphicsNum] = palOffset;
-                                }
+                                rom[pevent++] = (byte) blockId;
+                                lastBlockId = blockId;
+                                firstEvent = false;
+                            }
 
-                                objOffset += 6;
-                                graphicsNum = rom[pGfxObj + objOffset];
+                            // write out all the data 
+                            rom[pevent++] = (byte) ((e.match << 2) | e.type);
+                            uint lpevent = pevent;
+                            WriteWord(lpevent, e.ypos);
+                            pevent += 2;
+                            rom[pevent++] = e.eventId;
+                            rom[pevent++] = e.eventSubId;
+                            lpevent = pevent;
+                            WriteWord(lpevent, e.eventFlag);
+                            WriteWord(lpevent, (ushort) (ReadWord(lpevent) << 13));
+                            WriteWord(lpevent, (ushort) (ReadWord(lpevent) | e.xpos));
+                            pevent += 2;
 
+                            // clear the end bit
+                            rom[pevent - 1] &= ~0x80 & 0xff;
+
+                            if (pCapsulePos != 0 && e.type == 0x3 && e.eventId == 0x4D)
+                            {
+                                // update the capsule position
+                                // skip sigma boss levels for now
+                                WriteDWord((uint) (pCapsulePos + Level * 4 + 0), e.xpos);
+                                WriteDWord((uint) (pCapsulePos + Level * 4 + 2), e.ypos);
                             }
                         }
-                    }
 
-                    else if (ev.type == 0x3)
-                    {
-                        uint spriteIndex = rom[pSpriteOffset[ev.type] + (ev.eventId - 1) * (Type == 2 ? 5 : 2) + 1]; //(spriteOffset == 0x32) ? 0x30 : 0x1F;
-                        byte spriteAssembly = rom[pSpriteOffset[ev.type] + (ev.eventId - 1) * (Type == 2 ? 5 : 2)];
-
-                        if (!graphicsToAssembly.ContainsKey(spriteIndex))
+                        if (eventList.Count > 0)
                         {
-                            graphicsToAssembly[spriteIndex] = spriteAssembly;
-                        }
-                    }
-                    else if (Type == 1 && ev.type == 0x1 && ev.eventId == 0x40
-                            || Type == 2 && ev.type == 0x0 && ev.eventId == 0xD)
-                    {
-                        numBossTeleports++;
-                    }
-                }
-            }
-
-            // load the boss
-            objOffset = ReadWord(pGfxObj + levelOffset + numGfxIds * 2);
-            graphicsNum = rom[pGfxObj + objOffset];
-            while (graphicsNum != 0xFF)
-            {
-                if (!graphicsToPalette.ContainsKey(graphicsNum))
-                {
-                    uint palOffset = rom[pGfxPal + objOffset];
-                    graphicsToPalette[graphicsNum] = palOffset;
-                }
-
-                objOffset += 6;
-                graphicsNum = rom[pGfxObj + objOffset];
-
-            }
-
-            // test to load "everything".  this misses increments from some boss doors as it assumes there is only one
-            if (numGfxIds > 0)
-            {
-                numGfxIds++;
-                for (uint i = 0; i < numGfxIds; i++)
-                {
-                    objOffset = ReadWord(pGfxObj + levelOffset + i * 2);
-                    graphicsNum = rom[pGfxObj + objOffset];
-                    while (graphicsNum != 0xFF)
-                    {
-                        if (!graphicsToPalette.ContainsKey(graphicsNum))
-                        {
-                            uint palOffset = ReadWord(pGfxPal + objOffset);
-                            graphicsToPalette[graphicsNum] = palOffset;
+                            // set the end bit
+                            rom[pevent - 1] |= 0x80;
                         }
 
-                        objOffset += 6;
-                        graphicsNum = rom[pGfxObj + objOffset];
-
+                        ++blockId;
                     }
                 }
-            }
-            if (numBossTeleports > 0)
-            {
-                numBossTeleports++;
-                for (uint i = 0; i < numBossTeleports; i++)
+
+                if (!sizeOnly)
                 {
-                    objOffset = ReadWord(pGfxObj + levelOffset + i * 2);
-                    graphicsNum = rom[pGfxObj + objOffset];
-                    while (graphicsNum != 0xFF)
-                    {
-                        if (!graphicsToPalette.ContainsKey(graphicsNum))
-                        {
-                            uint palOffset = ReadWord(pGfxPal + objOffset);
-                            graphicsToPalette[graphicsNum] = palOffset;
-                        }
 
-                        objOffset += 6;
-                        graphicsNum = rom[pGfxObj + objOffset];
-                    }
+                    rom[pevent++] = (byte) lastBlockId;
+                }
+
+                size++;
+            }
+            else
+            {
+            }
+
+            return size;
+        }
+
+        internal void SaveSprites()
+        {
+
+        }
+
+        internal uint SaveLayout(bool sizeOnly = false)
+        {
+            uint playout = pLayout; //may need to change this offset location to load after boss fight for level 7
+            bool special_case = false;
+
+            // compress layout
+            uint tempSceneUsed = (expandedROM && expandedVersion >= 2) ? expandedLayoutScenes : 0x0; //else sceneUsed instead of 0x0?
+
+            // fix layout based on new sizes
+            uint oldWidth = rom[playout + 0];
+            uint oldHeight = rom[playout + 1];
+            byte[] tempSceneLayout = new byte[1024];
+
+            uint i = 0;
+            //tempsceneLayout matches sceneLayout after for loop
+            for (int y = 0; y < levelHeight; y++)
+            {
+                if (oldWidth > levelWidth && y >= 1)
+                    i += oldWidth - levelWidth;
+
+                for (int x = 0; x < levelWidth; x++)
+                {
+                    tempSceneLayout[y * levelWidth + x] = (byte) ((x >= (int) oldWidth || y >= (int) oldHeight) ? 0 : sceneLayout[i++]);
                 }
             }
+
+            //checking layout size during save to compare with origLayoutsize
+            /*int count = 0;
+            for (int i = 0; i < 78; i++) {
+                if (sceneLayout[i] != 0)
+                    count++;
+                sceneLayout[i] = *(playout + i + 3);
+            }*/
+            if (Type == 1 && Level == 7 && !expandedROM)
+                special_case = true;
+
+            uint size = (uint) CompressionCore.LayoutRLE(levelWidth, levelHeight, rom, (int) tempSceneUsed, tempSceneLayout, 0, rom, (int) playout, sizeOnly, special_case);
+
+            /* helps with debugging playout
+            for (int i = 0; i < 78; i++) {
+                sceneLayout[i] = *(playout + i + 3);
+            }*/
+
+            if (!sizeOnly)
+            {
+                // do we want to allow more scenes?
+                Array.Copy(tempSceneLayout, 0, sceneLayout, 0, sceneLayout.Length);
+            }
+
+            return size;
         }
 
         internal void LoadPaletteDynamic()
@@ -1847,6 +2823,7 @@ namespace XSharp.ROM
             }
             else
             {
+
                 // decompress the scene to map data
                 byte[] mapRam = new byte[0x10000];
 
@@ -1876,6 +2853,31 @@ namespace XSharp.ROM
                         //writeIndex += 0x10;
                     }
                 }
+            }
+        }
+
+        internal void ReallocScene(byte scene)
+        {
+            ushort writeIndex = (ushort) (SReadWord(0x868D20) + 0x100 * scene);
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    uint takeBlock = (uint) (pScenes + scene * 0x80 + x * 2 + y * 0x10);
+                    takeBlock = (uint) (pBlocks + ReadWord(takeBlock) * 8);
+
+                    mapping[writeIndex + 0x00] = ReadWord(takeBlock);
+                    takeBlock += 2;
+                    mapping[writeIndex + 0x01] = ReadWord(takeBlock);
+                    takeBlock += 2;
+                    mapping[writeIndex + 0x10] = ReadWord(takeBlock);
+                    takeBlock += 2;
+                    mapping[writeIndex + 0x11] = ReadWord(takeBlock);
+                    takeBlock += 2;
+                    writeIndex += 2;
+                }
+
+                writeIndex += 0x10;
             }
         }
 
@@ -1927,7 +2929,16 @@ namespace XSharp.ROM
             }
         }
 
+        internal void SwitchLevelEvent(bool ev)
+        {
+        }
+
         private Map[] maps;
+
+        private byte Expand(int i)
+        {
+            return (byte) (i * 256.0f / 32.0f);
+        }
 
         private int Transform(int color, bool notTransparent)
         {

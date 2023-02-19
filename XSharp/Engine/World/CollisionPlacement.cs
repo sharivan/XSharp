@@ -1,55 +1,67 @@
 ﻿using XSharp.Geometry;
+using XSharp.Math;
+using static XSharp.Engine.Consts;
+using MMXWorld = XSharp.Engine.World.World;
 
 namespace XSharp.Engine.World
 {
     public readonly struct CollisionPlacement
     {
+        public CollisionFlags Flags
+        {
+            get;
+        }
+
+        public Vector LeftTop
+        {
+            get;
+        }
+
+        public Vector RightBottom => LeftTop + (MAP_SIZE, MAP_SIZE);
+
+        public Vector Center => (LeftTop + RightBottom) * FixedSingle.HALF;
+
+        public Box BoudingBox => (LeftTop, RightBottom);
+
+        public Cell FirstMapCell => MMXWorld.GetMapCellFromPos(LeftTop);
+
+        public Cell LastMapCell => MMXWorld.GetMapCellFromPos(RightBottom);
+
+        public int FirstMapRow => FirstMapCell.Row;
+
+        public int FirstMapCol => FirstMapCell.Col;
+
+        public int LastMapRow => LastMapCell.Row;
+
+        public int LastMapCol => LastMapCell.Col;
+
         public CollisionData CollisionData
         {
-            get;
+            get
+            {
+                Map map = GameEngine.Engine.World.GetMapFrom(LeftTop);
+                return map != null ? map.CollisionData : CollisionData.NONE;
+            }
         }
 
-        public Box ObstableBox
+        public RightTriangle SlopeTriangle => CollisionChecker.MakeSlopeTriangle(CollisionData) + LeftTop;
+
+        public CollisionPlacement(CollisionFlags flags, Vector leftTop)
         {
-            get;
+            Flags = flags;
+            this.LeftTop = leftTop;
         }
 
-        public RightTriangle ObstableSlope
+        public CollisionPlacement(CollisionFlags flags, Cell mapCell)
         {
-            get;
+            Flags = flags;
+            LeftTop = MMXWorld.GetMapBoundingBox(mapCell).LeftTop;
         }
 
-        public CollisionPlacement(CollisionData collisionData, Box obstableBox)
+        public CollisionPlacement(CollisionFlags flags, int mapRow, int mapCol)
         {
-            CollisionData = collisionData;
-            ObstableBox = obstableBox;
-            ObstableSlope = RightTriangle.EMPTY;
-        }
-
-        public CollisionPlacement(CollisionData collisionData, RightTriangle obstacleSlope)
-        {
-            CollisionData = collisionData;
-            ObstableBox = Box.EMPTY_BOX;
-            ObstableSlope = obstacleSlope;
-        }
-
-        public void Deconstruct(out CollisionData collisionData, out Box obstacleBox)
-        {
-            collisionData = CollisionData;
-            obstacleBox = ObstableBox;
-        }
-
-        public void Deconstruct(out CollisionData collisionData, out RightTriangle obstacleSlope)
-        {
-            collisionData = CollisionData;
-            obstacleSlope = ObstableSlope;
-        }
-
-        public void Deconstruct(out CollisionData collisionData, out Box obstacleBox, out RightTriangle obstacleSlope)
-        {
-            collisionData = CollisionData;
-            obstacleBox = ObstableBox;
-            obstacleSlope = ObstableSlope;
+            Flags = flags;
+            LeftTop = MMXWorld.GetMapBoundingBox(mapRow, mapCol).LeftTop;
         }
     }
 }

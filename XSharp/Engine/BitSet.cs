@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -268,11 +269,10 @@ namespace XSharp.Engine
 
         public int FirstSetBit(int start = 0)
         {
-            int startSlotIndex = start / BITS_PER_SLOT;
-
-            if (SlotCount <= startSlotIndex)
+            if (SlotCount <= start)
                 return -1;
 
+            int startSlotIndex = start / BITS_PER_SLOT;
             int startBitIndex = start % BITS_PER_SLOT;
             ulong bitMask = ~(MASK[startBitIndex] - 1);
 

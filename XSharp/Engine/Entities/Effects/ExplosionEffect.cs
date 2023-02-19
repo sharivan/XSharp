@@ -52,7 +52,7 @@
                 case ExplosionEffectSound.ENEMY_DIE_4:
                     Engine.PlaySound(SoundChannel, 15);
                     break;
-            }
+            }   
         }
 
         protected internal override void OnAnimationEnd(Animation animation)

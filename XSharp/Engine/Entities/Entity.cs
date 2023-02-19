@@ -470,7 +470,7 @@ namespace XSharp.Engine.Entities
 
         protected virtual Box GetTouchingBox()
         {
-            return GetHitbox().ClipLeft(-STEP_SIZE).ClipTop(-STEP_SIZE).ClipRight(-STEP_SIZE).ClipBottom(-STEP_SIZE);
+            return GetHitbox();
         }
 
         protected virtual void SetHitbox(Box hitbox)
@@ -517,10 +517,10 @@ namespace XSharp.Engine.Entities
             if (TouchingKind == TouchingKind.VECTOR)
             {
                 Vector v = entity.GetVector(TouchingVectorKind);
-                return Hitbox.Contains(v);
+                return v <= Hitbox;
             }
 
-            return Hitbox.IsOverlaping(entity.Hitbox);
+            return (Hitbox & entity.Hitbox).IsValid();
         }
 
         protected internal virtual void OnFrame()
@@ -716,7 +716,7 @@ namespace XSharp.Engine.Entities
         }
 
         protected virtual void OnOffScreen()
-        {
+        {            
         }
 
         protected virtual BoxKind ComputeBoxKind()

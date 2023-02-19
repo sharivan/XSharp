@@ -122,7 +122,7 @@ namespace NAudioTest
             var form = new Form()
             {
                 Text = "NAudio Test",
-                ClientSize = new Size(SCREEN_WIDTH, SCREEN_HEIGHT)
+                ClientSize = new System.Drawing.Size(SCREEN_WIDTH, SCREEN_HEIGHT)
             };
 
             var d3d = new Direct3D();

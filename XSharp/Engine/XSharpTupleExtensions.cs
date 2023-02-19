@@ -7,7 +7,7 @@ namespace XSharp.Engine
     public static class XSharpTupleExtensions
     {
         public static bool CanConvertTupleToArray<ArrayElementType>(Type tupleType)
-        {
+        {           
             Type[] typeParameters = tupleType.GetGenericArguments();
             Type elementType = typeof(ArrayElementType);
             TypeConverter conv = TypeDescriptor.GetConverter(elementType);
@@ -40,7 +40,7 @@ namespace XSharp.Engine
             {
                 var typeParam = typeParameters[i];
                 var param = tuple[i];
-                if (typeParam != elementType && !typeParam.IsAssignableFrom(elementType))
+                if (typeParam != elementType && !typeParam.IsAssignableFrom(elementType)) 
                     param = conv.ConvertFrom(param);
 
                 args[i] = (ArrayElementType) param;
@@ -54,7 +54,7 @@ namespace XSharp.Engine
             Type tupleType = typeof(TupleType);
             Type[] typeParameters = tupleType.GetGenericArguments();
             Type elementType = typeof(ArrayElementType);
-
+            
             for (int i = 0; i < typeParameters.Length; i++)
             {
                 var typeParam = typeParameters[i];
@@ -69,7 +69,7 @@ namespace XSharp.Engine
         public static ITuple ArrayToTuple<ArrayElementType>(Type tupleType, params ArrayElementType[] array)
         {
             Type[] typeParameters = tupleType.GetGenericArguments();
-            Type elementType = typeof(ArrayElementType);
+            Type elementType = typeof(ArrayElementType);            
             var args = new object[typeParameters.Length];
 
             for (int i = 0; i < typeParameters.Length; i++)
@@ -91,7 +91,7 @@ namespace XSharp.Engine
         public static TupleType ArrayToTuple<ArrayElementType, TupleType>(params ArrayElementType[] array) where TupleType : ITuple
         {
             Type tupleType = typeof(TupleType);
-            return (TupleType) ArrayToTuple(tupleType, array);
+            return (TupleType) ArrayToTuple<ArrayElementType>(tupleType, array);
         }
-    }
+     }
 }

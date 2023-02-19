@@ -47,8 +47,8 @@ namespace XSharp.Engine.Entities.Enemies
 
             PaletteIndex = 5;
             Health = DRILLER_HEALTH;
-            ContactDamage = 0; //DRILLER_CONTACT_DAMAGE;
-            CollisionData = CollisionData.SOLID;
+            ContactDamage = DRILLER_CONTACT_DAMAGE;
+            CollisionData = CollisionData.NONE;
 
             NothingDropOdd = 79;
             SmallHealthDropOdd = 10;
@@ -60,7 +60,7 @@ namespace XSharp.Engine.Entities.Enemies
             State = DrillerState.IDLE;
         }
 
-        protected override FixedSingle GetLegsHeight()
+        protected override FixedSingle GetSideColliderBottomClip()
         {
             return DRILLER_SIDE_COLLIDER_BOTTOM_CLIP;
         }

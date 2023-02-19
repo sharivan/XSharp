@@ -1,5 +1,4 @@
-﻿using SharpDX.Direct3D9;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -12,23 +11,15 @@ using XSharp.Math;
 
 namespace XSharp.Geometry
 {
-    [Flags]
     public enum GeometryType
     {
         EMPTY = 0,
         VECTOR = 1,
         LINE_SEGMENT = 2,
-        RIGHT_TRIANGLE = 4,
-        BOX = 8,
-        POLIGON = 16,
-
-        SET = 1 << 31,
-        DISCRETE = 1 << 30,
-
-        DISCRETE_VECTOR_SET = VECTOR | SET | DISCRETE,
-        DISCRETE_LINE_SET = LINE_SEGMENT | SET | DISCRETE,
-        DISCRETE_BOX_SET = BOX | SET | DISCRETE,
-        DISCRETE_RIGHT_TRIANGLE_SET = RIGHT_TRIANGLE | SET | DISCRETE
+        RIGHT_TRIANGLE = 3,
+        BOX = 4,
+        POLIGON = 5,
+        UNION = 6
     }
 
     public interface IGeometry
@@ -43,7 +34,7 @@ namespace XSharp.Geometry
             get;
         }
 
-        bool HasIntersectionWith(IGeometry geometry);
+        bool Contains(Vector point);
     }
 
     public struct EmptyGeometry : IGeometry
@@ -54,153 +45,97 @@ namespace XSharp.Geometry
 
         public GeometryType Type => type;
 
-        public bool HasIntersectionWith(IGeometry geometry)
+        public bool Contains(Vector point)
         {
             return false;
         }
+
+        public static implicit operator Union(EmptyGeometry geometry)
+        {
+            return new Union();
+        }
     }
 
-    public struct UniverseGeometry : IGeometry
+    public struct Union : IGeometry
     {
-        public const GeometryType type = GeometryType.EMPTY;
+        public const GeometryType type = GeometryType.UNION;
 
-        public FixedSingle Length => FixedSingle.ZERO;
+        public static readonly Union EMPTY_SET = new();
+
+        private readonly IGeometry[] parts;
+
+        /// <summary>
+        /// Cria uma união a partir das partes
+        /// </summary>
+        /// <param name="parts">Partes</param>
+        public Union(params IGeometry[] parts)
+        {
+            this.parts = parts;
+        }
 
         public GeometryType Type => type;
-
-        public bool HasIntersectionWith(IGeometry geometry)
-        {
-            return true;
-        }
-    }
-
-    public enum SetOperation
-    {
-        UNION,
-        INTERSECTION
-    }
-
-    public class GeometrySet : IGeometry
-    {
-        public const GeometryType type = GeometryType.SET;
-
-        public static readonly GeometrySet EMPTY = new(SetOperation.UNION);
-
-        public static readonly GeometrySet UNIVERSE = Complementary(EMPTY);
-
-        public static GeometrySet Union(IGeometry a, IGeometry b)
-        {
-            return new GeometrySet(SetOperation.UNION, (a, false), (b, false));
-        }
-
-        public static GeometrySet Intersection(IGeometry a, IGeometry b)
-        {
-            return new GeometrySet(SetOperation.INTERSECTION, (a, false), (b, false));
-        }
-
-        public static GeometrySet Complementary(IGeometry a)
-        {
-            return new GeometrySet(SetOperation.UNION, (a, true));
-        }
-
-        public static GeometrySet Diference(IGeometry a, IGeometry b)
-        {
-            return new GeometrySet(SetOperation.INTERSECTION, (a, false), (b, true));
-        }
-
-        public static GeometrySet Diference(IGeometry a, IGeometry b, IGeometry c)
-        {
-            return new GeometrySet(SetOperation.INTERSECTION, (a, false), (b, true), (c, true));
-        }
-
-        public static void Split(IGeometry a, IGeometry b, out GeometrySet part1, out GeometrySet part2, out GeometrySet part3)
-        {
-            part1 = Diference(a, b);
-            part2 = Intersection(a, b);
-            part3 = Diference(b, a);
-        }
-
-        protected readonly List<(IGeometry part, bool negate)> parts;
-
-        public GeometryType Type => type;
-
-        public (IGeometry part, bool negate) this[int index]
-        {
-            get => parts[index];
-            set => parts[index] = value;
-        }
-
-        public SetOperation Operation
-        {
-            get;
-            set;
-        }
 
         public FixedSingle Length => throw new NotImplementedException();
 
-        public int Count => parts.Count;
-
-        public IEnumerable<(IGeometry part, bool negate)> Parts => parts;
-
-        public GeometrySet(SetOperation operation, params (IGeometry part, bool negate)[] parts)
-        {
-            Operation = operation;
-
-            this.parts = new List<(IGeometry part, bool negate)>(parts);
-        }
-
-        public bool HasIntersectionWith(IGeometry geometry)
-        {
-            switch (Operation)
-            {
-                case SetOperation.UNION:
-                    foreach (var (part, negate) in parts)
-                        if (negate ? !part.HasIntersectionWith(geometry) : part.HasIntersectionWith(geometry))
-                            return true;
-
-                    return false;
-
-                case SetOperation.INTERSECTION:
-                    foreach (var (part, negate) in parts)
-                        if (negate ? part.HasIntersectionWith(geometry) : !part.HasIntersectionWith(geometry))
-                            return false;
-
-                    return true;
-            }
-
-            return false;
-        }
+        /// <summary>
+        /// Quantidade de partes disjuntas contidas na união
+        /// </summary>
+        public int Count => parts.Length;
 
         public override bool Equals(object obj)
         {
-            if (obj is not GeometrySet)
+            if (obj is not Union)
             {
                 return false;
             }
 
-            var set = (GeometrySet) obj;
-            return this == set;
+            var union = (Union) obj;
+            return this == union;
         }
 
         public override int GetHashCode()
         {
-            return -223833363 + EqualityComparer<List<(IGeometry part, bool negate)>>.Default.GetHashCode(parts);
+            var hashCode = 1480434725;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<IGeometry[]>.Default.GetHashCode(parts);
+            return hashCode;
         }
 
-        public static bool operator ==(GeometrySet set1, GeometrySet set2)
+        public bool Contains(Vector point)
         {
-            var list = set2.parts.ToList();
+            foreach (var part in parts)
+                if (part.Contains(point))
+                    return true;
 
-            for (int i = 0; i < set1.parts.Count; i++)
+            return false;
+        }
+
+        /// <summary>
+        /// Retorna true se a união for vazia, false caso contrário
+        /// </summary>
+        /// <returns></returns>
+        public bool Empty => parts.Length == 0;
+
+        /// <summary>
+        /// Igualdade entre uniões
+        /// </summary>
+        /// <param name="set1">Primeira união</param>
+        /// <param name="set2">Segunda união</param>
+        /// <returns>true se as uniões forem iguais, false caso contrário</returns>
+        public static bool operator ==(Union set1, Union set2)
+        {
+            var list = set2.parts.ToList<IGeometry>();
+
+            for (int i = 0; i < set1.parts.Length; i++)
             {
-                var (part1, exclude1) = set1.parts[i];
+                IGeometry g1 = set1.parts[i];
                 bool found = false;
 
                 for (int j = 0; j < list.Count; j++)
                 {
-                    var (part2, exclude2) = list[j];
+                    IGeometry g2 = list[j];
 
-                    if (Equals(part1, part2) && exclude1 == exclude2)
+                    if (g1 == g2)
                     {
                         found = true;
                         list.RemoveAt(j);
@@ -215,7 +150,13 @@ namespace XSharp.Geometry
             return true;
         }
 
-        public static bool operator !=(GeometrySet set1, GeometrySet set2)
+        /// <summary>
+        /// Inequalidade entre uniões
+        /// </summary>
+        /// <param name="set1">Primeira união</param>
+        /// <param name="set2">Segunda união</param>
+        /// <returns>true se as uniões forem diferentes, false caso contrário</returns>
+        public static bool operator !=(Union set1, Union set2)
         {
             return !(set1 == set2);
         }
@@ -291,8 +232,6 @@ namespace XSharp.Geometry
         /// Vetor sul
         /// </summary>
         public static readonly Vector DOWN_VECTOR = new(0, 1);
-
-        public GeometryType Type => type;
 
         /// <summary>
         /// Coordenada x do vetor
@@ -388,14 +327,11 @@ namespace XSharp.Geometry
         /// <returns>O vetor normalizado</returns>
         public Vector Versor(FixedSingle epslon)
         {
-            if (X.Abs < epslon)
-                return (0, Y.Abs < epslon ? 0 : Y);
+            if (X.Abs <= epslon && Y.Abs <= epslon)
+                return NULL_VECTOR;
 
-            if (Y.Abs < epslon)
-                return (X, 0);
-
-            FixedDouble abs = Length;
-            return new Vector((FixedSingle) ((FixedDouble) X / abs), (FixedSingle) ((FixedDouble) Y / abs));
+            FixedSingle abs = Length;
+            return new Vector(X / abs, Y / abs);
         }
 
         public Vector Versor()
@@ -405,27 +341,6 @@ namespace XSharp.Geometry
 
             FixedSingle abs = Length;
             return new Vector(X / abs, Y / abs);
-        }
-
-        public Vector VersorScale(FixedSingle scale, FixedSingle epslon)
-        {
-            if (X.Abs < epslon)
-                return (0, Y.Abs < epslon ? 0 : Y);
-
-            if (Y.Abs < epslon)
-                return (X, 0);
-
-            FixedSingle abs = Length;
-            return new Vector((FixedSingle) ((FixedDouble) scale * X / abs), (FixedSingle) ((FixedDouble) scale * Y / abs));
-        }
-
-        public Vector VersorScale(FixedSingle scale)
-        {
-            if (IsNull)
-                return NULL_VECTOR;
-
-            FixedSingle abs = Length;
-            return new Vector((FixedSingle) ((FixedDouble) scale * X / abs), (FixedSingle) ((FixedDouble) scale * Y / abs));
         }
 
         /// <summary>
@@ -595,19 +510,12 @@ namespace XSharp.Geometry
             return (X.TruncFracPart(bits), Y.TruncFracPart(bits));
         }
 
-        public bool HasIntersectionWith(IGeometry geometry)
+        public bool Contains(Vector point)
         {
-            return (IGeometry) this == geometry
-                || geometry switch
-                {
-                    Vector v => this == v,
-                    Box box => box.Contains(this),
-                    LineSegment line => line.Contains(this),
-                    RightTriangle triangle => triangle.Contains(this),
-                    GeometrySet set => set.HasIntersectionWith(this),
-                    _ => false,
-                };
+            return this == point;
         }
+
+        public GeometryType Type => type;
 
         /// <summary>
         /// Adição de vetores
@@ -878,15 +786,14 @@ namespace XSharp.Geometry
         /// </summary>
         /// <param name="s">Segmento de reta a ser testado</param>
         /// <returns>A intersecção entre os dois segmentos caso ela exista, ou retorna conjunto vazio caso contrário</returns>
-        public GeometryType Intersection(LineSegment s, FixedSingle epslon, out LineSegment result)
+        public GeometryType Intersection(LineSegment s, FixedSingle epslon, out Vector resultVector, out LineSegment resultLineSegment)
         {
-            Vector v;
-
-            result = NULL_SEGMENT;
+            resultVector = Vector.NULL_VECTOR;
+            resultLineSegment = NULL_SEGMENT;
 
             if (s == this)
             {
-                result = this;
+                resultLineSegment = this;
                 return GeometryType.LINE_SEGMENT;
             }
 
@@ -912,14 +819,13 @@ namespace XSharp.Geometry
 
                 if (xmin < xmax)
                 {
-                    result = new LineSegment(new Vector(xmin, ymin), new Vector(xmax, ymax));
+                    resultLineSegment = new LineSegment(new Vector(xmin, ymin), new Vector(xmax, ymax));
                     return GeometryType.LINE_SEGMENT;
                 }
 
                 if (xmin == xmax)
                 {
-                    v = (xmin, ymin);
-                    result = new LineSegment(v, v);
+                    resultVector = new Vector(xmin, ymin);
                     return GeometryType.VECTOR;
                 }
 
@@ -928,42 +834,18 @@ namespace XSharp.Geometry
 
             var x = (FixedSingle) ((B2 * C1 - B1 * C2) / D);
             var y = (FixedSingle) ((A2 * C1 - A1 * C2) / D);
-            v = (x, y);
+            Vector v = (x, y);
 
             if (!Contains(v))
                 return GeometryType.EMPTY;
 
-            result = new LineSegment(v, v);
+            resultVector = v;
             return GeometryType.VECTOR;
         }
 
-        public GeometryType Intersection(LineSegment s, out LineSegment result)
+        public GeometryType Intersection(LineSegment s, out Vector resultVector, out LineSegment resultLineSegment)
         {
-            return Intersection(s, 0, out result);
-        }
-
-        public bool HasIntersectionWith(LineSegment other, FixedSingle epslon)
-        {
-            return Intersection(other, epslon, out _) != GeometryType.EMPTY;
-        }
-
-        public bool HasIntersectionWith(LineSegment other)
-        {
-            return HasIntersectionWith(other, 0);
-        }
-
-        public bool HasIntersectionWith(IGeometry geometry)
-        {
-            return (IGeometry) this == geometry
-                || geometry switch
-                {
-                    Vector v => Contains(v),
-                    Box box => box.HasIntersectionWith(this),
-                    LineSegment line => HasIntersectionWith(line),
-                    RightTriangle triangle => triangle.HasIntersectionWith(this),
-                    GeometrySet set => set.HasIntersectionWith(this),
-                    _ => false,
-                };
+            return Intersection(s, 0, out resultVector, out resultLineSegment);
         }
 
         public Box WrappingBox()
@@ -1181,9 +1063,9 @@ namespace XSharp.Geometry
         /// Calcula o determinante da uma matriz
         /// </summary>
         /// <returns>Determinante</returns>
-        public FixedDouble Determinant()
+        public FixedSingle Determinant()
         {
-            return (FixedDouble) Element00 * (FixedDouble) Element11 - (FixedDouble) Element10 * (FixedDouble) Element01;
+            return Element00 * Element11 - Element10 * Element01;
         }
 
         /// <summary>
@@ -1201,13 +1083,7 @@ namespace XSharp.Geometry
         /// <returns>Inversa da matriz</returns>
         public Matrix2x2 Inverse()
         {
-            FixedDouble determinant = Determinant();
-            return new Matrix2x2(
-                    (FixedSingle) (Element01 / determinant),
-                    (FixedSingle) (-Element01 / determinant),
-                    (FixedSingle) (-Element10 / determinant),
-                    (FixedSingle) (Element00 / determinant)
-                );
+            return new Matrix2x2(Element01, -Element01, -Element10, Element00) / Determinant();
         }
 
         /// <summary>
@@ -1299,7 +1175,7 @@ namespace XSharp.Geometry
             return new Matrix2x2(cos, -sin, sin, cos);
         }
     }
-
+                                                                   
     public interface IShape : IGeometry
     {
         FixedDouble Area
@@ -1308,17 +1184,12 @@ namespace XSharp.Geometry
         }
     }
 
-    [Flags]
     public enum BoxSide
     {
-        NONE = 0,
-        LEFT = 1,
-        TOP = 2,
-        RIGHT = 4,
-        BOTTOM = 8,
-        INNER = 16,
-
-        ALL = LEFT | TOP | RIGHT | BOTTOM | INNER
+        LEFT = 0,
+        UP = 1,
+        RIGHT = 2,
+        DOWN = 3
     }
 
     public enum OriginPosition
@@ -1548,28 +1419,10 @@ namespace XSharp.Geometry
             return "[" + Origin + " : " + Mins + " : " + Maxs + "]";
         }
 
-        public GeometryType Type => type;
-
         /// <summary>
         /// Origem do retângulo
         /// </summary>
         public Vector Origin
-        {
-            get;
-        }
-
-        /// <summary>
-        /// Mínimos relativos
-        /// </summary>
-        public Vector Mins
-        {
-            get;
-        }
-
-        /// <summary>
-        /// Máximos relativos
-        /// </summary>
-        public Vector Maxs
         {
             get;
         }
@@ -1617,6 +1470,22 @@ namespace XSharp.Geometry
         public Vector RightBottom => (Right, Bottom);
 
         public Vector Center => Origin + (Mins + Maxs) * FixedSingle.HALF;
+
+        /// <summary>
+        /// Mínimos relativos
+        /// </summary>
+        public Vector Mins
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Máximos relativos
+        /// </summary>
+        public Vector Maxs
+        {
+            get;
+        }
 
         public Vector WidthVector => (Width, 0);
 
@@ -1829,9 +1698,9 @@ namespace XSharp.Geometry
             return side switch
             {
                 BoxSide.LEFT => Vector.RIGHT_VECTOR,
-                BoxSide.TOP => Vector.DOWN_VECTOR,
+                BoxSide.UP => Vector.DOWN_VECTOR,
                 BoxSide.RIGHT => Vector.LEFT_VECTOR,
-                BoxSide.BOTTOM => Vector.UP_VECTOR,
+                BoxSide.DOWN => Vector.UP_VECTOR,
                 _ => Vector.NULL_VECTOR,
             };
         }
@@ -1841,9 +1710,9 @@ namespace XSharp.Geometry
             return side switch
             {
                 BoxSide.LEFT => new LineSegment(LeftTop, LeftBottom),
-                BoxSide.TOP => new LineSegment(LeftTop, RightTop),
+                BoxSide.UP => new LineSegment(LeftTop, RightTop),
                 BoxSide.RIGHT => new LineSegment(RightTop, RightBottom),
-                BoxSide.BOTTOM => new LineSegment(LeftBottom, RightBottom),
+                BoxSide.DOWN => new LineSegment(LeftBottom, RightBottom),
                 _ => LineSegment.NULL_SEGMENT,
             };
         }
@@ -1958,233 +1827,20 @@ namespace XSharp.Geometry
             return ((x, y), box.Mins, box.Maxs);
         }
 
-        public Box Union(Box other)
-        {
-            Vector lt1 = LeftTop;
-            Vector rb1 = RightBottom;
-
-            Vector lt2 = other.LeftTop;
-            Vector rb2 = other.RightBottom;
-
-            var left = FixedSingle.Min(lt1.X, lt2.X);
-            var right = FixedSingle.Max(rb1.X, rb2.X);
-
-            var top = FixedSingle.Min(lt1.Y, lt2.Y);
-            var bottom = FixedSingle.Max(rb1.Y, rb2.Y);
-
-            return new Box((left, top), (right - left).Abs, (bottom - top).Abs);
-        }
-
-        public Box Intersection(Box other)
-        {
-            Vector lt1 = LeftTop;
-            Vector rb1 = RightBottom;
-
-            Vector lt2 = other.LeftTop;
-            Vector rb2 = other.RightBottom;
-
-            var left = FixedSingle.Max(lt1.X, lt2.X);
-            var right = FixedSingle.Min(rb1.X, rb2.X);
-
-            if (right < left)
-                return EMPTY_BOX;
-
-            var top = FixedSingle.Max(lt1.Y, lt2.Y);
-            var bottom = FixedSingle.Min(rb1.Y, rb2.Y);
-
-            return bottom < top ? EMPTY_BOX : new Box(new Vector(left, top), Vector.NULL_VECTOR, new Vector(right - left, bottom - top));
-        }
-
-        public GeometryType Intersection(LineSegment line, out LineSegment result)
-        {
-            bool startInside = Contains(line.Start, BoxSide.ALL);
-            bool endInside = Contains(line.End, BoxSide.ALL);
-
-            if (startInside)
-            {
-                if (endInside)
-                {
-                    result = line;
-                    return GeometryType.LINE_SEGMENT;
-                }
-
-                for (int i = 0; i < 4; i++)
-                {
-                    var kind = (BoxSide) (1 << i);
-                    var side = GetSideSegment(kind);
-                    var type = line.Intersection(line, out LineSegment intersection);
-
-                    if (type == GeometryType.VECTOR && intersection.Start != line.Start)
-                    {
-                        result = new LineSegment(line.Start, intersection.Start);
-                        return GeometryType.LINE_SEGMENT;
-                    }
-                }
-
-                result = line;
-                return GeometryType.VECTOR;
-            }
-
-            if (endInside)
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    var kind = (BoxSide) (1 << i);
-                    var side = GetSideSegment(kind);
-                    var type = line.Intersection(side, out LineSegment intersection);
-
-                    if (type == GeometryType.VECTOR && intersection.Start != line.End)
-                    {
-                        result = new LineSegment(intersection.Start, line.End);
-                        return GeometryType.LINE_SEGMENT;
-                    }
-                }
-
-                result = line;
-                return GeometryType.VECTOR;
-            }
-
-            int founds = 0;
-            Vector start = Vector.NULL_VECTOR;
-            Vector end = Vector.NULL_VECTOR;
-
-            for (int i = 0; i < 4; i++)
-            {
-                var kind = (BoxSide) (1 << i);
-                var side = GetSideSegment(kind);
-                var type = line.Intersection(side, out LineSegment intersection);
-
-                if (type == GeometryType.VECTOR)
-                {
-                    if (founds == 0)
-                        start = intersection.Start;
-                    else if (founds == 1)
-                        end = intersection.Start;
-
-                    founds++;
-                }
-
-                if (founds == 2)
-                {
-                    result = new LineSegment(start, end);
-                    return GeometryType.LINE_SEGMENT;
-                }
-            }
-
-            if (founds == 1)
-            {
-                result = new LineSegment(start, start);
-                return GeometryType.VECTOR;
-            }
-
-            result = LineSegment.NULL_SEGMENT;
-            return GeometryType.EMPTY;
-        }
-
-        public bool Contains(Vector point, FixedSingle epslon, BoxSide include = BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER)
+        public bool Contains(Vector point)
         {
             Vector m = Origin + Mins;
             Vector M = Origin + Maxs;
 
-            if (!include.HasFlag(BoxSide.INNER))
-                return include.HasFlag(BoxSide.LEFT) && LeftSegment.Contains(point, epslon)
-                    || include.HasFlag(BoxSide.TOP) && TopSegment.Contains(point, epslon)
-                    || include.HasFlag(BoxSide.RIGHT) && RightSegment.Contains(point, epslon)
-                    || include.HasFlag(BoxSide.BOTTOM) && BottomSegment.Contains(point, epslon);
-
-            Interval interval = m.X <= M.X
-                ? Interval.MakeInterval(m.X, M.X, include.HasFlag(BoxSide.LEFT), include.HasFlag(BoxSide.RIGHT))
-                : Interval.MakeInterval(M.X, m.X, include.HasFlag(BoxSide.RIGHT), include.HasFlag(BoxSide.LEFT));
-
-            if (!interval.Contains(point.X, epslon))
+            Interval interval = m.X <= M.X ? Interval.MakeSemiOpenRightInterval(m.X, M.X) : Interval.MakeSemiOpenLeftInterval(M.X, m.X);
+            if (!interval.Contains(point.X))
                 return false;
 
-            interval = m.Y <= M.Y
-                ? Interval.MakeInterval(m.Y, M.Y, include.HasFlag(BoxSide.TOP), include.HasFlag(BoxSide.BOTTOM))
-                : Interval.MakeInterval(M.Y, m.Y, include.HasFlag(BoxSide.BOTTOM), include.HasFlag(BoxSide.TOP));
-
-            return interval.Contains(point.Y, epslon);
+            interval = m.Y <= M.Y ? Interval.MakeSemiOpenRightInterval(m.Y, M.Y) : Interval.MakeSemiOpenLeftInterval(M.Y, m.Y);
+            return interval.Contains(point.Y);
         }
 
-        public bool Contains(Vector point, BoxSide include)
-        {
-            return Contains(point, 0, include);
-        }
-
-        public bool Contains(Vector point)
-        {
-            return Contains(point, 0, BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER);
-        }
-
-        public bool HasIntersectionWith(LineSegment line, FixedSingle epslon, BoxSide include = BoxSide.ALL)
-        {
-            bool hasIntersectionWithLeftSegment = LeftSegment.HasIntersectionWith(line, epslon);
-            bool hasIntersectionWithTopSegment = TopSegment.HasIntersectionWith(line, epslon);
-            bool hasIntersectionWithRightSegment = RightSegment.HasIntersectionWith(line, epslon);
-            bool hasIntersectionWithBottomSegment = BottomSegment.HasIntersectionWith(line, epslon);
-
-            return include.HasFlag(BoxSide.LEFT) && hasIntersectionWithLeftSegment
-                || include.HasFlag(BoxSide.TOP) && hasIntersectionWithTopSegment
-                || include.HasFlag(BoxSide.RIGHT) && hasIntersectionWithRightSegment
-                || include.HasFlag(BoxSide.BOTTOM) && hasIntersectionWithBottomSegment
-                || include.HasFlag(BoxSide.INNER) && (
-                    hasIntersectionWithLeftSegment
-                    || hasIntersectionWithTopSegment
-                    || hasIntersectionWithRightSegment
-                    || hasIntersectionWithBottomSegment
-                    || Contains(line.Start, epslon, BoxSide.INNER)
-                    || Contains(line.End, epslon, BoxSide.INNER)
-                );
-        }
-
-        public bool HasIntersectionWith(LineSegment line, BoxSide include = BoxSide.ALL)
-        {
-            return HasIntersectionWith(line, 0, include);
-        }
-
-        public bool IsOverlaping(Box other, BoxSide includeSides = BoxSide.LEFT | BoxSide.TOP, BoxSide includeOtherBoxSides = BoxSide.LEFT | BoxSide.TOP)
-        {
-            Vector m1 = Origin + Mins;
-            Vector M1 = Origin + Maxs;
-
-            Vector m2 = other.Origin + other.Mins;
-            Vector M2 = other.Origin + other.Maxs;
-
-            Interval interval1 = m1.X <= M1.X
-                ? Interval.MakeInterval(m1.X, M1.X, includeSides.HasFlag(BoxSide.LEFT), includeSides.HasFlag(BoxSide.RIGHT))
-                : Interval.MakeInterval(M1.X, m1.X, includeSides.HasFlag(BoxSide.RIGHT), includeSides.HasFlag(BoxSide.LEFT));
-
-            Interval interval2 = m2.X <= M2.X
-                ? Interval.MakeInterval(m2.X, M2.X, includeOtherBoxSides.HasFlag(BoxSide.LEFT), includeOtherBoxSides.HasFlag(BoxSide.RIGHT))
-                : Interval.MakeInterval(M2.X, m2.X, includeOtherBoxSides.HasFlag(BoxSide.RIGHT), includeOtherBoxSides.HasFlag(BoxSide.LEFT));
-
-            if (!interval1.IsOverlaping(interval2))
-                return false;
-
-            interval1 = m1.Y <= M1.Y
-                ? Interval.MakeInterval(m1.Y, M1.Y, includeSides.HasFlag(BoxSide.TOP), includeSides.HasFlag(BoxSide.BOTTOM))
-                : Interval.MakeInterval(M1.Y, m1.Y, includeSides.HasFlag(BoxSide.BOTTOM), includeSides.HasFlag(BoxSide.TOP));
-
-            interval2 = m2.Y <= M2.Y
-                ? Interval.MakeInterval(m2.Y, M2.Y, includeOtherBoxSides.HasFlag(BoxSide.TOP), includeOtherBoxSides.HasFlag(BoxSide.BOTTOM))
-                : Interval.MakeInterval(M2.Y, m2.Y, includeOtherBoxSides.HasFlag(BoxSide.BOTTOM), includeOtherBoxSides.HasFlag(BoxSide.TOP));
-
-            return interval1.IsOverlaping(interval2);
-        }
-
-        public bool HasIntersectionWith(IGeometry geometry)
-        {
-            return (IGeometry) this == geometry
-                || geometry switch
-                {
-                    Vector v => Contains(v),
-                    Box box => IsOverlaping(box),
-                    LineSegment line => HasIntersectionWith(line),
-                    RightTriangle triangle => triangle.HasIntersectionWith(this),
-                    GeometrySet set => set.HasIntersectionWith(this),
-                    _ => false,
-                };
-        }
+        public GeometryType Type => type;
 
         public FixedSingle Length => FixedSingle.TWO * (Width + Height);
 
@@ -2266,7 +1922,19 @@ namespace XSharp.Geometry
         /// <returns>Menor retângulo que contém os dois retângulos dados</returns>
         public static Box operator |(Box box1, Box box2)
         {
-            return box1.Union(box2);
+            Vector lt1 = box1.LeftTop;
+            Vector rb1 = box1.RightBottom;
+
+            Vector lt2 = box2.LeftTop;
+            Vector rb2 = box2.RightBottom;
+
+            var left = FixedSingle.Min(lt1.X, lt2.X);
+            var right = FixedSingle.Max(rb1.X, rb2.X);
+
+            var top = FixedSingle.Min(lt1.Y, lt2.Y);
+            var bottom = FixedSingle.Max(rb1.Y, rb2.Y);
+
+            return new Box(new Vector(box1.Mins.X <= box1.Maxs.X ? left : right, box1.Mins.Y <= box1.Maxs.Y ? top : bottom), box1.Mins.X <= box1.Maxs.X ? right - left : left - right, box1.Mins.Y <= box1.Maxs.Y ? bottom - top : top - bottom);
         }
 
         /// <summary>
@@ -2277,13 +1945,111 @@ namespace XSharp.Geometry
         /// <returns>Interesecção entre os dois retângulos dados ou um vetor nulo caso a intersecção seja um conjunto vazio</returns>
         public static Box operator &(Box box1, Box box2)
         {
-            return box1.Intersection(box2);
+            Vector lt1 = box1.LeftTop;
+            Vector rb1 = box1.RightBottom;
+
+            Vector lt2 = box2.LeftTop;
+            Vector rb2 = box2.RightBottom;
+
+            var left = FixedSingle.Max(lt1.X, lt2.X);
+            var right = FixedSingle.Min(rb1.X, rb2.X);
+
+            if (right < left)
+                return EMPTY_BOX;
+
+            var top = FixedSingle.Max(lt1.Y, lt2.Y);
+            var bottom = FixedSingle.Min(rb1.Y, rb2.Y);
+
+            return bottom < top ? EMPTY_BOX : new Box(new Vector(left, top), Vector.NULL_VECTOR, new Vector(right - left, bottom - top));
         }
 
         public static LineSegment operator &(Box box, LineSegment line)
         {
-            box.Intersection(line, out line);
-            return line;
+            if (line.Start <= box)
+            {
+                if (line.End <= box)
+                    return line;
+
+                for (BoxSide side = BoxSide.LEFT; side <= BoxSide.DOWN; side++)
+                {
+                    LineSegment sideSegment = box.GetSideSegment(side);
+                    if (sideSegment.Contains(line.Start))
+                        continue;
+
+                    GeometryType type = line.Intersection(sideSegment, out Vector v, out LineSegment l);
+                    switch (type)
+                    {
+                        case GeometryType.VECTOR:
+                            return new LineSegment(line.Start, v);
+
+                        case GeometryType.LINE_SEGMENT:
+                            return l;
+                    }
+                }
+
+                return LineSegment.NULL_SEGMENT;
+            }
+
+            if (line.End <= box)
+            {
+                if (line.Start <= box)
+                    return line;
+
+                for (BoxSide side = BoxSide.LEFT; side <= BoxSide.DOWN; side++)
+                {
+                    LineSegment sideSegment = box.GetSideSegment(side);
+                    if (sideSegment.Contains(line.End))
+                        continue;
+
+                    GeometryType type = line.Intersection(sideSegment, out Vector v, out LineSegment l);
+                    switch (type)
+                    {
+                        case GeometryType.VECTOR:
+                            return new LineSegment(line.End, v);
+
+                        case GeometryType.LINE_SEGMENT:
+                            return l;
+                    }
+                }
+
+                return LineSegment.NULL_SEGMENT;
+            }
+
+            Vector foundVector = Vector.NULL_VECTOR;
+            bool found = false;
+            BoxSide foundSide = BoxSide.LEFT;
+            for (BoxSide side = BoxSide.LEFT; side <= BoxSide.DOWN; side++)
+            {
+                GeometryType type = line.Intersection(box.GetSideSegment(side), out foundVector, out LineSegment l);
+                switch (type)
+                {
+                    case GeometryType.VECTOR:
+                        found = true;
+                        foundSide = side;
+                        break;
+
+                    case GeometryType.LINE_SEGMENT:
+                        return l;
+                }
+            }
+
+            if (!found)
+                return LineSegment.NULL_SEGMENT;
+
+            for (BoxSide side = BoxSide.LEFT; side <= BoxSide.DOWN; side++)
+            {
+                if (side == foundSide)
+                    continue;
+
+                GeometryType type = line.Intersection(box.GetSideSegment(side), out Vector v, out LineSegment l);
+                switch (type)
+                {
+                    case GeometryType.VECTOR:
+                        return new LineSegment(foundVector, v);
+                }
+            }
+
+            return new LineSegment(foundVector, foundVector);
         }
 
         public static LineSegment operator &(LineSegment line, Box box)
@@ -2534,16 +2300,11 @@ namespace XSharp.Geometry
         }
     }
 
-    [Flags]
     public enum RightTriangleSide
     {
-        NONE = 0,
-        HCATHETUS = 1,
-        VCATHETUS = 2,
-        HYPOTENUSE = 4,
-        INNER = 8,
-
-        ALL = HCATHETUS | VCATHETUS | HYPOTENUSE | INNER
+        HCATHETUS,
+        VCATHETUS,
+        HYPOTENUSE
     }
 
     public struct RightTriangle : IShape
@@ -2559,11 +2320,9 @@ namespace XSharp.Geometry
             get;
         }
 
-        public Vector HypothenuseOpositeVertex => Origin;
+        public Vector HCathetusVertex => Origin + HCathetusVector;
 
-        public Vector VCathetusOpositeVertex => Origin + HCathetusVector;
-
-        public Vector HCathetusOpositeVertex => Origin + VCathetusVector;
+        public Vector VCathetusVertex => Origin + VCathetusVector;
 
         public FixedSingle HCathetus => hCathetus.Abs;
 
@@ -2585,11 +2344,11 @@ namespace XSharp.Geometry
 
         public Vector HypotenuseVector => HCathetusVector - VCathetusVector;
 
-        public LineSegment HypotenuseLine => new(VCathetusOpositeVertex, HCathetusOpositeVertex);
+        public LineSegment HypotenuseLine => new(HCathetusVertex, VCathetusVertex);
 
-        public LineSegment HCathetusLine => new(Origin, VCathetusOpositeVertex);
+        public LineSegment HCathetusLine => new(Origin, HCathetusVertex);
 
-        public LineSegment VCathetusLine => new(Origin, HCathetusOpositeVertex);
+        public LineSegment VCathetusLine => new(Origin, VCathetusVertex);
 
         public Box WrappingBox => new(FixedSingle.Min(Origin.X, Origin.X + hCathetus), FixedSingle.Min(Origin.Y, Origin.Y + vCathetus), HCathetus, VCathetus);
 
@@ -2669,131 +2428,53 @@ namespace XSharp.Geometry
             return !(has_neg && has_pos);
         }
 
-        public bool Contains(Vector v, FixedSingle epslon, RightTriangleSide include = RightTriangleSide.ALL)
+        public bool Contains(Vector v, FixedSingle epslon, bool excludeHypotenuse = false)
         {
-            if (include.HasFlag(RightTriangleSide.HYPOTENUSE))
+            if (excludeHypotenuse)
             {
                 LineSegment hypotenuseLine = HypotenuseLine;
                 if (hypotenuseLine.Contains(v, epslon))
-                    return true;
+                    return false;
             }
 
-            if (include.HasFlag(RightTriangleSide.HCATHETUS))
+            if (hCathetus == 0)
             {
-                LineSegment hCathetusLine = HCathetusLine;
-                if (hCathetusLine.Contains(v, epslon))
-                    return true;
+                var interval = Interval.MakeClosedInterval(Origin.Y, VCathetusVector.Y);
+                return interval.Contains(v.Y, epslon);
             }
 
-            if (include.HasFlag(RightTriangleSide.VCATHETUS))
+            if (vCathetus == 0)
             {
-                LineSegment vCathetusLine = VCathetusLine;
-                if (vCathetusLine.Contains(v, epslon))
-                    return true;
+                var interval = Interval.MakeClosedInterval(Origin.X, VCathetusVector.X);
+                return interval.Contains(v.X, epslon);
             }
 
-            FixedSingle hCatethusEpslon = HCathetus.Signal * epslon;
-            FixedSingle vCatethusEpslon = VCathetus.Signal * epslon;
-            return include.HasFlag(RightTriangleSide.INNER) && PointInTriangle(v, Origin + (hCatethusEpslon, vCatethusEpslon), VCathetusOpositeVertex + (-hCatethusEpslon, vCatethusEpslon), HCathetusOpositeVertex + (hCatethusEpslon, -vCatethusEpslon));
+            return PointInTriangle(v, Origin, HCathetusVertex + (epslon, 0), VCathetusVertex + (0, epslon));
         }
 
-        public bool Contains(Vector v, RightTriangleSide include)
+        public bool Contains(Vector v, bool excludeHypotenuse)
         {
-            return Contains(v, 0, include);
+            return Contains(v, 0, excludeHypotenuse);
         }
 
         public bool Contains(Vector point)
         {
-            return Contains(point, RightTriangleSide.ALL);
+            return Contains(point, false);
         }
 
-        public bool HasIntersectionWith(LineSegment line, FixedSingle epslon, RightTriangleSide include = RightTriangleSide.ALL)
-        {
-            bool hasIntersectionWithHypothenuse = HypotenuseLine.HasIntersectionWith(line, epslon);
-            bool hasIntersectionWithHCathetus = HCathetusLine.HasIntersectionWith(line, epslon);
-            bool hasIntersectionWithVCathetus = VCathetusLine.HasIntersectionWith(line, epslon);
-
-            return include.HasFlag(RightTriangleSide.HYPOTENUSE) && hasIntersectionWithHypothenuse
-                || include.HasFlag(RightTriangleSide.HCATHETUS) && hasIntersectionWithHCathetus
-                || include.HasFlag(RightTriangleSide.VCATHETUS) && hasIntersectionWithVCathetus
-                || include.HasFlag(RightTriangleSide.INNER) && (
-                    hasIntersectionWithHypothenuse
-                    || hasIntersectionWithHCathetus
-                    || hasIntersectionWithVCathetus
-                    || Contains(line.Start, RightTriangleSide.INNER)
-                    || Contains(line.End, RightTriangleSide.INNER)
-                );
-        }
-
-        public bool HasIntersectionWith(LineSegment line, RightTriangleSide include = RightTriangleSide.ALL)
-        {
-            return HasIntersectionWith(line, 0, include);
-        }
-
-        public bool HasIntersectionWith(Box box, FixedSingle epslon, RightTriangleSide include = RightTriangleSide.ALL)
+        public bool HasIntersectionWith(Box box, FixedSingle epslon, bool excludeHypotenuse = false)
         {
             Box intersection = box & WrappingBox;
-            if (!intersection.IsValid(epslon))
-                return false;
-
-            if (include.HasFlag(RightTriangleSide.INNER))
-                return Contains(intersection.LeftTop, epslon, include)
-                    || Contains(intersection.LeftBottom, epslon, include)
-                    || Contains(intersection.RightTop, epslon, include)
-                    || Contains(intersection.RightBottom, epslon, include);
-
-            if (include.HasFlag(RightTriangleSide.HYPOTENUSE))
-            {
-                var line = HypotenuseLine;
-                if (intersection.HasIntersectionWith(line))
-                    return true;
-            }
-
-            if (include.HasFlag(RightTriangleSide.HCATHETUS))
-            {
-                var line = HCathetusLine;
-                if (intersection.HasIntersectionWith(line))
-                    return true;
-            }
-
-            if (include.HasFlag(RightTriangleSide.VCATHETUS))
-            {
-                var line = VCathetusLine;
-                if (intersection.HasIntersectionWith(line))
-                    return true;
-            }
-
-            return false;
+            return intersection.IsValid(epslon)
+            && (Contains(intersection.LeftTop, epslon, excludeHypotenuse)
+            || Contains(intersection.LeftBottom, epslon, excludeHypotenuse)
+            || Contains(intersection.RightTop, epslon, excludeHypotenuse)
+            || Contains(intersection.RightBottom, epslon, excludeHypotenuse));
         }
 
-        public bool HasIntersectionWith(Box box, RightTriangleSide include = RightTriangleSide.ALL)
+        public bool HasIntersectionWith(Box box, bool excludeHypotenuse = false)
         {
-            return HasIntersectionWith(box, 0, include);
-        }
-
-        public bool HasIntersectionWith(RightTriangle triangle, FixedSingle epslon, RightTriangleSide include = RightTriangleSide.ALL)
-        {
-            // TODO : Implement!
-            throw new NotImplementedException();
-        }
-
-        public bool HasIntersectionWith(RightTriangle triangle, RightTriangleSide include = RightTriangleSide.ALL)
-        {
-            return HasIntersectionWith(triangle, 0, include);
-        }
-
-        public bool HasIntersectionWith(IGeometry geometry)
-        {
-            return (IGeometry) this == geometry
-                || geometry switch
-                {
-                    Vector v => Contains(v),
-                    Box box => HasIntersectionWith(box),
-                    LineSegment line => HasIntersectionWith(line),
-                    RightTriangle triangle => HasIntersectionWith(triangle),
-                    GeometrySet set => set.HasIntersectionWith(this),
-                    _ => false,
-                };
+            return HasIntersectionWith(box, 0, excludeHypotenuse);
         }
 
         public override string ToString()
@@ -2861,43 +2542,6 @@ namespace XSharp.Geometry
         public static RightTriangle operator -(Vector shift, RightTriangle triangle)
         {
             return (-triangle).Translate(shift);
-        }
-    }
-
-    public static class GeometryOperations
-    {
-        public static void HorizontalParallelogram(Vector origin, Vector direction, FixedSingle height, out Box box, out RightTriangle triangle1, out RightTriangle triangle2)
-        {
-            if (direction.X > 0)
-            {
-                if (direction.Y > 0)
-                {
-                    box = new Box(origin, direction.X, direction.Y + height);
-                    triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
-                    triangle2 = new RightTriangle(origin + (0, direction.Y + height), direction.X, -direction.Y);
-                }
-                else
-                {
-                    box = new Box(origin + (0, direction.Y), direction.X, height - direction.Y);
-                    triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
-                    triangle2 = new RightTriangle(origin + (direction.X, height), -direction.X, direction.Y);
-                }
-            }
-            else
-            {
-                if (direction.Y > 0)
-                {
-                    box = new Box(origin + (direction.X, 0), -direction.X, direction.Y + height);
-                    triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
-                    triangle2 = new RightTriangle(origin + (0, direction.Y + height), direction.X, -direction.Y);
-                }
-                else
-                {
-                    box = new Box(origin + direction, -direction.X, height - direction.Y);
-                    triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
-                    triangle2 = new RightTriangle(origin + (direction.X, height), -direction.X, direction.Y);
-                }
-            }
         }
     }
 }

@@ -3,6 +3,7 @@ using NLua;
 using SharpDX;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
+using SharpDX.DirectSound;
 using SharpDX.Mathematics.Interop;
 using SharpDX.Windows;
 using System;
@@ -10,9 +11,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using XSharp.Engine.Entities;
@@ -30,6 +33,7 @@ using XSharp.Engine.Sound;
 using XSharp.Engine.World;
 using XSharp.Geometry;
 using XSharp.Math;
+using XSharp.Properties;
 using XSharp.ROM;
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.World.World;
@@ -3537,8 +3541,8 @@ namespace XSharp.Engine
         private void DrawSlopeMap(MMXBox box, RightTriangle triangle, float strokeWidth)
         {
             Vector tv1 = triangle.Origin;
-            Vector tv2 = triangle.VCathetusOpositeVertex;
-            Vector tv3 = triangle.HCathetusOpositeVertex;
+            Vector tv2 = triangle.HCathetusVertex;
+            Vector tv3 = triangle.VCathetusVertex;
 
             DrawLine(tv2, tv3, strokeWidth, TOUCHING_MAP_COLOR);
 
@@ -3569,11 +3573,11 @@ namespace XSharp.Engine
         private void DrawHighlightMap(int row, int col, CollisionData collisionData)
         {
             MMXBox mapBox = GetMapBoundingBox(row, col);
-            if (collisionData.IsSolidBlock())
+            if (CollisionChecker.IsSolidBlock(collisionData))
                 DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
-            else if (collisionData.IsSlope())
+            else if (CollisionChecker.IsSlope(collisionData))
             {
-                RightTriangle st = collisionData.MakeSlopeTriangle() + mapBox.LeftTop;
+                RightTriangle st = CollisionChecker.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
                 DrawSlopeMap(mapBox, st, 4);
             }
         }
@@ -3584,13 +3588,13 @@ namespace XSharp.Engine
             var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width * 0.5, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
 
             MMXBox mapBox = GetMapBoundingBox(row, col);
-            if (collisionData.IsSolidBlock() && CollisionChecker.HasIntersection(mapBox, collisionBox))
+            if (CollisionChecker.IsSolidBlock(collisionData) && CollisionChecker.HasIntersection(mapBox, collisionBox))
                 DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
-            else if (!ignoreSlopes && collisionData.IsSlope())
+            else if (!ignoreSlopes && CollisionChecker.IsSlope(collisionData))
             {
-                RightTriangle st = collisionData.MakeSlopeTriangle() + mapBox.LeftTop;
+                RightTriangle st = CollisionChecker.MakeSlopeTriangle(collisionData) + mapBox.LeftTop;
                 Vector hv = st.HCathetusVector;
-                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, EPSLON) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, EPSLON))
+                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, EPSLON, true) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, EPSLON, true))
                     DrawSlopeMap(mapBox, st, 4);
             }
         }
@@ -3985,27 +3989,38 @@ namespace XSharp.Engine
                                     if (!entity.Alive)
                                     {
                                         if (entity.Respawnable)
+                                        {
+                                            DrawRectangle(rect, 1, DEAD_RESPAWNABLE_HITBOX_BORDER_COLOR);
                                             FillRectangle(rect, DEAD_RESPAWNABLE_HITBOX_COLOR);
+                                        }
                                         else
+                                        {
+                                            DrawRectangle(rect, 1, DEAD_HITBOX_BORDER_COLOR);
                                             FillRectangle(rect, DEAD_HITBOX_COLOR);
+                                        }
                                     }
                                     else
+                                    {
+                                        DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
                                         FillRectangle(rect, HITBOX_COLOR);
+                                    }
                                 }
 
                                 if (showDrawBox)
                                 {
                                     MMXBox drawBox = sprite.DrawBox;
                                     var rect = WorldBoxToScreen(drawBox);
+                                    DrawRectangle(rect, 1, BOUNDING_BOX_BORDER_COLOR);
                                     FillRectangle(rect, BOUNDING_BOX_COLOR);
                                 }
 
                                 if (showColliders)
                                 {
-                                    WorldCollider collider = sprite.WorldCollider;
-                                    FillRectangle(WorldBoxToScreen(collider.HeadBox), HEAD_COLLIDER_COLOR);
-                                    FillRectangle(WorldBoxToScreen(collider.ChestBox), CHEST_COLLIDER_COLOR);
-                                    FillRectangle(WorldBoxToScreen(collider.LegsBox), LEGS_COLLIDER_COLOR);
+                                    SpriteCollider collider = sprite.WorldCollider;
+                                    FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
+                                    FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
+                                    FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
+                                    FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
                                 }
 
                                 break;
@@ -4102,6 +4117,7 @@ namespace XSharp.Engine
                     {
                         MMXBox hitbox = Player.Hitbox;
                         var rect = WorldBoxToScreen(hitbox);
+                        DrawRectangle(rect, 1, HITBOX_BORDER_COLOR);
                         FillRectangle(rect, HITBOX_COLOR);
                     }
 
@@ -4109,15 +4125,17 @@ namespace XSharp.Engine
                     {
                         MMXBox drawBox = Player.DrawBox;
                         var rect = WorldBoxToScreen(drawBox);
+                        DrawRectangle(rect, 1, BOUNDING_BOX_BORDER_COLOR);
                         FillRectangle(rect, BOUNDING_BOX_COLOR);
                     }
 
                     if (showColliders)
                     {
-                        WorldCollider collider = Player.WorldCollider;
-                        FillRectangle(WorldBoxToScreen(collider.HeadBox), HEAD_COLLIDER_COLOR);
-                        FillRectangle(WorldBoxToScreen(collider.ChestBox), CHEST_COLLIDER_COLOR);
-                        FillRectangle(WorldBoxToScreen(collider.LegsBox), LEGS_COLLIDER_COLOR);
+                        SpriteCollider collider = Player.WorldCollider;
+                        FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
+                        FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
+                        FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
+                        FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
                     }
                 }
 

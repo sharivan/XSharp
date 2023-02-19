@@ -156,11 +156,10 @@
     <Compile Include="Engine\Graphics\Tilemap.cs" />
     <Compile Include="Engine\Graphics\Tileset.cs" />
     <Compile Include="Engine\Sound\SoundPlayer.cs" />
-    <Compile Include="Engine\World\Collider.cs" />
     <Compile Include="Engine\XSharpTupleExtensions.cs" />
     <Compile Include="Engine\World\Block.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Boss.cs" />
-    <Compile Include="Engine\World\WorldCollider.cs" />
+    <Compile Include="Engine\World\SpriteCollider.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterCharged.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterLemon.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterSemiCharged.cs" />
@@ -172,6 +171,7 @@
     <Compile Include="Engine\Entities\Direction.cs" />
     <Compile Include="Engine\Entities\Enemies\Enemy.cs" />
     <Compile Include="Engine\World\CollisionChecker.cs" />
+    <Compile Include="Engine\World\ExtendedCollisionChecker.cs" />
     <Compile Include="Engine\World\MapPlacement.cs" />
     <Compile Include="Engine\Entities\Triggers\BaseTriggeer.cs" />
     <Compile Include="Engine\GameEngine.cs" />

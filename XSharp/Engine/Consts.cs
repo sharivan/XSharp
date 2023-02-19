@@ -22,7 +22,7 @@ namespace XSharp.Engine
         public static readonly FixedSingle TICK = 1D / TICKRATE;
 
         // Sprite
-
+         
         public const int DEFAULT_INVINCIBLE_TIME = 60;
         public const int DEFAULT_HEALTH = 16;
 
@@ -30,9 +30,10 @@ namespace XSharp.Engine
 
         public const int STEP_BIT_COUNT = 8;
         public const int STEP_COUNT = 1 << STEP_BIT_COUNT;
-        public static readonly FixedSingle STEP_SIZE = 1 / 256.0;
+        public static readonly FixedSingle STEP_SIZE = FixedSingle.FromRawValue(1 << (FixedSingle.FIXED_BITS_COUNT - STEP_BIT_COUNT));
         public static readonly FixedSingle EPSLON = 0;
-        public static readonly FixedSingle QUERY_MAX_DISTANCE = TILE_SIZE * 0.5;
+        public static readonly FixedSingle MASK_SIZE = STEP_SIZE;
+        public static readonly FixedSingle QUERY_MAX_DISTANCE = FixedSingle.ONE;
         public static readonly Vector STEP_LEFT_VECTOR = STEP_SIZE * Vector.LEFT_VECTOR;
         public static readonly Vector STEP_UP_VECTOR = STEP_SIZE * Vector.UP_VECTOR;
         public static readonly Vector STEP_RIGHT_VECTOR = STEP_SIZE * Vector.RIGHT_VECTOR;
@@ -131,7 +132,7 @@ namespace XSharp.Engine
         {
             CollisionBoxType.X1 => ((0, -1), (-7, -17), (7, 17)),
             CollisionBoxType.X2X3 => ((0, -1), (-6, -17), (6, 17)),
-            CollisionBoxType.XSHARP => ((0, -1), (-6, -17), (6, 17)),
+            CollisionBoxType.XSHARP => ((0, 0), (-6, -16), (6, 16)),
             _ => Box.EMPTY_BOX
         };
 
@@ -220,19 +221,19 @@ namespace XSharp.Engine
         public static readonly Box PENGUIN_BLOW_HITBOX = (Vector.NULL_VECTOR, (-13, -6), (13, 6));
         public static readonly FixedSingle PENGUIN_BLOW_DISTANCE_FROM_HITBOX = 29;
         public const int PENGUIN_BLOW_FRAMES = 116;
-
+        
         public const int PENGUIN_BLOW_FRAMES_TO_SPAWN_SCULPTURES = 56;
         public static readonly Vector PENGUIN_SCUPTURE_ORIGIN_OFFSET_1 = (48, -16);
         public static readonly Vector PENGUIN_SCUPTURE_ORIGIN_OFFSET_2 = (80, -16);
         public static readonly Box PENGUIN_SCULPTURE_HITBOX = ((0, 2), (-8, -16), (8, 16));
         public static readonly FixedSingle PENGUIN_SCULPTURE_INITIAL_DISTANCE_FROM_SNOW = 23;
         public const int PENGUIN_SCULPTURE_FRAMES_TO_GRAVITY = 60;
-
+       
         public static readonly Box PENGUIN_ICE_HITBOX = (Vector.NULL_VECTOR, (-5, -5), (5, 5));
         public static readonly FixedSingle PENGUIN_ICE_SPEED = 1024 / 256.0;
         public static readonly FixedSingle PENGUIN_ICE_SPEED2_X = 512 / 256.0;
         public static readonly FixedSingle PENGUIN_ICE_SPEED2_Y = 545 / 256.0;
-        public static readonly FixedSingle PENGUIN_ICE_BUMO_SPEED2_Y = 395 / 256.0;
+        public static readonly FixedSingle PENGUIN_ICE_BUMO_SPEED2_Y = 395 / 256.0;       
 
         public static readonly Box PENGUIN_ICE_FRAGMENT_HITBOX = (Vector.NULL_VECTOR, (-4, -4), (4, 4));
 
@@ -281,20 +282,18 @@ namespace XSharp.Engine
         public const bool DEBUG_SHOW_TRIGGERS = false;
         public const bool DEBUG_SHOW_CAMERA_TRIGGER_EXTENSIONS = false;
 
-        public static readonly Color HITBOX_COLOR = Color.FromRgba(0x80ff0000);
-        public static readonly Color HITBOX_BORDER_COLOR = Color.Blue;
+        public static readonly Color HITBOX_COLOR = Color.FromRgba(0x8000ff00);
+        public static readonly Color HITBOX_BORDER_COLOR = Color.Green;
         public static readonly Color DEAD_HITBOX_COLOR = Color.FromRgba(0x800000ff);
         public static readonly Color DEAD_HITBOX_BORDER_COLOR = Color.Red;
-        public static readonly Color DEAD_RESPAWNABLE_HITBOX_COLOR = Color.FromRgba(0x8000ffff);
-        public static readonly Color DEAD_RESPAWNABLE_HITBOX_BORDER_COLOR = Color.Yellow;
+        public static readonly Color DEAD_RESPAWNABLE_HITBOX_COLOR = Color.FromRgba(0x80ff0000);
+        public static readonly Color DEAD_RESPAWNABLE_HITBOX_BORDER_COLOR = Color.Blue;
         public static readonly Color BOUNDING_BOX_COLOR = Color.FromRgba(0x80ff0000);
         public static readonly Color BOUNDING_BOX_BORDER_COLOR = Color.Red;
-        public static readonly Color HEAD_COLLIDER_COLOR = Color.FromRgba(0x800000ff);
-        public static readonly Color HEAD_COLLIDER_BORDER_COLOR = Color.Red;
-        public static readonly Color CHEST_COLLIDER_COLOR = Color.FromRgba(0x8000ffff);
-        public static readonly Color CHEST_COLLIDER_BORDER_COLOR = Color.Yellow;
-        public static readonly Color LEGS_COLLIDER_COLOR = Color.FromRgba(0x8000ff00);
-        public static readonly Color LEGS_COLLIDER_BORDER_COLOR = Color.Green;
+        public static readonly Color DOWN_COLLIDER_COLOR = Color.Green;
+        public static readonly Color UP_COLLIDER_COLOR = Color.Blue;
+        public static readonly Color LEFT_COLLIDER_COLOR = Color.Red;
+        public static readonly Color RIGHT_COLLIDER_COLOR = Color.Yellow;
         public static readonly Color TRIGGER_BORDER_BOX_COLOR = Color.Green;
         public static readonly Color TRIGGER_BOX_COLOR = Color.FromRgba(0x8000ff00);
         public static readonly Color CHECKPOINT_TRIGGER_BORDER_BOX_COLOR = Color.LightSeaGreen;
@@ -495,15 +494,15 @@ namespace XSharp.Engine
 
         // Startup
 
-        public const bool ENABLE_ENEMIES = false;
-        public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
-        public const bool ENABLE_OST = false;
+        public const bool ENABLE_ENEMIES = true;
+        public const bool ENABLE_SPAWNING_BLACK_SCREEN = true;
+        public const bool ENABLE_OST = true;
 
         public const bool LOAD_ROM = true;
-        public const string ROM_NAME = "BestGame.mmx";
+        public const string ROM_NAME = "ShittyDash.mmx";
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
-        public const int INITIAL_LEVEL = 2;
+        public const int INITIAL_LEVEL = 8;
         public const int INITIAL_CHECKPOINT = 0;
     }
 }
