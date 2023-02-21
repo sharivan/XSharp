@@ -365,7 +365,7 @@ namespace XSharp.Engine.World
                 return 0;
 
             var delta = line.End - line.Start;
-            var stepVector = CollisionChecker.GetHorizontalStepVector(delta, cellWidth);
+            var stepVector = CollisionChecker.GetStepVectorHorizontal(delta, cellWidth);
             var tracingDistance = FixedSingle.Max(delta.X.Abs, delta.Y.Abs);
 
             for (int i = 0; i < BOXKIND_COUNT; i++)
@@ -410,7 +410,7 @@ namespace XSharp.Engine.World
 
         public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
-            Vector stepVector = CollisionChecker.GetHorizontalStepVector(parallelogram.Direction, cellWidth);
+            Vector stepVector = CollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
             FixedSingle stepDistance = stepVector.Length;
             if (stepDistance == 0)
                 stepDistance = cellWidth;

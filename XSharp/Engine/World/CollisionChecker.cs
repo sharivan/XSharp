@@ -69,62 +69,41 @@ namespace XSharp.Engine.World
 
     public class CollisionChecker
     {
-        public static Vector GetHorizontalStepVector(Vector dir, FixedSingle stepWidth)
+        public static Vector GetStepVectorHorizontal(Vector dir, FixedSingle stepSize)
         {
-            if (dir.X == 0)
-                return Vector.NULL_VECTOR;
+            var dx = dir.X;
+            var dy = dir.Y;
 
-            if (dir.Y == 0)
-                return dir.X > 0 ? stepWidth * Vector.RIGHT_VECTOR : dir.X < 0 ? stepWidth * Vector.LEFT_VECTOR : Vector.NULL_VECTOR;
+            if (dx == 0)
+                return dy > 0 ? stepSize * Vector.DOWN_VECTOR : dy < 0 ? stepSize * Vector.UP_VECTOR : Vector.NULL_VECTOR;
 
-            FixedSingle x = dir.X;
-            FixedSingle xm = x.Abs;
-            FixedSingle y = dir.Y;
+            if (dy == 0)
+                return dx > 0 ? stepSize * Vector.RIGHT_VECTOR : stepSize * Vector.LEFT_VECTOR;
 
-            return new Vector(x.Signal * stepWidth, y / xm * stepWidth);
+            var xm = dx.Abs;
+
+            return (dx.Signal * stepSize, (FixedSingle) ((FixedDouble) dy * stepSize / xm));
         }
 
-        public static Vector GetVerticalStepVector(Vector dir, FixedSingle stepHeight)
+        public static Vector GetStepVectorVertical(Vector dir, FixedSingle stepSize)
         {
-            if (dir.Y == 0)
-                return Vector.NULL_VECTOR;
+            var dx = dir.X;
+            var dy = dir.Y;
 
-            if (dir.X == 0)
-                return dir.Y > 0 ? stepHeight * Vector.DOWN_VECTOR : dir.Y < 0 ? stepHeight * Vector.UP_VECTOR : Vector.NULL_VECTOR;
+            if (dx == 0)
+                return dy > 0 ? stepSize * Vector.DOWN_VECTOR : dy < 0 ? stepSize * Vector.UP_VECTOR : Vector.NULL_VECTOR;
 
-            FixedSingle x = dir.X;
-            FixedSingle y = dir.Y;
-            FixedSingle ym = y.Abs;
+            if (dy == 0)
+                return dx > 0 ? stepSize * Vector.RIGHT_VECTOR : stepSize * Vector.LEFT_VECTOR;
 
-            return new Vector(x / ym * stepHeight, y.Signal * stepHeight);
-        }
+            var ym = dy.Abs;
 
-        public static Vector GetStepVector(Vector dir, FixedSingle stepWidth, FixedSingle stepHeight)
-        {
-            if (dir.X == 0)
-                return dir.Y > 0 ? stepHeight * Vector.DOWN_VECTOR : dir.Y < 0 ? stepHeight * Vector.UP_VECTOR : Vector.NULL_VECTOR;
-
-            if (dir.Y == 0)
-                return dir.X > 0 ? stepWidth * Vector.RIGHT_VECTOR : dir.X < 0 ? stepWidth * Vector.LEFT_VECTOR : Vector.NULL_VECTOR;
-
-            dir = dir.Versor();
-
-            FixedSingle dx = dir.X;
-            FixedSingle dy = dir.Y;
-
-            if (dx < dy)
-            {
-                FixedSingle xm = dx.Abs;
-                return (dx.Signal * stepWidth, dy.Signal / xm * stepHeight);
-            }
-
-            FixedSingle ym = dy.Abs;
-            return (dx.Signal / ym * stepWidth, dy.Signal * stepHeight);
+            return ((FixedSingle) ((FixedDouble) dx / ym * stepSize), dy.Signal * stepSize);
         }
 
         public static Vector GetStepVector(Vector dir, FixedSingle stepSize)
         {
-            return GetStepVector(dir, stepSize, stepSize);
+            return dir.X.Abs > dir.Y.Abs ? GetStepVectorHorizontal(dir, stepSize) : GetStepVectorVertical(dir, stepSize);
         }
 
         public static bool HasIntersection(Vector v, Box box, BoxSide include = BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER)
@@ -857,7 +836,7 @@ namespace XSharp.Engine.World
             {
                 if (tracing && TracingBoxMode.HasFlag(TracingMode.DIAGONAL))
                 {
-                    Vector stepVector = GetHorizontalStepVector(TracingDirection, MAP_SIZE);
+                    Vector stepVector = GetStepVectorHorizontal(TracingDirection, MAP_SIZE);
                     FixedSingle stepDistance = stepVector.Length;
                     if (stepDistance == 0)
                         stepDistance = MAP_SIZE;
