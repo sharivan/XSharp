@@ -140,7 +140,7 @@ namespace XSharp.Engine.World
             return box1.IsOverlaping(box2);
         }
 
-        public static bool HasIntersection(Box box, RightTriangle slope, RightTriangleSide include = RightTriangleSide.HYPOTENUSE)
+        public static bool HasIntersection(Box box, RightTriangle slope, RightTriangleSide include = RightTriangleSide.ALL)
         {
             return slope.HasIntersectionWith(box, EPSLON, include);
         }
