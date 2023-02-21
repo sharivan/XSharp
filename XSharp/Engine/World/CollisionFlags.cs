@@ -23,8 +23,8 @@ namespace XSharp.Engine.World
             return flags != CollisionFlags.NONE
                 && (
                     flags.HasFlag(CollisionFlags.BLOCK)
-                    || (direction.HasFlag(Direction.LEFT) || direction.HasFlag(Direction.RIGHT)) && flags.HasFlag(CollisionFlags.UNCLIMBABLE)
-                    || direction.HasFlag(Direction.DOWN) && flags.HasFlag(CollisionFlags.TOP_LADDER)
+                    || (direction.HasFlag(Direction.LEFT) || direction.HasFlag(Direction.RIGHT)) && flags.HasFlag(CollisionFlags.UNCLIMBABLE) // TODO : Check if slopes must be checked here too
+                    || direction.HasFlag(Direction.DOWN) && (flags.HasFlag(CollisionFlags.TOP_LADDER) || flags.HasFlag(CollisionFlags.SLOPE))
                 );
         }
     }

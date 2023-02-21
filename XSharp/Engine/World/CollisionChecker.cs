@@ -132,17 +132,17 @@ namespace XSharp.Engine.World
             return box.Contains(v, EPSLON, include);
         }
 
-        public static bool HasIntersection(Vector v, RightTriangle slope, RightTriangleSide include = RightTriangleSide.HYPOTENUSE)
+        public static bool HasIntersection(Vector v, RightTriangle slope, RightTriangleSide include = RightTriangleSide.ALL)
         {
             return slope.Contains(v, EPSLON, include);
         }
 
-        public static bool HasIntersection(LineSegment line, Box box, BoxSide include = BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER)
+        public static bool HasIntersection(LineSegment line, Box box)
         {
-            return box.HasIntersectionWith(line, EPSLON, include);
+            return box.HasIntersectionWith(line, EPSLON);
         }
 
-        public static bool HasIntersection(LineSegment line, RightTriangle slope, RightTriangleSide include = RightTriangleSide.HYPOTENUSE)
+        public static bool HasIntersection(LineSegment line, RightTriangle slope, RightTriangleSide include = RightTriangleSide.ALL)
         {
             return slope.HasIntersectionWith(line, EPSLON, include);
         }

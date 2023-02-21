@@ -710,12 +710,12 @@ namespace XSharp.Math
 
         private bool CheckMin(FixedSingle element, FixedSingle epslon)
         {
-            return IsClosedLeft ? Min + epslon <= element : Min + epslon < element;
+            return IsClosedLeft ? Min - epslon <= element : Min - epslon < element;
         }
 
         private bool CheckMax(FixedSingle element, FixedSingle epslon)
         {
-            return IsClosedRight ? element <= Max - epslon : element < Max - epslon;
+            return IsClosedRight ? element <= Max + epslon : element < Max + epslon;
         }
 
         public bool Equals(Interval other)
@@ -727,7 +727,7 @@ namespace XSharp.Math
         public bool Contains(FixedSingle element, FixedSingle epslon, bool includeBounds = true)
         {
             return !includeBounds
-                ? Min + epslon < element && element < Max - epslon
+                ? Min - epslon < element && element < Max + epslon
                 : CheckMin(element, epslon) && CheckMax(element, epslon);
         }
 
@@ -839,9 +839,29 @@ namespace XSharp.Math
             return !Intersection(other).IsEmpty;
         }
 
-        public static Interval MakeInterval(FixedSingle v1, FixedSingle v2, bool closedLeft = true, bool closedRight = false)
+        public static Interval MakeInterval((FixedSingle pos, bool closed) v1, (FixedSingle pos, bool closed) v2)
         {
-            return new(FixedSingle.Min(v1, v2), closedLeft, FixedSingle.Max(v1, v2), closedRight);
+            bool closedLeft;
+            bool closedRight;
+            FixedSingle left;
+            FixedSingle right;
+
+            if (v1.pos < v2.pos)
+            {
+                closedLeft = v1.closed;
+                left = v1.pos;
+                closedRight = v2.closed;
+                right = v2.pos;
+            }
+            else
+            {
+                closedLeft = v2.closed;
+                left = v2.pos;
+                closedRight = v1.closed;
+                right = v1.pos;
+            }
+
+            return new(left, closedLeft, right, closedRight);
         }
 
         public static Interval MakeOpenInterval(FixedSingle v1, FixedSingle v2)
