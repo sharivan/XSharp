@@ -69,36 +69,6 @@ namespace XSharp.Engine.World
 
     public class CollisionChecker
     {
-        public static Vector GetHorizontalStepVector(Vector dir, FixedSingle stepWidth)
-        {
-            if (dir.X == 0)
-                return Vector.NULL_VECTOR;
-
-            if (dir.Y == 0)
-                return dir.X > 0 ? stepWidth * Vector.RIGHT_VECTOR : stepWidth * Vector.LEFT_VECTOR;
-
-            var x = dir.X;
-            var xm = x.Abs;
-            var y = dir.Y;
-
-            return new Vector(x.Signal * stepWidth, y / xm * stepWidth);
-        }
-
-        public static Vector GetVerticalStepVector(Vector dir, FixedSingle stepHeight)
-        {
-            if (dir.Y == 0)
-                return Vector.NULL_VECTOR;
-
-            if (dir.X == 0)
-                return dir.Y > 0 ? stepHeight * Vector.DOWN_VECTOR : dir.Y < 0 ? stepHeight * Vector.UP_VECTOR : Vector.NULL_VECTOR;
-
-            var x = dir.X;
-            var y = dir.Y;
-            var ym = y.Abs;
-
-            return new Vector(x / ym * stepHeight, y.Signal * stepHeight);
-        }
-
         public static Vector GetStepVectorHorizontal(Vector dir, FixedSingle stepSize)
         {
             var dx = dir.X;
@@ -129,6 +99,11 @@ namespace XSharp.Engine.World
             var ym = dy.Abs;
 
             return ((FixedSingle) ((FixedDouble) dx / ym * stepSize), dy.Signal * stepSize);
+        }
+
+        public static Vector GetStepVector(Vector dir, FixedSingle stepSize)
+        {
+            return dir.X.Abs > dir.Y.Abs ? GetStepVectorHorizontal(dir, stepSize) : GetStepVectorVertical(dir, stepSize);
         }
 
         public static bool HasIntersection(Vector v, Box box, BoxSide include = BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER)

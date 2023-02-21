@@ -258,7 +258,6 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
                     }
                 }
 
-
                 if (ExplodingFrameCounter is >= (30 * 5) and < (30 * 5 + 12)) // Blink white three times between frames 150 and 162, each blink taking two frames, two frames between each blink.
                 {
                     int frame = ExplodingFrameCounter - 30 * 5;
