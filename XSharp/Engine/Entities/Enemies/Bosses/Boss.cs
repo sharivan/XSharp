@@ -230,7 +230,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
             base.Think();
 
             if (HealthFilling)
-            {                
+            {
                 if (HealthFillingFrameCounter % 2 == 0)
                 {
                     Health++;
@@ -294,7 +294,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
                 }
                 else if (ExplodingFrameCounter >= 78 * 5 + 32 + 2 * 60)
                 {
-                    Exploding = false;                   
+                    Exploding = false;
                     BossDefeatedEvent?.Invoke(this, Engine.Player);
                 }
 
@@ -354,8 +354,8 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
                 }
 
                 Exploding = true;
-                ExplodingFrameCounter = 0;              
-                Engine.PlayBossExplosionLoop();              
+                ExplodingFrameCounter = 0;
+                Engine.PlayBossExplosionLoop();
             }
         }
     }

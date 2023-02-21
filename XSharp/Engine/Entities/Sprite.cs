@@ -2,14 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Policy;
-using System.Windows.Media.Media3D;
 using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
 using XSharp.Geometry;
 using XSharp.Math;
 using static XSharp.Engine.Consts;
-using static XSharp.Engine.World.World;
 using Box = XSharp.Geometry.Box;
 
 namespace XSharp.Engine.Entities
@@ -856,12 +853,12 @@ namespace XSharp.Engine.Entities
             return MASK_SIZE;
         }
 
-        protected virtual FixedSingle GetSideColliderTopClip()
+        protected virtual FixedSingle GetHeadHeight()
         {
             return 0;
         }
 
-        protected virtual FixedSingle GetSideColliderBottomClip()
+        protected virtual FixedSingle GetLegsHeight()
         {
             return 0;
         }
@@ -873,7 +870,7 @@ namespace XSharp.Engine.Entities
 
         protected virtual SpriteCollider CreateWorldCollider()
         {
-            return new SpriteCollider(this, CollisionBox, GetMaskSize(), GetSideColliderTopClip(), GetSideColliderBottomClip(), IsUsingCollisionPlacements(), true, false);
+            return new SpriteCollider(this, CollisionBox, GetMaskSize(), GetHeadHeight(), GetLegsHeight(), IsUsingCollisionPlacements(), true, false);
         }
 
         protected virtual SpriteCollider CreateSpriteCollider()
@@ -1013,21 +1010,21 @@ namespace XSharp.Engine.Entities
 
         protected override bool CheckTouching(Entity entity)
         {
-            if (CollisionChecker.IsSolidBlock(CollisionData) && entity is Sprite sprite && sprite.Alive && sprite.CheckCollisionWithSolidSprites)
+            if (CollisionData.IsSolidBlock() && entity is Sprite sprite && sprite.Alive && sprite.CheckCollisionWithSolidSprites)
             {
                 spriteCollider.ClearIgnoredSprites();
                 spriteCollider.Box = Hitbox;
 
-                if ((spriteCollider.DownCollider & sprite.Hitbox).IsValid())
+                if (spriteCollider.DownCollider.IsOverlaping(sprite.Hitbox))
                     touchingSpritesDown.Add(sprite);
 
-                if ((spriteCollider.LeftCollider & sprite.Hitbox).IsValid())
+                if (spriteCollider.LeftCollider.IsOverlaping(sprite.Hitbox))
                     touchingSpritesLeft.Add(sprite);
 
-                if ((spriteCollider.RightCollider & sprite.Hitbox).IsValid())
+                if (spriteCollider.RightCollider.IsOverlaping(sprite.Hitbox))
                     touchingSpritesRight.Add(sprite);
 
-                if ((spriteCollider.UpCollider & sprite.Hitbox).IsValid())
+                if (spriteCollider.UpCollider.IsOverlaping(sprite.Hitbox))
                     touchingSpritesUp.Add(sprite);
             }
 
@@ -1073,7 +1070,7 @@ namespace XSharp.Engine.Entities
             Box boxCollider = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
             CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(boxCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites);
 
-            if (!CanBlockTheMove(collisionFlags))
+            if (!collisionFlags.CanBlockTheMove())
             {
                 if (gravity && followSlopes && wasLanded)
                 {
@@ -1201,7 +1198,7 @@ namespace XSharp.Engine.Entities
                 if (dy.Y > 0)
                 {
                     Box union = lastDownCollider | collider.DownCollider;
-                    if (CanBlockTheMove(Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites)))
+                    if (Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).CanBlockTheMove())
                     {
                         collider.Box = lastBox;
                         collider.MoveContactFloor(dy.Y.Ceil());
@@ -1210,7 +1207,7 @@ namespace XSharp.Engine.Entities
                 else
                 {
                     Box union = lastUpCollider | collider.UpCollider;
-                    if (CanBlockTheMove(Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites)))
+                    if (Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).CanBlockTheMove())
                     {
                         collider.Box = lastBox;
                         collider.MoveContactSolid(dy, (-dy.Y).Ceil(), Direction.UP);
@@ -1668,7 +1665,7 @@ namespace XSharp.Engine.Entities
 
         protected override BoxKind ComputeBoxKind()
         {
-            return (CollisionChecker.IsSolidBlock(CollisionData) ? BoxKind.COLLISIONBOX : BoxKind.NONE)
+            return (CollisionData.IsSolidBlock() ? BoxKind.COLLISIONBOX : BoxKind.NONE)
                 | (Visible ? BoxKind.BOUDINGBOX : BoxKind.NONE)
                 | base.ComputeBoxKind();
         }

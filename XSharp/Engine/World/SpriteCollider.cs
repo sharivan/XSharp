@@ -457,9 +457,9 @@ namespace XSharp.Engine.World
             {
                 foreach (var placement in downCollisionChecker.Placements)
                 {
-                    if (placement.Flags == CollisionFlags.TOP_LADDER)
+                    if (placement.CollisionData == CollisionData.TOP_LADDER)
                     {
-                        Box placementBox = placement.BoudingBox;
+                        Box placementBox = placement.ObstableBox;
                         FixedSingle delta = placementBox.Left + MAP_SIZE * 0.5 - box.Left - box.Width * 0.5;
                         box += delta * Vector.RIGHT_VECTOR;
                         UpdateColliders();
@@ -471,9 +471,9 @@ namespace XSharp.Engine.World
             {
                 foreach (var placement in upCollisionChecker.Placements)
                 {
-                    if (placement.Flags == CollisionFlags.LADDER)
+                    if (placement.CollisionData == CollisionData.LADDER)
                     {
-                        Box placementBox = placement.BoudingBox;
+                        Box placementBox = placement.ObstableBox;
                         FixedSingle delta = placementBox.Left + MAP_SIZE * 0.5 - box.Left - box.Width * 0.5;
                         box += delta * Vector.RIGHT_VECTOR;
                         UpdateColliders();

@@ -517,10 +517,10 @@ namespace XSharp.Engine.Entities
             if (TouchingKind == TouchingKind.VECTOR)
             {
                 Vector v = entity.GetVector(TouchingVectorKind);
-                return v <= Hitbox;
+                return Hitbox.Contains(v);
             }
 
-            return (Hitbox & entity.Hitbox).IsValid();
+            return Hitbox.IsOverlaping(entity.Hitbox);
         }
 
         protected internal virtual void OnFrame()
@@ -716,7 +716,7 @@ namespace XSharp.Engine.Entities
         }
 
         protected virtual void OnOffScreen()
-        {            
+        {
         }
 
         protected virtual BoxKind ComputeBoxKind()

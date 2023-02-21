@@ -31,12 +31,12 @@ namespace XSharp.Engine.World
             CollisionFlags bottomLeftDisplacedCollisionFlags = leftChecker.GetCollisionFlags();
             CollisionFlags bottomRightDisplacedCollisionFlags = rightChecker.GetCollisionFlags();
 
-            if (!CanBlockTheMove(bottomLeftDisplacedCollisionFlags) && !CanBlockTheMove(bottomRightDisplacedCollisionFlags))
+            if (!bottomLeftDisplacedCollisionFlags.CanBlockTheMove() && !bottomRightDisplacedCollisionFlags.CanBlockTheMove())
                 return CollisionFlags.NONE;
 
             if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && !bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
             {
-                if (!CanBlockTheMove(bottomLeftDisplacedCollisionFlags) && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
+                if (!bottomLeftDisplacedCollisionFlags.CanBlockTheMove() && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
                 {
                     if (ComputePlacements)
                         placements.AddRange(rightChecker.Placements);
@@ -44,13 +44,12 @@ namespace XSharp.Engine.World
                     return bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
                 }
 
-                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && !CanBlockTheMove(bottomRightDisplacedCollisionFlags))
+                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && !bottomRightDisplacedCollisionFlags.CanBlockTheMove())
                 {
                     if (ComputePlacements)
                         placements.AddRange(leftChecker.Placements);
 
                     return bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
-                    ;
                 }
 
                 if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
@@ -156,7 +155,7 @@ namespace XSharp.Engine.World
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
             {
-                if (CanBlockTheMove(ComputeLandedState()))
+                if (ComputeLandedState().CanBlockTheMove())
                     break;
             }
 
@@ -167,7 +166,7 @@ namespace XSharp.Engine.World
         public bool TryMoveContactFloor(FixedSingle maxDistance)
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
-                if (CanBlockTheMove(ComputeLandedState()))
+                if (ComputeLandedState().CanBlockTheMove())
                     return true;
 
             return false;
@@ -186,13 +185,13 @@ namespace XSharp.Engine.World
         // TODO : Optmize it, can be terribly slow!
         public Box AdjustOnTheFloor(FixedSingle maxDistance)
         {
-            if (!CanBlockTheMove(ComputeLandedState()))
+            if (!ComputeLandedState().CanBlockTheMove())
                 return TestBox;
 
             for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += STEP_SIZE)
             {
                 TestBox += STEP_UP_VECTOR;
-                if (!CanBlockTheMove(ComputeLandedState()))
+                if (!ComputeLandedState().CanBlockTheMove())
                 {
                     TestBox -= STEP_UP_VECTOR;
                     break;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using XSharp.Engine.Entities;
 using XSharp.Geometry;
 using XSharp.Math;
@@ -7,161 +8,167 @@ using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.World
 {
+    [Flags]
+    public enum TracingMode
+    {
+        NONE = 0,
+        HORIZONTAL = 1,
+        VERTICAL = 2,
+        DIAGONAL = 4
+    }
+
+    public class HorizontalParallelogram : GeometrySet
+    {
+        private Box wrappingBox;
+        private RightTriangle triangle1;
+        private RightTriangle triangle2;
+
+        public Box WrappingBox => wrappingBox;
+
+        public Vector LeftTop => wrappingBox.LeftTop;
+
+        public FixedSingle Width => wrappingBox.Width;
+
+        public FixedSingle Height => wrappingBox.Height;
+
+        public Vector Origin
+        {
+            get;
+            private set;
+        }
+
+        public Vector Direction
+        {
+            get;
+            private set;
+        }
+
+        public FixedSingle SmallerHeight
+        {
+            get;
+            private set;
+        }
+
+        public HorizontalParallelogram() : base(SetOperation.INTERSECTION, (Box.EMPTY_BOX, false), (RightTriangle.EMPTY, true), (RightTriangle.EMPTY, true))
+        {
+        }
+
+        public void Setup(Vector origin, Vector direction, FixedSingle smallerHeight)
+        {
+            GeometryOperations.HorizontalParallelogram(origin, direction, smallerHeight, out wrappingBox, out triangle1, out triangle2);
+
+            parts[0] = (wrappingBox, false);
+            parts[1] = (triangle1, true);
+            parts[2] = (triangle2, true);
+
+            Origin = origin;
+            Direction = direction;
+            SmallerHeight = smallerHeight;
+        }
+    }
+
     public class CollisionChecker
     {
-        private static Vector GetStepVector(Vector dir)
+        public static Vector GetHorizontalStepVector(Vector dir, FixedSingle stepWidth)
         {
             if (dir.X == 0)
-                return dir.Y > 0 ? STEP_DOWN_VECTOR : dir.Y < 0 ? STEP_UP_VECTOR : Vector.NULL_VECTOR;
+                return Vector.NULL_VECTOR;
 
             if (dir.Y == 0)
-                return dir.X > 0 ? STEP_RIGHT_VECTOR : dir.X < 0 ? STEP_LEFT_VECTOR : Vector.NULL_VECTOR;
+                return dir.X > 0 ? stepWidth * Vector.RIGHT_VECTOR : stepWidth * Vector.LEFT_VECTOR;
 
-            FixedSingle x = dir.X;
-            FixedSingle xm = x.Abs;
-            FixedSingle y = dir.Y;
+            var x = dir.X;
+            var xm = x.Abs;
+            var y = dir.Y;
 
-            return new Vector(x.Signal * STEP_SIZE, y / xm * STEP_SIZE);
+            return new Vector(x.Signal * stepWidth, y / xm * stepWidth);
         }
 
-        public static bool IsSolidBlock(CollisionData collisionData)
+        public static Vector GetVerticalStepVector(Vector dir, FixedSingle stepHeight)
         {
-            return collisionData switch
-            {
-                CollisionData.MUD => true,
-                CollisionData.TOP_MUD => true,
-                CollisionData.LAVA => true,
-                CollisionData.SOLID2 => true,
-                CollisionData.SOLID3 => true,
-                CollisionData.UNCLIMBABLE_SOLID => true,
-                CollisionData.LEFT_CONVEYOR => true,
-                CollisionData.RIGHT_CONVEYOR => true,
-                CollisionData.UP_SLOPE_BASE => true,
-                CollisionData.DOWN_SLOPE_BASE => true,
-                CollisionData.SOLID => true,
-                CollisionData.BREAKABLE => true,
-                CollisionData.NON_LETHAL_SPIKE => true,
-                CollisionData.LETHAL_SPIKE => true,
-                CollisionData.SLIPPERY_SLOPE_BASE => true,
-                CollisionData.SLIPPERY_BORDER_FLOOR => true,
-                CollisionData.SLIPPERY_FLOOR => true,
-                CollisionData.DOOR => true,
-                _ => false,
-            };
+            if (dir.Y == 0)
+                return Vector.NULL_VECTOR;
+
+            if (dir.X == 0)
+                return dir.Y > 0 ? stepHeight * Vector.DOWN_VECTOR : dir.Y < 0 ? stepHeight * Vector.UP_VECTOR : Vector.NULL_VECTOR;
+
+            var x = dir.X;
+            var y = dir.Y;
+            var ym = y.Abs;
+
+            return new Vector(x / ym * stepHeight, y.Signal * stepHeight);
         }
 
-        public static bool IsMud(CollisionData collisionData)
+        public static Vector GetStepVectorHorizontal(Vector dir, FixedSingle stepSize)
         {
-            return collisionData switch
-            {
-                CollisionData.MUD => true,
-                CollisionData.TOP_MUD => true,
-                _ => false,
-            };
+            var dx = dir.X;
+            var dy = dir.Y;
+
+            if (dx == 0)
+                return dy > 0 ? stepSize * Vector.DOWN_VECTOR : dy < 0 ? stepSize * Vector.UP_VECTOR : Vector.NULL_VECTOR;
+
+            if (dy == 0)
+                return dx > 0 ? stepSize * Vector.RIGHT_VECTOR : stepSize * Vector.LEFT_VECTOR;
+
+            var xm = dx.Abs;
+
+            return (dx.Signal * stepSize, (FixedSingle) ((FixedDouble) dy * stepSize / xm));
         }
 
-        public static bool IsSlipperyFloor(CollisionData collisionData)
+        public static Vector GetStepVectorVertical(Vector dir, FixedSingle stepSize)
         {
-            return collisionData switch
-            {
-                CollisionData.SLIPPERY_SLOPE_BASE => true,
-                CollisionData.SLIPPERY_BORDER_FLOOR => true,
-                CollisionData.SLIPPERY_FLOOR => true,
-                _ => false,
-            };
+            var dx = dir.X;
+            var dy = dir.Y;
+
+            if (dx == 0)
+                return dy > 0 ? stepSize * Vector.DOWN_VECTOR : dy < 0 ? stepSize * Vector.UP_VECTOR : Vector.NULL_VECTOR;
+
+            if (dy == 0)
+                return dx > 0 ? stepSize * Vector.RIGHT_VECTOR : stepSize * Vector.LEFT_VECTOR;
+
+            var ym = dy.Abs;
+
+            return ((FixedSingle) ((FixedDouble) dx / ym * stepSize), dy.Signal * stepSize);
         }
 
-        public static bool IsSlope(CollisionData collisionData)
+        public static bool HasIntersection(Vector v, Box box, BoxSide include = BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER)
         {
-            return collisionData is >= CollisionData.SLOPE_16_8 and <= CollisionData.SLOPE_0_4 or
-                >= CollisionData.LEFT_CONVEYOR_SLOPE_16_12 and <= CollisionData.RIGHT_CONVEYOR_SLOPE_0_4 or
-                >= CollisionData.SLIPPERY_SLOPE_16_8 and <= CollisionData.SLIPPERY_SLOPE_0_4;
+            return box.Contains(v, EPSLON, include);
         }
 
-        public static bool IsSlipperySlope(CollisionData collisionData)
+        public static bool HasIntersection(Vector v, RightTriangle slope, RightTriangleSide include = RightTriangleSide.ALL)
         {
-            return collisionData is >= CollisionData.SLIPPERY_SLOPE_16_8 and <= CollisionData.SLIPPERY_SLOPE_0_4;
+            return slope.Contains(v, EPSLON, include);
         }
 
-        public static bool IsConveyorSlope(CollisionData collisionData)
+        public static bool HasIntersection(LineSegment line, Box box)
         {
-            return collisionData is >= CollisionData.LEFT_CONVEYOR_SLOPE_16_12 and <= CollisionData.RIGHT_CONVEYOR_SLOPE_0_4;
+            return box.HasIntersectionWith(line, EPSLON);
         }
 
-        public static bool IsWater(CollisionData collisionData)
+        public static bool HasIntersection(LineSegment line, RightTriangle slope, RightTriangleSide include = RightTriangleSide.ALL)
         {
-            return collisionData switch
-            {
-                CollisionData.WATER => true,
-                CollisionData.WATER_SURFACE => true,
-                _ => false,
-            };
+            return slope.HasIntersectionWith(line, EPSLON, include);
         }
 
-        public static RightTriangle MakeSlopeTriangle(int left, int right)
+        public static bool HasIntersection(HorizontalParallelogram parallelogram, Box box)
         {
-            return left < right
-                ? new RightTriangle(new Vector(0, right), MAP_SIZE, left - right)
-                : new RightTriangle(new Vector(MAP_SIZE, left), -MAP_SIZE, right - left);
+            return box.HasIntersectionWith(parallelogram);
         }
 
-        public static RightTriangle MakeSlopeTriangle(CollisionData collisionData)
+        public static bool HasIntersection(HorizontalParallelogram parallelogram, RightTriangle slope)
         {
-            return collisionData switch
-            {
-                CollisionData.SLOPE_16_8 => MakeSlopeTriangle(16, 8),
-                CollisionData.SLOPE_8_0 => MakeSlopeTriangle(8, 0),
-                CollisionData.SLOPE_8_16 => MakeSlopeTriangle(8, 16),
-                CollisionData.SLOPE_0_8 => MakeSlopeTriangle(0, 8),
-                CollisionData.SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-                CollisionData.SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-                CollisionData.SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-                CollisionData.SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-                CollisionData.SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-                CollisionData.SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-                CollisionData.SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-                CollisionData.SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-
-                CollisionData.LEFT_CONVEYOR_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-                CollisionData.LEFT_CONVEYOR_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-                CollisionData.LEFT_CONVEYOR_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-                CollisionData.LEFT_CONVEYOR_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-
-                CollisionData.RIGHT_CONVEYOR_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-                CollisionData.RIGHT_CONVEYOR_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-                CollisionData.RIGHT_CONVEYOR_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-                CollisionData.RIGHT_CONVEYOR_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-
-                CollisionData.SLIPPERY_SLOPE_16_8 => MakeSlopeTriangle(16, 8),
-                CollisionData.SLIPPERY_SLOPE_8_0 => MakeSlopeTriangle(8, 0),
-                CollisionData.SLIPPERY_SLOPE_8_16 => MakeSlopeTriangle(8, 16),
-                CollisionData.SLIPPERY_SLOPE_0_8 => MakeSlopeTriangle(0, 8),
-                CollisionData.SLIPPERY_SLOPE_16_12 => MakeSlopeTriangle(16, 12),
-                CollisionData.SLIPPERY_SLOPE_12_8 => MakeSlopeTriangle(12, 8),
-                CollisionData.SLIPPERY_SLOPE_8_4 => MakeSlopeTriangle(8, 4),
-                CollisionData.SLIPPERY_SLOPE_4_0 => MakeSlopeTriangle(4, 0),
-                CollisionData.SLIPPERY_SLOPE_12_16 => MakeSlopeTriangle(12, 16),
-                CollisionData.SLIPPERY_SLOPE_8_12 => MakeSlopeTriangle(8, 12),
-                CollisionData.SLIPPERY_SLOPE_4_8 => MakeSlopeTriangle(4, 8),
-                CollisionData.SLIPPERY_SLOPE_0_4 => MakeSlopeTriangle(0, 4),
-
-                _ => RightTriangle.EMPTY,
-            };
-        }
-
-        public static bool CanBlockTheMove(CollisionFlags flags)
-        {
-            return flags is not CollisionFlags.NONE and not CollisionFlags.WATER and not CollisionFlags.WATER_SURFACE;
+            return slope.HasIntersectionWith(parallelogram);
         }
 
         public static bool HasIntersection(Box box1, Box box2)
         {
-            return (box1 & box2).IsValid(EPSLON);
+            return box1.IsOverlaping(box2);
         }
 
-        public static bool HasIntersection(Box box, RightTriangle slope)
+        public static bool HasIntersection(Box box, RightTriangle slope, RightTriangleSide include = RightTriangleSide.CATHETUS | RightTriangleSide.INNER)
         {
-            return slope.HasIntersectionWith(box, EPSLON, true);
+            return slope.HasIntersectionWith(box, EPSLON, include);
         }
 
         public static CollisionFlags TestCollision(Box box, CollisionData collisionData, Box collisionBox, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE, bool preciseCollisionCheck = true)
@@ -170,63 +177,52 @@ namespace XSharp.Engine.World
                 return CollisionFlags.NONE;
 
             CollisionFlags result = CollisionFlags.NONE;
-            bool hasIntersection = HasIntersection(collisionBox, box);
-            if (IsSolidBlock(collisionData) && hasIntersection && !ignore.HasFlag(CollisionFlags.BLOCK))
+            if (collisionData.IsSolidBlock() && !ignore.HasFlag(CollisionFlags.BLOCK))
             {
                 if (collisionData == CollisionData.UNCLIMBABLE_SOLID)
                 {
                     if (!ignore.HasFlag(CollisionFlags.UNCLIMBABLE))
                     {
-                        placements?.Add(new CollisionPlacement(CollisionFlags.BLOCK, box.LeftTop));
+                        placements?.Add(new CollisionPlacement(collisionData, box));
                         result = CollisionFlags.BLOCK | CollisionFlags.UNCLIMBABLE;
                     }
                 }
                 else
                 {
-                    placements?.Add(new CollisionPlacement(CollisionFlags.BLOCK, box.LeftTop));
+                    placements?.Add(new CollisionPlacement(collisionData, box));
                     result = CollisionFlags.BLOCK;
                 }
             }
-            else if (collisionData == CollisionData.LADDER && hasIntersection && !ignore.HasFlag(CollisionFlags.LADDER))
+            else if (collisionData == CollisionData.LADDER && !ignore.HasFlag(CollisionFlags.LADDER))
             {
-                placements?.Add(new CollisionPlacement(CollisionFlags.LADDER, box.LeftTop));
+                placements?.Add(new CollisionPlacement(collisionData, box));
 
                 result = CollisionFlags.LADDER;
             }
-            else if (collisionData == CollisionData.TOP_LADDER && hasIntersection && !ignore.HasFlag(CollisionFlags.TOP_LADDER))
+            else if (collisionData == CollisionData.TOP_LADDER && !ignore.HasFlag(CollisionFlags.TOP_LADDER))
             {
-                placements?.Add(new CollisionPlacement(CollisionFlags.TOP_LADDER, box.LeftTop));
+                placements?.Add(new CollisionPlacement(collisionData, box));
 
                 result = CollisionFlags.TOP_LADDER;
             }
-            else if (collisionData == CollisionData.WATER && hasIntersection && !ignore.HasFlag(CollisionFlags.WATER))
+            else if (collisionData == CollisionData.WATER && !ignore.HasFlag(CollisionFlags.WATER))
             {
-                placements?.Add(new CollisionPlacement(CollisionFlags.WATER, box.LeftTop));
+                placements?.Add(new CollisionPlacement(collisionData, box));
 
                 result = CollisionFlags.WATER;
             }
-            else if (collisionData == CollisionData.WATER_SURFACE && hasIntersection && !ignore.HasFlag(CollisionFlags.WATER_SURFACE))
+            else if (collisionData == CollisionData.WATER_SURFACE && !ignore.HasFlag(CollisionFlags.WATER_SURFACE))
             {
-                placements?.Add(new CollisionPlacement(CollisionFlags.WATER_SURFACE, box.LeftTop));
+                placements?.Add(new CollisionPlacement(collisionData, box));
 
                 result = CollisionFlags.WATER_SURFACE;
             }
-            else if (!ignore.HasFlag(CollisionFlags.SLOPE) && IsSlope(collisionData))
+            else if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
             {
-                RightTriangle st = MakeSlopeTriangle(collisionData) + box.LeftTop;
-                if (preciseCollisionCheck)
+                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
+                if (HasIntersection(collisionBox, st))
                 {
-                    if (HasIntersection(collisionBox, st))
-                    {
-                        placements?.Add(new CollisionPlacement(CollisionFlags.BLOCK, box.LeftTop));
-
-                        slopeTriangle = st;
-                        result = CollisionFlags.SLOPE;
-                    }
-                }
-                else if (hasIntersection)
-                {
-                    placements?.Add(new CollisionPlacement(CollisionFlags.BLOCK, box.LeftTop));
+                    placements?.Add(new CollisionPlacement(collisionData, box));
 
                     slopeTriangle = st;
                     result = CollisionFlags.SLOPE;
@@ -238,7 +234,7 @@ namespace XSharp.Engine.World
 
         protected RightTriangle slopeTriangle;
         protected List<CollisionPlacement> placements;
-        
+
         private HashSet<Entity> resultSet;
 
         public Box TestBox
@@ -442,7 +438,7 @@ namespace XSharp.Engine.World
                 resultSet.Clear();
                 Engine.partition.Query(resultSet, TestBox, BoxKind.HITBOX);
                 foreach (var entity in resultSet)
-                    if (entity is Sprite sprite && IsSolidBlock(sprite.CollisionData) && !IgnoreSprites.Contains(sprite))
+                    if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                     {
                         CollisionFlags collisionResult = TestCollision(sprite.Hitbox, sprite.CollisionData, TestBox, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags, PreciseCollisionCheck);
                         if (collisionResult == CollisionFlags.NONE)
@@ -458,11 +454,11 @@ namespace XSharp.Engine.World
         // TODO : Optmize it, can be terribly slow!
         public Box MoveUntilIntersect(Vector dir, FixedSingle maxDistance)
         {
-            Vector deltaDir = GetStepVector(dir);
-            FixedSingle step = deltaDir.X == 0 ? deltaDir.Y.Abs : deltaDir.X.Abs;
+            var deltaDir = GetStepVectorHorizontal(dir, STEP_SIZE);
+            var startBox = TestBox;
 
-            for (FixedSingle distance = FixedSingle.ZERO; distance < maxDistance; distance += step, TestBox += deltaDir)
-                if (CanBlockTheMove(GetCollisionFlags()))
+            for (int i = 0; i * STEP_SIZE < maxDistance; i++, TestBox = startBox + (deltaDir * i).TruncFracPart())
+                if (GetCollisionFlags().CanBlockTheMove())
                     break;
 
             return TestBox;

@@ -26,7 +26,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             Directional = true;
             DefaultDirection = Direction.LEFT;
-            SpriteSheetIndex = 10;           
+            SpriteSheetIndex = 10;
 
             SetAnimationNames("Sculpture");
         }
@@ -141,7 +141,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             frameCounter++;
             if (frameCounter == PENGUIN_SCULPTURE_FRAMES_TO_GRAVITY)
             {
-                ContactDamage = 4;                
+                ContactDamage = 4;
                 Invincible = false;
                 gravity = true;
             }

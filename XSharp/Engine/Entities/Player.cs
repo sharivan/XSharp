@@ -545,12 +545,12 @@ namespace XSharp.Engine.Entities
                 SetState(PlayerState.SPAWN_END, 0);
         }
 
-        protected override FixedSingle GetSideColliderTopClip()
+        protected override FixedSingle GetHeadHeight()
         {
             return 1;
         }
 
-        protected override FixedSingle GetSideColliderBottomClip()
+        protected override FixedSingle GetLegsHeight()
         {
             return 9;
         }

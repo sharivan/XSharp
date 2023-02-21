@@ -10,7 +10,7 @@ namespace XSharp.Math
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
             return sourceType == typeof(int)
-                || sourceType == typeof(float) 
+                || sourceType == typeof(float)
                 || sourceType == typeof(double)
                 || sourceType == typeof(FixedSingle)
                 || base.CanConvertFrom(context, sourceType);
@@ -19,8 +19,8 @@ namespace XSharp.Math
         public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
         {
             return value switch
-            {              
-                int => new FixedSingle(Convert.ToInt32(value, culture)),                
+            {
+                int => new FixedSingle(Convert.ToInt32(value, culture)),
                 float => new FixedSingle(Convert.ToSingle(value, culture)),
                 double => new FixedSingle(Convert.ToDouble(value, culture)),
                 FixedSingle => value,
@@ -32,7 +32,7 @@ namespace XSharp.Math
         {
             return destinationType == typeof(float)
                 ? (float) (FixedSingle) value
-                : destinationType == typeof(double) 
+                : destinationType == typeof(double)
                 ? (double) (FixedSingle) value
                 : destinationType == typeof(FixedSingle)
                 ? value
@@ -335,7 +335,7 @@ namespace XSharp.Math
         public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
         {
             return value switch
-            {                
+            {
                 int => new FixedDouble(Convert.ToInt32(value, culture)),
                 long => new FixedDouble(Convert.ToInt64(value, culture)),
                 float => new FixedDouble(Convert.ToSingle(value, culture)),
@@ -467,9 +467,9 @@ namespace XSharp.Math
                 : RawFracPart > 1 << (FIXED_BITS_COUNT - 1) ? intPart - 1 : intPart;
         }
 
-        public FixedSingle TruncFracPart(int bits = 8)
+        public FixedDouble TruncFracPart(int bits = 8)
         {
-            return new FixedSingle(RawValue & (-1 << (FIXED_BITS_COUNT - bits)));
+            return new FixedDouble(RawValue & (-1 << (FIXED_BITS_COUNT - bits)));
         }
 
         public FixedDouble Sqrt()
@@ -746,6 +746,50 @@ namespace XSharp.Math
                 && !(IsClosedRight ? interval.Max > Max : interval.IsClosedRight ? interval.Max >= Max : interval.Max > Max);
         }
 
+        public Interval Union(Interval other)
+        {
+            if (other.IsEmpty)
+                return this;
+
+            FixedSingle newMin;
+            bool newClosedLeft;
+            if (Min > other.Min)
+            {
+                newMin = other.Min;
+                newClosedLeft = other.IsClosedLeft;
+            }
+            else if (Min < other.Min)
+            {
+                newMin = Min;
+                newClosedLeft = IsClosedLeft;
+            }
+            else
+            {
+                newMin = Min;
+                newClosedLeft = IsClosedLeft || other.IsClosedLeft;
+            }
+
+            FixedSingle newMax;
+            bool newClosedRight;
+            if (Max < other.Max)
+            {
+                newMax = other.Max;
+                newClosedRight = other.IsClosedRight;
+            }
+            else if (Max > other.Max)
+            {
+                newMax = Max;
+                newClosedRight = IsClosedRight;
+            }
+            else
+            {
+                newMax = Max;
+                newClosedRight = IsClosedRight || other.IsClosedRight;
+            }
+
+            return new Interval(newMin, newClosedLeft, newMax, newClosedRight);
+        }
+
         public Interval Intersection(Interval other)
         {
             if (other.IsEmpty)
@@ -788,6 +832,36 @@ namespace XSharp.Math
             }
 
             return new Interval(newMin, newClosedLeft, newMax, newClosedRight);
+        }
+
+        public bool IsOverlaping(Interval other)
+        {
+            return !Intersection(other).IsEmpty;
+        }
+
+        public static Interval MakeInterval((FixedSingle pos, bool closed) v1, (FixedSingle pos, bool closed) v2)
+        {
+            bool closedLeft;
+            bool closedRight;
+            FixedSingle left;
+            FixedSingle right;
+
+            if (v1.pos < v2.pos)
+            {
+                closedLeft = v1.closed;
+                left = v1.pos;
+                closedRight = v2.closed;
+                right = v2.pos;
+            }
+            else
+            {
+                closedLeft = v2.closed;
+                left = v2.pos;
+                closedRight = v1.closed;
+                right = v1.pos;
+            }
+
+            return new(left, closedLeft, right, closedRight);
         }
 
         public static Interval MakeOpenInterval(FixedSingle v1, FixedSingle v2)
@@ -834,6 +908,16 @@ namespace XSharp.Math
         public static bool operator !=(Interval left, Interval right)
         {
             return !left.Equals(right);
+        }
+
+        public static Interval operator |(Interval left, Interval right)
+        {
+            return left.Union(right);
+        }
+
+        public static Interval operator &(Interval left, Interval right)
+        {
+            return left.Intersection(right);
         }
     }
 }
