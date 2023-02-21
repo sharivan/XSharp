@@ -364,9 +364,9 @@ namespace XSharp.Engine.World
             if (type == GeometryType.EMPTY)
                 return 0;
 
-            Vector delta = line.End - line.Start;
-            Vector stepVector = CollisionChecker.GetStepVectorHorizontal(delta, cellWidth);
-            FixedSingle tracingDistance = FixedSingle.Max(delta.X.Abs, delta.Y.Abs);
+            var delta = line.End - line.Start;
+            var stepVector = CollisionChecker.GetStepVectorHorizontal(delta, cellWidth);
+            var tracingDistance = FixedSingle.Max(delta.X.Abs, delta.Y.Abs);
 
             for (int i = 0; i < BOXKIND_COUNT; i++)
             {
@@ -376,7 +376,7 @@ namespace XSharp.Engine.World
                 var k = i.ToBoxKind();
 
                 // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
-                Vector testVector = line.Start;
+                var testVector = line.Start;
                 FixedSingle distance = 0;
                 for (int j = 0; distance <= tracingDistance; k++, distance += cellWidth, testVector = line.Start + stepVector * j)
                 {
