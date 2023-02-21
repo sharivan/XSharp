@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using XSharp.Engine.Entities;
-using XSharp.Geometry;
 using XSharp.Math;
+using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.World
@@ -410,7 +410,7 @@ namespace XSharp.Engine.World
 
         public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
-            Vector stepVector = CollisionChecker.GetHorizontalStepVector(parallelogram.Direction, cellWidth);
+            Vector stepVector = CollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
             FixedSingle stepDistance = stepVector.Length;
             if (stepDistance == 0)
                 stepDistance = cellWidth;

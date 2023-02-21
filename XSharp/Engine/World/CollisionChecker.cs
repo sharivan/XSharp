@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using XSharp.Engine.Entities;
-using XSharp.Geometry;
 using XSharp.Math;
-
+using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.World
@@ -141,7 +140,7 @@ namespace XSharp.Engine.World
             return box1.IsOverlaping(box2);
         }
 
-        public static bool HasIntersection(Box box, RightTriangle slope, RightTriangleSide include = RightTriangleSide.CATHETUS | RightTriangleSide.INNER)
+        public static bool HasIntersection(Box box, RightTriangle slope, RightTriangleSide include = RightTriangleSide.ALL)
         {
             return slope.HasIntersectionWith(box, EPSLON, include);
         }

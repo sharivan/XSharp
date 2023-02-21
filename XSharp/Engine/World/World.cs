@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using XSharp.Engine.Entities;
-using XSharp.Geometry;
+using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
-using MMXBox = XSharp.Geometry.Box;
+using MMXBox = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.World
 {
