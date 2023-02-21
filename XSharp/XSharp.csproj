@@ -178,8 +178,6 @@
     <Compile Include="Engine\Keys.cs" />
     <Compile Include="Engine\World\Map.cs" />
     <Compile Include="Engine\Entities\Weapons\Weapon.cs" />
-    <Compile Include="Math\FMath.cs" />
-    <Compile Include="Math\Geometry2D.cs" />
     <Compile Include="Engine\Entities\Entity.cs" />
     <Compile Include="Engine\World\Partition.cs" />
     <Compile Include="Engine\Entities\Player.cs" />
@@ -190,6 +188,16 @@
     <Compile Include="Engine\World\Tile.cs" />
     <Compile Include="Engine\World\Cell.cs" />
     <Compile Include="Engine\World\World.cs" />
+    <Compile Include="Math\FixedDouble.cs" />
+    <Compile Include="Math\FixedSingle.cs" />
+    <Compile Include="Math\Geometry\Box.cs" />
+    <Compile Include="Math\Geometry\GeometrySet.cs" />
+    <Compile Include="Math\Geometry\IGeometry.cs" />
+    <Compile Include="Math\Geometry\LineSegment.cs" />
+    <Compile Include="Math\Geometry\Matrix2x2.cs" />
+    <Compile Include="Math\Geometry\RightTriangle.cs" />
+    <Compile Include="Math\Geometry\Vector.cs" />
+    <Compile Include="Math\Interval.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Engine\Entities\HUD\HUD.cs" />
@@ -314,7 +322,6 @@
   <ItemGroup>
     <Folder Include="Engine\Entities\Armors\" />
     <Folder Include="Engine\Entities\Misc\" />
-    <Folder Include="Math\Geometry\" />
     <Folder Include="resources\maps\" />
     <Folder Include="sstates\" />
   </ItemGroup>
