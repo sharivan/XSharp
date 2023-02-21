@@ -314,6 +314,7 @@
   <ItemGroup>
     <Folder Include="Engine\Entities\Armors\" />
     <Folder Include="Engine\Entities\Misc\" />
+    <Folder Include="Math\Geometry\" />
     <Folder Include="resources\maps\" />
     <Folder Include="sstates\" />
   </ItemGroup>

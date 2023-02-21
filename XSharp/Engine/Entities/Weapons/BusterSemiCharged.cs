@@ -1,6 +1,6 @@
 ﻿using XSharp.Engine.Entities.Enemies;
-using XSharp.Geometry;
 using XSharp.Math;
+using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Weapons

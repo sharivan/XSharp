@@ -1,6 +1,6 @@
 ﻿using SharpDX;
-using XSharp.Geometry;
 using XSharp.Math;
+using XSharp.Math.Geometry;
 
 namespace XSharp.Engine
 {

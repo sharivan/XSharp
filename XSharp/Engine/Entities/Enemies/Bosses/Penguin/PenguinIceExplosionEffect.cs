@@ -1,5 +1,5 @@
 ﻿using XSharp.Engine.Entities.Effects;
-using XSharp.Geometry;
+using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 {

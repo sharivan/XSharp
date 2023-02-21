@@ -1,4 +1,4 @@
-﻿using XSharp.Geometry;
+﻿using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Triggers
 {

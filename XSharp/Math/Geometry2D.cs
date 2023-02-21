@@ -7,9 +7,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using XSharp.Engine;
-using XSharp.Math;
 
-namespace XSharp.Geometry
+namespace XSharp.Math.Geometry
 {
     [Flags]
     public enum GeometryType
@@ -172,9 +171,7 @@ namespace XSharp.Geometry
         public override bool Equals(object obj)
         {
             if (obj is not GeometrySet)
-            {
                 return false;
-            }
 
             var set = (GeometrySet) obj;
             return this == set;
@@ -971,9 +968,7 @@ namespace XSharp.Geometry
         public override bool Equals(object obj)
         {
             if (obj is not LineSegment)
-            {
                 return false;
-            }
 
             var segment = (LineSegment) obj;
             return StrictEquals(segment);
@@ -2798,9 +2793,7 @@ namespace XSharp.Geometry
         public override bool Equals(object obj)
         {
             if (obj is not RightTriangle)
-            {
                 return false;
-            }
 
             var triangle = (RightTriangle) obj;
             return EqualityComparer<Vector>.Default.Equals(Origin, triangle.Origin) &&
@@ -2863,7 +2856,6 @@ namespace XSharp.Geometry
         public static void HorizontalParallelogram(Vector origin, Vector direction, FixedSingle height, out Box box, out RightTriangle triangle1, out RightTriangle triangle2)
         {
             if (direction.X > 0)
-            {
                 if (direction.Y > 0)
                 {
                     box = new Box(origin, direction.X, direction.Y + height);
@@ -2876,21 +2868,18 @@ namespace XSharp.Geometry
                     triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
                     triangle2 = new RightTriangle(origin + (direction.X, height), -direction.X, direction.Y);
                 }
+            else
+                if (direction.Y > 0)
+            {
+                box = new Box(origin + (direction.X, 0), -direction.X, direction.Y + height);
+                triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
+                triangle2 = new RightTriangle(origin + (0, direction.Y + height), direction.X, -direction.Y);
             }
             else
             {
-                if (direction.Y > 0)
-                {
-                    box = new Box(origin + (direction.X, 0), -direction.X, direction.Y + height);
-                    triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
-                    triangle2 = new RightTriangle(origin + (0, direction.Y + height), direction.X, -direction.Y);
-                }
-                else
-                {
-                    box = new Box(origin + direction, -direction.X, height - direction.Y);
-                    triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
-                    triangle2 = new RightTriangle(origin + (direction.X, height), -direction.X, direction.Y);
-                }
+                box = new Box(origin + direction, -direction.X, height - direction.Y);
+                triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
+                triangle2 = new RightTriangle(origin + (direction.X, height), -direction.X, direction.Y);
             }
         }
     }

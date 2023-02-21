@@ -1,7 +1,6 @@
 ﻿using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.World;
-using XSharp.Geometry;
-
+using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.World.World;
 

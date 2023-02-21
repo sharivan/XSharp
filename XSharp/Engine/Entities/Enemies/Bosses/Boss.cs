@@ -1,9 +1,8 @@
 ﻿using SharpDX;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Weapons;
-using XSharp.Geometry;
 using XSharp.Math;
-
+using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses
@@ -279,13 +278,13 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
                     FadingSettings.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
                     FadingSettings.FadingColor = Color.Black;
                 }
-                else if (ExplodingFrameCounter is >= (71 * 5) and < (71 * 5 + 30)) // On frame 355, start fading boss from black to transparent. This fading take 30 frames. 
+                else if (ExplodingFrameCounter is >= (71 * 5) and < (71 * 5 + 30)) // On frame 355, start fading out boss from black to transparent. This fading take 30 frames. 
                 {
                     float fadingLevel = (ExplodingFrameCounter - 71 * 5) / 29f;
                     FadingSettings.FadingLevel = new Vector4(1, 1, 1, fadingLevel);
                     FadingSettings.FadingColor = Color.Transparent;
                 }
-                else if (ExplodingFrameCounter is >= (78 * 5) and < (78 * 5 + 32)) // On frame 390, fade out back the tilemaps
+                else if (ExplodingFrameCounter is >= (78 * 5) and < (78 * 5 + 32)) // On frame 390, fade in the tilemaps
                 {
                     float fadingLevel = 1 - (ExplodingFrameCounter - 78 * 5) / 31f;
                     Engine.World.FadingSettings.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);

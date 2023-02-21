@@ -16,10 +16,10 @@ using System.Linq;
 using XSharp.Engine;
 using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.World;
-using XSharp.Geometry;
 using XSharp.Math;
+using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
-using MMXBox = XSharp.Geometry.Box;
+using MMXBox = XSharp.Math.Geometry.Box;
 
 #pragma warning disable IDE0060 // Remover o parâmetro não utilizado
 namespace XSharp.ROM

@@ -3,9 +3,9 @@ using SharpDX.Direct3D9;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using XSharp.Geometry;
 using XSharp.Math;
-using MMXBox = XSharp.Geometry.Box;
+using XSharp.Math.Geometry;
+using MMXBox = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.Graphics
 {
