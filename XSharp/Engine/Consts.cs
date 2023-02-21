@@ -494,15 +494,15 @@ namespace XSharp.Engine
 
         // Startup
 
-        public const bool ENABLE_ENEMIES = false;
-        public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
-        public const bool ENABLE_OST = false;
+        public const bool ENABLE_ENEMIES = true;
+        public const bool ENABLE_SPAWNING_BLACK_SCREEN = true;
+        public const bool ENABLE_OST = true;
 
         public const bool LOAD_ROM = true;
-        public const string ROM_NAME = "BestGame.mmx";
+        public const string ROM_NAME = "ShittyDash.mmx";
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
-        public const int INITIAL_LEVEL = 2;
+        public const int INITIAL_LEVEL = 8;
         public const int INITIAL_CHECKPOINT = 0;
     }
 }
