@@ -1,15 +1,11 @@
-﻿using SharpDX.Direct3D9;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Windows.Media.Media3D;
 using XSharp.Engine;
 using XSharp.Math;
 
@@ -2089,22 +2085,22 @@ namespace XSharp.Geometry
             var x = point.X;
             var y = point.Y;
 
-            if (x < Left)           
+            if (x < Left)
                 code |= BoxSide.OUTER | BoxSide.LEFT;
             else if (x == Left)
                 code |= BoxSide.LEFT;
             else if (x == Right)
                 code |= BoxSide.RIGHT;
-            else if (x > Right)      
+            else if (x > Right)
                 code |= BoxSide.OUTER | BoxSide.RIGHT;
 
-            if (y < Top)           
+            if (y < Top)
                 code |= BoxSide.OUTER | BoxSide.TOP;
             else if (y == Top)
                 code |= BoxSide.TOP;
             else if (y == Bottom)
                 code |= BoxSide.BOTTOM;
-            else if (y > Bottom)      
+            else if (y > Bottom)
                 code |= BoxSide.OUTER | BoxSide.BOTTOM;
 
             if (code == BoxSide.NONE)
@@ -2147,7 +2143,7 @@ namespace XSharp.Geometry
         public bool HasIntersectionWith(LineSegment line, FixedSingle epslon)
         {
             var type = Intersection(line, out line);
-            return type != GeometryType.EMPTY;  
+            return type != GeometryType.EMPTY;
         }
 
         public bool HasIntersectionWith(LineSegment line)
