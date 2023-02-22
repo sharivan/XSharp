@@ -91,7 +91,7 @@ namespace XSharp.Engine
         public static TupleType ArrayToTuple<ArrayElementType, TupleType>(params ArrayElementType[] array) where TupleType : ITuple
         {
             Type tupleType = typeof(TupleType);
-            return (TupleType) ArrayToTuple<ArrayElementType>(tupleType, array);
+            return (TupleType) ArrayToTuple(tupleType, array);
         }
     }
 }
