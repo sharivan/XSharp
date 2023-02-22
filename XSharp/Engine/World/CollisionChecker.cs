@@ -16,7 +16,7 @@ namespace XSharp.Engine.World
         DIAGONAL = 4
     }
 
-    public class HorizontalParallelogram : GeometrySet
+    public class Parallelogram : GeometrySet
     {
         private Box wrappingBox;
         private RightTriangle triangle1;
@@ -48,13 +48,26 @@ namespace XSharp.Engine.World
             private set;
         }
 
-        public HorizontalParallelogram() : base(SetOperation.INTERSECTION, (Box.EMPTY_BOX, false), (RightTriangle.EMPTY, true), (RightTriangle.EMPTY, true))
+        public Parallelogram() : base(SetOperation.INTERSECTION, (Box.EMPTY_BOX, false), (RightTriangle.EMPTY, true), (RightTriangle.EMPTY, true))
         {
         }
 
-        public void Setup(Vector origin, Vector direction, FixedSingle smallerHeight)
+        public void SetupHorizontal(Vector origin, Vector direction, FixedSingle smallerHeight)
         {
             GeometryOperations.HorizontalParallelogram(origin, direction, smallerHeight, out wrappingBox, out triangle1, out triangle2);
+
+            parts[0] = (wrappingBox, false);
+            parts[1] = (triangle1, true);
+            parts[2] = (triangle2, true);
+
+            Origin = origin;
+            Direction = direction;
+            SmallerHeight = smallerHeight;
+        }
+
+        public void SetupVertical(Vector origin, Vector direction, FixedSingle smallerHeight)
+        {
+            GeometryOperations.VerticalParallelogram(origin, direction, smallerHeight, out wrappingBox, out triangle1, out triangle2);
 
             parts[0] = (wrappingBox, false);
             parts[1] = (triangle1, true);
@@ -125,12 +138,12 @@ namespace XSharp.Engine.World
             return slope.HasIntersectionWith(line, EPSLON, include);
         }
 
-        public static bool HasIntersection(HorizontalParallelogram parallelogram, Box box)
+        public static bool HasIntersection(Parallelogram parallelogram, Box box)
         {
             return box.HasIntersectionWith(parallelogram);
         }
 
-        public static bool HasIntersection(HorizontalParallelogram parallelogram, RightTriangle slope)
+        public static bool HasIntersection(Parallelogram parallelogram, RightTriangle slope)
         {
             return slope.HasIntersectionWith(parallelogram);
         }
@@ -240,7 +253,7 @@ namespace XSharp.Engine.World
             return result;
         }
 
-        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, HorizontalParallelogram parallelogram, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, Parallelogram parallelogram, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
         {
             if (collisionData == CollisionData.NONE || !HasIntersection(parallelogram, box))
                 return CollisionFlags.NONE;
@@ -294,7 +307,7 @@ namespace XSharp.Engine.World
         private HashSet<Entity> resultSet;
         private bool tracing;
 
-        public HorizontalParallelogram tracingParallelogram;
+        public Parallelogram tracingParallelogram;
 
         public TouchingKind TestKind
         {
@@ -434,7 +447,7 @@ namespace XSharp.Engine.World
             placements = new List<CollisionPlacement>();
             resultSet = new HashSet<Entity>();
             IgnoreSprites = new EntityList<Sprite>();
-            tracingParallelogram = new HorizontalParallelogram();
+            tracingParallelogram = new Parallelogram();
         }
 
         public virtual void Setup(Vector testVector, CollisionFlags ignoreFlags, FixedSingle stepSize, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, bool preciseCollisionCheck)
@@ -1115,7 +1128,7 @@ namespace XSharp.Engine.World
             NearestSlopeDistance = NearestDistance;
             NearestObstacleCollisionData = CollisionData.NONE;
             TracingBox = TestBox;
-            tracingParallelogram.Setup(dx < 0 ? TestBox.LeftTop - (TracingDistance, 0) : TestBox.RightTop, direction, TestBox.Height);
+            tracingParallelogram.SetupVertical(dx < 0 ? TestBox.LeftTop : TestBox.RightTop, direction, TestBox.Height);
             TestBox = tracingParallelogram.WrappingBox;
             TracingBoxMode = TracingMode.HORIZONTAL | TracingMode.DIAGONAL;
             TracingBackward = dx < 0;

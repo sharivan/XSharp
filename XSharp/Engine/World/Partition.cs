@@ -393,22 +393,22 @@ namespace XSharp.Engine.World
             return resultSet.Count;
         }
 
-        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, parallelogram, null, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, parallelogram, exclude, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, parallelogram, null, exclusionList, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             Vector stepVector = CollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
             FixedSingle stepDistance = stepVector.Length;
