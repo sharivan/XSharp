@@ -4587,7 +4587,7 @@ namespace XSharp.Engine
             return effect;
         }
 
-        internal ExplosionEffect CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1, int soundChannel = 2)
+        internal ExplosionEffect CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1)
         {
             var effect = CreateEntity<ExplosionEffect>(new
             {
