@@ -101,6 +101,11 @@ namespace XSharp.Math.Geometry
             return false;
         }
 
+        public virtual bool HasIntersectionWith(IGeometry geometry)
+        {
+            throw new NotImplementedException();
+        }
+
         public override bool Equals(object obj)
         {
             if (obj is not GeometrySet)

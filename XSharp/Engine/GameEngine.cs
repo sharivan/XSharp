@@ -2646,9 +2646,7 @@ namespace XSharp.Engine
                     object value = attr.GetValue(initParams);
 
                     var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(prop => prop.Name == attrName);
-                    var property = properties.FirstOrDefault(prop => prop.DeclaringType == type) ?? properties.First();
-                    if (property == null)
-                        throw new ArgumentException($"Attribute '{attr}' in entity class '{type.Name}' doesn't exist or isn't public.");
+                    var property = (properties.FirstOrDefault(prop => prop.DeclaringType == type) ?? properties.First()) ?? throw new ArgumentException($"Attribute '{attr}' in entity class '{type.Name}' doesn't exist or isn't public.");
 
                     if (!property.CanWrite)
                         throw new ArgumentException($"Attribute '{attr}' is not writable.");
@@ -4590,7 +4588,7 @@ namespace XSharp.Engine
             return effect;
         }
 
-        internal ExplosionEffect CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1, int soundChannel = 2)
+        internal ExplosionEffect CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1)
         {
             var effect = CreateEntity<ExplosionEffect>(new
             {

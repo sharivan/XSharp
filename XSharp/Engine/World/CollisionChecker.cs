@@ -264,6 +264,19 @@ namespace XSharp.Engine.World
 
             return false;
         }
+
+        public override bool HasIntersectionWith(IGeometry geometry)
+        {
+            return (IGeometry) this == geometry
+                || geometry switch
+                {
+                    Vector v => Contains(v),
+                    Box box => HasIntersection(box),
+                    LineSegment line => HasIntersection(line),
+                    RightTriangle triangle => HasIntersection(triangle),
+                    _ => throw new NotImplementedException()
+                };
+        }
     }
 
     public class CollisionChecker

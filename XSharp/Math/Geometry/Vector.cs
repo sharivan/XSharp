@@ -387,6 +387,19 @@ namespace XSharp.Math.Geometry
             return this == v;
         }
 
+        public bool HasIntersectionWith(IGeometry geometry)
+        {
+            return (IGeometry) this == geometry
+                || geometry switch
+                {
+                    Vector v => Contains(v),
+                    Box box => box.Contains(this),
+                    LineSegment line => line.Contains(this),
+                    RightTriangle triangle => triangle.Contains(this),
+                    _ => throw new NotImplementedException()
+                };
+        }
+
         /// <summary>
         /// Adição de vetores
         /// </summary>
