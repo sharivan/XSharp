@@ -1,4 +1,6 @@
-﻿namespace XSharp.Math.Geometry
+﻿using System;
+
+namespace XSharp.Math.Geometry
 {
     /// <summary>
     /// Segmento de reta
@@ -236,8 +238,7 @@
                     Box box => box.HasIntersectionWith(this),
                     LineSegment line => HasIntersectionWith(line),
                     RightTriangle triangle => triangle.HasIntersectionWith(this),
-                    GeometrySet set => set.HasIntersectionWith(this),
-                    _ => false,
+                    _ => throw new NotImplementedException()
                 };
         }
 

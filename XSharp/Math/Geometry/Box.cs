@@ -883,8 +883,7 @@ namespace XSharp.Math.Geometry
                     Box box => IsOverlaping(box),
                     LineSegment line => HasIntersectionWith(line),
                     RightTriangle triangle => triangle.HasIntersectionWith(this),
-                    GeometrySet set => set.HasIntersectionWith(this),
-                    _ => false,
+                    _ => throw new NotImplementedException()
                 };
         }
 

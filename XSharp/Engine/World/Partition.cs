@@ -91,7 +91,7 @@ namespace XSharp.Engine.World
 
             public void Query(IGeometry geometry, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
             {
-                if (!box.HasIntersectionWith(geometry))
+                if (!box.Contains(geometry))
                     return;
 
                 int index = kind.ToIndex();
@@ -106,7 +106,7 @@ namespace XSharp.Engine.World
                     if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
                         continue;
 
-                    if (value.GetBox(kind).HasIntersectionWith(geometry) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                    if (value.GetBox(kind).Contains(geometry) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                         result.Add(value); // adiciona esta entidade à lista
                 }
             }
@@ -393,22 +393,22 @@ namespace XSharp.Engine.World
             return resultSet.Count;
         }
 
-        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, parallelogram, null, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, parallelogram, exclude, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, parallelogram, null, exclusionList, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, HorizontalParallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             Vector stepVector = CollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
             FixedSingle stepDistance = stepVector.Length;

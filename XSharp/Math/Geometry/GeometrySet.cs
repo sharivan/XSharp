@@ -66,7 +66,7 @@ namespace XSharp.Math.Geometry
             set;
         }
 
-        public FixedSingle Length => throw new NotImplementedException();
+        public virtual FixedSingle Length => throw new NotImplementedException();
 
         public int Count => parts.Count;
 
@@ -79,20 +79,20 @@ namespace XSharp.Math.Geometry
             this.parts = new List<(IGeometry part, bool negate)>(parts);
         }
 
-        public bool HasIntersectionWith(IGeometry geometry)
+        public bool Contains(Vector v)
         {
             switch (Operation)
             {
                 case SetOperation.UNION:
                     foreach (var (part, negate) in parts)
-                        if (negate ? !part.HasIntersectionWith(geometry) : part.HasIntersectionWith(geometry))
+                        if (negate ? !part.Contains(v) : part.Contains(v))
                             return true;
 
                     return false;
 
                 case SetOperation.INTERSECTION:
                     foreach (var (part, negate) in parts)
-                        if (negate ? part.HasIntersectionWith(geometry) : !part.HasIntersectionWith(geometry))
+                        if (negate ? part.Contains(v) : !part.Contains(v))
                             return false;
 
                     return true;

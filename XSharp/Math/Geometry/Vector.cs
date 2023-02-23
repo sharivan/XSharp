@@ -382,18 +382,9 @@ namespace XSharp.Math.Geometry
             return (X.TruncFracPart(bits), Y.TruncFracPart(bits));
         }
 
-        public bool HasIntersectionWith(IGeometry geometry)
+        public bool Contains(Vector v)
         {
-            return (IGeometry) this == geometry
-                || geometry switch
-                {
-                    Vector v => this == v,
-                    Box box => box.Contains(this),
-                    LineSegment line => line.Contains(this),
-                    RightTriangle triangle => triangle.Contains(this),
-                    GeometrySet set => set.HasIntersectionWith(this),
-                    _ => false,
-                };
+            return this == v;
         }
 
         /// <summary>
