@@ -91,7 +91,7 @@ namespace XSharp.Engine.World
 
             public void Query(IGeometry geometry, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
             {
-                if (!box.HasIntersectionWith(geometry))
+                if (!geometry.HasIntersectionWith(box))
                     return;
 
                 int index = kind.ToIndex();
@@ -106,7 +106,7 @@ namespace XSharp.Engine.World
                     if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
                         continue;
 
-                    if (value.GetBox(kind).HasIntersectionWith(geometry) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                    if (geometry.HasIntersectionWith(value.GetBox(kind)) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                         result.Add(value); // adiciona esta entidade à lista
                 }
             }
