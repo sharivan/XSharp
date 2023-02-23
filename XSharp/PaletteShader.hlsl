@@ -1,12 +1,11 @@
 uniform sampler2D image;
 uniform sampler1D palette;
-uniform bool hasPalette;
 uniform float4 fadingLevel;
 uniform float4 fadingColor;
 
 float4 main(in float2 coord : TEXCOORD) : COLOR
 {
-	float4 color = hasPalette ? tex1D(palette, tex2D(image, coord).r * (255. / 256) + (0.5 / 256)) : tex2D(image, coord);
+	float4 color = tex1D(palette, tex2D(image, coord).r * (255. / 256) + (0.5 / 256));
 
 	color.a = color.a * (1 - fadingLevel.a) + fadingLevel.a * fadingColor.a;
 	color.r = color.r * (1 - fadingLevel.r) + fadingLevel.r * fadingColor.r;

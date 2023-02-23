@@ -242,9 +242,10 @@ namespace XSharp.Engine
         private int lastLives;
         private bool respawning;
 
-        private EffectHandle hasPaletteHandle;
-        private EffectHandle fadingLevelHandle;
-        private EffectHandle fadingColorHandle;
+        private EffectHandle psFadingLevelHandle;
+        private EffectHandle psFadingColorHandle;
+        private EffectHandle plsFadingLevelHandle;
+        private EffectHandle plsFadingColorHandle;
 
         private readonly List<SpriteSheet> spriteSheets;
         private readonly Dictionary<string, SpriteSheet> spriteSheetsByName;
@@ -446,13 +447,13 @@ namespace XSharp.Engine
             set;
         } = DEFAULT_DRAW_SCALE;
 
-        public VertexShader VertexShader
+        public PixelShader PixelShader
         {
             get;
             private set;
         }
 
-        public PixelShader PixelShader
+        public PixelShader PaletteShader
         {
             get;
             private set;
@@ -1083,12 +1084,17 @@ namespace XSharp.Engine
             var device = new Device9(Direct3D, 0, DeviceType.Hardware, Control.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
             Device = device;
 
-            var function = ShaderBytecode.CompileFromFile("PixelShadder.hlsl", "main", "ps_2_0");
+            var function = ShaderBytecode.CompileFromFile("PixelShader.hlsl", "main", "ps_2_0");
             PixelShader = new PixelShader(device, function);
 
-            hasPaletteHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "hasPalette");
-            fadingLevelHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
-            fadingColorHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
+            psFadingLevelHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
+            psFadingColorHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
+
+            function = ShaderBytecode.CompileFromFile("PaletteShader.hlsl", "main", "ps_2_0");
+            PaletteShader = new PixelShader(device, function);
+
+            plsFadingLevelHandle = PaletteShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
+            plsFadingColorHandle = PaletteShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
 
             device.VertexShader = null;
             device.PixelShader = PixelShader;
@@ -2554,23 +2560,34 @@ namespace XSharp.Engine
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
             Device.SetSamplerState(0, SamplerState.MipFilter, TextureFilter.None);
 
-            Device.PixelShader = PixelShader;
+            PixelShader shader;
+            EffectHandle fadingLevelHandle;
+            EffectHandle fadingColorHandle;
 
             if (palette != null)
             {
-                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, true);
+                fadingLevelHandle = plsFadingLevelHandle;
+                fadingColorHandle = plsFadingColorHandle;
+                shader = PaletteShader;
                 Device.SetTexture(1, palette);
             }
             else
-                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
+            {
+                fadingLevelHandle = psFadingLevelHandle;
+                fadingColorHandle = psFadingColorHandle;
+                shader = PixelShader;
+            }
+
+            Device.PixelShader = shader;
+            Device.VertexShader = null;
 
             if (fadingSettings != null)
             {
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, fadingSettings.FadingLevel);
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingSettings.FadingColor.ToVector4());
+                shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, fadingSettings.FadingLevel);
+                shader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingSettings.FadingColor.ToVector4());
             }
             else
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
+                shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
 
             for (int i = 0; i < repeatX; i++)
                 for (int j = 0; j < repeatY; j++)
@@ -3691,16 +3708,17 @@ namespace XSharp.Engine
 
             Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
-
-            Device.VertexShader = null;
-
+           
             if (fadingSettings != null)
             {
                 Device.PixelShader = PixelShader;
-                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, fadingSettings.FadingLevel);
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingSettings.FadingColor.ToVector4());
+                PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingSettings.FadingLevel);
+                PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingSettings.FadingColor.ToVector4());
             }
+            else
+                Device.PixelShader = null;
+
+            Device.VertexShader = null;
 
             sprite.Transform = matTransform;
 
@@ -3784,8 +3802,8 @@ namespace XSharp.Engine
             DisposeResource(foregroundTilemap);
             DisposeResource(backgroundTilemap);
             DisposeResource(foregroundPalette);
-            DisposeResource(VertexShader);
             DisposeResource(PixelShader);
+            DisposeResource(PaletteShader);
             DisposeResource(sprite);
             DisposeResource(line);
             DisposeResource(infoFont);
@@ -3823,10 +3841,10 @@ namespace XSharp.Engine
         private void DrawTexture(Texture texture, bool linear = false)
         {
             Device.PixelShader = PixelShader;
-            PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
+            Device.VertexShader = null;
 
-            PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, FadingSettings.FadingLevel);
-            PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, FadingSettings.FadingColor.ToVector4());
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, FadingSettings.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, FadingSettings.FadingColor.ToVector4());
 
             var matScaling = Matrix.Scaling(0.25f, 0.25f, 1);
             var matTranslation = Matrix.Translation(-1 * SCREEN_WIDTH * 0.5F, +1 * SCREEN_HEIGHT * 0.5F, 1);
@@ -4737,23 +4755,34 @@ namespace XSharp.Engine
             Device.SetTransform(TransformState.Texture1, Matrix.Identity);
             Device.SetTexture(0, texture);
 
-            Device.PixelShader = PixelShader;
+            PixelShader shader;
+            EffectHandle fadingLevelHandle;
+            EffectHandle fadingColorHandle;
 
             if (palette != null)
             {
-                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, true);
+                fadingLevelHandle = plsFadingLevelHandle;
+                fadingColorHandle = plsFadingColorHandle;
+                shader = PaletteShader;
                 Device.SetTexture(1, palette);
             }
             else
-                PixelShader.Function.ConstantTable.SetValue(Device, hasPaletteHandle, false);
+            {
+                fadingLevelHandle = psFadingLevelHandle;
+                fadingColorHandle = psFadingColorHandle;
+                shader = PixelShader;
+            }
+
+            Device.PixelShader = shader;
+            Device.VertexShader = null;
 
             if (fadingSettings != null)
             {
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, fadingSettings.FadingLevel);
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingSettings.FadingColor.ToVector4());
+                shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, fadingSettings.FadingLevel);
+                shader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingSettings.FadingColor.ToVector4());
             }
             else
-                PixelShader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
+                shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
 
             Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);

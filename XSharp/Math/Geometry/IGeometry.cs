@@ -32,7 +32,7 @@ namespace XSharp.Math.Geometry
             get;
         }
 
-        bool HasIntersectionWith(IGeometry geometry);
+        bool Contains(Vector v);
     }
 
     public struct EmptyGeometry : IGeometry
@@ -43,7 +43,7 @@ namespace XSharp.Math.Geometry
 
         public GeometryType Type => type;
 
-        public bool HasIntersectionWith(IGeometry geometry)
+        public bool Contains(Vector v)
         {
             return false;
         }
@@ -57,7 +57,7 @@ namespace XSharp.Math.Geometry
 
         public GeometryType Type => type;
 
-        public bool HasIntersectionWith(IGeometry geometry)
+        public bool Contains(Vector v)
         {
             return true;
         }

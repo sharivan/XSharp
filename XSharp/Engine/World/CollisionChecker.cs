@@ -16,8 +16,88 @@ namespace XSharp.Engine.World
         DIAGONAL = 4
     }
 
-    public class Parallelogram : GeometrySet
+    public enum ParallelogramVertex
     {
+        LEFT_TOP = 0,
+        LEFT_BOTTOM = 1,
+        RIGHT_BOTTOM = 2,
+        RIGHT_TOP = 3
+    }
+
+    public enum ParallelogramSide
+    {
+        LEFT = 0,
+        TOP = 1,
+        RIGHT = 2,
+        BOTTOM = 3
+    }
+
+    public class Parallelogram : GeometrySet, IShape
+    {
+        private static void HorizontalParallelogram(Vector origin, Vector direction, FixedSingle smallWidth, out Box box, out RightTriangle triangle1, out RightTriangle triangle2)
+        {
+            if (direction.X > 0)
+            {
+                if (direction.Y > 0)
+                {
+                    box = new Box(origin, smallWidth + direction.X, direction.Y);
+                    triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
+                    triangle2 = new RightTriangle(origin + (direction.X + smallWidth, 0), -direction.X, direction.Y);
+                }
+                else
+                {
+                    box = new Box(origin + (0, direction.Y), smallWidth + direction.X, -direction.Y);
+                    triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
+                    triangle2 = new RightTriangle(origin + (direction.X + smallWidth, 0), -direction.X, direction.Y);
+                }
+            }
+            else if (direction.Y > 0)
+            {
+                box = new Box(origin + (direction.X, 0), smallWidth - direction.X, direction.Y);
+                triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
+                triangle2 = new RightTriangle(origin + (-smallWidth, direction.Y), direction.X, -direction.Y);
+            }
+            else
+            {
+                box = new Box(origin + direction, smallWidth - direction.X, -direction.Y);
+                triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
+                triangle2 = new RightTriangle(origin + (-smallWidth, direction.Y), direction.X, -direction.Y);
+            }
+        }
+
+        private static void VerticalParallelogram(Vector origin, Vector direction, FixedSingle smallHeight, out Box box, out RightTriangle triangle1, out RightTriangle triangle2)
+        {
+            if (direction.X > 0)
+            {
+                if (direction.Y > 0)
+                {
+                    box = new Box(origin, direction.X, smallHeight + direction.Y);
+                    triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
+                    triangle2 = new RightTriangle(origin + (0, direction.Y + smallHeight), direction.X, -direction.Y);
+                }
+                else
+                {
+                    box = new Box(origin + (0, direction.Y), direction.X, smallHeight - direction.Y);
+                    triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
+                    triangle2 = new RightTriangle(origin + (direction.X, smallHeight), -direction.X, direction.Y);
+                }
+            }
+            else if (direction.Y > 0)
+            {
+                box = new Box(origin + (direction.X, 0), -direction.X, smallHeight + direction.Y);
+                triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
+                triangle2 = new RightTriangle(origin + (0, direction.Y + smallHeight), direction.X, -direction.Y);
+            }
+            else
+            {
+                box = new Box(origin + direction, -direction.X, smallHeight - direction.Y);
+                triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
+                triangle2 = new RightTriangle(origin + (direction.X, smallHeight), -direction.X, direction.Y);
+            }
+        }
+
+        private Vector[] vertices;
+        private LineSegment[] sides;
         private Box wrappingBox;
         private RightTriangle triangle1;
         private RightTriangle triangle2;
@@ -48,17 +128,53 @@ namespace XSharp.Engine.World
             private set;
         }
 
+        public override FixedSingle Length => 2 * (Direction.Length + SmallerHeight); 
+
+        public FixedDouble Area => WrappingBox.Area - triangle1.Area - triangle2.Area;
+
         public Parallelogram() : base(SetOperation.INTERSECTION, (Box.EMPTY_BOX, false), (RightTriangle.EMPTY, true), (RightTriangle.EMPTY, true))
         {
+            vertices = new Vector[4];
+            sides = new LineSegment[4];
+        }
+
+        public LineSegment GetSegment(ParallelogramSide side)
+        {
+            return sides[(int) side];
+        }
+
+        public Vector GetVertex(ParallelogramVertex vertex)
+        {
+            return vertices[(int) vertex];
         }
 
         public void SetupHorizontal(Vector origin, Vector direction, FixedSingle smallerHeight)
         {
-            GeometryOperations.HorizontalParallelogram(origin, direction, smallerHeight, out wrappingBox, out triangle1, out triangle2);
+            HorizontalParallelogram(origin, direction, smallerHeight, out wrappingBox, out triangle1, out triangle2);
 
             parts[0] = (wrappingBox, false);
             parts[1] = (triangle1, true);
             parts[2] = (triangle2, true);
+
+            if (direction.X.Signal * direction.Y.Signal > 0)
+            {
+                vertices[0] = triangle1.HCathetusOpositeVertex;
+                vertices[1] = triangle1.VCathetusOpositeVertex;
+                vertices[2] = triangle2.HCathetusOpositeVertex;
+                vertices[3] = triangle2.VCathetusOpositeVertex;
+            }
+            else
+            {
+                vertices[0] = triangle1.VCathetusOpositeVertex;
+                vertices[1] = triangle1.HCathetusOpositeVertex;
+                vertices[2] = triangle2.VCathetusOpositeVertex;
+                vertices[3] = triangle2.HCathetusOpositeVertex;
+            }
+
+            sides[0] = new LineSegment(vertices[0], vertices[1]);
+            sides[1] = new LineSegment(vertices[1], vertices[2]);
+            sides[2] = new LineSegment(vertices[2], vertices[3]);
+            sides[3] = new LineSegment(vertices[3], vertices[0]);
 
             Origin = origin;
             Direction = direction;
@@ -67,15 +183,86 @@ namespace XSharp.Engine.World
 
         public void SetupVertical(Vector origin, Vector direction, FixedSingle smallerHeight)
         {
-            GeometryOperations.VerticalParallelogram(origin, direction, smallerHeight, out wrappingBox, out triangle1, out triangle2);
+            VerticalParallelogram(origin, direction, smallerHeight, out wrappingBox, out triangle1, out triangle2);
 
             parts[0] = (wrappingBox, false);
             parts[1] = (triangle1, true);
             parts[2] = (triangle2, true);
 
+            if (direction.X.Signal * direction.Y.Signal > 0)
+            {
+                vertices[0] = triangle1.VCathetusOpositeVertex;
+                vertices[1] = triangle2.HCathetusOpositeVertex;
+                vertices[2] = triangle2.VCathetusOpositeVertex;
+                vertices[3] = triangle1.HCathetusOpositeVertex;
+            }
+            else
+            {
+                vertices[0] = triangle1.HCathetusOpositeVertex;
+                vertices[1] = triangle2.VCathetusOpositeVertex;
+                vertices[2] = triangle2.HCathetusOpositeVertex;
+                vertices[3] = triangle1.VCathetusOpositeVertex;
+            }
+
+            sides[0] = new LineSegment(vertices[0], vertices[1]);
+            sides[1] = new LineSegment(vertices[1], vertices[2]);
+            sides[2] = new LineSegment(vertices[2], vertices[3]);
+            sides[3] = new LineSegment(vertices[3], vertices[0]);
+
             Origin = origin;
             Direction = direction;
             SmallerHeight = smallerHeight;
+        }
+
+        public bool HasIntersection(LineSegment line)
+        {
+            foreach (var side in sides)
+                if (side.HasIntersectionWith(line))
+                    return true;
+
+            return Contains(line.Start) || Contains(line.End);
+        }
+
+        public bool HasIntersection(Box box)
+        {
+            Box intersection = box & wrappingBox;
+            if (!intersection.IsValid())
+                return false;
+
+            if (intersection == wrappingBox
+                || Contains(intersection.LeftTop)
+                || Contains(intersection.RightTop)
+                || Contains(intersection.LeftBottom)
+                || Contains(intersection.RightBottom))
+                return true;
+
+            foreach (var side in sides)
+                if (intersection.HasIntersectionWith(side))
+                    return true;
+
+            return false;
+        }
+
+        public bool HasIntersection(RightTriangle triangle)
+        {
+            Box intersection = triangle.WrappingBox & wrappingBox;
+            if (!intersection.IsValid())
+                return false;
+
+            if (Contains(triangle.HypothenuseOpositeVertex)
+                || Contains(triangle.HCathetusOpositeVertex)
+                || Contains(triangle.VCathetusOpositeVertex))
+                return true;
+
+            foreach (var vertex in vertices)
+                if (triangle.Contains(vertex))
+                    return true;
+
+            foreach (var side in sides)
+                if (triangle.HasIntersectionWith(side))
+                    return true;
+
+            return false;
         }
     }
 
@@ -140,12 +327,12 @@ namespace XSharp.Engine.World
 
         public static bool HasIntersection(Parallelogram parallelogram, Box box)
         {
-            return box.HasIntersectionWith(parallelogram);
+            return parallelogram.HasIntersection(box);
         }
 
         public static bool HasIntersection(Parallelogram parallelogram, RightTriangle slope)
         {
-            return slope.HasIntersectionWith(parallelogram);
+            return parallelogram.HasIntersection(slope);
         }
 
         public static bool HasIntersection(Box box1, Box box2)
@@ -211,16 +398,19 @@ namespace XSharp.Engine.World
                 return CollisionFlags.NONE;
 
             CollisionFlags result = CollisionFlags.NONE;
-            if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
+            if (collisionData.IsSlope())
             {
-                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
-
-                if (HasIntersection(v, st))
+                if (!ignore.HasFlag(CollisionFlags.SLOPE))
                 {
-                    placements?.Add(new CollisionPlacement(collisionData, st));
+                    RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
 
-                    slopeTriangle = st;
-                    result = CollisionFlags.SLOPE;
+                    if (HasIntersection(v, st))
+                    {
+                        placements?.Add(new CollisionPlacement(collisionData, st));
+
+                        slopeTriangle = st;
+                        result = CollisionFlags.SLOPE;
+                    }
                 }
             }
             else
@@ -235,16 +425,19 @@ namespace XSharp.Engine.World
                 return CollisionFlags.NONE;
 
             CollisionFlags result = CollisionFlags.NONE;
-            if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
+            if (collisionData.IsSlope())
             {
-                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
-
-                if (HasIntersection(line, st))
+                if (!ignore.HasFlag(CollisionFlags.SLOPE))
                 {
-                    placements?.Add(new CollisionPlacement(collisionData, st));
+                    RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
 
-                    slopeTriangle = st;
-                    result = CollisionFlags.SLOPE;
+                    if (HasIntersection(line, st))
+                    {
+                        placements?.Add(new CollisionPlacement(collisionData, st));
+
+                        slopeTriangle = st;
+                        result = CollisionFlags.SLOPE;
+                    }
                 }
             }
             else
@@ -259,16 +452,19 @@ namespace XSharp.Engine.World
                 return CollisionFlags.NONE;
 
             CollisionFlags result = CollisionFlags.NONE;
-            if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
+            if (collisionData.IsSlope())
             {
-                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
-
-                if (HasIntersection(parallelogram, st))
+                if (!ignore.HasFlag(CollisionFlags.SLOPE))
                 {
-                    placements?.Add(new CollisionPlacement(collisionData, st));
+                    RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
 
-                    slopeTriangle = st;
-                    result = CollisionFlags.SLOPE;
+                    if (HasIntersection(parallelogram, st))
+                    {
+                        placements?.Add(new CollisionPlacement(collisionData, st));
+
+                        slopeTriangle = st;
+                        result = CollisionFlags.SLOPE;
+                    }
                 }
             }
             else
@@ -283,16 +479,19 @@ namespace XSharp.Engine.World
                 return CollisionFlags.NONE;
 
             CollisionFlags result = CollisionFlags.NONE;
-            if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
+            if (collisionData.IsSlope())
             {
-                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
-
-                if (HasIntersection(collisionBox, st))
+                if (!ignore.HasFlag(CollisionFlags.SLOPE))
                 {
-                    placements?.Add(new CollisionPlacement(collisionData, st));
+                    RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
 
-                    slopeTriangle = st;
-                    result = CollisionFlags.SLOPE;
+                    if (HasIntersection(collisionBox, st))
+                    {
+                        placements?.Add(new CollisionPlacement(collisionData, st));
+
+                        slopeTriangle = st;
+                        result = CollisionFlags.SLOPE;
+                    }
                 }
             }
             else
@@ -655,7 +854,7 @@ namespace XSharp.Engine.World
                 var obstacleLine = new LineSegment((x, TestBox.Top), (x, TestBox.Bottom));
                 var type = tracingLine.Intersection(obstacleLine, out tracingLine);
 
-                return type == GeometryType.VECTOR ? tracingLine.Length : TracingDirection.Length + 1;
+                return type == GeometryType.VECTOR ? tracingLine.Length.TruncFracPart() : TracingDirection.Length.TruncFracPart() + 1;
             }
 
             FixedSingle offset = TracingBoxMode == TracingMode.VERTICAL
@@ -677,12 +876,8 @@ namespace XSharp.Engine.World
             var type = hypothenuse.Intersection(bottomLine, out LineSegment intersection);
 
             return TracingBoxMode == TracingMode.VERTICAL
-                ? TracingBackward
-                    ? type == GeometryType.VECTOR ? (intersection.Start.Y - mb.Y).Abs.TruncFracPart() : TracingDirection.Length + 1
-                    : type == GeometryType.VECTOR ? (intersection.Start.Y - mb.Y).Abs.TruncFracPart() : TracingDirection.Length + 1
-                : TracingBackward
-                    ? type == GeometryType.VECTOR ? (intersection.Start.X - mb.X).Abs.TruncFracPart() : TracingDirection.Length + 1
-                    : type == GeometryType.VECTOR ? (intersection.Start.X - mb.X).Abs.TruncFracPart() : TracingDirection.Length + 1;
+                ? type == GeometryType.VECTOR ? (intersection.Start.Y - mb.Y).Abs.TruncFracPart() : TracingDirection.Length.TruncFracPart() + 1
+                : type == GeometryType.VECTOR ? (intersection.Start.X - mb.X).Abs.TruncFracPart() : TracingDirection.Length.TruncFracPart() + 1;
         }
 
         private void CompareVectorAndUpdateWithNearestObstacle(Box obstacleBox, RightTriangle obstacleSlope, CollisionData obstacleCollisionData)
@@ -764,11 +959,9 @@ namespace XSharp.Engine.World
                 if (tracing)
                 {
                     Vector stepVector = GetStepVector(TracingDirection, MAP_SIZE);
-                    FixedSingle stepDistance = stepVector.Length;
-                    if (stepDistance == 0)
-                        stepDistance = MAP_SIZE;
+                    FixedSingle maxDistance = TracingDirection.X > TracingDirection.Y ? TracingDirection.X : TracingDirection.Y;
 
-                    for (FixedSingle distance = 0; distance <= TracingDistance; distance += stepDistance, TestVector += stepVector)
+                    for (FixedSingle distance = 0; distance <= maxDistance; distance += MAP_SIZE, TestVector += stepVector)
                     {
                         Map map = World.GetMapFrom(TestVector);
                         if (map != null)
@@ -849,15 +1042,13 @@ namespace XSharp.Engine.World
                 if (tracing && TracingBoxMode.HasFlag(TracingMode.DIAGONAL))
                 {
                     Vector stepVector = GetStepVectorHorizontal(TracingDirection, MAP_SIZE);
-                    FixedSingle stepDistance = stepVector.Length;
-                    if (stepDistance == 0)
-                        stepDistance = MAP_SIZE;
+                    FixedSingle maxDistance = TracingDirection.X > TracingDirection.Y ? TracingDirection.X : TracingDirection.Y;
 
-                    var tracingBox = new Box(tracingParallelogram.Origin, stepDistance, TracingBox.Height);
-                    for (FixedSingle distance = 0; distance <= TracingDistance; distance += stepDistance, tracingBox += stepVector)
+                    TestBox = TracingBox;
+                    for (FixedSingle distance = 0; distance <= maxDistance; distance += MAP_SIZE, TestBox += stepVector)
                     {
-                        Cell start = World.GetMapCellFromPos(tracingBox.LeftTop);
-                        Cell end = World.GetMapCellFromPos(tracingBox.RightBottom);
+                        Cell start = World.GetMapCellFromPos(TestBox.LeftTop);
+                        Cell end = World.GetMapCellFromPos(TestBox.RightBottom);
 
                         int startRow = start.Row;
                         int startCol = start.Col;
@@ -896,7 +1087,7 @@ namespace XSharp.Engine.World
                                 Map map = World.GetMapFrom(mapPos);
                                 if (map != null)
                                 {
-                                    Box mapBox = World.GetMapBoundingBox(World.GetMapCellFromPos(TestVector));
+                                    Box mapBox = World.GetMapBoundingBox(row, col);
                                     CollisionData collisionData = map.CollisionData;
 
                                     CollisionFlags collisionResult = TestCollision(mapBox, collisionData, tracingParallelogram, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);

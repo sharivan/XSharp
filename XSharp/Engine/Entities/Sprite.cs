@@ -1014,7 +1014,7 @@ namespace XSharp.Engine.Entities
 
             var dy = (FixedSingle) (((FixedDouble) slope.VCathetus * dx / slope.HCathetus).Abs * dxSignal * slopeSignal).TruncFracPart();
 
-            collider.MoveContactSolidDiagonalHorizontal((dx, dy), (goingDown ? Direction.NONE : Direction.UP) | (dxSignal > 0 ? Direction.RIGHT : Direction.LEFT), CollisionFlags.SLOPE);
+            collider.MoveContactSolidDiagonalHorizontal((dx, dy), (goingDown ? Direction.NONE : Direction.UP) | (dxSignal > 0 ? Direction.RIGHT : Direction.LEFT));
 
             if (gravity)
                 collider.MoveContactSolidVertical(QUERY_MAX_DISTANCE);

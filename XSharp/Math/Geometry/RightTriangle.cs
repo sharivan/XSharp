@@ -25,6 +25,8 @@ namespace XSharp.Math.Geometry
         private readonly FixedSingle hCathetus;
         private readonly FixedSingle vCathetus;
 
+        public GeometryType Type => type;
+
         public Vector Origin
         {
             get;
@@ -49,6 +51,10 @@ namespace XSharp.Math.Geometry
                 return System.Math.Sqrt(h * h + v * v);
             }
         }
+
+        public FixedSingle Length => HCathetus + VCathetus + Hypotenuse;
+
+        public FixedDouble Area => FixedDouble.HALF * (FixedDouble) HCathetus * (FixedDouble) VCathetus;
 
         public Vector HCathetusVector => new(hCathetus, 0);
 
@@ -131,8 +137,6 @@ namespace XSharp.Math.Geometry
         {
             return new(-Origin, -hCathetus, -vCathetus);
         }
-
-        public FixedDouble Area => FixedDouble.HALF * (FixedDouble) HCathetus * (FixedDouble) VCathetus;
 
         public Vector GetNormal(RightTriangleSide side)
         {
@@ -227,7 +231,6 @@ namespace XSharp.Math.Geometry
                     || include.HasFlag(RightTriangleSide.HCATHETUS) && intersection.HasIntersectionWith(HCathetusLine, epslon)
                     || include.HasFlag(RightTriangleSide.VCATHETUS) && intersection.HasIntersectionWith(VCathetusLine, epslon)
                 );
-            ;
         }
 
         public bool HasIntersectionWith(Box box, RightTriangleSide include = RightTriangleSide.ALL)
@@ -235,15 +238,24 @@ namespace XSharp.Math.Geometry
             return HasIntersectionWith(box, 0, include);
         }
 
-        public bool HasIntersectionWith(RightTriangle triangle, FixedSingle epslon, RightTriangleSide include = RightTriangleSide.ALL)
+        public bool HasIntersectionWith(RightTriangle triangle, FixedSingle epslon)
         {
-            // TODO : Implement!
-            throw new NotImplementedException();
+            Box intersection = triangle.WrappingBox & WrappingBox;
+            return intersection.IsValid(epslon) && (
+                Contains(triangle.HypothenuseOpositeVertex)
+                || Contains(triangle.HCathetusOpositeVertex)
+                || Contains(triangle.VCathetusOpositeVertex)
+                || triangle.Contains(HypothenuseOpositeVertex)
+                || triangle.Contains(HCathetusOpositeVertex)
+                || triangle.Contains(VCathetusOpositeVertex)
+                || triangle.HasIntersectionWith(HypotenuseLine, epslon)
+                || triangle.HasIntersectionWith(HCathetusLine, epslon)
+                || triangle.HasIntersectionWith(VCathetusLine, epslon));
         }
 
-        public bool HasIntersectionWith(RightTriangle triangle, RightTriangleSide include = RightTriangleSide.ALL)
+        public bool HasIntersectionWith(RightTriangle triangle)
         {
-            return HasIntersectionWith(triangle, 0, include);
+            return HasIntersectionWith(triangle, 0);
         }
 
         public bool HasIntersectionWith(IGeometry geometry)
@@ -255,9 +267,13 @@ namespace XSharp.Math.Geometry
                     Box box => HasIntersectionWith(box),
                     LineSegment line => HasIntersectionWith(line),
                     RightTriangle triangle => HasIntersectionWith(triangle),
-                    GeometrySet set => set.HasIntersectionWith(this),
-                    _ => false,
+                    _ => throw new NotImplementedException()
                 };
+        }
+
+        public RightTriangle FlipAroundHypothenuse()
+        {
+            return new RightTriangle(Origin + (hCathetus, vCathetus), -hCathetus, -vCathetus);
         }
 
         public override string ToString()
@@ -281,10 +297,6 @@ namespace XSharp.Math.Geometry
                    EqualityComparer<FixedSingle>.Default.Equals(vCathetus, triangle.vCathetus) &&
                    EqualityComparer<Vector>.Default.Equals(Origin, triangle.Origin);
         }
-
-        public GeometryType Type => type;
-
-        public FixedSingle Length => HCathetus + VCathetus + Hypotenuse;
 
         public static bool operator ==(RightTriangle left, RightTriangle right)
         {
@@ -319,71 +331,6 @@ namespace XSharp.Math.Geometry
         public static RightTriangle operator -(Vector shift, RightTriangle triangle)
         {
             return (-triangle).Translate(shift);
-        }
-    }
-
-    public static class GeometryOperations
-    {
-        public static void HorizontalParallelogram(Vector origin, Vector direction, FixedSingle smallWidth, out Box box, out RightTriangle triangle1, out RightTriangle triangle2)
-        {
-            if (direction.X > 0)
-            {
-                if (direction.Y > 0)
-                {
-                    box = new Box(origin, smallWidth + direction.X, direction.Y);
-                    triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
-                    triangle2 = new RightTriangle(origin + (direction.X + smallWidth, 0), -direction.X, direction.Y);
-                }
-                else
-                {
-                    box = new Box(origin + (0, direction.Y), smallWidth + direction.X, -direction.Y);
-                    triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
-                    triangle2 = new RightTriangle(origin + (direction.X + smallWidth, 0), -direction.X, direction.Y);
-                }
-            }
-            else if (direction.Y > 0)
-            {
-                box = new Box(origin + (direction.X, 0), smallWidth - direction.X, direction.Y);
-                triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
-                triangle2 = new RightTriangle(origin + (-smallWidth, direction.Y), direction.X, -direction.Y);
-            }
-            else
-            {
-                box = new Box(origin + direction, smallWidth - direction.X, -direction.Y);
-                triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
-                triangle2 = new RightTriangle(origin + (-smallWidth, direction.Y), direction.X, -direction.Y);
-            }
-        }
-
-        public static void VerticalParallelogram(Vector origin, Vector direction, FixedSingle smallHeight, out Box box, out RightTriangle triangle1, out RightTriangle triangle2)
-        {
-            if (direction.X > 0)
-            {
-                if (direction.Y > 0)
-                {
-                    box = new Box(origin, direction.X, smallHeight + direction.Y);
-                    triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
-                    triangle2 = new RightTriangle(origin + (0, direction.Y + smallHeight), direction.X, -direction.Y);
-                }
-                else
-                {
-                    box = new Box(origin + (0, direction.Y), direction.X, smallHeight - direction.Y);
-                    triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
-                    triangle2 = new RightTriangle(origin + (direction.X, smallHeight), -direction.X, direction.Y);
-                }
-            }
-            else if (direction.Y > 0)
-            {
-                box = new Box(origin + (direction.X, 0), -direction.X, smallHeight + direction.Y);
-                triangle1 = new RightTriangle(origin + (direction.X, 0), -direction.X, direction.Y);
-                triangle2 = new RightTriangle(origin + (0, direction.Y + smallHeight), direction.X, -direction.Y);
-            }
-            else
-            {
-                box = new Box(origin + direction, -direction.X, smallHeight - direction.Y);
-                triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
-                triangle2 = new RightTriangle(origin + (direction.X, smallHeight), -direction.X, direction.Y);
-            }
         }
     }
 }
