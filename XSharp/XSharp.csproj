@@ -172,7 +172,6 @@
     <Compile Include="Engine\Entities\Direction.cs" />
     <Compile Include="Engine\Entities\Enemies\Enemy.cs" />
     <Compile Include="Engine\World\CollisionChecker.cs" />
-    <Compile Include="Engine\World\MapPlacement.cs" />
     <Compile Include="Engine\Entities\Triggers\BaseTriggeer.cs" />
     <Compile Include="Engine\GameEngine.cs" />
     <Compile Include="Engine\Keys.cs" />

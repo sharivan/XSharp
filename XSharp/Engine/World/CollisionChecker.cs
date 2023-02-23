@@ -128,7 +128,7 @@ namespace XSharp.Engine.World
             private set;
         }
 
-        public override FixedSingle Length => 2 * (Direction.Length + SmallerHeight); 
+        public override FixedSingle Length => 2 * (Direction.Length + SmallerHeight);
 
         public FixedDouble Area => WrappingBox.Area - triangle1.Area - triangle2.Area;
 

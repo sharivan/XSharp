@@ -3708,7 +3708,7 @@ namespace XSharp.Engine
 
             Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
-           
+
             if (fadingSettings != null)
             {
                 Device.PixelShader = PixelShader;
