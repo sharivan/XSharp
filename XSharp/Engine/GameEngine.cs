@@ -3838,6 +3838,7 @@ namespace XSharp.Engine
         private void DrawTexture(Texture texture, bool linear = false)
         {
             Device.PixelShader = PixelShader;
+            Device.VertexShader = null;
 
             PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, FadingSettings.FadingLevel);
             PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, FadingSettings.FadingColor.ToVector4());
