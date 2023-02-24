@@ -51,12 +51,6 @@ namespace XSharp.Engine.World
             this.backgroundSceneRowCount = backgroundSceneRowCount;
             this.backgroundSceneColCount = backgroundSceneColCount;
 
-            Camera = Engine.CreateEntity<Camera>(new
-            {
-                Width = SCREEN_WIDTH,
-                Height = SCREEN_HEIGHT
-            });
-
             FadingSettings = new FadingControl();
 
             tileList = new List<Tile>();
@@ -117,11 +111,6 @@ namespace XSharp.Engine.World
         public Vector LayoutSize => new(SceneRowCount, SceneColCount);
 
         public Vector LayoutBackgroundtSize => new(backgroundSceneRowCount, backgroundSceneColCount);
-
-        public Camera Camera
-        {
-            get;
-        }
 
         public Texture ForegroundPalette => Engine.ForegroundPalette;
 
@@ -483,8 +472,8 @@ namespace XSharp.Engine.World
             if (checkpoint == null)
                 return;
 
-            Vector screenLT = Camera.LeftTop;
-            Vector screenRB = Camera.RightBottom;
+            Vector screenLT = Engine.Camera.LeftTop;
+            Vector screenRB = Engine.Camera.RightBottom;
             Vector backgroundPos = checkpoint.BackgroundPos;
 
             Vector screenDelta = (checkpoint.Scroll & 0x2) != 0 ? Vector.NULL_VECTOR : (screenLT + checkpoint.CameraPos).Scale(0.5f) - backgroundPos;
@@ -520,8 +509,8 @@ namespace XSharp.Engine.World
 
         public void RenderForeground(int layer)
         {
-            Vector screenLT = Camera.LeftTop;
-            Vector screenRB = Camera.RightBottom;
+            Vector screenLT = Engine.Camera.LeftTop;
+            Vector screenRB = Engine.Camera.RightBottom;
 
             Cell start = GetSceneCellFromPos(screenLT);
             Cell end = GetSceneCellFromPos(screenRB);

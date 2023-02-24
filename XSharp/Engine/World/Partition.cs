@@ -2,7 +2,6 @@
 using XSharp.Engine.Entities;
 using XSharp.Math;
 using XSharp.Math.Geometry;
-using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.World
 {
@@ -22,7 +21,12 @@ namespace XSharp.Engine.World
         private class PartitionQuad<U> where U : Entity
         {
             readonly Box box; // Retângulo que delimita a célula
-            readonly EntityList<U>[] values;
+            readonly EntityList<U> values;
+
+            /// <summary>
+            /// Obtém a quantidade de entidades que possuem intersecção não vazia com esta célula
+            /// </summary>
+            public int Count => values.Count;
 
             /// <summary>
             /// Cria uma nova célula para a partição
@@ -32,103 +36,86 @@ namespace XSharp.Engine.World
             {
                 this.box = box;
 
-                values = new EntityList<U>[BOXKIND_COUNT];
-
-                for (int i = 0; i < BOXKIND_COUNT; i++)
-                    values[i] = new EntityList<U>();
+                values = new EntityList<U>();
             }
 
-            public void Insert(U value, BoxKind kind)
+            public void Insert(U value)
             {
-                int index = kind.ToIndex();
-                EntityList<U> list = values[index];
-                list.Add(value);
+                values.Add(value);
             }
 
-            public void Query(Vector v, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            public void Query(Vector v, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
             {
                 if (!box.Contains(v))
                     return;
 
-                int index = kind.ToIndex();
-                EntityList<U> list = values[index];
-
                 // Verifica a lista de entidades da célula
-                foreach (U value in list)
+                foreach (U value in values)
                 {
-                    if (exclude != null && exclude.Equals(value))
+                    if (value == null || exclude != null && exclude.Equals(value))
                         continue;
 
                     if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
                         continue;
 
-                    if (value.GetBox(kind).Contains(v) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                    if (value.Hitbox.Contains(v) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                         result.Add(value); // adiciona esta entidade à lista
                 }
             }
 
-            public void Query(LineSegment line, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            public void Query(LineSegment line, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
             {
                 if (!box.HasIntersectionWith(line))
                     return;
 
-                int index = kind.ToIndex();
-                EntityList<U> list = values[index];
-
                 // Verifica a lista de entidades da célula
-                foreach (U value in list)
+                foreach (U value in values)
                 {
-                    if (exclude != null && exclude.Equals(value))
+                    if (value == null || exclude != null && exclude.Equals(value))
                         continue;
 
                     if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
                         continue;
 
-                    if (value.GetBox(kind).HasIntersectionWith(line) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                    if (value.Hitbox.HasIntersectionWith(line) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                         result.Add(value); // adiciona esta entidade à lista
                 }
             }
 
-            public void Query(IGeometry geometry, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            public void Query(IGeometry geometry, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
             {
                 if (!geometry.HasIntersectionWith(box))
                     return;
 
-                int index = kind.ToIndex();
-                EntityList<U> list = values[index];
-
                 // Verifica a lista de entidades da célula
-                foreach (U value in list)
+                foreach (U value in values)
                 {
-                    if (exclude != null && exclude.Equals(value))
+                    if (value == null || exclude != null && exclude.Equals(value))
                         continue;
 
                     if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
                         continue;
 
-                    if (geometry.HasIntersectionWith(value.GetBox(kind)) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                    if (geometry.HasIntersectionWith(value.Hitbox) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                         result.Add(value); // adiciona esta entidade à lista
                 }
             }
 
-            public void Query(Box box, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            public void Query(Box box, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
             {
                 if (!box.IsOverlaping(this.box))
                     return;
 
-                int index = kind.ToIndex();
-                EntityList<U> list = values[index];
-
                 // Verifica a lista de entidades da célula
-                foreach (U value in list)
+                foreach (U value in values)
                 {
-                    if (exclude != null && exclude.Equals(value))
+                    if (value == null || exclude != null && exclude.Equals(value))
                         continue;
 
                     if (addictionalExclusionList != null && addictionalExclusionList.Contains(value))
                         continue;
 
-                    if (value.GetBox(kind).IsOverlaping(box) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
+                    if (value.Hitbox.IsOverlaping(box) && (!aliveOnly || value.Alive && !value.MarkedToRemove)) // Se a intersecção for não vazia e se a entidade ainda não estiver na lista de resultados
                         result.Add(value); // adiciona esta entidade à lista
                 }
             }
@@ -137,72 +124,29 @@ namespace XSharp.Engine.World
             /// Atualiza uma entidade com relaçõa a esta célula, se necessário adicionando-a ou removendo-a da célula
             /// </summary>
             /// <param name="value">Entidade a ser atualizada nesta célula</param>
-            public void Update(U value, BoxKind kind)
+            public void Update(U value)
             {
-                int index = kind.ToIndex();
-                EntityList<U> list = values[index];
-
-                if (value.GetBox(kind).IsOverlaping(box)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
-                    list.Add(value); // então adiciona-a em sua lista de entidades
+                if (value.Hitbox.IsOverlaping(box)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
+                    values.Add(value); // então adiciona-a em sua lista de entidades
                 else // Senão, se a intesecção for vazia e esta entidade ainda está contida neta célula
-                    list.Remove(value); // remove-a da sua lista de entidades
+                    values.Remove(value); // remove-a da sua lista de entidades
             }
 
             /// <summary>
             /// Remove uma entidade desta célula
             /// </summary>
             /// <param name="value">Entidade a ser removida</param>
-            public void Remove(U value, BoxKind kind)
-            {
-                int index = kind.ToIndex();
-                values[index].Remove(value);
-            }
-
             public void Remove(U value)
             {
-                for (int i = 0; i < BOXKIND_COUNT; i++)
-                {
-                    var kind = i.ToBoxKind();
-                    int index = kind.ToIndex();
-                    values[index].Remove(value);
-                }
+                values.Remove(value);
             }
 
             /// <summary>
             /// Limpa a lista de entidades desta célula
             /// </summary>
-            public void Clear(BoxKind kind)
-            {
-                int index = kind.ToIndex();
-                values[index].Clear();
-            }
-
             public void Clear()
             {
-                for (int i = 0; i < BOXKIND_COUNT; i++)
-                {
-                    var kind = i.ToBoxKind();
-                    int index = kind.ToIndex();
-                    values[index].Clear();
-                }
-            }
-
-            /// <summary>
-            /// Obtém a quantidade de entidades que possuem intersecção não vazia com esta célula
-            /// </summary>
-            public int Count(BoxKind kind)
-            {
-                int index = kind.ToIndex();
-                return values[index].Count;
-            }
-
-            public int Count()
-            {
-                int result = 0;
-                for (int i = 0; i < BOXKIND_COUNT; i++)
-                    result += values[i].Count;
-
-                return result;
+                values.Clear();
             }
         }
 
@@ -250,74 +194,66 @@ namespace XSharp.Engine.World
         /// Insere uma nova entidade a partição
         /// </summary>
         /// <param name="item">Entidade a ser adicionada</param>
-        public void Insert(T item, BoxKind kind = BoxKind.ALL)
+        public void Insert(T item)
         {
-            for (int i = 0; i < BOXKIND_COUNT; i++)
-            {
-                if (!kind.ContainsFlag(i))
-                    continue;
+            Box box = item.Hitbox;
 
-                var k = i.ToBoxKind();
+            // Calcula os mínimos e máximos absolutos do retângulo que delimita esta partição
+            Vector lt = this.box.LeftTop;
+            Vector rb = this.box.RightBottom;
 
-                Box box = item.GetBox(k);
+            // Calcula os mínimos e máximos absolutos do retângulo de desenho da entidade a ser adicionada
+            Vector queryLT = box.LeftTop;
+            Vector queryRB = box.RightBottom;
 
-                // Calcula os mínimos e máximos absolutos do retângulo que delimita esta partição
-                Vector lt = this.box.LeftTop;
-                Vector rb = this.box.RightBottom;
+            int startCol = ((queryLT.X - lt.X) / cellWidth).Floor(); // Calcula a coluna da primeira célula a qual interceptará a entidade
+            if (startCol < 0)
+                startCol = 0;
 
-                // Calcula os mínimos e máximos absolutos do retângulo de desenho da entidade a ser adicionada
-                Vector queryLT = box.LeftTop;
-                Vector queryRB = box.RightBottom;
+            int startRow = ((queryLT.Y - lt.Y) / cellHeight).Floor(); // Calcula a primeira linha da primeira célula a qual interceptará a entidade
+            if (startRow < 0)
+                startRow = 0;
 
-                int startCol = ((queryLT.X - lt.X) / cellWidth).Floor(); // Calcula a coluna da primeira célula a qual interceptará a entidade
-                if (startCol < 0)
-                    startCol = 0;
+            int endCol = ((queryRB.X - lt.X - 1) / cellWidth).Ceil(); // Calcula a coluna da última célula a qual interceptará a entidade
+            if (endCol >= cols)
+                endCol = cols - 1;
 
-                int startRow = ((queryLT.Y - lt.Y) / cellHeight).Floor(); // Calcula a primeira linha da primeira célula a qual interceptará a entidade
-                if (startRow < 0)
-                    startRow = 0;
+            int endRow = ((queryRB.Y - lt.Y - 1) / cellHeight).Ceil(); // Calcula a linha da última célula a qual intercepetará a entidade
+            if (endRow >= rows)
+                endRow = rows - 1;
 
-                int endCol = ((queryRB.X - lt.X - 1) / cellWidth).Ceil(); // Calcula a coluna da última célula a qual interceptará a entidade
-                if (endCol >= cols)
-                    endCol = cols - 1;
+            // Varre todas as possíveis células que podem interceptar a entidade dada
+            for (int col = startCol; col <= endCol; col++)
+                for (int row = startRow; row <= endRow; row++)
+                {
+                    var cellBox = new Box((lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, (cellWidth, cellHeight));
 
-                int endRow = ((queryRB.Y - lt.Y - 1) / cellHeight).Ceil(); // Calcula a linha da última célula a qual intercepetará a entidade
-                if (endRow >= rows)
-                    endRow = rows - 1;
+                    if (!cellBox.IsOverlaping(box)) // Se ela for vazia, não há nada o que fazer nesta célula
+                        continue;
 
-                // Varre todas as possíveis células que podem interceptar a entidade dada
-                for (int col = startCol; col <= endCol; col++)
-                    for (int row = startRow; row <= endRow; row++)
-                    {
-                        var cellBox = new Box((lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, (cellWidth, cellHeight));
+                    if (cells[col, row] == null) // Verifica se a célula já foi criada antes, caso não tenha sido ainda então a cria
+                        cells[col, row] = new PartitionQuad<T>(cellBox);
 
-                        if (!cellBox.IsOverlaping(box)) // Se ela for vazia, não há nada o que fazer nesta célula
-                            continue;
-
-                        if (cells[col, row] == null) // Verifica se a célula já foi criada antes, caso não tenha sido ainda então a cria
-                            cells[col, row] = new PartitionQuad<T>(cellBox);
-
-                        cells[col, row].Insert(item, k); // Insere a entidade na célula
-                    }
-            }
+                    cells[col, row].Insert(item); // Insere a entidade na célula
+                }
         }
 
-        public int Query(EntityList<T> resultSet, Vector v, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Vector v, bool aliveOnly = true)
         {
-            return Query(resultSet, v, null, null, kind, aliveOnly);
+            return Query(resultSet, v, null, null, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, Vector v, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Vector v, T exclude, bool aliveOnly = true)
         {
-            return Query(resultSet, v, exclude, null, kind, aliveOnly);
+            return Query(resultSet, v, exclude, null, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, Vector v, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Vector v, ICollection<T> exclusionList, bool aliveOnly = true)
         {
-            return Query(resultSet, v, null, exclusionList, kind, aliveOnly);
+            return Query(resultSet, v, null, exclusionList, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, Vector v, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Vector v, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
         {
             Vector lt = box.LeftTop;
 
@@ -331,34 +267,27 @@ namespace XSharp.Engine.World
             if (row < 0)
                 row = 0;
 
-            for (int i = 0; i < BOXKIND_COUNT; i++)
-            {
-                if (!kind.ContainsFlag(i))
-                    continue;
-
-                var k = i.ToBoxKind();
-                cells[col, row]?.Query(v, resultSet, exclude, addictionalExclusionList, k, aliveOnly);
-            }
+            cells[col, row]?.Query(v, resultSet, exclude, addictionalExclusionList, aliveOnly);
 
             return resultSet.Count;
         }
 
-        public int Query(EntityList<T> resultSet, LineSegment line, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, LineSegment line, bool aliveOnly = true)
         {
-            return Query(resultSet, line, null, null, kind, aliveOnly);
+            return Query(resultSet, line, null, null, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, LineSegment line, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, LineSegment line, T exclude, bool aliveOnly = true)
         {
-            return Query(resultSet, line, exclude, null, kind, aliveOnly);
+            return Query(resultSet, line, exclude, null, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, LineSegment line, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, LineSegment line, ICollection<T> exclusionList, bool aliveOnly = true)
         {
-            return Query(resultSet, line, null, exclusionList, kind, aliveOnly);
+            return Query(resultSet, line, null, exclusionList, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, LineSegment line, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, LineSegment line, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
         {
             var type = box.Intersection(line, out line);
             if (type == GeometryType.EMPTY)
@@ -368,47 +297,39 @@ namespace XSharp.Engine.World
             var stepVector = CollisionChecker.GetStepVectorHorizontal(delta, cellWidth);
             var tracingDistance = FixedSingle.Max(delta.X.Abs, delta.Y.Abs);
 
-            for (int i = 0; i < BOXKIND_COUNT; i++)
+            // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
+            var testVector = line.Start;
+            FixedSingle distance = 0;
+            for (int j = 0; distance <= tracingDistance; distance += cellWidth, testVector = line.Start + stepVector * j)
             {
-                if (!kind.ContainsFlag(i))
+                int col = (int) (testVector.X / cellWidth);
+                int row = (int) (testVector.Y / cellHeight);
+
+                if (row < 0 || row >= rows || col < 0 || col >= cols)
                     continue;
 
-                var k = i.ToBoxKind();
-
-                // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
-                var testVector = line.Start;
-                FixedSingle distance = 0;
-                for (int j = 0; distance <= tracingDistance; k++, distance += cellWidth, testVector = line.Start + stepVector * j)
-                {
-                    int col = (int) (testVector.X / cellWidth);
-                    int row = (int) (testVector.Y / cellHeight);
-
-                    if (row < 0 || row >= rows || col < 0 || col >= cols)
-                        continue;
-
-                    cells[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, k, aliveOnly); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
-                }
+                cells[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
             }
 
             return resultSet.Count;
         }
 
-        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, bool aliveOnly = true)
         {
-            return Query(resultSet, parallelogram, null, null, kind, aliveOnly);
+            return Query(resultSet, parallelogram, null, null, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, bool aliveOnly = true)
         {
-            return Query(resultSet, parallelogram, exclude, null, kind, aliveOnly);
+            return Query(resultSet, parallelogram, exclude, null, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, ICollection<T> exclusionList, bool aliveOnly = true)
         {
-            return Query(resultSet, parallelogram, null, exclusionList, kind, aliveOnly);
+            return Query(resultSet, parallelogram, null, exclusionList, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
         {
             Vector stepVector = CollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
             FixedSingle stepDistance = stepVector.Length;
@@ -418,56 +339,48 @@ namespace XSharp.Engine.World
             FixedSingle tracingDistance = parallelogram.Direction.Length;
             var tracingBox = new Box(parallelogram.Origin, cellWidth, parallelogram.SmallerHeight);
 
-            for (int i = 0; i < BOXKIND_COUNT; i++)
+            // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado                
+            for (FixedSingle distance = 0; distance <= tracingDistance; distance += stepDistance, tracingBox += stepVector)
             {
-                if (!kind.ContainsFlag(i))
-                    continue;
+                int startCol = (tracingBox.Left / cellWidth).Floor();
+                int startRow = (tracingBox.Top / cellHeight).Floor();
 
-                var k = i.ToBoxKind();
+                int endCol = (tracingBox.Right / cellWidth).Ceil();
+                int endRow = (tracingBox.Bottom / cellHeight).Ceil();
 
-                // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado                
-                for (FixedSingle distance = 0; distance <= tracingDistance; distance += stepDistance, tracingBox += stepVector)
-                {
-                    int startCol = (tracingBox.Left / cellWidth).Floor();
-                    int startRow = (tracingBox.Top / cellHeight).Floor();
+                if (startCol < 0)
+                    startCol = 0;
 
-                    int endCol = (tracingBox.Right / cellWidth).Ceil();
-                    int endRow = (tracingBox.Bottom / cellHeight).Ceil();
+                if (startRow < 0)
+                    startRow = 0;
 
-                    if (startCol < 0)
-                        startCol = 0;
+                if (endCol >= cols)
+                    endCol = cols - 1;
 
-                    if (startRow < 0)
-                        startRow = 0;
+                if (endRow >= rows)
+                    endRow = rows - 1;
 
-                    if (endCol >= cols)
-                        endCol = cols - 1;
-
-                    if (endRow >= rows)
-                        endRow = rows - 1;
-
-                    for (int col = startCol; col <= endCol; col++)
-                        for (int row = startRow; row <= endRow; row++)
-                            cells[col, row]?.Query(parallelogram, resultSet, exclude, addictionalExclusionList, k, aliveOnly); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
-                }
+                for (int col = startCol; col <= endCol; col++)
+                    for (int row = startRow; row <= endRow; row++)
+                        cells[col, row]?.Query(parallelogram, resultSet, exclude, addictionalExclusionList, aliveOnly); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
             }
 
             return resultSet.Count;
         }
 
-        public int Query(EntityList<T> resultSet, Box box, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Box box, bool aliveOnly = true)
         {
-            return Query(resultSet, box, null, null, kind, aliveOnly);
+            return Query(resultSet, box, null, null, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, Box box, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Box box, T exclude, bool aliveOnly = true)
         {
-            return Query(resultSet, box, exclude, null, kind, aliveOnly);
+            return Query(resultSet, box, exclude, null, aliveOnly);
         }
 
-        public int Query(EntityList<T> resultSet, Box box, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Box box, ICollection<T> exclusionList, bool aliveOnly = true)
         {
-            return Query(resultSet, box, null, exclusionList, kind, aliveOnly);
+            return Query(resultSet, box, null, exclusionList, aliveOnly);
         }
 
         /// <summary>
@@ -475,7 +388,7 @@ namespace XSharp.Engine.World
         /// </summary>
         /// <param name="box"></param>
         /// <returns></returns>
-        public int Query(EntityList<T> resultSet, Box box, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Box box, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
         {
             // Calcula os máximos e mínimos absulutos do retângulo que delimita esta partição
             Vector lt = this.box.LeftTop;
@@ -504,18 +417,10 @@ namespace XSharp.Engine.World
             if (endRow >= rows)
                 endRow = rows - 1;
 
-            for (int i = 0; i < BOXKIND_COUNT; i++)
-            {
-                if (!kind.ContainsFlag(i))
-                    continue;
-
-                var k = i.ToBoxKind();
-
-                // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
-                for (int col = startCol; col <= endCol; col++)
-                    for (int row = startRow; row <= endRow; row++)
-                        cells[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, k, aliveOnly); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
-            }
+            // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
+            for (int col = startCol; col <= endCol; col++)
+                for (int row = startRow; row <= endRow; row++)
+                    cells[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly); // consulta quais entidades possuem intersecção não vazia com o retângulo dado
 
             return resultSet.Count;
         }
@@ -525,180 +430,155 @@ namespace XSharp.Engine.World
         /// Este método deve ser chamado sempre que a entidade tiver sua posição ou dimensões alteradas.
         /// </summary>
         /// <param name="item">Entidade a ser atualizada dentro da partição</param>
-        public void Update(T item, BoxKind kind = BoxKind.ALL, bool force = false)
+        public void Update(T item, bool force = false)
         {
-            for (int i = 0; i < BOXKIND_COUNT; i++)
-            {
-                if (!kind.ContainsFlag(i))
-                    continue;
+            Box lastBox = item.GetLastBox(BoxKind.HITBOX);
+            Box box = item.Hitbox;
 
-                var k = i.ToBoxKind();
+            if (!force && lastBox == box) // Se a entidade não se deslocou desde o último tick então não há nada o que se fazer aqui
+                return;
 
-                Box lastBox = item.GetLastBox(k);
-                Box box = item.GetBox(k);
+            // Calcula os máximos e mínimos absolutos do retângulo que delimita esta partição
+            Vector lt = this.box.LeftTop;
+            Vector rb = this.box.RightBottom;
 
-                if (!force && lastBox == box) // Se a entidade não se deslocou desde o último tick então não há nada o que se fazer aqui
-                    continue;
+            // Calcula os máximos e mínimos absolutos do rêtângulo de desenho anterior da entidade
+            Vector queryLastLT = lastBox.LeftTop;
+            Vector queryLastRB = lastBox.RightBottom;
 
-                // Calcula os máximos e mínimos absolutos do retângulo que delimita esta partição
-                Vector lt = this.box.LeftTop;
-                Vector rb = this.box.RightBottom;
+            // Calcula os máximos e mínimos absolutos do retângulo de desenho atual da entidade
+            Vector queryLT = box.LeftTop;
+            Vector queryRB = box.RightBottom;
 
-                // Calcula os máximos e mínimos absolutos do rêtângulo de desenho anterior da entidade
-                Vector queryLastLT = lastBox.LeftTop;
-                Vector queryLastRB = lastBox.RightBottom;
+            int startCol = ((FixedSingle.Min(queryLastLT.X, queryLT.X) - lt.X) / cellWidth).Floor(); // Calcula a coluna da primeira célula para qual deverá ser verificada
 
-                // Calcula os máximos e mínimos absolutos do retângulo de desenho atual da entidade
-                Vector queryLT = box.LeftTop;
-                Vector queryRB = box.RightBottom;
+            if (startCol < 0)
+                startCol = 0;
 
-                int startCol = ((FixedSingle.Min(queryLastLT.X, queryLT.X) - lt.X) / cellWidth).Floor(); // Calcula a coluna da primeira célula para qual deverá ser verificada
+            if (startCol >= cols)
+                startCol = cols - 1;
 
-                if (startCol < 0)
-                    startCol = 0;
+            int startRow = ((FixedSingle.Min(queryLastLT.Y, queryLT.Y) - lt.Y) / cellHeight).Floor(); // Calcula a linha da primeira célula para a qual deverá ser verificada
 
-                if (startCol >= cols)
-                    startCol = cols - 1;
+            if (startRow < 0)
+                startRow = 0;
 
-                int startRow = ((FixedSingle.Min(queryLastLT.Y, queryLT.Y) - lt.Y) / cellHeight).Floor(); // Calcula a linha da primeira célula para a qual deverá ser verificada
+            if (startRow >= rows)
+                startRow = rows - 1;
 
-                if (startRow < 0)
-                    startRow = 0;
+            int endCol = ((FixedSingle.Max(queryLastRB.X, queryRB.X) - lt.X - 1) / cellWidth).Ceil(); // Calcula a coluna da útlima célula para qual deverá ser verificada
 
-                if (startRow >= rows)
-                    startRow = rows - 1;
+            if (endCol < 0)
+                endCol = 0;
 
-                int endCol = ((FixedSingle.Max(queryLastRB.X, queryRB.X) - lt.X - 1) / cellWidth).Ceil(); // Calcula a coluna da útlima célula para qual deverá ser verificada
+            if (endCol >= cols)
+                endCol = cols - 1;
 
-                if (endCol < 0)
-                    endCol = 0;
+            int endRow = ((FixedSingle.Max(queryLastRB.Y, queryRB.Y) - lt.Y - 1) / cellHeight).Ceil(); // Calcula a linha da última célula para qual deverá ser verificada
 
-                if (endCol >= cols)
-                    endCol = cols - 1;
+            if (endRow < 0)
+                endRow = 0;
 
-                int endRow = ((FixedSingle.Max(queryLastRB.Y, queryRB.Y) - lt.Y - 1) / cellHeight).Ceil(); // Calcula a linha da última célula para qual deverá ser verificada
+            if (endRow >= rows)
+                endRow = rows - 1;
 
-                if (endRow < 0)
-                    endRow = 0;
+            // Varre todas as possíveis células que possui ou possuiam intersecção não vazia com a entidade dada
+            for (int col = startCol; col <= endCol; col++)
+                for (int row = startRow; row <= endRow; row++)
+                    if (cells[col, row] != null) // Se a célula já existir
+                    {
+                        cells[col, row].Update(item); // Atualiza a entidade dentro da célula
 
-                if (endRow >= rows)
-                    endRow = rows - 1;
+                        if (cells[col, row].Count == 0) // Se a célula não possuir mais entidades, defina como nula
+                            cells[col, row] = null;
+                    }
+                    else
+                    {
+                        // Senão...
+                        var cellBox = new Box(new Vector(lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
 
-                // Varre todas as possíveis células que possui ou possuiam intersecção não vazia com a entidade dada
-                for (int col = startCol; col <= endCol; col++)
-                    for (int row = startRow; row <= endRow; row++)
-                        if (cells[col, row] != null) // Se a célula já existir
-                        {
-                            cells[col, row].Update(item, k); // Atualiza a entidade dentro da célula
+                        if (!cellBox.IsOverlaping(box)) // Se ela for vazia, não há nada o que fazer nesta célula
+                            continue;
 
-                            if (cells[col, row].Count() == 0) // Se a célula não possuir mais entidades, defina como nula
-                                cells[col, row] = null;
-                        }
-                        else
-                        {
-                            // Senão...
-                            var cellBox = new Box(new Vector(lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, new Vector(cellWidth, cellHeight));
+                        // Senão...
+                        if (cells[col, row] == null) // Verifica se a célula é nula
+                            cells[col, row] = new PartitionQuad<T>(cellBox); // Se for, cria uma nova célula nesta posição
 
-                            if (!cellBox.IsOverlaping(box)) // Se ela for vazia, não há nada o que fazer nesta célula
-                                continue;
-
-                            // Senão...
-                            if (cells[col, row] == null) // Verifica se a célula é nula
-                                cells[col, row] = new PartitionQuad<T>(cellBox); // Se for, cria uma nova célula nesta posição
-
-                            cells[col, row].Insert(item, k); // e finalmente insere a entidade nesta célula
-                        }
-            }
+                        cells[col, row].Insert(item); // e finalmente insere a entidade nesta célula
+                    }
         }
 
         /// <summary>
         /// Remove uma entidade da partição
         /// </summary>
         /// <param name="item">Entidade a ser removida</param>
-        public void Remove(T item, BoxKind kind = BoxKind.ALL)
+        public void Remove(T item)
         {
-            for (int i = 0; i < BOXKIND_COUNT; i++)
-            {
-                if (!kind.ContainsFlag(i))
-                    continue;
+            Box box = item.Hitbox;
 
-                var k = i.ToBoxKind();
+            // Calcula os máximos e mínimos absolutos do retângulo que delimita esta partição
+            Vector lt = this.box.LeftTop;
+            Vector rb = this.box.RightBottom;
 
-                Box box = item.GetBox(k);
+            // Calcula os máximos e mínimos absolutos do retângulo de desenho da entidade a ser removida
+            Vector queryLT = box.LeftTop;
+            Vector queryRB = box.RightBottom;
 
-                // Calcula os máximos e mínimos absolutos do retângulo que delimita esta partição
-                Vector lt = this.box.LeftTop;
-                Vector rb = this.box.RightBottom;
+            int startCol = ((queryLT.X - lt.X) / cellWidth).Floor(); // Calcula a coluna da primeira célula a ser verificada
 
-                // Calcula os máximos e mínimos absolutos do retângulo de desenho da entidade a ser removida
-                Vector queryLT = box.LeftTop;
-                Vector queryRB = box.RightBottom;
+            if (startCol < 0)
+                startCol = 0;
 
-                int startCol = ((queryLT.X - lt.X) / cellWidth).Floor(); // Calcula a coluna da primeira célula a ser verificada
+            if (startCol >= cols)
+                startCol = cols - 1;
 
-                if (startCol < 0)
-                    startCol = 0;
+            int startRow = ((queryLT.Y - lt.Y) / cellHeight).Floor(); // Calcula a linha da primeira célula a ser verificada
 
-                if (startCol >= cols)
-                    startCol = cols - 1;
+            if (startRow < 0)
+                startRow = 0;
 
-                int startRow = ((queryLT.Y - lt.Y) / cellHeight).Floor(); // Calcula a linha da primeira célula a ser verificada
+            if (startRow >= rows)
+                startRow = rows - 1;
 
-                if (startRow < 0)
-                    startRow = 0;
+            int endCol = ((queryRB.X - lt.X - 1) / cellWidth).Ceil(); // Calcula a coluna da última célula a ser verificada
 
-                if (startRow >= rows)
-                    startRow = rows - 1;
+            if (endCol < 0)
+                endCol = 0;
 
-                int endCol = ((queryRB.X - lt.X - 1) / cellWidth).Ceil(); // Calcula a coluna da última célula a ser verificada
+            if (endCol >= cols)
+                endCol = cols - 1;
 
-                if (endCol < 0)
-                    endCol = 0;
+            int endRow = ((queryRB.Y - lt.Y - 1) / cellHeight).Ceil(); // Calcula a linha da última célula a ser verificada
 
-                if (endCol >= cols)
-                    endCol = cols - 1;
+            if (endRow < 0)
+                endRow = 0;
 
-                int endRow = ((queryRB.Y - lt.Y - 1) / cellHeight).Ceil(); // Calcula a linha da última célula a ser verificada
+            if (endRow >= rows)
+                endRow = rows - 1;
 
-                if (endRow < 0)
-                    endRow = 0;
+            // Varre todas as possíveis células que podem ter intersecção não vazia com a entidade dada
+            for (int col = startCol; col <= endCol; col++)
+                for (int row = startRow; row <= endRow; row++)
+                    if (cells[col, row] != null)
+                    {
+                        cells[col, row].Remove(item); // Remove a entidade da célula caso ela possua intersecção não vazia com a célula
 
-                if (endRow >= rows)
-                    endRow = rows - 1;
-
-                // Varre todas as possíveis células que podem ter intersecção não vazia com a entidade dada
-                for (int col = startCol; col <= endCol; col++)
-                    for (int row = startRow; row <= endRow; row++)
-                        if (cells[col, row] != null)
-                        {
-                            cells[col, row].Remove(item, k); // Remove a entidade da célula caso ela possua intersecção não vazia com a célula
-
-                            if (cells[col, row].Count() == 0) // Se a célula não possuir mais entidades
-                                cells[col, row] = null; // defina-a como nula
-                        }
-            }
+                        if (cells[col, row].Count == 0) // Se a célula não possuir mais entidades
+                            cells[col, row] = null; // defina-a como nula
+                    }
         }
 
         /// <summary>
         /// Exclui todas as entidades contidas na partição
         /// </summary>
-        public void Clear(BoxKind kind = BoxKind.ALL)
+        public void Clear()
         {
             for (int col = 0; col < cols; col++)
                 for (int row = 0; row < rows; row++)
                     if (cells[col, row] != null)
                     {
-                        for (int i = 0; i < BOXKIND_COUNT; i++)
-                        {
-                            if (!kind.ContainsFlag(i))
-                                continue;
-
-                            var k = i.ToBoxKind();
-                            cells[col, row].Clear(k);
-                        }
-
-                        if (cells[col, row].Count() == 0) // Se a célula não possuir mais entidades
-                            cells[col, row] = null; // defina-a como nula
+                        cells[col, row].Clear();
+                        cells[col, row] = null;
                     }
         }
     }

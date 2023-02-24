@@ -106,8 +106,8 @@ namespace XSharp.Engine.Entities.Objects
 
             if (entity is Player player)
             {
-                Engine.World.Camera.NoConstraints = true;
-                Engine.World.Camera.FocusOn = null;
+                Engine.Camera.NoConstraints = true;
+                Engine.Camera.FocusOn = null;
                 player.StartBossDoorCrossing();
                 Engine.KillAllAliveEnemiesAndWeapons();
 
@@ -171,7 +171,7 @@ namespace XSharp.Engine.Entities.Objects
             Cell sceneCell = GetSceneCellFromPos(Engine.Player.Origin);
             Box sceneBox = GetSceneBoundingBox(sceneCell);
             Vector offset = GetCameraMoveOffset();
-            Engine.World.Camera.MoveToLeftTop(sceneBox.LeftTop + offset, CAMERA_SMOOTH_SPEED);
+            Engine.Camera.MoveToLeftTop(sceneBox.LeftTop + offset, CAMERA_SMOOTH_SPEED);
 
             if (StartBossBattle)
             {
@@ -188,8 +188,8 @@ namespace XSharp.Engine.Entities.Objects
             {
                 Engine.Player.StopBossDoorCrossing();
                 Engine.UnfreezeSprites();
-                Engine.World.Camera.NoConstraints = false;
-                Engine.World.Camera.FocusOn = Engine.Player;
+                Engine.Camera.NoConstraints = false;
+                Engine.Camera.FocusOn = Engine.Player;
                 State = BossDoorState.CLOSING;
             }
             else if (frameCounter < 120)

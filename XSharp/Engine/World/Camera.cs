@@ -417,6 +417,7 @@ namespace XSharp.Engine.World
 
             if ((!entity.Dead || Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn) && !entity.IsOffscreen(VectorKind.ORIGIN))
             {
+                // TODO : This needs a special check for Heart Tanks and Sub-Tanks
                 if (entity is Item item && item.Collected)
                     return;
 

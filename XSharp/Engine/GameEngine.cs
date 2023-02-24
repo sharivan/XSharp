@@ -380,6 +380,12 @@ namespace XSharp.Engine
             private set;
         }
 
+        public Camera Camera
+        {
+            get;
+            private set;
+        }
+
         public Player Player
         {
             get;
@@ -424,9 +430,9 @@ namespace XSharp.Engine
             set;
         }
 
-        public Vector MinCameraPos => NoCameraConstraints || World.Camera.NoConstraints ? World.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
+        public Vector MinCameraPos => NoCameraConstraints || Camera.NoConstraints ? World.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
 
-        public Vector MaxCameraPos => NoCameraConstraints || World.Camera.NoConstraints ? World.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
+        public Vector MaxCameraPos => NoCameraConstraints || Camera.NoConstraints ? World.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
 
         public bool Paused
         {
@@ -2703,10 +2709,14 @@ namespace XSharp.Engine
                     firstFreeEntityIndex = i;
                     break;
                 }
+
+            partition.Insert(entity);
         }
 
         private void RemoveEntity(Entity entity)
         {
+            partition.Remove(entity);
+
             int index = entity.Index;
 
             var next = entity.next;
@@ -3275,7 +3285,7 @@ namespace XSharp.Engine
                 if (paused || Player != null && Player.Freezed && (!FreezingSprites || freezingSpriteExceptions.Contains(Player)))
                 {
                     Player?.OnFrame();
-                    World.Camera.OnFrame();
+                    Camera.OnFrame();
                 }
                 else
                 {
@@ -3283,17 +3293,17 @@ namespace XSharp.Engine
                     {
                         for (var entity = firstEntity; entity != null; entity = entity.next)
                             if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
-                                if (entity.Alive && entity != World.Camera)
+                                if (entity.Alive && entity != Camera)
                                     entity.OnFrame();
                     }
                     else
                     {
                         for (var entity = firstEntity; entity != null; entity = entity.next)
-                            if (entity.Alive && entity != World.Camera)
+                            if (entity.Alive && entity != Camera)
                                 entity.OnFrame();
                     }
 
-                    World.Camera.OnFrame();
+                    Camera.OnFrame();
 
                     if (removedEntities.Count > 0)
                     {
@@ -3315,10 +3325,7 @@ namespace XSharp.Engine
                             removed.DeathFrame = FrameCounter;
 
                             if (!removed.Respawnable)
-                            {
-                                Engine.partition.Remove(removed);
                                 RemoveEntity(removed);
-                            }
                             else if (removed.RespawnOnNear)
                                 removed.Origin = autoRespawnableEntities[removed].Origin;
                         }
@@ -3366,7 +3373,7 @@ namespace XSharp.Engine
 
         public Vector2 WorldVectorToScreen(Vector v)
         {
-            return ToVector2((v - World.Camera.LeftTop) * DrawScale + drawBox.LeftTop);
+            return ToVector2((v - Camera.LeftTop) * DrawScale + drawBox.LeftTop);
         }
 
         public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
@@ -3381,17 +3388,17 @@ namespace XSharp.Engine
 
         public Vector ScreenPointToVector(Point p)
         {
-            return (new Vector(p.X, p.Y) - drawBox.LeftTop) / DrawScale + World.Camera.LeftTop;
+            return (new Vector(p.X, p.Y) - drawBox.LeftTop) / DrawScale + Camera.LeftTop;
         }
 
         public Vector ScreenVector2ToWorld(Vector2 v)
         {
-            return (new Vector(v.X, v.Y) - drawBox.LeftTop) / DrawScale + World.Camera.LeftTop;
+            return (new Vector(v.X, v.Y) - drawBox.LeftTop) / DrawScale + Camera.LeftTop;
         }
 
         public RectangleF WorldBoxToScreen(MMXBox box)
         {
-            return ToRectangleF((box.LeftTopOrigin() - World.Camera.LeftTop) * DrawScale + drawBox.LeftTop);
+            return ToRectangleF((box.LeftTopOrigin() - Camera.LeftTop) * DrawScale + drawBox.LeftTop);
         }
 
         public void TogglePauseGame()
@@ -3438,12 +3445,12 @@ namespace XSharp.Engine
                 cameraPos = new Vector(SCREEN_WIDTH * 0.5f, 0);
             }
 
-            World.Camera.RightTop = cameraPos;
+            Camera.RightTop = cameraPos;
 
             SpawnX(spawnPos);
             CreateHP();
 
-            World.Camera.FocusOn = Player;
+            Camera.FocusOn = Player;
 
             CurrentCheckpoint = checkpoints.Count > 0 ? checkpoints[mmx.Point] : null;
         }
@@ -3486,7 +3493,7 @@ namespace XSharp.Engine
                 loadingLevel = false;
                 respawning = false;
 
-                World.Camera.Spawn();
+                Camera.Spawn();
 
                 if (enableSpawningBlackScreen)
                 {
@@ -3496,9 +3503,9 @@ namespace XSharp.Engine
                 else
                     OnSpawningBlackScreenComplete();
 
-                World.Camera.FocusOn = null;
+                Camera.FocusOn = null;
                 var cameraPos = romLoaded ? mmx.CameraPos : Vector.NULL_VECTOR;
-                World.Camera.LeftTop = cameraPos;
+                Camera.LeftTop = cameraPos;
             }
         }
 
@@ -3982,7 +3989,7 @@ namespace XSharp.Engine
                 if (drawHitbox || showDrawBox || showTriggerBounds)
                 {
                     resultSet.Clear();
-                    partition.Query(resultSet, World.BoundingBox, (drawHitbox || showTriggerBounds ? BoxKind.HITBOX : BoxKind.NONE) | (showDrawBox ? BoxKind.BOUDINGBOX : BoxKind.NONE), false);
+                    partition.Query(resultSet, World.BoundingBox, false);
                     foreach (Entity entity in resultSet)
                     {
                         if (entity == Player)
@@ -4100,7 +4107,7 @@ namespace XSharp.Engine
                 DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
 
                 if (respawning || SpawningBlackScreen)
-                    FillRectangle(WorldBoxToScreen(World.Camera.BoundingBox), Color.Black, FadingSettings);
+                    FillRectangle(WorldBoxToScreen(Camera.BoundingBox), Color.Black, FadingSettings);
 
                 if (Player != null)
                 {
@@ -4203,7 +4210,7 @@ namespace XSharp.Engine
                     string text = $"Checkpoint: {(currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.Yellow, out RawRectangle fontDimension);
 
-                    text = $"Camera: CX: {(float) World.Camera.Left * 256} CY: {(float) World.Camera.Top * 256}";
+                    text = $"Camera: CX: {(float) Camera.Left * 256} CY: {(float) Camera.Top * 256}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, fontDimension.Top - fontDimension.Bottom, Color.Yellow, out fontDimension);
 
                     text = $"Player: {(float) Player.Origin.X * 256} Y: {(float) Player.Origin.Y * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256}";
@@ -4256,8 +4263,8 @@ namespace XSharp.Engine
             writer.Write(gameOver);
             writer.Write(paused);
 
-            World.Camera.Center.Write(writer);
-            writer.Write(World.Camera.FocusOn != null ? World.Camera.FocusOn.Index : -1);
+            Camera.Center.Write(writer);
+            writer.Write(Camera.FocusOn != null ? Camera.FocusOn.Index : -1);
 
             Player?.SaveState(writer);
         }
@@ -4280,9 +4287,9 @@ namespace XSharp.Engine
             gameOver = reader.ReadBoolean();
             paused = reader.ReadBoolean();
 
-            World.Camera.Center = new Vector(reader);
+            Camera.Center = new Vector(reader);
             int focusedObjectIndex = reader.ReadInt32();
-            World.Camera.FocusOn = focusedObjectIndex >= 0 ? entities[focusedObjectIndex] : null;
+            Camera.FocusOn = focusedObjectIndex >= 0 ? entities[focusedObjectIndex] : null;
 
             Player?.LoadState(reader);
         }
@@ -4458,10 +4465,10 @@ namespace XSharp.Engine
             CameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
 
             // TODO : Implement posssibility to smooth speed for one direction only
-            if ((Player.Origin - World.Camera.Center).Length.TruncFracPart() >= STEP_SIZE)
+            if ((Player.Origin - Camera.Center).Length.TruncFracPart() >= STEP_SIZE)
             {
-                World.Camera.SmoothOnNextMove = true;
-                World.Camera.SmoothSpeed = CAMERA_SMOOTH_SPEED;
+                Camera.SmoothOnNextMove = true;
+                Camera.SmoothSpeed = CAMERA_SMOOTH_SPEED;
             }
         }
 
@@ -4605,7 +4612,7 @@ namespace XSharp.Engine
         {
             var effect = CreateEntity<XDieExplosion>(new
             {
-                Offset = Player.Origin - World.Camera.LeftTop,
+                Offset = Player.Origin - Camera.LeftTop,
                 Phase = phase
             });
 
@@ -4741,8 +4748,8 @@ namespace XSharp.Engine
 
             RectangleF rDest = WorldBoxToScreen(box);
 
-            float x = rDest.Left - (float) World.Camera.Width * 0.5f;
-            float y = -rDest.Top + (float) World.Camera.Height * 0.5f;
+            float x = rDest.Left - (float) Camera.Width * 0.5f;
+            float y = -rDest.Top + (float) Camera.Height * 0.5f;
 
             var matScaling = Matrix.Scaling(1, 1, 1);
             var matTranslation = Matrix.Translation(x, y, 0);
@@ -4947,6 +4954,13 @@ namespace XSharp.Engine
             World = new MMXWorld(32, 32);
             partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
             resultSet = new EntityList<Entity>();
+
+            Camera = Engine.CreateEntity<Camera>(new
+            {
+                Width = SCREEN_WIDTH,
+                Height = SCREEN_HEIGHT
+            });
+
             CameraConstraintsBox = World.BoundingBox;
 
             ResetDevice();

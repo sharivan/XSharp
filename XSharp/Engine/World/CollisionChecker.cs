@@ -623,7 +623,7 @@ namespace XSharp.Engine.World
             if (CheckWithSolidSprites)
             {
                 resultSet.Clear();
-                Engine.partition.Query(resultSet, TestBox, BoxKind.HITBOX);
+                Engine.partition.Query(resultSet, TestBox);
                 foreach (var entity in resultSet)
                     if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                     {

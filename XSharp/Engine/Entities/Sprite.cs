@@ -1260,30 +1260,30 @@ namespace XSharp.Engine.Entities
 
         private void DoPhysics(Sprite phisycsParent, Vector delta)
         {
-            if (NoClip || Static || delta.IsNull)
+            if (Static)
                 return;
 
-            FixedSingle gravity = Gravity;
-
-            if (delta.IsNull)
-                return;
-
-            if (CheckCollisionWithWorld)
+            if (!NoClip)
             {
-                worldCollider.Box = CollisionBox;
-                delta = Move(worldCollider, delta, gravity);
-            }
+                FixedSingle gravity = Gravity;
 
-            if (CheckCollisionWithSolidSprites)
-            {
-                spriteCollider.ClearIgnoredSprites();
+                if (CheckCollisionWithWorld)
+                {
+                    worldCollider.Box = CollisionBox;
+                    delta = Move(worldCollider, delta, gravity);
+                }
 
-                if (phisycsParent != null)
-                    spriteCollider.IgnoreSprites.Add(phisycsParent);
+                if (CheckCollisionWithSolidSprites)
+                {
+                    spriteCollider.ClearIgnoredSprites();
 
-                spriteCollider.Box = Hitbox;
+                    if (phisycsParent != null)
+                        spriteCollider.IgnoreSprites.Add(phisycsParent);
 
-                delta = Move(spriteCollider, delta, gravity);
+                    spriteCollider.Box = Hitbox;
+
+                    delta = Move(spriteCollider, delta, gravity);
+                }
             }
 
             if (delta.IsNull)
@@ -1319,8 +1319,8 @@ namespace XSharp.Engine.Entities
                     sprite.AdjustOnTheFloor();
                 }
 
-            Vector newOrigin = Origin + delta
-                ;
+            Vector newOrigin = Origin + delta;
+
             if (!CanGoOutOfMapBounds)
                 RestrictIn(Engine.World.BoundingBox, ref newOrigin);
 
@@ -1473,7 +1473,7 @@ namespace XSharp.Engine.Entities
 
                 FixedSingle gravity = Gravity;
 
-                if (!NoClip && !Static)
+                if (!NoClip)
                 {
                     if (!lastLanded && gravity != 0)
                     {
@@ -1486,12 +1486,11 @@ namespace XSharp.Engine.Entities
 
                     if (lastLanded)
                         Velocity = Velocity.XVector;
+                    else if (Velocity.Y > gravity && Velocity.Y < 2 * gravity)
+                        Velocity = new Vector(Velocity.X, gravity);
                 }
 
-                if (!lastLanded && Velocity.Y > gravity && Velocity.Y < 2 * gravity)
-                    Velocity = new Vector(Velocity.X, gravity);
-
-                Vector vel = Velocity + ExternalVelocity;
+                Vector vel = Velocity + (!NoClip ? ExternalVelocity : Vector.NULL_VECTOR);
                 ExternalVelocity = Vector.NULL_VECTOR;
 
                 Vector lastOrigin = Origin;
@@ -1663,13 +1662,6 @@ namespace XSharp.Engine.Entities
                 animation.OnDeviceReset();
         }
 
-        protected override BoxKind ComputeBoxKind()
-        {
-            return (CollisionData.IsSolidBlock() ? BoxKind.COLLISIONBOX : BoxKind.NONE)
-                | (Visible ? BoxKind.BOUDINGBOX : BoxKind.NONE)
-                | base.ComputeBoxKind();
-        }
-
         public void FaceToPosition(Vector pos)
         {
             var faceDirection = GetHorizontalDirection(pos);
@@ -1690,7 +1682,7 @@ namespace XSharp.Engine.Entities
 
         public void FaceToScreenCenter()
         {
-            FaceToPosition(Engine.World.Camera.Center);
+            FaceToPosition(Engine.Camera.Center);
         }
 
         public void ResetExternalVelocity()

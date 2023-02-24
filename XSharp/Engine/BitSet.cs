@@ -1,5 +1,4 @@
-﻿using SharpDX;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -147,7 +146,7 @@ namespace XSharp.Engine
             {
                 int currentSlotCount = SlotCount;
                 if (value > currentSlotCount)
-                {  
+                {
                     for (int i = 0; i < value - currentSlotCount; i++)
                         bits.Add(0);
                 }
@@ -322,7 +321,7 @@ namespace XSharp.Engine
                     ulong otherSlotBits = other.bits[i];
                     result.bits[i] = otherSlotBits;
                 }
-            }    
+            }
         }
 
         public void Intersection(BitSet other)
