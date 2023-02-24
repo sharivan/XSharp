@@ -39,35 +39,6 @@ namespace XSharp.Engine.World
             get;
         }
 
-        internal World(int sceneRowCount, int sceneColCount)
-            : this(sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
-        {
-        }
-
-        internal World(int sceneRowCount, int sceneColCount, int backgroundSceneRowCount, int backgroundSceneColCount)
-        {
-            SceneRowCount = sceneRowCount;
-            SceneColCount = sceneColCount;
-            this.backgroundSceneRowCount = backgroundSceneRowCount;
-            this.backgroundSceneColCount = backgroundSceneColCount;
-
-            FadingSettings = new FadingControl();
-
-            tileList = new List<Tile>();
-            backgroundTileList = new List<Tile>();
-            mapList = new List<Map>();
-            backgroundMapList = new List<Map>();
-            blockList = new List<Block>();
-            backgroundBlockList = new List<Block>();
-            sceneList = new List<Scene>();
-            backgroundSceneList = new List<Scene>();
-
-            scenes = new Scene[sceneRowCount, sceneColCount];
-            backgroundScenes = new Scene[backgroundSceneRowCount, backgroundSceneColCount];
-
-            collisionChecker = new CollisionChecker();
-        }
-
         public static GameEngine Engine => GameEngine.Engine;
 
         public Device Device => GameEngine.Engine.Device;
@@ -119,6 +90,35 @@ namespace XSharp.Engine.World
         public Texture ForegroundTilemap => Engine.ForegroundTilemap;
 
         public Texture BackgroundTilemap => Engine.BackgroundTilemap;
+
+        internal World(int sceneRowCount, int sceneColCount)
+            : this(sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
+        {
+        }
+
+        internal World(int sceneRowCount, int sceneColCount, int backgroundSceneRowCount, int backgroundSceneColCount)
+        {
+            SceneRowCount = sceneRowCount;
+            SceneColCount = sceneColCount;
+            this.backgroundSceneRowCount = backgroundSceneRowCount;
+            this.backgroundSceneColCount = backgroundSceneColCount;
+
+            FadingSettings = new FadingControl();
+
+            tileList = new List<Tile>();
+            backgroundTileList = new List<Tile>();
+            mapList = new List<Map>();
+            backgroundMapList = new List<Map>();
+            blockList = new List<Block>();
+            backgroundBlockList = new List<Block>();
+            sceneList = new List<Scene>();
+            backgroundSceneList = new List<Scene>();
+
+            scenes = new Scene[sceneRowCount, sceneColCount];
+            backgroundScenes = new Scene[backgroundSceneRowCount, backgroundSceneColCount];
+
+            collisionChecker = new CollisionChecker();
+        }
 
         public Tile AddTile(bool background = false)
         {

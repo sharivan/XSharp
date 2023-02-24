@@ -3,8 +3,9 @@ using XSharp.Engine.Entities.Items;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
+using MMXWorld = XSharp.Engine.World.World;
 
-namespace XSharp.Engine.World
+namespace XSharp.Engine
 {
     public class Camera : Entity
     {
@@ -40,7 +41,7 @@ namespace XSharp.Engine.World
             set;
         }
 
-        public World World => GameEngine.Engine.World;
+        public MMXWorld World => GameEngine.Engine.World;
 
         public bool SmoothOnNextMove
         {
@@ -208,8 +209,8 @@ namespace XSharp.Engine.World
 
         public Vector ClampToBounds(FixedSingle x, FixedSingle y)
         {
-            Vector minCameraPos = World.Engine.MinCameraPos;
-            Vector maxCameraPos = World.Engine.MaxCameraPos;
+            Vector minCameraPos = Engine.MinCameraPos;
+            Vector maxCameraPos = Engine.MaxCameraPos;
 
             FixedSingle w2 = Width * 0.5;
             FixedSingle h2 = Height * 0.5;
