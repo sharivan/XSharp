@@ -1223,6 +1223,29 @@ namespace XSharp.Engine.Entities
             BeforeMoveEvent?.Invoke(this);
         }
 
+        public void MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            Box lastBox = CollisionBox;
+            worldCollider.Box = lastBox;
+            worldCollider.MoveContactFloor(maxDistance, ignore);
+
+            Vector delta = worldCollider.Box.Origin - lastBox.Origin;
+            Origin += delta;
+
+            lastBox = Hitbox;
+            spriteCollider.ClearIgnoredSprites();
+            spriteCollider.Box = lastBox;
+            spriteCollider.MoveContactFloor(maxDistance, ignore);
+
+            delta = spriteCollider.Box.Origin - lastBox.Origin;
+            Origin += delta;
+        }
+
+        public void MoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            MoveContactFloor(QUERY_MAX_DISTANCE, ignore);
+        }
+
         public void AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             Box lastBox = CollisionBox;
@@ -1296,28 +1319,35 @@ namespace XSharp.Engine.Entities
             {
                 foreach (var sprite in touchingSpritesLeft)
                     if (sprite != phisycsParent)
-                        sprite.DoPhysics(this, (0, deltaX));
+                        sprite.DoPhysics(null, (0, deltaX));
             }
             else if (deltaX > 0)
             {
                 foreach (var sprite in touchingSpritesRight)
                     if (sprite != phisycsParent)
-                        sprite.DoPhysics(this, (0, deltaX));
+                        sprite.DoPhysics(null, (0, deltaX));
             }
 
             if (deltaY > 0)
             {
                 foreach (var sprite in touchingSpritesDown)
                     if (sprite != phisycsParent)
-                        sprite.DoPhysics(this, (0, deltaY));
+                        sprite.DoPhysics(null, (0, deltaY));
             }
 
-            foreach (var sprite in touchingSpritesUp)
-                if (sprite != phisycsParent)
-                {
-                    sprite.DoPhysics(this, delta);
-                    sprite.AdjustOnTheFloor();
-                }
+            if (deltaY != 0)
+            {
+                foreach (var sprite in touchingSpritesUp)
+                    if (sprite != phisycsParent)
+                    {
+                        sprite.DoPhysics(null, delta);
+
+                        if (deltaY > 0)
+                            sprite.MoveContactFloor();
+                        else
+                            sprite.AdjustOnTheFloor();
+                    }
+            }
 
             Vector newOrigin = Origin + delta;
 

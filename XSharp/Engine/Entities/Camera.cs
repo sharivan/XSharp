@@ -41,7 +41,7 @@ namespace XSharp.Engine
             set;
         }
 
-        public MMXWorld World => GameEngine.Engine.World;
+        public static MMXWorld World => GameEngine.Engine.World;
 
         public bool SmoothOnNextMove
         {
