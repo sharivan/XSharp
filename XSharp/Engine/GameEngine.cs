@@ -256,7 +256,7 @@ namespace XSharp.Engine
         private readonly List<(WaveOutEvent player, SoundStream stream, bool initialized)> soundChannels;
 
         internal Partition<Entity> partition;
-        private HashSet<Entity> resultSet;
+        private EntityList<Entity> resultSet;
 
         private readonly List<Checkpoint> checkpoints;
         internal readonly Entity[] entities;
@@ -4946,7 +4946,7 @@ namespace XSharp.Engine
         {
             World = new MMXWorld(32, 32);
             partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
-            resultSet = new HashSet<Entity>();
+            resultSet = new EntityList<Entity>();
             CameraConstraintsBox = World.BoundingBox;
 
             ResetDevice();
