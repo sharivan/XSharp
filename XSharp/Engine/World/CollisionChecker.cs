@@ -422,7 +422,7 @@ namespace XSharp.Engine.World
         protected RightTriangle slopeTriangle;
         protected List<CollisionPlacement> placements;
 
-        private HashSet<Entity> resultSet;
+        private EntityList<Entity> resultSet;
 
         public Box TestBox
         {
@@ -482,7 +482,7 @@ namespace XSharp.Engine.World
         public CollisionChecker()
         {
             placements = new List<CollisionPlacement>();
-            resultSet = new HashSet<Entity>();
+            resultSet = new EntityList<Entity>();
             IgnoreSprites = new EntityList<Sprite>();
         }
 

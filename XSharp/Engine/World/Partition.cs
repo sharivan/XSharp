@@ -22,7 +22,7 @@ namespace XSharp.Engine.World
         private class PartitionQuad<U> where U : Entity
         {
             readonly Box box; // Retângulo que delimita a célula
-            readonly HashSet<U>[] values;
+            readonly EntityList<U>[] values;
 
             /// <summary>
             /// Cria uma nova célula para a partição
@@ -32,26 +32,26 @@ namespace XSharp.Engine.World
             {
                 this.box = box;
 
-                values = new HashSet<U>[BOXKIND_COUNT];
+                values = new EntityList<U>[BOXKIND_COUNT];
 
                 for (int i = 0; i < BOXKIND_COUNT; i++)
-                    values[i] = new HashSet<U>();
+                    values[i] = new EntityList<U>();
             }
 
             public void Insert(U value, BoxKind kind)
             {
                 int index = kind.ToIndex();
-                HashSet<U> list = values[index];
+                EntityList<U> list = values[index];
                 list.Add(value);
             }
 
-            public void Query(Vector v, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            public void Query(Vector v, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
             {
                 if (!box.Contains(v))
                     return;
 
                 int index = kind.ToIndex();
-                HashSet<U> list = values[index];
+                EntityList<U> list = values[index];
 
                 // Verifica a lista de entidades da célula
                 foreach (U value in list)
@@ -67,13 +67,13 @@ namespace XSharp.Engine.World
                 }
             }
 
-            public void Query(LineSegment line, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            public void Query(LineSegment line, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
             {
                 if (!box.HasIntersectionWith(line))
                     return;
 
                 int index = kind.ToIndex();
-                HashSet<U> list = values[index];
+                EntityList<U> list = values[index];
 
                 // Verifica a lista de entidades da célula
                 foreach (U value in list)
@@ -89,13 +89,13 @@ namespace XSharp.Engine.World
                 }
             }
 
-            public void Query(IGeometry geometry, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            public void Query(IGeometry geometry, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
             {
                 if (!geometry.HasIntersectionWith(box))
                     return;
 
                 int index = kind.ToIndex();
-                HashSet<U> list = values[index];
+                EntityList<U> list = values[index];
 
                 // Verifica a lista de entidades da célula
                 foreach (U value in list)
@@ -111,13 +111,13 @@ namespace XSharp.Engine.World
                 }
             }
 
-            public void Query(Box box, HashSet<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
+            public void Query(Box box, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, BoxKind kind, bool aliveOnly = true)
             {
                 if (!box.IsOverlaping(this.box))
                     return;
 
                 int index = kind.ToIndex();
-                HashSet<U> list = values[index];
+                EntityList<U> list = values[index];
 
                 // Verifica a lista de entidades da célula
                 foreach (U value in list)
@@ -140,7 +140,7 @@ namespace XSharp.Engine.World
             public void Update(U value, BoxKind kind)
             {
                 int index = kind.ToIndex();
-                HashSet<U> list = values[index];
+                EntityList<U> list = values[index];
 
                 if (value.GetBox(kind).IsOverlaping(box)) // Se a intersecção for não vazia e a célula ainda não contém esta entidade
                     list.Add(value); // então adiciona-a em sua lista de entidades
@@ -302,22 +302,22 @@ namespace XSharp.Engine.World
             }
         }
 
-        public int Query(HashSet<T> resultSet, Vector v, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Vector v, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, v, null, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, Vector v, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Vector v, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, v, exclude, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, Vector v, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Vector v, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, v, null, exclusionList, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, Vector v, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Vector v, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             Vector lt = box.LeftTop;
 
@@ -343,22 +343,22 @@ namespace XSharp.Engine.World
             return resultSet.Count;
         }
 
-        public int Query(HashSet<T> resultSet, LineSegment line, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, LineSegment line, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, line, null, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, LineSegment line, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, LineSegment line, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, line, exclude, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, LineSegment line, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, LineSegment line, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, line, null, exclusionList, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, LineSegment line, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, LineSegment line, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             var type = box.Intersection(line, out line);
             if (type == GeometryType.EMPTY)
@@ -393,22 +393,22 @@ namespace XSharp.Engine.World
             return resultSet.Count;
         }
 
-        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, parallelogram, null, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, parallelogram, exclude, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, parallelogram, null, exclusionList, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             Vector stepVector = CollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
             FixedSingle stepDistance = stepVector.Length;
@@ -455,17 +455,17 @@ namespace XSharp.Engine.World
             return resultSet.Count;
         }
 
-        public int Query(HashSet<T> resultSet, Box box, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Box box, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, box, null, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, Box box, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Box box, T exclude, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, box, exclude, null, kind, aliveOnly);
         }
 
-        public int Query(HashSet<T> resultSet, Box box, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Box box, ICollection<T> exclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             return Query(resultSet, box, null, exclusionList, kind, aliveOnly);
         }
@@ -475,7 +475,7 @@ namespace XSharp.Engine.World
         /// </summary>
         /// <param name="box"></param>
         /// <returns></returns>
-        public int Query(HashSet<T> resultSet, Box box, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
+        public int Query(EntityList<T> resultSet, Box box, T exclude, ICollection<T> addictionalExclusionList, BoxKind kind = BoxKind.ALL, bool aliveOnly = true)
         {
             // Calcula os máximos e mínimos absulutos do retângulo que delimita esta partição
             Vector lt = this.box.LeftTop;

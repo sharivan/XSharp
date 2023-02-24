@@ -36,7 +36,7 @@ namespace XSharp.Engine.Entities
 
         internal readonly List<Entity> touchingEntities;
         internal readonly List<Entity> childs;
-        private readonly HashSet<Entity> resultSet;
+        private readonly EntityList<Entity> resultSet;
 
         internal Entity previous;
         internal Entity next;
@@ -244,7 +244,7 @@ namespace XSharp.Engine.Entities
         {
             touchingEntities = new List<Entity>();
             childs = new List<Entity>();
-            resultSet = new HashSet<Entity>();
+            resultSet = new EntityList<Entity>();
 
             states = new List<EntityState>();
 
