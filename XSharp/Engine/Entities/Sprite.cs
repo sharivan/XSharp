@@ -1119,7 +1119,7 @@ namespace XSharp.Engine.Entities
 
             if (!NoClip)
             {
-                FixedSingle gravity = NoClip ? 0 : Gravity;
+                FixedSingle gravity = Gravity;
 
                 if (CheckCollisionWithWorld)
                 {
@@ -1334,7 +1334,7 @@ namespace XSharp.Engine.Entities
 
                 FixedSingle gravity = Gravity;
 
-                if (!NoClip && !Static)
+                if (!NoClip)
                 {
                     if (!lastLanded && gravity != 0)
                     {

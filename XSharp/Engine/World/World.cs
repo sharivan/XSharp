@@ -34,6 +34,11 @@ namespace XSharp.Engine.World
 
         private CollisionChecker collisionChecker;
 
+        public FadingControl FadingSettings
+        {
+            get;
+        }
+
         public static GameEngine Engine => GameEngine.Engine;
 
         public Device Device => GameEngine.Engine.Device;
@@ -85,11 +90,6 @@ namespace XSharp.Engine.World
         public Texture ForegroundTilemap => Engine.ForegroundTilemap;
 
         public Texture BackgroundTilemap => Engine.BackgroundTilemap;
-
-        public FadingControl FadingSettings
-        {
-            get;
-        }
 
         internal World(int sceneRowCount, int sceneColCount)
             : this(sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)

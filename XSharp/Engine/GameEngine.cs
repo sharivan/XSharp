@@ -2709,10 +2709,14 @@ namespace XSharp.Engine
                     firstFreeEntityIndex = i;
                     break;
                 }
+
+            partition.Insert(entity);
         }
 
         private void RemoveEntity(Entity entity)
         {
+            partition.Remove(entity);
+
             int index = entity.Index;
 
             var next = entity.next;
@@ -3321,10 +3325,7 @@ namespace XSharp.Engine
                             removed.DeathFrame = FrameCounter;
 
                             if (!removed.Respawnable)
-                            {
-                                Engine.partition.Remove(removed);
                                 RemoveEntity(removed);
-                            }
                             else if (removed.RespawnOnNear)
                                 removed.Origin = autoRespawnableEntities[removed].Origin;
                         }
