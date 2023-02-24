@@ -1347,7 +1347,7 @@ namespace XSharp.Engine.Entities
 
                     if (lastLanded)
                         Velocity = Velocity.XVector;
-                   else  if (Velocity.Y > gravity && Velocity.Y < 2 * gravity)
+                    else if (Velocity.Y > gravity && Velocity.Y < 2 * gravity)
                         Velocity = new Vector(Velocity.X, gravity);
                 }
 
