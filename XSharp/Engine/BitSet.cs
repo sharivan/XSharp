@@ -138,7 +138,22 @@ namespace XSharp.Engine
             }
         }
 
-        public int SlotCount => bits.Count;
+        public int SlotCount
+        {
+            get => bits.Count;
+
+            set
+            {
+                int currentSlotCount = SlotCount;
+                if (value > currentSlotCount)
+                {
+                    for (int i = 0; i < value - currentSlotCount; i++)
+                        bits.Add(0);
+                }
+                else if (value < currentSlotCount)
+                    bits.RemoveRange(value, currentSlotCount - value);
+            }
+        }
 
         public int BitCount => bits.Count * BITS_PER_SLOT;
 
@@ -148,20 +163,13 @@ namespace XSharp.Engine
                 throw new ArgumentException($"Invalid negative initial slot count value '{initialSlotCount}'.");
 
             bits = new List<ulong>();
-            Expand(initialSlotCount);
-        }
-
-        private void Expand(int slotCount)
-        {
-            int currentSlotCount = SlotCount;
-            for (int i = 0; i < slotCount - currentSlotCount; i++)
-                bits.Add(0);
+            SlotCount = initialSlotCount;
         }
 
         private ulong GetSlot(int slotIndex)
         {
             if (SlotCount <= slotIndex)
-                Expand(slotIndex + 1);
+                SlotCount = slotIndex + 1;
 
             return bits[slotIndex];
         }
@@ -169,7 +177,7 @@ namespace XSharp.Engine
         private void SetSlotIncluding(int slotIndex, ulong value)
         {
             if (SlotCount <= slotIndex)
-                Expand(slotIndex + 1);
+                SlotCount = slotIndex + 1;
 
             bits[slotIndex] |= value;
         }
@@ -177,7 +185,7 @@ namespace XSharp.Engine
         private void SetSlotExcluding(int slotIndex, ulong value)
         {
             if (SlotCount <= slotIndex)
-                Expand(slotIndex + 1);
+                SlotCount = slotIndex + 1;
 
             bits[slotIndex] &= ~value;
         }
@@ -193,15 +201,15 @@ namespace XSharp.Engine
             return (slotBits & bitMask) != 0;
         }
 
-        public void Set(BitSet bitSet)
+        public void Set(BitSet mask)
         {
-            if (SlotCount < bitSet.SlotCount)
-                Expand(bitSet.SlotCount);
+            if (SlotCount < mask.SlotCount)
+                SlotCount = mask.SlotCount;
 
-            for (int i = 0; i < bitSet.SlotCount; i++)
+            for (int i = 0; i < mask.SlotCount; i++)
             {
-                ulong slotBits = bitSet.bits[i];
-                bits[i] |= slotBits;
+                ulong maskSlotBits = mask.bits[i];
+                bits[i] |= maskSlotBits;
             }
         }
 
@@ -216,15 +224,15 @@ namespace XSharp.Engine
             return (slotBits & bitMask) != 0;
         }
 
-        public void Reset(BitSet bitSet)
+        public void Reset(BitSet mask)
         {
-            if (SlotCount < bitSet.SlotCount)
-                Expand(bitSet.SlotCount);
+            if (SlotCount < mask.SlotCount)
+                SlotCount = mask.SlotCount;
 
-            for (int i = 0; i < bitSet.SlotCount; i++)
+            for (int i = 0; i < mask.SlotCount; i++)
             {
-                ulong slotBits = bitSet.bits[i];
-                bits[i] &= ~slotBits;
+                ulong maskSlotBits = mask.bits[i];
+                bits[i] &= ~maskSlotBits;
             }
         }
 
@@ -239,16 +247,16 @@ namespace XSharp.Engine
             return test;
         }
 
-        public void Toggle(BitSet bitSet)
+        public void Toggle(BitSet mask)
         {
-            if (SlotCount < bitSet.SlotCount)
-                Expand(bitSet.SlotCount);
+            if (SlotCount < mask.SlotCount)
+                SlotCount = mask.SlotCount;
 
-            for (int i = 0; i < bitSet.SlotCount; i++)
+            for (int i = 0; i < mask.SlotCount; i++)
             {
-                ulong mask = bitSet.bits[i];
+                ulong maskSlotBits = mask.bits[i];
                 ulong slotBits = bits[i];
-                bits[i] = (mask ^ (mask & ~slotBits)) | (slotBits & ~mask);
+                bits[i] = (maskSlotBits ^ (maskSlotBits & ~slotBits)) | (slotBits & ~maskSlotBits);
             }
         }
 
@@ -264,6 +272,178 @@ namespace XSharp.Engine
             ulong bitMask = MASK[bitIndex];
 
             return (slotBits & bitMask) != 0;
+        }
+
+        public void Union(BitSet other)
+        {
+            if (SlotCount < other.SlotCount)
+                SlotCount = other.SlotCount;
+
+            int count = System.Math.Min(SlotCount, other.SlotCount);
+            for (int i = 0; i < count; i++)
+            {
+                ulong otherSlotBits = other.bits[i];
+                bits[i] |= otherSlotBits;
+            }
+        }
+
+        public void Union(BitSet other, BitSet result)
+        {
+            result.Clear();
+            result.SlotCount = System.Math.Max(SlotCount, other.SlotCount);
+
+            if (SlotCount >= other.SlotCount)
+            {
+                for (int i = 0; i < other.SlotCount; i++)
+                {
+                    ulong slotBits = bits[i];
+                    ulong otherSlotBits = other.bits[i];
+                    result.bits[i] = slotBits | otherSlotBits;
+                }
+
+                for (int i = other.SlotCount + 1; i < SlotCount; i++)
+                {
+                    ulong slotBits = bits[i];
+                    result.bits[i] = slotBits;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < SlotCount; i++)
+                {
+                    ulong slotBits = bits[i];
+                    ulong otherSlotBits = other.bits[i];
+                    result.bits[i] = slotBits | otherSlotBits;
+                }
+
+                for (int i = SlotCount + 1; i < other.SlotCount; i++)
+                {
+                    ulong otherSlotBits = other.bits[i];
+                    result.bits[i] = otherSlotBits;
+                }
+            }
+        }
+
+        public void Intersection(BitSet other)
+        {
+            if (SlotCount < other.SlotCount)
+                SlotCount = other.SlotCount;
+
+            int count = System.Math.Min(SlotCount, other.SlotCount);
+            for (int i = 0; i < count; i++)
+            {
+                ulong otherSlotBits = other.bits[i];
+                bits[i] &= otherSlotBits;
+            }
+        }
+
+        public void Intersection(BitSet other, BitSet result)
+        {
+            result.Clear();
+            result.SlotCount = System.Math.Min(SlotCount, other.SlotCount);
+
+            for (int i = 0; i < result.SlotCount; i++)
+            {
+                ulong slotBits = bits[i];
+                ulong otherSlotBits = other.bits[i];
+                result.bits[i] = slotBits & otherSlotBits;
+            }
+        }
+
+        public void Complementary()
+        {
+            for (int i = 0; i < SlotCount; i++)
+            {
+                ulong slotBits = bits[i];
+                bits[i] = ~slotBits;
+            }
+        }
+
+        public void Complementary(BitSet result)
+        {
+            result.Clear();
+            result.SlotCount = SlotCount;
+
+            for (int i = 0; i < SlotCount; i++)
+            {
+                ulong slotBits = bits[i];
+                result.bits[i] = ~slotBits;
+            }
+        }
+
+        public void Difference(BitSet other)
+        {
+            if (SlotCount < other.SlotCount)
+                SlotCount = other.SlotCount;
+
+            int count = System.Math.Min(SlotCount, other.SlotCount);
+            for (int i = 0; i < count; i++)
+            {
+                ulong otherSlotBits = other.bits[i];
+                bits[i] &= ~otherSlotBits;
+            }
+        }
+
+        public void Difference(BitSet other, BitSet result)
+        {
+            result.Clear();
+            result.SlotCount = System.Math.Min(SlotCount, other.SlotCount);
+
+            for (int i = 0; i < result.SlotCount; i++)
+            {
+                ulong slotBits = bits[i];
+                ulong otherSlotBits = other.bits[i];
+                result.bits[i] = slotBits & ~otherSlotBits;
+            }
+        }
+
+        public void Xor(BitSet other)
+        {
+            if (SlotCount < other.SlotCount)
+                SlotCount = other.SlotCount;
+
+            int count = System.Math.Min(SlotCount, other.SlotCount);
+            for (int i = 0; i < count; i++)
+            {
+                ulong otherSlotBits = other.bits[i];
+                bits[i] ^= otherSlotBits;
+            }
+        }
+
+        public void Xor(BitSet other, BitSet result)
+        {
+            result.Clear();
+            result.SlotCount = System.Math.Min(SlotCount, other.SlotCount);
+
+            for (int i = 0; i < result.SlotCount; i++)
+            {
+                ulong slotBits = bits[i];
+                ulong otherSlotBits = other.bits[i];
+                result.bits[i] = slotBits ^ otherSlotBits;
+            }
+        }
+
+        public void Split(BitSet other, BitSet myDiff, BitSet intersection, BitSet otherDiff)
+        {
+            myDiff.Clear();
+            intersection.Clear();
+            otherDiff.Clear();
+
+            int count = System.Math.Max(SlotCount, other.SlotCount);
+
+            myDiff.SlotCount = count;
+            intersection.SlotCount = count;
+            otherDiff.SlotCount = count;
+
+            for (int i = 0; i < count; i++)
+            {
+                ulong slotBits = i < SlotCount ? bits[i] : 0;
+                ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
+
+                myDiff.bits[i] = slotBits & ~otherSlotBits;
+                intersection.bits[i] = slotBits & otherSlotBits;
+                otherDiff.bits[i] = ~slotBits & otherSlotBits;
+            }
         }
 
         public int FirstSetBit(int start = 0)

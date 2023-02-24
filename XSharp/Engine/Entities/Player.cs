@@ -746,7 +746,7 @@ namespace XSharp.Engine.Entities
         protected override void OnBeforeMove(ref Vector origin)
         {
             Box limit = Engine.World.BoundingBox;
-            if (!CanGoOutOfCameraBounds && !CrossingBossDoor && !Engine.NoCameraConstraints && !Engine.World.Camera.NoConstraints)
+            if (!CanGoOutOfCameraBounds && !CrossingBossDoor && !Engine.NoCameraConstraints && !Engine.Camera.NoConstraints)
                 limit &= Engine.CameraConstraintsBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE);
 
             RestrictIn(limit, ref origin);
@@ -813,7 +813,7 @@ namespace XSharp.Engine.Entities
                 }
                 else if (!spawning)
                 {
-                    if (Origin.Y > Engine.World.Camera.RightBottom.Y + BLOCK_SIZE)
+                    if (Origin.Y > Engine.Camera.RightBottom.Y + BLOCK_SIZE)
                     {
                         DyeByAbiss = true;
                         Die();

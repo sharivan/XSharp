@@ -181,7 +181,7 @@
     <Compile Include="Engine\World\Partition.cs" />
     <Compile Include="Engine\Entities\Player.cs" />
     <Compile Include="Engine\World\Scene.cs" />
-    <Compile Include="Engine\World\Camera.cs" />
+    <Compile Include="Engine\Entities\Camera.cs" />
     <Compile Include="Engine\Entities\Sprite.cs" />
     <Compile Include="Engine\Graphics\SpriteSheet.cs" />
     <Compile Include="Engine\World\Tile.cs" />

@@ -1,10 +1,12 @@
-﻿using XSharp.Engine.Entities;
+﻿using XSharp.Engine.World;
+using XSharp.Engine.Entities;
 using XSharp.Engine.Entities.Items;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+using MMXWorld = XSharp.Engine.World.World;
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.World
+namespace XSharp.Engine
 {
     public class Camera : Entity
     {
@@ -40,7 +42,7 @@ namespace XSharp.Engine.World
             set;
         }
 
-        public World World => GameEngine.Engine.World;
+        public static MMXWorld World => GameEngine.Engine.World;
 
         public bool SmoothOnNextMove
         {
@@ -208,8 +210,8 @@ namespace XSharp.Engine.World
 
         public Vector ClampToBounds(FixedSingle x, FixedSingle y)
         {
-            Vector minCameraPos = World.Engine.MinCameraPos;
-            Vector maxCameraPos = World.Engine.MaxCameraPos;
+            Vector minCameraPos = Engine.MinCameraPos;
+            Vector maxCameraPos = Engine.MaxCameraPos;
 
             FixedSingle w2 = Width * 0.5;
             FixedSingle h2 = Height * 0.5;
@@ -417,6 +419,7 @@ namespace XSharp.Engine.World
 
             if ((!entity.Dead || Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn) && !entity.IsOffscreen(VectorKind.ORIGIN))
             {
+                // TODO : This needs a special check for Heart Tanks and Sub-Tanks
                 if (entity is Item item && item.Collected)
                     return;
 

@@ -1117,10 +1117,10 @@ namespace XSharp.Engine.Entities
             if (Static)
                 return;
 
-            FixedSingle gravity = NoClip ? 0 : Gravity;
-
             if (!NoClip)
             {
+                FixedSingle gravity = NoClip ? 0 : Gravity;
+
                 if (CheckCollisionWithWorld)
                 {
                     worldCollider.Box = CollisionBox;
@@ -1139,6 +1139,9 @@ namespace XSharp.Engine.Entities
                     delta = Move(spriteCollider, delta, gravity);
                 }
             }
+
+            if (delta.IsNull)
+                return;
 
             var deltaX = delta.X;
             var deltaY = delta.Y;
@@ -1344,12 +1347,11 @@ namespace XSharp.Engine.Entities
 
                     if (lastLanded)
                         Velocity = Velocity.XVector;
+                   else  if (Velocity.Y > gravity && Velocity.Y < 2 * gravity)
+                        Velocity = new Vector(Velocity.X, gravity);
                 }
 
-                if (!lastLanded && Velocity.Y > gravity && Velocity.Y < 2 * gravity)
-                    Velocity = new Vector(Velocity.X, gravity);
-
-                Vector vel = Velocity + ExternalVelocity;
+                Vector vel = Velocity + (!NoClip ? ExternalVelocity : Vector.NULL_VECTOR);
                 ExternalVelocity = Vector.NULL_VECTOR;
 
                 Vector lastOrigin = Origin;
@@ -1521,13 +1523,6 @@ namespace XSharp.Engine.Entities
                 animation.OnDeviceReset();
         }
 
-        protected override BoxKind ComputeBoxKind()
-        {
-            return (CollisionData.IsSolidBlock() ? BoxKind.COLLISIONBOX : BoxKind.NONE)
-                | (Visible ? BoxKind.BOUDINGBOX : BoxKind.NONE)
-                | base.ComputeBoxKind();
-        }
-
         public void FaceToPosition(Vector pos)
         {
             var faceDirection = GetHorizontalDirection(pos);
@@ -1548,7 +1543,7 @@ namespace XSharp.Engine.Entities
 
         public void FaceToScreenCenter()
         {
-            FaceToPosition(Engine.World.Camera.Center);
+            FaceToPosition(Engine.Camera.Center);
         }
 
         public void ResetExternalVelocity()

@@ -36,7 +36,7 @@ namespace XSharp.Engine.Entities
 
         internal readonly List<Entity> touchingEntities;
         internal readonly List<Entity> childs;
-        private readonly HashSet<Entity> resultSet;
+        private readonly EntityList<Entity> resultSet;
 
         internal Entity previous;
         internal Entity next;
@@ -50,8 +50,6 @@ namespace XSharp.Engine.Entities
         private bool checkTouchingEntities = true;
         private bool checkTouchingWithDeadEntities = false;
 
-        private BoxKind boxKind;
-        private BoxKind lastBoxKind;
         private Box[] lastBox;
 
         public static GameEngine Engine => GameEngine.Engine;
@@ -244,7 +242,7 @@ namespace XSharp.Engine.Entities
         {
             touchingEntities = new List<Entity>();
             childs = new List<Entity>();
-            resultSet = new HashSet<Entity>();
+            resultSet = new EntityList<Entity>();
 
             states = new List<EntityState>();
 
@@ -556,11 +554,18 @@ namespace XSharp.Engine.Entities
             if (CheckTouchingEntities)
             {
                 resultSet.Clear();
-                Engine.partition.Query(resultSet, TouchingBox, this, childs, BoxKind.HITBOX, !CheckTouchingWithDeadEntities);
+                Engine.partition.Query(resultSet, TouchingBox, this, childs, !CheckTouchingWithDeadEntities);
 
                 for (int i = 0; i < touchingEntities.Count; i++)
                 {
                     Entity entity = touchingEntities[i];
+                    if (entity.Index < 0)
+                    {
+                        touchingEntities.RemoveAt(i);
+                        i--;
+
+                        continue;
+                    }
 
                     bool touching = CheckTouching(entity);
 
@@ -679,8 +684,6 @@ namespace XSharp.Engine.Entities
         public virtual void Spawn()
         {
             SpawnFrame = Engine.FrameCounter;
-            boxKind = BoxKind.NONE;
-            lastBoxKind = BoxKind.NONE;
             Spawning = true;
             CheckTouchingEntities = true;
             frameToKill = -1;
@@ -719,11 +722,6 @@ namespace XSharp.Engine.Entities
         {
         }
 
-        protected virtual BoxKind ComputeBoxKind()
-        {
-            return Respawnable || CheckTouchingEntities ? BoxKind.HITBOX : BoxKind.NONE;
-        }
-
         public void BeginUpdate()
         {
             Updating = true;
@@ -736,32 +734,11 @@ namespace XSharp.Engine.Entities
 
         protected internal virtual void UpdatePartition(bool force = false)
         {
-            if (Updating || !Respawnable && !Alive)
+            if (Updating || Index <= 0)
                 return;
 
-            boxKind = ComputeBoxKind();
+            Engine.partition.Update(this, force);
 
-            if (lastBoxKind == BoxKind.NONE && boxKind != BoxKind.NONE)
-                Engine.partition.Insert(this, boxKind);
-            else if (lastBoxKind != BoxKind.NONE && boxKind == BoxKind.NONE)
-                Engine.partition.Remove(this, boxKind);
-            else if (lastBoxKind != boxKind)
-            {
-                for (int i = 0; i < BOXKIND_COUNT; i++)
-                {
-                    var k = i.ToBoxKind();
-                    if (boxKind.HasFlag(k) && !lastBoxKind.HasFlag(k))
-                        Engine.partition.Insert(this, k);
-                    else if (!boxKind.HasFlag(k) && lastBoxKind.HasFlag(k))
-                        Engine.partition.Remove(this, k);
-                    else
-                        Engine.partition.Update(this, k, force);
-                }
-            }
-            else
-                Engine.partition.Update(this, boxKind, force);
-
-            lastBoxKind = boxKind;
             UpdateLastBoxes();
         }
 
@@ -776,12 +753,12 @@ namespace XSharp.Engine.Entities
 
         public virtual bool IsOffscreen(VectorKind kind, bool extendedCamera = true)
         {
-            return GetVector(kind) > (extendedCamera ? Engine.World.Camera.ExtendedBoundingBox : Engine.World.Camera.BoundingBox);
+            return GetVector(kind) > (extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox);
         }
 
         public virtual bool IsOffscreen(BoxKind kind, bool extendedCamera = true)
         {
-            return !CollisionChecker.HasIntersection(GetBox(kind), extendedCamera ? Engine.World.Camera.ExtendedBoundingBox : Engine.World.Camera.BoundingBox);
+            return !CollisionChecker.HasIntersection(GetBox(kind), extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox);
         }
 
         public virtual void Place()

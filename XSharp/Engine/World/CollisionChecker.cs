@@ -516,7 +516,7 @@ namespace XSharp.Engine.World
         protected RightTriangle slopeTriangle;
         protected List<CollisionPlacement> placements;
 
-        private HashSet<Entity> resultSet;
+        private EntityList<Entity> resultSet;
         private bool tracing;
 
         public Parallelogram tracingParallelogram;
@@ -657,7 +657,7 @@ namespace XSharp.Engine.World
         public CollisionChecker()
         {
             placements = new List<CollisionPlacement>();
-            resultSet = new HashSet<Entity>();
+            resultSet = new EntityList<Entity>();
             IgnoreSprites = new EntityList<Sprite>();
             tracingParallelogram = new Parallelogram();
         }
@@ -1011,7 +1011,7 @@ namespace XSharp.Engine.World
                 resultSet.Clear();
                 if (tracing)
                 {
-                    Engine.partition.Query(resultSet, tracingLine, BoxKind.HITBOX);
+                    Engine.partition.Query(resultSet, tracingLine);
                     foreach (var entity in resultSet)
                         if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                         {
@@ -1027,7 +1027,7 @@ namespace XSharp.Engine.World
                 }
                 else
                 {
-                    Engine.partition.Query(resultSet, TestVector, BoxKind.HITBOX);
+                    Engine.partition.Query(resultSet, TestVector);
                     foreach (var entity in resultSet)
                         if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                         {
@@ -1177,7 +1177,7 @@ namespace XSharp.Engine.World
 
                 if (tracing && TracingBoxMode.HasFlag(TracingMode.DIAGONAL))
                 {
-                    Engine.partition.Query(resultSet, tracingParallelogram, BoxKind.HITBOX);
+                    Engine.partition.Query(resultSet, tracingParallelogram);
                     foreach (var entity in resultSet)
                         if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                         {
@@ -1194,7 +1194,7 @@ namespace XSharp.Engine.World
                 }
                 else
                 {
-                    Engine.partition.Query(resultSet, TestBox, BoxKind.HITBOX);
+                    Engine.partition.Query(resultSet, TestBox);
                     foreach (var entity in resultSet)
                         if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                         {

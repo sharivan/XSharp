@@ -34,46 +34,6 @@ namespace XSharp.Engine.World
 
         private CollisionChecker collisionChecker;
 
-        public FadingControl FadingSettings
-        {
-            get;
-        }
-
-        internal World(int sceneRowCount, int sceneColCount)
-            : this(sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
-        {
-        }
-
-        internal World(int sceneRowCount, int sceneColCount, int backgroundSceneRowCount, int backgroundSceneColCount)
-        {
-            SceneRowCount = sceneRowCount;
-            SceneColCount = sceneColCount;
-            this.backgroundSceneRowCount = backgroundSceneRowCount;
-            this.backgroundSceneColCount = backgroundSceneColCount;
-
-            Camera = Engine.CreateEntity<Camera>(new
-            {
-                Width = SCREEN_WIDTH,
-                Height = SCREEN_HEIGHT
-            });
-
-            FadingSettings = new FadingControl();
-
-            tileList = new List<Tile>();
-            backgroundTileList = new List<Tile>();
-            mapList = new List<Map>();
-            backgroundMapList = new List<Map>();
-            blockList = new List<Block>();
-            backgroundBlockList = new List<Block>();
-            sceneList = new List<Scene>();
-            backgroundSceneList = new List<Scene>();
-
-            scenes = new Scene[sceneRowCount, sceneColCount];
-            backgroundScenes = new Scene[backgroundSceneRowCount, backgroundSceneColCount];
-
-            collisionChecker = new CollisionChecker();
-        }
-
         public static GameEngine Engine => GameEngine.Engine;
 
         public Device Device => GameEngine.Engine.Device;
@@ -118,11 +78,6 @@ namespace XSharp.Engine.World
 
         public Vector LayoutBackgroundtSize => new(backgroundSceneRowCount, backgroundSceneColCount);
 
-        public Camera Camera
-        {
-            get;
-        }
-
         public Texture ForegroundPalette => Engine.ForegroundPalette;
 
         public Texture BackgroundPalette => Engine.BackgroundPalette;
@@ -130,6 +85,40 @@ namespace XSharp.Engine.World
         public Texture ForegroundTilemap => Engine.ForegroundTilemap;
 
         public Texture BackgroundTilemap => Engine.BackgroundTilemap;
+
+        public FadingControl FadingSettings
+        {
+            get;
+        }
+
+        internal World(int sceneRowCount, int sceneColCount)
+            : this(sceneRowCount, sceneColCount, sceneRowCount, sceneColCount)
+        {
+        }
+
+        internal World(int sceneRowCount, int sceneColCount, int backgroundSceneRowCount, int backgroundSceneColCount)
+        {
+            SceneRowCount = sceneRowCount;
+            SceneColCount = sceneColCount;
+            this.backgroundSceneRowCount = backgroundSceneRowCount;
+            this.backgroundSceneColCount = backgroundSceneColCount;
+
+            FadingSettings = new FadingControl();
+
+            tileList = new List<Tile>();
+            backgroundTileList = new List<Tile>();
+            mapList = new List<Map>();
+            backgroundMapList = new List<Map>();
+            blockList = new List<Block>();
+            backgroundBlockList = new List<Block>();
+            sceneList = new List<Scene>();
+            backgroundSceneList = new List<Scene>();
+
+            scenes = new Scene[sceneRowCount, sceneColCount];
+            backgroundScenes = new Scene[backgroundSceneRowCount, backgroundSceneColCount];
+
+            collisionChecker = new CollisionChecker();
+        }
 
         public Tile AddTile(bool background = false)
         {
@@ -483,8 +472,8 @@ namespace XSharp.Engine.World
             if (checkpoint == null)
                 return;
 
-            Vector screenLT = Camera.LeftTop;
-            Vector screenRB = Camera.RightBottom;
+            Vector screenLT = Engine.Camera.LeftTop;
+            Vector screenRB = Engine.Camera.RightBottom;
             Vector backgroundPos = checkpoint.BackgroundPos;
 
             Vector screenDelta = (checkpoint.Scroll & 0x2) != 0 ? Vector.NULL_VECTOR : (screenLT + checkpoint.CameraPos).Scale(0.5f) - backgroundPos;
@@ -520,8 +509,8 @@ namespace XSharp.Engine.World
 
         public void RenderForeground(int layer)
         {
-            Vector screenLT = Camera.LeftTop;
-            Vector screenRB = Camera.RightBottom;
+            Vector screenLT = Engine.Camera.LeftTop;
+            Vector screenRB = Engine.Camera.RightBottom;
 
             Cell start = GetSceneCellFromPos(screenLT);
             Cell end = GetSceneCellFromPos(screenRB);

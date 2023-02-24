@@ -26,7 +26,7 @@ namespace XSharp.Engine.Entities.HUD
 
         protected internal virtual void UpdateOrigin()
         {
-            Origin = Engine.World.Camera.LeftTop + Offset;
+            Origin = Engine.Camera.LeftTop + Offset;
         }
 
         protected internal override void UpdatePartition(bool force = false)
