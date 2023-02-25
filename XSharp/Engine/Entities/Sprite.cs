@@ -1328,15 +1328,15 @@ namespace XSharp.Engine.Entities
                         sprite.DoPhysics(null, (0, deltaX));
             }
 
-            if (deltaY > 0)
-            {
-                foreach (var sprite in touchingSpritesDown)
-                    if (sprite != phisycsParent)
-                        sprite.DoPhysics(null, (0, deltaY));
-            }
-
             if (deltaY != 0)
             {
+                if (deltaY > 0)
+                {
+                    foreach (var sprite in touchingSpritesDown)
+                        if (sprite != phisycsParent)
+                            sprite.DoPhysics(null, (0, deltaY));
+                }
+
                 foreach (var sprite in touchingSpritesUp)
                     if (sprite != phisycsParent)
                     {
