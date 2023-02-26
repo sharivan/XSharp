@@ -153,6 +153,18 @@ namespace XSharp.Math
                 : RawFracPart > 1 << (FIXED_BITS_COUNT - 1) ? intPart - 1 : intPart;
         }
 
+        public FixedSingle Round(RoundMode mode)
+        {
+            return mode switch
+            {
+                RoundMode.FLOOR => Floor(),
+                RoundMode.CEIL => Ceil(),
+                RoundMode.TRUNCATE => (int) this,
+                RoundMode.NEAREST => Round(),
+                _ => this
+            };
+        }
+
         public FixedSingle TruncFracPart(int bits = 8)
         {
             return new FixedSingle(RawValue & (-1 << (FIXED_BITS_COUNT - bits)));

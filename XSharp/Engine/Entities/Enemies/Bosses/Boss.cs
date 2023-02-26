@@ -252,8 +252,8 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
                     int index = ExplodingFrameCounter / 5;
                     if (index < EXPLOSION_ORIGIN_OFFSETS.Length)
                     {
-                        Vector origin = EXPLOSION_ORIGIN_OFFSETS[index];
-                        Engine.CreateExplosionEffect(Origin + origin, ExplosionEffectSound.NONE);
+                        Vector offset = EXPLOSION_ORIGIN_OFFSETS[index];
+                        Engine.CreateExplosionEffect(Origin + offset, ExplosionEffectSound.NONE);
                     }
                 }
 

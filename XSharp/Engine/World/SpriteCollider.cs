@@ -11,8 +11,8 @@ namespace XSharp.Engine.World
         private bool checkCollisionWithWorld;
         private bool checkCollisionWithSolidSprites;
         private FixedSingle maskSize;
-        private FixedSingle sideCollidersTopClip;
-        private FixedSingle sideCollidersBottomClip;
+        private FixedSingle headHeight;
+        private FixedSingle legsHeight;
 
         private ExtendedCollisionChecker leftCollisionChecker;
         private ExtendedCollisionChecker rightCollisionChecker;
@@ -82,24 +82,24 @@ namespace XSharp.Engine.World
             }
         }
 
-        public FixedSingle SideCollidersTopClip
+        public FixedSingle HeadHeight
         {
-            get => sideCollidersTopClip;
+            get => headHeight;
 
             set
             {
-                sideCollidersTopClip = value;
+                headHeight = value;
                 UpdateColliders();
             }
         }
 
-        public FixedSingle SideCollidersBottomClip
+        public FixedSingle LegsHeight
         {
-            get => sideCollidersBottomClip;
+            get => legsHeight;
 
             set
             {
-                sideCollidersBottomClip = value;
+                legsHeight = value;
                 UpdateColliders();
             }
         }
@@ -136,7 +136,7 @@ namespace XSharp.Engine.World
             {
                 if (!leftMaskComputed)
                 {
-                    leftMaskFlags = leftCollisionChecker.GetCollisionFlags();
+                    leftMaskFlags = leftCollisionChecker.GetTouchingFlags(Direction.LEFT, RoundMode.FLOOR);
                     leftMaskComputed = true;
                 }
 
@@ -152,7 +152,7 @@ namespace XSharp.Engine.World
             {
                 if (!upMaskComputed)
                 {
-                    upMaskFlags = upCollisionChecker.GetCollisionFlags();
+                    upMaskFlags = upCollisionChecker.GetTouchingFlags(Direction.UP, RoundMode.FLOOR);
                     upMaskComputed = true;
                 }
 
@@ -168,7 +168,7 @@ namespace XSharp.Engine.World
             {
                 if (!rightMaskComputed)
                 {
-                    rightMaskFlags = rightCollisionChecker.GetCollisionFlags();
+                    rightMaskFlags = rightCollisionChecker.GetTouchingFlags(Direction.RIGHT, RoundMode.FLOOR);
                     rightMaskComputed = true;
                 }
 
@@ -190,7 +190,7 @@ namespace XSharp.Engine.World
             {
                 if (!innerMaskComputed)
                 {
-                    innerMaskFlags = innerCollisionChecker.GetCollisionFlags();
+                    innerMaskFlags = innerCollisionChecker.GetCollisionFlags(RoundMode.FLOOR);
                     innerMaskComputed = true;
                 }
 
@@ -225,14 +225,14 @@ namespace XSharp.Engine.World
         {
         }
 
-        public SpriteCollider(Sprite owner, Box box, FixedSingle maskSize, FixedSingle sideCollidersTopClip, FixedSingle sideCollidersBottomClip, bool useCollisionPlacements = false, bool checkCollisionWithWorld = true, bool checkCollisionWithSolidSprites = false)
+        public SpriteCollider(Sprite owner, Box box, FixedSingle maskSize, FixedSingle headheight, FixedSingle legsHeight, bool useCollisionPlacements = false, bool checkCollisionWithWorld = true, bool checkCollisionWithSolidSprites = false)
         {
             Owner = owner;
             this.box = box;
             this.maskSize = maskSize;
             UseCollisionPlacements = useCollisionPlacements;
-            this.sideCollidersTopClip = sideCollidersTopClip;
-            this.sideCollidersBottomClip = sideCollidersBottomClip;
+            this.headHeight = headheight;
+            this.legsHeight = legsHeight;
             this.checkCollisionWithWorld = checkCollisionWithWorld;
             this.checkCollisionWithSolidSprites = checkCollisionWithSolidSprites;
 
@@ -294,16 +294,16 @@ namespace XSharp.Engine.World
 
         private void UpdateColliders()
         {
-            LeftCollider = new Box(box.Left - maskSize, box.Top + sideCollidersTopClip, maskSize, box.Height - sideCollidersTopClip - sideCollidersBottomClip);
-            UpCollider = new Box(box.Left, box.Top - maskSize, box.Width, maskSize);
-            RightCollider = new Box(box.Right, box.Top + sideCollidersTopClip, maskSize, box.Height - sideCollidersTopClip - sideCollidersBottomClip);
-            DownCollider = new Box(box.LeftBottom, box.Width, maskSize);
+            LeftCollider = ((box.Left, box.Origin.Y), (0, box.Mins.Y + headHeight), (1, box.Maxs.Y - legsHeight));
+            UpCollider = ((box.Origin.X, box.Top), (box.Mins.X, 0), (box.Maxs.X, 1));
+            RightCollider = ((box.Right, box.Origin.Y), (-1, box.Mins.Y + headHeight), (0, box.Maxs.Y - legsHeight));
+            DownCollider = ((box.Origin.X, box.Bottom), (box.Mins.X, -1), (box.Maxs.X, 0));
 
-            downCollisionChecker.Setup(DownCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
-            upCollisionChecker.Setup(UpCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
-            leftCollisionChecker.Setup(LeftCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
-            rightCollisionChecker.Setup(RightCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
-            innerCollisionChecker.Setup(box, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
+            downCollisionChecker.Setup(DownCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
+            upCollisionChecker.Setup(UpCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
+            leftCollisionChecker.Setup(LeftCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
+            rightCollisionChecker.Setup(RightCollider, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
+            innerCollisionChecker.Setup(box, CollisionFlags.NONE, IgnoreSprites, maskSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
 
             UpdateFlags();
         }
@@ -321,17 +321,17 @@ namespace XSharp.Engine.World
 
         private void UpdateFlags()
         {
-            DownMaskFlags = downCollisionChecker.ComputeLandedState();
+            DownMaskFlags = downCollisionChecker.ComputeLandedState(RoundMode.FLOOR);
             if (DownMaskFlags == CollisionFlags.SLOPE)
             {
                 LandedSlope = downCollisionChecker.SlopeTriangle;
                 ClipFromSlope(LandedSlope);
             }
 
-            upMaskFlags = upCollisionChecker.GetCollisionFlags();
-            leftMaskFlags = leftCollisionChecker.GetCollisionFlags();
-            rightMaskFlags = rightCollisionChecker.GetCollisionFlags();
-            innerMaskFlags = innerCollisionChecker.GetCollisionFlags();
+            upMaskFlags = upCollisionChecker.GetTouchingFlags(Direction.UP, RoundMode.FLOOR);
+            leftMaskFlags = leftCollisionChecker.GetTouchingFlags(Direction.LEFT, RoundMode.FLOOR);
+            rightMaskFlags = rightCollisionChecker.GetTouchingFlags(Direction.RIGHT, RoundMode.FLOOR);
+            innerMaskFlags = innerCollisionChecker.GetCollisionFlags(RoundMode.FLOOR);
 
             leftMaskComputed = true;
             upMaskComputed = true;
@@ -360,19 +360,19 @@ namespace XSharp.Engine.World
             {
                 rightCollisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
                 newBox = masks.HasFlag(Direction.RIGHT)
-                    ? rightCollisionChecker.MoveUntilIntersect(dir, maxDistance)
-                    : RightCollider + dir;
+                    ? rightCollisionChecker.MoveUntilIntersect(dir, maxDistance, RoundMode.FLOOR)
+                    : rightCollisionChecker.TestBox + dir;
 
-                delta1 = newBox.Origin - RightCollider.Origin;
+                delta1 = newBox.Origin - rightCollisionChecker.TestBox.Origin;
             }
             else if (dir.X < 0)
             {
                 leftCollisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
                 newBox = masks.HasFlag(Direction.LEFT)
-                    ? leftCollisionChecker.MoveUntilIntersect(dir, maxDistance)
-                    : LeftCollider + dir;
+                    ? leftCollisionChecker.MoveUntilIntersect(dir, maxDistance, RoundMode.FLOOR)
+                    : leftCollisionChecker.TestBox + dir;
 
-                delta1 = newBox.Origin - LeftCollider.Origin;
+                delta1 = newBox.Origin - leftCollisionChecker.TestBox.Origin;
             }
             else
                 delta1 = dir;
@@ -381,19 +381,19 @@ namespace XSharp.Engine.World
             {
                 downCollisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
                 newBox = masks.HasFlag(Direction.DOWN)
-                    ? downCollisionChecker.MoveUntilIntersect(dir, maxDistance)
-                    : DownCollider + dir;
+                    ? downCollisionChecker.MoveUntilIntersect(dir, maxDistance, RoundMode.FLOOR)
+                    : downCollisionChecker.TestBox + dir;
 
-                delta2 = newBox.Origin - DownCollider.Origin;
+                delta2 = newBox.Origin - downCollisionChecker.TestBox.Origin;
             }
             else if (dir.Y < 0)
             {
                 upCollisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
                 newBox = masks.HasFlag(Direction.UP)
-                    ? upCollisionChecker.MoveUntilIntersect(dir, maxDistance)
-                    : UpCollider + dir;
+                    ? upCollisionChecker.MoveUntilIntersect(dir, maxDistance, RoundMode.FLOOR)
+                    : upCollisionChecker.TestBox + dir;
 
-                delta2 = newBox.Origin - UpCollider.Origin;
+                delta2 = newBox.Origin - upCollisionChecker.TestBox.Origin;
             }
             else
                 delta2 = delta1;
@@ -412,14 +412,14 @@ namespace XSharp.Engine.World
         public void MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             innerCollisionChecker.IgnoreFlags = ignore;
-            box = innerCollisionChecker.MoveContactFloor(maxDistance);
+            box = innerCollisionChecker.MoveContactFloor(maxDistance, RoundMode.FLOOR);
             UpdateColliders();
         }
 
         public void TryMoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             innerCollisionChecker.IgnoreFlags = ignore;
-            if (innerCollisionChecker.TryMoveContactFloor(maxDistance))
+            if (innerCollisionChecker.TryMoveContactFloor(maxDistance, RoundMode.FLOOR))
             {
                 box = innerCollisionChecker.TestBox;
                 UpdateColliders();
@@ -429,7 +429,7 @@ namespace XSharp.Engine.World
         public void TryMoveContactSlope(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             innerCollisionChecker.IgnoreFlags = ignore;
-            if (innerCollisionChecker.TryMoveContactSlope(maxDistance))
+            if (innerCollisionChecker.TryMoveContactSlope(maxDistance, RoundMode.FLOOR))
             {
                 box = innerCollisionChecker.TestBox;
                 UpdateColliders();
@@ -444,7 +444,7 @@ namespace XSharp.Engine.World
         public void AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             innerCollisionChecker.IgnoreFlags = ignore;
-            box = innerCollisionChecker.AdjustOnTheFloor(maxDistance);
+            box = innerCollisionChecker.AdjustOnTheFloor(maxDistance, RoundMode.FLOOR);
             UpdateColliders();
         }
 
@@ -460,7 +460,7 @@ namespace XSharp.Engine.World
                     if (placement.CollisionData == CollisionData.TOP_LADDER)
                     {
                         Box placementBox = placement.ObstableBox;
-                        FixedSingle delta = placementBox.Left + MAP_SIZE * 0.5 - box.Left - box.Width * 0.5;
+                        FixedSingle delta = placementBox.Left - box.Left + (MAP_SIZE - box.Width) * 0.5;
                         box += delta * Vector.RIGHT_VECTOR;
                         UpdateColliders();
                         return;
@@ -474,7 +474,7 @@ namespace XSharp.Engine.World
                     if (placement.CollisionData == CollisionData.LADDER)
                     {
                         Box placementBox = placement.ObstableBox;
-                        FixedSingle delta = placementBox.Left + MAP_SIZE * 0.5 - box.Left - box.Width * 0.5;
+                        FixedSingle delta = placementBox.Left - box.Left + (MAP_SIZE - box.Width) * 0.5;
                         box += delta * Vector.RIGHT_VECTOR;
                         UpdateColliders();
                         return;

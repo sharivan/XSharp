@@ -28,12 +28,10 @@ namespace XSharp.Engine
 
         // Directions
 
-        public const int STEP_BIT_COUNT = 8;
-        public const int STEP_COUNT = 1 << STEP_BIT_COUNT;
-        public static readonly FixedSingle STEP_SIZE = FixedSingle.FromRawValue(1 << (FixedSingle.FIXED_BITS_COUNT - STEP_BIT_COUNT));
-        public static readonly FixedSingle EPSLON = 0;
-        public static readonly FixedSingle MASK_SIZE = STEP_SIZE;
-        public static readonly FixedSingle QUERY_MAX_DISTANCE = FixedSingle.ONE;
+        public static readonly FixedSingle STEP_SIZE = 1; // Recommended step size is 1 (one pixel). This is used to do the fine collision checking, original games do it at pixel level, its not needed to do it at sub-pixel level.
+        public static readonly FixedSingle EPSLON = 0; // TODO : Remove it in future
+        public static readonly FixedSingle MASK_SIZE = 1 / 256.0; // TODO : Remove it in future
+        public static readonly FixedSingle QUERY_MAX_DISTANCE = 1;
         public static readonly Vector STEP_LEFT_VECTOR = STEP_SIZE * Vector.LEFT_VECTOR;
         public static readonly Vector STEP_UP_VECTOR = STEP_SIZE * Vector.UP_VECTOR;
         public static readonly Vector STEP_RIGHT_VECTOR = STEP_SIZE * Vector.RIGHT_VECTOR;
@@ -495,15 +493,15 @@ namespace XSharp.Engine
 
         // Startup
 
-        public const bool ENABLE_ENEMIES = true;
-        public const bool ENABLE_SPAWNING_BLACK_SCREEN = true;
-        public const bool ENABLE_OST = true;
+        public const bool ENABLE_ENEMIES = false;
+        public const bool ENABLE_SPAWNING_BLACK_SCREEN = false;
+        public const bool ENABLE_OST = false;
 
         public const bool LOAD_ROM = true;
-        public const string ROM_NAME = "ShittyDash.mmx";
+        public const string ROM_NAME = "BestGame.mmx";
         public const bool SKIP_MENU = false;
         public const bool SKIP_INTRO = false;
-        public const int INITIAL_LEVEL = 8;
+        public const int INITIAL_LEVEL = 2;
         public const int INITIAL_CHECKPOINT = 0;
     }
 }

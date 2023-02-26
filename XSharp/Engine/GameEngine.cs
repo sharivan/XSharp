@@ -3373,7 +3373,7 @@ namespace XSharp.Engine
 
         public Vector2 WorldVectorToScreen(Vector v)
         {
-            return ToVector2((v - Camera.LeftTop) * DrawScale + drawBox.LeftTop);
+            return ToVector2((v.RoundToFloor() - Camera.LeftTop.RoundToFloor()) * DrawScale + drawBox.LeftTop);
         }
 
         public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
@@ -3398,7 +3398,7 @@ namespace XSharp.Engine
 
         public RectangleF WorldBoxToScreen(MMXBox box)
         {
-            return ToRectangleF((box.LeftTopOrigin() - Camera.LeftTop) * DrawScale + drawBox.LeftTop);
+            return ToRectangleF((box.LeftTopOrigin().RoundOriginToFloor() - Camera.LeftTop.RoundToFloor()) * DrawScale + drawBox.LeftTop);
         }
 
         public void TogglePauseGame()
@@ -4013,6 +4013,18 @@ namespace XSharp.Engine
                                     }
                                     else
                                         FillRectangle(rect, HITBOX_COLOR);
+
+                                    bool touchingNull = false;
+                                    foreach (var touching in entity.TouchingEntities)
+                                    {
+                                        if (touching == null)
+                                            touchingNull = true;
+                                        else if (touching is Sprite)
+                                            DrawLine(entity.Origin, touching.Origin, 2, HITBOX_BORDER_COLOR);
+                                    }
+
+                                    if (touchingNull)
+                                        DrawRectangle(rect, 2, HITBOX_BORDER_COLOR);
                                 }
 
                                 if (showDrawBox)
@@ -4025,10 +4037,13 @@ namespace XSharp.Engine
                                 if (showColliders)
                                 {
                                     SpriteCollider collider = sprite.WorldCollider;
-                                    FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
-                                    FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
-                                    FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
-                                    FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
+                                    if (collider != null)
+                                    {
+                                        FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
+                                        FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
+                                        FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
+                                        FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
+                                    }
                                 }
 
                                 break;
@@ -4126,6 +4141,18 @@ namespace XSharp.Engine
                         MMXBox hitbox = Player.Hitbox;
                         var rect = WorldBoxToScreen(hitbox);
                         FillRectangle(rect, HITBOX_COLOR);
+
+                        bool touchingNull = false;
+                        foreach (var touching in Player.TouchingEntities)
+                        {
+                            if (touching == null)
+                                touchingNull = true;
+                            else if (touching is Sprite)
+                                DrawLine(Player.Origin, touching.Origin, 2, HITBOX_BORDER_COLOR);
+                        }
+
+                        if (touchingNull)
+                            DrawRectangle(rect, 2, HITBOX_BORDER_COLOR);
                     }
 
                     if (showDrawBox)
@@ -4138,10 +4165,13 @@ namespace XSharp.Engine
                     if (showColliders)
                     {
                         SpriteCollider collider = Player.WorldCollider;
-                        FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
-                        FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
-                        FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
-                        FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
+                        if (collider != null)
+                        {
+                            FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
+                            FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
+                            FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
+                            FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
+                        }
                     }
                 }
 
@@ -4213,7 +4243,7 @@ namespace XSharp.Engine
                     text = $"Camera: CX: {(float) Camera.Left * 256} CY: {(float) Camera.Top * 256}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, fontDimension.Top - fontDimension.Bottom, Color.Yellow, out fontDimension);
 
-                    text = $"Player: {(float) Player.Origin.X * 256} Y: {(float) Player.Origin.Y * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256}";
+                    text = $"Player: X: {(float) Player.Origin.X * 256} Y: {(float) Player.Origin.Y * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256} Gravity: {(float) Player.GetGravity() * 256}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, 2 * (fontDimension.Top - fontDimension.Bottom), Color.Yellow, out fontDimension);
                 }
             }

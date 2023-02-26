@@ -227,10 +227,8 @@ namespace XSharp.Math.Geometry
         public Box Truncate()
         {
             Vector mins = Origin + Mins;
-            mins = (mins.X.Floor(), mins.Y.Floor());
             Vector maxs = Origin + Maxs;
-            maxs = (maxs.X.Floor(), maxs.Y.Floor());
-            return (mins, Vector.NULL_VECTOR, maxs - mins);
+            return (mins.RoundToFloor(), Vector.NULL_VECTOR, (maxs - mins).RoundToFloor());
         }
 
         public override int GetHashCode()
@@ -391,14 +389,29 @@ namespace XSharp.Math.Geometry
             return (Origin.Round(), Mins, Maxs);
         }
 
+        public Box RoundOrigin(RoundMode mode)
+        {
+            return (Origin.Round(mode), Mins, Maxs);
+        }
+
         public Box RoundOriginX()
         {
             return (Origin.RoundX(), Mins, Maxs);
         }
 
+        public Box RoundOriginX(RoundMode mode)
+        {
+            return (Origin.RoundX(mode), Mins, Maxs);
+        }
+
         public Box RoundOriginY()
         {
             return (Origin.RoundY(), Mins, Maxs);
+        }
+
+        public Box RoundOriginY(RoundMode mode)
+        {
+            return (Origin.RoundY(mode), Mins, Maxs);
         }
 
         /// <summary>
@@ -854,7 +867,7 @@ namespace XSharp.Math.Geometry
             return HasIntersectionWith(line, 0);
         }
 
-        public bool IsOverlaping(Box other, BoxSide includeSides = BoxSide.LEFT | BoxSide.TOP, BoxSide includeOtherBoxSides = BoxSide.LEFT | BoxSide.TOP)
+        public bool IsOverlaping(Box other, BoxSide includeSides = BoxSide.LEFT_TOP | BoxSide.INNER, BoxSide includeOtherBoxSides = BoxSide.LEFT_TOP | BoxSide.INNER)
         {
             var m1 = Origin + Mins;
             var M1 = Origin + Maxs;

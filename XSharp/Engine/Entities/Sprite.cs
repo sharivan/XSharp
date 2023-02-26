@@ -86,6 +86,34 @@ namespace XSharp.Engine.Entities
             private set;
         } = false;
 
+        public bool MultiAnimation
+        {
+            get;
+            protected set;
+        }
+
+        public Box DrawBox
+        {
+            get
+            {
+                if (!MultiAnimation)
+                    return CurrentAnimation != null ? CurrentAnimation.DrawBox : IntegerOrigin + Box.EMPTY_BOX;
+
+                Box result = Box.EMPTY_BOX;
+                foreach (var animation in animations)
+                    if (animation.Visible)
+                        result |= animation.DrawBox;
+
+                return result;
+            }
+        }
+
+        public float Opacity
+        {
+            get;
+            set;
+        } = 1;
+
         private readonly Dictionary<string, List<Animation>> animationsByName;
 
         public SpriteSheet SpriteSheet => Engine.GetSpriteSheet(SpriteSheetIndex);
@@ -265,15 +293,15 @@ namespace XSharp.Engine.Entities
         {
             get
             {
-                Box box = Origin + GetBoundingBox();
-                return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
+                Box box = IntegerOrigin + GetBoundingBox();
+                return Directional && Direction != DefaultDirection ? box.Mirror(IntegerOrigin) : box;
             }
 
             protected set
             {
-                Box collisionBox = Directional && Direction != DefaultDirection ? value.Mirror(Origin) : value;
-                collisionBox -= Origin;
-                SetBoundingBox(collisionBox);
+                Box boudingBox = Directional && Direction != DefaultDirection ? value.Mirror(IntegerOrigin) : value;
+                boudingBox -= IntegerOrigin;
+                SetBoundingBox(boudingBox);
                 UpdatePartition();
             }
         }
@@ -316,8 +344,13 @@ namespace XSharp.Engine.Entities
         {
             get
             {
-                worldCollider.Box = CollisionBox;
-                return worldCollider;
+                if (worldCollider != null)
+                {
+                    worldCollider.Box = CollisionBox;
+                    return worldCollider;
+                }
+
+                return null;
             }
         }
 
@@ -325,9 +358,14 @@ namespace XSharp.Engine.Entities
         {
             get
             {
-                spriteCollider.ClearIgnoredSprites();
-                spriteCollider.Box = Hitbox;
-                return spriteCollider;
+                if (spriteCollider != null)
+                {
+                    spriteCollider.ClearIgnoredSprites();
+                    spriteCollider.Box = Hitbox;
+                    return spriteCollider;
+                }
+
+                return null;
             }
         }
 
@@ -732,7 +770,7 @@ namespace XSharp.Engine.Entities
 
         protected virtual Box GetBoundingBox()
         {
-            return (Directional && Direction != DefaultDirection ? DrawBox.Mirror(Origin) : DrawBox) - Origin;
+            return (Directional && Direction != DefaultDirection ? DrawBox.Mirror(IntegerOrigin) : DrawBox) - IntegerOrigin;
         }
 
         protected virtual void SetBoundingBox(Box boudingBox)
@@ -1068,10 +1106,12 @@ namespace XSharp.Engine.Entities
                 collider.TryMoveContactSlope(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
 
             Box boxCollider = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
-            CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(boxCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites);
+            CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(boxCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites, RoundMode.FLOOR);
 
             if (!collisionFlags.CanBlockTheMove())
             {
+                //collider.Translate(-dx.RoundToFloor());
+
                 if (gravity && followSlopes && wasLanded)
                 {
                     if (collider.LandedOnSlope)
@@ -1114,7 +1154,7 @@ namespace XSharp.Engine.Entities
                             }
                         }
                     }
-                    else if (Engine.World.GetCollisionFlags(collider.DownCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).HasFlag(CollisionFlags.SLOPE))
+                    else if (Engine.World.GetCollisionFlags(collider.DownCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites, RoundMode.FLOOR).HasFlag(CollisionFlags.SLOPE))
                         collider.MoveContactFloor();
                 }
             }
@@ -1190,28 +1230,20 @@ namespace XSharp.Engine.Entities
             if (delta.Y != 0)
             {
                 var dy = new Vector(0, delta.Y);
-                Box lastBox = collider.Box;
                 Box lastUpCollider = collider.UpCollider;
                 Box lastDownCollider = collider.DownCollider;
                 collider.Translate(dy);
 
-                if (dy.Y > 0)
+                Box union = dy.Y > 0 ? lastDownCollider | collider.DownCollider : lastUpCollider | collider.UpCollider;
+
+                if (Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites, RoundMode.FLOOR).CanBlockTheMove())
                 {
-                    Box union = lastDownCollider | collider.DownCollider;
-                    if (Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).CanBlockTheMove())
-                    {
-                        collider.Box = lastBox;
+                    collider.Translate(-dy.RoundToFloor());
+
+                    if (dy.Y > 0)
                         collider.MoveContactFloor(dy.Y.Ceil());
-                    }
-                }
-                else
-                {
-                    Box union = lastUpCollider | collider.UpCollider;
-                    if (Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).CanBlockTheMove())
-                    {
-                        collider.Box = lastBox;
+                    else
                         collider.MoveContactSolid(dy, (-dy.Y).Ceil(), Direction.UP);
-                    }
                 }
             }
 
@@ -1281,7 +1313,7 @@ namespace XSharp.Engine.Entities
                 origin += newDelta - delta;
         }
 
-        private void DoPhysics(Sprite phisycsParent, Vector delta)
+        private void DoPhysics(Sprite physicsParent, Vector delta)
         {
             if (Static)
                 return;
@@ -1300,8 +1332,8 @@ namespace XSharp.Engine.Entities
                 {
                     spriteCollider.ClearIgnoredSprites();
 
-                    if (phisycsParent != null)
-                        spriteCollider.IgnoreSprites.Add(phisycsParent);
+                    if (physicsParent != null)
+                        spriteCollider.IgnoreSprites.Add(physicsParent);
 
                     spriteCollider.Box = Hitbox;
 
@@ -1315,38 +1347,41 @@ namespace XSharp.Engine.Entities
             var deltaX = delta.X;
             var deltaY = delta.Y;
 
-            if (deltaX < 0)
+            if (CollisionData.IsSolidBlock())
             {
-                foreach (var sprite in touchingSpritesLeft)
-                    if (sprite != phisycsParent)
-                        sprite.DoPhysics(null, (0, deltaX));
-            }
-            else if (deltaX > 0)
-            {
-                foreach (var sprite in touchingSpritesRight)
-                    if (sprite != phisycsParent)
-                        sprite.DoPhysics(null, (0, deltaX));
-            }
-
-            if (deltaY != 0)
-            {
-                if (deltaY > 0)
+                if (deltaX < 0)
                 {
-                    foreach (var sprite in touchingSpritesDown)
-                        if (sprite != phisycsParent)
-                            sprite.DoPhysics(null, (0, deltaY));
+                    foreach (var sprite in touchingSpritesLeft)
+                        if (sprite != physicsParent)
+                            sprite.DoPhysics(null, (0, deltaX));
+                }
+                else if (deltaX > 0)
+                {
+                    foreach (var sprite in touchingSpritesRight)
+                        if (sprite != physicsParent)
+                            sprite.DoPhysics(null, (0, deltaX));
                 }
 
-                foreach (var sprite in touchingSpritesUp)
-                    if (sprite != phisycsParent)
+                if (deltaY != 0)
+                {
+                    if (deltaY > 0)
                     {
-                        sprite.DoPhysics(null, delta);
-
-                        if (deltaY > 0)
-                            sprite.MoveContactFloor();
-                        else
-                            sprite.AdjustOnTheFloor();
+                        foreach (var sprite in touchingSpritesDown)
+                            if (sprite != physicsParent)
+                                sprite.DoPhysics(null, (0, deltaY));
                     }
+
+                    foreach (var sprite in touchingSpritesUp)
+                        if (sprite != physicsParent)
+                        {
+                            sprite.DoPhysics(null, delta);
+
+                            if (deltaY > 0)
+                                sprite.MoveContactFloor();
+                            else
+                                sprite.AdjustOnTheFloor();
+                        }
+                }
             }
 
             Vector newOrigin = Origin + delta;
@@ -1393,34 +1428,6 @@ namespace XSharp.Engine.Entities
             // TODO : Implement call to this
             return ShouldCollide(sprite) || sprite.ShouldCollide(this);
         }
-
-        public bool MultiAnimation
-        {
-            get;
-            protected set;
-        }
-
-        public Box DrawBox
-        {
-            get
-            {
-                if (!MultiAnimation)
-                    return CurrentAnimation != null ? CurrentAnimation.DrawBox : Origin + Box.EMPTY_BOX;
-
-                Box result = Box.EMPTY_BOX;
-                foreach (var animation in animations)
-                    if (animation.Visible)
-                        result |= animation.DrawBox;
-
-                return result;
-            }
-        }
-
-        public float Opacity
-        {
-            get;
-            set;
-        } = 1;
 
         public Animation GetAnimation(int index)
         {

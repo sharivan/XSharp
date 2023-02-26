@@ -335,14 +335,29 @@ namespace XSharp.Math.Geometry
             return new(X.Round(), Y.Round());
         }
 
+        public Vector Round(RoundMode mode)
+        {
+            return (X.Round(mode), Y.Round(mode));
+        }
+
         public Vector RoundX()
         {
             return new(X.Round(), Y);
         }
 
+        public Vector RoundX(RoundMode mode)
+        {
+            return (X.Round(mode), Y);
+        }
+
         public Vector RoundY()
         {
             return new(X, Y.Round());
+        }
+
+        public Vector RoundY(RoundMode mode)
+        {
+            return (X, Y.Round(mode));
         }
 
         /// <summary>

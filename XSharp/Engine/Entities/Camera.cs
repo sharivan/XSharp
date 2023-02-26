@@ -194,7 +194,7 @@ namespace XSharp.Engine
         protected override Box GetHitbox()
         {
             var box = ExtendedBoundingBox;
-            return box - Origin;
+            return box - Center;
         }
 
         private void SetCenter(Vector v)

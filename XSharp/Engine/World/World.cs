@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using XSharp.Engine.Entities;
+using XSharp.Math;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 using MMXBox = XSharp.Math.Geometry.Box;
@@ -753,42 +754,42 @@ namespace XSharp.Engine.World
                 scene.OnDisposeDevice();
         }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false, params Entities.Sprite[] ignoreSprites)
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false, RoundMode mode = RoundMode.NONE, params Entities.Sprite[] ignoreSprites)
         {
-            collisionChecker.Setup(collisionBox, ignore, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false, true, ignoreSprites);
-            return collisionChecker.GetCollisionFlags();
+            collisionChecker.Setup(collisionBox, ignore, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false, ignoreSprites);
+            return collisionChecker.GetCollisionFlags(mode);
         }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, EntityList<Entities.Sprite> ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, EntityList<Entities.Sprite> ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false, RoundMode mode = RoundMode.NONE)
         {
-            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false, true);
-            return collisionChecker.GetCollisionFlags();
+            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false);
+            return collisionChecker.GetCollisionFlags(mode);
         }
 
-        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, BitSet ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+        public CollisionFlags GetCollisionFlags(MMXBox collisionBox, BitSet ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false, RoundMode mode = RoundMode.NONE)
         {
-            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false, true);
-            return collisionChecker.GetCollisionFlags();
+            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, MASK_SIZE, checkWithWorld, checknWithSolidSprites, false);
+            return collisionChecker.GetCollisionFlags(mode);
         }
 
-        public IEnumerable<CollisionPlacement> GetCollisionPlacements(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false, params Entities.Sprite[] ignoreSprites)
+        public IEnumerable<CollisionPlacement> GetCollisionPlacements(MMXBox collisionBox, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false, RoundMode mode = RoundMode.NONE, params Entities.Sprite[] ignoreSprites)
         {
-            collisionChecker.Setup(collisionBox, ignore, STEP_SIZE, checkWithWorld, checknWithSolidSprites, true, true, ignoreSprites);
-            collisionChecker.GetCollisionFlags();
+            collisionChecker.Setup(collisionBox, ignore, STEP_SIZE, checkWithWorld, checknWithSolidSprites, true, ignoreSprites);
+            collisionChecker.GetCollisionFlags(mode);
             return collisionChecker.Placements;
         }
 
-        public IEnumerable<CollisionPlacement> GetCollisionPlacements(MMXBox collisionBox, EntityList<Entities.Sprite> ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+        public IEnumerable<CollisionPlacement> GetCollisionPlacements(MMXBox collisionBox, EntityList<Entities.Sprite> ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false, RoundMode mode = RoundMode.NONE)
         {
-            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, STEP_SIZE, checkWithWorld, checknWithSolidSprites, true, true);
-            collisionChecker.GetCollisionFlags();
+            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, STEP_SIZE, checkWithWorld, checknWithSolidSprites, true);
+            collisionChecker.GetCollisionFlags(mode);
             return collisionChecker.Placements;
         }
 
-        public IEnumerable<CollisionPlacement> GetCollisionPlacements(MMXBox collisionBox, BitSet ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+        public IEnumerable<CollisionPlacement> GetCollisionPlacements(MMXBox collisionBox, BitSet ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false, RoundMode mode = RoundMode.NONE)
         {
-            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, STEP_SIZE, checkWithWorld, checknWithSolidSprites, true, true);
-            collisionChecker.GetCollisionFlags();
+            collisionChecker.Setup(collisionBox, ignore, ignoreSprites, STEP_SIZE, checkWithWorld, checknWithSolidSprites, true);
+            collisionChecker.GetCollisionFlags(mode);
             return collisionChecker.Placements;
         }
     }

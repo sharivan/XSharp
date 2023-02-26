@@ -94,6 +94,8 @@ namespace XSharp.Engine.Entities
             set => SetOrigin(value);
         }
 
+        public Vector IntegerOrigin => Origin.RoundToFloor();
+
         public Vector LastOrigin
         {
             get;
