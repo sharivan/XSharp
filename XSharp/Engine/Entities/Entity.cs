@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using XSharp.Engine.World;
+using XSharp.Engine.Collision;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
@@ -758,7 +758,7 @@ namespace XSharp.Engine.Entities
 
         public virtual bool IsOffscreen(BoxKind kind, bool extendedCamera = true)
         {
-            return !CollisionChecker.HasIntersection(GetBox(kind), extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox);
+            return !TracerCollisionChecker.HasIntersection(GetBox(kind), extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox);
         }
 
         public virtual void Place()

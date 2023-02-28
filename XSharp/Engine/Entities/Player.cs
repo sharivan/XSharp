@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.World;
 using XSharp.Math;

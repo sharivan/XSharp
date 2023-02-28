@@ -3,16 +3,15 @@ using XSharp.Math;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.World
+namespace XSharp.Engine.Collision
 {
     public class Collider
     {
         private Box box;
         private bool checkCollisionWithWorld;
         private bool checkCollisionWithSolidSprites;
-        private FixedSingle stepSize;
 
-        protected CollisionChecker collisionChecker;
+        protected TracerCollisionChecker collisionChecker;
 
         protected CollisionFlags leftMaskFlags = CollisionFlags.NONE;
         protected CollisionFlags upMaskFlags = CollisionFlags.NONE;
@@ -45,17 +44,6 @@ namespace XSharp.Engine.World
         public EntityList<Sprite> IgnoreSprites
         {
             get;
-        }
-
-        public FixedSingle StepSize
-        {
-            get => stepSize;
-
-            set
-            {
-                stepSize = value;
-                UpdateColliders();
-            }
         }
 
         public bool CheckCollisionWithWorld
@@ -163,26 +151,19 @@ namespace XSharp.Engine.World
 
         public bool TouchingWaterSurface => (innerMaskFlags & CollisionFlags.WATER_SURFACE) != 0;
 
-        public Collider(Sprite owner, Box box, bool useCollisionPlacements = false)
-                    : this(owner, box, STEP_SIZE, useCollisionPlacements)
-        {
-        }
-
-        public Collider(Sprite owner, Box box, FixedSingle stepSize, bool useCollisionPlacements = false, bool checkCollisionWithWorld = true, bool checkCollisionWithSolidSprites = false)
+        public Collider(Sprite owner, Box box, bool useCollisionPlacements = false, bool checkCollisionWithWorld = true, bool checkCollisionWithSolidSprites = false)
         {
             Owner = owner;
             this.box = box;
-            this.stepSize = stepSize;
             UseCollisionPlacements = useCollisionPlacements;
             this.checkCollisionWithWorld = checkCollisionWithWorld;
             this.checkCollisionWithSolidSprites = checkCollisionWithSolidSprites;
 
             IgnoreSprites = new EntityList<Sprite>(owner);
 
-            collisionChecker = new CollisionChecker()
+            collisionChecker = new TracerCollisionChecker()
             {
                 ComputePlacements = useCollisionPlacements,
-                StepSize = stepSize,
                 CheckWithWorld = checkCollisionWithWorld,
                 CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
@@ -201,14 +182,14 @@ namespace XSharp.Engine.World
 
         protected virtual void UpdateColliders()
         {
-            collisionChecker.Setup(box, CollisionFlags.NONE, IgnoreSprites, stepSize, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements, true);
+            collisionChecker.Setup(box, CollisionFlags.NONE, IgnoreSprites, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
 
             UpdateFlags();
         }
 
         private void UpdateFlags()
         {
-            CollisionChecker downCollisionChecker = GetMoveDownCollisionChecker();
+            TracerCollisionChecker downCollisionChecker = GetMoveDownCollisionChecker();
             downMaskFlags = downCollisionChecker.ComputeLandedState();
             if (downMaskFlags == CollisionFlags.SLOPE)
                 LandedSlope = downCollisionChecker.SlopeTriangle;
@@ -245,22 +226,22 @@ namespace XSharp.Engine.World
             return box;
         }
 
-        protected virtual CollisionChecker GetMoveLeftCollisionChecker()
+        protected virtual TracerCollisionChecker GetMoveLeftCollisionChecker()
         {
             return collisionChecker;
         }
 
-        protected virtual CollisionChecker GetMoveUpCollisionChecker()
+        protected virtual TracerCollisionChecker GetMoveUpCollisionChecker()
         {
             return collisionChecker;
         }
 
-        protected virtual CollisionChecker GetMoveRightCollisionChecker()
+        protected virtual TracerCollisionChecker GetMoveRightCollisionChecker()
         {
             return collisionChecker;
         }
 
-        protected virtual CollisionChecker GetMoveDownCollisionChecker()
+        protected virtual TracerCollisionChecker GetMoveDownCollisionChecker()
         {
             return collisionChecker;
         }
@@ -279,7 +260,7 @@ namespace XSharp.Engine.World
             Box newBox;
             Vector delta;
             CollisionFlags flags = CollisionFlags.NONE;
-            CollisionChecker collisionChecker = null;
+            TracerCollisionChecker collisionChecker = null;
 
             if (dx > 0)
             {
@@ -336,7 +317,7 @@ namespace XSharp.Engine.World
 
                 if (masks.HasFlag(Direction.RIGHT))
                 {
-                    CollisionChecker collisionChecker = GetMoveRightCollisionChecker();
+                    TracerCollisionChecker collisionChecker = GetMoveRightCollisionChecker();
                     collisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
                     flags = collisionChecker.MoveContactSolidDiagonalHorizontal(delta);
                     newBox = collisionChecker.TestBox;
@@ -352,7 +333,7 @@ namespace XSharp.Engine.World
 
                 if (masks.HasFlag(Direction.RIGHT))
                 {
-                    CollisionChecker collisionChecker = GetMoveLeftCollisionChecker();
+                    TracerCollisionChecker collisionChecker = GetMoveLeftCollisionChecker();
                     collisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
                     flags = collisionChecker.MoveContactSolidDiagonalHorizontal(delta);
                     newBox = collisionChecker.TestBox;
@@ -383,7 +364,7 @@ namespace XSharp.Engine.World
 
                 if (masks.HasFlag(Direction.DOWN))
                 {
-                    CollisionChecker collisionChecker = GetMoveDownCollisionChecker();
+                    TracerCollisionChecker collisionChecker = GetMoveDownCollisionChecker();
                     collisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
                     flags = collisionChecker.MoveContactSolidVertical(dy);
                     newBox = collisionChecker.TestBox;
@@ -399,7 +380,7 @@ namespace XSharp.Engine.World
 
                 if (masks.HasFlag(Direction.UP))
                 {
-                    CollisionChecker collisionChecker = GetMoveUpCollisionChecker();
+                    TracerCollisionChecker collisionChecker = GetMoveUpCollisionChecker();
                     collisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
                     flags = collisionChecker.MoveContactSolidVertical(dy);
                     newBox = collisionChecker.TestBox;
@@ -423,7 +404,7 @@ namespace XSharp.Engine.World
 
         public void AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            CollisionChecker collisionChecker = GetMoveDownCollisionChecker();
+            TracerCollisionChecker collisionChecker = GetMoveDownCollisionChecker();
 
             Vector lastOrigin = collisionChecker.TestBox.Origin;
             collisionChecker.IgnoreFlags = ignore;
@@ -440,10 +421,9 @@ namespace XSharp.Engine.World
 
             if (LandedOnTopLadder)
             {
-                CollisionChecker collisionChecker = GetMoveDownCollisionChecker();
+                TracerCollisionChecker collisionChecker = GetMoveDownCollisionChecker();
 
                 foreach (var placement in collisionChecker.Placements)
-                {
                     if (placement.CollisionData == CollisionData.TOP_LADDER)
                     {
                         Box placementBox = placement.ObstableBox;
@@ -451,14 +431,12 @@ namespace XSharp.Engine.World
                         Box += delta.TruncFracPart() * Vector.RIGHT_VECTOR;
                         return;
                     }
-                }
             }
             else
             {
-                CollisionChecker collisionChecker = GetMoveUpCollisionChecker();
+                TracerCollisionChecker collisionChecker = GetMoveUpCollisionChecker();
 
                 foreach (var placement in collisionChecker.Placements)
-                {
                     if (placement.CollisionData == CollisionData.LADDER)
                     {
                         Box placementBox = placement.ObstableBox;
@@ -466,32 +444,31 @@ namespace XSharp.Engine.World
                         Box += delta.TruncFracPart() * Vector.RIGHT_VECTOR;
                         return;
                     }
-                }
             }
         }
 
         public bool IsTouchingLeft(Box other)
         {
             Box box = GetMoveLeftBox();
-            return box.ClipLeft(-stepSize).IsOverlaping(other);
+            return box.ClipLeft(-STEP_SIZE).IsOverlaping(other);
         }
 
         public bool IsTouchingRight(Box other)
         {
             Box box = GetMoveRightBox();
-            return box.ClipRight(-stepSize).IsOverlaping(other);
+            return box.ClipRight(-STEP_SIZE).IsOverlaping(other);
         }
 
         public bool IsTouchingUp(Box other)
         {
             Box box = GetMoveUpBox();
-            return box.ClipTop(-stepSize).IsOverlaping(other);
+            return box.ClipTop(-STEP_SIZE).IsOverlaping(other);
         }
 
         public bool IsTouchingDown(Box other)
         {
             Box box = GetMoveDownBox();
-            return box.ClipBottom(-stepSize).IsOverlaping(other);
+            return box.ClipBottom(-STEP_SIZE).IsOverlaping(other);
         }
     }
 }

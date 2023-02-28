@@ -15,6 +15,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Enemies;
@@ -3605,13 +3606,13 @@ namespace XSharp.Engine
             var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width * 0.5, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
 
             MMXBox mapBox = GetMapBoundingBox(row, col);
-            if (collisionData.IsSolidBlock() && CollisionChecker.HasIntersection(mapBox, collisionBox))
+            if (collisionData.IsSolidBlock() && TracerCollisionChecker.HasIntersection(mapBox, collisionBox))
                 DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
             else if (!ignoreSlopes && collisionData.IsSlope())
             {
                 RightTriangle st = collisionData.MakeSlopeTriangle() + mapBox.LeftTop;
                 Vector hv = st.HCathetusVector;
-                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, EPSLON) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, EPSLON))
+                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1))
                     DrawSlopeMap(mapBox, st, 4);
             }
         }

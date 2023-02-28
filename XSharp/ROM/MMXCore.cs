@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using XSharp.Engine;
+using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.World;
 using XSharp.Math;

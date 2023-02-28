@@ -3,16 +3,16 @@ using XSharp.Math;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.World
+namespace XSharp.Engine.Collision
 {
     public class WorldCollider : Collider
     {
         private FixedSingle headHeight;
         private FixedSingle legsHeight;
 
-        private CollisionChecker headCollisionChecker;
-        private CollisionChecker chestCollisionChecker;
-        private CollisionChecker legsCollisionChecker;
+        private TracerCollisionChecker headCollisionChecker;
+        private TracerCollisionChecker chestCollisionChecker;
+        private TracerCollisionChecker legsCollisionChecker;
 
         public Box HeadBox
         {
@@ -55,36 +55,33 @@ namespace XSharp.Engine.World
         }
 
         public WorldCollider(Sprite owner, Box box, bool useCollisionPlacements = false)
-            : this(owner, box, STEP_SIZE, 0, 0, useCollisionPlacements)
+            : this(owner, box, 0, 0, useCollisionPlacements)
         {
         }
 
-        public WorldCollider(Sprite owner, Box box, FixedSingle stepSize, FixedSingle headHeight, FixedSingle legsHeight, bool useCollisionPlacements = false, bool checkCollisionWithWorld = true, bool checkCollisionWithSolidSprites = false)
-            : base(owner, box, stepSize, useCollisionPlacements, checkCollisionWithWorld, checkCollisionWithSolidSprites)
+        public WorldCollider(Sprite owner, Box box, FixedSingle headHeight, FixedSingle legsHeight, bool useCollisionPlacements = false, bool checkCollisionWithWorld = true, bool checkCollisionWithSolidSprites = false)
+            : base(owner, box, useCollisionPlacements, checkCollisionWithWorld, checkCollisionWithSolidSprites)
         {
             this.headHeight = headHeight;
             this.legsHeight = legsHeight;
 
-            headCollisionChecker = new CollisionChecker()
+            headCollisionChecker = new TracerCollisionChecker()
             {
                 ComputePlacements = useCollisionPlacements,
-                StepSize = stepSize,
                 CheckWithWorld = checkCollisionWithWorld,
                 CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
 
-            chestCollisionChecker = new CollisionChecker()
+            chestCollisionChecker = new TracerCollisionChecker()
             {
                 ComputePlacements = useCollisionPlacements,
-                StepSize = stepSize,
                 CheckWithWorld = checkCollisionWithWorld,
                 CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
 
-            legsCollisionChecker = new CollisionChecker()
+            legsCollisionChecker = new TracerCollisionChecker()
             {
                 ComputePlacements = useCollisionPlacements,
-                StepSize = stepSize,
                 CheckWithWorld = checkCollisionWithWorld,
                 CheckWithSolidSprites = checkCollisionWithSolidSprites
             };
@@ -96,9 +93,9 @@ namespace XSharp.Engine.World
             ChestBox = new Box(Box.Left, Box.Top + headHeight, Box.Width, Box.Height - headHeight - legsHeight);
             LegsBox = new Box(Box.Left, Box.Bottom - legsHeight, Box.Width, legsHeight);
 
-            headCollisionChecker.Setup(HeadBox, CollisionFlags.NONE, IgnoreSprites, StepSize, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, UseCollisionPlacements, true);
-            chestCollisionChecker.Setup(ChestBox, CollisionFlags.NONE, IgnoreSprites, StepSize, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, UseCollisionPlacements, true);
-            legsCollisionChecker.Setup(LegsBox, CollisionFlags.NONE, IgnoreSprites, StepSize, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, UseCollisionPlacements, true);
+            headCollisionChecker.Setup(HeadBox, CollisionFlags.NONE, IgnoreSprites, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, UseCollisionPlacements);
+            chestCollisionChecker.Setup(ChestBox, CollisionFlags.NONE, IgnoreSprites, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, UseCollisionPlacements);
+            legsCollisionChecker.Setup(LegsBox, CollisionFlags.NONE, IgnoreSprites, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, UseCollisionPlacements);
 
             base.UpdateColliders();
         }
@@ -123,22 +120,22 @@ namespace XSharp.Engine.World
             return LegsBox;
         }
 
-        protected override CollisionChecker GetMoveLeftCollisionChecker()
+        protected override TracerCollisionChecker GetMoveLeftCollisionChecker()
         {
             return chestCollisionChecker;
         }
 
-        protected override CollisionChecker GetMoveUpCollisionChecker()
+        protected override TracerCollisionChecker GetMoveUpCollisionChecker()
         {
             return headCollisionChecker;
         }
 
-        protected override CollisionChecker GetMoveRightCollisionChecker()
+        protected override TracerCollisionChecker GetMoveRightCollisionChecker()
         {
             return chestCollisionChecker;
         }
 
-        protected override CollisionChecker GetMoveDownCollisionChecker()
+        protected override TracerCollisionChecker GetMoveDownCollisionChecker()
         {
             return legsCollisionChecker;
         }

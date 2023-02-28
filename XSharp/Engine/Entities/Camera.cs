@@ -362,7 +362,7 @@ namespace XSharp.Engine
 
         public bool IsVisible(Box box)
         {
-            return VisibleBox(box).IsValid(EPSLON);
+            return VisibleBox(box).IsValid();
         }
 
         protected internal override void OnSpawn()

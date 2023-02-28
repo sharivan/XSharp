@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -294,7 +295,7 @@ namespace XSharp.Engine.World
                 return 0;
 
             var delta = line.End - line.Start;
-            var stepVector = CollisionChecker.GetStepVectorHorizontal(delta, cellWidth);
+            var stepVector = TracerCollisionChecker.GetStepVectorHorizontal(delta, cellWidth);
             var tracingDistance = FixedSingle.Max(delta.X.Abs, delta.Y.Abs);
 
             // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
@@ -331,7 +332,7 @@ namespace XSharp.Engine.World
 
         public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
         {
-            Vector stepVector = CollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
+            Vector stepVector = TracerCollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
             FixedSingle stepDistance = stepVector.Length;
             if (stepDistance == 0)
                 stepDistance = cellWidth;

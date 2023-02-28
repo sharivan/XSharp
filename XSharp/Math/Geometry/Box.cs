@@ -571,14 +571,9 @@ namespace XSharp.Math.Geometry
             return new(Origin, new Vector(Mins.X, (Mins.Y + Maxs.Y) * FixedSingle.HALF), Maxs);
         }
 
-        public bool IsValid(FixedSingle epslon)
-        {
-            return Width > epslon && Height > epslon;
-        }
-
         public bool IsValid()
         {
-            return IsValid(0);
+            return Width > 0 && Height > 0;
         }
 
         public Box Scale(Vector origin, FixedSingle scaleX, FixedSingle scaleY)
@@ -812,46 +807,36 @@ namespace XSharp.Math.Geometry
             return code;
         }
 
-        public bool Contains(Vector point, FixedSingle epslon, BoxSide include = BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER)
+        public bool Contains(Vector point, BoxSide include)
         {
             var m = Origin + Mins;
             var M = Origin + Maxs;
 
             if (!include.HasFlag(BoxSide.INNER))
-                return include.HasFlag(BoxSide.LEFT) && LeftSegment.Contains(point, epslon)
-                    || include.HasFlag(BoxSide.TOP) && TopSegment.Contains(point, epslon)
-                    || include.HasFlag(BoxSide.RIGHT) && RightSegment.Contains(point, epslon)
-                    || include.HasFlag(BoxSide.BOTTOM) && BottomSegment.Contains(point, epslon);
+                return include.HasFlag(BoxSide.LEFT) && LeftSegment.Contains(point)
+                    || include.HasFlag(BoxSide.TOP) && TopSegment.Contains(point)
+                    || include.HasFlag(BoxSide.RIGHT) && RightSegment.Contains(point)
+                    || include.HasFlag(BoxSide.BOTTOM) && BottomSegment.Contains(point);
 
             var interval = Interval.MakeInterval((m.X, include.HasFlag(BoxSide.LEFT)), (M.X, include.HasFlag(BoxSide.RIGHT)));
 
-            if (!interval.Contains(point.X, epslon))
+            if (!interval.Contains(point.X))
                 return false;
 
             interval = Interval.MakeInterval((m.Y, include.HasFlag(BoxSide.TOP)), (M.Y, include.HasFlag(BoxSide.BOTTOM)));
 
-            return interval.Contains(point.Y, epslon);
-        }
-
-        public bool Contains(Vector point, BoxSide include)
-        {
-            return Contains(point, 0, include);
+            return interval.Contains(point.Y);
         }
 
         public bool Contains(Vector point)
         {
-            return Contains(point, 0, BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER);
-        }
-
-        public bool HasIntersectionWith(LineSegment line, FixedSingle epslon)
-        {
-            var type = Intersection(line, out line);
-            return type != GeometryType.EMPTY;
+            return Contains(point, BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER);
         }
 
         public bool HasIntersectionWith(LineSegment line)
         {
-            return HasIntersectionWith(line, 0);
+            var type = Intersection(line, out _);
+            return type != GeometryType.EMPTY;
         }
 
         public bool IsOverlaping(Box other, BoxSide includeSides = BoxSide.LEFT | BoxSide.TOP, BoxSide includeOtherBoxSides = BoxSide.LEFT | BoxSide.TOP)

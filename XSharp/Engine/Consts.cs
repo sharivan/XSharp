@@ -28,10 +28,7 @@ namespace XSharp.Engine
 
         // Directions
 
-        public const int STEP_BIT_COUNT = 8;
-        public const int STEP_COUNT = 1 << STEP_BIT_COUNT;
-        public static readonly FixedSingle STEP_SIZE = 1 / 256.0;
-        public static readonly FixedSingle EPSLON = 0;
+        public static readonly FixedSingle STEP_SIZE = 1;
         public static readonly FixedSingle QUERY_MAX_DISTANCE = TILE_SIZE * 0.5;
         public static readonly Vector STEP_LEFT_VECTOR = STEP_SIZE * Vector.LEFT_VECTOR;
         public static readonly Vector STEP_UP_VECTOR = STEP_SIZE * Vector.UP_VECTOR;

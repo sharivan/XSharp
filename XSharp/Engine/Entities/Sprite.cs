@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
-using XSharp.Engine.World;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
@@ -822,11 +822,6 @@ namespace XSharp.Engine.Entities
             }
         }
 
-        protected virtual FixedSingle GetMaskSize()
-        {
-            return STEP_SIZE;
-        }
-
         protected virtual FixedSingle GetHeadHeight()
         {
             return 0;
@@ -844,12 +839,12 @@ namespace XSharp.Engine.Entities
 
         protected virtual WorldCollider CreateWorldCollider()
         {
-            return new WorldCollider(this, CollisionBox, GetMaskSize(), GetHeadHeight(), GetLegsHeight(), IsUsingCollisionPlacements(), true, false);
+            return new WorldCollider(this, CollisionBox, GetHeadHeight(), GetLegsHeight(), IsUsingCollisionPlacements(), true, false);
         }
 
         protected virtual Collider CreateSpriteCollider()
         {
-            return new Collider(this, Hitbox, GetMaskSize(), IsUsingCollisionPlacements(), false, true);
+            return new Collider(this, Hitbox, IsUsingCollisionPlacements(), false, true);
         }
 
         protected internal virtual void CreateResources()

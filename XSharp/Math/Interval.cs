@@ -55,14 +55,14 @@
             return Equals(interval);
         }
 
-        private bool CheckMin(FixedSingle element, FixedSingle epslon)
+        private bool CheckMin(FixedSingle element)
         {
-            return IsClosedLeft ? Min - epslon <= element : Min - epslon < element;
+            return IsClosedLeft ? Min <= element : Min < element;
         }
 
-        private bool CheckMax(FixedSingle element, FixedSingle epslon)
+        private bool CheckMax(FixedSingle element)
         {
-            return IsClosedRight ? element <= Max + epslon : element < Max + epslon;
+            return IsClosedRight ? element <= Max : element < Max;
         }
 
         public bool Equals(Interval other)
@@ -71,16 +71,11 @@
                 || Min == other.Min && IsClosedLeft == other.IsClosedLeft && Max == other.Max && IsClosedRight == other.IsClosedRight;
         }
 
-        public bool Contains(FixedSingle element, FixedSingle epslon, bool includeBounds = true)
-        {
-            return !includeBounds
-                ? Min - epslon < element && element < Max + epslon
-                : CheckMin(element, epslon) && CheckMax(element, epslon);
-        }
-
         public bool Contains(FixedSingle element, bool includeBounds = true)
         {
-            return Contains(element, 0, includeBounds);
+            return !includeBounds
+                ? Min < element && element < Max
+                : CheckMin(element) && CheckMax(element);
         }
 
         public bool Contains(Interval interval, bool includeBounds = true)

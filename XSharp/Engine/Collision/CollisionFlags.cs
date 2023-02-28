@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace XSharp.Engine.World
+namespace XSharp.Engine.Collision
 {
     [Flags]
     public enum CollisionFlags

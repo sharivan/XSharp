@@ -159,12 +159,12 @@ namespace XSharp.Math.Geometry
             return Vector.NULL_VECTOR;
         }
 
-        public bool Contains(Vector v, FixedSingle epslon, RightTriangleSide include = RightTriangleSide.ALL)
+        public bool Contains(Vector v, RightTriangleSide include)
         {
             if (!include.HasFlag(RightTriangleSide.INNER))
-                return include.HasFlag(RightTriangleSide.HCATHETUS) && HCathetusLine.Contains(v, epslon)
-                        || include.HasFlag(RightTriangleSide.VCATHETUS) && VCathetusLine.Contains(v, epslon)
-                        || include.HasFlag(RightTriangleSide.HYPOTENUSE) && HypotenuseLine.Contains(v, epslon);
+                return include.HasFlag(RightTriangleSide.HCATHETUS) && HCathetusLine.Contains(v)
+                        || include.HasFlag(RightTriangleSide.VCATHETUS) && VCathetusLine.Contains(v)
+                        || include.HasFlag(RightTriangleSide.HYPOTENUSE) && HypotenuseLine.Contains(v);
 
             var dx = v.X - Origin.X;
             var dy = v.Y - Origin.Y;
@@ -173,17 +173,12 @@ namespace XSharp.Math.Geometry
 
             var interval = Interval.MakeInterval((0, include.HasFlag(RightTriangleSide.VCATHETUS)), (xl, include.HasFlag(RightTriangleSide.HYPOTENUSE)));
 
-            if (!interval.Contains(dx, epslon))
+            if (!interval.Contains(dx))
                 return false;
 
             interval = Interval.MakeInterval((0, include.HasFlag(RightTriangleSide.HCATHETUS)), (yl, include.HasFlag(RightTriangleSide.HYPOTENUSE)));
 
-            return interval.Contains(dy, epslon);
-        }
-
-        public bool Contains(Vector v, RightTriangleSide include)
-        {
-            return Contains(v, 0, include);
+            return interval.Contains(dy);
         }
 
         public bool Contains(Vector point)
@@ -191,11 +186,11 @@ namespace XSharp.Math.Geometry
             return Contains(point, RightTriangleSide.ALL);
         }
 
-        public bool HasIntersectionWith(LineSegment line, FixedSingle epslon, RightTriangleSide include = RightTriangleSide.ALL)
+        public bool HasIntersectionWith(LineSegment line, RightTriangleSide include = RightTriangleSide.ALL)
         {
-            bool hasIntersectionWithHypothenuse = HypotenuseLine.HasIntersectionWith(line, epslon);
-            bool hasIntersectionWithHCathetus = HCathetusLine.HasIntersectionWith(line, epslon);
-            bool hasIntersectionWithVCathetus = VCathetusLine.HasIntersectionWith(line, epslon);
+            bool hasIntersectionWithHypothenuse = HypotenuseLine.HasIntersectionWith(line);
+            bool hasIntersectionWithHCathetus = HCathetusLine.HasIntersectionWith(line);
+            bool hasIntersectionWithVCathetus = VCathetusLine.HasIntersectionWith(line);
 
             return include.HasFlag(RightTriangleSide.HYPOTENUSE) && hasIntersectionWithHypothenuse
                 || include.HasFlag(RightTriangleSide.HCATHETUS) && hasIntersectionWithHCathetus
@@ -209,17 +204,12 @@ namespace XSharp.Math.Geometry
                 );
         }
 
-        public bool HasIntersectionWith(LineSegment line, RightTriangleSide include = RightTriangleSide.ALL)
-        {
-            return HasIntersectionWith(line, 0, include);
-        }
-
-        public bool HasIntersectionWith(Box box, FixedSingle epslon, RightTriangleSide include = RightTriangleSide.ALL)
+        public bool HasIntersectionWith(Box box, RightTriangleSide include = RightTriangleSide.ALL)
         {
             Box wrappingBox = WrappingBox;
             Box intersection = box & wrappingBox;
 
-            return intersection.IsValid(epslon) && (
+            return intersection.IsValid() && (
                     intersection == wrappingBox
                     || include.HasFlag(RightTriangleSide.INNER) && (
                         Contains(intersection.LeftTop)
@@ -227,35 +217,25 @@ namespace XSharp.Math.Geometry
                         || Contains(intersection.LeftBottom)
                         || Contains(intersection.RightBottom)
                     )
-                    || include.HasFlag(RightTriangleSide.HYPOTENUSE) && intersection.HasIntersectionWith(HypotenuseLine, epslon)
-                    || include.HasFlag(RightTriangleSide.HCATHETUS) && intersection.HasIntersectionWith(HCathetusLine, epslon)
-                    || include.HasFlag(RightTriangleSide.VCATHETUS) && intersection.HasIntersectionWith(VCathetusLine, epslon)
+                    || include.HasFlag(RightTriangleSide.HYPOTENUSE) && intersection.HasIntersectionWith(HypotenuseLine)
+                    || include.HasFlag(RightTriangleSide.HCATHETUS) && intersection.HasIntersectionWith(HCathetusLine)
+                    || include.HasFlag(RightTriangleSide.VCATHETUS) && intersection.HasIntersectionWith(VCathetusLine)
                 );
         }
 
-        public bool HasIntersectionWith(Box box, RightTriangleSide include = RightTriangleSide.ALL)
-        {
-            return HasIntersectionWith(box, 0, include);
-        }
-
-        public bool HasIntersectionWith(RightTriangle triangle, FixedSingle epslon)
+        public bool HasIntersectionWith(RightTriangle triangle)
         {
             Box intersection = triangle.WrappingBox & WrappingBox;
-            return intersection.IsValid(epslon) && (
+            return intersection.IsValid() && (
                 Contains(triangle.HypothenuseOpositeVertex)
                 || Contains(triangle.HCathetusOpositeVertex)
                 || Contains(triangle.VCathetusOpositeVertex)
                 || triangle.Contains(HypothenuseOpositeVertex)
                 || triangle.Contains(HCathetusOpositeVertex)
                 || triangle.Contains(VCathetusOpositeVertex)
-                || triangle.HasIntersectionWith(HypotenuseLine, epslon)
-                || triangle.HasIntersectionWith(HCathetusLine, epslon)
-                || triangle.HasIntersectionWith(VCathetusLine, epslon));
-        }
-
-        public bool HasIntersectionWith(RightTriangle triangle)
-        {
-            return HasIntersectionWith(triangle, 0);
+                || triangle.HasIntersectionWith(HypotenuseLine)
+                || triangle.HasIntersectionWith(HCathetusLine)
+                || triangle.HasIntersectionWith(VCathetusLine));
         }
 
         public bool HasIntersectionWith(IGeometry geometry)
