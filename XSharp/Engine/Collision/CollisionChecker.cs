@@ -81,19 +81,16 @@ namespace XSharp.Engine.Collision
 
         public static bool HasIntersection(Box box1, Box box2)
         {
-            return box1.IsOverlaping(box2, BoxSide.LEFT_TOP | BoxSide.INNER, BoxSide.LEFT_TOP | BoxSide.INNER);
+            return box1.IsOverlaping(box2);
         }
 
-        public static bool HasIntersection(Box box, RightTriangle slope)
+        public static bool HasIntersection(Box box, RightTriangle slope, RightTriangleSide include = RightTriangleSide.ALL)
         {
-            return slope.HasIntersectionWith(box, RightTriangleSide.ALL);
+            return slope.HasIntersectionWith(box, include);
         }
 
-        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, Box collisionBox, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        private static CollisionFlags CheckCollisionData(Box box, CollisionData collisionData, List<CollisionPlacement> placements, CollisionFlags ignore)
         {
-            if (collisionData == CollisionData.NONE || !HasIntersection(box, collisionBox))
-                return CollisionFlags.NONE;
-
             CollisionFlags result = CollisionFlags.NONE;
             if (collisionData.IsSolidBlock() && !ignore.HasFlag(CollisionFlags.BLOCK))
             {
@@ -135,17 +132,114 @@ namespace XSharp.Engine.Collision
 
                 result = CollisionFlags.WATER_SURFACE;
             }
-            else if (!ignore.HasFlag(CollisionFlags.SLOPE) && collisionData.IsSlope())
-            {
-                RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
-                if (HasIntersection(collisionBox, st))
-                {
-                    placements?.Add(new CollisionPlacement(collisionData, box));
 
-                    slopeTriangle = st;
-                    result = CollisionFlags.SLOPE;
+            return result;
+        }
+
+        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, Vector v, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            if (collisionData == CollisionData.NONE || !HasIntersection(v, box))
+                return CollisionFlags.NONE;
+
+            CollisionFlags result = CollisionFlags.NONE;
+            if (collisionData.IsSlope())
+            {
+                if (!ignore.HasFlag(CollisionFlags.SLOPE))
+                {
+                    RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
+
+                    if (HasIntersection(v, st))
+                    {
+                        placements?.Add(new CollisionPlacement(collisionData, st));
+
+                        slopeTriangle = st;
+                        result = CollisionFlags.SLOPE;
+                    }
                 }
             }
+            else
+                result = CheckCollisionData(box, collisionData, placements, ignore);
+
+            return result;
+        }
+
+        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, LineSegment line, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            if (collisionData == CollisionData.NONE || !HasIntersection(line, box))
+                return CollisionFlags.NONE;
+
+            CollisionFlags result = CollisionFlags.NONE;
+            if (collisionData.IsSlope())
+            {
+                if (!ignore.HasFlag(CollisionFlags.SLOPE))
+                {
+                    RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
+
+                    if (HasIntersection(line, st))
+                    {
+                        placements?.Add(new CollisionPlacement(collisionData, st));
+
+                        slopeTriangle = st;
+                        result = CollisionFlags.SLOPE;
+                    }
+                }
+            }
+            else
+                result = CheckCollisionData(box, collisionData, placements, ignore);
+
+            return result;
+        }
+
+        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, Parallelogram parallelogram, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            if (collisionData == CollisionData.NONE || !HasIntersection(parallelogram, box))
+                return CollisionFlags.NONE;
+
+            CollisionFlags result = CollisionFlags.NONE;
+            if (collisionData.IsSlope())
+            {
+                if (!ignore.HasFlag(CollisionFlags.SLOPE))
+                {
+                    RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
+
+                    if (HasIntersection(parallelogram, st))
+                    {
+                        placements?.Add(new CollisionPlacement(collisionData, st));
+
+                        slopeTriangle = st;
+                        result = CollisionFlags.SLOPE;
+                    }
+                }
+            }
+            else
+                result = CheckCollisionData(box, collisionData, placements, ignore);
+
+            return result;
+        }
+
+        public static CollisionFlags TestCollision(Box box, CollisionData collisionData, Box collisionBox, List<CollisionPlacement> placements, ref RightTriangle slopeTriangle, CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            if (collisionData == CollisionData.NONE || !HasIntersection(collisionBox, box))
+                return CollisionFlags.NONE;
+
+            CollisionFlags result = CollisionFlags.NONE;
+            if (collisionData.IsSlope())
+            {
+                if (!ignore.HasFlag(CollisionFlags.SLOPE))
+                {
+                    RightTriangle st = collisionData.MakeSlopeTriangle() + box.LeftTop;
+
+                    if (HasIntersection(collisionBox, st))
+                    {
+                        placements?.Add(new CollisionPlacement(collisionData, st));
+
+                        slopeTriangle = st;
+                        result = CollisionFlags.SLOPE;
+                    }
+                }
+            }
+            else
+                result = CheckCollisionData(box, collisionData, placements, ignore);
 
             return result;
         }
@@ -154,11 +248,23 @@ namespace XSharp.Engine.Collision
         protected List<CollisionPlacement> placements;
         protected EntityList<Entity> resultSet;
 
+        public TouchingKind TestKind
+        {
+            get;
+            set;
+        } = TouchingKind.BOX;
+
+        public Vector TestVector
+        {
+            get;
+            set;
+        } = Vector.NULL_VECTOR;
+
         public Box TestBox
         {
             get;
             set;
-        }
+        } = Box.EMPTY_BOX;
 
         public EntityList<Sprite> IgnoreSprites
         {
@@ -193,11 +299,101 @@ namespace XSharp.Engine.Collision
 
         public RightTriangle SlopeTriangle => slopeTriangle;
 
-        public CollisionChecker()
+        protected CollisionChecker()
         {
             placements = new List<CollisionPlacement>();
             resultSet = new EntityList<Entity>();
             IgnoreSprites = new EntityList<Sprite>();
+        }
+
+        protected abstract CollisionFlags GetCollisionVectorFlags();
+
+        protected abstract CollisionFlags GetCollisionBoxFlags();
+
+        public CollisionFlags GetCollisionFlags()
+        {
+            return TestKind switch
+            {
+                TouchingKind.VECTOR => GetCollisionVectorFlags(),
+                TouchingKind.BOX => GetCollisionBoxFlags(),
+                _ => CollisionFlags.NONE
+            };
+        }
+
+        public virtual void Setup(Vector testVector, CollisionFlags ignoreFlags, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements)
+        {
+            if (computePlacements)
+                placements.Clear();
+
+            TestKind = TouchingKind.VECTOR;
+            TestVector = testVector;
+            IgnoreFlags = ignoreFlags;
+            CheckWithWorld = checkWithWorld;
+            CheckWithSolidSprites = checkWithSolidSprites;
+            ComputePlacements = computePlacements;
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements, params Sprite[] ignoreSprites)
+        {
+            Setup(testVector, ignoreFlags, checkWithWorld, checkWithSolidSprites, computePlacements);
+
+            IgnoreSprites.Clear();
+            IgnoreSprites.AddRange(ignoreSprites);
+        }
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements)
+        {
+            Setup(testVector, ignoreFlags, checkWithWorld, checkWithSolidSprites, computePlacements);
+
+            IgnoreSprites.Clear();
+            IgnoreSprites.AddRange(ignoreSprites);
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, BitSet ignoreSprites, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements)
+        {
+            Setup(testVector, ignoreFlags, checkWithWorld, checkWithSolidSprites, computePlacements);
+
+            IgnoreSprites.Clear();
+            IgnoreSprites.AddRange(ignoreSprites);
+        }
+
+        public void Setup(Vector testVector)
+        {
+            Setup(testVector, CollisionFlags.NONE, true, true, false);
+        }
+
+        public void Setup(Vector testVector, params Sprite[] ignoreSprites)
+        {
+            Setup(testVector, CollisionFlags.NONE, true, true, false, ignoreSprites);
+        }
+
+        public void Setup(Vector testVector, EntityList<Sprite> ignoreSprites)
+        {
+            Setup(testVector, CollisionFlags.NONE, ignoreSprites, true, true, false);
+        }
+
+        public void Setup(Vector testVector, BitSet ignoreSprites)
+        {
+            Setup(testVector, CollisionFlags.NONE, ignoreSprites, true, true, false);
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags)
+        {
+            Setup(testVector, ignoreFlags, true, true, false);
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, params Sprite[] ignoreSprites)
+        {
+            Setup(testVector, ignoreFlags, true, true, false, ignoreSprites);
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites)
+        {
+            Setup(testVector, ignoreFlags, ignoreSprites, true, true, false);
+        }
+
+        public void Setup(Vector testVector, CollisionFlags ignoreFlags, BitSet ignoreSprites)
+        {
+            Setup(testVector, ignoreFlags, ignoreSprites, true, true, false);
         }
 
         public virtual void Setup(Box testBox, CollisionFlags ignoreFlags, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements)
@@ -205,6 +401,7 @@ namespace XSharp.Engine.Collision
             if (computePlacements)
                 placements.Clear();
 
+            TestKind = TouchingKind.BOX;
             TestBox = testBox;
             IgnoreFlags = ignoreFlags;
             CheckWithWorld = checkWithWorld;
@@ -275,7 +472,5 @@ namespace XSharp.Engine.Collision
         {
             Setup(testBox, ignoreFlags, ignoreSprites, true, true, false);
         }
-
-        public abstract CollisionFlags GetCollisionFlags();
     }
 }

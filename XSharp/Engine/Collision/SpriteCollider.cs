@@ -217,7 +217,6 @@ namespace XSharp.Engine.Collision
         {
             Owner = owner;
             this.box = box;
-            ;
             UseCollisionPlacements = useCollisionPlacements;
             headHeight = headheight;
             this.legsHeight = legsHeight;

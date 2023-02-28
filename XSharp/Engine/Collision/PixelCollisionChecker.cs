@@ -14,7 +14,45 @@ namespace XSharp.Engine.Collision
         {
         }
 
-        public override CollisionFlags GetCollisionFlags()
+        protected override CollisionFlags GetCollisionVectorFlags()
+        {
+            CollisionFlags result = CollisionFlags.NONE;
+
+            if (CheckWithWorld)
+            {
+                Map map = World.GetMapFrom(TestVector);
+                if (map != null)
+                {
+                    Box mapBox = GetMapBoundingBox(GetMapCellFromPos(TestVector));
+                    CollisionData collisionData = map.CollisionData;
+
+                    CollisionFlags collisionResult = TestCollision(mapBox, collisionData, TestVector, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                    if (collisionResult != CollisionFlags.NONE)
+                        result |= collisionResult;
+                }
+            }
+
+            if (CheckWithSolidSprites)
+            {
+                resultSet.Clear();
+                Engine.partition.Query(resultSet, TestVector);
+                foreach (var entity in resultSet)
+                    if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
+                    {
+                        var hitbox = sprite.Hitbox;
+                        var collisionData = sprite.CollisionData;
+                        CollisionFlags collisionResult = TestCollision(hitbox, collisionData, TestVector, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                        if (collisionResult == CollisionFlags.NONE)
+                            continue;
+
+                        result |= collisionResult;
+                    }
+            }
+
+            return result;
+        }
+
+        protected override CollisionFlags GetCollisionBoxFlags()
         {
             Box box = TestBox.RoundOriginToFloor();
             Cell start = GetMapCellFromPos(box.LeftTop);

@@ -345,12 +345,9 @@ namespace XSharp.Engine.Entities
             get
             {
                 if (worldCollider != null)
-                {
                     worldCollider.Box = CollisionBox;
-                    return worldCollider;
-                }
 
-                return null;
+                return worldCollider;
             }
         }
 
@@ -362,10 +359,9 @@ namespace XSharp.Engine.Entities
                 {
                     spriteCollider.ClearIgnoredSprites();
                     spriteCollider.Box = Hitbox;
-                    return spriteCollider;
                 }
 
-                return null;
+                return spriteCollider;
             }
         }
 
@@ -1062,124 +1058,6 @@ namespace XSharp.Engine.Entities
             }
 
             return base.CheckTouching(entity);
-        }
-
-        private void MoveXOld(SpriteCollider collider, FixedSingle deltaX, bool gravity = true, bool followSlopes = true)
-        {
-            var dx = new Vector(deltaX, 0);
-
-            Box lastBox = collider.Box;
-            bool wasLanded = collider.Landed;
-            bool wasLandedOnSlope = collider.LandedOnSlope;
-            RightTriangle lastSlope = collider.LandedSlope;
-            Box lastLeftCollider = collider.LeftCollider;
-            Box lastRightCollider = collider.RightCollider;
-
-            collider.Translate(dx);
-
-            if (collider.Landed)
-                collider.AdjustOnTheFloor(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
-            else if (gravity && wasLanded)
-                collider.TryMoveContactSlope(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
-
-            Box boxCollider = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
-            CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(boxCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites);
-
-            if (!collisionFlags.CanBlockTheMove())
-            {
-                if (gravity && followSlopes && wasLanded)
-                {
-                    if (collider.LandedOnSlope)
-                    {
-                        RightTriangle slope = collider.LandedSlope;
-                        FixedSingle h = slope.HCathetusVector.X;
-                        if (h > 0 && deltaX > 0 || h < 0 && deltaX < 0)
-                        {
-                            FixedSingle x = lastBox.Origin.X;
-                            FixedSingle stx = deltaX > 0 ? slope.Left : slope.Right;
-                            FixedSingle stx_x = stx - x;
-                            if (deltaX > 0 && stx_x > 0 && stx_x <= deltaX || deltaX < 0 && stx_x < 0 && stx_x >= deltaX)
-                            {
-                                deltaX -= stx_x;
-                                dx = new Vector(deltaX, 0);
-
-                                collider.Box = lastBox;
-                                if (wasLandedOnSlope)
-                                    MoveAlongSlope(collider, lastSlope, stx_x);
-                                else
-                                    collider.Translate(new Vector(stx_x, 0));
-
-                                MoveAlongSlope(collider, slope, deltaX);
-                            }
-                            else
-                            {
-                                if (wasLandedOnSlope)
-                                {
-                                    collider.Box = lastBox;
-                                    MoveAlongSlope(collider, lastSlope, deltaX);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (wasLandedOnSlope)
-                            {
-                                collider.Box = lastBox;
-                                MoveAlongSlope(collider, lastSlope, deltaX);
-                            }
-                        }
-                    }
-                    else if (Engine.World.GetCollisionFlags(collider.DownCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).HasFlag(CollisionFlags.SLOPE))
-                        collider.MoveContactFloor();
-                }
-            }
-            else if (collisionFlags.HasFlag(CollisionFlags.SLOPE))
-            {
-                if (collider.LandedOnSlope)
-                {
-                    RightTriangle slope = collider.LandedSlope;
-                    FixedSingle x = lastBox.Origin.X;
-                    FixedSingle stx = deltaX > 0 ? slope.Left : slope.Right;
-                    FixedSingle stx_x = stx - x;
-                    if (deltaX > 0 && stx_x < 0 && stx_x >= deltaX || deltaX < 0 && stx_x > 0 && stx_x <= deltaX)
-                    {
-                        deltaX -= stx_x;
-                        dx = new Vector(deltaX, 0);
-
-                        collider.Box = lastBox;
-                        if (wasLandedOnSlope)
-                            MoveAlongSlope(collider, lastSlope, stx_x);
-                        else
-                            collider.Translate(new Vector(stx_x, 0));
-
-                        MoveAlongSlope(collider, slope, deltaX);
-                    }
-                    else
-                    {
-                        if (wasLandedOnSlope)
-                        {
-                            collider.Box = lastBox;
-                            MoveAlongSlope(collider, lastSlope, deltaX);
-                        }
-                    }
-                }
-                else if (!wasLanded)
-                {
-                    collider.Box = lastBox;
-                    if (deltaX > 0)
-                        collider.MoveContactSolid(Vector.RIGHT_VECTOR, deltaX.Ceil(), Direction.RIGHT, CollisionFlags.NONE);
-                    else
-                        collider.MoveContactSolid(Vector.LEFT_VECTOR, (-deltaX).Ceil(), Direction.LEFT, CollisionFlags.NONE);
-                }
-            }
-            else
-            {
-                collider.Box = lastBox;
-                if (deltaX > 0)
-                    collider.MoveContactSolid(Vector.RIGHT_VECTOR, deltaX.Ceil(), Direction.RIGHT, CollisionFlags.NONE);
-                else
-                    collider.MoveContactSolid(Vector.LEFT_VECTOR, (-deltaX).Ceil(), Direction.LEFT, CollisionFlags.NONE);
-            }
         }
 
         private void MoveAlongSlope(SpriteCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)

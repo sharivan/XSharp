@@ -295,7 +295,7 @@ namespace XSharp.Engine
                 return 0;
 
             var delta = line.End - line.Start;
-            var stepVector = PixelCollisionChecker.GetStepVectorHorizontal(delta, cellWidth);
+            var stepVector = CollisionChecker.GetStepVectorHorizontal(delta, cellWidth);
             var tracingDistance = FixedSingle.Max(delta.X.Abs, delta.Y.Abs);
 
             // Varre todas as possíveis células que poderão ter intersecção não vazia com o retângulo dado
