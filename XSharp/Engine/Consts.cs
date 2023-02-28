@@ -250,6 +250,7 @@ namespace XSharp.Engine
         // 5 - HUD up layer
         // 6 - Unused
         // 7 - Unused
+
         public const int NUM_LAYERS = 8;
         public const int NUM_SPRITE_LAYERS = 2;
 
