@@ -169,22 +169,6 @@ namespace XSharp.Math.Geometry
             return "(" + X + ", " + Y + ")";
         }
 
-        /// <summary>
-        /// Normaliza o vetor
-        /// </summary>
-        /// <returns>O vetor normalizado</returns>
-        public Vector Versor(FixedSingle epslon)
-        {
-            if (X.Abs <= epslon)
-                return (0, Y.Abs <= epslon ? 0 : Y);
-
-            if (Y.Abs <= epslon)
-                return (X, 0);
-
-            FixedDouble abs = Length;
-            return new Vector((FixedSingle) ((FixedDouble) X / abs), (FixedSingle) ((FixedDouble) Y / abs));
-        }
-
         public Vector Versor()
         {
             if (IsNull)
@@ -192,18 +176,6 @@ namespace XSharp.Math.Geometry
 
             FixedSingle abs = Length;
             return new Vector(X / abs, Y / abs);
-        }
-
-        public Vector VersorScale(FixedSingle scale, FixedSingle epslon)
-        {
-            if (X.Abs <= epslon)
-                return (0, Y.Abs <= epslon ? 0 : Y);
-
-            if (Y.Abs <= epslon)
-                return (X, 0);
-
-            FixedSingle abs = Length;
-            return new Vector((FixedSingle) ((FixedDouble) scale * X / abs), (FixedSingle) ((FixedDouble) scale * Y / abs));
         }
 
         public Vector VersorScale(FixedSingle scale)
@@ -305,6 +277,21 @@ namespace XSharp.Math.Geometry
             return new(X.Ceil(), Y.Ceil());
         }
 
+        public Vector Truncate()
+        {
+            return new(X.IntValue, Y.IntValue);
+        }
+
+        public Vector TruncateX()
+        {
+            return new(X.IntValue, Y);
+        }
+
+        public Vector TruncateY()
+        {
+            return new(X, Y.IntValue);
+        }
+
         public Vector RoundToFloor()
         {
             return new(X.Floor(), Y.Floor());
@@ -330,14 +317,9 @@ namespace XSharp.Math.Geometry
             return new(X, Y.Floor());
         }
 
-        public Vector Round()
+        public Vector Round(RoundMode roundXMode = RoundMode.FLOOR, RoundMode roundYMode = RoundMode.FLOOR)
         {
-            return new(X.Round(), Y.Round());
-        }
-
-        public Vector Round(RoundMode mode)
-        {
-            return (X.Round(mode), Y.Round(mode));
+            return (X.Round(roundXMode), Y.Round(roundYMode));
         }
 
         public Vector RoundX()

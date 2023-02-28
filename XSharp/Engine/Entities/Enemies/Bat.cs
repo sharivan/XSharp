@@ -100,7 +100,7 @@ namespace XSharp.Engine.Entities.Enemies
         private void OnAttacking(EntityState state, long frameCounter)
         {
             Vector delta = Engine.Player.Origin - Origin;
-            Velocity = BAT_ATTACK_SPEED * delta.Versor(STEP_SIZE);
+            Velocity = BAT_ATTACK_SPEED * delta.Versor();
         }
 
         private void OnEscaping(EntityState state, long frameCounter)

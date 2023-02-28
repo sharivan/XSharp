@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using XSharp.Engine.World;
+using XSharp.Engine.Collision;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
@@ -90,8 +90,8 @@ namespace XSharp.Engine.Entities
 
         public Vector Origin
         {
-            get => GetOrigin();
-            set => SetOrigin(value);
+            get => origin;
+            set => origin = value.TruncFracPart();
         }
 
         public Vector IntegerOrigin => Origin.RoundToFloor();
@@ -407,23 +407,6 @@ namespace XSharp.Engine.Entities
             return childs.Contains(other);
         }
 
-        protected virtual Vector GetOrigin()
-        {
-            return origin;
-        }
-
-        protected virtual void SetOrigin(Vector origin)
-        {
-            LastOrigin = this.origin;
-            this.origin = origin.TruncFracPart();
-
-            UpdatePartition();
-
-            Vector delta = origin - LastOrigin;
-            foreach (Entity child in childs)
-                child.Origin += delta;
-        }
-
         public bool IsParent(Entity entity)
         {
             if (entity == null)
@@ -525,6 +508,17 @@ namespace XSharp.Engine.Entities
 
         protected internal virtual void OnFrame()
         {
+            UpdatePartition();
+
+            Vector delta = Origin - LastOrigin;
+            if (delta != Vector.NULL_VECTOR)
+            {
+                foreach (Entity child in childs)
+                    child.Origin += delta;
+            }
+
+            LastOrigin = Origin;
+
             if (frameToKill > 0 && Engine.FrameCounter >= frameToKill)
             {
                 frameToKill = -1;
@@ -697,6 +691,8 @@ namespace XSharp.Engine.Entities
 
         protected internal virtual void OnSpawn()
         {
+            LastOrigin = Origin;
+
             SpawnEvent?.Invoke(this);
         }
 

@@ -1,4 +1,5 @@
 ﻿using SharpDX;
+using XSharp.Engine.Collision;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 using MMXBox = XSharp.Math.Geometry.Box;

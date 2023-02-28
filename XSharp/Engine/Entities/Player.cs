@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
+using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Effects;
-using XSharp.Engine.World;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
@@ -939,7 +939,7 @@ namespace XSharp.Engine.Entities
                                     if (!Shooting)
                                     {
                                         Box ladderCollisionBox = Hitbox.ClipTop(HITBOX.Height - 5);
-                                        CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, RoundMode.NONE, this);
+                                        CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this);
                                         if (flags.HasFlag(CollisionFlags.TOP_LADDER))
                                         {
                                             if (!TopLadderClimbing && !TopLadderDescending)
@@ -963,7 +963,7 @@ namespace XSharp.Engine.Entities
                                 else if (!OnLadder)
                                 {
                                     Box ladderCollisionBox = Hitbox.ClipTop(15);
-                                    CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, RoundMode.NONE, this);
+                                    CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this);
                                     if (flags.HasFlag(CollisionFlags.LADDER))
                                     {
                                         Velocity = Vector.NULL_VECTOR;
@@ -993,7 +993,7 @@ namespace XSharp.Engine.Entities
                                         else
                                         {
                                             Box ladderCollisionBox = Hitbox.ClipTop(15);
-                                            CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, RoundMode.NONE, this);
+                                            CollisionFlags flags = Engine.World.GetCollisionFlags(ladderCollisionBox, CollisionFlags.NONE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this);
                                             if (!flags.HasFlag(CollisionFlags.LADDER))
                                             {
                                                 if (Landed)
@@ -1417,13 +1417,13 @@ namespace XSharp.Engine.Entities
         private bool CanWallJumpLeft()
         {
             Box collisionBox = WorldCollider.LeftCollider.ExtendLeftFixed(8).ClipTop(-2 + (256 - 32) / 256.0);
-            return Engine.World.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, RoundMode.NONE, this).HasFlag(CollisionFlags.BLOCK);
+            return Engine.World.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this).HasFlag(CollisionFlags.BLOCK);
         }
 
         private bool CanWallJumpRight()
         {
             Box collisionBox = WorldCollider.RightCollider.ExtendRightFixed(8).ClipTop(-2 + (256 - 32) / 256.0);
-            return Engine.World.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, RoundMode.NONE, this).HasFlag(CollisionFlags.BLOCK);
+            return Engine.World.GetCollisionFlags(collisionBox, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this).HasFlag(CollisionFlags.BLOCK);
         }
 
         public Direction GetWallJumpDir()

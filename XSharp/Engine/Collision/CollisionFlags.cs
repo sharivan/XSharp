@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace XSharp.Engine.World
+namespace XSharp.Engine.Collision
 {
     [Flags]
     public enum CollisionFlags
@@ -23,7 +23,7 @@ namespace XSharp.Engine.World
             return flags != CollisionFlags.NONE
                 && (
                     flags.HasFlag(CollisionFlags.BLOCK)
-                    || (direction.HasFlag(Direction.LEFT) || direction.HasFlag(Direction.RIGHT)) && flags.HasFlag(CollisionFlags.UNCLIMBABLE) // TODO : Check if slopes must be checked here too
+                    || (direction.HasFlag(Direction.LEFT) || direction.HasFlag(Direction.RIGHT)) && (flags.HasFlag(CollisionFlags.UNCLIMBABLE) || flags.HasFlag(CollisionFlags.SLOPE)) // TODO : Check if slopes must be checked here too
                     || direction.HasFlag(Direction.DOWN) && (flags.HasFlag(CollisionFlags.TOP_LADDER) || flags.HasFlag(CollisionFlags.SLOPE))
                 );
         }

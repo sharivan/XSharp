@@ -15,6 +15,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Enemies;
@@ -3611,7 +3612,7 @@ namespace XSharp.Engine
             {
                 RightTriangle st = collisionData.MakeSlopeTriangle() + mapBox.LeftTop;
                 Vector hv = st.HCathetusVector;
-                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2, EPSLON) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1, EPSLON))
+                if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1))
                     DrawSlopeMap(mapBox, st, 4);
             }
         }
@@ -4039,10 +4040,10 @@ namespace XSharp.Engine
                                     SpriteCollider collider = sprite.WorldCollider;
                                     if (collider != null)
                                     {
-                                        FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
-                                        FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
-                                        FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
-                                        FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
+                                        FillRectangle(WorldBoxToScreen(collider.DownCollider), DOWN_COLLIDER_COLOR);
+                                        FillRectangle(WorldBoxToScreen(collider.UpCollider), UP_COLLIDER_COLOR);
+                                        FillRectangle(WorldBoxToScreen(collider.LeftCollider), LEFT_COLLIDER_COLOR);
+                                        FillRectangle(WorldBoxToScreen(collider.RightCollider), RIGHT_COLLIDER_COLOR);
                                     }
                                 }
 
@@ -4167,10 +4168,10 @@ namespace XSharp.Engine
                         SpriteCollider collider = Player.WorldCollider;
                         if (collider != null)
                         {
-                            FillRectangle(WorldBoxToScreen(collider.DownCollider.ClipBottom(collider.MaskSize - 1)), DOWN_COLLIDER_COLOR);
-                            FillRectangle(WorldBoxToScreen(collider.UpCollider.ClipTop(collider.MaskSize - 1)), UP_COLLIDER_COLOR);
-                            FillRectangle(WorldBoxToScreen(collider.LeftCollider.ClipLeft(collider.MaskSize - 1)), LEFT_COLLIDER_COLOR);
-                            FillRectangle(WorldBoxToScreen(collider.RightCollider.ClipRight(collider.MaskSize - 1)), RIGHT_COLLIDER_COLOR);
+                            FillRectangle(WorldBoxToScreen(collider.DownCollider), DOWN_COLLIDER_COLOR);
+                            FillRectangle(WorldBoxToScreen(collider.UpCollider), UP_COLLIDER_COLOR);
+                            FillRectangle(WorldBoxToScreen(collider.LeftCollider), LEFT_COLLIDER_COLOR);
+                            FillRectangle(WorldBoxToScreen(collider.RightCollider), RIGHT_COLLIDER_COLOR);
                         }
                     }
                 }
@@ -4243,7 +4244,7 @@ namespace XSharp.Engine
                     text = $"Camera: CX: {(float) Camera.Left * 256} CY: {(float) Camera.Top * 256}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, fontDimension.Top - fontDimension.Bottom, Color.Yellow, out fontDimension);
 
-                    text = $"Player: X: {(float) Player.Origin.X * 256} Y: {(float) Player.Origin.Y * 256} VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256} Gravity: {(float) Player.GetGravity() * 256}";
+                    text = $"Player: X: {(float) Player.Origin.X * 256}({(float) (Player.Origin.X - Player.LastOrigin.X) * 256}) Y: {(float) Player.Origin.Y * 256}({(float) (Player.Origin.Y - Player.LastOrigin.Y) * 256}) VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256} Gravity: {(float) Player.GetGravity() * 256}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, 2 * (fontDimension.Top - fontDimension.Bottom), Color.Yellow, out fontDimension);
                 }
             }

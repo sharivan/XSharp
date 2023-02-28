@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
-using XSharp.Engine.World;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
@@ -886,11 +886,6 @@ namespace XSharp.Engine.Entities
             }
         }
 
-        protected virtual FixedSingle GetMaskSize()
-        {
-            return MASK_SIZE;
-        }
-
         protected virtual FixedSingle GetHeadHeight()
         {
             return 0;
@@ -908,12 +903,12 @@ namespace XSharp.Engine.Entities
 
         protected virtual SpriteCollider CreateWorldCollider()
         {
-            return new SpriteCollider(this, CollisionBox, GetMaskSize(), GetHeadHeight(), GetLegsHeight(), IsUsingCollisionPlacements(), true, false);
+            return new SpriteCollider(this, CollisionBox, GetHeadHeight(), GetLegsHeight(), IsUsingCollisionPlacements(), true, false);
         }
 
         protected virtual SpriteCollider CreateSpriteCollider()
         {
-            return new SpriteCollider(this, Hitbox, GetMaskSize(), 0, 0, IsUsingCollisionPlacements(), false, true);
+            return new SpriteCollider(this, Hitbox, 0, 0, IsUsingCollisionPlacements(), false, true);
         }
 
         protected internal virtual void CreateResources()
@@ -1069,25 +1064,7 @@ namespace XSharp.Engine.Entities
             return base.CheckTouching(entity);
         }
 
-        private void MoveAlongSlope(SpriteCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)
-        {
-            FixedSingle h = slope.HCathetusVector.X;
-            int slopeSign = h.Signal;
-            int dxs = dx.Signal;
-            bool goingDown = dxs == slopeSign;
-
-            var dy = (FixedSingle) (((FixedDouble) slope.VCathetus * dx / slope.HCathetus).Abs * dxs * slopeSign);
-            var delta = new Vector(dx, dy);
-            collider.MoveContactSolid(delta, dx.Abs, (goingDown ? Direction.NONE : Direction.UP) | (dxs > 0 ? Direction.RIGHT : Direction.LEFT), CollisionFlags.SLOPE);
-
-            if (gravity)
-                collider.MoveContactFloor(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
-
-            if (collider.Landed)
-                collider.AdjustOnTheFloor();
-        }
-
-        private void MoveX(SpriteCollider collider, FixedSingle deltaX, bool gravity = true, bool followSlopes = true)
+        private void MoveXOld(SpriteCollider collider, FixedSingle deltaX, bool gravity = true, bool followSlopes = true)
         {
             var dx = new Vector(deltaX, 0);
 
@@ -1106,12 +1083,10 @@ namespace XSharp.Engine.Entities
                 collider.TryMoveContactSlope(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
 
             Box boxCollider = deltaX > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
-            CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(boxCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites, RoundMode.FLOOR);
+            CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(boxCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites);
 
             if (!collisionFlags.CanBlockTheMove())
             {
-                //collider.Translate(-dx.RoundToFloor());
-
                 if (gravity && followSlopes && wasLanded)
                 {
                     if (collider.LandedOnSlope)
@@ -1154,7 +1129,7 @@ namespace XSharp.Engine.Entities
                             }
                         }
                     }
-                    else if (Engine.World.GetCollisionFlags(collider.DownCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites, RoundMode.FLOOR).HasFlag(CollisionFlags.SLOPE))
+                    else if (Engine.World.GetCollisionFlags(collider.DownCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).HasFlag(CollisionFlags.SLOPE))
                         collider.MoveContactFloor();
                 }
             }
@@ -1207,9 +1182,158 @@ namespace XSharp.Engine.Entities
             }
         }
 
-        private Vector Move(SpriteCollider collider, Vector delta, FixedSingle gravity)
+        private void MoveAlongSlope(SpriteCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)
+        {
+            Box lastLeftCollider = collider.LeftCollider;
+            Box lastRightCollider = collider.RightCollider;
+
+            FixedSingle h = slope.HCathetusVector.X;
+            int slopeSign = h.Signal;
+            int dxs = dx.Signal;
+            bool goingDown = dxs == slopeSign;
+
+            var dy = (FixedSingle) (((FixedDouble) slope.VCathetus * dx / slope.HCathetus).Abs * dxs * slopeSign);
+            var delta = new Vector(dx, dy);
+
+            collider.Translate(delta);
+
+            Box boxCollider = dx > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
+            CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(boxCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites);
+
+            if (collisionFlags.CanBlockTheMove(delta.GetDirection()))
+            {
+                collider.Translate(-delta.Truncate());
+                collider.MoveContactSolid(delta, dx.Abs, (goingDown ? Direction.NONE : Direction.UP) | (dxs > 0 ? Direction.RIGHT : Direction.LEFT), CollisionFlags.SLOPE);
+            }
+
+            if (gravity)
+                collider.MoveContactFloor(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
+
+            if (collider.Landed)
+                collider.AdjustOnTheFloor();
+        }
+
+        private void MoveX(SpriteCollider collider, FixedSingle dx, bool gravity = true, bool followSlopes = true)
+        {
+            var delta = new Vector(dx, 0);
+
+            Box lastBox = collider.Box;
+            bool wasLanded = collider.Landed;
+            bool wasLandedOnSlope = collider.LandedOnSlope;
+            RightTriangle lastSlope = collider.LandedSlope;
+            Box lastLeftCollider = collider.LeftCollider;
+            Box lastRightCollider = collider.RightCollider;
+
+            collider.Translate(delta);
+
+            Box boxCollider = dx > 0 ? lastRightCollider | collider.RightCollider : lastLeftCollider | collider.LeftCollider;
+            CollisionFlags collisionFlags = Engine.World.GetCollisionFlags(boxCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites);
+
+            if (collisionFlags.CanBlockTheMove(delta.GetDirection()))
+            {
+                if (collisionFlags.HasFlag(CollisionFlags.SLOPE))
+                {
+                    if (collider.LandedOnSlope)
+                    {
+                        RightTriangle slope = collider.LandedSlope;
+                        FixedSingle x = lastBox.Origin.X;
+                        FixedSingle stx = dx > 0 ? slope.Left : slope.Right;
+                        FixedSingle stx_x = stx - x;
+                        if (dx > 0 && stx_x < 0 && stx_x >= dx || dx < 0 && stx_x > 0 && stx_x <= dx)
+                        {
+                            dx -= stx_x;
+                            delta = (dx, 0);
+
+                            //collider.Box = lastBox;
+                            collider.Translate(-delta.Truncate());
+                            if (wasLandedOnSlope)
+                                MoveAlongSlope(collider, lastSlope, stx_x);
+                            else
+                                collider.Translate((stx_x, 0));
+
+                            MoveAlongSlope(collider, slope, dx);
+                        }
+                        else if (wasLandedOnSlope)
+                        {
+                            //collider.Box = lastBox;
+                            collider.Translate(-delta.Truncate());
+                            MoveAlongSlope(collider, lastSlope, dx);
+                        }
+                    }
+                    else if (!wasLanded)
+                    {
+                        collider.Translate(-delta.Truncate());
+
+                        if (dx > 0)
+                            collider.MoveContactSolid(Vector.RIGHT_VECTOR, dx.Ceil(), Direction.RIGHT, CollisionFlags.NONE);
+                        else
+                            collider.MoveContactSolid(Vector.LEFT_VECTOR, (-dx).Ceil(), Direction.LEFT, CollisionFlags.NONE);
+                    }
+                }
+                else
+                {
+                    collider.Translate(-delta.Truncate());
+
+                    if (dx > 0)
+                        collider.MoveContactSolid(Vector.RIGHT_VECTOR, dx.Ceil(), Direction.RIGHT);
+                    else
+                        collider.MoveContactSolid(Vector.LEFT_VECTOR, (-dx).Ceil(), Direction.LEFT);
+                }
+            }
+            else if (gravity && followSlopes && wasLanded)
+            {
+                if (collider.LandedOnSlope)
+                {
+                    RightTriangle slope = collider.LandedSlope;
+                    FixedSingle h = slope.HCathetusVector.X;
+                    if (h > 0 && dx > 0 || h < 0 && dx < 0)
+                    {
+                        FixedSingle x = lastBox.Origin.X;
+                        FixedSingle stx = dx > 0 ? slope.Left : slope.Right;
+                        FixedSingle stx_x = stx - x;
+                        if (dx > 0 && stx_x > 0 && stx_x <= dx || dx < 0 && stx_x < 0 && stx_x >= dx)
+                        {
+                            dx -= stx_x;
+                            delta = (dx, 0);
+
+                            //collider.Box = lastBox;
+                            collider.Translate(-delta.Truncate());
+                            if (wasLandedOnSlope)
+                                MoveAlongSlope(collider, lastSlope, stx_x);
+                            else
+                                collider.Translate(new Vector(stx_x, 0));
+
+                            MoveAlongSlope(collider, slope, dx);
+                        }
+                        else
+                        {
+                            if (wasLandedOnSlope)
+                            {
+                                //collider.Box = lastBox;
+                                collider.Translate(-delta.Truncate());
+                                MoveAlongSlope(collider, lastSlope, dx);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (wasLandedOnSlope)
+                        {
+                            //collider.Box = lastBox;
+                            collider.Translate(-delta.Truncate());
+                            MoveAlongSlope(collider, lastSlope, dx);
+                        }
+                    }
+                }
+                else if (Engine.World.GetCollisionFlags(collider.DownCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).HasFlag(CollisionFlags.SLOPE))
+                    collider.MoveContactFloor();
+            }
+        }
+
+        private Vector Move(SpriteCollider collider, Vector delta, bool gravity)
         {
             Vector lastBoxOrigin = collider.Box.Origin;
+            bool wasLanded = collider.Landed;
 
             if (delta.X != 0)
             {
@@ -1217,33 +1341,38 @@ namespace XSharp.Engine.Entities
                 {
                     if (collider.LandedSlope.HCathetusSign == delta.X.Signal)
                     {
-                        if (gravity != 0)
-                            MoveAlongSlope(collider, collider.LandedSlope, delta.X, gravity != 0);
+                        if (gravity)
+                            MoveAlongSlope(collider, collider.LandedSlope, delta.X, gravity);
                     }
                     else
-                        MoveAlongSlope(collider, collider.LandedSlope, delta.X, gravity != 0);
+                        MoveAlongSlope(collider, collider.LandedSlope, delta.X, gravity);
                 }
                 else
-                    MoveX(collider, delta.X, gravity != 0);
+                    MoveX(collider, delta.X, gravity);
+
+                if (collider.Landed)
+                    collider.AdjustOnTheFloor(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
+                else if (gravity && wasLanded)
+                    collider.TryMoveContactSlope(TILE_SIZE * 0.5 * QUERY_MAX_DISTANCE);
             }
 
             if (delta.Y != 0)
             {
-                var dy = new Vector(0, delta.Y);
+                delta = delta.YVector;
                 Box lastUpCollider = collider.UpCollider;
                 Box lastDownCollider = collider.DownCollider;
-                collider.Translate(dy);
+                collider.Translate(delta);
 
-                Box union = dy.Y > 0 ? lastDownCollider | collider.DownCollider : lastUpCollider | collider.UpCollider;
+                Box union = delta.Y > 0 ? lastDownCollider | collider.DownCollider : lastUpCollider | collider.UpCollider;
 
-                if (Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites, RoundMode.FLOOR).CanBlockTheMove())
+                if (Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).CanBlockTheMove())
                 {
-                    collider.Translate(-dy.RoundToFloor());
+                    collider.Translate(-delta.Truncate());
 
-                    if (dy.Y > 0)
-                        collider.MoveContactFloor(dy.Y.Ceil());
+                    if (delta.Y > 0)
+                        collider.MoveContactFloor(delta.Y.Ceil());
                     else
-                        collider.MoveContactSolid(dy, (-dy.Y).Ceil(), Direction.UP);
+                        collider.MoveContactSolid(delta, (-delta.Y).Ceil(), Direction.UP);
                 }
             }
 
@@ -1325,7 +1454,7 @@ namespace XSharp.Engine.Entities
                 if (CheckCollisionWithWorld)
                 {
                     worldCollider.Box = CollisionBox;
-                    delta = Move(worldCollider, delta, gravity);
+                    delta = Move(worldCollider, delta, gravity != 0);
                 }
 
                 if (CheckCollisionWithSolidSprites)
@@ -1337,7 +1466,7 @@ namespace XSharp.Engine.Entities
 
                     spriteCollider.Box = Hitbox;
 
-                    delta = Move(spriteCollider, delta, gravity);
+                    delta = Move(spriteCollider, delta, gravity != 0);
                 }
             }
 

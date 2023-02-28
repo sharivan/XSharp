@@ -94,6 +94,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Engine\BitSet.cs" />
+    <Compile Include="Engine\Collision\CollisionChecker.cs" />
+    <Compile Include="Engine\Collision\Parallelogram.cs" />
+    <Compile Include="Engine\Collision\TracerCollisionChecker.cs" />
     <Compile Include="Engine\Entities\Animation.cs" />
     <Compile Include="Engine\Entities\BoxKind.cs" />
     <Compile Include="Engine\Entities\Checkpoint.cs" />
@@ -159,19 +162,19 @@
     <Compile Include="Engine\XSharpTupleExtensions.cs" />
     <Compile Include="Engine\World\Block.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Boss.cs" />
-    <Compile Include="Engine\World\SpriteCollider.cs" />
+    <Compile Include="Engine\Collision\SpriteCollider.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterCharged.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterLemon.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterSemiCharged.cs" />
     <Compile Include="Engine\Entities\Effects\ChargingEffect.cs" />
-    <Compile Include="Engine\World\CollisionPlacement.cs" />
-    <Compile Include="Engine\World\CollisionFlags.cs" />
-    <Compile Include="Engine\World\CollisionData.cs" />
+    <Compile Include="Engine\Collision\CollisionPlacement.cs" />
+    <Compile Include="Engine\Collision\CollisionFlags.cs" />
+    <Compile Include="Engine\Collision\CollisionData.cs" />
     <Compile Include="Engine\Consts.cs" />
     <Compile Include="Engine\Entities\Direction.cs" />
     <Compile Include="Engine\Entities\Enemies\Enemy.cs" />
-    <Compile Include="Engine\World\CollisionChecker.cs" />
-    <Compile Include="Engine\World\ExtendedCollisionChecker.cs" />
+    <Compile Include="Engine\Collision\PixelCollisionChecker.cs" />
+    <Compile Include="Engine\Collision\LanderCollisionChecker.cs" />
     <Compile Include="Engine\Entities\Triggers\BaseTriggeer.cs" />
     <Compile Include="Engine\GameEngine.cs" />
     <Compile Include="Engine\Keys.cs" />
@@ -181,7 +184,7 @@
     <Compile Include="Math\FixedSingle.cs" />
     <Compile Include="Math\Geometry\Box.cs" />
     <Compile Include="Engine\Entities\Entity.cs" />
-    <Compile Include="Engine\World\Partition.cs" />
+    <Compile Include="Engine\Partition.cs" />
     <Compile Include="Engine\Entities\Player.cs" />
     <Compile Include="Engine\World\Scene.cs" />
     <Compile Include="Engine\Entities\Camera.cs" />

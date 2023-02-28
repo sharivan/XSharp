@@ -1,8 +1,7 @@
-﻿using XSharp.Engine.World;
-using XSharp.Math.Geometry;
+﻿using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine
+namespace XSharp.Engine.Collision
 {
     public enum CollisionData
     {

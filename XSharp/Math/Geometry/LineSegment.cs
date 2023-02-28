@@ -117,7 +117,7 @@ namespace XSharp.Math.Geometry
         /// </summary>
         /// <param name="v">Vetor a ser testado</param>
         /// <returns>true se o segmento contém o vetor, false caso contrário</returns>
-        public bool Contains(Vector v, FixedSingle epslon)
+        public bool Contains(Vector v)
         {
             if (Compare(v) != 0)
                 return false;
@@ -127,12 +127,7 @@ namespace XSharp.Math.Geometry
             var mY = FixedSingle.Min(Start.Y, End.Y);
             var MY = FixedSingle.Max(Start.Y, End.Y);
 
-            return mX - epslon <= v.X && v.X <= MX + epslon && mY - epslon <= v.Y && v.Y <= MY + epslon;
-        }
-
-        public bool Contains(Vector v)
-        {
-            return Contains(v, 0);
+            return mX <= v.X && v.X <= MX && mY <= v.Y && v.Y <= MY;
         }
 
         /// <summary>
@@ -150,12 +145,7 @@ namespace XSharp.Math.Geometry
             return A1 * B2 == A2 * B1;
         }
 
-        /// <summary>
-        /// Obtém a intersecção entre dois segmentos de reta
-        /// </summary>
-        /// <param name="s">Segmento de reta a ser testado</param>
-        /// <returns>A intersecção entre os dois segmentos caso ela exista, ou retorna conjunto vazio caso contrário</returns>
-        public GeometryType Intersection(LineSegment s, FixedSingle epslon, out LineSegment result)
+        public GeometryType Intersection(LineSegment s, out LineSegment result)
         {
             Vector v;
 
@@ -214,19 +204,9 @@ namespace XSharp.Math.Geometry
             return GeometryType.VECTOR;
         }
 
-        public GeometryType Intersection(LineSegment s, out LineSegment result)
-        {
-            return Intersection(s, 0, out result);
-        }
-
-        public bool HasIntersectionWith(LineSegment other, FixedSingle epslon)
-        {
-            return Intersection(other, epslon, out _) != GeometryType.EMPTY;
-        }
-
         public bool HasIntersectionWith(LineSegment other)
         {
-            return HasIntersectionWith(other, 0);
+            return Intersection(other, out _) != GeometryType.EMPTY;
         }
 
         public bool HasIntersectionWith(IGeometry geometry)

@@ -2,32 +2,32 @@
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.World
+namespace XSharp.Engine.Collision
 {
-    public class ExtendedCollisionChecker : CollisionChecker
+    public class LanderCollisionChecker : PixelCollisionChecker
     {
-        private CollisionChecker leftChecker;
-        private CollisionChecker rightChecker;
+        private PixelCollisionChecker leftChecker;
+        private PixelCollisionChecker rightChecker;
 
-        public ExtendedCollisionChecker()
+        public LanderCollisionChecker()
         {
-            leftChecker = new CollisionChecker();
-            rightChecker = new CollisionChecker();
+            leftChecker = new PixelCollisionChecker();
+            rightChecker = new PixelCollisionChecker();
         }
 
         // TODO : In the future, refactor this to make it simpler and more effective at the same time.
-        // TODO : Also, its not working fine with slopes for now, fix it!
-        public CollisionFlags ComputeLandedState(RoundMode mode = RoundMode.NONE)
+        // TODO : Also, this isn't working fine with slopes for now, fix it!
+        public CollisionFlags ComputeLandedState()
         {
-            Box box = TestBox.RoundOrigin(mode);
-            Box bottomMask = box.ClipTop(box.Height - MaskSize);
-            Box bottomMaskDisplaced = bottomMask + MaskSize * Vector.DOWN_VECTOR;
+            Box box = TestBox.RoundOriginToFloor();
+            Box bottomMask = box.ClipTop(box.Height - STEP_SIZE);
+            Box bottomMaskDisplaced = bottomMask + STEP_DOWN_VECTOR;
 
             Box bottomMaskDisplacedHalfLeft = bottomMaskDisplaced.HalfLeft();
             Box bottomMaskDisplacedHalfRight = bottomMaskDisplaced.HalfRight();
 
-            leftChecker.Setup(bottomMaskDisplacedHalfLeft, IgnoreFlags, IgnoreSprites, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements);
-            rightChecker.Setup(bottomMaskDisplacedHalfRight, IgnoreFlags, IgnoreSprites, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements);
+            leftChecker.Setup(bottomMaskDisplacedHalfLeft, IgnoreFlags, CheckWithWorld, CheckWithSolidSprites, ComputePlacements);
+            rightChecker.Setup(bottomMaskDisplacedHalfRight, IgnoreFlags, CheckWithWorld, CheckWithSolidSprites, ComputePlacements);
 
             CollisionFlags bottomLeftDisplacedCollisionFlags = leftChecker.GetCollisionFlags();
             CollisionFlags bottomRightDisplacedCollisionFlags = rightChecker.GetCollisionFlags();
@@ -69,8 +69,8 @@ namespace XSharp.Engine.World
                 Box bottomMaskHalfLeft = bottomMask.HalfLeft();
                 Box bottomMaskHalfRight = bottomMask.HalfRight();
 
-                leftChecker.Setup(bottomMaskHalfLeft, IgnoreFlags, IgnoreSprites, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements);
-                rightChecker.Setup(bottomMaskHalfRight, IgnoreFlags, IgnoreSprites, MaskSize, CheckWithWorld, CheckWithSolidSprites, ComputePlacements);
+                leftChecker.Setup(bottomMaskHalfLeft, IgnoreFlags, CheckWithWorld, CheckWithSolidSprites, ComputePlacements);
+                rightChecker.Setup(bottomMaskHalfRight, IgnoreFlags, CheckWithWorld, CheckWithSolidSprites, ComputePlacements);
 
                 CollisionFlags bottomLeftCollisionFlags = leftChecker.GetCollisionFlags();
                 CollisionFlags bottomRightCollisionFlags = rightChecker.GetCollisionFlags();
@@ -151,48 +151,44 @@ namespace XSharp.Engine.World
             return CollisionFlags.NONE;
         }
 
-        // Warning! It can be terribly slow if you use small steps. Recommended step size is 1 (one pixel).
-        public Box MoveContactFloor(FixedSingle maxDistance, RoundMode mode = RoundMode.NONE)
+        // Warning! The following methods can be terribly slow if you use small steps. Recommended step size is 1 (one pixel).
+
+        public Box MoveContactFloor(FixedSingle maxDistance)
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
-            {
-                if (ComputeLandedState(mode).CanBlockTheMove())
+                if (ComputeLandedState().CanBlockTheMove(Direction.DOWN))
                     break;
-            }
 
             return TestBox;
         }
 
-        // Warning! It can be terribly slow if you use small steps. Recommended step size is 1 (one pixel).
-        public bool TryMoveContactFloor(FixedSingle maxDistance, RoundMode mode = RoundMode.NONE)
+        public bool TryMoveContactFloor(FixedSingle maxDistance)
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
-                if (ComputeLandedState(mode).CanBlockTheMove())
+                if (ComputeLandedState().CanBlockTheMove(Direction.DOWN))
                     return true;
 
             return false;
         }
 
-        // Warning! It can be terribly slow if you use small steps. Recommended step size is 1 (one pixel).
-        public bool TryMoveContactSlope(FixedSingle maxDistance, RoundMode mode = RoundMode.NONE)
+        public bool TryMoveContactSlope(FixedSingle maxDistance)
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
-                if (ComputeLandedState(mode).HasFlag(CollisionFlags.SLOPE))
+                if (ComputeLandedState().HasFlag(CollisionFlags.SLOPE))
                     return true;
 
             return false;
         }
 
-        // Warning! It can be terribly slow if you use small steps. Recommended step size is 1 (one pixel).
-        public Box AdjustOnTheFloor(FixedSingle maxDistance, RoundMode mode = RoundMode.NONE)
+        public Box AdjustOnTheFloor(FixedSingle maxDistance)
         {
-            if (!ComputeLandedState(mode).CanBlockTheMove())
+            if (!ComputeLandedState().CanBlockTheMove())
                 return TestBox;
 
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE)
             {
                 TestBox += STEP_UP_VECTOR;
-                if (!ComputeLandedState(mode).CanBlockTheMove())
+                if (!ComputeLandedState().CanBlockTheMove())
                 {
                     TestBox -= STEP_UP_VECTOR;
                     break;

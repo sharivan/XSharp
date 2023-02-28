@@ -1,6 +1,6 @@
 ﻿using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.World
+namespace XSharp.Engine.Collision
 {
     public readonly struct CollisionPlacement
     {
