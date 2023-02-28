@@ -508,16 +508,16 @@ namespace XSharp.Engine.Entities
 
         protected internal virtual void OnFrame()
         {
-            LastOrigin = Origin;
-
             UpdatePartition();
 
             Vector delta = Origin - LastOrigin;
-            if (delta != null)
+            if (delta != Vector.NULL_VECTOR)
             {
                 foreach (Entity child in childs)
                     child.Origin += delta;
             }
+
+            LastOrigin = Origin;
 
             if (frameToKill > 0 && Engine.FrameCounter >= frameToKill)
             {

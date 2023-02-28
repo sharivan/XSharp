@@ -33,7 +33,7 @@ namespace XSharp.Engine.World
         private Scene[,] scenes;
         private Scene[,] backgroundScenes;
 
-        private TracerCollisionChecker collisionChecker;
+        private PixelCollisionChecker collisionChecker;
 
         public FadingControl FadingSettings
         {
@@ -118,7 +118,7 @@ namespace XSharp.Engine.World
             scenes = new Scene[sceneRowCount, sceneColCount];
             backgroundScenes = new Scene[backgroundSceneRowCount, backgroundSceneColCount];
 
-            collisionChecker = new TracerCollisionChecker();
+            collisionChecker = new PixelCollisionChecker();
         }
 
         public Tile AddTile(bool background = false)

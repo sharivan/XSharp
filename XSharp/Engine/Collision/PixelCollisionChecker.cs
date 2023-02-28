@@ -1,5 +1,4 @@
-﻿using System.Windows.Media;
-using XSharp.Engine.Entities;
+﻿using XSharp.Engine.Entities;
 using XSharp.Engine.World;
 using XSharp.Math;
 using XSharp.Math.Geometry;

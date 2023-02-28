@@ -97,7 +97,7 @@ namespace XSharp.Engine.Entities
             get
             {
                 if (!MultiAnimation)
-                    return CurrentAnimation != null ? CurrentAnimation.DrawBox : Origin + Box.EMPTY_BOX;
+                    return CurrentAnimation != null ? CurrentAnimation.DrawBox : IntegerOrigin + Box.EMPTY_BOX;
 
                 Box result = Box.EMPTY_BOX;
                 foreach (var animation in animations)
@@ -904,7 +904,7 @@ namespace XSharp.Engine.Entities
 
         protected virtual SpriteCollider CreateSpriteCollider()
         {
-            return new SpriteCollider(this, Hitbox, GetHeadHeight(), GetLegsHeight(), IsUsingCollisionPlacements(), false, true);
+            return new SpriteCollider(this, Hitbox, 0, 0, IsUsingCollisionPlacements(), false, true);
         }
 
         protected internal virtual void CreateResources()

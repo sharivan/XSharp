@@ -49,7 +49,7 @@ namespace XSharp.Engine.Collision
             return dir.X.Abs > dir.Y.Abs ? GetStepVectorHorizontal(dir, stepSize) : GetStepVectorVertical(dir, stepSize);
         }
 
-        public static bool HasIntersection(Vector v, Box box, BoxSide include = BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER)
+        public static bool HasIntersection(Vector v, Box box, BoxSide include = BoxSide.LEFT_TOP | BoxSide.INNER)
         {
             return box.Contains(v, include);
         }
