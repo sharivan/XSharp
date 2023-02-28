@@ -159,7 +159,7 @@ namespace XSharp.Math.Geometry
             return Vector.NULL_VECTOR;
         }
 
-        public bool Contains(Vector v, RightTriangleSide include)
+        public bool Contains(Vector v, RightTriangleSide include = RightTriangleSide.ALL)
         {
             if (!include.HasFlag(RightTriangleSide.INNER))
                 return include.HasFlag(RightTriangleSide.HCATHETUS) && HCathetusLine.Contains(v)

@@ -1,6 +1,6 @@
 ﻿using System;
-using XSharp.Math.Geometry;
 using XSharp.Math;
+using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Collision
 {

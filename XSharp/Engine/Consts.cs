@@ -28,8 +28,8 @@ namespace XSharp.Engine
 
         // Directions
 
-        public static readonly FixedSingle STEP_SIZE = 1;
-        public static readonly FixedSingle QUERY_MAX_DISTANCE = TILE_SIZE * 0.5;
+        public static readonly FixedSingle STEP_SIZE = 1; // Recommended step size is 1 (one pixel). This is used to do the fine collision checking, original games do it at pixel level, its not needed to do it at sub-pixel level.
+        public static readonly FixedSingle QUERY_MAX_DISTANCE = 1;
         public static readonly Vector STEP_LEFT_VECTOR = STEP_SIZE * Vector.LEFT_VECTOR;
         public static readonly Vector STEP_UP_VECTOR = STEP_SIZE * Vector.UP_VECTOR;
         public static readonly Vector STEP_RIGHT_VECTOR = STEP_SIZE * Vector.RIGHT_VECTOR;
@@ -278,20 +278,18 @@ namespace XSharp.Engine
         public const bool DEBUG_SHOW_TRIGGERS = false;
         public const bool DEBUG_SHOW_CAMERA_TRIGGER_EXTENSIONS = false;
 
-        public static readonly Color HITBOX_COLOR = Color.FromRgba(0x80ff0000);
-        public static readonly Color HITBOX_BORDER_COLOR = Color.Blue;
+        public static readonly Color HITBOX_COLOR = Color.FromRgba(0x8000ff00);
+        public static readonly Color HITBOX_BORDER_COLOR = Color.Green;
         public static readonly Color DEAD_HITBOX_COLOR = Color.FromRgba(0x800000ff);
         public static readonly Color DEAD_HITBOX_BORDER_COLOR = Color.Red;
-        public static readonly Color DEAD_RESPAWNABLE_HITBOX_COLOR = Color.FromRgba(0x8000ffff);
-        public static readonly Color DEAD_RESPAWNABLE_HITBOX_BORDER_COLOR = Color.Yellow;
+        public static readonly Color DEAD_RESPAWNABLE_HITBOX_COLOR = Color.FromRgba(0x80ff0000);
+        public static readonly Color DEAD_RESPAWNABLE_HITBOX_BORDER_COLOR = Color.Blue;
         public static readonly Color BOUNDING_BOX_COLOR = Color.FromRgba(0x80ff0000);
         public static readonly Color BOUNDING_BOX_BORDER_COLOR = Color.Red;
-        public static readonly Color HEAD_COLLIDER_COLOR = Color.FromRgba(0x800000ff);
-        public static readonly Color HEAD_COLLIDER_BORDER_COLOR = Color.Red;
-        public static readonly Color CHEST_COLLIDER_COLOR = Color.FromRgba(0x8000ffff);
-        public static readonly Color CHEST_COLLIDER_BORDER_COLOR = Color.Yellow;
-        public static readonly Color LEGS_COLLIDER_COLOR = Color.FromRgba(0x8000ff00);
-        public static readonly Color LEGS_COLLIDER_BORDER_COLOR = Color.Green;
+        public static readonly Color DOWN_COLLIDER_COLOR = Color.Green;
+        public static readonly Color UP_COLLIDER_COLOR = Color.Blue;
+        public static readonly Color LEFT_COLLIDER_COLOR = Color.Red;
+        public static readonly Color RIGHT_COLLIDER_COLOR = Color.Yellow;
         public static readonly Color TRIGGER_BORDER_BOX_COLOR = Color.Green;
         public static readonly Color TRIGGER_BOX_COLOR = Color.FromRgba(0x8000ff00);
         public static readonly Color CHECKPOINT_TRIGGER_BORDER_BOX_COLOR = Color.LightSeaGreen;

@@ -277,6 +277,21 @@ namespace XSharp.Math.Geometry
             return new(X.Ceil(), Y.Ceil());
         }
 
+        public Vector Truncate()
+        {
+            return new(X.IntValue, Y.IntValue);
+        }
+
+        public Vector TruncateX()
+        {
+            return new(X.IntValue, Y);
+        }
+
+        public Vector TruncateY()
+        {
+            return new(X, Y.IntValue);
+        }
+
         public Vector RoundToFloor()
         {
             return new(X.Floor(), Y.Floor());
@@ -302,9 +317,9 @@ namespace XSharp.Math.Geometry
             return new(X, Y.Floor());
         }
 
-        public Vector Round()
+        public Vector Round(RoundMode roundXMode = RoundMode.FLOOR, RoundMode roundYMode = RoundMode.FLOOR)
         {
-            return new(X.Round(), Y.Round());
+            return (X.Round(roundXMode), Y.Round(roundYMode));
         }
 
         public Vector RoundX()
@@ -312,9 +327,19 @@ namespace XSharp.Math.Geometry
             return new(X.Round(), Y);
         }
 
+        public Vector RoundX(RoundMode mode)
+        {
+            return (X.Round(mode), Y);
+        }
+
         public Vector RoundY()
         {
             return new(X, Y.Round());
+        }
+
+        public Vector RoundY(RoundMode mode)
+        {
+            return (X, Y.Round(mode));
         }
 
         /// <summary>

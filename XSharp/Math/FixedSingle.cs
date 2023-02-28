@@ -66,11 +66,21 @@ namespace XSharp.Math
             get;
         }
 
-        public int IntValue => RawValue >> FIXED_BITS_COUNT;
+        public int IntValue
+        {
+            get
+            {
+                int result = RawValue >> FIXED_BITS_COUNT;
+                if (RawValue < 0)
+                    result++;
+
+                return result;
+            }
+        }
 
         public uint RawFracPart => (uint) (RawValue & FRAC_PART_MASK);
 
-        public FixedSingle FracPart => new(RawValue & FRAC_PART_MASK);
+        public FixedSingle FracPart => this - IntValue;
 
         public float FloatValue => (float) RawValue / FIXED_DIVISOR;
 
@@ -151,6 +161,18 @@ namespace XSharp.Math
             return Signal >= 0
                 ? RawFracPart > 1 << (FIXED_BITS_COUNT - 1) ? intPart + 1 : intPart
                 : RawFracPart > 1 << (FIXED_BITS_COUNT - 1) ? intPart - 1 : intPart;
+        }
+
+        public FixedSingle Round(RoundMode mode)
+        {
+            return mode switch
+            {
+                RoundMode.FLOOR => Floor(),
+                RoundMode.CEIL => Ceil(),
+                RoundMode.TRUNCATE => (int) this,
+                RoundMode.NEAREST => Round(),
+                _ => this
+            };
         }
 
         public FixedSingle TruncFracPart(int bits = 8)

@@ -62,13 +62,23 @@ namespace XSharp.Math
             get;
         }
 
-        public int IntValue => (int) (RawValue >> FIXED_BITS_COUNT);
+        public int IntValue => (int) LongValue;
 
-        public long LongValue => RawValue >> FIXED_BITS_COUNT;
+        public long LongValue
+        {
+            get
+            {
+                long result = RawValue >> FIXED_BITS_COUNT;
+                if (RawValue < 0)
+                    result++;
+
+                return result;
+            }
+        }
 
         public long RawFracPart => RawValue & FRAC_PART_MASK;
 
-        public FixedDouble FracPart => new(RawValue & FRAC_PART_MASK);
+        public FixedDouble FracPart => this - LongValue;
 
         public float FloatValue => RawValue / (float) FIXED_DIVISOR;
 

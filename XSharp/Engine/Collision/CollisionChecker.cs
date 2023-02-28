@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using XSharp.Engine.Entities;
-using XSharp.Math.Geometry;
 using XSharp.Math;
-
+using XSharp.Math.Geometry;
 using MMXWorld = XSharp.Engine.World.World;
 
 namespace XSharp.Engine.Collision

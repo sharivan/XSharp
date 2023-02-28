@@ -26,7 +26,7 @@ namespace XSharp.Engine
             set;
         }
 
-        public Vector DrawOrigin => Sprite.Origin + Offset;
+        public Vector DrawOrigin => Sprite.IntegerOrigin + Offset;
 
         public MMXBox DrawBox
         {

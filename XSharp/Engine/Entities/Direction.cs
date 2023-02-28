@@ -1,4 +1,5 @@
 ﻿using System;
+using XSharp.Math.Geometry;
 
 namespace XSharp.Engine
 {
@@ -37,6 +38,11 @@ namespace XSharp.Engine
                 return Direction.UP;
 
             return result;
+        }
+
+        public static Direction GetDirection(this Vector v)
+        {
+            return (v.X > 0 ? Direction.RIGHT : v.X < 0 ? Direction.LEFT : 0) | (v.Y > 0 ? Direction.DOWN : v.Y < 0 ? Direction.UP : 0);
         }
     }
 }

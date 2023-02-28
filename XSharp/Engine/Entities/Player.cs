@@ -2,7 +2,6 @@
 using System.IO;
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Effects;
-using XSharp.Engine.World;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 using static XSharp.Engine.Consts;
@@ -970,7 +969,7 @@ namespace XSharp.Engine.Entities
                                         Velocity = Vector.NULL_VECTOR;
 
                                         Box collisionBox = CollisionBox;
-                                        Collider collider = WorldCollider;
+                                        SpriteCollider collider = WorldCollider;
                                         collider.AdjustOnTheLadder();
                                         Vector delta = collider.Box.Origin - collisionBox.Origin;
                                         Origin += delta;
@@ -985,7 +984,7 @@ namespace XSharp.Engine.Entities
                                 {
                                     if (!Shooting)
                                     {
-                                        Collider collider = WorldCollider;
+                                        SpriteCollider collider = WorldCollider;
                                         if (collider.Landed)
                                         {
                                             if (!Standing)
@@ -1021,7 +1020,7 @@ namespace XSharp.Engine.Entities
                                     Velocity = Vector.NULL_VECTOR;
 
                                     Box collisionBox = CollisionBox;
-                                    Collider collider = WorldCollider;
+                                    SpriteCollider collider = WorldCollider;
                                     collider.AdjustOnTheLadder();
                                     Vector delta = collider.Box.Origin - collisionBox.Origin;
                                     Origin += delta;
@@ -1096,8 +1095,8 @@ namespace XSharp.Engine.Entities
 
                         if (PressedJump)
                         {
-                            Collider worldCollider = WorldCollider;
-                            Collider spriteCollider = SpriteCollider;
+                            SpriteCollider worldCollider = WorldCollider;
+                            SpriteCollider spriteCollider = SpriteCollider;
                             if (worldCollider.Landed || spriteCollider.Landed || (worldCollider.TouchingWaterSurface || spriteCollider.TouchingWaterSurface) && !CanWallJump)
                             {
                                 bool hspeedNull = false;

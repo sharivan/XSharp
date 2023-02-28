@@ -126,6 +126,103 @@ namespace XSharp.Math.Geometry
         /// </summary>
         public static readonly Box UNIVERSE_BOX = new(Vector.NULL_VECTOR, new Vector(FixedSingle.MIN_VALUE, FixedSingle.MIN_VALUE), new Vector(FixedSingle.MAX_VALUE, FixedSingle.MAX_VALUE));
 
+        public GeometryType Type => type;
+
+        /// <summary>
+        /// Origem do retângulo
+        /// </summary>
+        public Vector Origin
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Mínimos relativos
+        /// </summary>
+        public Vector Mins
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Máximos relativos
+        /// </summary>
+        public Vector Maxs
+        {
+            get;
+        }
+
+        public FixedSingle X => Origin.X;
+
+        public FixedSingle Y => Origin.Y;
+
+        public FixedSingle Left => FixedSingle.Min(Origin.X + Mins.X, Origin.X + Maxs.X);
+
+        public FixedSingle Top => FixedSingle.Min(Origin.Y + Mins.Y, Origin.Y + Maxs.Y);
+
+        public FixedSingle Right => FixedSingle.Max(Origin.X + Mins.X, Origin.X + Maxs.X);
+
+        public FixedSingle Bottom => FixedSingle.Max(Origin.Y + Mins.Y, Origin.Y + Maxs.Y);
+
+        public LineSegment LeftSegment => new(LeftTop, LeftBottom);
+
+        public LineSegment TopSegment => new(LeftTop, RightTop);
+
+        public LineSegment RightSegment => new(RightTop, RightBottom);
+
+        public LineSegment BottomSegment => new(LeftBottom, RightBottom);
+
+        /// <summary>
+        /// Extremo superior esquerdo do retângulo (ou mínimos absolutos)
+        /// </summary>
+        public Vector LeftTop => (Left, Top);
+
+        public Vector LeftMiddle => (Left, (Top + Bottom) * FixedSingle.HALF);
+
+        public Vector LeftBottom => (Left, Bottom);
+
+        public Vector RightTop => (Right, Top);
+
+        public Vector RightMiddle => (Right, (Top + Bottom) * FixedSingle.HALF);
+
+        public Vector MiddleTop => ((Left + Right) * FixedSingle.HALF, Top);
+
+        public Vector MiddleBottom => ((Left + Right) * FixedSingle.HALF, Bottom);
+
+        /// <summary>
+        /// Extremo inferior direito do retângulo (ou máximos absolutos)
+        /// </summary>
+        public Vector RightBottom => (Right, Bottom);
+
+        public Vector Center => Origin + (Mins + Maxs) * FixedSingle.HALF;
+
+        public Vector WidthVector => (Width, 0);
+
+        public Vector HeightVector => (0, Height);
+
+        /// <summary>
+        /// Vetor correspondente ao tamanho do retângulo contendo sua largura (width) na coordenada x e sua altura (height) na coordenada y
+        /// </summary>
+        public Vector DiagonalVector => (Width, Height);
+
+        /// <summary>
+        /// Largura (base) do retângulo
+        /// </summary>
+        public FixedSingle Width => (Maxs.X - Mins.X).Abs;
+
+        /// <summary>
+        /// Altura do retângulo
+        /// </summary>
+        public FixedSingle Height => (Maxs.Y - Mins.Y).Abs;
+
+        public FixedSingle Length => FixedSingle.TWO * (Width + Height);
+
+        /// <summary>
+        /// Área do retângulo
+        /// </summary>
+        /// <returns></returns>
+        public FixedDouble Area => (FixedDouble) Width * (FixedDouble) Height;
+
         /// <summary>
         /// Cria um retângulo vazio com uma determinada origem
         /// </summary>
@@ -227,10 +324,13 @@ namespace XSharp.Math.Geometry
         public Box Truncate()
         {
             Vector mins = Origin + Mins;
-            mins = (mins.X.Floor(), mins.Y.Floor());
             Vector maxs = Origin + Maxs;
-            maxs = (maxs.X.Floor(), maxs.Y.Floor());
-            return (mins, Vector.NULL_VECTOR, maxs - mins);
+            return (mins.RoundToFloor(), Vector.NULL_VECTOR, (maxs - mins).RoundToFloor());
+        }
+
+        public Box TruncateOrigin()
+        {
+            return (Origin.Truncate(), Mins, Maxs);
         }
 
         public override int GetHashCode()
@@ -250,95 +350,6 @@ namespace XSharp.Math.Geometry
         {
             return "[" + Origin + " : " + Mins + " : " + Maxs + "]";
         }
-
-        public GeometryType Type => type;
-
-        /// <summary>
-        /// Origem do retângulo
-        /// </summary>
-        public Vector Origin
-        {
-            get;
-        }
-
-        /// <summary>
-        /// Mínimos relativos
-        /// </summary>
-        public Vector Mins
-        {
-            get;
-        }
-
-        /// <summary>
-        /// Máximos relativos
-        /// </summary>
-        public Vector Maxs
-        {
-            get;
-        }
-
-        public FixedSingle X => Origin.X;
-
-        public FixedSingle Y => Origin.Y;
-
-        public FixedSingle Left => FixedSingle.Min(Origin.X + Mins.X, Origin.X + Maxs.X);
-
-        public FixedSingle Top => FixedSingle.Min(Origin.Y + Mins.Y, Origin.Y + Maxs.Y);
-
-        public FixedSingle Right => FixedSingle.Max(Origin.X + Mins.X, Origin.X + Maxs.X);
-
-        public FixedSingle Bottom => FixedSingle.Max(Origin.Y + Mins.Y, Origin.Y + Maxs.Y);
-
-        public LineSegment LeftSegment => new(LeftTop, LeftBottom);
-
-        public LineSegment TopSegment => new(LeftTop, RightTop);
-
-        public LineSegment RightSegment => new(RightTop, RightBottom);
-
-        public LineSegment BottomSegment => new(LeftBottom, RightBottom);
-
-        /// <summary>
-        /// Extremo superior esquerdo do retângulo (ou mínimos absolutos)
-        /// </summary>
-        public Vector LeftTop => (Left, Top);
-
-        public Vector LeftMiddle => (Left, (Top + Bottom) * FixedSingle.HALF);
-
-        public Vector LeftBottom => (Left, Bottom);
-
-        public Vector RightTop => (Right, Top);
-
-        public Vector RightMiddle => (Right, (Top + Bottom) * FixedSingle.HALF);
-
-        public Vector MiddleTop => ((Left + Right) * FixedSingle.HALF, Top);
-
-        public Vector MiddleBottom => ((Left + Right) * FixedSingle.HALF, Bottom);
-
-        /// <summary>
-        /// Extremo inferior direito do retângulo (ou máximos absolutos)
-        /// </summary>
-        public Vector RightBottom => (Right, Bottom);
-
-        public Vector Center => Origin + (Mins + Maxs) * FixedSingle.HALF;
-
-        public Vector WidthVector => (Width, 0);
-
-        public Vector HeightVector => (0, Height);
-
-        /// <summary>
-        /// Vetor correspondente ao tamanho do retângulo contendo sua largura (width) na coordenada x e sua altura (height) na coordenada y
-        /// </summary>
-        public Vector DiagonalVector => (Width, Height);
-
-        /// <summary>
-        /// Largura (base) do retângulo
-        /// </summary>
-        public FixedSingle Width => (Maxs.X - Mins.X).Abs;
-
-        /// <summary>
-        /// Altura do retângulo
-        /// </summary>
-        public FixedSingle Height => (Maxs.Y - Mins.Y).Abs;
 
         public Box LeftTopOrigin()
         {
@@ -386,9 +397,9 @@ namespace XSharp.Math.Geometry
             return (Origin.RoundYToFloor(), Mins, Maxs);
         }
 
-        public Box RoundOrigin()
+        public Box RoundOrigin(RoundMode roundXMode = RoundMode.FLOOR, RoundMode roundYMode = RoundMode.FLOOR)
         {
-            return (Origin.Round(), Mins, Maxs);
+            return (Origin.Round(roundXMode, roundYMode), Mins, Maxs);
         }
 
         public Box RoundOriginX()
@@ -396,16 +407,20 @@ namespace XSharp.Math.Geometry
             return (Origin.RoundX(), Mins, Maxs);
         }
 
+        public Box RoundOriginX(RoundMode mode)
+        {
+            return (Origin.RoundX(mode), Mins, Maxs);
+        }
+
         public Box RoundOriginY()
         {
             return (Origin.RoundY(), Mins, Maxs);
         }
 
-        /// <summary>
-        /// Área do retângulo
-        /// </summary>
-        /// <returns></returns>
-        public FixedDouble Area => (FixedDouble) Width * (FixedDouble) Height;
+        public Box RoundOriginY(RoundMode mode)
+        {
+            return (Origin.RoundY(mode), Mins, Maxs);
+        }
 
         /// <summary>
         /// Escala o retângulo para a esquerda
@@ -830,16 +845,16 @@ namespace XSharp.Math.Geometry
 
         public bool Contains(Vector point)
         {
-            return Contains(point, BoxSide.LEFT | BoxSide.TOP | BoxSide.INNER);
+            return Contains(point, BoxSide.LEFT_TOP | BoxSide.INNER);
         }
 
         public bool HasIntersectionWith(LineSegment line)
         {
-            var type = Intersection(line, out _);
+            var type = Intersection(line, out line);
             return type != GeometryType.EMPTY;
         }
 
-        public bool IsOverlaping(Box other, BoxSide includeSides = BoxSide.LEFT | BoxSide.TOP, BoxSide includeOtherBoxSides = BoxSide.LEFT | BoxSide.TOP)
+        public bool IsOverlaping(Box other, BoxSide includeSides = BoxSide.LEFT_TOP | BoxSide.INNER, BoxSide includeOtherBoxSides = BoxSide.LEFT_TOP | BoxSide.INNER)
         {
             var m1 = Origin + Mins;
             var M1 = Origin + Maxs;
@@ -871,8 +886,6 @@ namespace XSharp.Math.Geometry
                     _ => throw new NotImplementedException()
                 };
         }
-
-        public FixedSingle Length => FixedSingle.TWO * (Width + Height);
 
         /// <summary>
         /// Translata um retângulo na direção de um vetor

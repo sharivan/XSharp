@@ -145,11 +145,6 @@ namespace XSharp.Math.Geometry
             return A1 * B2 == A2 * B1;
         }
 
-        /// <summary>
-        /// Obtém a intersecção entre dois segmentos de reta
-        /// </summary>
-        /// <param name="s">Segmento de reta a ser testado</param>
-        /// <returns>A intersecção entre os dois segmentos caso ela exista, ou retorna conjunto vazio caso contrário</returns>
         public GeometryType Intersection(LineSegment s, out LineSegment result)
         {
             Vector v;

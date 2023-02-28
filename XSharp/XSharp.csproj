@@ -95,7 +95,9 @@
   <ItemGroup>
     <Compile Include="Engine\BitSet.cs" />
     <Compile Include="Engine\Collision\CollisionChecker.cs" />
+    <Compile Include="Engine\Collision\LanderCollisionChecker.cs" />
     <Compile Include="Engine\Collision\Parallelogram.cs" />
+    <Compile Include="Engine\Collision\PixelCollisionChecker.cs" />
     <Compile Include="Engine\Entities\Animation.cs" />
     <Compile Include="Engine\Entities\BoxKind.cs" />
     <Compile Include="Engine\Entities\Checkpoint.cs" />
@@ -158,11 +160,10 @@
     <Compile Include="Engine\Graphics\Tilemap.cs" />
     <Compile Include="Engine\Graphics\Tileset.cs" />
     <Compile Include="Engine\Sound\SoundPlayer.cs" />
-    <Compile Include="Engine\Collision\Collider.cs" />
+    <Compile Include="Engine\Collision\SpriteCollider.cs" />
     <Compile Include="Engine\XSharpTupleExtensions.cs" />
     <Compile Include="Engine\World\Block.cs" />
     <Compile Include="Engine\Entities\Enemies\Bosses\Boss.cs" />
-    <Compile Include="Engine\Collision\WorldCollider.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterCharged.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterLemon.cs" />
     <Compile Include="Engine\Entities\Weapons\BusterSemiCharged.cs" />
@@ -180,7 +181,7 @@
     <Compile Include="Engine\World\Map.cs" />
     <Compile Include="Engine\Entities\Weapons\Weapon.cs" />
     <Compile Include="Engine\Entities\Entity.cs" />
-    <Compile Include="Engine\World\Partition.cs" />
+    <Compile Include="Engine\Partition.cs" />
     <Compile Include="Engine\Entities\Player.cs" />
     <Compile Include="Engine\World\Scene.cs" />
     <Compile Include="Engine\Entities\Camera.cs" />
@@ -199,6 +200,7 @@
     <Compile Include="Math\Geometry\RightTriangle.cs" />
     <Compile Include="Math\Geometry\Vector.cs" />
     <Compile Include="Math\Interval.cs" />
+    <Compile Include="Math\RoundMode.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Engine\Entities\HUD\HUD.cs" />
