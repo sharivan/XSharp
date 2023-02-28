@@ -2711,12 +2711,14 @@ namespace XSharp.Engine
                     break;
                 }
 
-            partition.Insert(entity);
+            if (entity.CheckTouchingEntities)
+                partition.Insert(entity);
         }
 
         private void RemoveEntity(Entity entity)
         {
-            partition.Remove(entity);
+            if (entity.CheckTouchingEntities)
+                partition.Remove(entity);
 
             int index = entity.Index;
 
@@ -2783,11 +2785,14 @@ namespace XSharp.Engine
 
         private void OnSpawningBlackScreenComplete()
         {
+            foreach (var (player, _, _) in soundChannels)
+                player.Stop();
+
             FadingOST = false;
             FadingOSTLevel = 0;
             soundChannels[3].player.Volume = 0.5f;
 
-            if (ENABLE_OST && romLoaded && mmx.Type == 0 && mmx.Level == 8)
+            if (romLoaded && mmx.Type == 0 && mmx.Level == 8)
                 PlayOST(18, 83, 50.152);
 
             FadingSettings.Reset();
@@ -5057,6 +5062,9 @@ namespace XSharp.Engine
 
         public void PlaySound(int channel, int index, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
         {
+            if (!ENABLE_OST && channel == 3)
+                return;
+
             var stream = soundStreams[index];
             var (player, ss, initialized) = soundChannels[channel];
 
@@ -5170,8 +5178,7 @@ namespace XSharp.Engine
             FadingSettings.Reset();
             FadingSettings.Start(Color.Black, 28, FadingFlags.COLORS, FadingFlags.COLORS, LoadLevel);
 
-            if (ENABLE_OST)
-                StartFadingOST(0, 60, () => soundChannels[3].player.Stop());
+            StartFadingOST(0, 60, () => soundChannels[3].player.Stop());
         }
 
         internal void StartDyingEffect()

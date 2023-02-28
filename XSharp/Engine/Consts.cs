@@ -29,7 +29,7 @@ namespace XSharp.Engine
         // Directions
 
         public static readonly FixedSingle STEP_SIZE = 1; // Recommended step size is 1 (one pixel). This is used to do the fine collision checking, original games do it at pixel level, its not needed to do it at sub-pixel level.
-        public static readonly FixedSingle QUERY_MAX_DISTANCE = 1;
+        public static readonly FixedSingle QUERY_MAX_DISTANCE = TILE_SIZE * 0.5;
         public static readonly Vector STEP_LEFT_VECTOR = STEP_SIZE * Vector.LEFT_VECTOR;
         public static readonly Vector STEP_UP_VECTOR = STEP_SIZE * Vector.UP_VECTOR;
         public static readonly Vector STEP_RIGHT_VECTOR = STEP_SIZE * Vector.RIGHT_VECTOR;

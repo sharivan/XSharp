@@ -105,7 +105,13 @@ namespace XSharp.Engine.Entities.Enemies
 
         private void OnEscaping(EntityState state, long frameCounter)
         {
-            Velocity = BAT_ESCAPE_SPEED * Vector.UP_VECTOR;
+            if (BlockedUp)
+            {
+                Velocity = Vector.NULL_VECTOR;
+                State = BatState.IDLE;
+            }
+            else
+                Velocity = BAT_ESCAPE_SPEED * Vector.UP_VECTOR;
         }
 
         protected override bool PreThink()

@@ -30,6 +30,9 @@ namespace XSharp.Engine.Entities
             public bool MoveNext()
             {
                 index = list.TryGetNextIndexNotNull(index + 1);
+                while (Current == null && index >= 0)
+                    index = list.TryGetNextIndexNotNull(index + 1);
+
                 return index >= 0;
             }
 

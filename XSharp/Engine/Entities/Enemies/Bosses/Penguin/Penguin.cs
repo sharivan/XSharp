@@ -171,15 +171,18 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             Velocity = Vector.NULL_VECTOR;
         }
 
+        private void FlipSpeedAndDirection()
+        {
+            Velocity = -Velocity;
+            Direction = Direction.Oposite();
+        }
+
         protected override void OnBlockedLeft()
         {
             base.OnBlockedLeft();
 
             if (State == PenguinState.SLIDING && Direction == Direction.LEFT)
-            {
-                Velocity = (Velocity.X.Abs, 0);
-                Direction = Direction.RIGHT;
-            }
+                FlipSpeedAndDirection();
         }
 
         protected override void OnBlockedRight()
@@ -187,10 +190,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             base.OnBlockedRight();
 
             if (State == PenguinState.SLIDING && Direction == Direction.RIGHT)
-            {
-                Velocity = (-Velocity.X.Abs, 0);
-                Direction = Direction.LEFT;
-            }
+                FlipSpeedAndDirection();
         }
 
         protected override void OnBlockedUp()
@@ -505,7 +505,20 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             {
                 case "PreSliding":
                     SetCurrentAnimationByName("Sliding");
-                    Velocity = PENGUIN_SLIDE_INITIAL_SPEED * (Direction == DefaultDirection ? Vector.LEFT_VECTOR : Vector.RIGHT_VECTOR);
+
+                    if (Direction == DefaultDirection)
+                    {
+                        Velocity = PENGUIN_SLIDE_INITIAL_SPEED * Vector.LEFT_VECTOR;
+                        if (WorldCollider.BlockedLeft)
+                            FlipSpeedAndDirection();
+                    }
+                    else
+                    {
+                        Velocity = PENGUIN_SLIDE_INITIAL_SPEED * Vector.RIGHT_VECTOR;
+                        if (WorldCollider.BlockedRight)
+                            FlipSpeedAndDirection();
+                    }
+
                     break;
 
                 case "PreJumping":

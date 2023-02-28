@@ -164,19 +164,23 @@ namespace XSharp.Engine.Collision
 
         public bool TryMoveContactFloor(FixedSingle maxDistance)
         {
+            var lastBox = TestBox;
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
                 if (ComputeLandedState().CanBlockTheMove(Direction.DOWN))
                     return true;
 
+            TestBox = lastBox;
             return false;
         }
 
         public bool TryMoveContactSlope(FixedSingle maxDistance)
         {
+            var lastBox = TestBox;
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
                 if (ComputeLandedState().HasFlag(CollisionFlags.SLOPE))
                     return true;
 
+            TestBox = lastBox;
             return false;
         }
 

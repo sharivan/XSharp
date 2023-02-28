@@ -185,8 +185,14 @@ namespace XSharp.Engine.Entities
             get => checkTouchingEntities;
             set
             {
+                if (value && !checkTouchingEntities)
+                    Engine.partition.Insert(this);
+                else if (!value && checkTouchingEntities)
+                    Engine.partition.Remove(this);
+
                 checkTouchingEntities = value;
-                UpdatePartition();
+
+                UpdateLastBoxes();
             }
         }
 
@@ -735,7 +741,8 @@ namespace XSharp.Engine.Entities
             if (Updating || Index <= 0)
                 return;
 
-            Engine.partition.Update(this, force);
+            if (CheckTouchingEntities)
+                Engine.partition.Update(this, force);
 
             UpdateLastBoxes();
         }

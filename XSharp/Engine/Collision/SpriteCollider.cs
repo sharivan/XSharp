@@ -384,40 +384,50 @@ namespace XSharp.Engine.Collision
 
         public void MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            var lastOrigin = innerCollisionChecker.TestBox.Origin;
+            var lastOrigin = downCollisionChecker.TestBox.Origin;
 
-            innerCollisionChecker.IgnoreFlags = ignore;
-            innerCollisionChecker.MoveContactFloor(maxDistance);
+            downCollisionChecker.IgnoreFlags = ignore;
+            downCollisionChecker.MoveContactFloor(maxDistance);
 
-            var delta = innerCollisionChecker.TestBox.Origin - lastOrigin;
+            var delta = downCollisionChecker.TestBox.Origin - lastOrigin;
             if (delta != Vector.NULL_VECTOR)
                 Box += delta;
         }
 
         public void TryMoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            var lastOrigin = innerCollisionChecker.TestBox.Origin;
+            var lastOrigin = downCollisionChecker.TestBox.Origin;
 
-            innerCollisionChecker.IgnoreFlags = ignore;
-            if (innerCollisionChecker.TryMoveContactFloor(maxDistance))
+            downCollisionChecker.IgnoreFlags = ignore;
+            if (downCollisionChecker.TryMoveContactFloor(maxDistance))
             {
-                var delta = innerCollisionChecker.TestBox.Origin - lastOrigin;
+                var delta = downCollisionChecker.TestBox.Origin - lastOrigin;
                 if (delta != Vector.NULL_VECTOR)
                     Box += delta;
             }
         }
 
+        public void TryMoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            TryMoveContactFloor(QUERY_MAX_DISTANCE, ignore);
+        }
+
         public void TryMoveContactSlope(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            var lastOrigin = innerCollisionChecker.TestBox.Origin;
+            var lastOrigin = downCollisionChecker.TestBox.Origin;
 
-            innerCollisionChecker.IgnoreFlags = ignore;
-            if (innerCollisionChecker.TryMoveContactSlope(maxDistance))
+            downCollisionChecker.IgnoreFlags = ignore;
+            if (downCollisionChecker.TryMoveContactSlope(maxDistance))
             {
-                var delta = innerCollisionChecker.TestBox.Origin - lastOrigin;
+                var delta = downCollisionChecker.TestBox.Origin - lastOrigin;
                 if (delta != Vector.NULL_VECTOR)
                     Box += delta;
             }
+        }
+
+        public void TryMoveContactSlope(CollisionFlags ignore = CollisionFlags.NONE)
+        {
+            TryMoveContactSlope(QUERY_MAX_DISTANCE, ignore);
         }
 
         public void AdjustOnTheFloor(CollisionFlags ignore = CollisionFlags.NONE)
