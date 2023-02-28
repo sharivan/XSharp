@@ -3686,7 +3686,7 @@ namespace XSharp.Engine
 
         public void DrawRectangle(RectangleF rect, float borderWith, Color color)
         {
-            rect = new RectangleF(rect.X * 4, rect.Y * 4, rect.Width * 4, rect.Height * 4);
+            rect = new RectangleF(rect.X * 4, rect.Y * 4 + 1, rect.Width * 4, rect.Height * 4);
 
             line.Width = borderWith;
 
@@ -3706,7 +3706,7 @@ namespace XSharp.Engine
             float y = 4 * rect.Top;
 
             var matScaling = Matrix.Scaling(4 * rect.Width, 4 * rect.Height, 1);
-            var matTranslation = Matrix.Translation(x, y, 0);
+            var matTranslation = Matrix.Translation(x, y + 1, 0);
             Matrix matTransform = matScaling * matTranslation;
 
             sprite.Begin(SpriteFlags.AlphaBlend);
@@ -4405,7 +4405,7 @@ namespace XSharp.Engine
 
         public Sprite AddObjectEvent(ushort id, ushort subid, Vector origin)
         {
-            return !ENABLE_ENEMIES
+            return !ENABLE_ENEMIES && id != 0x2
                 ? null
                 : id switch
                 {

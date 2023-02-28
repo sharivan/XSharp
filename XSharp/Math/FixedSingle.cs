@@ -71,7 +71,7 @@ namespace XSharp.Math
             get
             {
                 int result = RawValue >> FIXED_BITS_COUNT;
-                if (RawValue < 0)
+                if (result < 0 && RawFracPart > 0)
                     result++;
 
                 return result;

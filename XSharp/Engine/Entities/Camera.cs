@@ -373,6 +373,7 @@ namespace XSharp.Engine
             CheckTouchingWithDeadEntities = true;
         }
 
+        // TODO : Smooth movement is not working right for some situations. Please fix it!
         protected internal override void OnFrame()
         {
             base.OnFrame();

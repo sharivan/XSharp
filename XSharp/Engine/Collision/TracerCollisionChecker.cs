@@ -18,6 +18,7 @@ namespace XSharp.Engine.Collision
         DIAGONAL = 4
     }
 
+    // TODO : This class was not fully tested yet. Please do it later.
     public class TracerCollisionChecker : CollisionChecker
     {
         private bool tracing;

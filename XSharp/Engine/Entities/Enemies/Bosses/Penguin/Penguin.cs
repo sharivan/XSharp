@@ -20,6 +20,8 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
     public class Penguin : Boss
     {
+        public static readonly bool DONT_ATTACK = false;
+
         private bool firstAttack;
         private bool hanging;
         private bool snowing;
@@ -35,7 +37,16 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         public PenguinState State
         {
             get => GetState<PenguinState>();
-            set => SetState(value);
+            set
+            {
+                if (DONT_ATTACK)
+                {
+                    if (value is PenguinState.IDLE or PenguinState.INTRODUCING or PenguinState.TAKING_DAMAGE or PenguinState.DYING)
+                        SetState(value);
+                }
+                else
+                    SetState(value);
+            }
         }
 
         public Penguin()
@@ -225,35 +236,38 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                     wasShootingIce = false;
                     iceCount = 0;
 
-                    int value = Engine.RNG.Next(5);
-                    while (State == PenguinState.IDLE)
+                    if (!DONT_ATTACK)
                     {
-                        switch (value)
+                        int value = Engine.RNG.Next(5);
+                        while (State == PenguinState.IDLE)
                         {
-                            case 0:
-                                State = PenguinState.SLIDING;
-                                break;
+                            switch (value)
+                            {
+                                case 0:
+                                    State = PenguinState.SLIDING;
+                                    break;
 
-                            case 1:
-                                State = PenguinState.SHOOTING_ICE;
-                                break;
+                                case 1:
+                                    State = PenguinState.SHOOTING_ICE;
+                                    break;
 
-                            case 2:
-                                State = PenguinState.JUMPING;
-                                break;
+                                case 2:
+                                    State = PenguinState.JUMPING;
+                                    break;
 
-                            case 3:
-                                State = PenguinState.HANGING;
-                                break;
+                                case 3:
+                                    State = PenguinState.HANGING;
+                                    break;
 
-                            case 4:
-                                if (!AllSculpturesAlive())
-                                    State = PenguinState.BLOWING;
+                                case 4:
+                                    if (!AllSculpturesAlive())
+                                        State = PenguinState.BLOWING;
 
-                                break;
+                                    break;
+                            }
+
+                            value = Engine.RNG.Next(4);
                         }
-
-                        value = Engine.RNG.Next(4);
                     }
                 }
             }

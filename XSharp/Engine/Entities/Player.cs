@@ -439,19 +439,6 @@ namespace XSharp.Engine.Entities
         {
         }
 
-        protected override void OnBlockedUp()
-        {
-            if (!CrossingBossDoor && !teleporting && !TakingDamage && !Dying && WallJumping && wallJumpFrameCounter >= 7)
-            {
-                Velocity = Vector.NULL_VECTOR;
-                WallJumping = false;
-                jumping = false;
-                SetAirStateAnimation(true);
-            }
-            else
-                Velocity = Velocity.XVector;
-        }
-
         public void SetStandState(Direction direction, int startAnimationIndex = 0)
         {
             if (LandedOnTopLadder)
@@ -478,8 +465,31 @@ namespace XSharp.Engine.Entities
                 SetAirStateAnimation();
         }
 
+        protected override void OnBlockedUp()
+        {
+            base.OnBlockedUp();
+
+            if (Velocity.Y >= 0)
+                return;
+
+            if (!CrossingBossDoor && !teleporting && !TakingDamage && !Dying && WallJumping && wallJumpFrameCounter >= 7)
+            {
+                Velocity = Vector.NULL_VECTOR;
+                WallJumping = false;
+                jumping = false;
+                SetAirStateAnimation(true);
+            }
+            else
+                Velocity = Velocity.XVector;
+        }
+
         protected override void OnBlockedLeft()
         {
+            base.OnBlockedLeft();
+
+            if (Velocity.X >= 0)
+                return;
+
             if (!CrossingBossDoor && !teleporting && !Dying)
             {
                 if (TakingDamage)
@@ -489,16 +499,16 @@ namespace XSharp.Engine.Entities
                 }
                 else if (Landed)
                     SetStandState();
-                /*else if (WallJumping && wallJumpFrameCounter >= 7)
-                {
-                    WallJumping = false;
-                    SetAirStateAnimation(true);
-                }*/
             }
         }
 
         protected override void OnBlockedRight()
         {
+            base.OnBlockedRight();
+
+            if (Velocity.X <= 0)
+                return;
+
             if (!CrossingBossDoor && !teleporting && !Dying)
             {
                 if (TakingDamage)
@@ -508,16 +518,16 @@ namespace XSharp.Engine.Entities
                 }
                 else if (Landed)
                     SetStandState();
-                /*else if (WallJumping && wallJumpFrameCounter >= 7)
-                {
-                    WallJumping = false;
-                    SetAirStateAnimation(true);
-                }*/
             }
         }
 
         protected override void OnLanded()
         {
+            base.OnLanded();
+
+            if (Velocity.Y <= 0)
+                return;
+
             WallJumping = false;
             baseHSpeed = WALKING_SPEED;
 
@@ -1419,15 +1429,15 @@ namespace XSharp.Engine.Entities
 
         private bool CanWallJumpLeft()
         {
-            var collisionBox = CollisionBox;
-            var leftWallJumpBoxDetector = new Box(collisionBox.LeftTop - (8, 0), 8, collisionBox.Height - WorldCollider.LegsHeight);
+            var collider = WorldCollider;
+            var leftWallJumpBoxDetector = new Box(collider.Box.LeftTop - (8, 0), 8, collider.Box.Height - collider.LegsHeight);
             return Engine.World.GetCollisionFlags(leftWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this).HasFlag(CollisionFlags.BLOCK);
         }
 
         private bool CanWallJumpRight()
         {
-            var collisionBox = CollisionBox;
-            var rightWallJumpBoxDetector = new Box(collisionBox.RightTop, 8, collisionBox.Height - WorldCollider.LegsHeight);
+            var collider = WorldCollider;
+            var rightWallJumpBoxDetector = new Box(collider.Box.RightTop + (1, 0), 8, collider.Box.Height - collider.LegsHeight);
             return Engine.World.GetCollisionFlags(rightWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this).HasFlag(CollisionFlags.BLOCK);
         }
 

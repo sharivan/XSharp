@@ -276,9 +276,11 @@ namespace XSharp.Engine.Collision
 
         private void UpdateColliders()
         {
+            var box = this.box.TruncateOrigin();
+
             LeftCollider = ((box.Left, box.Origin.Y), (0, box.Mins.Y + headHeight), (1, box.Maxs.Y - legsHeight));
-            UpCollider = ((box.Origin.X, box.Top), (box.Mins.X, 0), (box.Maxs.X, 1));
-            RightCollider = ((box.Right, box.Origin.Y), (-1, box.Mins.Y + headHeight), (0, box.Maxs.Y - legsHeight));
+            UpCollider = ((box.Origin.X, box.Top - 1), (box.Mins.X, 0), (box.Maxs.X, 1));
+            RightCollider = ((box.Right + 1, box.Origin.Y), (-1, box.Mins.Y + headHeight), (0, box.Maxs.Y - legsHeight));
             DownCollider = ((box.Origin.X, box.Bottom), (box.Mins.X, -1), (box.Maxs.X, 0));
 
             downCollisionChecker.Setup(DownCollider, CollisionFlags.NONE, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
@@ -288,17 +290,6 @@ namespace XSharp.Engine.Collision
             innerCollisionChecker.Setup(box, CollisionFlags.NONE, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
 
             UpdateFlags();
-        }
-
-        private void ClipFromSlope(RightTriangle slope)
-        {
-            FixedSingle h = slope.HCathetusVector.X;
-            var vclip = (FixedSingle) ((FixedDouble) slope.VCathetusVector.Y * (box.Width + STEP_SIZE) / h).Abs;
-
-            if (h > 0)
-                LeftCollider = LeftCollider.ClipBottom(vclip);
-            else
-                RightCollider = RightCollider.ClipBottom(vclip);
         }
 
         private void UpdateFlags()
@@ -320,8 +311,7 @@ namespace XSharp.Engine.Collision
 
         public void Translate(Vector delta)
         {
-            box += delta;
-            UpdateColliders();
+            Box += delta;
         }
 
         public void MoveContactSolid(Vector dir, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
@@ -382,10 +372,9 @@ namespace XSharp.Engine.Collision
             else
                 delta2 = delta1;
 
-            Vector delta = delta1.Length < delta2.Length ? delta1 : delta2;
-
-            box += delta;
-            UpdateColliders();
+            var delta = delta1.Length < delta2.Length ? delta1 : delta2;
+            if (delta != Vector.NULL_VECTOR)
+                Box += delta;
         }
 
         public void MoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
@@ -395,28 +384,39 @@ namespace XSharp.Engine.Collision
 
         public void MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
+            var lastOrigin = innerCollisionChecker.TestBox.Origin;
+
             innerCollisionChecker.IgnoreFlags = ignore;
-            box = innerCollisionChecker.MoveContactFloor(maxDistance);
-            UpdateColliders();
+            innerCollisionChecker.MoveContactFloor(maxDistance);
+
+            var delta = innerCollisionChecker.TestBox.Origin - lastOrigin;
+            if (delta != Vector.NULL_VECTOR)
+                Box += delta;
         }
 
         public void TryMoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
+            var lastOrigin = innerCollisionChecker.TestBox.Origin;
+
             innerCollisionChecker.IgnoreFlags = ignore;
             if (innerCollisionChecker.TryMoveContactFloor(maxDistance))
             {
-                box = innerCollisionChecker.TestBox;
-                UpdateColliders();
+                var delta = innerCollisionChecker.TestBox.Origin - lastOrigin;
+                if (delta != Vector.NULL_VECTOR)
+                    Box += delta;
             }
         }
 
         public void TryMoveContactSlope(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
+            var lastOrigin = innerCollisionChecker.TestBox.Origin;
+
             innerCollisionChecker.IgnoreFlags = ignore;
             if (innerCollisionChecker.TryMoveContactSlope(maxDistance))
             {
-                box = innerCollisionChecker.TestBox;
-                UpdateColliders();
+                var delta = innerCollisionChecker.TestBox.Origin - lastOrigin;
+                if (delta != Vector.NULL_VECTOR)
+                    Box += delta;
             }
         }
 
@@ -428,14 +428,13 @@ namespace XSharp.Engine.Collision
         public void AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             var lastOrigin = downCollisionChecker.TestBox.Origin;
+
             downCollisionChecker.IgnoreFlags = ignore;
             downCollisionChecker.AdjustOnTheFloor(maxDistance);
+
             var delta = downCollisionChecker.TestBox.Origin - lastOrigin;
-
             if (delta != Vector.NULL_VECTOR)
-                box += delta;
-
-            UpdateColliders();
+                Box += delta;
         }
 
         public void AdjustOnTheLadder()
@@ -448,10 +447,12 @@ namespace XSharp.Engine.Collision
                 foreach (var placement in downCollisionChecker.Placements)
                     if (placement.CollisionData == CollisionData.TOP_LADDER)
                     {
-                        Box placementBox = placement.ObstableBox;
-                        FixedSingle delta = placementBox.Left - box.Left + (MAP_SIZE - box.Width) * 0.5;
-                        box += delta * Vector.RIGHT_VECTOR;
-                        UpdateColliders();
+                        var placementBox = placement.ObstableBox;
+                        var delta = placementBox.Left - box.Left + (MAP_SIZE - box.Width) * 0.5;
+
+                        if (delta != 0)
+                            Box += delta * Vector.RIGHT_VECTOR;
+
                         return;
                     }
             }
@@ -460,10 +461,12 @@ namespace XSharp.Engine.Collision
                 foreach (var placement in upCollisionChecker.Placements)
                     if (placement.CollisionData == CollisionData.LADDER)
                     {
-                        Box placementBox = placement.ObstableBox;
-                        FixedSingle delta = placementBox.Left - box.Left + (MAP_SIZE - box.Width) * 0.5;
-                        box += delta * Vector.RIGHT_VECTOR;
-                        UpdateColliders();
+                        var placementBox = placement.ObstableBox;
+                        var delta = placementBox.Left - box.Left + (MAP_SIZE - box.Width) * 0.5;
+
+                        if (delta != 0)
+                            Box += delta * Vector.RIGHT_VECTOR;
+
                         return;
                     }
             }
