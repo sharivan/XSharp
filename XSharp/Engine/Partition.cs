@@ -332,7 +332,7 @@ namespace XSharp.Engine
 
         public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
         {
-            Vector stepVector = PixelCollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
+            Vector stepVector = CollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
             FixedSingle stepDistance = stepVector.Length;
             if (stepDistance == 0)
                 stepDistance = cellWidth;

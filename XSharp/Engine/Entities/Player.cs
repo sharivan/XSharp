@@ -547,12 +547,12 @@ namespace XSharp.Engine.Entities
 
         protected override FixedSingle GetHeadHeight()
         {
-            return 1;
+            return 8;
         }
 
         protected override FixedSingle GetLegsHeight()
         {
-            return 9;
+            return 8;
         }
 
         protected override bool IsUsingCollisionPlacements()

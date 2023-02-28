@@ -120,7 +120,7 @@ namespace XSharp.Engine
 
         // X
 
-        public const CollisionBoxType COLLISION_BOX_TYPE = CollisionBoxType.XSHARP;
+        public const CollisionBoxType COLLISION_BOX_TYPE = CollisionBoxType.X2X3;
 
         public static readonly Box HITBOX = ((0, -1), (-6, -14), (6, 14));
         public static readonly Box DASHING_HITBOX = ((0, 5), (-6, -8), (6, 8));
@@ -128,7 +128,6 @@ namespace XSharp.Engine
         {
             CollisionBoxType.X1 => ((0, -1), (-7, -17), (7, 17)),
             CollisionBoxType.X2X3 => ((0, -1), (-6, -17), (6, 17)),
-            CollisionBoxType.XSHARP => ((0, 0), (-6, -16), (6, 16)),
             _ => Box.EMPTY_BOX
         };
 
