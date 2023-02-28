@@ -1438,7 +1438,10 @@ namespace XSharp.Engine.Entities
 
             return PressingLeft && cwjl
                 ? Direction.LEFT
-                : PressingRight && cwjr ? Direction.RIGHT : cwjr ? Direction.RIGHT : cwjl ? Direction.LEFT : Direction.NONE;
+                : PressingRight && cwjr
+                ? Direction.RIGHT : cwjr
+                ? Direction.RIGHT : cwjl
+                ? Direction.LEFT : Direction.NONE;
         }
 
         private void SetAirStateAnimation(bool forceGoingUp = false)
