@@ -376,7 +376,7 @@ namespace XSharp.Engine.Entities
 
         public bool PressedSelect => !WasPressingSelect && PressingSelect;
 
-        public bool DyeByAbiss
+        public bool DeadByAbiss
         {
             get;
             private set;
@@ -581,7 +581,7 @@ namespace XSharp.Engine.Entities
             Freezed = false;
             CrossingBossDoor = false;
             CanGoOutOfCameraBounds = false;
-            DyeByAbiss = false;
+            DeadByAbiss = false;
             TakingDamageFrameCounter = 0;
 
             ResetKeys();
@@ -815,7 +815,7 @@ namespace XSharp.Engine.Entities
                 {
                     if (Origin.Y > Engine.Camera.RightBottom.Y + BLOCK_SIZE)
                     {
-                        DyeByAbiss = true;
+                        DeadByAbiss = true;
                         Die();
                         return;
                     }

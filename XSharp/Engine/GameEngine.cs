@@ -3196,7 +3196,7 @@ namespace XSharp.Engine
 
             if (DyingEffectActive)
             {
-                if (!Player.DyeByAbiss)
+                if (!Player.DeadByAbiss)
                 {
                     if (DyingEffectFrameCounter % 32 == 0)
                         CreateXDieExplosionEffect(DyingEffectFrameCounter % 64 == 0 ? 0 : System.Math.PI / 8);

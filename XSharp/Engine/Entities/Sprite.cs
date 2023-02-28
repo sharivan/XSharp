@@ -1213,6 +1213,7 @@ namespace XSharp.Engine.Entities
                 collider.AdjustOnTheFloor();
         }
 
+        // TODO : Slope collision detection inside this method must be refined and some trash code should be removed.
         private void MoveX(SpriteCollider collider, FixedSingle dx, bool gravity = true, bool followSlopes = true)
         {
             var delta = new Vector(dx, 0);
