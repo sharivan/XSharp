@@ -18,7 +18,7 @@ namespace XSharp.Engine.Collision
         {
             CollisionFlags result = CollisionFlags.NONE;
 
-            if (CheckWithWorld)                
+            if (CheckWithWorld)
             {
                 Map map = World.GetMapFrom(TestVector);
                 if (map != null)
