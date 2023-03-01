@@ -314,37 +314,39 @@ namespace XSharp.Engine.Collision
             Box += delta;
         }
 
-        public void MoveContactSolid(Vector dir, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool MoveContactSolid(Vector dir, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
         {
-            MoveContactSolid(dir, QUERY_MAX_DISTANCE, masks, ignore);
+            return MoveContactSolid(dir, QUERY_MAX_DISTANCE, masks, ignore);
         }
 
-        public void MoveContactSolid(Vector dir, FixedSingle maxDistance, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool MoveContactSolid(Vector dir, FixedSingle maxDistance, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
         {
             Vector delta1;
             Vector delta2;
             Box lastBox;
-            Box newBox;
+            bool contact = false;
 
             if (dir.X > 0)
             {
                 lastBox = rightCollisionChecker.TestBox;
                 rightCollisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
-                newBox = masks.HasFlag(Direction.RIGHT)
-                    ? rightCollisionChecker.MoveContactSolid(dir, maxDistance)
-                    : rightCollisionChecker.TestBox + dir;
+                if (masks.HasFlag(Direction.RIGHT))
+                    contact |= rightCollisionChecker.MoveContactSolid(dir, maxDistance);
+                else
+                    rightCollisionChecker.TestBox += dir;
 
-                delta1 = newBox.Origin - lastBox.Origin;
+                delta1 = rightCollisionChecker.TestBox.Origin - lastBox.Origin;
             }
             else if (dir.X < 0)
             {
                 lastBox = leftCollisionChecker.TestBox;
                 leftCollisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
-                newBox = masks.HasFlag(Direction.LEFT)
-                    ? leftCollisionChecker.MoveContactSolid(dir, maxDistance)
-                    : leftCollisionChecker.TestBox + dir;
+                if (masks.HasFlag(Direction.LEFT))
+                    contact |= leftCollisionChecker.MoveContactSolid(dir, maxDistance);
+                else
+                    leftCollisionChecker.TestBox += dir;
 
-                delta1 = newBox.Origin - lastBox.Origin;
+                delta1 = leftCollisionChecker.TestBox.Origin - lastBox.Origin;
             }
             else
                 delta1 = dir;
@@ -353,21 +355,23 @@ namespace XSharp.Engine.Collision
             {
                 lastBox = downCollisionChecker.TestBox;
                 downCollisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
-                newBox = masks.HasFlag(Direction.DOWN)
-                    ? downCollisionChecker.MoveContactSolid(dir, maxDistance)
-                    : downCollisionChecker.TestBox + dir;
+                if (masks.HasFlag(Direction.DOWN))
+                    contact |= downCollisionChecker.MoveContactSolid(dir, maxDistance);
+                else
+                    downCollisionChecker.TestBox += dir;
 
-                delta2 = newBox.Origin - lastBox.Origin;
+                delta2 = downCollisionChecker.TestBox.Origin - lastBox.Origin;
             }
             else if (dir.Y < 0)
             {
                 lastBox = upCollisionChecker.TestBox;
                 upCollisionChecker.IgnoreFlags = ignore | CollisionFlags.LADDER | CollisionFlags.TOP_LADDER | CollisionFlags.WATER | CollisionFlags.WATER_SURFACE;
-                newBox = masks.HasFlag(Direction.UP)
-                    ? upCollisionChecker.MoveContactSolid(dir, maxDistance)
-                    : upCollisionChecker.TestBox + dir;
+                if (masks.HasFlag(Direction.UP))
+                    contact |= upCollisionChecker.MoveContactSolid(dir, maxDistance);
+                else
+                    upCollisionChecker.TestBox += dir;
 
-                delta2 = newBox.Origin - lastBox.Origin;
+                delta2 = upCollisionChecker.TestBox.Origin - lastBox.Origin;
             }
             else
                 delta2 = delta1;
@@ -375,26 +379,30 @@ namespace XSharp.Engine.Collision
             var delta = delta1.Length < delta2.Length ? delta1 : delta2;
             if (delta != Vector.NULL_VECTOR)
                 Box += delta;
+
+            return contact;
         }
 
-        public void MoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
+        public bool MoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
         {
-            MoveContactFloor(QUERY_MAX_DISTANCE, ignore);
+            return MoveContactFloor(QUERY_MAX_DISTANCE, ignore);
         }
 
-        public void MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             var lastOrigin = downCollisionChecker.TestBox.Origin;
 
             downCollisionChecker.IgnoreFlags = ignore;
-            downCollisionChecker.MoveContactFloor(maxDistance);
+            bool contact = downCollisionChecker.MoveContactFloor(maxDistance);
 
             var delta = downCollisionChecker.TestBox.Origin - lastOrigin;
             if (delta != Vector.NULL_VECTOR)
                 Box += delta;
+
+            return contact;
         }
 
-        public void TryMoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             var lastOrigin = downCollisionChecker.TestBox.Origin;
 
@@ -404,15 +412,19 @@ namespace XSharp.Engine.Collision
                 var delta = downCollisionChecker.TestBox.Origin - lastOrigin;
                 if (delta != Vector.NULL_VECTOR)
                     Box += delta;
+
+                return true;
             }
+
+            return false;
         }
 
-        public void TryMoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
         {
-            TryMoveContactFloor(QUERY_MAX_DISTANCE, ignore);
+            return TryMoveContactFloor(QUERY_MAX_DISTANCE, ignore);
         }
 
-        public void TryMoveContactSlope(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactSlope(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             var lastOrigin = downCollisionChecker.TestBox.Origin;
 
@@ -422,35 +434,41 @@ namespace XSharp.Engine.Collision
                 var delta = downCollisionChecker.TestBox.Origin - lastOrigin;
                 if (delta != Vector.NULL_VECTOR)
                     Box += delta;
+
+                return true;
             }
+
+            return false;
         }
 
-        public void TryMoveContactSlope(CollisionFlags ignore = CollisionFlags.NONE)
+        public bool TryMoveContactSlope(CollisionFlags ignore = CollisionFlags.NONE)
         {
-            TryMoveContactSlope(QUERY_MAX_DISTANCE, ignore);
+            return TryMoveContactSlope(QUERY_MAX_DISTANCE, ignore);
         }
 
-        public void AdjustOnTheFloor(CollisionFlags ignore = CollisionFlags.NONE)
+        public bool AdjustOnTheFloor(CollisionFlags ignore = CollisionFlags.NONE)
         {
-            AdjustOnTheFloor(QUERY_MAX_DISTANCE, ignore);
+            return AdjustOnTheFloor(QUERY_MAX_DISTANCE, ignore);
         }
 
-        public void AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
+        public bool AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)
         {
             var lastOrigin = downCollisionChecker.TestBox.Origin;
 
             downCollisionChecker.IgnoreFlags = ignore;
-            downCollisionChecker.AdjustOnTheFloor(maxDistance);
+            bool contact = downCollisionChecker.AdjustOnTheFloor(maxDistance);
 
             var delta = downCollisionChecker.TestBox.Origin - lastOrigin;
             if (delta != Vector.NULL_VECTOR)
                 Box += delta;
+
+            return contact;
         }
 
-        public void AdjustOnTheLadder()
+        public bool AdjustOnTheLadder()
         {
             if (!UseCollisionPlacements)
-                return;
+                return false;
 
             if (LandedOnTopLadder)
             {
@@ -461,9 +479,12 @@ namespace XSharp.Engine.Collision
                         var delta = placementBox.Left - box.Left + (MAP_SIZE - box.Width) * 0.5;
 
                         if (delta != 0)
+                        {
                             Box += delta * Vector.RIGHT_VECTOR;
+                            return true;
+                        }
 
-                        return;
+                        return false;
                     }
             }
             else
@@ -475,11 +496,16 @@ namespace XSharp.Engine.Collision
                         var delta = placementBox.Left - box.Left + (MAP_SIZE - box.Width) * 0.5;
 
                         if (delta != 0)
+                        {
                             Box += delta * Vector.RIGHT_VECTOR;
+                            return true;
+                        }
 
-                        return;
+                        return false;
                     }
             }
+
+            return false;
         }
     }
 }

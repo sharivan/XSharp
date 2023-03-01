@@ -180,6 +180,11 @@ namespace XSharp.Math
             return new FixedSingle(RawValue & (-1 << (FIXED_BITS_COUNT - bits)));
         }
 
+        public FixedSingle Clamp(FixedSingle min, FixedSingle max)
+        {
+            return this < min ? min : this > max ? max : this;
+        }
+
         public FixedSingle Sqrt()
         {
             return System.Math.Sqrt(DoubleValue);

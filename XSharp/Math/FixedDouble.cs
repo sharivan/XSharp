@@ -166,6 +166,11 @@ namespace XSharp.Math
             return new FixedDouble(RawValue & (-1 << (FIXED_BITS_COUNT - bits)));
         }
 
+        public FixedDouble Clamp(FixedDouble min, FixedDouble max)
+        {
+            return this < min ? min : this > max ? max : this;
+        }
+
         public FixedDouble Sqrt()
         {
             return System.Math.Sqrt(DoubleValue);

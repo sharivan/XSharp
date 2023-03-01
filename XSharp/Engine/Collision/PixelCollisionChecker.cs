@@ -16,17 +16,18 @@ namespace XSharp.Engine.Collision
 
         protected override CollisionFlags GetCollisionVectorFlags()
         {
+            Vector vec = TestVector.RoundToFloor();
             CollisionFlags result = CollisionFlags.NONE;
 
             if (CheckWithWorld)
             {
-                Map map = World.GetMapFrom(TestVector);
+                Map map = World.GetMapFrom(vec);
                 if (map != null)
                 {
-                    Box mapBox = GetMapBoundingBox(GetMapCellFromPos(TestVector));
+                    Box mapBox = GetMapBoundingBox(GetMapCellFromPos(vec));
                     CollisionData collisionData = map.CollisionData;
 
-                    CollisionFlags collisionResult = TestCollision(mapBox, collisionData, TestVector, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                    CollisionFlags collisionResult = TestCollision(mapBox, collisionData, vec, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
                     if (collisionResult != CollisionFlags.NONE)
                         result |= collisionResult;
                 }
@@ -35,13 +36,13 @@ namespace XSharp.Engine.Collision
             if (CheckWithSolidSprites)
             {
                 resultSet.Clear();
-                Engine.partition.Query(resultSet, TestVector);
+                Engine.partition.Query(resultSet, vec);
                 foreach (var entity in resultSet)
                     if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                     {
-                        var hitbox = sprite.Hitbox;
+                        var hitbox = sprite.Hitbox.RoundOriginToFloor();
                         var collisionData = sprite.CollisionData;
-                        CollisionFlags collisionResult = TestCollision(hitbox, collisionData, TestVector, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                        CollisionFlags collisionResult = TestCollision(hitbox, collisionData, vec, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
                         if (collisionResult == CollisionFlags.NONE)
                             continue;
 
@@ -116,7 +117,8 @@ namespace XSharp.Engine.Collision
                 foreach (var entity in resultSet)
                     if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                     {
-                        CollisionFlags collisionResult = TestCollision(sprite.Hitbox, sprite.CollisionData, box, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
+                        var hitbox = sprite.Hitbox.RoundOriginToFloor();
+                        CollisionFlags collisionResult = TestCollision(hitbox, sprite.CollisionData, box, ComputePlacements ? placements : null, ref slopeTriangle, IgnoreFlags);
                         if (collisionResult == CollisionFlags.NONE)
                             continue;
 
@@ -128,21 +130,25 @@ namespace XSharp.Engine.Collision
         }
 
         // Warning! It can be terribly slow if you use small steps. Recommended step size is 1 (one pixel).
-        public Box MoveContactSolid(Vector dir, FixedSingle maxDistance)
+        public bool MoveContactSolid(Vector dir, FixedSingle maxDistance)
         {
             var direction = dir.GetDirection();
             var deltaDir = GetStepVector(dir, STEP_SIZE);
             var startBox = TestBox;
 
+            bool contact = false;
             var distance = STEP_SIZE;
             TestBox = startBox + deltaDir.TruncFracPart();
             int i = 1;
             for (; distance <= maxDistance; i++, distance += STEP_SIZE, TestBox = startBox + (deltaDir * i).TruncFracPart())
                 if (GetCollisionFlags().CanBlockTheMove(direction))
+                {
+                    contact = true;
                     break;
+                }
 
             TestBox = startBox + (deltaDir * (i - 1)).TruncFracPart();
-            return TestBox;
+            return contact;
         }
 
         public CollisionFlags GetTouchingFlags(Direction direction)

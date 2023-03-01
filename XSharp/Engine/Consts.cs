@@ -29,7 +29,7 @@ namespace XSharp.Engine
         // Directions
 
         public static readonly FixedSingle STEP_SIZE = 1; // Recommended step size is 1 (one pixel). This is used to do the fine collision checking, original games do it at pixel level, its not needed to do it at sub-pixel level.
-        public static readonly FixedSingle QUERY_MAX_DISTANCE = TILE_SIZE * 0.5;
+        public static readonly FixedSingle QUERY_MAX_DISTANCE = MAP_SIZE * 0.5;
         public static readonly Vector STEP_LEFT_VECTOR = STEP_SIZE * Vector.LEFT_VECTOR;
         public static readonly Vector STEP_UP_VECTOR = STEP_SIZE * Vector.UP_VECTOR;
         public static readonly Vector STEP_RIGHT_VECTOR = STEP_SIZE * Vector.RIGHT_VECTOR;
@@ -238,6 +238,12 @@ namespace XSharp.Engine
 
         public const int HITS_TO_BREAK_FROZEN_BLOCK = 24;
         public static readonly Box PENGUIN_FROZEN_BLOCK_HITBOX = ((0, -1), (-6, -14), (6, 14));
+
+        // Probe 8201-U
+
+        public static readonly Box PROBE8201U_HITBOX = (Vector.NULL_VECTOR, (-11, -27), (11, 27));
+        public static readonly FixedSingle PROBE8201U_TERMINAL_SPEED = 1;
+        public static readonly FixedSingle PROBE8201U_ACCELERATION = 4 / 256.0;
 
         // Render
 

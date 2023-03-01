@@ -153,13 +153,13 @@ namespace XSharp.Engine.Collision
 
         // Warning! The following methods can be terribly slow if you use small steps. Recommended step size is 1 (one pixel).
 
-        public Box MoveContactFloor(FixedSingle maxDistance)
+        public bool MoveContactFloor(FixedSingle maxDistance)
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
                 if (ComputeLandedState().CanBlockTheMove(Direction.DOWN))
-                    break;
+                    return true;
 
-            return TestBox;
+            return false;
         }
 
         public bool TryMoveContactFloor(FixedSingle maxDistance)
@@ -184,22 +184,25 @@ namespace XSharp.Engine.Collision
             return false;
         }
 
-        public Box AdjustOnTheFloor(FixedSingle maxDistance)
+        public bool AdjustOnTheFloor(FixedSingle maxDistance)
         {
             if (!ComputeLandedState().CanBlockTheMove())
-                return TestBox;
+                return false;
+
+            var lastBox = TestBox;
 
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE)
             {
                 TestBox += STEP_UP_VECTOR;
                 if (!ComputeLandedState().CanBlockTheMove())
                 {
-                    TestBox -= STEP_UP_VECTOR;
-                    break;
+                    TestBox += STEP_DOWN_VECTOR;
+                    return true;
                 }
             }
 
-            return TestBox;
+            TestBox = lastBox;
+            return false;
         }
     }
 }

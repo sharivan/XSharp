@@ -63,12 +63,6 @@ namespace XSharp.Engine.Entities.Enemies
             CanGoOutOfMapBounds = true;
         }
 
-        protected override Box GetCollisionBox()
-        {
-            Animation animation = CurrentAnimation;
-            return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
-        }
-
         protected internal override void OnSpawn()
         {
             base.OnSpawn();

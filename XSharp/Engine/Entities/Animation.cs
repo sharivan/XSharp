@@ -78,13 +78,13 @@ namespace XSharp.Engine
             }
         }
 
-        public MMXBox CurrentFrameCollisionBox
+        public MMXBox CurrentFrameHitbox
         {
             get
             {
                 return currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
                     ? MMXBox.EMPTY_BOX
-                    : sequence[currentSequenceIndex].CollisionBox;
+                    : sequence[currentSequenceIndex].Hitbox;
             }
         }
 

@@ -102,82 +102,6 @@ namespace XSharp.Engine.Entities
             set;
         } = PlayerState.NONE;
 
-        public Player()
-        {
-            SpriteSheetName = "X";
-            Directional = true;
-        }
-
-        public override void SaveState(BinaryWriter writer)
-        {
-            base.SaveState(writer);
-
-            for (int i = 0; i < KEY_BUFFER_COUNT; i++)
-                writer.Write((int) keyBuffer[i]);
-
-            writer.Write(Lives);
-            writer.Write(InputLocked);
-            writer.Write(death);
-
-            writer.Write(jumping);
-            writer.Write(dashReleased);
-
-            baseHSpeed.Write(writer);
-            writer.Write(dashFrameCounter);
-            writer.Write(spawning);
-            writer.Write(WallJumping);
-            writer.Write(wallJumpFrameCounter);
-
-            writer.Write(wasBlockedLeft);
-            writer.Write(wasBlockedRight);
-
-            writer.Write((int) Direction);
-            writer.Write((int) state);
-            writer.Write((int) stateDirection);
-            writer.Write(Shooting);
-            writer.Write(shotFrameCounter);
-        }
-
-        public override void LoadState(BinaryReader reader)
-        {
-            base.LoadState(reader);
-
-            for (int i = 0; i < KEY_BUFFER_COUNT; i++)
-                keyBuffer[i] = (Keys) reader.ReadInt32();
-
-            Lives = reader.ReadInt32();
-            InputLocked = reader.ReadBoolean();
-            death = reader.ReadBoolean();
-
-            jumping = reader.ReadBoolean();
-            dashReleased = reader.ReadBoolean();
-
-            baseHSpeed = new FixedSingle(reader);
-            dashFrameCounter = reader.ReadInt32();
-            spawning = reader.ReadBoolean();
-            WallJumping = reader.ReadBoolean();
-            wallJumpFrameCounter = reader.ReadInt32();
-
-            wasBlockedLeft = reader.ReadBoolean();
-            wasBlockedRight = reader.ReadBoolean();
-
-            Direction = (Direction) reader.ReadInt32();
-            state = (PlayerState) reader.ReadInt32();
-            stateDirection = (Direction) reader.ReadInt32();
-            Shooting = reader.ReadBoolean();
-            shotFrameCounter = reader.ReadInt32();
-        }
-
-        protected override Box GetCollisionBox()
-        {
-            return COLLISION_BOX;
-        }
-
-        protected override Box GetHitbox()
-        {
-            return Dashing ? DASHING_HITBOX : HITBOX;
-        }
-
         public bool Shooting
         {
             get;
@@ -388,6 +312,82 @@ namespace XSharp.Engine.Entities
             private set;
         }
 
+        public Player()
+        {
+            SpriteSheetName = "X";
+            Directional = true;
+        }
+
+        public override void SaveState(BinaryWriter writer)
+        {
+            base.SaveState(writer);
+
+            for (int i = 0; i < KEY_BUFFER_COUNT; i++)
+                writer.Write((int) keyBuffer[i]);
+
+            writer.Write(Lives);
+            writer.Write(InputLocked);
+            writer.Write(death);
+
+            writer.Write(jumping);
+            writer.Write(dashReleased);
+
+            baseHSpeed.Write(writer);
+            writer.Write(dashFrameCounter);
+            writer.Write(spawning);
+            writer.Write(WallJumping);
+            writer.Write(wallJumpFrameCounter);
+
+            writer.Write(wasBlockedLeft);
+            writer.Write(wasBlockedRight);
+
+            writer.Write((int) Direction);
+            writer.Write((int) state);
+            writer.Write((int) stateDirection);
+            writer.Write(Shooting);
+            writer.Write(shotFrameCounter);
+        }
+
+        public override void LoadState(BinaryReader reader)
+        {
+            base.LoadState(reader);
+
+            for (int i = 0; i < KEY_BUFFER_COUNT; i++)
+                keyBuffer[i] = (Keys) reader.ReadInt32();
+
+            Lives = reader.ReadInt32();
+            InputLocked = reader.ReadBoolean();
+            death = reader.ReadBoolean();
+
+            jumping = reader.ReadBoolean();
+            dashReleased = reader.ReadBoolean();
+
+            baseHSpeed = new FixedSingle(reader);
+            dashFrameCounter = reader.ReadInt32();
+            spawning = reader.ReadBoolean();
+            WallJumping = reader.ReadBoolean();
+            wallJumpFrameCounter = reader.ReadInt32();
+
+            wasBlockedLeft = reader.ReadBoolean();
+            wasBlockedRight = reader.ReadBoolean();
+
+            Direction = (Direction) reader.ReadInt32();
+            state = (PlayerState) reader.ReadInt32();
+            stateDirection = (Direction) reader.ReadInt32();
+            Shooting = reader.ReadBoolean();
+            shotFrameCounter = reader.ReadInt32();
+        }
+
+        protected override Box GetCollisionBox()
+        {
+            return COLLISION_BOX;
+        }
+
+        protected override Box GetHitbox()
+        {
+            return Dashing ? DASHING_HITBOX : HITBOX;
+        }
+
         protected override FixedSingle GetTerminalDownwardSpeed()
         {
             return spawning || teleporting ?
@@ -412,8 +412,13 @@ namespace XSharp.Engine.Entities
 
             this.state = state;
             stateDirection = direction;
-            CurrentAnimationIndex = GetAnimationIndex(state, Shooting);
-            CurrentAnimation.Start(startAnimationIndex);
+
+            int animationIndex = GetAnimationIndex(state, Shooting);
+            if (animationIndex != CurrentAnimationIndex)
+            {
+                CurrentAnimationIndex = animationIndex;
+                CurrentAnimation.Start(startAnimationIndex);
+            }
         }
 
         protected int GetAnimationIndex(PlayerState state, bool shooting)
@@ -1828,8 +1833,6 @@ namespace XSharp.Engine.Entities
         {
             if (TakingDamage || Dying || Invincible || NoClip)
                 return false;
-
-            //Invincible = true;
 
             Direction direction = GetHorizontalDirection(attacker).Oposite();
             if (direction != Direction.NONE)

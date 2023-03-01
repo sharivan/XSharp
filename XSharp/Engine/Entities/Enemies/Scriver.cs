@@ -13,7 +13,7 @@ namespace XSharp.Engine.Entities.Enemies
         LANDING = 3
     }
 
-    public class Driller : Enemy
+    public class Scriver : Enemy
     {
         private bool flashing;
         private bool jumping;
@@ -25,7 +25,7 @@ namespace XSharp.Engine.Entities.Enemies
             set => SetState(value);
         }
 
-        public Driller()
+        public Scriver()
         {
             SpriteSheetName = "Driller";
 

@@ -871,7 +871,15 @@ namespace XSharp.Engine.Entities
 
         protected override Box GetHitbox()
         {
-            return GetCollisionBox();
+            if (!MultiAnimation)
+                return CurrentAnimation != null ? CurrentAnimation.CurrentFrameHitbox : Box.EMPTY_BOX;
+
+            Box result = Box.EMPTY_BOX;
+            foreach (var animation in animations)
+                if (animation.Visible)
+                    result |= animation.CurrentFrameHitbox;
+
+            return result;
         }
 
         protected override Box GetTouchingBox()
@@ -893,15 +901,7 @@ namespace XSharp.Engine.Entities
 
         protected virtual Box GetCollisionBox()
         {
-            if (!MultiAnimation)
-                return CurrentAnimation != null ? CurrentAnimation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
-
-            Box result = Box.EMPTY_BOX;
-            foreach (var animation in animations)
-                if (animation.Visible)
-                    result |= animation.CurrentFrameCollisionBox;
-
-            return result;
+            return GetHitbox();
         }
 
         protected internal override void OnSpawn()
@@ -979,7 +979,7 @@ namespace XSharp.Engine.Entities
 
         protected virtual SpriteCollider CreateSpriteCollider()
         {
-            return new SpriteCollider(this, Hitbox, 0, 0, IsUsingCollisionPlacements(), false, true);
+            return new SpriteCollider(this, Hitbox, GetHeadHeight(), GetLegsHeight(), IsUsingCollisionPlacements(), false, true);
         }
 
         protected internal virtual void CreateResources()
@@ -1116,21 +1116,19 @@ namespace XSharp.Engine.Entities
         {
             if (CollisionData.IsSolidBlock() && entity is Sprite sprite && sprite.Alive && sprite.CheckCollisionWithSolidSprites)
             {
-                spriteCollider.ClearIgnoredSprites();
-                spriteCollider.Box = Hitbox;
-
+                Box box = Hitbox.RoundOriginToFloor();
                 SpriteCollider collider = sprite.SpriteCollider;
 
-                if (spriteCollider.Box.IsOverlaping(collider.UpCollider))
+                if (box.IsOverlaping(collider.UpCollider - (0, STEP_SIZE)))
                     touchingSpritesDown.Add(sprite);
 
-                if (spriteCollider.Box.IsOverlaping(collider.RightCollider))
+                if (box.IsOverlaping(collider.RightCollider + (STEP_SIZE, 0)))
                     touchingSpritesLeft.Add(sprite);
 
-                if (spriteCollider.Box.IsOverlaping(collider.LeftCollider - (STEP_SIZE, 0)))
+                if (box.IsOverlaping(collider.LeftCollider - (STEP_SIZE, 0)))
                     touchingSpritesRight.Add(sprite);
 
-                if (spriteCollider.Box.IsOverlaping(collider.DownCollider + (0, STEP_SIZE)))
+                if (box.IsOverlaping(collider.DownCollider + (0, STEP_SIZE)))
                     touchingSpritesUp.Add(sprite);
             }
 
@@ -1364,16 +1362,20 @@ namespace XSharp.Engine.Entities
             BeforeMoveEvent?.Invoke(this);
         }
 
-        public void MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
+        public bool MoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
         {
+            bool worldContact = false;
+            bool spriteContact = false;
+            FixedSingle worldDelta = maxDistance;
+            FixedSingle spriteDelta = maxDistance;
+
             if (world)
             {
                 var lastBox = CollisionBox;
                 worldCollider.Box = lastBox;
-                worldCollider.MoveContactFloor(maxDistance, ignore);
+                worldContact = worldCollider.MoveContactFloor(maxDistance, ignore);
 
-                var delta = worldCollider.Box.Origin - lastBox.Origin;
-                Origin += delta;
+                worldDelta = worldCollider.Box.Origin.Y - lastBox.Origin.Y;
             }
 
             if (sprite)
@@ -1381,28 +1383,37 @@ namespace XSharp.Engine.Entities
                 var lastBox = Hitbox;
                 spriteCollider.ClearIgnoredSprites();
                 spriteCollider.Box = lastBox;
-                spriteCollider.MoveContactFloor(maxDistance, ignore);
+                spriteContact = spriteCollider.MoveContactFloor(maxDistance, ignore);
 
-                var delta = spriteCollider.Box.Origin - lastBox.Origin;
-                Origin += delta;
+                spriteDelta = spriteCollider.Box.Origin.Y - lastBox.Origin.Y;
             }
+
+            FixedSingle delta = worldContact ? spriteContact ? FixedSingle.Min(worldDelta, spriteDelta) : worldDelta : spriteContact ? spriteDelta : 0;
+            if (delta != 0)
+                Origin += (0, delta);
+
+            return worldContact || spriteContact;
         }
 
-        public void MoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
+        public bool MoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
         {
-            MoveContactFloor(QUERY_MAX_DISTANCE, ignore, world, sprite);
+            return MoveContactFloor(QUERY_MAX_DISTANCE, ignore, world, sprite);
         }
 
-        public void TryMoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
+        public bool TryMoveContactFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
         {
+            bool worldContact = false;
+            bool spriteContact = false;
+            FixedSingle worldDelta = maxDistance;
+            FixedSingle spriteDelta = maxDistance;
+
             if (world)
             {
                 var lastBox = CollisionBox;
                 worldCollider.Box = lastBox;
-                worldCollider.TryMoveContactFloor(maxDistance, ignore);
+                worldContact = worldCollider.TryMoveContactFloor(maxDistance, ignore);
 
-                var delta = worldCollider.Box.Origin - lastBox.Origin;
-                Origin += delta;
+                worldDelta = worldCollider.Box.Origin.Y - lastBox.Origin.Y;
             }
 
             if (sprite)
@@ -1410,28 +1421,37 @@ namespace XSharp.Engine.Entities
                 var lastBox = Hitbox;
                 spriteCollider.ClearIgnoredSprites();
                 spriteCollider.Box = lastBox;
-                spriteCollider.TryMoveContactFloor(maxDistance, ignore);
+                spriteContact = spriteCollider.TryMoveContactFloor(maxDistance, ignore);
 
-                var delta = spriteCollider.Box.Origin - lastBox.Origin;
-                Origin += delta;
+                spriteDelta = spriteCollider.Box.Origin.Y - lastBox.Origin.Y;
             }
+
+            FixedSingle delta = worldContact ? spriteContact ? FixedSingle.Min(worldDelta, spriteDelta) : worldDelta : spriteContact ? spriteDelta : 0;
+            if (delta != 0)
+                Origin += (0, delta);
+
+            return worldContact || spriteContact;
         }
 
-        public void TryMoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
+        public bool TryMoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
         {
-            TryMoveContactFloor(QUERY_MAX_DISTANCE, ignore, world, sprite);
+            return TryMoveContactFloor(QUERY_MAX_DISTANCE, ignore, world, sprite);
         }
 
-        public void AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
+        public bool AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
         {
+            bool worldContact = false;
+            bool spriteContact = false;
+            FixedSingle worldDelta = 0;
+            FixedSingle spriteDelta = 0;
+
             if (world)
             {
                 var lastBox = CollisionBox;
                 worldCollider.Box = lastBox;
-                worldCollider.AdjustOnTheFloor(maxDistance, ignore);
+                worldContact = worldCollider.AdjustOnTheFloor(maxDistance, ignore);
 
-                var delta = worldCollider.Box.Origin - lastBox.Origin;
-                Origin += delta;
+                worldDelta = worldCollider.Box.Origin.Y - lastBox.Origin.Y;
             }
 
             if (sprite)
@@ -1439,16 +1459,21 @@ namespace XSharp.Engine.Entities
                 var lastBox = Hitbox;
                 spriteCollider.ClearIgnoredSprites();
                 spriteCollider.Box = lastBox;
-                spriteCollider.AdjustOnTheFloor(maxDistance, ignore);
+                spriteContact = spriteCollider.AdjustOnTheFloor(maxDistance, ignore);
 
-                var delta = spriteCollider.Box.Origin - lastBox.Origin;
-                Origin += delta;
+                spriteDelta = spriteCollider.Box.Origin.Y - lastBox.Origin.Y;
             }
+
+            FixedSingle delta = worldContact ? spriteContact ? FixedSingle.Max(worldDelta, spriteDelta) : worldDelta : spriteContact ? spriteDelta : 0;
+            if (delta != 0)
+                Origin += (0, delta);
+
+            return worldContact || spriteContact;
         }
 
-        public void AdjustOnTheFloor(CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
+        public bool AdjustOnTheFloor(CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
         {
-            AdjustOnTheFloor(QUERY_MAX_DISTANCE, ignore, world, sprite);
+            return AdjustOnTheFloor(QUERY_MAX_DISTANCE, ignore, world, sprite);
         }
 
         protected void RestrictIn(Box limitBox, ref Vector origin)
@@ -1548,23 +1573,22 @@ namespace XSharp.Engine.Entities
                             sprite.DoPhysics(this, (deltaX, 0));
                 }
 
-                if (deltaY != 0)
+                if (deltaY > 0)
                 {
-                    if (deltaY > 0)
-                    {
-                        foreach (var sprite in touchingSpritesDown)
-                            if (sprite != physicsParent)
-                                sprite.DoPhysics(this, (0, deltaY));
-                    }
+                    foreach (var sprite in touchingSpritesDown)
+                        if (sprite != physicsParent)
+                            sprite.DoPhysics(null, (0, deltaY));
+                }
 
+
+                if (delta != Vector.NULL_VECTOR)
                     foreach (var sprite in touchingSpritesUp)
                         if (sprite != physicsParent)
                         {
-                            sprite.DoPhysics(this, delta);
-                            sprite.TryMoveContactFloor(CollisionFlags.NONE, false, true);
-                            sprite.AdjustOnTheFloor(CollisionFlags.NONE, false, true);
+                            sprite.DoPhysics(null, delta);
+                            sprite.TryMoveContactFloor();
+                            sprite.AdjustOnTheFloor();
                         }
-                }
             }
 
             if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
@@ -1635,6 +1659,12 @@ namespace XSharp.Engine.Entities
             return animation != null ? animation.Index : -1;
         }
 
+        public Animation GetAnimationByName(string name)
+        {
+            int index = GetAnimationIndexByName(name);
+            return index == -1 ? null : animations[index];
+        }
+
         public IEnumerable<Animation> GetAnimationsByName(string name)
         {
             return animationsByName.TryGetValue(name, out List<Animation> animations) ? animations : null;
@@ -1694,7 +1724,7 @@ namespace XSharp.Engine.Entities
 
                 if (!NoClip)
                 {
-                    if (!lastLanded && gravity != 0)
+                    if ((!lastLanded || Velocity.Y <= 0) && gravity != 0)
                     {
                         Velocity += gravity * Vector.DOWN_VECTOR;
 

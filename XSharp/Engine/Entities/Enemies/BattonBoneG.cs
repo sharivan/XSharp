@@ -11,7 +11,7 @@ namespace XSharp.Engine.Entities.Enemies
         ESCAPING = 2
     }
 
-    public class Bat : Enemy
+    public class BattonBoneG : Enemy
     {
         private bool flashing;
 
@@ -25,7 +25,7 @@ namespace XSharp.Engine.Entities.Enemies
             }
         }
 
-        public Bat()
+        public BattonBoneG()
         {
             SpriteSheetName = "Bat";
 

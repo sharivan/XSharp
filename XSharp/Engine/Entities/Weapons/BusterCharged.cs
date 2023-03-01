@@ -45,12 +45,6 @@ namespace XSharp.Engine.Entities.Weapons
             return FixedSingle.ZERO;
         }
 
-        protected override Box GetCollisionBox()
-        {
-            Animation animation = CurrentAnimation;
-            return animation != null ? animation.CurrentFrameCollisionBox : Box.EMPTY_BOX;
-        }
-
         protected override FixedSingle GetBaseDamage()
         {
             return CHARGED_DAMAGE;

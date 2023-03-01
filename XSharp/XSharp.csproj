@@ -129,9 +129,9 @@
     <Compile Include="Engine\Entities\Effects\WallKickEffect.cs" />
     <Compile Include="Engine\Entities\Effects\WallSlideEffect.cs" />
     <Compile Include="Engine\Entities\HUD\XDieExplosion.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bat.cs" />
+    <Compile Include="Engine\Entities\Enemies\BattonBoneG.cs" />
     <Compile Include="Engine\Entities\Objects\BossDoor.cs" />
-    <Compile Include="Engine\Entities\Enemies\Driller.cs" />
+    <Compile Include="Engine\Entities\Enemies\Scriver.cs" />
     <Compile Include="Engine\Entities\EntityState.cs" />
     <Compile Include="Engine\Entities\HUD\HealthHUD.cs" />
     <Compile Include="Engine\Entities\HUD\ReadyHUD.cs" />
@@ -143,6 +143,7 @@
     <Compile Include="Engine\Entities\Items\SmallAmmoRecover.cs" />
     <Compile Include="Engine\Entities\Items\SmallHealthRecover.cs" />
     <Compile Include="Engine\Entities\Items\SubTankItem.cs" />
+    <Compile Include="Engine\Entities\Objects\Probe8201U.cs" />
     <Compile Include="Engine\Entities\RespawnEntry.cs" />
     <Compile Include="Engine\Entities\SpriteState.cs" />
     <Compile Include="Engine\Entities\Triggers\CameraLockTrigger.cs" />

@@ -43,7 +43,7 @@ namespace XSharp.Engine.Graphics
                 set;
             }
 
-            public MMXBox CollisionBox
+            public MMXBox Hitbox
             {
                 get;
                 set;
@@ -103,17 +103,17 @@ namespace XSharp.Engine.Graphics
                     LoopFromSequenceIndex = frames.Count;
 
                 var boundingBox = new MMXBox(left + originOffsetX + OriginOffset.X, top + originOffsetY + OriginOffset.Y, left, top, width, height);
-                Frame frame = Sheet.AddFrame(boundingBox, CollisionBox);
+                Frame frame = Sheet.AddFrame(boundingBox, Hitbox);
                 AddRepeated(frame, count);
                 return frame;
             }
 
-            public Frame AddFrame(MMXBox boudingBox, MMXBox collisionBox, int count = 1, bool loopPoint = false)
+            public Frame AddFrame(MMXBox boudingBox, MMXBox hitbox, int count = 1, bool loopPoint = false)
             {
                 if (loopPoint)
                     LoopFromSequenceIndex = frames.Count;
 
-                Frame frame = Sheet.AddFrame(boudingBox, collisionBox);
+                Frame frame = Sheet.AddFrame(boudingBox, hitbox);
                 AddRepeated(frame, count);
                 return frame;
             }
@@ -146,7 +146,7 @@ namespace XSharp.Engine.Graphics
                 get;
             }
 
-            public MMXBox CollisionBox
+            public MMXBox Hitbox
             {
                 get;
             }
@@ -161,11 +161,11 @@ namespace XSharp.Engine.Graphics
                 get;
             }
 
-            internal Frame(int index, MMXBox boundingBox, MMXBox collisionBox, Texture texture, bool precached)
+            internal Frame(int index, MMXBox boundingBox, MMXBox hitbox, Texture texture, bool precached)
             {
                 Index = index;
                 BoundingBox = boundingBox;
-                CollisionBox = collisionBox;
+                Hitbox = hitbox;
                 Texture = texture;
                 Precached = precached;
             }
@@ -174,7 +174,7 @@ namespace XSharp.Engine.Graphics
             {
                 return obj is Frame frame &&
                        EqualityComparer<MMXBox>.Default.Equals(BoundingBox, frame.BoundingBox) &&
-                       EqualityComparer<MMXBox>.Default.Equals(CollisionBox, frame.CollisionBox) &&
+                       EqualityComparer<MMXBox>.Default.Equals(Hitbox, frame.Hitbox) &&
                        EqualityComparer<Texture>.Default.Equals(Texture, frame.Texture);
             }
 
@@ -182,14 +182,14 @@ namespace XSharp.Engine.Graphics
             {
                 var hashCode = -250932352;
                 hashCode = hashCode * -1521134295 + EqualityComparer<MMXBox>.Default.GetHashCode(BoundingBox);
-                hashCode = hashCode * -1521134295 + EqualityComparer<MMXBox>.Default.GetHashCode(CollisionBox);
+                hashCode = hashCode * -1521134295 + EqualityComparer<MMXBox>.Default.GetHashCode(Hitbox);
                 hashCode = hashCode * -1521134295 + EqualityComparer<Texture>.Default.GetHashCode(Texture);
                 return hashCode;
             }
 
             public override string ToString()
             {
-                return "{" + BoundingBox + ", " + CollisionBox + "}";
+                return "{" + BoundingBox + ", " + Hitbox + "}";
             }
         }
 
@@ -284,7 +284,7 @@ namespace XSharp.Engine.Graphics
             return AddFrame(boudingBox, boudingBox - boudingBox.Origin);
         }
 
-        public Frame AddFrame(MMXBox boudingBox, MMXBox collisionBox)
+        public Frame AddFrame(MMXBox boudingBox, MMXBox hitbox)
         {
             Frame frame;
 
@@ -347,12 +347,12 @@ namespace XSharp.Engine.Graphics
                     texture.UnlockRectangle(0);
                 }
 
-                frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, collisionBox, texture, true);
+                frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, hitbox, texture, true);
                 frames.Add(frame);
                 return frame;
             }
 
-            frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, collisionBox, CurrentTexture, false);
+            frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, hitbox, CurrentTexture, false);
             frames.Add(frame);
             return frame;
         }
