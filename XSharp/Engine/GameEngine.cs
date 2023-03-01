@@ -1193,10 +1193,10 @@ namespace XSharp.Engine
             CreatePalette("flashingPalette", FLASHING_PALETTE);
 
             // 5
-            var drillerPalette = CreatePalette("drillerPalette", DRILLER_PALETTE);
+            var scriverPalette = CreatePalette("scriverPalette", SCRIVER_PALETTE);
 
             // 6
-            var batPalette = CreatePalette("batPalette", BAT_PALETTE);
+            var battonBoneGPalette = CreatePalette("battonBoneGPalette", BATTON_BONE_G_PALETTE);
 
             // 7
             var penguinPalette = CreatePalette("penguinPalette", PENGUIN_PALETTE);
@@ -1216,7 +1216,7 @@ namespace XSharp.Engine
             var xChargingEffectsSpriteSheet = CreateSpriteSheet("X Charging Effects", true, false);
 
             // 4
-            var drillerSpriteSheet = CreateSpriteSheet("Driller", true, true);
+            var scriverSpriteSheet = CreateSpriteSheet("Scriver", true, true);
 
             // 5
             var explosionSpriteSheet = CreateSpriteSheet("Explosion", true, true);
@@ -1228,7 +1228,7 @@ namespace XSharp.Engine
             var readySpriteSheet = CreateSpriteSheet("Ready", true, true);
 
             // 8
-            var batSpriteSheet = CreateSpriteSheet("Bat", true, true);
+            var battonBoneGSpriteSheet = CreateSpriteSheet("BattonBoneG", true, true);
 
             // 9
             var bossDoorSpriteSheet = CreateSpriteSheet("Boos Door", true, true);
@@ -1761,66 +1761,66 @@ namespace XSharp.Engine
 
             // Enemies
 
-            // Driller
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-driller.png"))
+            // Scriver
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.scriver.png"))
             {
                 var texture = CreateImageTextureFromStream(stream);
-                drillerSpriteSheet.CurrentTexture = texture;
+                scriverSpriteSheet.CurrentTexture = texture;
             }
 
-            drillerSpriteSheet.CurrentPalette = drillerPalette;
+            scriverSpriteSheet.CurrentPalette = scriverPalette;
 
             // 0
-            sequence = drillerSpriteSheet.AddFrameSquence("Idle");
-            sequence.OriginOffset = -DRILLER_HITBOX.Origin - DRILLER_HITBOX.Mins;
-            sequence.Hitbox = DRILLER_HITBOX;
+            sequence = scriverSpriteSheet.AddFrameSquence("Idle");
+            sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
+            sequence.Hitbox = SCRIVER_HITBOX;
             sequence.AddFrame(-5, 6, 4, 4, 35, 30, 1, true);
 
             // 1
-            sequence = drillerSpriteSheet.AddFrameSquence("Jumping");
-            sequence.OriginOffset = -DRILLER_HITBOX.Origin - DRILLER_HITBOX.Mins;
-            sequence.Hitbox = DRILLER_HITBOX;
+            sequence = scriverSpriteSheet.AddFrameSquence("Jumping");
+            sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
+            sequence.Hitbox = SCRIVER_HITBOX;
             sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
             sequence.AddFrame(-7, 6, 78, 4, 35, 30, 5);
             sequence.AddFrame(4, -3, 115, 4, 43, 30, 1, true);
 
             // 2
-            sequence = drillerSpriteSheet.AddFrameSquence("Landing");
-            sequence.OriginOffset = -DRILLER_HITBOX.Origin - DRILLER_HITBOX.Mins;
-            sequence.Hitbox = DRILLER_HITBOX;
+            sequence = scriverSpriteSheet.AddFrameSquence("Landing");
+            sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
+            sequence.Hitbox = SCRIVER_HITBOX;
             sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
 
             // 3
-            sequence = drillerSpriteSheet.AddFrameSquence("Drilling");
-            sequence.OriginOffset = -DRILLER_DRILLING_HITBOX.Origin - DRILLER_DRILLING_HITBOX.Mins;
-            sequence.Hitbox = DRILLER_DRILLING_HITBOX;
+            sequence = scriverSpriteSheet.AddFrameSquence("Drilling");
+            sequence.OriginOffset = -SCRIVER_DRILLING_HITBOX.Origin - SCRIVER_DRILLING_HITBOX.Mins;
+            sequence.Hitbox = SCRIVER_DRILLING_HITBOX;
             sequence.AddFrame(-3, 0, 160, 10, 48, 24, 2, true);
             sequence.AddFrame(-4, 1, 209, 9, 46, 25, 2);
             sequence.AddFrame(-4, 0, 256, 10, 48, 24, 2);
             sequence.AddFrame(-4, 1, 305, 9, 46, 25, 2);
 
-            // Bat
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.mmx2-bat.png"))
+            // Batton Bone G
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.batton-bone-g.png"))
             {
                 var texture = CreateImageTextureFromStream(stream);
-                batSpriteSheet.CurrentTexture = texture;
+                battonBoneGSpriteSheet.CurrentTexture = texture;
             }
 
-            batSpriteSheet.CurrentPalette = batPalette;
+            battonBoneGSpriteSheet.CurrentPalette = battonBoneGPalette;
 
-            var batIdleHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-6, -18), new Vector(6, 0));
-            var batAttackingHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-8, -14), new Vector(8, 0));
+            var battonBoneGIdleHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-6, -18), new Vector(6, 0));
+            var battonBoneGAttackingHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-8, -14), new Vector(8, 0));
 
             // 0
-            sequence = batSpriteSheet.AddFrameSquence("Idle");
-            sequence.OriginOffset = -batIdleHitbox.Mins;
-            sequence.Hitbox = batIdleHitbox;
+            sequence = battonBoneGSpriteSheet.AddFrameSquence("Idle");
+            sequence.OriginOffset = -battonBoneGIdleHitbox.Mins;
+            sequence.Hitbox = battonBoneGIdleHitbox;
             sequence.AddFrame(0, 4, 7, 1, 14, 23, 1, true);
 
             // 1
-            sequence = batSpriteSheet.AddFrameSquence("Attacking");
-            sequence.OriginOffset = -batAttackingHitbox.Mins;
-            sequence.Hitbox = batAttackingHitbox;
+            sequence = battonBoneGSpriteSheet.AddFrameSquence("Attacking");
+            sequence.OriginOffset = -battonBoneGAttackingHitbox.Mins;
+            sequence.Hitbox = battonBoneGAttackingHitbox;
             sequence.AddFrame(4, 7, 22, 1, 30, 23, 1, true);
             sequence.AddFrame(10, 8, 53, 1, 39, 23, 3);
             sequence.AddFrame(5, 6, 93, 1, 29, 23, 3);
@@ -1828,7 +1828,7 @@ namespace XSharp.Engine
             sequence.AddFrame(3, 5, 147, 1, 23, 23, 4);
             sequence.AddFrame(4, 7, 22, 1, 30, 23, 3);
 
-            batSpriteSheet.ReleaseCurrentTexture();
+            battonBoneGSpriteSheet.ReleaseCurrentTexture();
 
             // Explosion
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Explosion.png"))
@@ -4696,24 +4696,24 @@ namespace XSharp.Engine
 
         public Scriver AddScriver(Vector origin)
         {
-            var driller = CreateEntity<Scriver>(new
+            var scriver = CreateEntity<Scriver>(new
             {
                 Origin = origin
             });
 
-            driller.Place();
-            return driller;
+            scriver.Place();
+            return scriver;
         }
 
         public BattonBoneG AddBattonBoneG(Vector origin)
         {
-            var bat = CreateEntity<BattonBoneG>(new
+            var battonBoneG = CreateEntity<BattonBoneG>(new
             {
                 Origin = origin
             });
 
-            bat.Place();
-            return bat;
+            battonBoneG.Place();
+            return battonBoneG;
         }
 
         private void SpawnX(Vector origin)

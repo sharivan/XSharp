@@ -5,7 +5,7 @@ using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies
 {
-    public enum DrillerState
+    public enum ScriverState
     {
         IDLE = 0,
         DRILLING = 1,
@@ -19,23 +19,23 @@ namespace XSharp.Engine.Entities.Enemies
         private bool jumping;
         private int jumpCounter;
 
-        public DrillerState State
+        public ScriverState State
         {
-            get => GetState<DrillerState>();
+            get => GetState<ScriverState>();
             set => SetState(value);
         }
 
         public Scriver()
         {
-            SpriteSheetName = "Driller";
+            SpriteSheetName = "Scriver";
 
             SetAnimationNames("Idle", "Drilling", "Jumping", "Landing");
 
-            SetupStateArray(typeof(DrillerState));
-            RegisterState(DrillerState.IDLE, OnIdle, "Idle");
-            RegisterState(DrillerState.DRILLING, OnDrilling, "Drilling");
-            RegisterState(DrillerState.JUMPING, OnJumping, "Jumping");
-            RegisterState(DrillerState.LANDING, OnLanding, "Landing");
+            SetupStateArray(typeof(ScriverState));
+            RegisterState(ScriverState.IDLE, OnIdle, "Idle");
+            RegisterState(ScriverState.DRILLING, OnDrilling, "Drilling");
+            RegisterState(ScriverState.JUMPING, OnJumping, "Jumping");
+            RegisterState(ScriverState.LANDING, OnLanding, "Landing");
         }
 
         protected internal override void OnSpawn()
@@ -46,9 +46,9 @@ namespace XSharp.Engine.Entities.Enemies
             jumping = false;
             jumpCounter = 0;
 
-            PaletteName = "drillerPalette";
-            Health = DRILLER_HEALTH;
-            ContactDamage = DRILLER_CONTACT_DAMAGE;
+            PaletteName = "scriverPalette";
+            Health = SCRIVER_HEALTH;
+            ContactDamage = SCRIVER_CONTACT_DAMAGE;
             CollisionData = CollisionData.NONE;
 
             NothingDropOdd = 79;
@@ -58,22 +58,22 @@ namespace XSharp.Engine.Entities.Enemies
             BigAmmoDropOdd = 0;
             LifeUpDropOdd = 1;
 
-            State = DrillerState.IDLE;
+            State = ScriverState.IDLE;
         }
 
         protected override FixedSingle GetLegsHeight()
         {
-            return DRILLER_SIDE_COLLIDER_BOTTOM_CLIP;
+            return SCRIVER_SIDE_COLLIDER_BOTTOM_CLIP;
         }
 
         protected override Box GetCollisionBox()
         {
-            return DRILLER_COLLISION_BOX;
+            return SCRIVER_COLLISION_BOX;
         }
 
         protected override Box GetHitbox()
         {
-            return State == DrillerState.DRILLING ? DRILLER_DRILLING_HITBOX : DRILLER_HITBOX;
+            return State == ScriverState.DRILLING ? SCRIVER_DRILLING_HITBOX : SCRIVER_HITBOX;
         }
 
         protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
@@ -86,12 +86,12 @@ namespace XSharp.Engine.Entities.Enemies
 
         protected override void OnLanded()
         {
-            if (State == DrillerState.JUMPING)
+            if (State == ScriverState.JUMPING)
             {
                 jumpCounter++;
                 jumping = false;
                 Velocity = Vector.NULL_VECTOR;
-                State = DrillerState.LANDING;
+                State = ScriverState.LANDING;
             }
         }
 
@@ -111,12 +111,12 @@ namespace XSharp.Engine.Entities.Enemies
                     FaceToPlayer();
 
                     if ((Engine.Player.Origin.X - Origin.X).Abs <= 50)
-                        State = DrillerState.DRILLING;
+                        State = ScriverState.DRILLING;
                 }
 
-                if (frameCounter >= 40 && State != DrillerState.DRILLING)
+                if (frameCounter >= 40 && State != ScriverState.DRILLING)
                 {
-                    State = DrillerState.JUMPING;
+                    State = ScriverState.JUMPING;
                     jumpCounter = 0;
                 }
             }
@@ -126,7 +126,7 @@ namespace XSharp.Engine.Entities.Enemies
         {
             if (frameCounter == 10)
             {
-                Velocity = (Direction == Direction.RIGHT ? DRILLER_JUMP_VELOCITY_X : -DRILLER_JUMP_VELOCITY_X, DRILLER_JUMP_VELOCITY_Y);
+                Velocity = (Direction == Direction.RIGHT ? SCRIVER_JUMP_VELOCITY_X : -SCRIVER_JUMP_VELOCITY_X, SCRIVER_JUMP_VELOCITY_Y);
                 jumping = true;
             }
             else if (!jumping)
@@ -136,13 +136,13 @@ namespace XSharp.Engine.Entities.Enemies
         private void OnLanding(EntityState state, long frameCounter)
         {
             if (frameCounter >= 12)
-                State = jumpCounter >= 2 ? DrillerState.IDLE : DrillerState.JUMPING;
+                State = jumpCounter >= 2 ? ScriverState.IDLE : ScriverState.JUMPING;
         }
 
         private void OnDrilling(EntityState state, long frameCounter)
         {
             if (frameCounter >= 12 && (Engine.Player.Origin.X - Origin.X).Abs > 50)
-                State = DrillerState.IDLE;
+                State = ScriverState.IDLE;
             else
                 FaceToPlayer();
         }
@@ -152,7 +152,7 @@ namespace XSharp.Engine.Entities.Enemies
             if (flashing)
             {
                 flashing = false;
-                PaletteName = "drillerPalette";
+                PaletteName = "scriverPalette";
             }
 
             return base.PreThink();

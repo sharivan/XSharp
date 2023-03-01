@@ -292,7 +292,7 @@
     <EmbeddedResource Include="resources\sprites\Objects\BossDoor.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X2\mmx2-bat.png" />
+    <EmbeddedResource Include="resources\sprites\Enemies\X2\batton-bone-g.png" />
     <EmbeddedResource Include="resources\tiles\black_pixel.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -375,7 +375,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\sprites\Enemies\X2\mmx2-driller.png" />
+    <EmbeddedResource Include="resources\sprites\Enemies\X2\scriver.png" />
     <Content Include="resources\sounds\mmx2\X Semi Charged Shot.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -4,7 +4,7 @@ using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies
 {
-    public enum BatState
+    public enum BattonBoneGState
     {
         IDLE = 0,
         ATTACKING = 1,
@@ -15,26 +15,26 @@ namespace XSharp.Engine.Entities.Enemies
     {
         private bool flashing;
 
-        public BatState State
+        public BattonBoneGState State
         {
-            get => GetState<BatState>();
+            get => GetState<BattonBoneGState>();
             set
             {
-                CheckCollisionWithWorld = value == BatState.ESCAPING;
+                CheckCollisionWithWorld = value == BattonBoneGState.ESCAPING;
                 SetState(value);
             }
         }
 
         public BattonBoneG()
         {
-            SpriteSheetName = "Bat";
+            SpriteSheetName = "BattonBoneG";
 
             SetAnimationNames("Idle", "Attacking");
 
-            SetupStateArray(typeof(BatState));
-            RegisterState(BatState.IDLE, OnIdle, "Idle");
-            RegisterState(BatState.ATTACKING, OnAttacking, "Attacking");
-            RegisterState(BatState.ESCAPING, OnEscaping, "Attacking");
+            SetupStateArray(typeof(BattonBoneGState));
+            RegisterState(BattonBoneGState.IDLE, OnIdle, "Idle");
+            RegisterState(BattonBoneGState.ATTACKING, OnAttacking, "Attacking");
+            RegisterState(BattonBoneGState.ESCAPING, OnEscaping, "Attacking");
         }
 
         public override FixedSingle GetGravity()
@@ -50,9 +50,9 @@ namespace XSharp.Engine.Entities.Enemies
 
             flashing = false;
 
-            PaletteName = "batPalette";
-            Health = BAT_HEALTH;
-            ContactDamage = BAT_CONTACT_DAMAGE;
+            PaletteName = "battonBoneGPalette";
+            Health = BATTON_BONE_G_HEALTH;
+            ContactDamage = BATTON_BONE_G_CONTACT_DAMAGE;
 
             NothingDropOdd = 79;
             SmallHealthDropOdd = 5;
@@ -61,7 +61,7 @@ namespace XSharp.Engine.Entities.Enemies
             BigAmmoDropOdd = 5;
             LifeUpDropOdd = 1;
 
-            State = BatState.IDLE;
+            State = BattonBoneGState.IDLE;
         }
 
         protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
@@ -74,25 +74,25 @@ namespace XSharp.Engine.Entities.Enemies
 
         protected override void OnHurt(Sprite victim, FixedSingle damage)
         {
-            Velocity = BAT_ESCAPE_SPEED * Vector.UP_VECTOR;
-            State = BatState.ESCAPING;
+            Velocity = BATTON_BONE_G_ESCAPE_SPEED * Vector.UP_VECTOR;
+            State = BattonBoneGState.ESCAPING;
         }
 
         protected override void OnStopMoving()
         {
             base.OnStopMoving();
 
-            if (State == BatState.ESCAPING)
+            if (State == BattonBoneGState.ESCAPING)
             {
                 Velocity = Vector.NULL_VECTOR;
-                State = BatState.IDLE;
+                State = BattonBoneGState.IDLE;
             }
         }
 
         private void OnIdle(EntityState state, long frameCounter)
         {
             if (frameCounter >= 60 && Origin.DistanceTo(Engine.Player.Origin) <= SCENE_SIZE * 0.5)
-                State = BatState.ATTACKING;
+                State = BattonBoneGState.ATTACKING;
             else
                 Velocity = Vector.NULL_VECTOR;
         }
@@ -100,7 +100,7 @@ namespace XSharp.Engine.Entities.Enemies
         private void OnAttacking(EntityState state, long frameCounter)
         {
             Vector delta = Engine.Player.Origin - Origin;
-            Velocity = BAT_ATTACK_SPEED * delta.Versor();
+            Velocity = BATTON_BONE_G_ATTACK_SPEED * delta.Versor();
         }
 
         private void OnEscaping(EntityState state, long frameCounter)
@@ -108,10 +108,10 @@ namespace XSharp.Engine.Entities.Enemies
             if (BlockedUp)
             {
                 Velocity = Vector.NULL_VECTOR;
-                State = BatState.IDLE;
+                State = BattonBoneGState.IDLE;
             }
             else
-                Velocity = BAT_ESCAPE_SPEED * Vector.UP_VECTOR;
+                Velocity = BATTON_BONE_G_ESCAPE_SPEED * Vector.UP_VECTOR;
         }
 
         protected override bool PreThink()
@@ -119,7 +119,7 @@ namespace XSharp.Engine.Entities.Enemies
             if (flashing)
             {
                 flashing = false;
-                PaletteName = "batPalette";
+                PaletteName = "battonBoneGPalette";
             }
 
             return base.PreThink();

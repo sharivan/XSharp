@@ -163,23 +163,23 @@ namespace XSharp.Engine
         public const int DEFAULT_BOSS_INVINCIBILITY_TIME = 68;
         public static readonly FixedSingle BOSS_HP_LEFT = 233;
 
-        // Driller
+        // Scriver
 
-        public static readonly FixedSingle DRILLER_JUMP_VELOCITY_X = 384 / 256.0;
-        public static readonly FixedSingle DRILLER_JUMP_VELOCITY_Y = -1280 / 256.0;
-        public const int DRILLER_HEALTH = 4;
-        public static readonly FixedSingle DRILLER_CONTACT_DAMAGE = 2;
-        public static readonly Box DRILLER_HITBOX = ((-2, 0), (-16, -12), (16, 12));
-        public static readonly Box DRILLER_DRILLING_HITBOX = ((8, 0), (-24, -12), (24, 12));
-        public static readonly Box DRILLER_COLLISION_BOX = ((-2, 0), (-9, -12), (9, 12));
-        public static readonly FixedSingle DRILLER_SIDE_COLLIDER_BOTTOM_CLIP = 6;
+        public static readonly FixedSingle SCRIVER_JUMP_VELOCITY_X = 384 / 256.0;
+        public static readonly FixedSingle SCRIVER_JUMP_VELOCITY_Y = -1280 / 256.0;
+        public const int SCRIVER_HEALTH = 4;
+        public static readonly FixedSingle SCRIVER_CONTACT_DAMAGE = 2;
+        public static readonly Box SCRIVER_HITBOX = ((-2, 0), (-16, -12), (16, 12));
+        public static readonly Box SCRIVER_DRILLING_HITBOX = ((8, 0), (-24, -12), (24, 12));
+        public static readonly Box SCRIVER_COLLISION_BOX = ((-2, 0), (-9, -12), (9, 12));
+        public static readonly FixedSingle SCRIVER_SIDE_COLLIDER_BOTTOM_CLIP = 6;
 
-        // Bat
+        // Batton Bone G
 
-        public static readonly FixedSingle BAT_ATTACK_SPEED = 256 / 256.0;
-        public static readonly FixedSingle BAT_ESCAPE_SPEED = 512 / 256.0;
-        public const int BAT_HEALTH = 3;
-        public static readonly FixedSingle BAT_CONTACT_DAMAGE = 1;
+        public static readonly FixedSingle BATTON_BONE_G_ATTACK_SPEED = 256 / 256.0;
+        public static readonly FixedSingle BATTON_BONE_G_ESCAPE_SPEED = 512 / 256.0;
+        public const int BATTON_BONE_G_HEALTH = 3;
+        public static readonly FixedSingle BATTON_BONE_G_CONTACT_DAMAGE = 1;
 
         // Penguin
 
@@ -417,7 +417,7 @@ namespace XSharp.Engine
             new Color(136, 248, 248, 255) // 15
         };
 
-        public static readonly Color[] DRILLER_PALETTE = new Color[]
+        public static readonly Color[] SCRIVER_PALETTE = new Color[]
         {
             Color.Transparent, // 0
             new Color(48, 40, 96, 255), // 1
@@ -437,7 +437,7 @@ namespace XSharp.Engine
             new Color(32, 32, 32, 255) // 15
         };
 
-        public static readonly Color[] BAT_PALETTE = new Color[]
+        public static readonly Color[] BATTON_BONE_G_PALETTE = new Color[]
         {
             Color.Transparent, // 0
             new Color(64, 136, 64, 255), // 1
