@@ -164,7 +164,9 @@
     <Compile Include="Engine\Graphics\Palette.cs" />
     <Compile Include="Engine\Graphics\Tilemap.cs" />
     <Compile Include="Engine\Graphics\Tileset.cs" />
-    <Compile Include="Engine\Sound\SoundPlayer.cs" />
+    <Compile Include="Engine\Sound\SoundChannel.cs" />
+    <Compile Include="Engine\Sound\DuplicateSoundChannelNameException.cs" />
+    <Compile Include="Engine\Sound\SoundStream.cs" />
     <Compile Include="Engine\Collision\SpriteCollider.cs" />
     <Compile Include="Engine\XSharpTupleExtensions.cs" />
     <Compile Include="Engine\World\Block.cs" />

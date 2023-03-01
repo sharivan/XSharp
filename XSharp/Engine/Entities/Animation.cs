@@ -20,11 +20,130 @@ namespace XSharp.Engine
 
         private readonly AnimationFrameEvent[] animationEvents;
 
-        public Vector Offset
+        public Sprite Sprite
+        {
+            get;
+        }
+
+        public int SpriteSheetIndex
+        {
+            get;
+            private set;
+        }
+
+        public string FrameSequenceName
+        {
+            get;
+            private set;
+        }
+
+        public int Index
+        {
+            get;
+            private set;
+        }
+
+        public SpriteSheet SpriteSheet => Sprite.SpriteSheet;
+
+        public int InitialSequenceIndex
         {
             get;
             set;
         }
+
+        public Vector Offset
+        {
+            get;
+            set;
+        } = Vector.NULL_VECTOR;
+
+        public int CurrentSequenceIndex
+        {
+            get => currentSequenceIndex;
+
+            set
+            {
+                currentSequenceIndex = value >= sequence.Count ? sequence.Count - 1 : value;
+                animationEndFired = false;
+            }
+        }
+
+        public MMXBox CurrentFrameBoundingBox
+        {
+            get
+            {
+                return currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
+                    ? MMXBox.EMPTY_BOX
+                    : sequence[currentSequenceIndex].BoundingBox;
+            }
+        }
+
+        public MMXBox CurrentFrameCollisionBox
+        {
+            get
+            {
+                return currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
+                    ? MMXBox.EMPTY_BOX
+                    : sequence[currentSequenceIndex].CollisionBox;
+            }
+        }
+
+        public bool Visible
+        {
+            get;
+            set;
+        }
+
+        public bool Animating
+        {
+            get => animating;
+
+            set
+            {
+                if (value && !animating)
+                    Start();
+                else if (!value && animating)
+                    Stop();
+            }
+        }
+
+        public int LoopFromFrame => sequence.LoopFromSequenceIndex;
+
+        public FixedSingle Rotation
+        {
+            get;
+            set;
+        }
+
+        public FixedSingle Scale
+        {
+            get;
+            set;
+        }
+
+        public bool Flipped
+        {
+            get;
+            set;
+        }
+
+        public bool Mirrored
+        {
+            get;
+            set;
+        }
+
+        public int RepeatX
+        {
+            get;
+            set;
+        } = 1;
+
+        public int RepeatY
+        {
+            get;
+            set;
+        } = 1;
 
         public Vector DrawOrigin => Sprite.IntegerOrigin + Offset;
 
@@ -67,17 +186,6 @@ namespace XSharp.Engine
         {
         }
 
-        /// <summary>
-        /// Cria uma nova animação
-        /// </summary>
-        /// <param name="entity">Entidade possuidora da animação</param>
-        /// <param name="index">Índice da animação</param>
-        /// <param name="imageList">ImageList usado para gerar a animação (cada elemento do ImageList é um frame desta animação)</param>
-        /// <param name="fps">Quandidade de quadros por segundo da animação</param>
-        /// <param name="initialSequenceIndex">Quadro inicial da animação</param>
-        /// <param name="startVisible">Especifica se a animação iniciará visível ou não</param>
-        /// <param name="startOn">Especifica se a animação começará ativa ou não</param>
-        /// <param name="loop">Especifica se a animação estará em looping ou não</param>
         public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, Vector offset, FixedSingle rotation, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
         {
             Sprite = sprite;
@@ -88,7 +196,7 @@ namespace XSharp.Engine
             RepeatX = repeatX;
             RepeatY = repeatY;
 
-            sequence = Sheet.GetFrameSequence(frameSequenceName);
+            sequence = SpriteSheet.GetFrameSequence(frameSequenceName);
             InitialSequenceIndex = initialFrame;
             Visible = startVisible;
             animating = startOn;
@@ -145,9 +253,6 @@ namespace XSharp.Engine
             SetEvent(frameSequenceIndex, null);
         }
 
-        /// <summary>
-        /// Inicia a animação a partir do quadro atual
-        /// </summary>
         public void Start(int startIndex = -1)
         {
             animationEndFired = false;
@@ -157,170 +262,21 @@ namespace XSharp.Engine
                 currentSequenceIndex = InitialSequenceIndex + startIndex;
         }
 
-        /// <summary>
-        /// Inicia a animação a partir do quadro inicial
-        /// </summary>
         public void StartFromBegin()
         {
             Start(0);
         }
 
-        /// <summary>
-        /// Para a animação
-        /// </summary>
         public void Stop()
         {
             animating = false;
         }
 
-        /// <summary>
-        /// Reseta a animação, definindo o quadro atual como o quadro inicial
-        /// </summary>
         public void Reset()
         {
             currentSequenceIndex = InitialSequenceIndex;
         }
 
-        /// <summary>
-        /// Entidade possuidora da animação
-        /// </summary>
-        public Sprite Sprite
-        {
-            get;
-        }
-
-        public int SpriteSheetIndex
-        {
-            get;
-            private set;
-        }
-
-        public string FrameSequenceName
-        {
-            get;
-            private set;
-        }
-
-        public int Index
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// ImageList usado para gerar a animação (cada elemento do ImageList é um frame desta animação)
-        /// </summary>
-        public SpriteSheet Sheet => Sprite.Engine.GetSpriteSheet(SpriteSheetIndex);
-
-        /// <summary>
-        /// Frame inicial da animação
-        /// </summary>
-        public int InitialSequenceIndex
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Frame atual da animação
-        /// </summary>
-        public int CurrentSequenceIndex
-        {
-            get => currentSequenceIndex;
-
-            set
-            {
-                currentSequenceIndex = value >= sequence.Count ? sequence.Count - 1 : value;
-                animationEndFired = false;
-            }
-        }
-
-        public MMXBox CurrentFrameBoundingBox
-        {
-            get
-            {
-                return currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
-                    ? MMXBox.EMPTY_BOX
-                    : sequence[currentSequenceIndex].BoundingBox;
-            }
-        }
-
-        public MMXBox CurrentFrameCollisionBox
-        {
-            get
-            {
-                return currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
-                    ? MMXBox.EMPTY_BOX
-                    : sequence[currentSequenceIndex].CollisionBox;
-            }
-        }
-
-        /// <summary>
-        /// Visibilidade da animação (true se está visível, false caso contrário)
-        /// </summary>
-        public bool Visible
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// true se a animação está sendo executada, false caso contrário
-        /// </summary>
-        public bool Animating
-        {
-            get => animating;
-
-            set
-            {
-                if (value && !animating)
-                    Start();
-                else if (!value && animating)
-                    Stop();
-            }
-        }
-
-        public int LoopFromFrame => sequence.LoopFromSequenceIndex;
-
-        public FixedSingle Rotation
-        {
-            get;
-            set;
-        }
-
-        public FixedSingle Scale
-        {
-            get;
-            set;
-        }
-
-        public bool Flipped
-        {
-            get;
-            set;
-        }
-
-        public bool Mirrored
-        {
-            get;
-            set;
-        }
-
-        public int RepeatX
-        {
-            get;
-            set;
-        } = 1;
-
-        public int RepeatY
-        {
-            get;
-            set;
-        } = 1;
-
-        /// <summary>
-        /// Evento a ser executado a cada frame (tick) do engine
-        /// </summary>
         internal void NextFrame()
         {
             // Se a animação não está em execução ou não ouver pelo menos dois quadros na animação então não é necessário computar o próximo quadro da animação
@@ -350,10 +306,6 @@ namespace XSharp.Engine
             }
         }
 
-        /// <summary>
-        /// Realiza a pintura da animação
-        /// </summary>
-        /// <param name="g">Objeto do tipo Graphics usado nas operações de desenho e pintura pela animação</param>
         public void Render()
         {
             // Se não estiver visível ou não ouver frames então não precisa desenhar nada
@@ -366,12 +318,12 @@ namespace XSharp.Engine
 
             Vector origin = DrawOrigin;
             MMXBox drawBox = origin + srcBox;
-            Vector2 translatedOrigin = Sprite.Engine.WorldVectorToScreen(drawBox.Origin);
+            Vector2 translatedOrigin = GameEngine.Engine.WorldVectorToScreen(drawBox.Origin);
             var origin3 = new Vector3(translatedOrigin.X, translatedOrigin.Y, 0);
 
             Matrix transform = Matrix.Identity;
 
-            float drawScale = (float) Sprite.Engine.DrawScale;
+            float drawScale = (float) GameEngine.Engine.DrawScale;
             transform *= Matrix.Scaling(drawScale);
 
             if (Rotation != FixedSingle.ZERO)
@@ -390,12 +342,12 @@ namespace XSharp.Engine
             else if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
                 transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(origin3);
 
-            Sprite.Engine.RenderSprite(texture, Sprite.Palette, Sprite.FadingSettings, drawBox.LeftTop, transform, RepeatX, RepeatY);
+            GameEngine.Engine.RenderSprite(texture, Sprite.Palette, Sprite.FadingSettings, drawBox.LeftTop, transform, RepeatX, RepeatY);
         }
 
         internal void OnDeviceReset()
         {
-            sequence = Sheet.GetFrameSequence(FrameSequenceName);
+            sequence = SpriteSheet.GetFrameSequence(FrameSequenceName);
         }
 
         public override string ToString()

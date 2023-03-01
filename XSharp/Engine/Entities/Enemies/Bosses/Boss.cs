@@ -173,7 +173,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
 
         protected override void OnDamaged(Sprite attacker, FixedSingle damage)
         {
-            Engine.PlaySound(2, 27);
+            Engine.PlaySound(2, "Big Hit");
             MakeInvincible(InvincibilityFrames);
 
             if (!Exploding)
@@ -241,7 +241,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
                     }
                 }
 
-                Engine.PlaySound(0, 19);
+                Engine.PlaySound(0, "X Life Gain");
 
                 HealthFillingFrameCounter++;
             }

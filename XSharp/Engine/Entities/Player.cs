@@ -539,7 +539,7 @@ namespace XSharp.Engine.Entities
                 if (!TakingDamage)
                 {
                     if (!ContainsAnimationIndex(PlayerState.LAND, CurrentAnimationIndex, true))
-                        PlaySound(6);
+                        PlaySound("X Land");
 
                     if (PressingLeft)
                         TryMoveLeft();
@@ -651,7 +651,7 @@ namespace XSharp.Engine.Entities
                             Velocity = Vector.NULL_VECTOR;
                             wallSlideFrameCounter = 0;
                             SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
-                            PlaySound(6);
+                            PlaySound("X Land");
                         }
                     }
                     else if (!WallJumping)
@@ -699,7 +699,7 @@ namespace XSharp.Engine.Entities
                             Velocity = Vector.NULL_VECTOR;
                             wallSlideFrameCounter = 0;
                             SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
-                            PlaySound(6);
+                            PlaySound("X Land");
                         }
                     }
                     else if (!WallJumping)
@@ -748,9 +748,9 @@ namespace XSharp.Engine.Entities
             return INITIAL_UPWARD_SPEED_FROM_JUMP;
         }
 
-        internal void PlaySound(int index, bool ignoreUpdatesUntilFinished = false)
+        internal void PlaySound(string name, bool ignoreUpdatesUntilFinished = false)
         {
-            Engine.PlaySound(0, index, ignoreUpdatesUntilFinished);
+            Engine.PlaySound(0, name, ignoreUpdatesUntilFinished);
         }
 
         protected override void OnBeforeMove(ref Vector origin)
@@ -777,7 +777,7 @@ namespace XSharp.Engine.Entities
                 {
                     if (!spawnSoundPlayed)
                     {
-                        PlaySound(7);
+                        PlaySound("X Fade In");
                         spawnSoundPlayed = true;
                     }
 
@@ -871,7 +871,7 @@ namespace XSharp.Engine.Entities
                                                 Velocity = Vector.NULL_VECTOR;
                                                 wallSlideFrameCounter = 0;
                                                 SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
-                                                PlaySound(6);
+                                                PlaySound("X Land");
                                             }
                                             else if (!WallJumping)
                                                 TryMoveLeft(mirrored);
@@ -910,7 +910,7 @@ namespace XSharp.Engine.Entities
                                                 Velocity = Vector.NULL_VECTOR;
                                                 wallSlideFrameCounter = 0;
                                                 SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
-                                                PlaySound(6);
+                                                PlaySound("X Land");
                                             }
                                             else if (!WallJumping)
                                                 TryMoveRight(mirrored);
@@ -1057,7 +1057,7 @@ namespace XSharp.Engine.Entities
                                             dashFrameCounter = 0;
                                             Velocity = new Vector(Direction == Direction.LEFT ? -DASH_SPEED : DASH_SPEED, Velocity.Y);
                                             SetState(PlayerState.PRE_DASH, 0);
-                                            PlaySound(4);
+                                            PlaySound("X Dash");
                                         }
                                     }
                                     else if (!Landed && !WallJumping && !WallSliding && !OnLadder)
@@ -1124,7 +1124,7 @@ namespace XSharp.Engine.Entities
                                     jumping = true;
                                     Velocity = (hspeedNull ? 0 : PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, -GetInitialJumpSpeed());
                                     SetState(PlayerState.JUMP, 0);
-                                    PlaySound(5);
+                                    PlaySound("X Jump");
                                 }
                                 else if (Velocity.Y < 0)
                                     Velocity = Velocity.XVector;
@@ -1211,7 +1211,7 @@ namespace XSharp.Engine.Entities
                                 SetState(PlayerState.WALL_JUMP, 0);
                             else if (wallJumpFrameCounter == 4)
                             {
-                                PlaySound(5);
+                                PlaySound("X Jump");
                                 Engine.StartWallKickEffect(this);
                             }
 
@@ -1603,7 +1603,7 @@ namespace XSharp.Engine.Entities
             else if (ContainsAnimationIndex(PlayerState.DYING, animation.Index, false))
             {
                 Freezed = false;
-                Engine.PlaySound(2, 10);
+                Engine.PlaySound(2, "X Die");
                 PaletteName = "flashingPalette";
 
                 Engine.StartDyingEffect();
@@ -1616,7 +1616,7 @@ namespace XSharp.Engine.Entities
                     InputLocked = true;
                     Invincible = true;
                     SetState(PlayerState.PRE_TELEPORTING, 0);
-                    PlaySound(17);
+                    PlaySound("X Fade Out");
                 }
                 else
                 {
@@ -1640,7 +1640,7 @@ namespace XSharp.Engine.Entities
             Invincible = true;
             InputLocked = true;
             SetState(PlayerState.VICTORY, 0);
-            PlaySound(16);
+            PlaySound("X Upgrade Complete");
         }
 
         public void StartTeleporting(bool withVictoryPose)
@@ -1655,7 +1655,7 @@ namespace XSharp.Engine.Entities
                 Invincible = true;
                 InputLocked = true;
                 SetState(PlayerState.PRE_TELEPORTING, 0);
-                PlaySound(17);
+                PlaySound("X Fade Out");
             }
         }
 
@@ -1835,7 +1835,7 @@ namespace XSharp.Engine.Entities
             if (direction != Direction.NONE)
                 Direction = direction;
 
-            Engine.PlaySound(2, 9);
+            Engine.PlaySound(2, "X Hurt");
 
             WallJumping = false;
 

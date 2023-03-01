@@ -53,7 +53,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             DetatchFromPlayer();
 
             Exploding = true;
-            Engine.PlaySound(4, 31);
+            Engine.PlaySound(4, "Ice Freeze");
 
             var fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
             {

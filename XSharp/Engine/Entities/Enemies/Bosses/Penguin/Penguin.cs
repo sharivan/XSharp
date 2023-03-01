@@ -294,17 +294,17 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         private void PlayBlowingSoundLoop()
         {
-            Engine.PlaySound(5, 29, 2.3305, 0.03018);
+            Engine.PlaySound(5, "Chill Penguin Breath", 2.3305, 0.03018);
         }
 
         private void FinishBlowingSoundLoop()
         {
-            Engine.ClearSoundLoopPoint(5, 29, true);
+            Engine.ClearSoundLoopPoint(5, "Chill Penguin Breath", true);
         }
 
         private void StopBlowingSound()
         {
-            Engine.StopSound(5, 29);
+            Engine.StopSound(5, "Chill Penguin Breath");
         }
 
         private void OnBlowing(EntityState state, long frameCounter)
@@ -373,7 +373,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             if (frameCounter >= 30)
             {
                 if (frameCounter == 30)
-                    Engine.PlaySound(4, 28);
+                    Engine.PlaySound(4, "Misc. dash, jump, move (3)");
 
                 Vector v = Velocity;
                 Vector a = PENGUIN_SLIDE_DECELARATION * (Direction == DefaultDirection ? Vector.LEFT_VECTOR : Vector.RIGHT_VECTOR);

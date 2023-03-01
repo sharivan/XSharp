@@ -56,7 +56,7 @@
         {
             if (!soundPlayed)
             {
-                Engine.PlaySound(2, 3, 3.350, 1.585);
+                Engine.PlaySound(2, "X Charge", 3.350, 1.585);
                 soundPlayed = true;
             }
 
@@ -68,7 +68,7 @@
 
         protected override void OnDeath()
         {
-            Engine.StopSound(2, 3);
+            Engine.StopSound(2, "X Charge");
             base.OnDeath();
         }
     }

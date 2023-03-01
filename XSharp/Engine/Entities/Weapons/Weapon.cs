@@ -48,7 +48,7 @@ namespace XSharp.Engine.Entities.Weapons
 
         protected internal virtual void OnHit(Enemy enemy, FixedSingle damage)
         {
-            Engine.PlaySound(1, 8);
+            Engine.PlaySound(1, "Small Hit");
         }
 
         public void Hit(Enemy enemy)

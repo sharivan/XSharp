@@ -38,19 +38,19 @@
             switch (EffectSound)
             {
                 case ExplosionEffectSound.ENEMY_DIE_1:
-                    Engine.PlaySound(SoundChannel, 12);
+                    Engine.PlaySound(SoundChannel, "Enemy Die (1)");
                     break;
 
                 case ExplosionEffectSound.ENEMY_DIE_2:
-                    Engine.PlaySound(SoundChannel, 13);
+                    Engine.PlaySound(SoundChannel, "Enemy Die (2)");
                     break;
 
                 case ExplosionEffectSound.ENEMY_DIE_3:
-                    Engine.PlaySound(SoundChannel, 14);
+                    Engine.PlaySound(SoundChannel, "Enemy Die (3)");
                     break;
 
                 case ExplosionEffectSound.ENEMY_DIE_4:
-                    Engine.PlaySound(SoundChannel, 15);
+                    Engine.PlaySound(SoundChannel, "Enemy Die (4)");
                     break;
             }
         }

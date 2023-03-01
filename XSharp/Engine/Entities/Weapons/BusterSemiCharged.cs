@@ -70,7 +70,7 @@ namespace XSharp.Engine.Entities.Weapons
         private void OnStartFiring(EntityState state, EntityState lastState)
         {
             if (Engine.Boss != null && !Engine.Boss.Exploding)
-                Engine.PlaySound(1, 1);
+                Engine.PlaySound(1, "X Semi Charged Shot");
         }
 
         private void OnStartShooting(EntityState state, EntityState lastState)
@@ -115,7 +115,7 @@ namespace XSharp.Engine.Entities.Weapons
 
         public override void Reflect()
         {
-            Engine.PlaySound(1, 33);
+            Engine.PlaySound(1, "Enemy Helmet Hit");
             SetState(SemiChargedState.EXPLODING);
         }
 

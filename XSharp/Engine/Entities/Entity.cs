@@ -18,6 +18,8 @@ namespace XSharp.Engine.Entities
 
     public abstract class Entity
     {
+        public static GameEngine Engine => GameEngine.Engine;
+
         public event EntityEvent SpawnEvent;
         public event EntityEvent DeathEvent;
         public event EntityEvent VisibleChangedEvent;
@@ -51,8 +53,6 @@ namespace XSharp.Engine.Entities
         private bool checkTouchingWithDeadEntities = false;
 
         private Box[] lastBox;
-
-        public static GameEngine Engine => GameEngine.Engine;
 
         public int Index
         {

@@ -141,7 +141,7 @@ namespace XSharp.Engine.Entities.Objects
         internal void OnOpening(long frameCounter)
         {
             if (frameCounter == 44)
-                Engine.PlaySound(0, 22, true);
+                Engine.PlaySound(0, "Door Opening", true);
         }
 
         private Vector GetCameraMoveOffset()
@@ -198,7 +198,7 @@ namespace XSharp.Engine.Entities.Objects
 
         internal void OnStartClosing()
         {
-            Engine.PlaySound(0, StartBossBattle ? 23 : 22, true);
+            Engine.PlaySound(0, StartBossBattle ? "Door Closing" : "Door Opening", true);
             ClosingEvent?.Invoke(this);
         }
 

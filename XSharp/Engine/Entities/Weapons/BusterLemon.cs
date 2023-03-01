@@ -70,7 +70,7 @@ namespace XSharp.Engine.Entities.Weapons
         private void OnStartShot(EntityState state, EntityState lastState)
         {
             if (!Shooter.shootingCharged)
-                Engine.PlaySound(1, 0);
+                Engine.PlaySound(1, "X Regular Shot");
         }
 
         private void OnShooting(EntityState state, long frameCounter)
@@ -122,7 +122,7 @@ namespace XSharp.Engine.Entities.Weapons
                 Damage = 0;
                 reflected = true;
                 Velocity = new Vector(-Velocity.X, LEMON_REFLECTION_VSPEED);
-                Engine.PlaySound(1, 33);
+                Engine.PlaySound(1, "Enemy Helmet Hit");
             }
         }
 

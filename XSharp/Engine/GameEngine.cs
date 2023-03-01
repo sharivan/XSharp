@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Remoting.Channels;
 using System.Windows.Forms;
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
@@ -254,8 +255,9 @@ namespace XSharp.Engine
         private readonly List<Palette> palettes;
         private readonly Dictionary<string, Palette> palettesByName;
 
-        private readonly List<WaveStream> soundStreams;
-        private readonly List<(WaveOutEvent player, SoundStream stream, bool initialized)> soundChannels;
+        private readonly Dictionary<string, WaveStream> soundStreams;
+        private readonly List<SoundChannel> soundChannels;
+        private readonly Dictionary<string, SoundChannel> soundChannelsByName;
 
         internal Partition<Entity> partition;
         private EntityList<Entity> resultSet;
@@ -801,8 +803,9 @@ namespace XSharp.Engine
             palettes = new List<Palette>();
             palettesByName = new Dictionary<string, Palette>();
 
-            soundStreams = new List<WaveStream>();
-            soundChannels = new List<(WaveOutEvent, SoundStream, bool)>();
+            soundStreams = new Dictionary<string, WaveStream>();
+            soundChannels = new List<SoundChannel>();
+            soundChannelsByName = new Dictionary<string, SoundChannel>();
 
             FadingSettings = new FadingControl();
 
@@ -849,167 +852,158 @@ namespace XSharp.Engine
             // 4 - Enemies (including bosses)
             // 5 - Ambient
 
-            for (int i = 0; i < 8; i++)
-            {
-                var player = new WaveOutEvent()
-                {
-                    Volume = 0.25f
-                };
-
-                var ss = new SoundStream();
-
-                soundChannels.Add((player, ss, false));
-            }
-
-            soundChannels[3].player.Volume = 0.5f;
+            CreateSoundChannel("X", 0.25f);
+            CreateSoundChannel("Weapons", 0.25f);
+            CreateSoundChannel("Effects", 0.25f);
+            CreateSoundChannel("OST", 0.5f);
+            CreateSoundChannel("Enemies", 0.25f);
+            CreateSoundChannel("Ambient", 0.25f);
+            CreateSoundChannel("Unused1", 0.25f);
+            CreateSoundChannel("Unused2", 0.25f);
 
             // 0
             var stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\01 - MMX - X Regular Shot.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Regular Shot", stream);
 
             // 1
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx2\X Semi Charged Shot.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Semi Charged Shot", stream);
 
             // 2
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\02 - MMX - X Charge Shot.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Charge Shot", stream);
 
             // 3
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\04 - MMX - X Charge.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Charge", stream);
 
             // 4
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\07 - MMX - X Dash.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Dash", stream);
 
             // 5
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\08 - MMX - X Jump.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Jump", stream);
 
             // 6
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\09 - MMX - X Land.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Land", stream);
 
             // 7
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\17 - MMX - X Fade In.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Fade In", stream);
 
             // 8
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\30 - MMX - Small Hit.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("Small Hit", stream);
 
             // 9
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\10 - MMX - X Hurt.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Hurt", stream);
 
             // 10
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\11 - MMX - X Die.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("X Die", stream);
 
             // 11
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\11 - MMX - X Die.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\56 - MMX - Enemy Die (1).wav", SoundFormat.WAVE);
+            soundStreams.Add("Enemy Die (1)", stream);
 
             // 12
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\56 - MMX - Enemy Die (1).wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\57 - MMX - Enemy Die (2).wav", SoundFormat.WAVE);
+            soundStreams.Add("Enemy Die (2)", stream);
 
             // 13
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\57 - MMX - Enemy Die (2).wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\58 - MMX - Enemy Die (3).wav", SoundFormat.WAVE);
+            soundStreams.Add("Enemy Die (3)", stream);
 
             // 14
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\58 - MMX - Enemy Die (3).wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\59 - MMX - Enemy Die (4).wav", SoundFormat.WAVE);
+            soundStreams.Add("Enemy Die (4)", stream);
 
             // 15
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\59 - MMX - Enemy Die (4).wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav", SoundFormat.WAVE);
+            soundStreams.Add("X Upgrade Complete", stream);
 
             // 16
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\18 - MMX - X Fade Out.wav", SoundFormat.WAVE);
+            soundStreams.Add("X Fade Out", stream);
 
             // 17
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\18 - MMX - X Fade Out.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\12 - Chill Penguin.mp3", SoundFormat.MP3);
+            soundStreams.Add("Chill Penguin", stream);
 
             // 18
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\12 - Chill Penguin.mp3", SoundFormat.MP3);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\12 - MMX - X Life Gain.wav", SoundFormat.WAVE);
+            soundStreams.Add("X Life Gain", stream);
 
             // 19
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\12 - MMX - X Life Gain.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\13 - MMX - X Extra Life.wav", SoundFormat.WAVE);
+            soundStreams.Add("X Extra Life", stream);
 
             // 20
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\13 - MMX - X Extra Life.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav", SoundFormat.WAVE);
+            soundStreams.Add("X Sub Tank-Heart Powerup", stream);
 
             // 21
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Door Opening.wav", SoundFormat.WAVE);
+            soundStreams.Add("Door Opening", stream);
 
             // 22
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Door Opening.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Door Closing.wav", SoundFormat.WAVE);
+            soundStreams.Add("Door Closing", stream);
 
             // 23
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Door Closing.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\19 - Boss Intro.mp3", SoundFormat.MP3);
+            soundStreams.Add("Boss Intro", stream);
 
             // 24
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\19 - Boss Intro.mp3", SoundFormat.MP3);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\20 - Boss Battle.mp3", SoundFormat.MP3);
+            soundStreams.Add("Boss Battle", stream);
 
             // 25
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\20 - Boss Battle.mp3", SoundFormat.MP3);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\21 - Boss Defeated.mp3", SoundFormat.MP3);
+            soundStreams.Add("Boss Defeated", stream);
 
             // 26
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\21 - Boss Defeated.mp3", SoundFormat.MP3);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\31 - MMX - Big Hit.wav", SoundFormat.WAVE);
+            soundStreams.Add("Big Hit", stream);
 
             // 27
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\31 - MMX - Big Hit.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\91 - MMX - Misc. dash, jump, move (3).wav", SoundFormat.WAVE);
+            soundStreams.Add("Misc. dash, jump, move (3)", stream);
 
             // 28
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\91 - MMX - Misc. dash, jump, move (3).wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav", SoundFormat.WAVE);
+            soundStreams.Add("Chill Penguin Breath", stream);
 
             // 29
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\34 - MMX - Ice.wav", SoundFormat.WAVE);
+            soundStreams.Add("Ice", stream);
 
             // 30
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\34 - MMX - Ice.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\35 - MMX - Ice Freeze.wav", SoundFormat.WAVE);
+            soundStreams.Add("Ice Freeze", stream);
 
             // 31
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\35 - MMX - Ice Freeze.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\36 - MMX - Ice Break.wav", SoundFormat.WAVE);
+            soundStreams.Add("Ice Break", stream);
 
             // 32
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\36 - MMX - Ice Break.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\29 - MMX - Enemy Helmet Hit.wav", SoundFormat.WAVE);
+            soundStreams.Add("Enemy Helmet Hit", stream);
 
             // 33
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\29 - MMX - Enemy Helmet Hit.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Boss Explosion.wav", SoundFormat.WAVE);
+            soundStreams.Add("Boss Explosion", stream);
 
             // 34
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Boss Explosion.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Boss Final Explode.wav", SoundFormat.WAVE);
+            soundStreams.Add("Boss Final Explode", stream);
 
             // 35
-            stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Boss Final Explode.wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
-
-            // 36
             stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\68 - MMX - Enemy Sound (05).wav", SoundFormat.WAVE);
-            soundStreams.Add(stream);
+            soundStreams.Add("Enemy Sound (05)", stream);
 
             directInput = new DirectInput();
 
@@ -1067,16 +1061,14 @@ namespace XSharp.Engine
 
             DisposeResource(lua);
 
-            foreach (var (channel, stream, _) in soundChannels)
-            {
-                DisposeResource(stream);
+            foreach (var channel in soundChannels)
                 DisposeResource(channel);
-            }
 
             soundChannels.Clear();
+            soundChannelsByName.Clear();
 
             foreach (var stream in soundStreams)
-                DisposeResource(stream);
+                DisposeResource(stream.Value);
 
             soundStreams.Clear();
 
@@ -2313,7 +2305,7 @@ namespace XSharp.Engine
         public void StartFadingOST(float volume, int frames, bool fadeIn, Action onFadingComplete = null)
         {
             FadingOST = true;
-            FadingOSTInitialVolume = soundChannels[3].player.Volume;
+            FadingOSTInitialVolume = soundChannels[3].Volume;
             FadingOSTVolume = volume;
             FadingOSTFrames = frames;
             FadingOSTLevel = fadeIn ? 1 : 0;
@@ -2779,15 +2771,15 @@ namespace XSharp.Engine
 
         private void OnSpawningBlackScreenComplete()
         {
-            foreach (var (player, _, _) in soundChannels)
-                player.Stop();
+            foreach (var channel in soundChannels)
+                channel.Stop();
 
             FadingOST = false;
             FadingOSTLevel = 0;
-            soundChannels[3].player.Volume = 0.5f;
+            soundChannels[3].Volume = 0.5f;
 
             if (romLoaded && mmx.Type == 0 && mmx.Level == 8)
-                PlayOST(18, 83, 50.152);
+                PlayOST("Chill Penguin", 83, 50.152);
 
             FadingSettings.Reset();
             FadingSettings.Start(Color.Black, 26, FadingFlags.COLORS, FadingFlags.COLORS, StartReadyHUD);
@@ -3179,7 +3171,7 @@ namespace XSharp.Engine
                     if (FadeInOST)
                         FadingOSTLevel = 1 - FadingOSTLevel;
 
-                    soundChannels[3].player.Volume = FadingOSTInitialVolume * (1 - FadingOSTLevel) + FadingOSTVolume * FadingOSTLevel;
+                    soundChannels[3].Volume = FadingOSTInitialVolume * (1 - FadingOSTLevel) + FadingOSTVolume * FadingOSTLevel;
                 }
             }
 
@@ -4902,7 +4894,7 @@ namespace XSharp.Engine
             return palette;
         }
 
-        public Palette GetPalette(int index)
+        public Palette GetPaletteByIndex(int index)
         {
             return index >= 0 && index < palettes.Count ? palettes[index] : null;
         }
@@ -4957,7 +4949,7 @@ namespace XSharp.Engine
             return AddSpriteSheet(new SpriteSheet(imageFileName, precache), name);
         }
 
-        public SpriteSheet GetSpriteSheet(int index)
+        public SpriteSheet GetSpriteSheetByIndex(int index)
         {
             return index >= 0 && index < spriteSheets.Count ? spriteSheets[index] : null;
         }
@@ -4981,6 +4973,49 @@ namespace XSharp.Engine
             spriteSheetsByName.Add(name, sheet);
 
             sheet.name = name;
+        }
+
+        internal SoundChannel CreateSoundChannel(string name, float volume)
+        {
+            if (soundChannelsByName.ContainsKey(name))
+                throw new DuplicateSoundChannelNameException(name);
+
+            var channel = new SoundChannel(volume)
+            {
+                Index = soundChannels.Count,
+                name = name
+            };
+
+            soundChannels.Add(channel);
+            soundChannelsByName.Add(name, channel);
+
+            return channel;
+        }
+
+        public SoundChannel GetSoundChannelByIndex(int index)
+        {
+            return index >= 0 && index < soundChannels.Count ? soundChannels[index] : null;
+        }
+
+        public SoundChannel GetSoundChannelByName(string name)
+        {
+            return soundChannelsByName.TryGetValue(name, out SoundChannel result) ? result : null;
+        }
+
+        internal void UpdateSoundChannelName(SoundChannel channel, string name)
+        {
+            if (name == channel.Name)
+                return;
+
+            if (soundChannelsByName.ContainsKey(name))
+                throw new DuplicatePaletteNameException(name);
+
+            if (channel.Name is not null and not "")
+                soundChannelsByName.Remove(channel.Name);
+
+            soundChannelsByName.Add(name, channel);
+
+            channel.name = name;
         }
 
         private void ReloadLevel()
@@ -5029,112 +5064,93 @@ namespace XSharp.Engine
             }
         }
 
-        public void PlaySound(int channel, int index, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
+        public void PlaySound(int channelIndex, string name, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
         {
-            if (!ENABLE_OST && channel == 3)
+            if (!ENABLE_OST && channelIndex == 3)
                 return;
 
-            var stream = soundStreams[index];
-            var (player, ss, initialized) = soundChannels[channel];
+            var stream = soundStreams[name];
+            var channel = soundChannels[channelIndex];
 
-            stream.Position = 0;
-            ss.UpdateSource(stream, stopTime, loopTime, ignoreUpdatesUntilPlayed);
-
-            if (!ss.Playing)
-            {
-                ss.Reset();
-                ss.Play();
-            }
-
-            if (!initialized)
-            {
-                player.Init(ss);
-                soundChannels[channel] = (player, ss, true);
-            }
-
-            player.Play();
+            channel.Play(stream, stopTime, loopTime, ignoreUpdatesUntilPlayed);
         }
 
-        public void PlaySound(int channel, int index, double loopTime, bool ignoreUpdatesUntilFinished = false)
+        public void PlaySound(int channel, string name, double loopTime, bool ignoreUpdatesUntilFinished = false)
         {
-            PlaySound(channel, index, -1, loopTime, ignoreUpdatesUntilFinished);
+            PlaySound(channel, name, -1, loopTime, ignoreUpdatesUntilFinished);
         }
 
-        public void PlaySound(int channel, int index, bool ignoreUpdatesUntilFinished = false)
+        public void PlaySound(int channel, string name, bool ignoreUpdatesUntilFinished = false)
         {
-            PlaySound(channel, index, -1, -1, ignoreUpdatesUntilFinished);
+            PlaySound(channel, name, -1, -1, ignoreUpdatesUntilFinished);
         }
 
-        public void ClearSoundLoopPoint(int channel, int index, bool clearStopPoint = false)
+        public void ClearSoundLoopPoint(int channelIndex, string name, bool clearStopPoint = false)
         {
-            var stream = soundStreams[index];
-            var (_, ss, _) = soundChannels[channel];
+            var stream = soundStreams[name];
+            var channel = soundChannels[channelIndex];
 
-            if (ss.Source == stream)
-            {
-                ss.LoopPoint = -1;
-                if (clearStopPoint)
-                    ss.StopPoint = -1;
-            }
+            if (channel.IsPlaying(stream))
+                channel.ClearSoundLoopPoint(clearStopPoint);
         }
 
-        public void ClearSoundStopPoint(int channel, int index)
+        public void ClearSoundStopPoint(int channelIndex, string name)
         {
-            var stream = soundStreams[index];
-            var (_, ss, _) = soundChannels[channel];
+            var stream = soundStreams[name];
+            var channel = soundChannels[channelIndex];
 
-            if (ss.Source == stream)
-                ss.StopPoint = -1;
+            if (channel.IsPlaying(stream))
+                channel.ClearSoundStopPoint();
         }
 
-        public void PlayOST(int index, double stopTime, double loopTime)
+        public void PlayOST(string name, double stopTime, double loopTime)
         {
-            PlaySound(3, index, stopTime, loopTime);
+            PlaySound(3, name, stopTime, loopTime);
         }
 
-        public void PlayOST(int index, double loopTime)
+        public void PlayOST(string name, double loopTime)
         {
-            PlaySound(3, index, loopTime);
+            PlaySound(3, name, loopTime);
         }
 
-        public void PlayOST(int index)
+        public void PlayOST(string name)
         {
-            PlaySound(3, index);
+            PlaySound(3, name);
         }
 
-        public void StopOST(int index)
+        public void StopOST(string name)
         {
-            StopSound(3, index);
+            StopSound(3, name);
         }
 
         public void StopBossBattleOST()
         {
-            StopOST(25);
+            StopOST("Boss Battle");
         }
 
-        public void StopSound(int channel, int index)
+        public void StopSound(int channelIndex, string name)
         {
-            var stream = soundStreams[index];
-            var (_, ss, _) = soundChannels[channel];
+            var stream = soundStreams[name];
+            var channel = soundChannels[channelIndex];
 
-            if (ss.Source == stream)
-                ss.Stop();
+            if (channel.IsPlaying(stream))
+                channel.StopStream();
         }
 
-        public void StopSound(int channel)
+        public void StopSound(int channelIndex)
         {
-            var (_, ss, _) = soundChannels[channel];
-            ss.Stop();
+            var channel = soundChannels[channelIndex];
+            channel.StopStream();
         }
 
         public void StopAllSounds(int exceptChannel = -1)
         {
-            for (int channel = 0; channel < soundChannels.Count; channel++)
+            for (int channelIndex = 0; channelIndex < soundChannels.Count; channelIndex++)
             {
-                if (channel != exceptChannel)
+                if (channelIndex != exceptChannel)
                 {
-                    var (_, ss, _) = soundChannels[channel];
-                    ss.Stop();
+                    var channel = soundChannels[channelIndex];
+                    channel.StopStream();
                 }
             }
         }
@@ -5147,7 +5163,7 @@ namespace XSharp.Engine
             FadingSettings.Reset();
             FadingSettings.Start(Color.Black, 28, FadingFlags.COLORS, FadingFlags.COLORS, LoadLevel);
 
-            StartFadingOST(0, 60, () => soundChannels[3].player.Stop());
+            StartFadingOST(0, 60, () => soundChannels[3].Stop());
         }
 
         internal void StartDyingEffect()
@@ -5310,7 +5326,7 @@ namespace XSharp.Engine
             Player.Health++;
             amount--;
 
-            PlaySound(0, 19);
+            PlaySound(0, "X Life Gain");
 
             if (amount > 0)
                 Freeze(4, () => HealthRecoveringStep(amount));
@@ -5318,7 +5334,7 @@ namespace XSharp.Engine
 
         internal void StartHeartTankAcquiring()
         {
-            PlaySound(0, 21);
+            PlaySound(0, "X Sub Tank-Heart Powerup");
             Freeze(84, () => HeartTankAcquiringStep(2));
         }
 
@@ -5328,7 +5344,7 @@ namespace XSharp.Engine
             HealthCapacity++;
             amount--;
 
-            PlaySound(0, 19);
+            PlaySound(0, "X Life Gain");
 
             if (amount > 0)
                 Freeze(4, () => HeartTankAcquiringStep(amount));
@@ -5338,7 +5354,7 @@ namespace XSharp.Engine
 
         internal void StartSubTankAcquiring()
         {
-            PlaySound(0, 21);
+            PlaySound(0, "X Sub Tank-Heart Powerup");
             Freeze(84, SubTankAcquiringStep);
         }
 
@@ -5527,17 +5543,17 @@ namespace XSharp.Engine
 
         public void PlayBossIntroOST()
         {
-            PlayOST(24, 13, 6.328125);
+            PlayOST("Boss Intro", 13, 6.328125);
         }
 
         public void PlayBossBatleOST()
         {
-            PlayOST(25, 57, 28.798);
+            PlayOST("Boss Battle", 57, 28.798);
         }
 
         public void PlayVictorySound()
         {
-            PlayOST(26);
+            PlayOST("Boss Defeated");
         }
 
         internal void StartBossBattle()
@@ -5561,12 +5577,12 @@ namespace XSharp.Engine
 
         public void PlayBossExplosionLoop()
         {
-            PlayOST(34, 5.651, 0.323);
+            PlayOST("Boss Explosion", 5.651, 0.323);
         }
 
         public void PlayBossExplosionEnd()
         {
-            PlayOST(35);
+            PlayOST("Boss Final Explode");
         }
 
         internal void OnPlayerTeleported()

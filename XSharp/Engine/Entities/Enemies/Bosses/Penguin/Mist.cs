@@ -46,12 +46,12 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         private void PlaySnowSoundLoop()
         {
-            Engine.PlaySound(5, 36, 1.2, 0.128);
+            Engine.PlaySound(5, "Enemy Sound (05)", 1.2, 0.128);
         }
 
         private void FinishSnowSoundLoop()
         {
-            Engine.ClearSoundLoopPoint(5, 36, true);
+            Engine.ClearSoundLoopPoint(5, "Enemy Sound (05)", true);
         }
 
         protected internal override void OnSpawn()

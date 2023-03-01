@@ -24,7 +24,7 @@ namespace XSharp.Engine.Entities.Items
             if (player.Lives <= MAX_LIVES)
             {
                 player.Lives++;
-                Engine.PlaySound(0, 20, true);
+                Engine.PlaySound(0, "X Extra Life", true);
             }
         }
     }
