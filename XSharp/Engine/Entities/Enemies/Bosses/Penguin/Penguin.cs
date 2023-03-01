@@ -53,8 +53,8 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             Directional = true;
             DefaultDirection = Direction.LEFT;
-            SpriteSheetIndex = 10;
-            PaletteIndex = 7;
+            SpriteSheetName = "Penguin";
+            PaletteName = "penguinPalette";
 
             ContactDamage = 6;
 
@@ -124,7 +124,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             base.OnSpawn();
 
-            PaletteIndex = 7;
+            PaletteName = "penguinPalette";
             firstAttack = true;
             hanging = false;
             snowing = false;

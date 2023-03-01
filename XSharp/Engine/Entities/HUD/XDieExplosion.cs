@@ -38,8 +38,8 @@ namespace XSharp.Engine.Entities.HUD
 
         public XDieExplosion()
         {
-            SpriteSheetIndex = 0;
-            PaletteIndex = 0;
+            SpriteSheetName = "X";
+            PaletteName = "x1NormalPalette";
             Directional = false;
 
             SetAnimationNames("DyingExplosion");

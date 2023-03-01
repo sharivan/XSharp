@@ -29,7 +29,7 @@ namespace XSharp.Engine.Entities.Effects
 
         public WallSlideEffect()
         {
-            SpriteSheetIndex = 2;
+            SpriteSheetName = "X Effects";
             Directional = true;
 
             SetAnimationNames("WallSlideEffect");

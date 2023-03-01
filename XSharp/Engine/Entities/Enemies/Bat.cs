@@ -27,7 +27,7 @@ namespace XSharp.Engine.Entities.Enemies
 
         public Bat()
         {
-            SpriteSheetIndex = 8;
+            SpriteSheetName = "Bat";
 
             SetAnimationNames("Idle", "Attacking");
 
@@ -50,7 +50,7 @@ namespace XSharp.Engine.Entities.Enemies
 
             flashing = false;
 
-            PaletteIndex = 6;
+            PaletteName = "batPalette";
             Health = BAT_HEALTH;
             ContactDamage = BAT_CONTACT_DAMAGE;
 
@@ -67,7 +67,7 @@ namespace XSharp.Engine.Entities.Enemies
         protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
         {
             flashing = true;
-            PaletteIndex = 4;
+            PaletteName = "flashingPalette";
 
             return base.OnTakeDamage(attacker, ref damage);
         }
@@ -119,7 +119,7 @@ namespace XSharp.Engine.Entities.Enemies
             if (flashing)
             {
                 flashing = false;
-                PaletteIndex = 6;
+                PaletteName = "batPalette";
             }
 
             return base.PreThink();

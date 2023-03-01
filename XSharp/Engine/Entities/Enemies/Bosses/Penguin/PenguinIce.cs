@@ -30,7 +30,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         public PenguinIce()
         {
             Directional = true;
-            SpriteSheetIndex = 10;
+            SpriteSheetName = "Penguin";
             ContactDamage = 2;
 
             SetAnimationNames("Ice");

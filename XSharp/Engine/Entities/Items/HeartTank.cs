@@ -5,7 +5,7 @@
         public HeartTank()
         {
             DurationFrames = 0;
-            SpriteSheetIndex = 1;
+            SpriteSheetName = "X Weapons";
 
             SetAnimationNames("HeartTank");
         }

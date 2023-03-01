@@ -27,7 +27,7 @@ namespace XSharp.Engine.Entities.Enemies
 
         public Driller()
         {
-            SpriteSheetIndex = 4;
+            SpriteSheetName = "Driller";
 
             SetAnimationNames("Idle", "Drilling", "Jumping", "Landing");
 
@@ -46,7 +46,7 @@ namespace XSharp.Engine.Entities.Enemies
             jumping = false;
             jumpCounter = 0;
 
-            PaletteIndex = 5;
+            PaletteName = "drillerPalette";
             Health = DRILLER_HEALTH;
             ContactDamage = DRILLER_CONTACT_DAMAGE;
             CollisionData = CollisionData.NONE;
@@ -79,7 +79,7 @@ namespace XSharp.Engine.Entities.Enemies
         protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
         {
             flashing = true;
-            PaletteIndex = 4;
+            PaletteName = "flashingPalette";
 
             return base.OnTakeDamage(attacker, ref damage);
         }
@@ -152,7 +152,7 @@ namespace XSharp.Engine.Entities.Enemies
             if (flashing)
             {
                 flashing = false;
-                PaletteIndex = 5;
+                PaletteName = "drillerPalette";
             }
 
             return base.PreThink();

@@ -18,7 +18,7 @@ namespace XSharp.Engine.Entities.Items
 
         public SmallHealthRecover()
         {
-            SpriteSheetIndex = 1;
+            SpriteSheetName = "X Weapons";
 
             SetAnimationNames("SmallHealthRecoverDropping", "SmallHealthRecoverIdle");
 

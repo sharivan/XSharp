@@ -18,7 +18,7 @@ namespace XSharp.Engine.Entities.Objects
 
         public BossDoorEffect()
         {
-            SpriteSheetIndex = 9;
+            SpriteSheetName = "Boos Door";
             Directional = false;
 
             SetAnimationNames("Closed", "Opening", "PlayerCrossing", "Closing");

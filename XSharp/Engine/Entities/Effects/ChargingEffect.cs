@@ -38,9 +38,9 @@
 
         public ChargingEffect()
         {
-            SpriteSheetIndex = 3;
+            SpriteSheetName = "X Charging Effects";
             Directional = true;
-            PaletteIndex = 3;
+            PaletteName = "chargingEffectPalette";
 
             SetAnimationNames("ChargingLevel1", "ChargingLevel2");
         }

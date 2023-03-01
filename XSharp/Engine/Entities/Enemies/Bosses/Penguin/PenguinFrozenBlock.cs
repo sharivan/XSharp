@@ -29,7 +29,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             Layer = 1;
             Directional = true;
-            SpriteSheetIndex = 10;
+            SpriteSheetName = "Penguin";
             CollisionData = CollisionData.SOLID;
 
             SetAnimationNames("FrozenBlock");

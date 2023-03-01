@@ -6,7 +6,7 @@ namespace XSharp.Engine.Entities.Items
     {
         public LifeUp()
         {
-            SpriteSheetIndex = 1;
+            SpriteSheetName = "X Weapons";
 
             SetAnimationNames("LifeUp");
         }

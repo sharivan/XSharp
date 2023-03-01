@@ -33,9 +33,14 @@ namespace XSharp.Engine.Entities
         public event SpriteEvent LandedEvent;
         public event SpriteEvent BrokeEvent;
 
+        private int paletteIndex = -1;
+        private string paletteName = null;
+        private int spriteSheetIndex = -1;
+        private string spriteSheetName = null;
         private bool visible = true;
         private int layer = 0;
         private List<Animation> animations;
+        private readonly Dictionary<string, List<Animation>> animationsByName;
         private int currentAnimationIndex = -1;
 
         protected SpriteCollider worldCollider;
@@ -112,32 +117,7 @@ namespace XSharp.Engine.Entities
         {
             get;
             set;
-        } = 1;
-
-        private readonly Dictionary<string, List<Animation>> animationsByName;
-
-        public SpriteSheet SpriteSheet => Engine.GetSpriteSheet(SpriteSheetIndex);
-
-        public int SpriteSheetIndex
-        {
-            get;
-            set;
-        } = -1;
-
-        public string SpriteSheetName
-        {
-            get
-            {
-                var spriteSheet = Engine.GetSpriteSheet(SpriteSheetIndex);
-                return spriteSheet?.Name;
-            }
-
-            set
-            {
-                var spriteSheet = Engine.GetSpriteSheetByName(value);
-                SpriteSheetIndex = spriteSheet != null ? spriteSheet.Index : -1;
-            }
-        }
+        } = 1; 
 
         public bool Directional
         {
@@ -403,13 +383,129 @@ namespace XSharp.Engine.Entities
             protected set;
         } = true;
 
+        public string PaletteName
+        {
+            get
+            {
+                if (paletteName == null)
+                {
+                    if (paletteIndex == -1)
+                        return null;
+
+                    var palette = Engine.GetPalette(paletteIndex);
+                    if (palette != null)
+                        paletteName = palette.Name;
+                }
+
+                return paletteName;
+            }
+
+            protected set
+            {
+                paletteName = value;
+                if (paletteName == null)
+                    paletteIndex = -1;
+                else
+                {
+                    var palette = Engine.GetPaletteByName(value);
+                    paletteIndex = palette != null ? palette.Index : -1;
+                }
+            }
+        }
+
         public int PaletteIndex
         {
-            get;
-            protected set;
-        } = -1;
+            get
+            {
+                if (paletteIndex == -1)
+                {
+                    if (paletteName == null)
+                        return -1;
 
-        public Texture Palette => Engine.GetPalette(PaletteIndex);
+                    var palette = Engine.GetPaletteByName(paletteName);
+                    if (palette != null)
+                        paletteIndex = palette.Index;
+                }
+
+                return paletteIndex;
+            }
+
+            protected set
+            {
+                paletteIndex = value;
+                if (paletteIndex == -1)
+                    paletteName = null;
+                else
+                {
+                    var palette = Engine.GetPalette(value);
+                    paletteName = palette != null ? palette.Name : null;
+                }
+            }
+        }
+
+        public Palette Palette => Engine.GetPalette(PaletteIndex);
+
+        public string SpriteSheetName
+        {
+            get
+            {
+                if (spriteSheetName == null)
+                {
+                    if (spriteSheetIndex == -1)
+                        return null;
+
+                    var sheet = Engine.GetSpriteSheet(spriteSheetIndex);
+                    if (sheet != null)
+                        spriteSheetName = sheet.Name;
+                }
+
+                return spriteSheetName;
+            }
+
+            protected set
+            {
+                spriteSheetName = value;
+                if (spriteSheetName == null)
+                    spriteSheetIndex = -1;
+                else
+                {
+                    var sheet = Engine.GetSpriteSheetByName(value);
+                    spriteSheetIndex = sheet != null ? sheet.Index : -1;
+                }
+            }
+        }
+
+        public int SpriteSheetIndex
+        {
+            get
+            {
+                if (spriteSheetIndex == -1)
+                {
+                    if (spriteSheetName == null)
+                        return -1;
+
+                    var palette = Engine.GetSpriteSheetByName(spriteSheetName);
+                    if (palette != null)
+                        spriteSheetIndex = palette.Index;
+                }
+
+                return spriteSheetIndex;
+            }
+
+            protected set
+            {
+                spriteSheetIndex = value;
+                if (spriteSheetIndex == -1)
+                    spriteSheetName = null;
+                else
+                {
+                    var palette = Engine.GetSpriteSheet(value);
+                    spriteSheetName = palette != null ? palette.Name : null;
+                }
+            }
+        }
+
+        public SpriteSheet SpriteSheet => Engine.GetSpriteSheet(SpriteSheetIndex);
 
         public bool Animating
         {

@@ -11,6 +11,8 @@ namespace XSharp.Engine.Graphics
 {
     public class SpriteSheet : IDisposable
     {
+        public static GameEngine Engine => GameEngine.Engine;
+
         public class FrameSequence
         {
             private readonly List<Frame> frames;
@@ -191,10 +193,10 @@ namespace XSharp.Engine.Graphics
             }
         }
 
+        internal string name;
+        
         private readonly List<Frame> frames;
-        private readonly Dictionary<string, FrameSequence> sequences;
-
-        public GameEngine Engine => GameEngine.Engine;
+        private readonly Dictionary<string, FrameSequence> sequences;  
 
         public int Index
         {
@@ -204,7 +206,8 @@ namespace XSharp.Engine.Graphics
 
         public string Name
         {
-            get;
+            get => name;
+            set => GameEngine.Engine.UpdateSpriteSheetName(this, value);
         }
 
         public bool Precache
@@ -219,7 +222,7 @@ namespace XSharp.Engine.Graphics
             set;
         }
 
-        public Texture CurrentPalette
+        public Palette CurrentPalette
         {
             get;
             set;
@@ -239,9 +242,8 @@ namespace XSharp.Engine.Graphics
 
         public int FrameSequenceCount => sequences.Count;
 
-        public SpriteSheet(string name, bool disposeTexture = false, bool precache = false)
+        internal SpriteSheet(bool disposeTexture = false, bool precache = false)
         {
-            Name = name;
             Precache = precache;
             DisposeTexture = disposeTexture;
 
@@ -249,15 +251,15 @@ namespace XSharp.Engine.Graphics
             sequences = new Dictionary<string, FrameSequence>();
         }
 
-        public SpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false)
-            : this(name, precache)
+        internal SpriteSheet(Texture texture, bool disposeTexture = false, bool precache = false)
+            : this(precache)
         {
             CurrentTexture = texture;
             DisposeTexture = disposeTexture;
         }
 
-        public SpriteSheet(string name, string imageFileName, bool precache = false)
-            : this(name, precache)
+        internal SpriteSheet(string imageFileName, bool precache = false)
+            : this(precache)
         {
             DisposeTexture = true;
             LoadFromFile(imageFileName);
@@ -326,7 +328,7 @@ namespace XSharp.Engine.Graphics
                                 srcDS.Seek(y * srcRect.Pitch + x * sizeof(int), SeekOrigin.Begin);
                                 int bgra = reader.ReadInt32();
                                 var color = Color.FromBgra(bgra);
-                                int index = GameEngine.LookupColor(CurrentPalette, color);
+                                int index = CurrentPalette.LookupColor(color);
                                 dstDS.Write((byte) (index != -1 ? index : 0));
                             }
 

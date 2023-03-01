@@ -25,7 +25,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         public PenguinLever()
         {
             Directional = true;
-            SpriteSheetIndex = 10;
+            SpriteSheetName = "Penguin";
 
             SetAnimationNames("Lever");
         }

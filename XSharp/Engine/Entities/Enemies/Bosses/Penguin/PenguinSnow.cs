@@ -18,7 +18,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             Layer = 1;
             Directional = true;
-            SpriteSheetIndex = 10;
+            SpriteSheetName = "Penguin";
             ContactDamage = 0;
 
             SetAnimationNames("Snow");

@@ -14,7 +14,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         public PenguinIceExplosionEffect()
         {
             Directional = false;
-            SpriteSheetIndex = 10;
+            SpriteSheetName = "Penguin";
 
             SetAnimationNames("IceFragment");
         }

@@ -18,7 +18,7 @@ namespace XSharp.Engine.Entities.Items
 
         public BigHealthRecover()
         {
-            SpriteSheetIndex = 1;
+            SpriteSheetName = "X Weapons";
 
             SetAnimationNames("BigHealthRecoverDropping", "BigHealthRecoverIdle");
 

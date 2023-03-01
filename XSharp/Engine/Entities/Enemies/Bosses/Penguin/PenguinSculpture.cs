@@ -26,7 +26,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             Directional = true;
             DefaultDirection = Direction.LEFT;
-            SpriteSheetIndex = 10;
+            SpriteSheetName = "Penguin";
 
             SetAnimationNames("Sculpture");
         }

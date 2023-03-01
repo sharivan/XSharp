@@ -29,7 +29,7 @@ namespace XSharp.Engine.Entities.Weapons
 
         public BusterLemon()
         {
-            SpriteSheetIndex = 1;
+            SpriteSheetName = "X Weapons";
 
             SetupStateArray(typeof(LemonState));
             RegisterState(LemonState.SHOOTING, OnStartShot, OnShooting, null, "LemonShot");

@@ -5,8 +5,8 @@
         public PenguinIceFragment()
         {
             Directional = false;
-            SpriteSheetIndex = 10;
-            PaletteIndex = 7;
+            SpriteSheetName = "Penguin";
+            PaletteName = "penguinPalette";
             KillOnOffscreen = true;
 
             SetAnimationNames("IceFragment");

@@ -12,7 +12,7 @@ namespace XSharp.Engine.Entities.Items
     {
         public BigAmmoRecover()
         {
-            SpriteSheetIndex = 1;
+            SpriteSheetName = "X Weapons";
 
             SetAnimationNames("BigAmmoRecover");
         }

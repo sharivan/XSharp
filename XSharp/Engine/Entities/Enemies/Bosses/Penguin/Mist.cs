@@ -28,7 +28,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
 
         public Mist()
         {
-            SpriteSheetIndex = 11;
+            SpriteSheetName = "Mist";
             Directional = false;
 
             SetAnimationNames("Mist");

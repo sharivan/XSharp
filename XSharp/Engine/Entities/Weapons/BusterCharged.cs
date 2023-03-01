@@ -31,7 +31,7 @@ namespace XSharp.Engine.Entities.Weapons
 
         public BusterCharged()
         {
-            SpriteSheetIndex = 1;
+            SpriteSheetName = "X Weapons";
 
             SetupStateArray(typeof(ChargedState));
             RegisterState(ChargedState.FIRING, OnStartFiring, "ChargedShotFiring");

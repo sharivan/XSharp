@@ -104,7 +104,7 @@ namespace XSharp.Engine.Entities
 
         public Player()
         {
-            SpriteSheetIndex = 0;
+            SpriteSheetName = "X";
             Directional = true;
         }
 
@@ -584,7 +584,7 @@ namespace XSharp.Engine.Entities
 
             CheckCollisionWithWorld = false;
             CheckCollisionWithSolidSprites = false;
-            PaletteIndex = 0;
+            PaletteName = "x1NormalPalette";
             Velocity = TELEPORT_SPEED * Vector.DOWN_VECTOR;
             Lives = X_INITIAL_LIVES;
             Health = Engine.HealthCapacity;
@@ -1303,7 +1303,7 @@ namespace XSharp.Engine.Entities
                         this.chargingFrameCounter = 0;
                         chargingFrameCounter2 = 0;
 
-                        PaletteIndex = 0;
+                        PaletteName = "x1NormalPalette";
 
                         if (ChargingEffect != null)
                         {
@@ -1365,7 +1365,7 @@ namespace XSharp.Engine.Entities
                 if (chargingFrameCounter >= 4)
                 {
                     int frame = chargingFrameCounter2 - 4;
-                    PaletteIndex = (frame & 2) is 0 or 1 ? 1 : 0;
+                    PaletteName = (frame & 2) is 0 or 1 ? "chargeLevel1Palette" : "x1NormalPalette";
 
                     ChargingEffect ??= Engine.StartChargingEffect(this);
 
@@ -1604,7 +1604,7 @@ namespace XSharp.Engine.Entities
             {
                 Freezed = false;
                 Engine.PlaySound(2, 10);
-                PaletteIndex = 4;
+                PaletteName = "flashingPalette";
 
                 Engine.StartDyingEffect();
                 KillOnNextFrame();

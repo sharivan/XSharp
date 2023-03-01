@@ -159,6 +159,8 @@
     <Compile Include="Engine\Entities\VectorKind.cs" />
     <Compile Include="Engine\Entities\EntityList.cs" />
     <Compile Include="Engine\FadingControl.cs" />
+    <Compile Include="Engine\Graphics\DuplicateSpriteSheetNameException .cs" />
+    <Compile Include="Engine\Graphics\DuplicatePaletteNameException.cs" />
     <Compile Include="Engine\Graphics\Palette.cs" />
     <Compile Include="Engine\Graphics\Tilemap.cs" />
     <Compile Include="Engine\Graphics\Tileset.cs" />
@@ -269,6 +271,9 @@
     <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
     <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
     <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
+    <EmbeddedResource Include="resources\sprites\Objects\Platforms.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Effects\Mist.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>

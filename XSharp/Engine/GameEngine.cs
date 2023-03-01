@@ -251,7 +251,8 @@ namespace XSharp.Engine
         private readonly List<SpriteSheet> spriteSheets;
         private readonly Dictionary<string, SpriteSheet> spriteSheetsByName;
 
-        private readonly List<Texture> palettes;
+        private readonly List<Palette> palettes;
+        private readonly Dictionary<string, Palette> palettesByName;
 
         private readonly List<WaveStream> soundStreams;
         private readonly List<(WaveOutEvent player, SoundStream stream, bool initialized)> soundChannels;
@@ -797,7 +798,8 @@ namespace XSharp.Engine
             spriteSheets = new List<SpriteSheet>();
             spriteSheetsByName = new Dictionary<string, SpriteSheet>();
 
-            palettes = new List<Texture>();
+            palettes = new List<Palette>();
+            palettesByName = new Dictionary<string, Palette>();
 
             soundStreams = new List<WaveStream>();
             soundChannels = new List<(WaveOutEvent, SoundStream, bool)>();
@@ -1185,74 +1187,66 @@ namespace XSharp.Engine
             // Create palettes
 
             // 0
-            var x1NormalPalette = CreatePalette(X1_NORMAL_PALETTE);
-            palettes.Add(x1NormalPalette);
+            var x1NormalPalette = CreatePalette("x1NormalPalette", X1_NORMAL_PALETTE);
 
             // 1
-            var chargeLevel1Palette = CreatePalette(CHARGE_LEVEL_1_PALETTE);
-            palettes.Add(chargeLevel1Palette);
+            CreatePalette("chargeLevel1Palette", CHARGE_LEVEL_1_PALETTE);
 
             // 2
-            var chargeLevel2Palette = CreatePalette(CHARGE_LEVEL_2_PALETTE);
-            palettes.Add(chargeLevel2Palette);
+            CreatePalette("chargeLevel2Palette", CHARGE_LEVEL_2_PALETTE);
 
             // 3
-            var chargingEffectPalette = CreatePalette(CHARGE_EFFECT_PALETTE);
-            palettes.Add(chargingEffectPalette);
+            CreatePalette("chargingEffectPalette", CHARGE_EFFECT_PALETTE);
 
             // 4
-            var flashingPalette = CreatePalette(FLASHING_PALETTE);
-            palettes.Add(flashingPalette);
+            CreatePalette("flashingPalette", FLASHING_PALETTE);
 
             // 5
-            var drillerPalette = CreatePalette(DRILLER_PALETTE);
-            palettes.Add(drillerPalette);
+            var drillerPalette = CreatePalette("drillerPalette", DRILLER_PALETTE);
 
             // 6
-            var batPalette = CreatePalette(BAT_PALETTE);
-            palettes.Add(batPalette);
+            var batPalette = CreatePalette("batPalette", BAT_PALETTE);
 
             // 7
-            var penguinPalette = CreatePalette(PENGUIN_PALETTE);
-            palettes.Add(penguinPalette);
+            var penguinPalette = CreatePalette("penguinPalette", PENGUIN_PALETTE);
 
             // Create sprite sheets
 
             // 0
-            var xSpriteSheet = AddSpriteSheet("X", true, true);
+            var xSpriteSheet = CreateSpriteSheet("X", true, true);
 
             // 1
-            var xWeaponsSpriteSheet = AddSpriteSheet("X Weapons", true, true);
+            var xWeaponsSpriteSheet = CreateSpriteSheet("X Weapons", true, true);
 
             // 2
-            var xEffectsSpriteSheet = AddSpriteSheet("X Effects", true, true);
+            var xEffectsSpriteSheet = CreateSpriteSheet("X Effects", true, true);
 
             // 3
-            var xChargingEffectsSpriteSheet = AddSpriteSheet("X Charging Effects", true, false);
+            var xChargingEffectsSpriteSheet = CreateSpriteSheet("X Charging Effects", true, false);
 
             // 4
-            var drillerSpriteSheet = AddSpriteSheet("Driller", true, true);
+            var drillerSpriteSheet = CreateSpriteSheet("Driller", true, true);
 
             // 5
-            var explosionSpriteSheet = AddSpriteSheet("Explosion", true, true);
+            var explosionSpriteSheet = CreateSpriteSheet("Explosion", true, true);
 
             // 6
-            var hpSpriteSheet = AddSpriteSheet("HP", true, true);
+            var hpSpriteSheet = CreateSpriteSheet("HP", true, true);
 
             // 7
-            var readySpriteSheet = AddSpriteSheet("Ready", true, true);
+            var readySpriteSheet = CreateSpriteSheet("Ready", true, true);
 
             // 8
-            var batSpriteSheet = AddSpriteSheet("Bat", true, true);
+            var batSpriteSheet = CreateSpriteSheet("Bat", true, true);
 
             // 9
-            var bossDoorSpriteSheet = AddSpriteSheet("Boos Door", true, true);
+            var bossDoorSpriteSheet = CreateSpriteSheet("Boos Door", true, true);
 
             // 10
-            var penguinSpriteSheet = AddSpriteSheet("Penguin", true, true);
+            var penguinSpriteSheet = CreateSpriteSheet("Penguin", true, true);
 
             // 11
-            var mistSpriteSheet = AddSpriteSheet("Mist", true, true);
+            var mistSpriteSheet = CreateSpriteSheet("Mist", true, true);
 
             // Setup frame sequences (animations)
 
@@ -2554,7 +2548,7 @@ namespace XSharp.Engine
             vb.Unlock();
         }
 
-        public void RenderSprite(Texture texture, Texture palette, FadingControl fadingSettings, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
+        public void RenderSprite(Texture texture, Palette palette, FadingControl fadingSettings, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             RectangleF rDest = WorldBoxToScreen(box);
 
@@ -2575,7 +2569,7 @@ namespace XSharp.Engine
                 fadingLevelHandle = plsFadingLevelHandle;
                 fadingColorHandle = plsFadingColorHandle;
                 shader = PaletteShader;
-                Device.SetTexture(1, palette);
+                Device.SetTexture(1, palette.Texture);
             }
             else
             {
@@ -2626,13 +2620,13 @@ namespace XSharp.Engine
             RenderSprite(texture, null, fadingSettings, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, Texture palette, FadingControl fadingSettings, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
+        public void RenderSprite(Texture texture, Palette palette, FadingControl fadingSettings, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
             RenderSprite(texture, palette, fadingSettings, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
         }
 
-        public void RenderSprite(Texture texture, Texture palette, FadingControl fadingSettings, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
+        public void RenderSprite(Texture texture, Palette palette, FadingControl fadingSettings, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
         {
             var description = texture.GetLevelDescription(0);
             RenderSprite(texture, palette, fadingSettings, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
@@ -3802,6 +3796,7 @@ namespace XSharp.Engine
                 DisposeResource(palette);
 
             palettes.Clear();
+            palettesByName.Clear();
 
             World?.OnDisposeDevice();
 
@@ -4832,13 +4827,16 @@ namespace XSharp.Engine
             Device.DrawPrimitives(PrimitiveType.TriangleList, 0, primitiveCount);
         }
 
-        public Texture CreatePalette(Color[] colors, int count = 256)
+        public Palette CreatePalette(string name, Color[] colors, int count = 256)
         {
+            if (palettesByName.ContainsKey(name))
+                throw new DuplicatePaletteNameException(name);
+
             if (colors.Length > count)
                 throw new ArgumentException($"Length of colors should up to {count}.");
 
-            var palette = new Texture(Device, count, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
-            DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.None);
+            var texture = new Texture(Device, count, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
+            DataRectangle rect = texture.LockRectangle(0, D3D9LockFlags.None);
 
             using (var stream = new DataStream(rect.DataPointer, count * 1 * sizeof(int), true, true))
             {
@@ -4849,8 +4847,19 @@ namespace XSharp.Engine
                     stream.Write(0);
             }
 
-            palette.UnlockRectangle(0);
-            return palette;
+            texture.UnlockRectangle(0);
+
+            var result = new Palette
+            {
+                Texture = texture,
+                Index = palettes.Count,
+                name = name
+            };
+
+            palettes.Add(result);
+            palettesByName.Add(name, result);
+
+            return result;
         }
 
         public Texture CreatePalette(Texture image, int count = 256)
@@ -4893,74 +4902,85 @@ namespace XSharp.Engine
             return palette;
         }
 
-        public static int LookupColor(Texture palette, Color color)
+        public Palette GetPalette(int index)
         {
-            return LookupColor(palette, color, 0, 256);
+            return index >= 0 && index < palettes.Count ? palettes[index] : null;
         }
 
-        public static int LookupColor(Texture palette, Color color, int start, int count)
+        public Palette GetPaletteByName(string name)
         {
-            DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
-            try
-            {
-                int width = palette.GetLevelDescription(0).Width;
-                int height = palette.GetLevelDescription(0).Height;
-
-                using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
-                using var reader = new BinaryReader(stream);
-                for (int i = start; i < start + count; i++)
-                {
-                    int bgra = reader.ReadInt32();
-                    var c = Color.FromBgra(bgra);
-                    if (color == c)
-                        return i;
-                }
-            }
-            finally
-            {
-                palette.UnlockRectangle(0);
-            }
-
-            return -1;
+            return palettesByName.TryGetValue(name, out Palette result) ? result : null;
         }
 
-        public static Color GetPaletteColor(Texture palette, int index)
+        internal void UpdatePaletteName(Palette palette, string name)
         {
-            DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
-            try
-            {
-                int width = palette.GetLevelDescription(0).Width;
-                int height = palette.GetLevelDescription(0).Height;
+            if (name == palette.Name)
+                return;
 
-                using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
-                using var reader = new BinaryReader(stream);
-                stream.Position = index * sizeof(int);
-                int bgra = reader.ReadInt32();
-                var c = Color.FromBgra(bgra);
-                return c;
-            }
-            finally
-            {
-                palette.UnlockRectangle(0);
-            }
+            if (palettesByName.ContainsKey(name))
+                throw new DuplicatePaletteNameException(name);
+
+            if (palette.Name is not null and not "")
+                palettesByName.Remove(palette.Name);
+
+            palettesByName.Add(name, palette);
+
+            palette.name = name;
         }
 
-        public static void SetPaletteColor(Texture palette, int index, Color color)
+        private SpriteSheet AddSpriteSheet(SpriteSheet sheet, string name)
         {
-            DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
-            try
-            {
-                int width = palette.GetLevelDescription(0).Width;
-                int height = palette.GetLevelDescription(0).Height;
+            if (spriteSheetsByName.ContainsKey(name))
+                throw new DuplicateSpriteSheetNameException(name);
 
-                using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
-                stream.Position = index * sizeof(int);
-                stream.Write(color.ToBgra());
-            }
-            finally
-            {
-                palette.UnlockRectangle(0);
-            }
+            sheet.Index = spriteSheets.Count;
+            sheet.name = name;
+
+            spriteSheets.Add(sheet);
+            spriteSheetsByName.Add(name, sheet);
+
+            return sheet;
+        }
+
+        public SpriteSheet CreateSpriteSheet(string name, bool disposeTexture = false, bool precache = false)
+        {
+            return AddSpriteSheet(new SpriteSheet(disposeTexture, precache), name);
+        }
+
+        public SpriteSheet CreateSpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false)
+        {
+            return AddSpriteSheet(new SpriteSheet(texture, disposeTexture, precache), name);
+        }
+
+        public SpriteSheet CreateSpriteSheet(string name, string imageFileName, bool precache = false)
+        {
+            return AddSpriteSheet(new SpriteSheet(imageFileName, precache), name);
+        }
+
+        public SpriteSheet GetSpriteSheet(int index)
+        {
+            return index >= 0 && index < spriteSheets.Count ? spriteSheets[index] : null;
+        }
+
+        public SpriteSheet GetSpriteSheetByName(string name)
+        {
+            return spriteSheetsByName.TryGetValue(name, out SpriteSheet result) ? result : null;
+        }
+
+        internal void UpdateSpriteSheetName(SpriteSheet sheet, string name)
+        {
+            if (name == sheet.Name)
+                return;
+
+            if (spriteSheetsByName.ContainsKey(name))
+                throw new DuplicateSpriteSheetNameException(name);
+
+            if (sheet.Name is not null and not "")
+                spriteSheetsByName.Remove(sheet.Name);
+
+            spriteSheetsByName.Add(name, sheet);
+
+            sheet.name = name;
         }
 
         private void ReloadLevel()
@@ -5007,57 +5027,6 @@ namespace XSharp.Engine
                 // Main loop
                 RenderLoop.Run(Control, Render);
             }
-        }
-
-        public SpriteSheet AddSpriteSheet(string name, bool disposeTexture = false, bool precache = false)
-        {
-            var result = new SpriteSheet(name, disposeTexture, precache)
-            {
-                Index = spriteSheets.Count
-            };
-
-            spriteSheets.Add(result);
-            spriteSheetsByName.Add(name, result);
-            return result;
-        }
-
-        public SpriteSheet AddSpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false)
-        {
-            var result = new SpriteSheet(name, texture, disposeTexture, precache)
-            {
-                Index = spriteSheets.Count
-            };
-
-            spriteSheets.Add(result);
-            spriteSheetsByName.Add(name, result);
-            return result;
-        }
-
-        public SpriteSheet AddSpriteSheet(string name, string imageFileName, bool precache = false)
-        {
-            var result = new SpriteSheet(name, imageFileName, precache)
-            {
-                Index = spriteSheets.Count
-            };
-
-            spriteSheets.Add(result);
-            spriteSheetsByName.Add(name, result);
-            return result;
-        }
-
-        public SpriteSheet GetSpriteSheet(int spriteSheetIndex)
-        {
-            return spriteSheets[spriteSheetIndex];
-        }
-
-        public SpriteSheet GetSpriteSheetByName(string name)
-        {
-            return spriteSheetsByName[name];
-        }
-
-        internal Texture GetPalette(int paletteIndex)
-        {
-            return paletteIndex >= 0 && paletteIndex < palettes.Count ? palettes[paletteIndex] : null;
         }
 
         public void PlaySound(int channel, int index, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
@@ -5535,10 +5504,6 @@ namespace XSharp.Engine
         public Entity GetEntityByname(string name)
         {
             return entitiesByName.TryGetValue(name, out Entity result) ? result : null;
-        }
-
-        internal void UpdatePaletteName(Palette palette, string name)
-        {
         }
 
         internal void UpdateEntityName(Entity entity, string name)

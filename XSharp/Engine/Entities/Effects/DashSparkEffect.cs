@@ -31,8 +31,7 @@ namespace XSharp.Engine.Entities.Effects
                 if (state == DashingSparkEffectState.DASHING)
                 {
                     Parent = null;
-                    var index = GetAnimationIndex("DashSparkEffect");
-                    CurrentAnimationIndex = index;
+                    SetCurrentAnimationByName("DashSparkEffect");
                     CurrentAnimation.StartFromBegin();
                 }
             }
@@ -58,7 +57,7 @@ namespace XSharp.Engine.Entities.Effects
 
         public DashSparkEffect()
         {
-            SpriteSheetIndex = 2;
+            SpriteSheetName = "X Effects";
             Directional = true;
 
             SetAnimationNames("PreDashSparkEffect", "DashSparkEffect");

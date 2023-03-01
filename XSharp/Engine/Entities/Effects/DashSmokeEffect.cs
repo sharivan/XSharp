@@ -29,7 +29,7 @@ namespace XSharp.Engine.Entities.Effects
 
         public DashSmokeEffect()
         {
-            SpriteSheetIndex = 2;
+            SpriteSheetName = "X Effects";
             Directional = false;
 
             SetAnimationNames("DashSmokeEffect");

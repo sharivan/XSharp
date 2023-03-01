@@ -4,7 +4,7 @@
     {
         public SubTankItem()
         {
-            SpriteSheetIndex = 1;
+            SpriteSheetName = "X Weapons";
             DurationFrames = 0;
 
             SetAnimationNames("SubTank");

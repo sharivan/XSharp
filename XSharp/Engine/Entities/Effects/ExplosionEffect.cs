@@ -25,7 +25,7 @@
 
         public ExplosionEffect()
         {
-            SpriteSheetIndex = 5;
+            SpriteSheetName = "Explosion";
             Directional = false;
 
             SetAnimationNames("Explosion");

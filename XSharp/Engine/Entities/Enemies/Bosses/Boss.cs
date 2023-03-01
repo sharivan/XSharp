@@ -99,7 +99,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
         public event BossDefeatedEvent BossDefeatedEvent;
 
         private BossHealthHUD healthHUD;
-        private int bossPaletteIndex;
+        private string bossPaletteName;
 
         public bool HealthFilling
         {
@@ -157,18 +157,18 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
             if (!Exploding)
             {
                 if (frameCounter % 2 == 0)
-                    PaletteIndex = PaletteIndex != 4 ? 4 : bossPaletteIndex;
+                    PaletteName = PaletteName != "flashingPalette" ? "flashingPalette" : bossPaletteName;
             }
             else
             {
                 Blinking = false;
-                PaletteIndex = bossPaletteIndex;
+                PaletteName = bossPaletteName;
             }
         }
 
         protected override void OnEndBlinking()
         {
-            PaletteIndex = bossPaletteIndex;
+            PaletteName = bossPaletteName;
         }
 
         protected override void OnDamaged(Sprite attacker, FixedSingle damage)
@@ -211,7 +211,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
             MaxHealth = BOSS_HP;
             HealthFilling = false;
             KillOnOffscreen = false;
-            bossPaletteIndex = PaletteIndex;
+            bossPaletteName = PaletteName;
             Exploding = false;
 
             healthHUD.Spawn();

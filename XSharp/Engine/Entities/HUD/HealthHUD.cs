@@ -92,7 +92,7 @@ namespace XSharp.Engine.Entities.HUD
 
         protected HealthHUD()
         {
-            SpriteSheetIndex = 6;
+            SpriteSheetName = "HP";
 
             hudImageAnimationIndex = new int[8];
         }
