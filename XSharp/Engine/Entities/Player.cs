@@ -769,9 +769,9 @@ namespace XSharp.Engine.Entities
         {
             Box limit = Engine.World.BoundingBox;
             if (!CanGoOutOfCameraBounds && !CrossingBossDoor && !Engine.NoCameraConstraints && !Engine.Camera.NoConstraints)
-                limit &= Engine.CameraConstraintsBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE);
+                limit &= Engine.CameraConstraintsBox;
 
-            RestrictIn(limit, ref origin);
+            Clamp(limit.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE), ref origin);
         }
 
         protected override void Think()

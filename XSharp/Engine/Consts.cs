@@ -53,7 +53,7 @@ namespace XSharp.Engine
         public const int SCREEN_HEIGHT = 224; // In pixels
         public static readonly FixedSingle SIZE_RATIO = (float) SCREEN_WIDTH / SCREEN_HEIGHT;
 
-        public static readonly Vector EXTENDED_BORDER_SCREEN_OFFSET = (2 * BLOCK_SIZE, 2 * BLOCK_SIZE);
+        public static readonly Vector EXTENDED_BORDER_SCREEN_OFFSET = (MAP_SIZE, MAP_SIZE);
 
         public const int MAX_ENTITIES = 2048;
 

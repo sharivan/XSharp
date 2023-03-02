@@ -14,7 +14,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Remoting.Channels;
 using System.Windows.Forms;
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
@@ -43,7 +42,6 @@ using DXSprite = SharpDX.Direct3D9.Sprite;
 using MMXBox = XSharp.Math.Geometry.Box;
 using MMXWorld = XSharp.Engine.World.World;
 using ResultCode = SharpDX.Direct3D9.ResultCode;
-using SoundStream = XSharp.Engine.Sound.SoundStream;
 using Sprite = XSharp.Engine.Entities.Sprite;
 
 namespace XSharp.Engine
@@ -243,6 +241,9 @@ namespace XSharp.Engine
 
         private int lastLives;
         private bool respawning;
+        private Vector lastPlayerOrigin;
+        private Vector lastPlayerVelocity;
+        private Vector lastCameraLeftTop;
 
         private EffectHandle psFadingLevelHandle;
         private EffectHandle psFadingColorHandle;
@@ -851,6 +852,8 @@ namespace XSharp.Engine
             // 3 - OST
             // 4 - Enemies (including bosses)
             // 5 - Ambient
+            // 6 - Unused
+            // 7 - Unused
 
             CreateSoundChannel("X", 0.25f);
             CreateSoundChannel("Weapons", 0.25f);
@@ -4268,11 +4271,15 @@ namespace XSharp.Engine
                     string text = $"Checkpoint: {(currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.Yellow, out RawRectangle fontDimension);
 
-                    text = $"Camera: CX: {(float) Camera.Left * 256} CY: {(float) Camera.Top * 256}";
+                    text = $"Camera: CX: {(float) Camera.Left * 256}({(float) (Camera.Left - lastCameraLeftTop.X) * 256}) CY: {(float) Camera.Top * 256}({(float) (Camera.Top - lastCameraLeftTop.Y) * 256})";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, fontDimension.Top - fontDimension.Bottom, Color.Yellow, out fontDimension);
 
-                    text = $"Player: X: {(float) Player.Origin.X * 256}({(float) (Player.Origin.X - Player.LastOrigin.X) * 256}) Y: {(float) Player.Origin.Y * 256}({(float) (Player.Origin.Y - Player.LastOrigin.Y) * 256}) VX: {(float) Player.Velocity.X * 256} VY: {(float) Player.Velocity.Y * -256} Gravity: {(float) Player.GetGravity() * 256}";
+                    text = $"Player: X: {(float) Player.Origin.X * 256}({(float) (Player.Origin.X - lastPlayerOrigin.X) * 256}) Y: {(float) Player.Origin.Y * 256}({(float) (Player.Origin.Y - lastPlayerOrigin.Y) * 256}) VX: {(float) Player.Velocity.X * 256}({(float) (Player.Velocity.X - lastPlayerVelocity.X) * 256}) VY: {(float) Player.Velocity.Y * -256}({(float) (Player.Velocity.Y - lastPlayerVelocity.Y) * 256}) Gravity: {(float) Player.GetGravity() * 256}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, 2 * (fontDimension.Top - fontDimension.Bottom), Color.Yellow, out fontDimension);
+
+                    lastPlayerOrigin = Player.Origin;
+                    lastPlayerVelocity = Player.Velocity;
+                    lastCameraLeftTop = Camera.LeftTop;
                 }
             }
 

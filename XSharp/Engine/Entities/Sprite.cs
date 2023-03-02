@@ -1501,7 +1501,7 @@ namespace XSharp.Engine.Entities
             return AdjustOnTheFloor(QUERY_MAX_DISTANCE, ignore, world, sprite);
         }
 
-        protected void RestrictIn(Box limitBox, ref Vector origin)
+        protected void Clamp(Box limitBox, ref Vector origin)
         {
             var delta = origin - Origin;
 
@@ -1551,7 +1551,7 @@ namespace XSharp.Engine.Entities
             var newOrigin = Origin + delta;
 
             if (!CanGoOutOfMapBounds)
-                RestrictIn(Engine.World.BoundingBox, ref newOrigin);
+                Clamp(Engine.World.BoundingBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE), ref newOrigin);
 
             OnBeforeMove(ref newOrigin);
             Origin = newOrigin;
@@ -1562,8 +1562,8 @@ namespace XSharp.Engine.Entities
                 StopMoving();
 
             delta = Origin - lastOrigin;
-            var deltaX = delta.X;
-            var deltaY = delta.Y;
+            var deltaX = delta.X > 0 ? delta.X.Ceil() : delta.X.Floor();
+            var deltaY = delta.Y > 0 ? delta.Y.Ceil() : delta.Y.Floor();
 
             if (CollisionData.IsSolidBlock())
             {

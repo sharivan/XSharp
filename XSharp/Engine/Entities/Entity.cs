@@ -91,7 +91,20 @@ namespace XSharp.Engine.Entities
         public Vector Origin
         {
             get => origin;
-            set => origin = value.TruncFracPart();
+            set
+            {
+                LastOrigin = origin;
+                Vector delta = value - origin;
+                origin = value.TruncFracPart();
+
+                if (delta != Vector.NULL_VECTOR)
+                {
+                    foreach (Entity child in childs)
+                        child.Origin += delta;
+                }
+
+                UpdatePartition();
+            }
         }
 
         public Vector IntegerOrigin => Origin.RoundToFloor();
@@ -99,7 +112,7 @@ namespace XSharp.Engine.Entities
         public Vector LastOrigin
         {
             get;
-            private set;
+            internal set;
         }
 
         public virtual Box Hitbox
@@ -505,26 +518,15 @@ namespace XSharp.Engine.Entities
         {
             if (TouchingKind == TouchingKind.VECTOR)
             {
-                Vector v = entity.GetVector(TouchingVectorKind);
-                return Hitbox.Contains(v);
+                Vector v = entity.GetVector(TouchingVectorKind).RoundToFloor();
+                return Hitbox.RoundOriginToFloor().Contains(v);
             }
 
-            return Hitbox.IsOverlaping(entity.Hitbox);
+            return Hitbox.RoundOriginToFloor().IsOverlaping(entity.Hitbox.RoundOriginToFloor());
         }
 
         protected internal virtual void OnFrame()
         {
-            UpdatePartition();
-
-            Vector delta = Origin - LastOrigin;
-            if (delta != Vector.NULL_VECTOR)
-            {
-                foreach (Entity child in childs)
-                    child.Origin += delta;
-            }
-
-            LastOrigin = Origin;
-
             if (frameToKill > 0 && Engine.FrameCounter >= frameToKill)
             {
                 frameToKill = -1;
@@ -610,9 +612,6 @@ namespace XSharp.Engine.Entities
                 return;
 
             CurrentState?.OnFrame();
-
-            if (!Alive || MarkedToRemove)
-                return;
         }
 
         protected virtual void OnStartTouch(Entity entity)
@@ -758,12 +757,12 @@ namespace XSharp.Engine.Entities
 
         public virtual bool IsOffscreen(VectorKind kind, bool extendedCamera = true)
         {
-            return GetVector(kind) > (extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox);
+            return GetVector(kind).RoundToFloor() > (extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox).RoundOriginToFloor();
         }
 
         public virtual bool IsOffscreen(BoxKind kind, bool extendedCamera = true)
         {
-            return !CollisionChecker.HasIntersection(GetBox(kind), extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox);
+            return !CollisionChecker.HasIntersection(GetBox(kind).RoundOriginToFloor(), (extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox).RoundOriginToFloor());
         }
 
         public virtual void Place()

@@ -39,23 +39,23 @@ namespace XSharp.Engine.Entities.Triggers
         {
             base.OnTrigger(entity);
 
-            Vector targetOrigin = entity.GetVector(TouchingVectorKind);
-            Vector targetLastOrigin = entity.GetLastVector(TouchingVectorKind);
+            Vector targetOrigin = entity.GetVector(TouchingVectorKind).RoundToFloor();
+            Vector targetLastOrigin = entity.GetLastVector(TouchingVectorKind).RoundToFloor();
 
             switch (Orientation)
             {
                 case SplitterTriggerOrientation.HORIZONTAL:
-                    if (targetOrigin.Y < Origin.Y && targetLastOrigin.Y >= Origin.Y)
+                    if (targetOrigin.Y < IntegerOrigin.Y && targetLastOrigin.Y >= IntegerOrigin.Y)
                         OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
-                    else if (targetOrigin.Y >= Origin.Y && targetLastOrigin.Y < Origin.Y)
+                    else if (targetOrigin.Y >= IntegerOrigin.Y && targetLastOrigin.Y < IntegerOrigin.Y)
                         OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
 
                     break;
 
                 case SplitterTriggerOrientation.VERTICAL:
-                    if (targetOrigin.X < Origin.X && targetLastOrigin.X >= Origin.X)
+                    if (targetOrigin.X < IntegerOrigin.X && targetLastOrigin.X >= IntegerOrigin.X)
                         OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
-                    else if (targetOrigin.X >= Origin.X && targetLastOrigin.X < Origin.X)
+                    else if (targetOrigin.X >= IntegerOrigin.X && targetLastOrigin.X < IntegerOrigin.X)
                         OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
 
                     break;
