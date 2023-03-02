@@ -272,11 +272,6 @@ namespace XSharp.Math.Geometry
             return (this - center).Rotate270() + center;
         }
 
-        public Vector RoundToCeil()
-        {
-            return new(X.Ceil(), Y.Ceil());
-        }
-
         public Vector Truncate()
         {
             return new(X.IntValue, Y.IntValue);
@@ -297,14 +292,24 @@ namespace XSharp.Math.Geometry
             return new(X.Floor(), Y.Floor());
         }
 
-        public Vector RoundXToCeil()
-        {
-            return new(X.Ceil(), Y);
-        }
-
         public Vector RoundXToFloor()
         {
             return new(X.Floor(), Y);
+        }
+
+        public Vector RoundYToFloor()
+        {
+            return new(X, Y.Floor());
+        }
+
+        public Vector RoundToCeil()
+        {
+            return new(X.Ceil(), Y.Ceil());
+        }
+
+        public Vector RoundXToCeil()
+        {
+            return new(X.Ceil(), Y);
         }
 
         public Vector RoundYToCeil()
@@ -312,9 +317,19 @@ namespace XSharp.Math.Geometry
             return new(X, Y.Ceil());
         }
 
-        public Vector RoundYToFloor()
+        public Vector RoundToNearest()
         {
-            return new(X, Y.Floor());
+            return new(X.Round(), Y.Round());
+        }
+
+        public Vector RoundXToNearest()
+        {
+            return new(X.Round(), Y);
+        }
+
+        public Vector RoundYToNearest()
+        {
+            return new(X, Y.Round());
         }
 
         public Vector Round(RoundMode roundXMode = RoundMode.FLOOR, RoundMode roundYMode = RoundMode.FLOOR)

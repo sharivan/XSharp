@@ -10,12 +10,7 @@ namespace XSharp.Engine
     public class Camera : Entity
     {
         private Entity focusOn = null;
-
-        private Vector vel = Vector.NULL_VECTOR;
-        private FixedSingle moveDistance;
-        private FixedSingle moveStep;
-        private Vector moveToCenter;
-        private bool moveToFocus = false;
+        private Vector moveDistance;
 
         public bool NoConstraints
         {
@@ -43,27 +38,21 @@ namespace XSharp.Engine
 
         public static MMXWorld World => GameEngine.Engine.World;
 
-        public bool SmoothOnNextMove
-        {
-            get;
-            set;
-        } = false;
-
         public FixedSingle SmoothSpeed
         {
             get;
             set;
         } = CAMERA_SMOOTH_SPEED;
 
-        public FixedSingle MovingSpeed
+        public Vector Velocity
         {
             get;
             private set;
-        } = 0;
+        } = Vector.NULL_VECTOR;
 
         public Vector LeftTop
         {
-            get => Origin - Size * FixedSingle.HALF;
+            get => Center - Size * FixedSingle.HALF;
             set => Center = value + Size * FixedSingle.HALF;
         }
 
@@ -99,13 +88,19 @@ namespace XSharp.Engine
 
         public Vector Center
         {
-            get => Origin;
+            get => (Origin.X, Origin.Y - (Width - Height) * FixedSingle.HALF);
+            set => Origin = (value.X, value.Y + (Width - Height) * FixedSingle.HALF);          
+        }
+
+        new public Vector Origin
+        {
+            get => base.Origin;
             set
             {
                 if (focusOn != null)
                     return;
 
-                SetCenter(value);
+                SetOrigin(value);
             }
         }
 
@@ -152,7 +147,7 @@ namespace XSharp.Engine
             {
                 focusOn = value;
                 if (focusOn != null)
-                    SetCenter(focusOn.Origin);
+                    MoveToFocus();
             }
         }
 
@@ -160,8 +155,8 @@ namespace XSharp.Engine
         {
             get
             {
-                Vector sv2 = Size * FixedSingle.HALF;
-                return new Box(Center, -sv2, sv2);
+                Vector sv2 = new Vector(Width, Width) * FixedSingle.HALF;
+                return new Box(Origin, -sv2, sv2);
             }
         }
 
@@ -169,22 +164,12 @@ namespace XSharp.Engine
         {
             get
             {
-                Vector sv2 = Size * FixedSingle.HALF + EXTENDED_BORDER_SCREEN_OFFSET;
-                return new Box(Center, -sv2, sv2);
+                Vector sv2 = new Vector(Width, Width) * FixedSingle.HALF + EXTENDED_BORDER_SCREEN_OFFSET;
+                return new Box(Origin, -sv2, sv2);
             }
         }
 
-        public Vector Velocity
-        {
-            get => vel;
-            set
-            {
-                vel = value.TruncFracPart();
-                moveStep = vel.Length.TruncFracPart();
-            }
-        }
-
-        public bool Moving => moveDistance >= STEP_SIZE;
+        public bool Moving => moveDistance.X >= STEP_SIZE || moveDistance.Y >= STEP_SIZE;
 
         public Camera()
         {
@@ -194,21 +179,23 @@ namespace XSharp.Engine
         protected override Box GetHitbox()
         {
             var box = ExtendedBoundingBox;
-            return box - Center;
+            return box - Origin;
         }
 
-        private void SetCenter(Vector v)
+        private void SetOrigin(Vector v, bool clamp = true)
         {
-            SetCenter(v.X, v.Y);
+            SetOrigin(v.X, v.Y, clamp);
         }
 
-        public Vector ClampToBounds(Vector v)
+        public Vector ClampToBounds(Vector origin)
         {
-            return ClampToBounds(v.X, v.Y);
+            return ClampToBounds(origin.X, origin.Y);
         }
 
         public Vector ClampToBounds(FixedSingle x, FixedSingle y)
         {
+            y -= (Width - Height) * FixedSingle.HALF;
+
             Vector minCameraPos = Engine.MinCameraPos;
             Vector maxCameraPos = Engine.MaxCameraPos;
 
@@ -230,129 +217,87 @@ namespace XSharp.Engine
             else if (y > maxY)
                 y = maxY;
 
-            return (x, y);
+            return (x, y + (Width - Height) * FixedSingle.HALF);
         }
 
-        private void SetCenter(FixedSingle x, FixedSingle y)
+        private void SetOrigin(FixedSingle x, FixedSingle y, bool clamp = true)
         {
-            Origin = ClampToBounds(x, y);
+            base.Origin = (clamp ? ClampToBounds(x, y) : new Vector(x, y)).TruncFracPart();
         }
 
         public void MoveToLeftTop(Vector dest)
         {
-            MoveToCenter(dest + Size * FixedSingle.HALF, SmoothSpeed);
+            MoveToOrigin(dest + new Vector(Width, Width) * FixedSingle.HALF, (SmoothSpeed, SmoothSpeed));
         }
 
-        public void MoveToLeftTop(Vector dest, FixedSingle speed)
+        public void MoveToLeftTop(Vector dest, Vector velocity)
         {
-            MoveToCenter(dest + Size * FixedSingle.HALF, speed);
+            MoveToOrigin(dest + new Vector(Width, Width) * FixedSingle.HALF, velocity);
         }
 
-        public void MoveToCenter(Vector dest)
+        public void MoveToOrigin(Vector dest)
         {
-            MoveToCenter(dest, SmoothSpeed);
+            MoveToOrigin(dest, (SmoothSpeed, SmoothSpeed));
         }
 
-        public void MoveToCenter(Vector dest, FixedSingle speed)
+        public void MoveToOrigin(Vector origin, Vector velocity)
         {
-            if (speed < STEP_SIZE)
-                return;
+            focusOn = null;
+            MoveToOriginInternal(origin, velocity);
+        }
 
-            dest = ClampToBounds(dest.TruncFracPart());
-            Vector delta = dest - Center;
-            FixedSingle moveDistance = delta.Length.TruncFracPart();
-            if (moveDistance < STEP_SIZE)
+        private bool MoveToOriginInternal(Vector origin, Vector velocity)
+        {
+            if (velocity.X < STEP_SIZE && velocity.Y < STEP_SIZE)
+                return false;
+
+            var moveTo = ClampToBounds(origin.RoundToFloor());
+            var dx = moveTo.X - Origin.X;
+            var dy = moveTo.Y - Origin.Y;
+            Vector moveDistance = (dx.Abs, dy.Abs);
+
+            bool moveX = true;
+            bool moveY = true;
+
+            if (moveDistance.X < STEP_SIZE)
             {
-                this.moveDistance = 0;
-                MovingSpeed = 0;
-                moveToCenter = Vector.NULL_VECTOR;
-                return;
+                moveX = false;
+                moveDistance = moveDistance.YVector;
+                velocity = velocity.YVector;
             }
 
-            MovingSpeed = speed.TruncFracPart();
+            if (moveDistance.Y < STEP_SIZE)
+            {
+                moveY = false;
+                moveDistance = moveDistance.XVector;
+                velocity = velocity.XVector;
+            }
+
+            if (!moveX && !moveY)
+                return false;
+
+            Velocity = (velocity.X.TruncFracPart() * dx.Signal, velocity.Y.TruncFracPart() * dy.Signal);           
             this.moveDistance = moveDistance;
-            vel = (delta * (speed / moveDistance)).TruncFracPart();
-            moveStep = vel.Length.TruncFracPart();
-
-            this.moveDistance -= moveStep;
-            if (this.moveDistance < STEP_SIZE)
-            {
-                SetCenter(dest);
-                this.moveDistance = 0;
-                MovingSpeed = 0;
-                moveToCenter = Vector.NULL_VECTOR;
-            }
-            else
-            {
-                Vector oldCenter = Center;
-                Vector newCenter = Center + vel;
-                SetCenter(newCenter);
-
-                if ((Center - oldCenter).Length.TruncFracPart() < STEP_SIZE)
-                {
-                    this.moveDistance = 0;
-                    MovingSpeed = 0;
-                    moveToCenter = Vector.NULL_VECTOR;
-                }
-                else
-                    moveToCenter = dest;
-            }
-
-            moveToFocus = false;
+            return true;
         }
 
-        public void MoveToFocus(FixedSingle speed)
+        private void MoveToFocus(Vector velocity)
         {
-            if (speed < STEP_SIZE || focusOn == null)
+            if (focusOn == null)
                 return;
 
             Vector dest = focusOn.Origin;
-            dest = ClampToBounds(dest);
-            Vector delta = dest - Center;
-            FixedSingle moveDistance = delta.Length.TruncFracPart();
-            if (moveDistance < STEP_SIZE)
-            {
-                this.moveDistance = 0;
-                MovingSpeed = 0;
-                moveToCenter = Vector.NULL_VECTOR;
-                return;
-            }
+            MoveToOriginInternal(dest, velocity);
+        }
 
-            MovingSpeed = speed.TruncFracPart();
-            this.moveDistance = moveDistance;
-            vel = (delta * (speed / moveDistance)).TruncFracPart();
-            moveStep = vel.Length.TruncFracPart();
-
-            this.moveDistance -= moveStep;
-            if (this.moveDistance < STEP_SIZE)
-            {
-                SetCenter(dest);
-                this.moveDistance = 0;
-                MovingSpeed = 0;
-                moveToCenter = Vector.NULL_VECTOR;
-            }
-            else
-            {
-                Vector oldCenter = Center;
-                Vector newCenter = Center + vel;
-                SetCenter(newCenter);
-
-                if ((Center - oldCenter).Length.TruncFracPart() < STEP_SIZE)
-                {
-                    this.moveDistance = 0;
-                    MovingSpeed = 0;
-                    moveToCenter = Vector.NULL_VECTOR;
-                }
-                else
-                    moveToCenter = dest;
-            }
-
-            moveToFocus = true;
+        private void MoveToFocus()
+        {
+            MoveToFocus((SmoothSpeed, SmoothSpeed));
         }
 
         public void StopMoving()
         {
-            moveDistance = 0;
+            moveDistance = Vector.NULL_VECTOR;
         }
 
         public Box VisibleBox(Box box)
@@ -373,41 +318,58 @@ namespace XSharp.Engine
             CheckTouchingWithDeadEntities = true;
         }
 
+        private bool DoMoving()
+        {
+            if (focusOn != null)
+                MoveToFocus();
+
+            Vector velocity = Velocity;
+            moveDistance -= (velocity.X.Abs, velocity.Y.Abs);
+
+            if (moveDistance.X < STEP_SIZE)
+            {
+                Velocity = Velocity.YVector;
+                velocity = ((moveDistance.X + velocity.X.Abs) * velocity.X.Signal, velocity.Y);
+                moveDistance = moveDistance.YVector;
+            }
+
+            if (moveDistance.Y < STEP_SIZE)
+            {
+                Velocity = Velocity.XVector;
+                velocity = (velocity.X, (moveDistance.Y + velocity.Y.Abs) * velocity.Y.Signal);
+                moveDistance = moveDistance.XVector;
+            }
+
+            if (velocity != Vector.NULL_VECTOR)
+            {
+                Vector oldOrigin = Origin;
+                Vector newOrigin = oldOrigin + velocity;
+                SetOrigin(newOrigin, false);
+
+                if ((Origin.X - oldOrigin.X).Abs < STEP_SIZE)
+                {
+                    Velocity = Velocity.YVector;
+                    moveDistance = moveDistance.YVector;
+                }
+
+                if ((Origin.Y - oldOrigin.Y).Abs < STEP_SIZE)
+                {
+                    Velocity = Velocity.XVector;
+                    moveDistance = moveDistance.XVector;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         // TODO : Smooth movement is not working right for some situations. Please fix it!
         protected internal override void OnFrame()
         {
             base.OnFrame();
 
-            if (Moving)
-            {
-                Vector oldCenter = Center;
-                Vector newCenter = Center + vel;
-                SetCenter(newCenter);
-
-                if ((Center - oldCenter).Length.TruncFracPart() < STEP_SIZE)
-                {
-                    moveDistance = 0;
-                    MovingSpeed = 0;
-                    moveToFocus = false;
-                }
-                else if (moveToFocus)
-                    MoveToFocus(MovingSpeed);
-                else
-                    MoveToCenter(moveToCenter, MovingSpeed);
-            }
-            else if (focusOn != null)
-            {
-                if (SmoothOnNextMove)
-                {
-                    SmoothOnNextMove = false;
-                    MoveToFocus(SmoothSpeed);
-                }
-                else
-                {
-                    var focusOrigin = focusOn.Origin;
-                    SetCenter(focusOrigin);
-                }
-            }
+            DoMoving();
         }
 
         protected override void OnStartTouch(Entity entity)

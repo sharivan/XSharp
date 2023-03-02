@@ -3479,7 +3479,6 @@ namespace XSharp.Engine
             CreateHP();
 
             Camera.FocusOn = Player;
-
             CurrentCheckpoint = checkpoints.Count > 0 ? checkpoints[mmx.Point] : null;
         }
 
@@ -4322,7 +4321,7 @@ namespace XSharp.Engine
             writer.Write(gameOver);
             writer.Write(paused);
 
-            Camera.Center.Write(writer);
+            Camera.Origin.Write(writer);
             writer.Write(Camera.FocusOn != null ? Camera.FocusOn.Index : -1);
 
             Player?.SaveState(writer);
@@ -4346,7 +4345,7 @@ namespace XSharp.Engine
             gameOver = reader.ReadBoolean();
             paused = reader.ReadBoolean();
 
-            Camera.Center = new Vector(reader);
+            Camera.Origin = new Vector(reader);
             int focusedObjectIndex = reader.ReadInt32();
             Camera.FocusOn = focusedObjectIndex >= 0 ? entities[focusedObjectIndex] : null;
 
@@ -4537,13 +4536,6 @@ namespace XSharp.Engine
             }
 
             CameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
-
-            // TODO : Implement posssibility to smooth speed for one direction only
-            if ((Player.Origin - Camera.Center).Length.TruncFracPart() >= STEP_SIZE)
-            {
-                Camera.SmoothOnNextMove = true;
-                Camera.SmoothSpeed = CAMERA_SMOOTH_SPEED;
-            }
         }
 
         public void SetCameraConstraints(Vector origin, IEnumerable<Vector> extensions)
@@ -4822,8 +4814,8 @@ namespace XSharp.Engine
 
             RectangleF rDest = WorldBoxToScreen(box);
 
-            float x = rDest.Left - (float) Camera.Width * 0.5f;
-            float y = -rDest.Top + (float) Camera.Height * 0.5f;
+            float x = rDest.Left - SCREEN_WIDTH * 0.5f;
+            float y = -rDest.Top + SCREEN_HEIGHT * 0.5f;
 
             var matScaling = Matrix.Scaling(1, 1, 1);
             var matTranslation = Matrix.Translation(x, y, 0);

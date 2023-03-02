@@ -171,7 +171,7 @@ namespace XSharp.Engine.Entities.Objects
             Cell sceneCell = GetSceneCellFromPos(Engine.Player.Origin);
             Box sceneBox = GetSceneBoundingBox(sceneCell);
             Vector offset = GetCameraMoveOffset();
-            Engine.Camera.MoveToLeftTop(sceneBox.LeftTop + offset, CAMERA_SMOOTH_SPEED);
+            Engine.Camera.MoveToLeftTop(sceneBox.LeftTop + offset, (CAMERA_BOOS_DOOR_CROSSING_SMOOTH_SPEED, CAMERA_BOOS_DOOR_CROSSING_SMOOTH_SPEED));
 
             if (StartBossBattle)
             {

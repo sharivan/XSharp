@@ -53,9 +53,6 @@ namespace XSharp.Engine
         public const int SCREEN_HEIGHT = 224; // In pixels
         public static readonly FixedSingle SIZE_RATIO = (float) SCREEN_WIDTH / SCREEN_HEIGHT;
 
-        public static readonly int SIDE_WIDTH_SCENES_PER_SCREEN = ((FixedSingle) SCREEN_WIDTH / SCENE_SIZE).Ceil();
-        public static readonly int SIDE_HEIGHT_SCENES_PER_SCREEN = ((FixedSingle) SCREEN_HEIGHT / SCENE_SIZE).Ceil();
-
         public static readonly Vector EXTENDED_BORDER_SCREEN_OFFSET = (2 * BLOCK_SIZE, 2 * BLOCK_SIZE);
 
         public const int MAX_ENTITIES = 2048;
@@ -82,7 +79,8 @@ namespace XSharp.Engine
         public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_1 = 408 / 256.0;
         public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_2 = 456 / 256.0;
         public static readonly FixedSingle DASH_SPEED = 885 / 256.0;
-        public static readonly FixedSingle CAMERA_SMOOTH_SPEED = 2;
+        public static readonly FixedSingle CAMERA_BOOS_DOOR_CROSSING_SMOOTH_SPEED = 2.5;
+        public static readonly FixedSingle CAMERA_SMOOTH_SPEED = 8;
         public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_X = -138 / 256.0;
         public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_Y = -512 / 256.0;
         public static readonly Vector INITIAL_DAMAGE_RECOIL_SPEED = (INITIAL_DAMAGE_RECOIL_SPEED_X, INITIAL_DAMAGE_RECOIL_SPEED_Y);

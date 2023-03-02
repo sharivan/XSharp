@@ -485,7 +485,14 @@ namespace XSharp.Engine.Entities
                 SetAirStateAnimation(true);
             }
             else
+            {
                 Velocity = Velocity.XVector;
+
+                if (Landed)
+                    SetStandState();
+                else
+                    SetAirStateAnimation();
+            }
         }
 
         protected override void OnBlockedLeft()
@@ -543,14 +550,14 @@ namespace XSharp.Engine.Entities
             {
                 if (!TakingDamage)
                 {
-                    if (!ContainsAnimationIndex(PlayerState.LAND, CurrentAnimationIndex, true))
+                    if (state == PlayerState.FALL && !ContainsAnimationIndex(PlayerState.LAND, CurrentAnimationIndex, true))
                         PlaySound("X Land");
 
                     if (PressingLeft)
                         TryMoveLeft();
                     else if (PressingRight)
                         TryMoveRight();
-                    else
+                    else if (state != PlayerState.STAND)
                         SetState(PlayerState.LAND, 0);
                 }
                 else
@@ -653,7 +660,7 @@ namespace XSharp.Engine.Entities
                     {
                         if (!WallSliding)
                         {
-                            Velocity = Vector.NULL_VECTOR;
+                            Velocity = (PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, 0);
                             wallSlideFrameCounter = 0;
                             SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
                             PlaySound("X Land");
@@ -701,7 +708,7 @@ namespace XSharp.Engine.Entities
                     {
                         if (!WallSliding)
                         {
-                            Velocity = Vector.NULL_VECTOR;
+                            Velocity = (PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, 0);
                             wallSlideFrameCounter = 0;
                             SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
                             PlaySound("X Land");
@@ -790,7 +797,7 @@ namespace XSharp.Engine.Entities
                     {
                         if (Engine.CurrentCheckpoint != null)
                         {
-                            if (Origin.Y >= Engine.CurrentCheckpoint.Hitbox.Top + SCREEN_HEIGHT * 0.5)
+                            if (Origin.Y >= Engine.CurrentCheckpoint.Hitbox.Top + SCENE_SIZE * 0.5)
                             {
                                 CheckCollisionWithWorld = true;
                                 CheckCollisionWithSolidSprites = true;
@@ -873,7 +880,7 @@ namespace XSharp.Engine.Entities
                                         {
                                             if (!WallSliding)
                                             {
-                                                Velocity = Vector.NULL_VECTOR;
+                                                Velocity = (PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, 0);
                                                 wallSlideFrameCounter = 0;
                                                 SetState(PlayerState.WALL_SLIDE, Direction.LEFT, 0);
                                                 PlaySound("X Land");
@@ -912,7 +919,7 @@ namespace XSharp.Engine.Entities
                                         {
                                             if (!WallSliding)
                                             {
-                                                Velocity = Vector.NULL_VECTOR;
+                                                Velocity = (PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, 0);
                                                 wallSlideFrameCounter = 0;
                                                 SetState(PlayerState.WALL_SLIDE, Direction.RIGHT, 0);
                                                 PlaySound("X Land");
@@ -1247,8 +1254,8 @@ namespace XSharp.Engine.Entities
                     if (WallSliding)
                     {
                         wallSlideFrameCounter++;
-                        Velocity = wallSlideFrameCounter < 8 ? Vector.NULL_VECTOR : (Underwater ? UNDERWATER_WALL_SLIDE_SPEED : WALL_SLIDE_SPEED) * Vector.DOWN_VECTOR;
                         baseHSpeed = WALKING_SPEED;
+                        Velocity = (PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, wallSlideFrameCounter < 8 ? 0 : Underwater ? UNDERWATER_WALL_SLIDE_SPEED : WALL_SLIDE_SPEED);
 
                         if (wallSlideFrameCounter >= 11)
                         {

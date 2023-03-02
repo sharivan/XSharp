@@ -50,6 +50,11 @@ namespace XSharp.Engine.Entities
         protected SpriteCollider worldCollider;
         protected SpriteCollider spriteCollider;
 
+        private bool lastBlockedUp = false;
+        private bool lastBlockedLeft = false;
+        private bool lastBlockedRight = false;
+        private bool lastLanded = false;
+
         private Vector vel;
         protected bool moving;
         protected bool breakable;
@@ -944,16 +949,36 @@ namespace XSharp.Engine.Entities
                 spriteCollider.Box = Hitbox;
 
                 if (BlockedUp)
+                {
                     OnBlockedUp();
+                    lastBlockedUp = true;
+                }
+                else
+                    lastBlockedUp = false;
 
                 if (BlockedLeft)
+                {
                     OnBlockedLeft();
+                    lastBlockedLeft = true;
+                }
+                else
+                    lastBlockedLeft = false;
 
                 if (BlockedRight)
+                {
                     OnBlockedRight();
+                    lastBlockedRight = true;
+                }
+                else
+                    lastBlockedRight = false;
 
                 if (Landed)
+                {
                     OnLanded();
+                    lastLanded = true;
+                }
+                else
+                    lastLanded = false;
             }
         }
 
@@ -1495,24 +1520,6 @@ namespace XSharp.Engine.Entities
 
             Vector lastOrigin = Origin;
 
-            bool lastBlockedUp = false;
-            bool lastBlockedLeft = false;
-            bool lastBlockedRight = false;
-            bool lastLanded = false;
-
-            if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
-            {
-                worldCollider.Box = CollisionBox;
-
-                spriteCollider.ClearIgnoredSprites();
-                spriteCollider.Box = Hitbox;
-
-                lastBlockedUp = BlockedUp;
-                lastBlockedLeft = BlockedLeft;
-                lastBlockedRight = BlockedRight;
-                lastLanded = Landed;
-            }
-
             if (!NoClip)
             {
                 var gravity = Gravity;
@@ -1577,15 +1584,14 @@ namespace XSharp.Engine.Entities
                 {
                     foreach (var sprite in touchingSpritesDown)
                         if (sprite != physicsParent)
-                            sprite.DoPhysics(null, (0, deltaY));
+                            sprite.DoPhysics(this, (0, deltaY));
                 }
-
 
                 if (delta != Vector.NULL_VECTOR)
                     foreach (var sprite in touchingSpritesUp)
                         if (sprite != physicsParent)
                         {
-                            sprite.DoPhysics(null, delta);
+                            sprite.DoPhysics(this, delta);
                             sprite.TryMoveContactFloor();
                             sprite.AdjustOnTheFloor();
                         }
@@ -1598,17 +1604,49 @@ namespace XSharp.Engine.Entities
                 spriteCollider.ClearIgnoredSprites();
                 spriteCollider.Box = Hitbox;
 
-                if (BlockedUp && !lastBlockedUp)
-                    OnBlockedUp();
+                if (BlockedUp)
+                {
+                    if (!lastBlockedUp)
+                    {
+                        OnBlockedUp();
+                        lastBlockedUp = true;
+                    }
+                }
+                else
+                    lastBlockedUp = false;
 
-                if (BlockedLeft && !lastBlockedLeft)
-                    OnBlockedLeft();
+                if (BlockedLeft)
+                {
+                    if (!lastBlockedLeft)
+                    {
+                        OnBlockedLeft();
+                        lastBlockedLeft = true;
+                    }
+                }
+                else
+                    lastBlockedLeft = false;
 
-                if (BlockedRight && !lastBlockedRight)
-                    OnBlockedRight();
+                if (BlockedRight)
+                {
+                    if (!lastBlockedRight)
+                    {
+                        OnBlockedRight();
+                        lastBlockedRight = true;
+                    }
+                }
+                else
+                    lastBlockedRight = false;
 
-                if (Landed && !lastLanded)
-                    OnLanded();
+                if (Landed)
+                {
+                    if (!lastLanded)
+                    {
+                        OnLanded();
+                        lastLanded = true;
+                    }
+                }
+                else
+                    lastLanded = false;
             }
         }
 
@@ -1715,16 +1753,12 @@ namespace XSharp.Engine.Entities
         {
             if (!Static && !Engine.Paused)
             {
-                bool lastLanded = false;
-
-                if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
-                    lastLanded = Landed;
-
+                bool landed = (CheckCollisionWithWorld || CheckCollisionWithSolidSprites) && Landed;
                 FixedSingle gravity = Gravity;
 
                 if (!NoClip)
                 {
-                    if ((!lastLanded || Velocity.Y <= 0) && gravity != 0)
+                    if (!landed && gravity != 0)
                     {
                         Velocity += gravity * Vector.DOWN_VECTOR;
 
@@ -1733,7 +1767,7 @@ namespace XSharp.Engine.Entities
                             Velocity = new Vector(Velocity.X, terminalDownwardSpeed);
                     }
 
-                    if (lastLanded)
+                    if (landed && Velocity.Y > gravity)
                         Velocity = Velocity.XVector;
                     else if (Velocity.Y > gravity && Velocity.Y < 2 * gravity)
                         Velocity = new Vector(Velocity.X, gravity);
@@ -1914,7 +1948,7 @@ namespace XSharp.Engine.Entities
 
         public void FaceToScreenCenter()
         {
-            FaceToPosition(Engine.Camera.Center);
+            FaceToPosition(Engine.Camera.Origin);
         }
 
         public void ResetExternalVelocity()
