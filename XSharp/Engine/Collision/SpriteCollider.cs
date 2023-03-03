@@ -193,11 +193,27 @@ namespace XSharp.Engine.Collision
             private set;
         }
 
+        public bool TouchingLethalSpikeLeft => BlockedLeft && leftCollisionChecker.HasPlacement(CollisionData.LETHAL_SPIKE);
+
+        public bool TouchingNonLethalSpikeLeft => BlockedLeft && leftCollisionChecker.HasPlacement(CollisionData.NON_LETHAL_SPIKE);
+
+        public bool TouchingLethalSpikeUp => BlockedUp && upCollisionChecker.HasPlacement(CollisionData.LETHAL_SPIKE);
+
+        public bool TouchingNonLethalSpikeUp => BlockedUp && upCollisionChecker.HasPlacement(CollisionData.NON_LETHAL_SPIKE);
+
+        public bool TouchingLethalSpikeRight => BlockedRight && rightCollisionChecker.HasPlacement(CollisionData.LETHAL_SPIKE);
+
+        public bool TouchingNonLethalSpikeRight => BlockedRight && rightCollisionChecker.HasPlacement(CollisionData.NON_LETHAL_SPIKE);
+
         public bool LandedOnBlock => DownMaskFlags == CollisionFlags.BLOCK;
 
         public bool LandedOnSlope => DownMaskFlags == CollisionFlags.SLOPE;
 
         public bool LandedOnTopLadder => DownMaskFlags == CollisionFlags.TOP_LADDER;
+
+        public bool LandedOnLethalSpike => Landed && downCollisionChecker.HasPlacement(CollisionData.LETHAL_SPIKE);
+
+        public bool LandedOnNonLethalSpike => Landed && downCollisionChecker.HasPlacement(CollisionData.NON_LETHAL_SPIKE);
 
         public RightTriangle LandedSlope
         {
@@ -205,9 +221,9 @@ namespace XSharp.Engine.Collision
             private set;
         }
 
-        public bool Underwater => (innerMaskFlags & CollisionFlags.WATER) != 0;
+        public bool Underwater => innerMaskFlags.HasFlag(CollisionFlags.WATER);
 
-        public bool TouchingWaterSurface => (innerMaskFlags & CollisionFlags.WATER_SURFACE) != 0;
+        public bool TouchingWaterSurface => innerMaskFlags.HasFlag(CollisionFlags.WATER_SURFACE);
 
         public SpriteCollider(Sprite owner, Box box, bool useCollisionPlacements = false)
             : this(owner, box, 0, 0, useCollisionPlacements)

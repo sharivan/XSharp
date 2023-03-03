@@ -59,7 +59,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             var fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
             {
                 Origin,
-                InitialVelocity = (-PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED)
+                InitialVelocity = (-PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED)
             });
 
             fragment.Spawn();
@@ -67,7 +67,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
             {
                 Origin,
-                InitialVelocity = (PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED)
+                InitialVelocity = (PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED)
             });
 
             fragment.Spawn();
@@ -75,7 +75,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
             {
                 Origin,
-                InitialVelocity = (-PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED * FixedSingle.HALF)
+                InitialVelocity = (-PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED * FixedSingle.HALF)
             });
 
             fragment.Spawn();
@@ -83,7 +83,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
             fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
             {
                 Origin,
-                InitialVelocity = (PENGUIN_ICE_SPEED, -PENGUIN_ICE_SPEED * FixedSingle.HALF)
+                InitialVelocity = (PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED * FixedSingle.HALF)
             });
 
             fragment.Spawn();

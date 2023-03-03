@@ -253,10 +253,10 @@ namespace XSharp.Engine.Collision
 
             return result;
         }
-
-        protected RightTriangle slopeTriangle;
+       
         protected List<CollisionPlacement> placements;
         protected EntityList<Entity> resultSet;
+        protected RightTriangle slopeTriangle;
 
         public TouchingKind TestKind
         {
@@ -481,6 +481,17 @@ namespace XSharp.Engine.Collision
         public void Setup(Box testBox, CollisionFlags ignoreFlags, BitSet ignoreSprites)
         {
             Setup(testBox, ignoreFlags, ignoreSprites, true, true, false);
+        }
+
+        public bool HasPlacement(CollisionData placementData)
+        {
+            foreach (var placement in placements)
+            {
+                if (placement.CollisionData == placementData)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

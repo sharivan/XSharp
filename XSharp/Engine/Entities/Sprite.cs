@@ -324,14 +324,7 @@ namespace XSharp.Engine.Entities
             }
         }
 
-        public virtual Box CollisionBox
-        {
-            get
-            {
-                Box box = Origin + GetCollisionBox();
-                return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
-            }
-        }
+        public virtual Box CollisionBox => Origin + GetCollisionBox();
 
         public SpriteCollider WorldCollider
         {
@@ -374,21 +367,37 @@ namespace XSharp.Engine.Entities
             protected set => spriteCollider.CheckCollisionWithSolidSprites = value;
         }
 
-        public bool BlockedUp => !NoClip && (WorldCollider.BlockedUp || SpriteCollider.BlockedUp);
+        public bool BlockedUp => !NoClip && (CheckCollisionWithWorld && WorldCollider.BlockedUp || CheckCollisionWithSolidSprites && SpriteCollider.BlockedUp);
 
-        public bool BlockedLeft => !NoClip && (WorldCollider.BlockedLeft || SpriteCollider.BlockedLeft);
+        public bool BlockedLeft => !NoClip && (CheckCollisionWithWorld && WorldCollider.BlockedLeft || CheckCollisionWithSolidSprites && SpriteCollider.BlockedLeft);
 
-        public bool BlockedRight => !NoClip && (WorldCollider.BlockedRight || SpriteCollider.BlockedRight);
+        public bool BlockedRight => !NoClip && (CheckCollisionWithWorld && WorldCollider.BlockedRight || CheckCollisionWithSolidSprites && SpriteCollider.BlockedRight);
 
-        public bool Landed => !NoClip && (WorldCollider.Landed || SpriteCollider.Landed) && Velocity.Y >= 0;
+        public bool TouchingLethalSpikeLeft => !NoClip && (CheckCollisionWithWorld && WorldCollider.TouchingLethalSpikeLeft || CheckCollisionWithSolidSprites && SpriteCollider.TouchingLethalSpikeLeft);
 
-        public bool LandedOnSlope => !NoClip && (WorldCollider.LandedOnSlope || SpriteCollider.LandedOnSlope);
+        public bool TouchingNonLethalSpikeLeft => !NoClip && (CheckCollisionWithWorld && WorldCollider.TouchingNonLethalSpikeLeft || CheckCollisionWithSolidSprites && SpriteCollider.TouchingNonLethalSpikeLeft);
 
-        public bool LandedOnTopLadder => !NoClip && (WorldCollider.LandedOnTopLadder || SpriteCollider.LandedOnTopLadder);
+        public bool TouchingLethalSpikeUp => !NoClip && (CheckCollisionWithWorld && WorldCollider.TouchingLethalSpikeUp || CheckCollisionWithSolidSprites && SpriteCollider.TouchingLethalSpikeUp);
 
-        public RightTriangle LandedSlope => WorldCollider.LandedOnSlope ? WorldCollider.LandedSlope : SpriteCollider.LandedSlope;
+        public bool TouchingNonLethalSpikeUp => !NoClip && (CheckCollisionWithWorld && WorldCollider.TouchingNonLethalSpikeUp || CheckCollisionWithSolidSprites && SpriteCollider.TouchingNonLethalSpikeUp);
 
-        public bool Underwater => !NoClip && (WorldCollider.Underwater || SpriteCollider.Underwater);
+        public bool TouchingLethalSpikeRight => !NoClip && (CheckCollisionWithWorld && WorldCollider.TouchingLethalSpikeRight || CheckCollisionWithSolidSprites && SpriteCollider.TouchingLethalSpikeRight);
+
+        public bool TouchingNonLethalSpikeRight => !NoClip && (CheckCollisionWithWorld && WorldCollider.TouchingNonLethalSpikeRight || CheckCollisionWithSolidSprites && SpriteCollider.TouchingNonLethalSpikeRight);
+
+        public bool Landed => !NoClip && (CheckCollisionWithWorld && WorldCollider.Landed || CheckCollisionWithSolidSprites && SpriteCollider.Landed) && Velocity.Y >= 0;
+
+        public bool LandedOnSlope => !NoClip && (CheckCollisionWithWorld && WorldCollider.LandedOnSlope || CheckCollisionWithSolidSprites && SpriteCollider.LandedOnSlope);
+
+        public bool LandedOnTopLadder => !NoClip && CheckCollisionWithWorld && (WorldCollider.LandedOnTopLadder || CheckCollisionWithSolidSprites && SpriteCollider.LandedOnTopLadder);
+
+        public bool LandedOnLethalSpike => !NoClip && (CheckCollisionWithWorld && WorldCollider.LandedOnLethalSpike || CheckCollisionWithSolidSprites && SpriteCollider.LandedOnLethalSpike);
+
+        public bool LandedOnNonLethalSpike => !NoClip && (CheckCollisionWithWorld && WorldCollider.LandedOnNonLethalSpike || CheckCollisionWithSolidSprites && SpriteCollider.LandedOnNonLethalSpike);
+
+        public RightTriangle LandedSlope => CheckCollisionWithWorld && WorldCollider.LandedOnSlope ? WorldCollider.LandedSlope : CheckCollisionWithSolidSprites && SpriteCollider.LandedOnSlope ? SpriteCollider.LandedSlope : RightTriangle.EMPTY;
+
+        public bool Underwater => !NoClip && (CheckCollisionWithWorld && WorldCollider.Underwater || CheckCollisionWithSolidSprites && SpriteCollider.Underwater);
 
         public bool CanGoOutOfMapBounds
         {
@@ -1082,7 +1091,7 @@ namespace XSharp.Engine.Entities
             CreateResources();
             base.Place();
 
-            if (!IsOffscreen(VectorKind.ORIGIN))
+            if (IsInSpawnArea(VectorKind.ORIGIN))
                 Spawn();
         }
 
@@ -1418,7 +1427,7 @@ namespace XSharp.Engine.Entities
             FixedSingle worldDelta = maxDistance;
             FixedSingle spriteDelta = maxDistance;
 
-            if (world)
+            if (world && CheckCollisionWithWorld)
             {
                 var lastBox = CollisionBox;
                 worldCollider.Box = lastBox;
@@ -1427,7 +1436,7 @@ namespace XSharp.Engine.Entities
                 worldDelta = worldCollider.Box.Origin.Y - lastBox.Origin.Y;
             }
 
-            if (sprite)
+            if (sprite && CheckCollisionWithSolidSprites)
             {
                 var lastBox = Hitbox;
                 spriteCollider.ClearIgnoredSprites();
@@ -1456,7 +1465,7 @@ namespace XSharp.Engine.Entities
             FixedSingle worldDelta = maxDistance;
             FixedSingle spriteDelta = maxDistance;
 
-            if (world)
+            if (world && CheckCollisionWithWorld)
             {
                 var lastBox = CollisionBox;
                 worldCollider.Box = lastBox;
@@ -1465,7 +1474,7 @@ namespace XSharp.Engine.Entities
                 worldDelta = worldCollider.Box.Origin.Y - lastBox.Origin.Y;
             }
 
-            if (sprite)
+            if (sprite && CheckCollisionWithSolidSprites)
             {
                 var lastBox = Hitbox;
                 spriteCollider.ClearIgnoredSprites();
@@ -1494,7 +1503,7 @@ namespace XSharp.Engine.Entities
             FixedSingle worldDelta = 0;
             FixedSingle spriteDelta = 0;
 
-            if (world)
+            if (world && CheckCollisionWithWorld)
             {
                 var lastBox = CollisionBox;
                 worldCollider.Box = lastBox;
@@ -1503,7 +1512,7 @@ namespace XSharp.Engine.Entities
                 worldDelta = worldCollider.Box.Origin.Y - lastBox.Origin.Y;
             }
 
-            if (sprite)
+            if (sprite && CheckCollisionWithSolidSprites)
             {
                 var lastBox = Hitbox;
                 spriteCollider.ClearIgnoredSprites();
@@ -1568,10 +1577,13 @@ namespace XSharp.Engine.Entities
 
             if (delta.IsNull)
             {
-                if (Landed)
-                    AdjustOnTheFloor();
-                else
-                    TryMoveContactFloor();
+                if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
+                {
+                    if (Landed)
+                        AdjustOnTheFloor();
+                    //else
+                    //    TryMoveContactFloor();
+                }
 
                 return;
             }
@@ -1637,10 +1649,14 @@ namespace XSharp.Engine.Entities
 
             if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
             {
-                worldCollider.Box = CollisionBox;
+                if (CheckCollisionWithWorld)
+                    worldCollider.Box = CollisionBox;
 
-                spriteCollider.ClearIgnoredSprites();
-                spriteCollider.Box = Hitbox;
+                if (CheckCollisionWithSolidSprites)
+                {
+                    spriteCollider.ClearIgnoredSprites();
+                    spriteCollider.Box = Hitbox;
+                }
 
                 if (BlockedUp)
                 {

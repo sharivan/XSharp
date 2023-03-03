@@ -37,6 +37,7 @@ namespace XSharp.Engine.Entities
         internal Entity parent = null;
 
         private bool wasOffScreen;
+        private bool wasOutOfLiveArea;
 
         internal readonly List<Entity> touchingEntities;
         internal readonly List<Entity> childs;
@@ -542,7 +543,13 @@ namespace XSharp.Engine.Entities
 
             wasOffScreen = offScreen;
 
-            if (KillOnOffscreen && Engine.FrameCounter - SpawnFrame >= MinimumIntervalToKillOnOffScreen && offScreen)
+            bool outOfLiveArea = !IsInLiveArea(VectorKind.ORIGIN);
+            if (outOfLiveArea && !wasOutOfLiveArea)
+                OnOutOfLiveArea();
+
+            wasOutOfLiveArea = outOfLiveArea;
+
+            if (KillOnOffscreen && Engine.FrameCounter - SpawnFrame >= MinimumIntervalToKillOnOffScreen && outOfLiveArea)
             {
                 Kill();
                 return;
@@ -674,6 +681,7 @@ namespace XSharp.Engine.Entities
             MarkedToRemove = false;
             Spawning = false;
             wasOffScreen = false;
+            wasOutOfLiveArea = false;
         }
 
         public void KillOnNextFrame()
@@ -695,6 +703,7 @@ namespace XSharp.Engine.Entities
             currentStateID = -1;
             MarkedToRemove = false;
             wasOffScreen = false;
+            wasOutOfLiveArea = false;
             Engine.spawnedEntities.Add(this);
         }
 
@@ -729,6 +738,10 @@ namespace XSharp.Engine.Entities
         {
         }
 
+        protected virtual void OnOutOfLiveArea()
+        {
+        }
+
         public void BeginUpdate()
         {
             Updating = true;
@@ -759,14 +772,34 @@ namespace XSharp.Engine.Entities
             }
         }
 
-        public virtual bool IsOffscreen(VectorKind kind, bool extendedCamera = true)
+        public virtual bool IsOffscreen(VectorKind kind)
         {
-            return GetVector(kind).RoundToFloor() > (extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox).RoundOriginToFloor();
+            return !Engine.Camera.BoundingBox.RoundOriginToFloor().Contains(GetVector(kind).RoundToFloor());
         }
 
-        public virtual bool IsOffscreen(BoxKind kind, bool extendedCamera = true)
+        public virtual bool IsOffscreen(BoxKind kind)
         {
-            return !CollisionChecker.HasIntersection(GetBox(kind).RoundOriginToFloor(), (extendedCamera ? Engine.Camera.ExtendedBoundingBox : Engine.Camera.BoundingBox).RoundOriginToFloor());
+            return !CollisionChecker.HasIntersection(GetBox(kind).RoundOriginToFloor(), Engine.Camera.BoundingBox.RoundOriginToFloor());
+        }
+
+        public virtual bool IsInLiveArea(VectorKind kind)
+        {
+            return Engine.Camera.LiveBoundingBox.RoundOriginToFloor().Contains(GetVector(kind).RoundToFloor());
+        }
+
+        public virtual bool IsInLiveArea(BoxKind kind)
+        {
+            return CollisionChecker.HasIntersection(GetBox(kind).RoundOriginToFloor(), Engine.Camera.LiveBoundingBox.RoundOriginToFloor());
+        }
+
+        public virtual bool IsInSpawnArea(VectorKind kind)
+        {
+            return Engine.Camera.SpawnBoundingBox.RoundOriginToFloor().Contains(GetVector(kind).RoundToFloor());
+        }
+
+        public virtual bool IsInSpawnArea(BoxKind kind)
+        {
+            return CollisionChecker.HasIntersection(GetBox(kind).RoundOriginToFloor(), Engine.Camera.SpawnBoundingBox.RoundOriginToFloor());
         }
 
         public virtual void Place()

@@ -54,7 +54,8 @@ namespace XSharp.Engine
         public const int SCREEN_HEIGHT = 224; // In pixels
         public static readonly FixedSingle SIZE_RATIO = (float) SCREEN_WIDTH / SCREEN_HEIGHT;
 
-        public static readonly Vector EXTENDED_BORDER_SCREEN_OFFSET = (MAP_SIZE, MAP_SIZE);
+        public static readonly Vector EXTENDED_BORDER_SPAWN_SCREEN_OFFSET = (MAP_SIZE, MAP_SIZE);
+        public static readonly Vector EXTENDED_BORDER_LIVE_SCREEN_OFFSET = (2 * BLOCK_SIZE, 2 * BLOCK_SIZE);
 
         public const int MAX_ENTITIES = 2048;
 
@@ -85,10 +86,11 @@ namespace XSharp.Engine
         public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_X = -138 / 256.0;
         public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_Y = -512 / 256.0;
         public static readonly Vector INITIAL_DAMAGE_RECOIL_SPEED = (INITIAL_DAMAGE_RECOIL_SPEED_X, INITIAL_DAMAGE_RECOIL_SPEED_Y);
-        public const int DASH_DURATION = 30;
+        public const int DASH_DURATION = 33;
         public const int WALL_JUMP_DURATION = 14;
         public const int SHOT_DURATION = 16;
         public const int DAMAGE_RECOIL_DURATION = 32;
+        public static readonly FixedSingle NON_LETHAN_SPIKE_DAMAGE = 4;
         public static readonly FixedSingle RIDE_ARMOR_DASH_SPEED = 4;
         public static readonly FixedSingle CHARGED_SPEED_BURNER_SPEED = 4.5;
         public static readonly FixedSingle RIDE_ARMOD_LUNGING_SPEED = 6;
@@ -227,12 +229,12 @@ namespace XSharp.Engine
         public static readonly FixedSingle PENGUIN_ICE_SPEED = 1024 / 256.0;
         public static readonly FixedSingle PENGUIN_ICE_SPEED2_X = 512 / 256.0;
         public static readonly FixedSingle PENGUIN_ICE_SPEED2_Y = 545 / 256.0;
-        public static readonly FixedSingle PENGUIN_ICE_BUMO_SPEED2_Y = 395 / 256.0;
+        public static readonly FixedSingle PENGUIN_ICE_BUMP_SPEED2_Y = 395 / 256.0;
 
         public static readonly Box PENGUIN_ICE_FRAGMENT_HITBOX = (Vector.NULL_VECTOR, (-4, -4), (4, 4));
+        public static readonly FixedSingle PENGUIN_ICE_FRAGMENT_SPEED = 2;
 
         public static readonly Box PENGUIN_LEVER_HITBOX = (Vector.NULL_VECTOR, (-13, -12), (13, 12));
-        public static readonly FixedSingle PENGUIN_LEVER_STEP_Y = 1;
         public const int PENGUIN_LEVER_MOVING_FRAMES = 16;
 
         public const int HITS_TO_BREAK_FROZEN_BLOCK = 24;
@@ -504,6 +506,6 @@ namespace XSharp.Engine
         public static readonly bool SKIP_MENU = false;
         public static readonly bool SKIP_INTRO = false;
         public const int INITIAL_LEVEL = 8;
-        public const int INITIAL_CHECKPOINT = 0;
+        public const int INITIAL_CHECKPOINT = 2;
     }
 }

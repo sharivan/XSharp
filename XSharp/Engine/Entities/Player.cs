@@ -476,7 +476,31 @@ namespace XSharp.Engine.Entities
         {
             base.OnBlockedUp();
 
-            if (!CrossingBossDoor && !teleporting && !TakingDamage && !Dying && WallJumping && wallJumpFrameCounter >= 7)
+            if (CrossingBossDoor || teleporting || Dying)
+                return;
+
+            if (TakingDamage && Velocity.Y < 0)
+            {
+                Velocity = Velocity.XVector;
+                return;
+            }
+
+            if (!Invincible)
+            {
+                if (TouchingLethalSpikeUp)
+                {
+                    Die();
+                    return;
+                }
+
+                if (TouchingNonLethalSpikeUp)
+                {
+                    Hurt(this, NON_LETHAN_SPIKE_DAMAGE);
+                    return;
+                }
+            }
+
+            if (WallJumping && wallJumpFrameCounter >= 7)
             {
                 Velocity = Vector.NULL_VECTOR;
                 WallJumping = false;
@@ -498,20 +522,33 @@ namespace XSharp.Engine.Entities
         {
             base.OnBlockedLeft();
 
-            if (Velocity.X >= 0)
+            if (CrossingBossDoor || teleporting || Dying)
                 return;
 
-            if (!CrossingBossDoor && !teleporting && !Dying)
+            if (TakingDamage)
             {
-                if (TakingDamage)
+                if (PressingLeft && TakingDamageFrameCounter >= 4)
+                    OnKnockbackEnd();
+            }
+            else if (Velocity.X < 0)
+            {
+                if (!Invincible)
                 {
-                    if (PressingLeft && TakingDamageFrameCounter >= 4)
-                        OnKnockbackEnd();
+                    if (TouchingLethalSpikeLeft)
+                    {
+                        Die();
+                        return;
+                    }
+
+                    if (TouchingNonLethalSpikeLeft)
+                    {
+                        Hurt(this, NON_LETHAN_SPIKE_DAMAGE);
+                        return;
+                    }
                 }
-                else if (Landed)
-                {
+
+                if (Landed)
                     SetStandState();
-                }
             }
         }
 
@@ -519,20 +556,33 @@ namespace XSharp.Engine.Entities
         {
             base.OnBlockedRight();
 
-            if (Velocity.X <= 0)
+            if (CrossingBossDoor || teleporting || Dying)
                 return;
 
-            if (!CrossingBossDoor && !teleporting && !Dying)
+            if (TakingDamage)
             {
-                if (TakingDamage)
+                if (PressingRight && TakingDamageFrameCounter >= 4)
+                    OnKnockbackEnd();
+            }
+            else if (Velocity.X > 0)
+            {
+                if (!Invincible)
                 {
-                    if (PressingRight && TakingDamageFrameCounter >= 4)
-                        OnKnockbackEnd();
+                    if (TouchingLethalSpikeRight)
+                    {
+                        Die();
+                        return;
+                    }
+
+                    if (TouchingNonLethalSpikeRight)
+                    {
+                        Hurt(this, NON_LETHAN_SPIKE_DAMAGE);
+                        return;
+                    }
                 }
-                else if (Landed)
-                {
+
+                if (Landed)
                     SetStandState();
-                }
             }
         }
 
@@ -546,13 +596,28 @@ namespace XSharp.Engine.Entities
             WallJumping = false;
             baseHSpeed = WALKING_SPEED;
 
-            if (CrossingBossDoor || Dying || teleporting)
+            if (CrossingBossDoor || teleporting || Dying)
                 return;
 
             if (!spawning)
             {
                 if (!TakingDamage)
                 {
+                    if (!Invincible)
+                    {
+                        if (LandedOnLethalSpike)
+                        {
+                            Die();
+                            return;
+                        }
+
+                        if (LandedOnNonLethalSpike)
+                        {
+                            Hurt(this, NON_LETHAN_SPIKE_DAMAGE);
+                            return;
+                        }
+                    }
+
                     if (state == PlayerState.FALL && !ContainsAnimationIndex(PlayerState.LAND, CurrentAnimationIndex, true))
                         PlaySound("X Land");
 
@@ -589,7 +654,7 @@ namespace XSharp.Engine.Entities
             return true;
         }
 
-        protected override void OnOffScreen()
+        protected override void OnOutOfLiveArea()
         {
             if (teleporting)
                 Engine.OnPlayerTeleported();
@@ -635,6 +700,24 @@ namespace XSharp.Engine.Entities
 
         private void TryMoveLeft(bool standOnly = false)
         {
+            if (CrossingBossDoor || teleporting || TakingDamage || Dying)
+                return;
+
+            if (!Invincible)
+            {
+                if (TouchingLethalSpikeLeft)
+                {
+                    Die();
+                    return;
+                }
+
+                if (TouchingNonLethalSpikeLeft)
+                {
+                    Hurt(this, NON_LETHAN_SPIKE_DAMAGE);
+                    return;
+                }
+            }
+
             Velocity = !standOnly && !BlockedLeft ? new Vector(-baseHSpeed, Velocity.Y) : new Vector(0, Velocity.Y);
 
             if (Landed)
@@ -687,6 +770,24 @@ namespace XSharp.Engine.Entities
 
         private void TryMoveRight(bool standOnly = false)
         {
+            if (CrossingBossDoor || teleporting || TakingDamage || Dying)
+                return;
+
+            if (!Invincible)
+            {
+                if (TouchingLethalSpikeRight)
+                {
+                    Die();
+                    return;
+                }
+
+                if (TouchingNonLethalSpikeRight)
+                {
+                    Hurt(this, NON_LETHAN_SPIKE_DAMAGE);
+                    return;
+                }
+            }
+
             Velocity = !standOnly && !BlockedRight ? new Vector(baseHSpeed, Velocity.Y) : new Vector(0, Velocity.Y);
 
             if (Landed)
@@ -864,6 +965,21 @@ namespace XSharp.Engine.Entities
 
                     if (!TakingDamage)
                     {
+                        if (!Invincible)
+                        {
+                            if (LandedOnLethalSpike)
+                            {
+                                Die();
+                                return;
+                            }
+
+                            if (LandedOnNonLethalSpike)
+                            {
+                                Hurt(this, NON_LETHAN_SPIKE_DAMAGE);
+                                return;
+                            }
+                        }
+
                         if (!WallJumping)
                         {
                             if (!OnLadder)
@@ -993,6 +1109,7 @@ namespace XSharp.Engine.Entities
                                                 worldCollider.Box = collisionBox + LADDER_MOVE_OFFSET * Vector.UP_VECTOR;
                                                 worldCollider.AdjustOnTheFloor(MAP_SIZE);
                                                 Vector delta = worldCollider.Box.Origin - collisionBox.Origin;
+                                                worldCollider.Box = collisionBox;
                                                 Origin += delta;
                                                 Velocity = Vector.NULL_VECTOR;
                                                 SetState(PlayerState.TOP_LADDER_CLIMB, 0);
@@ -1013,10 +1130,10 @@ namespace XSharp.Engine.Entities
                                     {
                                         Velocity = Vector.NULL_VECTOR;
 
-                                        Box collisionBox = CollisionBox;
                                         SpriteCollider collider = WorldCollider;
+                                        var lastOrigin = collider.Box.Origin;
                                         collider.AdjustOnTheLadder();
-                                        Vector delta = collider.Box.Origin - collisionBox.Origin;
+                                        Vector delta = collider.Box.Origin - lastOrigin;
                                         Origin += delta;
 
                                         SetState(PlayerState.PRE_LADDER_CLIMB, 0);
@@ -1064,10 +1181,10 @@ namespace XSharp.Engine.Entities
                                 {
                                     Velocity = Vector.NULL_VECTOR;
 
-                                    Box collisionBox = CollisionBox;
                                     SpriteCollider collider = WorldCollider;
+                                    var lastOrigin = collider.Box.Origin;
                                     collider.AdjustOnTheLadder();
-                                    Vector delta = collider.Box.Origin - collisionBox.Origin;
+                                    Vector delta = collider.Box.Origin - lastOrigin;
                                     Origin += delta;
 
                                     SetState(PlayerState.TOP_LADDER_DESCEND, 0);
@@ -1184,6 +1301,46 @@ namespace XSharp.Engine.Entities
                                 Direction wallJumpDir = GetWallJumpDir();
                                 if (wallJumpDir != Direction.NONE)
                                 {
+                                    if (!Invincible)
+                                    {
+                                        if (wallJumpDir == Direction.RIGHT)
+                                        {
+                                            if (TouchingLethalSpikeRight)
+                                            {
+                                                Die();
+                                                return;
+                                            }
+
+                                            if (TouchingNonLethalSpikeRight)
+                                            {
+                                                if (!PressingRight)
+                                                    DoHurtAnimation();
+                                                else
+                                                    Hurt(this, NON_LETHAN_SPIKE_DAMAGE);
+
+                                                return;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (TouchingLethalSpikeLeft)
+                                            {
+                                                Die();
+                                                return;
+                                            }
+
+                                            if (TouchingNonLethalSpikeLeft)
+                                            {
+                                                if (!PressingLeft)
+                                                    DoHurtAnimation();
+                                                else
+                                                    Hurt(this, NON_LETHAN_SPIKE_DAMAGE);
+
+                                                return;
+                                            }
+                                        }
+                                    }
+
                                     WallJumping = true;
                                     wallJumpFrameCounter = 0;
                                     Direction = wallJumpDir;
@@ -1560,7 +1717,9 @@ namespace XSharp.Engine.Entities
 
         private void OnKnockbackEnd()
         {
-            baseHSpeed = WALKING_SPEED;
+            MakeInvincible(60, true);
+            SetStandState();
+
             if (PressingLeft)
                 TryMoveLeft();
             else if (PressingRight)
@@ -1569,8 +1728,6 @@ namespace XSharp.Engine.Entities
                 SetStandState();
             else
                 SetAirStateAnimation();
-
-            MakeInvincible(60, true);
         }
 
         protected internal override void OnAnimationEnd(Animation animation)
@@ -1893,12 +2050,8 @@ namespace XSharp.Engine.Entities
             return spawning || teleporting || WallJumping && wallJumpFrameCounter < 7 || WallSliding || OnLadder || Dying || CrossingBossDoor ? 0 : base.GetGravity();
         }
 
-        protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
+        public void DoHurtAnimation(Direction direction, bool knockback = true)
         {
-            if (TakingDamage || Dying || Invincible || NoClip)
-                return false;
-
-            Direction direction = GetHorizontalDirection(attacker).Oposite();
             if (direction != Direction.NONE)
                 Direction = direction;
 
@@ -1906,11 +2059,25 @@ namespace XSharp.Engine.Entities
 
             WallJumping = false;
 
-            if (attacker.KnockPlayerOnHurt)
+            if (knockback)
             {
                 Velocity = (Direction == Direction.RIGHT ? INITIAL_DAMAGE_RECOIL_SPEED_X : -INITIAL_DAMAGE_RECOIL_SPEED_X, INITIAL_DAMAGE_RECOIL_SPEED_Y);
                 SetState(PlayerState.TAKING_DAMAGE, 0);
             }
+        }
+
+        public void DoHurtAnimation(bool knockback = true)
+        {
+            DoHurtAnimation(Direction);
+        }
+
+        protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
+        {
+            if (TakingDamage || Dying || Invincible || NoClip)
+                return false;
+
+            Direction direction = attacker == null || attacker == this ? Direction : GetHorizontalDirection(attacker).Oposite();
+            DoHurtAnimation(direction, attacker.KnockPlayerOnHurt);
 
             if (Health > 0 && Health - damage <= 0)
                 Velocity = Vector.NULL_VECTOR;

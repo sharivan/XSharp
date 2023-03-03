@@ -157,17 +157,26 @@ namespace XSharp.Engine
         {
             get
             {
-                Vector sv2 = new Vector(Width, Width) * FixedSingle.HALF;
-                return new Box(Origin, -sv2, sv2);
+                Vector sv2 = Size * FixedSingle.HALF;
+                return new Box(Center, -sv2, sv2);
             }
         }
 
-        public Box ExtendedBoundingBox
+        public Box LiveBoundingBox
         {
             get
             {
-                Vector sv2 = new Vector(Width, Width) * FixedSingle.HALF + EXTENDED_BORDER_SCREEN_OFFSET;
-                return new Box(Origin, -sv2, sv2);
+                Vector sv2 = Size * FixedSingle.HALF + EXTENDED_BORDER_LIVE_SCREEN_OFFSET;
+                return new Box(Center, -sv2, sv2);
+            }
+        }
+
+        public Box SpawnBoundingBox
+        {
+            get
+            {
+                Vector sv2 = Size * FixedSingle.HALF + EXTENDED_BORDER_SPAWN_SCREEN_OFFSET;
+                return new Box(Center, -sv2, sv2);
             }
         }
 
@@ -180,7 +189,7 @@ namespace XSharp.Engine
 
         protected override Box GetHitbox()
         {
-            var box = ExtendedBoundingBox;
+            var box = SpawnBoundingBox;
             return box - Origin;
         }
 
@@ -381,7 +390,7 @@ namespace XSharp.Engine
             if (entity.Alive || entity.Spawning || !entity.Respawnable || !entity.RespawnOnNear)
                 return;
 
-            if ((!entity.Dead || Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn) && !entity.IsOffscreen(VectorKind.ORIGIN))
+            if ((!entity.Dead || Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn) && entity.IsInSpawnArea(VectorKind.ORIGIN))
             {
                 // TODO : This needs a special check for Heart Tanks and Sub-Tanks
                 if (entity is Item item && item.Collected)

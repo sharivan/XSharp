@@ -111,7 +111,7 @@ namespace XSharp.Engine.Entities.Enemies
                 {
                     FaceToPlayer();
 
-                    if ((Engine.Player.Origin.X - Origin.X).Abs <= 50)
+                    if ((Engine.Player.Origin.X - Origin.X).Abs <= 50 && (Engine.Player.Origin.Y - Origin.Y).Abs <= 24)
                         State = ScriverState.DRILLING;
                 }
 

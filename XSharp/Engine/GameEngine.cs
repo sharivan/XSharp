@@ -3349,6 +3349,19 @@ namespace XSharp.Engine
             if (!nextFrame)
                 return false;
 
+            if (Player != null)
+            {
+                lastPlayerOrigin = Player.Origin;
+                lastPlayerVelocity = Player.Velocity;
+            }
+            else
+            {
+                lastPlayerOrigin = Vector.NULL_VECTOR;
+                lastPlayerVelocity = Vector.NULL_VECTOR;
+            }
+
+            lastCameraLeftTop = Camera != null ? Camera.LeftTop : Vector.NULL_VECTOR;
+
             FrameCounter++;
 
             //lua.DoString("if engine.Player ~= null then engine.Player:ShootLemon() end");
@@ -4052,7 +4065,7 @@ namespace XSharp.Engine
                     // Render down layer sprites
                     foreach (var sprite in sprites[0])
                     {
-                        if (!sprite.Alive || !sprite.Visible || sprite.IsOffscreen(BoxKind.BOUDINGBOX))
+                        if (!sprite.Alive || !sprite.Visible)
                             continue;
 
                         if (sprite == Player)
@@ -4089,7 +4102,7 @@ namespace XSharp.Engine
                     // Render up layer sprites
                     foreach (var sprite in sprites[1])
                     {
-                        if (!sprite.Alive || !sprite.Visible || sprite.IsOffscreen(BoxKind.BOUDINGBOX))
+                        if (!sprite.Alive || !sprite.Visible)
                             continue;
 
                         if (sprite == Player)
@@ -4107,7 +4120,7 @@ namespace XSharp.Engine
                     DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
                 }
 
-                if (drawHitbox || showDrawBox || showTriggerBounds)
+                if (drawHitbox || showColliders || showDrawBox || showTriggerBounds)
                 {
                     resultSet.Clear();
                     partition.Query(resultSet, World.BoundingBox, false);
@@ -4370,10 +4383,6 @@ namespace XSharp.Engine
 
                     text = $"Player: X: {(float) Player.Origin.X * 256}({(float) (Player.Origin.X - lastPlayerOrigin.X) * 256}) Y: {(float) Player.Origin.Y * 256}({(float) (Player.Origin.Y - lastPlayerOrigin.Y) * 256}) VX: {(float) Player.Velocity.X * 256}({(float) (Player.Velocity.X - lastPlayerVelocity.X) * 256}) VY: {(float) Player.Velocity.Y * -256}({(float) (Player.Velocity.Y - lastPlayerVelocity.Y) * 256}) Gravity: {(float) Player.GetGravity() * 256}";
                     DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, 2 * (fontDimension.Top - fontDimension.Bottom), Color.Yellow, out fontDimension);
-
-                    lastPlayerOrigin = Player.Origin;
-                    lastPlayerVelocity = Player.Velocity;
-                    lastCameraLeftTop = Camera.LeftTop;
                 }
             }
 

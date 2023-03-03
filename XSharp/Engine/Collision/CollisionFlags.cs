@@ -7,13 +7,12 @@ namespace XSharp.Engine.Collision
     {
         NONE = 0,
         BLOCK = 1,
-        SPIKE = 2,
-        SLOPE = 4,
-        LADDER = 8,
-        TOP_LADDER = 16,
-        UNCLIMBABLE = 32,
-        WATER = 64,
-        WATER_SURFACE = 128
+        SLOPE = 2,
+        LADDER = 4,
+        TOP_LADDER = 8,
+        UNCLIMBABLE = 16,
+        WATER = 32,
+        WATER_SURFACE = 64
     }
 
     public static class CollisionFlagsExtensions
