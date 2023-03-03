@@ -1,10 +1,14 @@
-﻿using SharpDX.Direct3D9;
-using System;
+﻿using System;
 using System.Collections.Generic;
+
+using SharpDX.Direct3D9;
+
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
+
 using MMXBox = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.World
@@ -329,14 +333,22 @@ namespace XSharp.Engine.World
             backgroundSceneList.Remove(scene);
 
             for (int col = 0; col < SceneColCount; col++)
+            {
                 for (int row = 0; row < SceneRowCount; row++)
+                {
                     if (scenes[row, col] == scene)
                         scenes[row, col] = null;
+                }
+            }
 
             for (int col = 0; col < backgroundSceneColCount; col++)
+            {
                 for (int row = 0; row < backgroundSceneRowCount; row++)
+                {
                     if (backgroundScenes[row, col] == scene)
                         backgroundScenes[row, col] = null;
+                }
+            }
         }
 
         public void Resize(int rowCount, int colCount, bool background = false)
@@ -358,8 +370,10 @@ namespace XSharp.Engine.World
             int minCols = System.Math.Min(colCount, SceneColCount);
 
             for (int col = 0; col < minCols; col++)
+            {
                 for (int row = 0; row < minRows; row++)
                     newScenes[row, col] = scenes[row, col];
+            }
 
             SceneRowCount = rowCount;
             SceneColCount = colCount;
@@ -378,8 +392,10 @@ namespace XSharp.Engine.World
             int minCols = System.Math.Min(colCount, backgroundSceneColCount);
 
             for (int col = 0; col < minCols; col++)
+            {
                 for (int row = 0; row < minRows; row++)
                     newScenes[row, col] = backgroundScenes[row, col];
+            }
 
             backgroundSceneRowCount = rowCount;
             backgroundSceneColCount = colCount;
@@ -390,12 +406,16 @@ namespace XSharp.Engine.World
         public void Clear()
         {
             for (int col = 0; col < SceneColCount; col++)
+            {
                 for (int row = 0; row < SceneRowCount; row++)
                     scenes[row, col] = null;
+            }
 
             for (int col = 0; col < backgroundSceneColCount; col++)
+            {
                 for (int row = 0; row < backgroundSceneRowCount; row++)
                     backgroundScenes[row, col] = null;
+            }
 
             tileList.Clear();
             backgroundTileList.Clear();
@@ -426,8 +446,10 @@ namespace XSharp.Engine.World
             int rows = (int) (boxSize.Y / MAP_SIZE);
 
             for (int c = 0; c < cols; c++)
+            {
                 for (int r = 0; r < rows; r++)
                     SetMap(GetMapLeftTop(row + r, col + c), map, background);
+            }
         }
 
         public void FillRectangle(MMXBox box, Block block, bool background = false)
@@ -442,8 +464,10 @@ namespace XSharp.Engine.World
             int rows = (int) (boxSize.Y / BLOCK_SIZE);
 
             for (int c = 0; c < cols; c++)
+            {
                 for (int r = 0; r < rows; r++)
                     SetBlock(GetBlockLeftTop(row + r, col + c), block, background);
+            }
         }
 
         public void FillRectangle(MMXBox box, Scene scene, bool background = false)
@@ -458,8 +482,10 @@ namespace XSharp.Engine.World
             int rows = (int) (boxSize.Y / SCENE_SIZE);
 
             for (int c = 0; c < cols; c++)
+            {
                 for (int r = 0; r < rows; r++)
                     SetScene(GetSceneLeftTop(row + r, col + c), scene, background);
+            }
         }
 
         public void Dispose()

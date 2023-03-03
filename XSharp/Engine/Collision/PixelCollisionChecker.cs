@@ -38,6 +38,7 @@ namespace XSharp.Engine.Collision
                 resultSet.Clear();
                 Engine.partition.Query(resultSet, vec);
                 foreach (var entity in resultSet)
+                {
                     if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                     {
                         var hitbox = sprite.Hitbox.RoundOriginToFloor();
@@ -48,6 +49,7 @@ namespace XSharp.Engine.Collision
 
                         result |= collisionResult;
                     }
+                }
             }
 
             return result;
@@ -92,7 +94,9 @@ namespace XSharp.Engine.Collision
             CollisionFlags result = CollisionFlags.NONE;
 
             if (CheckWithWorld)
+            {
                 for (int row = startRow; row <= endRow; row++)
+                {
                     for (int col = startCol; col <= endCol; col++)
                     {
                         var mapPos = GetMapLeftTop(row, col);
@@ -109,12 +113,15 @@ namespace XSharp.Engine.Collision
                             result |= collisionResult;
                         }
                     }
+                }
+            }
 
             if (CheckWithSolidSprites)
             {
                 resultSet.Clear();
                 Engine.partition.Query(resultSet, box);
                 foreach (var entity in resultSet)
+                {
                     if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                     {
                         var hitbox = sprite.Hitbox.RoundOriginToFloor();
@@ -124,6 +131,7 @@ namespace XSharp.Engine.Collision
 
                         result |= collisionResult;
                     }
+                }
             }
 
             return result;
@@ -141,11 +149,13 @@ namespace XSharp.Engine.Collision
             TestBox = startBox + deltaDir.TruncFracPart();
             int i = 1;
             for (; distance <= maxDistance; i++, distance += STEP_SIZE, TestBox = startBox + (deltaDir * i).TruncFracPart())
+            {
                 if (GetCollisionFlags().CanBlockTheMove(direction))
                 {
                     contact = true;
                     break;
                 }
+            }
 
             TestBox = startBox + (deltaDir * (i - 1)).TruncFracPart();
             return contact;

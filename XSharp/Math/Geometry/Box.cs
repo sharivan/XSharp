@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+
 using XSharp.Engine;
 
 namespace XSharp.Math.Geometry
@@ -828,10 +829,12 @@ namespace XSharp.Math.Geometry
             var M = Origin + Maxs;
 
             if (!include.HasFlag(BoxSide.INNER))
+            {
                 return include.HasFlag(BoxSide.LEFT) && LeftSegment.Contains(point)
                     || include.HasFlag(BoxSide.TOP) && TopSegment.Contains(point)
                     || include.HasFlag(BoxSide.RIGHT) && RightSegment.Contains(point)
                     || include.HasFlag(BoxSide.BOTTOM) && BottomSegment.Contains(point);
+            }
 
             var interval = Interval.MakeInterval((m.X, include.HasFlag(BoxSide.LEFT)), (M.X, include.HasFlag(BoxSide.RIGHT)));
 

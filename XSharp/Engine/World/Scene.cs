@@ -1,9 +1,13 @@
-﻿using SharpDX;
-using SharpDX.Direct3D9;
-using System;
+﻿using System;
 using System.Collections.Generic;
+
+using SharpDX;
+using SharpDX.Direct3D9;
+
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
+
 using MMXBox = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.World
@@ -101,16 +105,22 @@ namespace XSharp.Engine.World
             List<Cell> positions = new();
 
             for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
+            {
                 for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
+                {
                     if (blocks[row, col] == block)
                     {
                         positions.Add((row, col));
                         blocks[row, col] = null;
                     }
+                }
+            }
 
             if (Tessellated)
+            {
                 foreach (var cell in positions)
                     RefreshLayers((cell.Col * BLOCK_SIZE, cell.Row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE));
+            }
         }
 
         public void SetMap(Vector pos, Map map)
@@ -159,8 +169,10 @@ namespace XSharp.Engine.World
             int rows = (int) (boxSize.Y / MAP_SIZE);
 
             for (int c = 0; c < cols; c++)
+            {
                 for (int r = 0; r < rows; r++)
                     SetMap(new Vector((col + c) * MAP_SIZE, (row + r) * MAP_SIZE), map);
+            }
 
             if (Tessellated)
                 RefreshLayers(box);
@@ -177,8 +189,10 @@ namespace XSharp.Engine.World
             int rows = (int) (boxSize.Y / BLOCK_SIZE);
 
             for (int c = 0; c < cols; c++)
+            {
                 for (int r = 0; r < rows; r++)
                     SetBlock(new Vector((col + c) * BLOCK_SIZE, (row + r) * BLOCK_SIZE), block);
+            }
 
             if (Tessellated)
                 RefreshLayers(box);
@@ -238,16 +252,20 @@ namespace XSharp.Engine.World
                     Block block = blocks[row, col];
 
                     if (block != null)
+                    {
                         block.Tessellate(downLayerVBData, upLayerVBData, blockPos);
+                    }
                     else
                     {
                         for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileRow++)
+                        {
                             for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileCol++)
                             {
                                 var tilePos = new Vector(blockPos.X + tileCol * TILE_SIZE, blockPos.Y - tileRow * TILE_SIZE);
                                 GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                                 GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                             }
+                        }
                     }
                 }
 
@@ -269,24 +287,30 @@ namespace XSharp.Engine.World
             DataStream upLayerVBData = layers[1].Lock(0, 0, LockFlags.None);
 
             for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
+            {
                 for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
                 {
                     var blockPos = new Vector(col * BLOCK_SIZE, -row * BLOCK_SIZE);
                     Block block = blocks[row, col];
 
                     if (block != null)
+                    {
                         block.Tessellate(downLayerVBData, upLayerVBData, blockPos);
+                    }
                     else
                     {
                         for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileRow++)
+                        {
                             for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileCol++)
                             {
                                 var tilePos = new Vector(blockPos.X + tileCol * TILE_SIZE, blockPos.Y - tileRow * TILE_SIZE);
                                 GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                                 GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                             }
+                        }
                     }
                 }
+            }
 
             layers[0].Unlock();
             layers[1].Unlock();
@@ -297,11 +321,13 @@ namespace XSharp.Engine.World
         public void Dispose()
         {
             for (int i = 0; i < layers.Length; i++)
+            {
                 if (layers[i] != null)
                 {
                     layers[i].Dispose();
                     layers[i] = null;
                 }
+            }
 
             Tessellated = false;
         }

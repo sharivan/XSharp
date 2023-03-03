@@ -1,5 +1,6 @@
 ﻿using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies
@@ -105,7 +106,9 @@ namespace XSharp.Engine.Entities.Enemies
                 Velocity = BATTON_BONE_G_ATTACK_SPEED * delta.Versor();
             }
             else
+            {
                 State = BattonBoneGState.ESCAPING;
+            }
         }
 
         private void OnEscaping(EntityState state, long frameCounter)
@@ -116,7 +119,9 @@ namespace XSharp.Engine.Entities.Enemies
                 State = BattonBoneGState.IDLE;
             }
             else
+            {
                 Velocity = BATTON_BONE_G_ESCAPE_SPEED * Vector.UP_VECTOR;
+            }
         }
 
         protected override bool PreThink()

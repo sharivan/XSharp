@@ -1,5 +1,6 @@
 ﻿using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Collision
@@ -156,8 +157,10 @@ namespace XSharp.Engine.Collision
         public bool MoveContactFloor(FixedSingle maxDistance)
         {
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
+            {
                 if (ComputeLandedState().CanBlockTheMove(Direction.DOWN))
                     return true;
+            }
 
             return false;
         }
@@ -166,8 +169,10 @@ namespace XSharp.Engine.Collision
         {
             var lastBox = TestBox;
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
+            {
                 if (ComputeLandedState().CanBlockTheMove(Direction.DOWN))
                     return true;
+            }
 
             TestBox = lastBox;
             return false;
@@ -177,8 +182,10 @@ namespace XSharp.Engine.Collision
         {
             var lastBox = TestBox;
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE, TestBox += STEP_DOWN_VECTOR)
+            {
                 if (ComputeLandedState().HasFlag(CollisionFlags.SLOPE))
                     return true;
+            }
 
             TestBox = lastBox;
             return false;

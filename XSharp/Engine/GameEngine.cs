@@ -1,11 +1,4 @@
-﻿using NAudio.Wave;
-using NLua;
-using SharpDX;
-using SharpDX.Direct3D9;
-using SharpDX.DirectInput;
-using SharpDX.Mathematics.Interop;
-using SharpDX.Windows;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
@@ -15,6 +8,17 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+
+using NAudio.Wave;
+
+using NLua;
+
+using SharpDX;
+using SharpDX.Direct3D9;
+using SharpDX.DirectInput;
+using SharpDX.Mathematics.Interop;
+using SharpDX.Windows;
+
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Engine.Entities.Effects;
@@ -32,8 +36,10 @@ using XSharp.Engine.World;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 using XSharp.ROM;
+
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.World.World;
+
 using Configuration = System.Configuration.Configuration;
 using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using Device9 = SharpDX.Direct3D9.Device;
@@ -548,7 +554,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     CameraConstraintsBox = World.BoundingBox;
+                }
             }
         }
 
@@ -1019,8 +1027,10 @@ namespace XSharp.Engine
                 joystickGuid = deviceInstance.InstanceGuid;
 
             if (joystickGuid == Guid.Empty)
+            {
                 foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
                     joystickGuid = deviceInstance.InstanceGuid;
+            }
 
             if (joystickGuid != Guid.Empty)
             {
@@ -2229,8 +2239,10 @@ namespace XSharp.Engine
             }
 
             for (var entity = firstEntity; entity != null; entity = entity.next)
+            {
                 if (entity is Sprite sprite)
                     sprite.OnDeviceReset();
+            }
         }
 
         public void LoadConfig()
@@ -2529,10 +2541,12 @@ namespace XSharp.Engine
             ZeroDataRect(rect, length);
 
             for (int i = 0; i < points.Length; i++)
+            {
                 if (large[i])
                     DrawChargingPointLarge(rect, length, points[i], level, types[i]);
                 else
                     DrawChargingPointSmall(rect, length, points[i], level, types[i]);
+            }
 
             result.UnlockRectangle(0);
             return result;
@@ -2618,9 +2632,12 @@ namespace XSharp.Engine
                 shader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingSettings.FadingColor.ToVector4());
             }
             else
+            {
                 shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
+            }
 
             for (int i = 0; i < repeatX; i++)
+            {
                 for (int j = 0; j < repeatY; j++)
                 {
                     float x = rDest.Left + i * rDest.Width;
@@ -2630,6 +2647,7 @@ namespace XSharp.Engine
                     sprite.Transform = matTransform;
                     sprite.Draw(texture, Color.FromRgba(0xffffffff));
                 }
+            }
 
             sprite.End();
         }
@@ -2730,11 +2748,13 @@ namespace XSharp.Engine
             entityCount++;
 
             for (int i = firstFreeEntityIndex; i < MAX_ENTITIES; i++)
+            {
                 if (entities[i] == null)
                 {
                     firstFreeEntityIndex = i;
                     break;
                 }
+            }
 
             if (entity.CheckTouchingEntities)
                 partition.Insert(entity);
@@ -2880,7 +2900,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleFrameAdvance = false;
+                }
 
                 if (state.IsPressed(Key.Backslash) && !state.IsPressed(Key.LeftControl))
                 {
@@ -2892,7 +2914,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingNextFrame = false;
+                }
 
                 if (state.IsPressed(Key.F5) && !state.IsPressed(Key.LeftShift))
                 {
@@ -2903,7 +2927,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingSaveState = false;
+                }
 
                 if (state.IsPressed(Key.F7) && !state.IsPressed(Key.LeftShift))
                 {
@@ -2914,7 +2940,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingLoadState = false;
+                }
 
                 if (state.IsPressed(Key.Equals))
                 {
@@ -2927,7 +2955,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingNextSlot = false;
+                }
 
                 if (state.IsPressed(Key.Minus))
                 {
@@ -2940,7 +2970,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingPreviousSlot = false;
+                }
 
                 if (state.IsPressed(Key.N))
                 {
@@ -2952,7 +2984,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleNoClip = false;
+                }
 
                 if (state.IsPressed(Key.M))
                 {
@@ -2963,7 +2997,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleCameraConstraints = false;
+                }
 
                 if (state.IsPressed(Key.D1))
                 {
@@ -2974,7 +3010,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleDrawCollisionBox = false;
+                }
 
                 if (state.IsPressed(Key.D2))
                 {
@@ -2985,7 +3023,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleShowColliders = false;
+                }
 
                 if (state.IsPressed(Key.D3))
                 {
@@ -2996,7 +3036,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleDrawMapBounds = false;
+                }
 
                 if (state.IsPressed(Key.D4))
                 {
@@ -3007,7 +3049,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleDrawTouchingMapBounds = false;
+                }
 
                 if (state.IsPressed(Key.D5))
                 {
@@ -3018,7 +3062,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleDrawHighlightedPointingTiles = false;
+                }
 
                 if (state.IsPressed(Key.D6))
                 {
@@ -3029,7 +3075,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleDrawPlayerOriginAxis = false;
+                }
 
                 if (state.IsPressed(Key.D7))
                 {
@@ -3040,7 +3088,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleShowInfoText = false;
+                }
 
                 if (state.IsPressed(Key.D8))
                 {
@@ -3051,7 +3101,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleShowCheckpointBounds = false;
+                }
 
                 if (state.IsPressed(Key.D9))
                 {
@@ -3062,7 +3114,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleShowTriggerBounds = false;
+                }
 
                 if (state.IsPressed(Key.D0))
                 {
@@ -3073,7 +3127,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleShowTriggerCameraLook = false;
+                }
 
                 if (state.IsPressed(Key.F1))
                 {
@@ -3084,7 +3140,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleDrawBackground = false;
+                }
 
                 if (state.IsPressed(Key.F2))
                 {
@@ -3095,7 +3153,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleDrawDownLayer = false;
+                }
 
                 if (state.IsPressed(Key.F3))
                 {
@@ -3106,7 +3166,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleDrawUpLayer = false;
+                }
 
                 if (state.IsPressed(Key.F4))
                 {
@@ -3117,7 +3179,9 @@ namespace XSharp.Engine
                     }
                 }
                 else
+                {
                     wasPressingToggleDrawSprites = false;
+                }
 
                 if (joystick != null)
                 {
@@ -3245,7 +3309,9 @@ namespace XSharp.Engine
                     OnFreezeComplete?.Invoke();
                 }
                 else
+                {
                     FreezingFrameCounter++;
+                }
             }
 
             if (DelayedAction != null)
@@ -3256,7 +3322,9 @@ namespace XSharp.Engine
                     DelayedAction = null;
                 }
                 else
+                {
                     DelayedActionFrameCounter++;
+                }
             }
 
             if (FreezingSprites)
@@ -3268,7 +3336,9 @@ namespace XSharp.Engine
                     OnFreezeSpritesComplete = null;
                 }
                 else
+                {
                     FreezingSpritesFrameCounter++;
+                }
             }
         }
 
@@ -3322,15 +3392,21 @@ namespace XSharp.Engine
                     if (FreezingSprites)
                     {
                         for (var entity = firstEntity; entity != null; entity = entity.next)
+                        {
                             if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
+                            {
                                 if (entity.Alive && entity != Camera)
                                     entity.OnFrame();
+                            }
+                        }
                     }
                     else
                     {
                         for (var entity = firstEntity; entity != null; entity = entity.next)
+                        {
                             if (entity.Alive && entity != Camera)
                                 entity.OnFrame();
+                        }
                     }
                 }
 
@@ -3514,7 +3590,9 @@ namespace XSharp.Engine
                     CameraConstraintsBox = CurrentCheckpoint.Hitbox;
                 }
                 else
+                {
                     CameraConstraintsBox = World.BoundingBox;
+                }
 
                 World.Tessellate();
 
@@ -3529,7 +3607,9 @@ namespace XSharp.Engine
                     SpawningBlackScreenFrameCounter = 0;
                 }
                 else
+                {
                     OnSpawningBlackScreenComplete();
+                }
 
                 Camera.FocusOn = null;
                 var cameraPos = romLoaded ? mmx.CameraPos : Vector.NULL_VECTOR;
@@ -3619,7 +3699,9 @@ namespace XSharp.Engine
         {
             MMXBox mapBox = GetMapBoundingBox(row, col);
             if (collisionData.IsSolidBlock())
+            {
                 DrawRectangle(mapBox, 4, color);
+            }
             else if (collisionData.IsSlope())
             {
                 RightTriangle st = collisionData.MakeSlopeTriangle() + mapBox.LeftTop;
@@ -3629,12 +3711,14 @@ namespace XSharp.Engine
 
         private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, MMXBox collisionBox, Color color, bool ignoreSlopes = false)
         {
-            var halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
-            var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width * 0.5, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
+            MMXBox halfCollisionBox1 = (collisionBox.Left, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
+            MMXBox halfCollisionBox2 = (collisionBox.Left + collisionBox.Width * 0.5, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
 
             MMXBox mapBox = GetMapBoundingBox(row, col);
             if (collisionData.IsSolidBlock() && CollisionChecker.HasIntersection(mapBox, collisionBox))
+            {
                 DrawRectangle(mapBox, 4, color);
+            }
             else if (!ignoreSlopes && collisionData.IsSlope())
             {
                 RightTriangle st = collisionData.MakeSlopeTriangle() + mapBox.LeftTop;
@@ -3680,6 +3764,7 @@ namespace XSharp.Engine
                 endCol = World.MapColCount - 1;
 
             for (int row = startRow; row <= endRow; row++)
+            {
                 for (int col = startCol; col <= endCol; col++)
                 {
                     var v = new Vector(col * MAP_SIZE, row * MAP_SIZE);
@@ -3687,6 +3772,7 @@ namespace XSharp.Engine
                     if (map != null)
                         CheckAndDrawTouchingMap(row, col, map.CollisionData, collisionBox, color, ignoreSlopes);
                 }
+            }
         }
 
         public void DrawLine(Vector from, Vector to, float width, Color color)
@@ -3748,7 +3834,9 @@ namespace XSharp.Engine
                 PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingSettings.FadingColor.ToVector4());
             }
             else
+            {
                 Device.PixelShader = null;
+            }
 
             Device.VertexShader = null;
 
@@ -3973,7 +4061,9 @@ namespace XSharp.Engine
                                 sprite.Render();
                         }
                         else
+                        {
                             sprite.Render();
+                        }
                     }
 
                     Device.SetRenderTarget(0, backBuffer);
@@ -4008,7 +4098,9 @@ namespace XSharp.Engine
                                 sprite.Render();
                         }
                         else
+                        {
                             sprite.Render();
+                        }
                     }
 
                     Device.SetRenderTarget(0, backBuffer);
@@ -4041,7 +4133,9 @@ namespace XSharp.Engine
                                             FillRectangle(rect, DEAD_HITBOX_COLOR);
                                     }
                                     else
+                                    {
                                         FillRectangle(rect, HITBOX_COLOR);
+                                    }
 
                                     bool touchingNull = false;
                                     foreach (var touching in entity.TouchingEntities)
@@ -4141,11 +4235,13 @@ namespace XSharp.Engine
                 Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
 
                 foreach (var layer in huds)
+                {
                     foreach (var hud in layer)
                     {
                         hud.UpdateOrigin();
                         hud.Render();
                     }
+                }
 
                 Device.SetRenderTarget(0, backBuffer);
                 DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
@@ -4298,15 +4394,21 @@ namespace XSharp.Engine
                         if (FreezingSprites)
                         {
                             for (var entity = firstEntity; entity != null; entity = entity.next)
+                            {
                                 if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
                                     entity.PostThink();
+                            }
                         }
                         else
+                        {
                             for (var entity = firstEntity; entity != null; entity = entity.next)
                                 entity.PostThink();
+                        }
                     }
                     else
+                    {
                         Player?.PostThink();
+                    }
                 }
             }
         }
@@ -4859,7 +4961,9 @@ namespace XSharp.Engine
                 shader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingSettings.FadingColor.ToVector4());
             }
             else
+            {
                 shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
+            }
 
             Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
             Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
@@ -5547,22 +5651,28 @@ namespace XSharp.Engine
         public void KillAllAliveEnemies()
         {
             for (Entity entity = firstEntity; entity != null; entity = entity.next)
+            {
                 if (entity is Enemy)
                     entity.Kill();
+            }
         }
 
         public void KillAllAliveWeapons()
         {
             for (Entity entity = firstEntity; entity != null; entity = entity.next)
+            {
                 if (entity is Weapon)
                     entity.Kill();
+            }
         }
 
         public void KillAllAliveEnemiesAndWeapons()
         {
             for (Entity entity = firstEntity; entity != null; entity = entity.next)
+            {
                 if (entity is Enemy or Weapon)
                     entity.Kill();
+            }
         }
 
         public Entity GetEntityByname(string name)

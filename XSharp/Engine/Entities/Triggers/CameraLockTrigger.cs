@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+
 using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Triggers

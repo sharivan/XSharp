@@ -1,4 +1,5 @@
 ﻿using SharpDX;
+
 using XSharp.Math;
 using XSharp.Math.Geometry;
 

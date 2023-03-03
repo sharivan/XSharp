@@ -162,9 +162,11 @@ namespace XSharp.Math.Geometry
         public bool Contains(Vector v, RightTriangleSide include = RightTriangleSide.ALL)
         {
             if (!include.HasFlag(RightTriangleSide.INNER))
+            {
                 return include.HasFlag(RightTriangleSide.HCATHETUS) && HCathetusLine.Contains(v)
                         || include.HasFlag(RightTriangleSide.VCATHETUS) && VCathetusLine.Contains(v)
                         || include.HasFlag(RightTriangleSide.HYPOTENUSE) && HypotenuseLine.Contains(v);
+            }
 
             var dx = v.X - Origin.X;
             var dy = v.Y - Origin.Y;

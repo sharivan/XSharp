@@ -1,9 +1,12 @@
-﻿using SharpDX;
+﻿using System.IO;
+
+using SharpDX;
 using SharpDX.Direct3D9;
-using System.IO;
+
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using MMXBox = XSharp.Math.Geometry.Box;
 using Sprite = XSharp.Engine.Entities.Sprite;
 
@@ -69,24 +72,14 @@ namespace XSharp.Engine
         }
 
         public MMXBox CurrentFrameBoundingBox
-        {
-            get
-            {
-                return currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
+                    => currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
                     ? MMXBox.EMPTY_BOX
                     : sequence[currentSequenceIndex].BoundingBox;
-            }
-        }
 
         public MMXBox CurrentFrameHitbox
-        {
-            get
-            {
-                return currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
+                    => currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
                     ? MMXBox.EMPTY_BOX
                     : sequence[currentSequenceIndex].Hitbox;
-            }
-        }
 
         public bool Visible
         {
@@ -340,7 +333,9 @@ namespace XSharp.Engine
                     transform *= Matrix.Translation(-origin3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(origin3);
             }
             else if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
+            {
                 transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(origin3);
+            }
 
             GameEngine.Engine.RenderSprite(texture, Sprite.Palette, Sprite.FadingSettings, drawBox.LeftTop, transform, RepeatX, RepeatY);
         }

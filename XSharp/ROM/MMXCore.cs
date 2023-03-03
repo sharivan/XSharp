@@ -7,22 +7,25 @@
     MegaEDX v1.3: https://github.com/rbrummett/megaedx_v1.3
  */
 
-using SharpDX;
-using SharpDX.Direct3D9;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
+using SharpDX;
+using SharpDX.Direct3D9;
+
 using XSharp.Engine;
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.World;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
+
 using MMXBox = XSharp.Math.Geometry.Box;
 
-#pragma warning disable IDE0060 // Remover o parâmetro não utilizado
 namespace XSharp.ROM
 {
     public struct STileInfo
@@ -192,7 +195,6 @@ namespace XSharp.ROM
         internal static readonly uint[] p_bblocks = { 0x86902D, 0x868B91, 0x868CBC, 0 };
         private readonly byte[] vram;
         private readonly ushort[] mapping;
-        private readonly byte[] mappingBG;
         private readonly byte[] sceneLayout;
 
         private readonly uint[] palettesOffset;
@@ -393,7 +395,6 @@ namespace XSharp.ROM
             Type = 0xff;
             vram = new byte[0x10000];
             mapping = new ushort[0x10 * 0x10 * 0x100];
-            mappingBG = new byte[0x10 * 0x10 * 0x100 * 0x2];
             sceneLayout = new byte[0x400];
 
             palettesOffset = new uint[16];
@@ -427,6 +428,7 @@ namespace XSharp.ROM
             ushort headerTitleShort8 = header.GetTitleUShort(8);
 
             if (headerTitleInt0 is 0x4147454D or 0x6167654D or 0x4B434F52)
+            {
                 if (headerTitleInt4 is 0x204E414D or 0x206E616D or 0x264E414D)
                 {
                     switch (headerTitleShort8)
@@ -537,6 +539,7 @@ namespace XSharp.ROM
 
                     return (byte) (Type + 1);
                 }
+            }
 
             Type = 0xFF;
             return 0;
@@ -1755,6 +1758,7 @@ namespace XSharp.ROM
                     }
                 }
             }
+
             if (numBossTeleports > 0)
             {
                 numBossTeleports++;
@@ -2089,30 +2093,19 @@ namespace XSharp.ROM
             pmap += 2;
         }
 
-        private void LoadScene(World world, int x, int y, ushort index, bool background = false)
-        {
-            x <<= 3;
-            y <<= 3;
-            uint pblock = (uint) (pScenes + (index << 6));
-            for (int iy = 0; iy < 8; iy++)
-                for (int ix = 0; ix < 8; ix++)
-                {
-                    LoadBlock(world, x + ix, y + iy, ReadWord(pblock), background);
-                    pblock += 2;
-                }
-        }
-
         private void LoadSceneEx(World world, int x, int y, ushort index, bool background = false)
         {
             x <<= 4;
             y <<= 4;
             uint pmap = (uint) (index << 8);
             for (int iy = 0; iy < 16; iy++)
+            {
                 for (int ix = 0; ix < 16; ix++)
                 {
                     LoadMap(world, x + ix, y + iy, mapping[pmap], background);
                     pmap++;
                 }
+            }
         }
 
         internal void LoadPalette(GameEngine engine, bool background = false)
@@ -2123,8 +2116,10 @@ namespace XSharp.ROM
             using (var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
             {
                 for (int i = 0; i < 16; i++)
+                {
                     for (int j = 0; j < 16; j++)
                         stream.Write(new Color(Transform(palCache[(i << 4) | j], j != 0)).ToRgba());
+                }
             }
 
             palette.UnlockRectangle(0);
@@ -2145,8 +2140,10 @@ namespace XSharp.ROM
 
             uint tmpLayout = 0;
             for (int y = 0; y < levelHeight; y++)
+            {
                 for (int x = 0; x < levelWidth; x++)
                     LoadSceneEx(engine.World, x, y, sceneLayout[tmpLayout++], background);
+            }
         }
 
         public void LoadEvents(GameEngine engine)
@@ -2389,4 +2386,3 @@ namespace XSharp.ROM
         }
     }
 }
-#pragma warning restore IDE0060 // Remover o parâmetro não utilizado

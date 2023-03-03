@@ -62,7 +62,9 @@
                 FrameCounter = 0;
             }
             else
+            {
                 FrameCounter++;
+            }
         }
     }
 }

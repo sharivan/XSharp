@@ -1,4 +1,5 @@
 ﻿using System;
+
 using XSharp.Engine.Entities;
 using XSharp.Engine.World;
 using XSharp.Math;
@@ -219,6 +220,7 @@ namespace XSharp.Engine.Collision
                 return;
 
             if (distance < NearestBoxDistance)
+            {
                 if (obstacleCollisionData.IsSlope())
                 {
                     var slopeDistance = BoxDistanceTo(obstacleSlope);
@@ -239,6 +241,7 @@ namespace XSharp.Engine.Collision
                     NearestObstacleBox = obstacleBox;
                     NearestObstacleCollisionData = obstacleCollisionData;
                 }
+            }
             else if (distance == NearestBoxDistance && obstacleCollisionData.IsSlope())
             {
                 distance = BoxDistanceTo(obstacleSlope);
@@ -260,6 +263,7 @@ namespace XSharp.Engine.Collision
             var tracingLine = new LineSegment(TracingVector, TracingVector + TracingDirection);
 
             if (CheckWithWorld)
+            {
                 if (tracing)
                 {
                     Vector stepVector = GetStepVector(TracingDirection, MAP_SIZE);
@@ -295,6 +299,7 @@ namespace XSharp.Engine.Collision
                             result |= collisionResult;
                     }
                 }
+            }
 
             if (CheckWithSolidSprites)
             {
@@ -303,6 +308,7 @@ namespace XSharp.Engine.Collision
                 {
                     Engine.partition.Query(resultSet, tracingLine);
                     foreach (var entity in resultSet)
+                    {
                         if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                         {
                             var hitbox = sprite.Hitbox;
@@ -314,11 +320,13 @@ namespace XSharp.Engine.Collision
                             result |= collisionResult;
                             CompareVectorAndUpdateWithNearestObstacle(hitbox, slopeTriangle, collisionData);
                         }
+                    }
                 }
                 else
                 {
                     Engine.partition.Query(resultSet, TestVector);
                     foreach (var entity in resultSet)
+                    {
                         if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                         {
                             var hitbox = sprite.Hitbox;
@@ -329,6 +337,7 @@ namespace XSharp.Engine.Collision
 
                             result |= collisionResult;
                         }
+                    }
                 }
             }
 
@@ -341,6 +350,7 @@ namespace XSharp.Engine.Collision
             NearestObstacleBox = Box.EMPTY_BOX;
 
             if (CheckWithWorld)
+            {
                 if (tracing && TracingBoxMode.HasFlag(TracingMode.DIAGONAL))
                 {
                     Vector stepVector = GetStepVectorHorizontal(TracingDirection, MAP_SIZE);
@@ -383,6 +393,7 @@ namespace XSharp.Engine.Collision
                             endCol = World.MapColCount - 1;
 
                         for (int row = startRow; row <= endRow; row++)
+                        {
                             for (int col = startCol; col <= endCol; col++)
                             {
                                 var mapPos = GetMapLeftTop(row, col);
@@ -400,6 +411,7 @@ namespace XSharp.Engine.Collision
                                     CompareVectorAndUpdateWithNearestObstacle(mapBox, slopeTriangle, collisionData);
                                 }
                             }
+                        }
                     }
                 }
                 else
@@ -438,6 +450,7 @@ namespace XSharp.Engine.Collision
                         endCol = World.MapColCount - 1;
 
                     for (int row = startRow; row <= endRow; row++)
+                    {
                         for (int col = startCol; col <= endCol; col++)
                         {
                             var mapPos = GetMapLeftTop(row, col);
@@ -457,7 +470,9 @@ namespace XSharp.Engine.Collision
                                     CompareBoxAndUpdateWithNearestObstacle(mapBox, slopeTriangle, collisionData);
                             }
                         }
+                    }
                 }
+            }
 
             if (CheckWithSolidSprites)
             {
@@ -467,6 +482,7 @@ namespace XSharp.Engine.Collision
                 {
                     Engine.partition.Query(resultSet, tracingParallelogram);
                     foreach (var entity in resultSet)
+                    {
                         if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                         {
                             var hitbox = sprite.Hitbox;
@@ -479,11 +495,13 @@ namespace XSharp.Engine.Collision
 
                             CompareBoxAndUpdateWithNearestObstacle(hitbox, slopeTriangle, collisionData);
                         }
+                    }
                 }
                 else
                 {
                     Engine.partition.Query(resultSet, TestBox);
                     foreach (var entity in resultSet)
+                    {
                         if (entity is Sprite sprite && sprite.CollisionData.IsSolidBlock() && !IgnoreSprites.Contains(sprite))
                         {
                             var hitbox = sprite.Hitbox;
@@ -498,6 +516,7 @@ namespace XSharp.Engine.Collision
                             if (tracing)
                                 CompareBoxAndUpdateWithNearestObstacle(hitbox, slopeTriangle, collisionData);
                         }
+                    }
                 }
             }
 

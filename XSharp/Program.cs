@@ -1,7 +1,10 @@
-﻿using SharpDX.Windows;
-using System;
+﻿using System;
 using System.Windows.Forms;
+
+using SharpDX.Windows;
+
 using XSharp.Engine;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp

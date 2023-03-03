@@ -1,8 +1,10 @@
 ﻿using SharpDX;
+
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Weapons;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses
@@ -266,7 +268,9 @@ namespace XSharp.Engine.Entities.Enemies.Bosses
                         Engine.FadingSettings.FadingColor = Color.White;
                     }
                     else
+                    {
                         Engine.FadingSettings.FadingLevel = Vector4.Zero;
+                    }
                 }
                 else if (ExplodingFrameCounter is >= (33 * 5) and < (33 * 5 + 60)) // On frame 162, start tilemaps fading to white and boss fading to black. Fading take 60 frames.
                 {

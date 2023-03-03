@@ -1,12 +1,14 @@
-﻿using SharpDX.Direct3D9;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+
 using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
+
 using Box = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.Entities
@@ -115,8 +117,10 @@ namespace XSharp.Engine.Entities
 
                 Box result = Box.EMPTY_BOX;
                 foreach (var animation in animations)
+                {
                     if (animation.Visible)
                         result |= animation.DrawBox;
+                }
 
                 return result;
             }
@@ -402,7 +406,7 @@ namespace XSharp.Engine.Entities
                 if (paletteName == null)
                 {
                     palette = null;
-                    paletteIndex = -1;                   
+                    paletteIndex = -1;
                 }
                 else
                 {
@@ -462,7 +466,7 @@ namespace XSharp.Engine.Entities
                 if (spriteSheetName == null)
                 {
                     spriteSheet = null;
-                    spriteSheetIndex = -1;                  
+                    spriteSheetIndex = -1;
                 }
                 else
                 {
@@ -482,7 +486,7 @@ namespace XSharp.Engine.Entities
                 if (spriteSheetIndex == -1)
                 {
                     spriteSheet = null;
-                    spriteSheetName = null;                    
+                    spriteSheetName = null;
                 }
                 else
                 {
@@ -770,7 +774,9 @@ namespace XSharp.Engine.Entities
                     animation.SaveState(writer);
             }
             else
+            {
                 writer.Write(0);
+            }
 
             writer.Write((byte) CollisionData);
             writer.Write(CheckCollisionWithWorld);
@@ -881,8 +887,10 @@ namespace XSharp.Engine.Entities
 
             Box result = Box.EMPTY_BOX;
             foreach (var animation in animations)
+            {
                 if (animation.Visible)
                     result |= animation.CurrentFrameHitbox;
+            }
 
             return result;
         }
@@ -954,7 +962,9 @@ namespace XSharp.Engine.Entities
                     lastBlockedUp = true;
                 }
                 else
+                {
                     lastBlockedUp = false;
+                }
 
                 if (BlockedLeft)
                 {
@@ -962,7 +972,9 @@ namespace XSharp.Engine.Entities
                     lastBlockedLeft = true;
                 }
                 else
+                {
                     lastBlockedLeft = false;
+                }
 
                 if (BlockedRight)
                 {
@@ -970,7 +982,9 @@ namespace XSharp.Engine.Entities
                     lastBlockedRight = true;
                 }
                 else
+                {
                     lastBlockedRight = false;
+                }
 
                 if (Landed)
                 {
@@ -978,7 +992,9 @@ namespace XSharp.Engine.Entities
                     lastLanded = true;
                 }
                 else
+                {
                     lastLanded = false;
+                }
             }
         }
 
@@ -1047,7 +1063,9 @@ namespace XSharp.Engine.Entities
                     }
                 }
                 else
+                {
                     animationsByName.Remove(animationName);
+                }
             }
 
             ResourcesCreated = true;
@@ -1325,7 +1343,9 @@ namespace XSharp.Engine.Entities
                     }
                 }
                 else if (Engine.World.GetCollisionFlags(collider.DownCollider, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).HasFlag(CollisionFlags.SLOPE))
+                {
                     collider.TryMoveContactFloor();
+                }
             }
         }
 
@@ -1344,10 +1364,14 @@ namespace XSharp.Engine.Entities
                             MoveAlongSlope(collider, collider.LandedSlope, delta.X, gravity);
                     }
                     else
+                    {
                         MoveAlongSlope(collider, collider.LandedSlope, delta.X, gravity);
+                    }
                 }
                 else
+                {
                     MoveX(collider, delta.X, gravity);
+                }
 
                 if (collider.Landed)
                     collider.AdjustOnTheFloor();
@@ -1574,31 +1598,41 @@ namespace XSharp.Engine.Entities
                 if (deltaX < 0)
                 {
                     foreach (var sprite in touchingSpritesLeft)
+                    {
                         if (sprite != physicsParent)
                             sprite.DoPhysics(this, (deltaX, 0));
+                    }
                 }
                 else if (deltaX > 0)
                 {
                     foreach (var sprite in touchingSpritesRight)
+                    {
                         if (sprite != physicsParent)
                             sprite.DoPhysics(this, (deltaX, 0));
+                    }
                 }
 
                 if (deltaY > 0)
                 {
                     foreach (var sprite in touchingSpritesDown)
+                    {
                         if (sprite != physicsParent)
                             sprite.DoPhysics(this, (0, deltaY));
+                    }
                 }
 
                 if (delta != Vector.NULL_VECTOR)
+                {
                     foreach (var sprite in touchingSpritesUp)
+                    {
                         if (sprite != physicsParent)
                         {
                             sprite.DoPhysics(this, delta);
                             sprite.TryMoveContactFloor();
                             sprite.AdjustOnTheFloor();
                         }
+                    }
+                }
             }
 
             if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
@@ -1617,7 +1651,9 @@ namespace XSharp.Engine.Entities
                     }
                 }
                 else
+                {
                     lastBlockedUp = false;
+                }
 
                 if (BlockedLeft)
                 {
@@ -1628,7 +1664,9 @@ namespace XSharp.Engine.Entities
                     }
                 }
                 else
+                {
                     lastBlockedLeft = false;
+                }
 
                 if (BlockedRight)
                 {
@@ -1639,7 +1677,9 @@ namespace XSharp.Engine.Entities
                     }
                 }
                 else
+                {
                     lastBlockedRight = false;
+                }
 
                 if (Landed)
                 {
@@ -1650,7 +1690,9 @@ namespace XSharp.Engine.Entities
                     }
                 }
                 else
+                {
                     lastLanded = false;
+                }
             }
         }
 
@@ -1817,8 +1859,10 @@ namespace XSharp.Engine.Entities
             }
 
             if (Animating)
+            {
                 foreach (Animation animation in animations)
                     animation.NextFrame();
+            }
         }
 
         protected virtual void OnBlink(int frameCounter)
@@ -1840,8 +1884,10 @@ namespace XSharp.Engine.Entities
                 return;
 
             if (!InvisibleOnCurrentFrame)
+            {
                 foreach (Animation animation in animations)
                     animation.Render();
+            }
 
             InvisibleOnCurrentFrame = false;
         }

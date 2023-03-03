@@ -2,7 +2,9 @@
 using XSharp.Engine.Entities.Items;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
+
 using MMXWorld = XSharp.Engine.World.World;
 
 namespace XSharp.Engine
@@ -89,7 +91,7 @@ namespace XSharp.Engine
         public Vector Center
         {
             get => (Origin.X, Origin.Y - (Width - Height) * FixedSingle.HALF);
-            set => Origin = (value.X, value.Y + (Width - Height) * FixedSingle.HALF);          
+            set => Origin = (value.X, value.Y + (Width - Height) * FixedSingle.HALF);
         }
 
         new public Vector Origin
@@ -276,7 +278,7 @@ namespace XSharp.Engine
             if (!moveX && !moveY)
                 return false;
 
-            Velocity = (velocity.X.TruncFracPart() * dx.Signal, velocity.Y.TruncFracPart() * dy.Signal);           
+            Velocity = (velocity.X.TruncFracPart() * dx.Signal, velocity.Y.TruncFracPart() * dy.Signal);
             this.moveDistance = moveDistance;
             return true;
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -25,6 +26,7 @@ namespace XSharp.Engine.Collision
         private static void HorizontalParallelogram(Vector origin, Vector direction, FixedSingle smallWidth, out Box box, out RightTriangle triangle1, out RightTriangle triangle2)
         {
             if (direction.X > 0)
+            {
                 if (direction.Y > 0)
                 {
                     box = new Box(origin, smallWidth + direction.X, direction.Y);
@@ -37,6 +39,7 @@ namespace XSharp.Engine.Collision
                     triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
                     triangle2 = new RightTriangle(origin + (direction.X + smallWidth, 0), -direction.X, direction.Y);
                 }
+            }
             else if (direction.Y > 0)
             {
                 box = new Box(origin + (direction.X, 0), smallWidth - direction.X, direction.Y);
@@ -54,6 +57,7 @@ namespace XSharp.Engine.Collision
         private static void VerticalParallelogram(Vector origin, Vector direction, FixedSingle smallHeight, out Box box, out RightTriangle triangle1, out RightTriangle triangle2)
         {
             if (direction.X > 0)
+            {
                 if (direction.Y > 0)
                 {
                     box = new Box(origin, direction.X, smallHeight + direction.Y);
@@ -66,6 +70,7 @@ namespace XSharp.Engine.Collision
                     triangle1 = new RightTriangle(origin + (0, direction.Y), direction.X, -direction.Y);
                     triangle2 = new RightTriangle(origin + (direction.X, smallHeight), -direction.X, direction.Y);
                 }
+            }
             else if (direction.Y > 0)
             {
                 box = new Box(origin + (direction.X, 0), -direction.X, smallHeight + direction.Y);
@@ -201,8 +206,10 @@ namespace XSharp.Engine.Collision
         public bool HasIntersection(LineSegment line)
         {
             foreach (var side in sides)
+            {
                 if (side.HasIntersectionWith(line))
                     return true;
+            }
 
             return Contains(line.Start) || Contains(line.End);
         }
@@ -218,11 +225,15 @@ namespace XSharp.Engine.Collision
                 || Contains(intersection.RightTop)
                 || Contains(intersection.LeftBottom)
                 || Contains(intersection.RightBottom))
+            {
                 return true;
+            }
 
             foreach (var side in sides)
+            {
                 if (intersection.HasIntersectionWith(side))
                     return true;
+            }
 
             return false;
         }
@@ -236,15 +247,21 @@ namespace XSharp.Engine.Collision
             if (Contains(triangle.HypothenuseOpositeVertex)
                 || Contains(triangle.HCathetusOpositeVertex)
                 || Contains(triangle.VCathetusOpositeVertex))
+            {
                 return true;
+            }
 
             foreach (var vertex in vertices)
+            {
                 if (triangle.Contains(vertex))
                     return true;
+            }
 
             foreach (var side in sides)
+            {
                 if (triangle.HasIntersectionWith(side))
                     return true;
+            }
 
             return false;
         }

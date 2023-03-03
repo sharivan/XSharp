@@ -1,5 +1,6 @@
 ﻿using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
@@ -114,7 +115,9 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                 bumped = true;
             }
             else
+            {
                 Velocity = Velocity.XVector;
+            }
         }
 
         protected override void OnBlockedLeft()

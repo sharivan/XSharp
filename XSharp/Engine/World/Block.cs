@@ -1,6 +1,9 @@
 ﻿using SharpDX;
+
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
+
 using MMXBox = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.World
@@ -70,9 +73,13 @@ namespace XSharp.Engine.World
                 return;
 
             for (int col = 0; col < SIDE_MAPS_PER_BLOCK; col++)
+            {
                 for (int row = 0; row < SIDE_MAPS_PER_BLOCK; row++)
+                {
                     if (maps[row, col] == map)
                         maps[row, col] = null;
+                }
+            }
         }
 
         public void SetTile(Vector pos, Tile tile)
@@ -105,8 +112,10 @@ namespace XSharp.Engine.World
             int rows = (int) (boxSize.Y / TILE_SIZE);
 
             for (int c = 0; c < cols; c++)
+            {
                 for (int r = 0; r < rows; r++)
                     SetTile(new Vector((col + c) * TILE_SIZE, (row + r) * TILE_SIZE), tile);
+            }
         }
 
         public void FillRectangle(MMXBox box, Map map)
@@ -120,31 +129,39 @@ namespace XSharp.Engine.World
             int rows = (int) (boxSize.Y / MAP_SIZE);
 
             for (int c = 0; c < cols; c++)
+            {
                 for (int r = 0; r < rows; r++)
                     SetMap(new Vector((col + c) * MAP_SIZE, (row + r) * MAP_SIZE), map);
+            }
         }
 
         internal void Tessellate(DataStream downLayerVBData, DataStream upLayerVBData, Vector pos)
         {
             for (int col = 0; col < SIDE_MAPS_PER_BLOCK; col++)
+            {
                 for (int row = 0; row < SIDE_MAPS_PER_BLOCK; row++)
                 {
                     var mapPos = new Vector(pos.X + col * MAP_SIZE, pos.Y - row * MAP_SIZE);
                     Map map = maps[row, col];
 
                     if (map != null)
+                    {
                         map.Tessellate(downLayerVBData, upLayerVBData, mapPos);
+                    }
                     else
                     {
                         for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP; tileRow++)
+                        {
                             for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP; tileCol++)
                             {
                                 var tilePos = new Vector(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
                                 GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                                 GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                             }
+                        }
                     }
                 }
+            }
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+
 using XSharp.Engine.Entities;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using MMXWorld = XSharp.Engine.World.World;
 
 namespace XSharp.Engine.Collision
@@ -158,7 +160,9 @@ namespace XSharp.Engine.Collision
                 }
             }
             else
+            {
                 result = CheckCollisionData(box, collisionData, placements, ignore);
+            }
 
             return result;
         }
@@ -185,7 +189,9 @@ namespace XSharp.Engine.Collision
                 }
             }
             else
+            {
                 result = CheckCollisionData(box, collisionData, placements, ignore);
+            }
 
             return result;
         }
@@ -212,7 +218,9 @@ namespace XSharp.Engine.Collision
                 }
             }
             else
+            {
                 result = CheckCollisionData(box, collisionData, placements, ignore);
+            }
 
             return result;
         }
@@ -239,7 +247,9 @@ namespace XSharp.Engine.Collision
                 }
             }
             else
+            {
                 result = CheckCollisionData(box, collisionData, placements, ignore);
+            }
 
             return result;
         }

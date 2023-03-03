@@ -1,5 +1,6 @@
-﻿using SharpDX.Direct3D9;
-using System;
+﻿using System;
+
+using SharpDX.Direct3D9;
 
 namespace XSharp.Engine.Graphics
 {

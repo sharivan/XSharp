@@ -1,6 +1,7 @@
 ﻿using XSharp.Engine.Entities;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Collision
@@ -349,7 +350,9 @@ namespace XSharp.Engine.Collision
                 delta1 = leftCollisionChecker.TestBox.Origin - lastBox.Origin;
             }
             else
+            {
                 delta1 = dir;
+            }
 
             if (dir.Y > 0)
             {
@@ -374,7 +377,9 @@ namespace XSharp.Engine.Collision
                 delta2 = upCollisionChecker.TestBox.Origin - lastBox.Origin;
             }
             else
+            {
                 delta2 = delta1;
+            }
 
             var delta = delta1.Length < delta2.Length ? delta1 : delta2;
             if (delta != Vector.NULL_VECTOR)
@@ -473,6 +478,7 @@ namespace XSharp.Engine.Collision
             if (LandedOnTopLadder)
             {
                 foreach (var placement in downCollisionChecker.Placements)
+                {
                     if (placement.CollisionData == CollisionData.TOP_LADDER)
                     {
                         var placementBox = placement.ObstableBox;
@@ -486,10 +492,12 @@ namespace XSharp.Engine.Collision
 
                         return false;
                     }
+                }
             }
             else
             {
                 foreach (var placement in upCollisionChecker.Placements)
+                {
                     if (placement.CollisionData == CollisionData.LADDER)
                     {
                         var placementBox = placement.ObstableBox;
@@ -503,6 +511,7 @@ namespace XSharp.Engine.Collision
 
                         return false;
                     }
+                }
             }
 
             return false;

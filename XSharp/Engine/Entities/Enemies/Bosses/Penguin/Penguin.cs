@@ -1,5 +1,6 @@
 ﻿using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
@@ -45,7 +46,9 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                         SetState(value);
                 }
                 else
+                {
                     SetState(value);
+                }
             }
         }
 
@@ -384,7 +387,9 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
                     State = PenguinState.IDLE;
                 }
                 else
+                {
                     Velocity = v;
+                }
             }
         }
 
@@ -579,7 +584,9 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
         {
             if (Alive && !Exploding && !Broke && !frozenBlock.Alive
                 && !Engine.Player.TakingDamage && !Engine.Player.Blinking)
+            {
                 frozenBlock.Spawn();
+            }
         }
     }
 }

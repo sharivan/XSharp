@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities
@@ -507,7 +509,9 @@ namespace XSharp.Engine.Entities
                         OnKnockbackEnd();
                 }
                 else if (Landed)
+                {
                     SetStandState();
+                }
             }
         }
 
@@ -526,7 +530,9 @@ namespace XSharp.Engine.Entities
                         OnKnockbackEnd();
                 }
                 else if (Landed)
+                {
                     SetStandState();
+                }
             }
         }
 
@@ -558,10 +564,14 @@ namespace XSharp.Engine.Entities
                         SetState(PlayerState.LAND, 0);
                 }
                 else
+                {
                     Velocity = Velocity.XVector;
+                }
             }
             else
+            {
                 SetState(PlayerState.SPAWN_END, 0);
+            }
         }
 
         protected override FixedSingle GetHeadHeight()
@@ -664,10 +674,14 @@ namespace XSharp.Engine.Entities
                         }
                     }
                     else if (!WallJumping)
+                    {
                         SetAirStateAnimation();
+                    }
                 }
                 else if (!WallJumping)
+                {
                     SetAirStateAnimation();
+                }
             }
         }
 
@@ -712,10 +726,14 @@ namespace XSharp.Engine.Entities
                         }
                     }
                     else if (!WallJumping)
+                    {
                         SetAirStateAnimation();
+                    }
                 }
                 else if (!WallJumping)
+                {
                     SetAirStateAnimation();
+                }
             }
         }
 
@@ -883,10 +901,14 @@ namespace XSharp.Engine.Entities
                                                 PlaySound("X Land");
                                             }
                                             else if (!WallJumping)
+                                            {
                                                 TryMoveLeft(mirrored);
+                                            }
                                         }
                                         else if (!WallJumping)
+                                        {
                                             TryMoveLeft(mirrored);
+                                        }
                                     }
                                 }
                                 else if (PressingRight)
@@ -922,10 +944,14 @@ namespace XSharp.Engine.Entities
                                                 PlaySound("X Land");
                                             }
                                             else if (!WallJumping)
+                                            {
                                                 TryMoveRight(mirrored);
+                                            }
                                         }
                                         else if (!WallJumping)
+                                        {
                                             TryMoveRight(mirrored);
+                                        }
                                     }
                                 }
                                 else
@@ -1070,7 +1096,9 @@ namespace XSharp.Engine.Entities
                                         }
                                     }
                                     else if (!Landed && !WallJumping && !WallSliding && !OnLadder)
+                                    {
                                         SetAirStateAnimation();
+                                    }
                                 }
                                 else if (Dashing)
                                 {
@@ -1121,7 +1149,9 @@ namespace XSharp.Engine.Entities
                             {
                                 bool hspeedNull = false;
                                 if (PressingDash)
+                                {
                                     baseHSpeed = DASH_SPEED;
+                                }
                                 else if (baseHSpeed == PRE_WALKING_SPEED)
                                 {
                                     baseHSpeed = WALKING_SPEED;
@@ -1136,7 +1166,9 @@ namespace XSharp.Engine.Entities
                                     PlaySound("X Jump");
                                 }
                                 else if (Velocity.Y < 0)
+                                {
                                     Velocity = Velocity.XVector;
+                                }
                             }
                             else if (OnLadder)
                             {
@@ -1144,7 +1176,9 @@ namespace XSharp.Engine.Entities
                                 SetAirStateAnimation();
                             }
                             else if (BlockedUp && Velocity.Y < 0)
+                            {
                                 Velocity = Velocity.XVector;
+                            }
                             else if (!WallJumping || wallJumpFrameCounter >= 3)
                             {
                                 Direction wallJumpDir = GetWallJumpDir();
@@ -1217,7 +1251,9 @@ namespace XSharp.Engine.Entities
                         if (wallJumpFrameCounter < 7)
                         {
                             if (wallJumpFrameCounter == 3)
+                            {
                                 SetState(PlayerState.WALL_JUMP, 0);
+                            }
                             else if (wallJumpFrameCounter == 4)
                             {
                                 PlaySound("X Jump");
@@ -1241,7 +1277,9 @@ namespace XSharp.Engine.Entities
                                 vy = !Landed && !WallSliding && Velocity.Y < 0 ? 0 : Velocity.Y;
                             }
                             else
+                            {
                                 vy = Velocity.Y;
+                            }
 
                             Velocity = new Vector(PressingLeft ? -baseHSpeed : PressingRight ? baseHSpeed : 0, vy);
                             SetState(PlayerState.GOING_UP, 0);
@@ -1289,9 +1327,13 @@ namespace XSharp.Engine.Entities
                                     RefreshAnimation();
                                 }
                                 else if (Standing || PreWalking)
+                                {
                                     SetStandState();
+                                }
                                 else
+                                {
                                     RefreshAnimation();
+                                }
 
                                 ShootLemon();
                             }
@@ -1338,9 +1380,13 @@ namespace XSharp.Engine.Entities
                                 RefreshAnimation();
                             }
                             else if (Standing || PreWalking)
+                            {
                                 SetStandState();
+                            }
                             else
+                            {
                                 RefreshAnimation();
+                            }
 
                             if (chargingFrameCounter >= 60)
                                 ShootCharged();
@@ -1476,7 +1522,9 @@ namespace XSharp.Engine.Entities
                 }
             }
             else if (forceGoingUp || !Jumping && !GoingUp)
+            {
                 SetState(PlayerState.GOING_UP, 0);
+            }
         }
 
         public static Vector GetVectorDir(Direction direction)
@@ -1550,9 +1598,13 @@ namespace XSharp.Engine.Entities
                 }
             }
             else if (ContainsAnimationIndex(PlayerState.JUMP, animation.Index, true))
+            {
                 SetState(PlayerState.GOING_UP, 0);
+            }
             else if (ContainsAnimationIndex(PlayerState.LAND, animation.Index, true))
+            {
                 SetStandState();
+            }
             else if (ContainsAnimationIndex(PlayerState.PRE_DASH, animation.Index, true))
             {
                 if (dashSparkEffect != null)
@@ -1573,7 +1625,9 @@ namespace XSharp.Engine.Entities
                         SetStandState();
                 }
                 else
+                {
                     SetAirStateAnimation();
+                }
             }
             else if (ContainsAnimationIndex(PlayerState.PRE_LADDER_CLIMB, animation.Index, true))
             {
@@ -1590,7 +1644,9 @@ namespace XSharp.Engine.Entities
                     CurrentAnimation.Stop();
             }
             else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animation.Index, true))
+            {
                 SetStandState();
+            }
             else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animation.Index, true))
             {
                 Origin += LADDER_MOVE_OFFSET * Vector.DOWN_VECTOR;
@@ -1608,7 +1664,9 @@ namespace XSharp.Engine.Entities
                     CurrentAnimation.Stop();
             }
             else if (ContainsAnimationIndex(PlayerState.TAKING_DAMAGE, animation.Index, false))
+            {
                 OnKnockbackEnd();
+            }
             else if (ContainsAnimationIndex(PlayerState.DYING, animation.Index, false))
             {
                 Freezed = false;
@@ -1658,7 +1716,9 @@ namespace XSharp.Engine.Entities
             teleporting = true;
 
             if (withVictoryPose)
+            {
                 StartVictoryPosing();
+            }
             else
             {
                 Invincible = true;

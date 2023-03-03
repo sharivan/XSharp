@@ -1,5 +1,6 @@
-﻿using NAudio.Wave;
-using System;
+﻿using System;
+
+using NAudio.Wave;
 
 namespace XSharp.Engine.Sound
 {

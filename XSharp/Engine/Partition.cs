@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Math;
@@ -170,6 +171,7 @@ namespace XSharp.Engine
                 endRow = rows - 1;
 
             for (int col = startCol; col <= endCol; col++)
+            {
                 for (int row = startRow; row <= endRow; row++)
                 {
                     var cellBox = new Box((lt.X + cellWidth * col, lt.Y + cellHeight * row), Vector.NULL_VECTOR, (cellWidth, cellHeight));
@@ -182,6 +184,7 @@ namespace XSharp.Engine
 
                     cells[col, row].Insert(item);
                 }
+            }
         }
 
         public int Query(EntityList<T> resultSet, Vector v, bool aliveOnly = true)
@@ -283,7 +286,7 @@ namespace XSharp.Engine
 
             FixedSingle tracingDistance = parallelogram.Direction.Length;
             var tracingBox = new Box(parallelogram.Origin, cellWidth, parallelogram.SmallerHeight);
-               
+
             for (FixedSingle distance = 0; distance <= tracingDistance; distance += stepDistance, tracingBox += stepVector)
             {
                 int startCol = (tracingBox.Left / cellWidth).Floor();
@@ -305,8 +308,10 @@ namespace XSharp.Engine
                     endRow = rows - 1;
 
                 for (int col = startCol; col <= endCol; col++)
+                {
                     for (int row = startRow; row <= endRow; row++)
                         cells[col, row]?.Query(parallelogram, resultSet, exclude, addictionalExclusionList, aliveOnly);
+                }
             }
 
             return resultSet.Count;
@@ -355,8 +360,10 @@ namespace XSharp.Engine
                 endRow = rows - 1;
 
             for (int col = startCol; col <= endCol; col++)
+            {
                 for (int row = startRow; row <= endRow; row++)
                     cells[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly);
+            }
 
             return resultSet.Count;
         }
@@ -411,7 +418,9 @@ namespace XSharp.Engine
                 endRow = rows - 1;
 
             for (int col = startCol; col <= endCol; col++)
+            {
                 for (int row = startRow; row <= endRow; row++)
+                {
                     if (cells[col, row] != null)
                     {
                         cells[col, row].Update(item);
@@ -431,6 +440,8 @@ namespace XSharp.Engine
 
                         cells[col, row].Insert(item);
                     }
+                }
+            }
         }
 
         public void Remove(T item)
@@ -476,7 +487,9 @@ namespace XSharp.Engine
                 endRow = rows - 1;
 
             for (int col = startCol; col <= endCol; col++)
+            {
                 for (int row = startRow; row <= endRow; row++)
+                {
                     if (cells[col, row] != null)
                     {
                         cells[col, row].Remove(item);
@@ -484,17 +497,23 @@ namespace XSharp.Engine
                         if (cells[col, row].Count == 0)
                             cells[col, row] = null;
                     }
+                }
+            }
         }
 
         public void Clear()
         {
             for (int col = 0; col < cols; col++)
+            {
                 for (int row = 0; row < rows; row++)
+                {
                     if (cells[col, row] != null)
                     {
                         cells[col, row].Clear();
                         cells[col, row] = null;
                     }
+                }
+            }
         }
     }
 }

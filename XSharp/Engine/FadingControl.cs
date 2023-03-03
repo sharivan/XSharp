@@ -1,5 +1,6 @@
-﻿using SharpDX;
-using System;
+﻿using System;
+
+using SharpDX;
 
 namespace XSharp.Engine
 {

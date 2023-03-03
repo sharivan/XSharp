@@ -1,6 +1,7 @@
 ﻿using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.World;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.World.World;
 
@@ -193,7 +194,9 @@ namespace XSharp.Engine.Entities.Objects
                 State = BossDoorState.CLOSING;
             }
             else if (frameCounter < 120)
+            {
                 Engine.Player.Velocity = (CROSSING_BOOS_DOOR_SPEED, 0);
+            }
         }
 
         internal void OnStartClosing()
@@ -205,7 +208,9 @@ namespace XSharp.Engine.Entities.Objects
         internal void OnEndClosing()
         {
             if (StartBossBattle)
+            {
                 Engine.StartBossBattle();
+            }
             else
             {
                 var player = Engine.Player;

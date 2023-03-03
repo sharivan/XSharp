@@ -62,7 +62,9 @@ namespace XSharp.Engine.Entities
                     bitSet.Set(index);
                 }
                 else
+                {
                     bitSet.Reset(index);
+                }
             }
         }
 
@@ -125,8 +127,10 @@ namespace XSharp.Engine.Entities
         public void RemoveRange(params T[] entities)
         {
             if (entities != null && entities.Length > 0)
+            {
                 foreach (var entity in entities)
                     Remove(entity);
+            }
         }
 
         public void RemoveRange(EntityList<T> entities)
@@ -150,12 +154,14 @@ namespace XSharp.Engine.Entities
             if (entities != null && entities.Length > 0)
             {
                 foreach (var entity in entities)
+                {
                     if (Contains(entity))
                     {
                         count++;
                         if (count == minCount)
                             return true;
                     }
+                }
             }
 
             return false;
@@ -167,12 +173,14 @@ namespace XSharp.Engine.Entities
             if (entities != null && entities.Length > 0)
             {
                 foreach (var entity in entities)
+                {
                     if (Contains(entity))
                     {
                         count++;
                         if (count > exactCount)
                             return false;
                     }
+                }
             }
 
             return count == exactCount;
@@ -184,12 +192,14 @@ namespace XSharp.Engine.Entities
             if (entities != null && entities.Length > 0)
             {
                 foreach (var entity in entities)
+                {
                     if (Contains(entity))
                     {
                         count++;
                         if (count > maxCount)
                             return false;
                     }
+                }
             }
 
             return count <= maxCount;
@@ -200,8 +210,10 @@ namespace XSharp.Engine.Entities
             if (entities != null && entities.Length > 0)
             {
                 foreach (var entity in entities)
+                {
                     if (!Contains(entity))
                         return false;
+                }
             }
 
             return true;
@@ -212,8 +224,10 @@ namespace XSharp.Engine.Entities
             if (entities != null && entities.Length > 0)
             {
                 foreach (var entity in entities)
+                {
                     if (Contains(entity))
                         return true;
+                }
             }
 
             return false;
@@ -225,6 +239,7 @@ namespace XSharp.Engine.Entities
             if (entities != null && entities.Length > 0)
             {
                 foreach (var entity in entities)
+                {
                     if (Contains(entity))
                     {
                         if (containsOne)
@@ -232,6 +247,7 @@ namespace XSharp.Engine.Entities
 
                         containsOne = true;
                     }
+                }
             }
 
             return containsOne;
@@ -243,8 +259,10 @@ namespace XSharp.Engine.Entities
             if (entities != null && entities.Length > 0)
             {
                 foreach (var entity in entities)
+                {
                     if (Contains(entity))
                         result++;
+                }
             }
 
             return result;
@@ -258,8 +276,10 @@ namespace XSharp.Engine.Entities
         public void AddRange(params T[] entities)
         {
             if (entities != null && entities.Length > 0)
+            {
                 foreach (var entity in entities)
                     Add(entity);
+            }
         }
 
         public void AddRange(EntityList<T> entities)

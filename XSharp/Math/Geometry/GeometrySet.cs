@@ -85,15 +85,19 @@ namespace XSharp.Math.Geometry
             {
                 case SetOperation.UNION:
                     foreach (var (part, negate) in parts)
+                    {
                         if (negate ? !part.Contains(v) : part.Contains(v))
                             return true;
+                    }
 
                     return false;
 
                 case SetOperation.INTERSECTION:
                     foreach (var (part, negate) in parts)
+                    {
                         if (negate ? part.Contains(v) : !part.Contains(v))
                             return false;
+                    }
 
                     return true;
             }

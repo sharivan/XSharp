@@ -1,7 +1,8 @@
-﻿using SharpDX;
-using SharpDX.Direct3D9;
-using System;
+﻿using System;
 using System.IO;
+
+using SharpDX;
+using SharpDX.Direct3D9;
 
 using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 
@@ -30,7 +31,7 @@ namespace XSharp.Engine.Graphics
         }
 
         internal Palette()
-        {           
+        {
         }
 
         public void Dispose()

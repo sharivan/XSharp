@@ -1,10 +1,13 @@
-﻿using SharpDX;
-using SharpDX.Direct3D9;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+
+using SharpDX;
+using SharpDX.Direct3D9;
+
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using MMXBox = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.Graphics
@@ -194,9 +197,9 @@ namespace XSharp.Engine.Graphics
         }
 
         internal string name;
-        
+
         private readonly List<Frame> frames;
-        private readonly Dictionary<string, FrameSequence> sequences;  
+        private readonly Dictionary<string, FrameSequence> sequences;
 
         public int Index
         {

@@ -1,7 +1,10 @@
 ﻿using SharpDX;
+
 using XSharp.Engine.Collision;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
+
 using MMXBox = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.World
@@ -49,12 +52,14 @@ namespace XSharp.Engine.World
             get
             {
                 for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
+                {
                     for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
                     {
                         Tile tile = tiles[row, col];
                         if (tile != null)
                             return false;
                     }
+                }
 
                 return true;
             }
@@ -88,7 +93,9 @@ namespace XSharp.Engine.World
                 return;
 
             for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
+            {
                 for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
+                {
                     if (tiles[row, col] == tile)
                     {
                         tiles[row, col] = null;
@@ -97,6 +104,8 @@ namespace XSharp.Engine.World
                         mirrored[row, col] = false;
                         upLayer[row, col] = false;
                     }
+                }
+            }
         }
 
         public Tile GetTile(Vector pos)
@@ -136,13 +145,16 @@ namespace XSharp.Engine.World
             int rows = (int) (boxSize.Y / TILE_SIZE);
 
             for (int c = 0; c < cols; c++)
+            {
                 for (int r = 0; r < rows; r++)
                     SetTile(new Vector((col + c) * TILE_SIZE, (row + r) * TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
+            }
         }
 
         internal void Tessellate(DataStream downLayerVBData, DataStream upLayerVBData, Vector pos)
         {
             for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
+            {
                 for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
                 {
                     var tilePos = new Vector(pos.X + col * TILE_SIZE, pos.Y - row * TILE_SIZE);
@@ -168,6 +180,7 @@ namespace XSharp.Engine.World
                         GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                     }
                 }
+            }
         }
     }
 }

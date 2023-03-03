@@ -1,6 +1,7 @@
 ﻿using XSharp.Engine.Collision;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies
@@ -130,7 +131,9 @@ namespace XSharp.Engine.Entities.Enemies
                 jumping = true;
             }
             else if (!jumping)
+            {
                 Velocity = Vector.NULL_VECTOR;
+            }
         }
 
         private void OnLanding(EntityState state, long frameCounter)

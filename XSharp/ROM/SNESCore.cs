@@ -197,16 +197,19 @@ namespace XSharp.ROM
         internal static void Tile2bpp2raw(byte[] src, int srcOff, byte[] dst, int dstOff)
         {
             for (int y = 0; y < 8; y++)
+            {
                 for (int x = 0; x < 8; x++)
                 {
                     dst[dstOff++] = (byte) ((src[srcOff + (y << 1)] >> (~x & 7) & 1)
                         | ((src[srcOff + y * 2 + 1] >> (~x & 7) << 1) & 2));
                 }
+            }
         }
 
         internal static void Tile4bpp2raw(byte[] src, int srcOff, byte[] dst, int dstOff)
         {
             for (int y = 0; y < 8; y++)
+            {
                 for (int x = 0; x < 8; x++)
                 {
                     dst[dstOff++] = (byte) ((src[srcOff + (y << 1)] >> (~x & 7) & 1)
@@ -214,6 +217,7 @@ namespace XSharp.ROM
                         | ((src[srcOff + y * 2 + 16] >> (~x & 7) << 2) & 4)
                         | ((src[srcOff + y * 2 + 17] >> (~x & 7) << 3) & 8));
                 }
+            }
         }
 
         internal static void Raw2tile2bpp(byte[] src, int srcOff, byte[] dst, int dstOff)

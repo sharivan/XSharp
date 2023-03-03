@@ -151,7 +151,9 @@ namespace XSharp.Engine
                         bits.Add(0);
                 }
                 else if (value < currentSlotCount)
+                {
                     bits.RemoveRange(value, currentSlotCount - value);
+                }
             }
         }
 

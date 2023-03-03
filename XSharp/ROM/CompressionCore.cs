@@ -323,7 +323,9 @@ namespace XSharp.ROM
                                 i++;
                             }
                             else
+                            {
                                 write = true;
+                            }
                         }
                         else if (src[srcOff + i] == buf + counter) //what is this
                         {
@@ -339,7 +341,9 @@ namespace XSharp.ROM
                                 i++;
                             }
                             else
+                            {
                                 write = true;
+                            }
                         }
                         else
                         {

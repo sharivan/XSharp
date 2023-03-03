@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+
 using XSharp.Engine.Collision;
 using XSharp.Math.Geometry;
+
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities
@@ -590,6 +592,7 @@ namespace XSharp.Engine.Entities
                 }
 
                 foreach (Entity entity in resultSet)
+                {
                     if ((CheckTouchingWithDeadEntities || entity.Alive && !entity.MarkedToRemove) && CheckTouching(entity))
                     {
                         if (!Alive || MarkedToRemove)
@@ -601,6 +604,7 @@ namespace XSharp.Engine.Entities
                         if (!Alive || MarkedToRemove)
                             return;
                     }
+                }
             }
 
             if (!Alive || MarkedToRemove)
