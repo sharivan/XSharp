@@ -284,9 +284,9 @@ namespace XSharp.Engine.Collision
             DownCollider = ((box.Origin.X, box.Bottom), (box.Mins.X, -1), (box.Maxs.X, 0));
 
             downCollisionChecker.Setup(DownCollider, CollisionFlags.NONE, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
-            upCollisionChecker.Setup(UpCollider, CollisionFlags.NONE, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
-            leftCollisionChecker.Setup(LeftCollider, CollisionFlags.NONE, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
-            rightCollisionChecker.Setup(RightCollider, CollisionFlags.NONE, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
+            upCollisionChecker.Setup(UpCollider, CollisionFlags.TOP_LADDER | CollisionFlags.SLOPE, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
+            leftCollisionChecker.Setup(LeftCollider, CollisionFlags.TOP_LADDER, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
+            rightCollisionChecker.Setup(RightCollider, CollisionFlags.TOP_LADDER, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
             innerCollisionChecker.Setup(box, CollisionFlags.NONE, checkCollisionWithWorld, checkCollisionWithSolidSprites, UseCollisionPlacements);
 
             UpdateFlags();

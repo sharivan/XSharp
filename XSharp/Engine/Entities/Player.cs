@@ -474,9 +474,6 @@ namespace XSharp.Engine.Entities
         {
             base.OnBlockedUp();
 
-            if (Velocity.Y >= 0)
-                return;
-
             if (!CrossingBossDoor && !teleporting && !TakingDamage && !Dying && WallJumping && wallJumpFrameCounter >= 7)
             {
                 Velocity = Vector.NULL_VECTOR;
@@ -484,7 +481,7 @@ namespace XSharp.Engine.Entities
                 jumping = false;
                 SetAirStateAnimation(true);
             }
-            else
+            else if (Velocity.Y < 0)
             {
                 Velocity = Velocity.XVector;
 
@@ -569,7 +566,7 @@ namespace XSharp.Engine.Entities
 
         protected override FixedSingle GetHeadHeight()
         {
-            return 8;
+            return 2;
         }
 
         protected override FixedSingle GetLegsHeight()
@@ -1234,7 +1231,7 @@ namespace XSharp.Engine.Entities
                             baseHSpeed = PressingDash ? DASH_SPEED : WALKING_SPEED;
                             Velocity = new Vector(WallJumpingToLeft ? baseHSpeed : -baseHSpeed, -INITIAL_UPWARD_SPEED_FROM_JUMP);
                         }
-                        else if (/*collider.Landed || */wallJumpFrameCounter > WALL_JUMP_DURATION)
+                        else if (wallJumpFrameCounter > WALL_JUMP_DURATION)
                         {
                             WallJumping = false;
                             FixedSingle vy;
@@ -1442,14 +1439,14 @@ namespace XSharp.Engine.Entities
         private bool CanWallJumpLeft()
         {
             var collider = WorldCollider;
-            var leftWallJumpBoxDetector = new Box(collider.Box.LeftTop - (8, 0), 8, collider.Box.Height - collider.LegsHeight);
+            var leftWallJumpBoxDetector = new Box(collider.Box.LeftTop - (8, 1), 8, collider.Box.Height - collider.LegsHeight);
             return Engine.World.GetCollisionFlags(leftWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this).HasFlag(CollisionFlags.BLOCK);
         }
 
         private bool CanWallJumpRight()
         {
             var collider = WorldCollider;
-            var rightWallJumpBoxDetector = new Box(collider.Box.RightTop + (1, 0), 8, collider.Box.Height - collider.LegsHeight);
+            var rightWallJumpBoxDetector = new Box(collider.Box.RightTop + (1, -1), 8, collider.Box.Height - collider.LegsHeight);
             return Engine.World.GetCollisionFlags(rightWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this).HasFlag(CollisionFlags.BLOCK);
         }
 

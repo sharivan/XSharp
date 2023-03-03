@@ -32,12 +32,12 @@ namespace XSharp.Engine.Collision
             CollisionFlags bottomLeftDisplacedCollisionFlags = leftChecker.GetCollisionFlags();
             CollisionFlags bottomRightDisplacedCollisionFlags = rightChecker.GetCollisionFlags();
 
-            if (!bottomLeftDisplacedCollisionFlags.CanBlockTheMove() && !bottomRightDisplacedCollisionFlags.CanBlockTheMove())
+            if (!bottomLeftDisplacedCollisionFlags.CanBlockTheMove(Direction.DOWN) && !bottomRightDisplacedCollisionFlags.CanBlockTheMove(Direction.DOWN))
                 return CollisionFlags.NONE;
 
             if (!bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE) && !bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.SLOPE))
             {
-                if (!bottomLeftDisplacedCollisionFlags.CanBlockTheMove() && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
+                if (!bottomLeftDisplacedCollisionFlags.CanBlockTheMove(Direction.DOWN) && (bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)))
                 {
                     if (ComputePlacements)
                         placements.AddRange(rightChecker.Placements);
@@ -45,7 +45,7 @@ namespace XSharp.Engine.Collision
                     return bottomRightDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) ? CollisionFlags.BLOCK : CollisionFlags.TOP_LADDER;
                 }
 
-                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && !bottomRightDisplacedCollisionFlags.CanBlockTheMove())
+                if ((bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.BLOCK) || bottomLeftDisplacedCollisionFlags.HasFlag(CollisionFlags.TOP_LADDER)) && !bottomRightDisplacedCollisionFlags.CanBlockTheMove(Direction.DOWN))
                 {
                     if (ComputePlacements)
                         placements.AddRange(leftChecker.Placements);
@@ -186,7 +186,7 @@ namespace XSharp.Engine.Collision
 
         public bool AdjustOnTheFloor(FixedSingle maxDistance)
         {
-            if (!ComputeLandedState().CanBlockTheMove())
+            if (!ComputeLandedState().CanBlockTheMove(Direction.DOWN))
                 return false;
 
             var lastBox = TestBox;
@@ -194,7 +194,7 @@ namespace XSharp.Engine.Collision
             for (FixedSingle distance = FixedSingle.ZERO; distance <= maxDistance; distance += STEP_SIZE)
             {
                 TestBox += STEP_UP_VECTOR;
-                if (!ComputeLandedState().CanBlockTheMove())
+                if (!ComputeLandedState().CanBlockTheMove(Direction.DOWN))
                 {
                     TestBox += STEP_DOWN_VECTOR;
                     return true;

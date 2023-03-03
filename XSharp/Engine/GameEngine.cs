@@ -3316,7 +3316,6 @@ namespace XSharp.Engine
                 if (paused || Player != null && Player.Freezed && (!FreezingSprites || freezingSpriteExceptions.Contains(Player)))
                 {
                     Player?.OnFrame();
-                    Camera.OnFrame();
                 }
                 else
                 {
@@ -3333,39 +3332,38 @@ namespace XSharp.Engine
                             if (entity.Alive && entity != Camera)
                                 entity.OnFrame();
                     }
-
-                    Camera.OnFrame();
-
-                    if (removedEntities.Count > 0)
-                    {
-                        for (int i = 0; i < removedEntities.Count; i++)
-                        {
-                            var removed = removedEntities[i];
-
-                            if (removed is Sprite sprite)
-                            {
-                                if (sprite is HUD hud)
-                                    huds[sprite.Layer].Remove(hud);
-                                else
-                                    sprites[sprite.Layer].Remove(sprite);
-                            }
-
-                            removed.Cleanup();
-                            removed.Alive = false;
-                            removed.Dead = true;
-                            removed.DeathFrame = FrameCounter;
-
-                            if (!removed.Respawnable)
-                                RemoveEntity(removed);
-                            else if (removed.RespawnOnNear)
-                                removed.Origin = autoRespawnableEntities[removed].Origin;
-                        }
-
-                        removedEntities.Clear();
-                    }
                 }
 
                 World.OnFrame();
+                Camera.OnFrame();
+
+                if (removedEntities.Count > 0)
+                {
+                    for (int i = 0; i < removedEntities.Count; i++)
+                    {
+                        var removed = removedEntities[i];
+
+                        if (removed is Sprite sprite)
+                        {
+                            if (sprite is HUD hud)
+                                huds[sprite.Layer].Remove(hud);
+                            else
+                                sprites[sprite.Layer].Remove(sprite);
+                        }
+
+                        removed.Cleanup();
+                        removed.Alive = false;
+                        removed.Dead = true;
+                        removed.DeathFrame = FrameCounter;
+
+                        if (!removed.Respawnable)
+                            RemoveEntity(removed);
+                        else if (removed.RespawnOnNear)
+                            removed.Origin = autoRespawnableEntities[removed].Origin;
+                    }
+
+                    removedEntities.Clear();
+                }
             }
 
             if (changeLevel)
@@ -3476,7 +3474,7 @@ namespace XSharp.Engine
                 cameraPos = new Vector(SCREEN_WIDTH * 0.5f, 0);
             }
 
-            Camera.RightTop = cameraPos;
+            Camera.LeftTop = cameraPos;
 
             SpawnX(spawnPos);
             CreateHP();
@@ -3585,13 +3583,13 @@ namespace XSharp.Engine
             drawBox = new MMXBox(drawOrigin.X, drawOrigin.Y, width, height);
         }
 
-        private void DrawSlopeMap(MMXBox box, RightTriangle triangle, float strokeWidth)
+        private void DrawSlopeMap(MMXBox box, RightTriangle triangle, Color color, float strokeWidth)
         {
             Vector tv1 = triangle.Origin;
             Vector tv2 = triangle.VCathetusOpositeVertex;
             Vector tv3 = triangle.HCathetusOpositeVertex;
 
-            DrawLine(tv2, tv3, strokeWidth, TOUCHING_MAP_COLOR);
+            DrawLine(tv2, tv3, strokeWidth, color);
 
             FixedSingle h = tv1.Y - box.Top;
             FixedSingle H = MAP_SIZE - h;
@@ -3599,54 +3597,54 @@ namespace XSharp.Engine
             {
                 if (triangle.HCathetusVector.X < 0)
                 {
-                    DrawLine(tv2, box.LeftBottom, strokeWidth, TOUCHING_MAP_COLOR);
-                    DrawLine(tv3, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
+                    DrawLine(tv2, box.LeftBottom, strokeWidth, color);
+                    DrawLine(tv3, box.RightBottom, strokeWidth, color);
                 }
                 else
                 {
-                    DrawLine(tv3, box.LeftBottom, strokeWidth, TOUCHING_MAP_COLOR);
-                    DrawLine(tv2, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
+                    DrawLine(tv3, box.LeftBottom, strokeWidth, color);
+                    DrawLine(tv2, box.RightBottom, strokeWidth, color);
                 }
 
-                DrawLine(box.LeftBottom, box.RightBottom, strokeWidth, TOUCHING_MAP_COLOR);
+                DrawLine(box.LeftBottom, box.RightBottom, strokeWidth, color);
             }
             else
             {
-                DrawLine(tv3, tv1, strokeWidth, TOUCHING_MAP_COLOR);
-                DrawLine(tv1, tv2, strokeWidth, TOUCHING_MAP_COLOR);
+                DrawLine(tv3, tv1, strokeWidth, color);
+                DrawLine(tv1, tv2, strokeWidth, color);
             }
         }
 
-        private void DrawHighlightMap(int row, int col, CollisionData collisionData)
+        private void DrawHighlightMap(int row, int col, CollisionData collisionData, Color color)
         {
             MMXBox mapBox = GetMapBoundingBox(row, col);
             if (collisionData.IsSolidBlock())
-                DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
+                DrawRectangle(mapBox, 4, color);
             else if (collisionData.IsSlope())
             {
                 RightTriangle st = collisionData.MakeSlopeTriangle() + mapBox.LeftTop;
-                DrawSlopeMap(mapBox, st, 4);
+                DrawSlopeMap(mapBox, st, color, 4);
             }
         }
 
-        private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, MMXBox collisionBox, bool ignoreSlopes = false)
+        private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, MMXBox collisionBox, Color color, bool ignoreSlopes = false)
         {
             var halfCollisionBox1 = new MMXBox(collisionBox.Left, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
             var halfCollisionBox2 = new MMXBox(collisionBox.Left + collisionBox.Width * 0.5, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
 
             MMXBox mapBox = GetMapBoundingBox(row, col);
             if (collisionData.IsSolidBlock() && CollisionChecker.HasIntersection(mapBox, collisionBox))
-                DrawRectangle(mapBox, 4, TOUCHING_MAP_COLOR);
+                DrawRectangle(mapBox, 4, color);
             else if (!ignoreSlopes && collisionData.IsSlope())
             {
                 RightTriangle st = collisionData.MakeSlopeTriangle() + mapBox.LeftTop;
                 Vector hv = st.HCathetusVector;
                 if (hv.X > 0 && st.HasIntersectionWith(halfCollisionBox2) || hv.X < 0 && st.HasIntersectionWith(halfCollisionBox1))
-                    DrawSlopeMap(mapBox, st, 4);
+                    DrawSlopeMap(mapBox, st, color, 4);
             }
         }
 
-        private void CheckAndDrawTouchingMaps(MMXBox collisionBox, bool ignoreSlopes = false)
+        private void CheckAndDrawTouchingMaps(MMXBox collisionBox, Color color, bool ignoreSlopes = false)
         {
             Cell start = GetMapCellFromPos(collisionBox.LeftTop);
             Cell end = GetMapCellFromPos(collisionBox.RightBottom);
@@ -3687,7 +3685,7 @@ namespace XSharp.Engine
                     var v = new Vector(col * MAP_SIZE, row * MAP_SIZE);
                     Map map = World.GetMapFrom(v);
                     if (map != null)
-                        CheckAndDrawTouchingMap(row, col, map.CollisionData, collisionBox, ignoreSlopes);
+                        CheckAndDrawTouchingMap(row, col, map.CollisionData, collisionBox, color, ignoreSlopes);
                 }
         }
 
@@ -4159,12 +4157,12 @@ namespace XSharp.Engine
                 {
                     if (drawTouchingMapBounds)
                     {
-                        MMXBox collisionBox = Player.CollisionBox;
+                        var collider = Player.WorldCollider;
 
-                        CheckAndDrawTouchingMaps(collisionBox + Vector.LEFT_VECTOR, true);
-                        CheckAndDrawTouchingMaps(collisionBox + Vector.UP_VECTOR);
-                        CheckAndDrawTouchingMaps(collisionBox + Vector.RIGHT_VECTOR, true);
-                        CheckAndDrawTouchingMaps(collisionBox + Vector.DOWN_VECTOR);
+                        CheckAndDrawTouchingMaps(collider.LeftCollider + STEP_LEFT_VECTOR, LEFT_COLLIDER_COLOR, true);
+                        CheckAndDrawTouchingMaps(collider.UpCollider + STEP_UP_VECTOR, UP_COLLIDER_COLOR);
+                        CheckAndDrawTouchingMaps(collider.RightCollider + STEP_RIGHT_VECTOR, RIGHT_COLLIDER_COLOR, true);
+                        CheckAndDrawTouchingMaps(collider.DownCollider + STEP_DOWN_VECTOR, DOWN_COLLIDER_COLOR);
                     }
 
                     if (drawHitbox)

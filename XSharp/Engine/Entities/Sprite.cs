@@ -1364,7 +1364,7 @@ namespace XSharp.Engine.Entities
 
                 var union = delta.Y > 0 ? lastDownCollider | collider.DownCollider : lastUpCollider | collider.UpCollider;
 
-                if (Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).CanBlockTheMove())
+                if (Engine.World.GetCollisionFlags(union, collider.IgnoreSprites, CollisionFlags.NONE, collider.CheckCollisionWithWorld, collider.CheckCollisionWithSolidSprites).CanBlockTheMove(delta.GetDirection()))
                 {
                     if (delta.Y > 0)
                     {
@@ -1544,7 +1544,11 @@ namespace XSharp.Engine.Entities
 
             if (delta.IsNull)
             {
-                TryMoveContactFloor();
+                if (Landed)
+                    AdjustOnTheFloor();
+                else
+                    TryMoveContactFloor();
+
                 return;
             }
 

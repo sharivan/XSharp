@@ -91,7 +91,7 @@ namespace XSharp.Engine.Entities.Enemies
 
         private void OnIdle(EntityState state, long frameCounter)
         {
-            if (frameCounter >= 60 && Origin.DistanceTo(Engine.Player.Origin) <= SCENE_SIZE * 0.5)
+            if (Engine.Player != null && frameCounter >= 60 && Origin.DistanceTo(Engine.Player.Origin) <= SCENE_SIZE * 0.5)
                 State = BattonBoneGState.ATTACKING;
             else
                 Velocity = Vector.NULL_VECTOR;
@@ -99,8 +99,13 @@ namespace XSharp.Engine.Entities.Enemies
 
         private void OnAttacking(EntityState state, long frameCounter)
         {
-            Vector delta = Engine.Player.Origin - Origin;
-            Velocity = BATTON_BONE_G_ATTACK_SPEED * delta.Versor();
+            if (Engine.Player != null)
+            {
+                Vector delta = Engine.Player.Origin - Origin;
+                Velocity = BATTON_BONE_G_ATTACK_SPEED * delta.Versor();
+            }
+            else
+                State = BattonBoneGState.ESCAPING;
         }
 
         private void OnEscaping(EntityState state, long frameCounter)
