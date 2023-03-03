@@ -506,6 +506,6 @@ namespace XSharp.Engine
         public static readonly bool SKIP_MENU = false;
         public static readonly bool SKIP_INTRO = false;
         public const int INITIAL_LEVEL = 8;
-        public const int INITIAL_CHECKPOINT = 2;
+        public const int INITIAL_CHECKPOINT = 0;
     }
 }
