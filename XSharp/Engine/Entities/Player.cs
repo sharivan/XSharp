@@ -951,7 +951,7 @@ namespace XSharp.Engine.Entities
                 }
                 else if (!spawning)
                 {
-                    if (Origin.Y > Engine.Camera.RightBottom.Y + BLOCK_SIZE)
+                    if (Origin.Y >= Engine.Camera.Top + SCENE_SIZE)
                     {
                         DeadByAbiss = true;
                         Die();
@@ -1658,9 +1658,9 @@ namespace XSharp.Engine.Entities
             bool cwjl = CanWallJumpLeft();
             bool cwjr = CanWallJumpRight();
 
-            return PressingLeft && cwjl
+            return Direction == Direction.LEFT && cwjl
                 ? Direction.LEFT
-                : PressingRight && cwjr
+                : Direction == Direction.RIGHT && cwjr
                 ? Direction.RIGHT : cwjr
                 ? Direction.RIGHT : cwjl
                 ? Direction.LEFT : Direction.NONE;

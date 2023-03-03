@@ -324,7 +324,14 @@ namespace XSharp.Engine.Entities
             }
         }
 
-        public virtual Box CollisionBox => Origin + GetCollisionBox();
+        public virtual Box CollisionBox
+        {
+            get
+            {
+                Box box = Origin + GetCollisionBox();
+                return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
+            }
+        }
 
         public SpriteCollider WorldCollider
         {

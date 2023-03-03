@@ -211,9 +211,9 @@ namespace XSharp.Engine.Collision
 
         public bool LandedOnTopLadder => DownMaskFlags == CollisionFlags.TOP_LADDER;
 
-        public bool LandedOnLethalSpike => Landed && downCollisionChecker.HasPlacement(CollisionData.LETHAL_SPIKE);
+        public bool LandedOnLethalSpike => LandedOnBlock && downCollisionChecker.HasPlacementAndOnlyAtLeastOtherPlacements(CollisionData.LETHAL_SPIKE, CollisionData.NON_LETHAL_SPIKE);
 
-        public bool LandedOnNonLethalSpike => Landed && downCollisionChecker.HasPlacement(CollisionData.NON_LETHAL_SPIKE);
+        public bool LandedOnNonLethalSpike => LandedOnBlock && downCollisionChecker.HasPlacement(CollisionData.NON_LETHAL_SPIKE);
 
         public RightTriangle LandedSlope
         {

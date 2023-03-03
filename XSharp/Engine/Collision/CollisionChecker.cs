@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 using XSharp.Engine.Entities;
 using XSharp.Math;
@@ -492,6 +493,67 @@ namespace XSharp.Engine.Collision
             }
 
             return false;
+        }
+
+        public bool HasPlacements(params CollisionData[] placementData)
+        {
+            foreach (var placement in placements)
+            {
+                if (placementData.Contains(placement.CollisionData))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public bool HasPlacementAndNotOtherPlacements(CollisionData placementData, params CollisionData[] exclude)
+        {
+            bool contains = false;
+            foreach (var placement in placements)
+            {
+                if (placement.CollisionData == placementData)
+                    contains = true;
+                else if (exclude.Contains(placement.CollisionData))
+                    return false;
+            }
+
+            return contains;
+        }
+
+        public bool HasPlacementAndOnlyAtLeastOtherPlacements(CollisionData placementData, params CollisionData[] additional)
+        {
+            bool contains = false;
+            foreach (var placement in placements)
+            {
+                if (placement.CollisionData == placementData)
+                    contains = true;
+                else if (!additional.Contains(placement.CollisionData))
+                    return false;
+            }
+
+            return contains;
+        }
+
+        public bool HasOnlyPlacement(CollisionData placementData)
+        {
+            foreach (var placement in placements)
+            {
+                if (placement.CollisionData != placementData)
+                    return false;
+            }
+
+            return true;
+        }
+
+        public bool HasOnlyPlacements(params CollisionData[] placementData)
+        {
+            foreach (var placement in placements)
+            {
+                if (!placementData.Contains(placement.CollisionData))
+                    return false;
+            }
+
+            return true;
         }
     }
 }

@@ -236,9 +236,16 @@ namespace XSharp.Engine
             base.Origin = (clamp ? ClampToBounds(x, y) : new Vector(x, y)).TruncFracPart();
         }
 
+        private Vector GetSmoothVelocity()
+        {
+            return Engine.Player != null && focusOn == Engine.Player && Engine.Player.NoClip
+                ? (NO_CLIP_SPEED_BOOST, NO_CLIP_SPEED_BOOST)
+                : (SmoothSpeed, SmoothSpeed);
+        }
+
         public void MoveToLeftTop(Vector dest)
         {
-            MoveToOrigin(dest + new Vector(Width, Width) * FixedSingle.HALF, (SmoothSpeed, SmoothSpeed));
+            MoveToOrigin(dest + new Vector(Width, Width) * FixedSingle.HALF, GetSmoothVelocity());
         }
 
         public void MoveToLeftTop(Vector dest, Vector velocity)
@@ -248,7 +255,7 @@ namespace XSharp.Engine
 
         public void MoveToOrigin(Vector dest)
         {
-            MoveToOrigin(dest, (SmoothSpeed, SmoothSpeed));
+            MoveToOrigin(dest, GetSmoothVelocity());
         }
 
         public void MoveToOrigin(Vector origin, Vector velocity)
@@ -303,7 +310,7 @@ namespace XSharp.Engine
 
         private void MoveToFocus()
         {
-            MoveToFocus((SmoothSpeed, SmoothSpeed));
+            MoveToFocus(GetSmoothVelocity());
         }
 
         public void StopMoving()

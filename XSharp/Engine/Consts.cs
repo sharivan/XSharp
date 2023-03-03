@@ -166,6 +166,8 @@ namespace XSharp.Engine
 
         // Scriver
 
+        public static readonly FixedSingle SCRIVER_START_JUMP_OFFSET_X = 10;
+        public static readonly FixedSingle SCRIVER_START_JUMP_OFFSET_Y = -6;
         public static readonly FixedSingle SCRIVER_JUMP_VELOCITY_X = 384 / 256.0;
         public static readonly FixedSingle SCRIVER_JUMP_VELOCITY_Y = -1280 / 256.0;
         public const int SCRIVER_HEALTH = 4;

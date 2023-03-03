@@ -85,24 +85,6 @@ namespace XSharp.Engine.Entities.Enemies
             return base.OnTakeDamage(attacker, ref damage);
         }
 
-        protected override void OnLanded()
-        {
-            if (State == ScriverState.JUMPING)
-            {
-                jumpCounter++;
-                jumping = false;
-                Velocity = Vector.NULL_VECTOR;
-                State = ScriverState.LANDING;
-            }
-        }
-
-        protected override void OnBlockedUp()
-        {
-            base.OnBlockedUp();
-
-            Velocity = Vector.NULL_VECTOR;
-        }
-
         private void OnIdle(EntityState state, long frameCounter)
         {
             if (Landed && Engine.Player != null)
@@ -125,14 +107,32 @@ namespace XSharp.Engine.Entities.Enemies
 
         private void OnJumping(EntityState state, long frameCounter)
         {
-            if (frameCounter == 10)
-            {
-                Velocity = (Direction == Direction.RIGHT ? SCRIVER_JUMP_VELOCITY_X : -SCRIVER_JUMP_VELOCITY_X, SCRIVER_JUMP_VELOCITY_Y);
-                jumping = true;
-            }
-            else if (!jumping)
+            if (frameCounter < 10)
             {
                 Velocity = Vector.NULL_VECTOR;
+            }
+            else if (frameCounter == 10)
+            {
+                Velocity = (Direction == Direction.RIGHT ? SCRIVER_START_JUMP_OFFSET_X : -SCRIVER_START_JUMP_OFFSET_X, SCRIVER_START_JUMP_OFFSET_Y);
+                jumping = true;
+            }
+            else if (frameCounter == 11)
+            {
+                Velocity = (Direction == Direction.RIGHT ? SCRIVER_JUMP_VELOCITY_X : -SCRIVER_JUMP_VELOCITY_X, SCRIVER_JUMP_VELOCITY_Y);
+            }
+            else
+            {
+                if (jumping && Landed)
+                {
+                    jumpCounter++;
+                    jumping = false;
+                    Velocity = Vector.NULL_VECTOR;
+                    State = ScriverState.LANDING;
+                }
+                else if (!jumping || Velocity.Y < 0 && (BlockedLeft || BlockedRight || BlockedUp))
+                {
+                    Velocity = Vector.NULL_VECTOR;
+                }
             }
         }
 
