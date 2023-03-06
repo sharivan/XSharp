@@ -1,72 +1,71 @@
 ﻿using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities
+namespace XSharp.Engine.Entities;
+
+public class Checkpoint : Entity
 {
-    public class Checkpoint : Entity
+    private Box hitbox;
+
+    new public Box Hitbox
     {
-        private Box hitbox;
+        get => base.Hitbox;
+        set => base.Hitbox = value;
+    }
 
-        new public Box Hitbox
-        {
-            get => base.Hitbox;
-            set => base.Hitbox = value;
-        }
+    public ushort Point
+    {
+        get;
+        set;
+    }
 
-        public ushort Point
-        {
-            get;
-            set;
-        }
+    public Vector CharacterPos
+    {
+        get;
+        set;
+    }
 
-        public Vector CharacterPos
-        {
-            get;
-            set;
-        }
+    public Vector CameraPos
+    {
+        get;
+        set;
+    }
 
-        public Vector CameraPos
-        {
-            get;
-            set;
-        }
+    public Vector BackgroundPos
+    {
+        get;
+        set;
+    }
 
-        public Vector BackgroundPos
-        {
-            get;
-            set;
-        }
+    public Vector ForceBackground
+    {
+        get;
+        set;
+    }
 
-        public Vector ForceBackground
-        {
-            get;
-            set;
-        }
+    public uint Scroll
+    {
+        get;
+        set;
+    }
 
-        public uint Scroll
-        {
-            get;
-            set;
-        }
+    public Checkpoint()
+    {
+    }
 
-        public Checkpoint()
-        {
-        }
+    protected override Box GetHitbox()
+    {
+        return hitbox;
+    }
 
-        protected override Box GetHitbox()
-        {
-            return hitbox;
-        }
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
+        CheckTouchingEntities = false;
+    }
 
-            CheckTouchingEntities = false;
-        }
-
-        protected override void SetHitbox(Box hitbox)
-        {
-            this.hitbox = hitbox;
-        }
+    protected override void SetHitbox(Box hitbox)
+    {
+        this.hitbox = hitbox;
     }
 }

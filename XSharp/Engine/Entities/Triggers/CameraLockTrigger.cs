@@ -2,61 +2,60 @@
 
 using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Triggers
+namespace XSharp.Engine.Entities.Triggers;
+
+public class CameraLockTrigger : BaseTrigger
 {
-    public class CameraLockTrigger : BaseTrigger
+    private readonly List<Vector> constraints;
+
+    public IEnumerable<Vector> Constraints => constraints;
+
+    public Vector ConstraintOrigin => Hitbox.Center;
+
+    public int ConstraintCount => constraints.Count;
+
+    public CameraLockTrigger()
     {
-        private readonly List<Vector> constraints;
+        TouchingKind = TouchingKind.VECTOR;
 
-        public IEnumerable<Vector> Constraints => constraints;
+        constraints = new List<Vector>();
+    }
 
-        public Vector ConstraintOrigin => Hitbox.Center;
+    protected override void OnStartTrigger(Entity obj)
+    {
+        base.OnStartTrigger(obj);
 
-        public int ConstraintCount => constraints.Count;
+        if (obj is Player)
+            Engine.SetCameraConstraints(ConstraintOrigin, constraints);
+    }
 
-        public CameraLockTrigger()
-        {
-            TouchingKind = TouchingKind.VECTOR;
+    public void AddConstraint(Vector constraint)
+    {
+        constraints.Add(constraint);
+    }
 
-            constraints = new List<Vector>();
-        }
+    public void AddConstraints(IEnumerable<Vector> constraints)
+    {
+        this.constraints.AddRange(constraints);
+    }
 
-        protected override void OnStartTrigger(Entity obj)
-        {
-            base.OnStartTrigger(obj);
+    public void AddConstraints(params Vector[] constraints)
+    {
+        this.constraints.AddRange(constraints);
+    }
 
-            if (obj is Player)
-                Engine.SetCameraConstraints(ConstraintOrigin, constraints);
-        }
+    public Vector GetConstraint(int index)
+    {
+        return constraints[index];
+    }
 
-        public void AddConstraint(Vector constraint)
-        {
-            constraints.Add(constraint);
-        }
+    public bool ContainsConstraint(Vector constraint)
+    {
+        return constraints.Contains(constraint);
+    }
 
-        public void AddConstraints(IEnumerable<Vector> constraints)
-        {
-            this.constraints.AddRange(constraints);
-        }
-
-        public void AddConstraints(params Vector[] constraints)
-        {
-            this.constraints.AddRange(constraints);
-        }
-
-        public Vector GetConstraint(int index)
-        {
-            return constraints[index];
-        }
-
-        public bool ContainsConstraint(Vector constraint)
-        {
-            return constraints.Contains(constraint);
-        }
-
-        public void ClearConstraints()
-        {
-            constraints.Clear();
-        }
+    public void ClearConstraints()
+    {
+        constraints.Clear();
     }
 }

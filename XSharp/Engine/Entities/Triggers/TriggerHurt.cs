@@ -1,6 +1,5 @@
-﻿namespace XSharp.Engine.Entities.Triggers
+﻿namespace XSharp.Engine.Entities.Triggers;
+
+public class TriggerHurt : BaseTrigger
 {
-    public class TriggerHurt : BaseTrigger
-    {
-    }
 }

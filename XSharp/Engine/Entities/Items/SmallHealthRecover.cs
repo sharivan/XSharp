@@ -1,49 +1,48 @@
 ﻿using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.Entities.Items
+namespace XSharp.Engine.Entities.Items;
+
+public enum SmallHealthRecoverState
 {
-    public enum SmallHealthRecoverState
+    DROPPING = 0,
+    IDLE = 1
+}
+
+public class SmallHealthRecover : Item
+{
+    public SmallHealthRecoverState State
     {
-        DROPPING = 0,
-        IDLE = 1
+        get => GetState<SmallHealthRecoverState>();
+        set => SetState(value);
     }
 
-    public class SmallHealthRecover : Item
+    public SmallHealthRecover()
     {
-        public SmallHealthRecoverState State
-        {
-            get => GetState<SmallHealthRecoverState>();
-            set => SetState(value);
-        }
+        SpriteSheetName = "X Weapons";
 
-        public SmallHealthRecover()
-        {
-            SpriteSheetName = "X Weapons";
+        SetAnimationNames("SmallHealthRecoverDropping", "SmallHealthRecoverIdle");
 
-            SetAnimationNames("SmallHealthRecoverDropping", "SmallHealthRecoverIdle");
+        SetupStateArray(typeof(SmallHealthRecoverState));
+        RegisterState(SmallHealthRecoverState.DROPPING, "SmallHealthRecoverDropping");
+        RegisterState(SmallHealthRecoverState.IDLE, "SmallHealthRecoverIdle");
+    }
 
-            SetupStateArray(typeof(SmallHealthRecoverState));
-            RegisterState(SmallHealthRecoverState.DROPPING, "SmallHealthRecoverDropping");
-            RegisterState(SmallHealthRecoverState.IDLE, "SmallHealthRecoverIdle");
-        }
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
+        State = SmallHealthRecoverState.DROPPING;
+    }
 
-            State = SmallHealthRecoverState.DROPPING;
-        }
+    protected override void OnLanded()
+    {
+        base.OnLanded();
 
-        protected override void OnLanded()
-        {
-            base.OnLanded();
+        State = SmallHealthRecoverState.IDLE;
+    }
 
-            State = SmallHealthRecoverState.IDLE;
-        }
-
-        protected override void OnCollecting(Player player)
-        {
-            player.Heal(SMALL_HEALTH_RECOVER_AMOUNT);
-        }
+    protected override void OnCollecting(Player player)
+    {
+        player.Heal(SMALL_HEALTH_RECOVER_AMOUNT);
     }
 }

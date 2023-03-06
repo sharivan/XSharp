@@ -1,36 +1,37 @@
 ﻿using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.HUD
+namespace XSharp.Engine.Entities.HUD;
+
+public abstract class HUD : Sprite
 {
-    public abstract class HUD : Sprite
+    public Vector Offset
     {
-        public Vector Offset
-        {
-            get;
-            set;
-        }
+        get;
+        set;
+    }
 
-        protected HUD()
-        {
-            Directional = false;
-        }
+    protected HUD()
+    {
+        Directional = false;
+    }
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
 
-            CheckTouchingEntities = false;
-            CheckCollisionWithWorld = false;
-            Static = true;
-        }
+        CheckTouchingEntities = false;
+        CheckCollisionWithWorld = false;
+        Static = true;
+    }
 
-        protected internal virtual void UpdateOrigin()
-        {
-            Origin = Engine.Camera.LeftTop + Offset;
-        }
+    protected internal override void PostThink()
+    {
+        base.PostThink();
 
-        protected internal override void UpdatePartition(bool force = false)
-        {
-        }
+        Origin = Engine.Camera.LeftTop + Offset;
+    }
+
+    protected internal override void UpdatePartition(bool force = false)
+    {
     }
 }

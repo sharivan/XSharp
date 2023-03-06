@@ -3,93 +3,92 @@ using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
+namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+
+public enum PenguinLeverState
 {
-    public enum PenguinLeverState
+    SHOWING,
+    IDLE,
+    PULLED,
+    HIDING
+}
+
+public class PenguinLever : Sprite
+{
+    private int showingFrameCounter;
+
+    public PenguinLeverState State
     {
-        SHOWING,
-        IDLE,
-        PULLED,
-        HIDING
+        get;
+        private set;
+    } = PenguinLeverState.IDLE;
+
+    public PenguinLever()
+    {
+        Directional = true;
+        SpriteSheetName = "Penguin";
+
+        SetAnimationNames("Lever");
     }
 
-    public class PenguinLever : Sprite
+    public override FixedSingle GetGravity()
     {
-        private int showingFrameCounter;
+        return 0;
+    }
 
-        public PenguinLeverState State
+    protected override Box GetHitbox()
+    {
+        return PENGUIN_LEVER_HITBOX;
+    }
+
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
+
+        CheckCollisionWithWorld = false;
+
+        Show();
+    }
+
+    public void Show()
+    {
+        if (State == PenguinLeverState.IDLE)
         {
-            get;
-            private set;
-        } = PenguinLeverState.IDLE;
-
-        public PenguinLever()
-        {
-            Directional = true;
-            SpriteSheetName = "Penguin";
-
-            SetAnimationNames("Lever");
+            showingFrameCounter = 0;
+            State = PenguinLeverState.SHOWING;
         }
+    }
 
-        public override FixedSingle GetGravity()
+    public void Hide()
+    {
+        if (State == PenguinLeverState.IDLE)
         {
-            return 0;
+            showingFrameCounter = 0;
+            State = PenguinLeverState.HIDING;
         }
+    }
 
-        protected override Box GetHitbox()
+    protected override void Think()
+    {
+        base.Think();
+
+        switch (State)
         {
-            return PENGUIN_LEVER_HITBOX;
-        }
+            case PenguinLeverState.SHOWING:
+                showingFrameCounter++;
+                Origin += Vector.DOWN_VECTOR;
+                if (showingFrameCounter == PENGUIN_LEVER_MOVING_FRAMES)
+                    State = PenguinLeverState.IDLE;
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
+                break;
 
-            CheckCollisionWithWorld = false;
+            case PenguinLeverState.HIDING:
+                showingFrameCounter++;
+                Origin += Vector.UP_VECTOR;
+                if (showingFrameCounter == PENGUIN_LEVER_MOVING_FRAMES)
+                    State = PenguinLeverState.IDLE;
 
-            Show();
-        }
-
-        public void Show()
-        {
-            if (State == PenguinLeverState.IDLE)
-            {
-                showingFrameCounter = 0;
-                State = PenguinLeverState.SHOWING;
-            }
-        }
-
-        public void Hide()
-        {
-            if (State == PenguinLeverState.IDLE)
-            {
-                showingFrameCounter = 0;
-                State = PenguinLeverState.HIDING;
-            }
-        }
-
-        protected override void Think()
-        {
-            base.Think();
-
-            switch (State)
-            {
-                case PenguinLeverState.SHOWING:
-                    showingFrameCounter++;
-                    Origin += Vector.DOWN_VECTOR;
-                    if (showingFrameCounter == PENGUIN_LEVER_MOVING_FRAMES)
-                        State = PenguinLeverState.IDLE;
-
-                    break;
-
-                case PenguinLeverState.HIDING:
-                    showingFrameCounter++;
-                    Origin += Vector.UP_VECTOR;
-                    if (showingFrameCounter == PENGUIN_LEVER_MOVING_FRAMES)
-                        State = PenguinLeverState.IDLE;
-
-                    break;
-            }
+                break;
         }
     }
 }

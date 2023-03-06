@@ -1,44 +1,43 @@
 ﻿using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Effects
+namespace XSharp.Engine.Entities.Effects;
+
+public class WallSlideEffect : SpriteEffect
 {
-    public class WallSlideEffect : SpriteEffect
+    private static Vector GetOrigin(Player player)
     {
-        private static Vector GetOrigin(Player player)
+        return player.Direction switch
         {
-            return player.Direction switch
-            {
-                Direction.LEFT => player.Hitbox.LeftTop + (-5, 25),
-                Direction.RIGHT => player.Hitbox.RightTop + (5, 25),
-                _ => Vector.NULL_VECTOR,
-            };
-        }
+            Direction.LEFT => player.Hitbox.LeftTop + (-5, 25),
+            Direction.RIGHT => player.Hitbox.RightTop + (5, 25),
+            _ => Vector.NULL_VECTOR,
+        };
+    }
 
-        private Player player;
+    private Player player;
 
-        public Player Player
+    public Player Player
+    {
+        get => player;
+        set
         {
-            get => player;
-            set
-            {
-                player = value;
-                if (value != null)
-                    Origin = GetOrigin(value);
-            }
+            player = value;
+            if (value != null)
+                Origin = GetOrigin(value);
         }
+    }
 
-        public WallSlideEffect()
-        {
-            SpriteSheetName = "X Effects";
-            Directional = true;
+    public WallSlideEffect()
+    {
+        SpriteSheetName = "X Effects";
+        Directional = true;
 
-            SetAnimationNames("WallSlideEffect");
-        }
+        SetAnimationNames("WallSlideEffect");
+    }
 
-        protected internal override void OnAnimationEnd(Animation animation)
-        {
-            base.OnAnimationEnd(animation);
-            KillOnNextFrame();
-        }
+    protected internal override void OnAnimationEnd(Animation animation)
+    {
+        base.OnAnimationEnd(animation);
+        KillOnNextFrame();
     }
 }

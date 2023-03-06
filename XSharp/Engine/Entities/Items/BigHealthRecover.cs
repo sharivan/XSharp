@@ -1,49 +1,48 @@
 ﻿using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.Entities.Items
+namespace XSharp.Engine.Entities.Items;
+
+public enum BigHealthRecoverState
 {
-    public enum BigHealthRecoverState
+    DROPPING = 0,
+    IDLE = 1
+}
+
+public class BigHealthRecover : Item
+{
+    public BigHealthRecoverState State
     {
-        DROPPING = 0,
-        IDLE = 1
+        get => GetState<BigHealthRecoverState>();
+        set => SetState(value);
     }
 
-    public class BigHealthRecover : Item
+    public BigHealthRecover()
     {
-        public BigHealthRecoverState State
-        {
-            get => GetState<BigHealthRecoverState>();
-            set => SetState(value);
-        }
+        SpriteSheetName = "X Weapons";
 
-        public BigHealthRecover()
-        {
-            SpriteSheetName = "X Weapons";
+        SetAnimationNames("BigHealthRecoverDropping", "BigHealthRecoverIdle");
 
-            SetAnimationNames("BigHealthRecoverDropping", "BigHealthRecoverIdle");
+        SetupStateArray(typeof(BigHealthRecoverState));
+        RegisterState(BigHealthRecoverState.DROPPING, "BigHealthRecoverDropping");
+        RegisterState(BigHealthRecoverState.IDLE, "BigHealthRecoverIdle");
+    }
 
-            SetupStateArray(typeof(BigHealthRecoverState));
-            RegisterState(BigHealthRecoverState.DROPPING, "BigHealthRecoverDropping");
-            RegisterState(BigHealthRecoverState.IDLE, "BigHealthRecoverIdle");
-        }
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
+        State = BigHealthRecoverState.DROPPING;
+    }
 
-            State = BigHealthRecoverState.DROPPING;
-        }
+    protected override void OnLanded()
+    {
+        base.OnLanded();
 
-        protected override void OnLanded()
-        {
-            base.OnLanded();
+        State = BigHealthRecoverState.IDLE;
+    }
 
-            State = BigHealthRecoverState.IDLE;
-        }
-
-        protected override void OnCollecting(Player player)
-        {
-            player.Heal(BIG_HEALTH_RECOVER_AMOUNT);
-        }
+    protected override void OnCollecting(Player player)
+    {
+        player.Heal(BIG_HEALTH_RECOVER_AMOUNT);
     }
 }

@@ -2,125 +2,126 @@
 
 using NAudio.Wave;
 
-namespace XSharp.Engine.Sound
+namespace XSharp.Engine.Sound;
+
+public class SoundChannel : IDisposable
 {
-    public class SoundChannel : IDisposable
+    internal string name;
+    private WaveOutEvent player;
+
+    public int Index
     {
-        internal string name;
-        private WaveOutEvent player;
+        get;
+        internal set;
+    }
 
-        public int Index
+    public string Name
+    {
+        get => name;
+        set => GameEngine.Engine.UpdateSoundChannelName(this, value);
+    }
+
+    public SoundStream Stream
+    {
+        get;
+    }
+
+    public bool Initialized
+    {
+        get;
+        private set;
+    }
+
+    public float Volume
+    {
+        get => player.Volume;
+        set => player.Volume = value;
+    }
+
+    public bool Playing => Stream.Playing;
+
+    internal SoundChannel(float volume = 1)
+    {
+        player = new WaveOutEvent()
         {
-            get;
-            internal set;
+            Volume = volume
+        };
+
+        Stream = new SoundStream();
+
+        Initialized = false;
+    }
+
+    public void Dispose()
+    {
+        player.Dispose();
+        Stream.Dispose();
+
+        Initialized = false;
+
+        GC.SuppressFinalize(this);
+    }
+
+    public void Play(WaveStream stream, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
+    {
+        stream.Position = 0;
+        Stream.UpdateSource(stream, stopTime, loopTime, ignoreUpdatesUntilPlayed);
+
+        if (!Stream.Playing)
+        {
+            Stream.Reset();
+            Stream.Play();
         }
 
-        public string Name
+        if (!Initialized)
         {
-            get => name;
-            set => GameEngine.Engine.UpdateSoundChannelName(this, value);
+            player.Init(Stream);
+            Initialized = true;
         }
 
-        public SoundStream Stream
-        {
-            get;
-        }
+        player.Play();
+    }
 
-        public bool Initialized
-        {
-            get;
-            private set;
-        }
+    public void Play(WaveStream stream, double loopTime, bool ignoreUpdatesUntilFinished = false)
+    {
+        Play(stream, -1, loopTime, ignoreUpdatesUntilFinished);
+    }
 
-        public float Volume
-        {
-            get => player.Volume;
-            set => player.Volume = value;
-        }
+    public void Play(WaveStream stream, bool ignoreUpdatesUntilFinished = false)
+    {
+        Play(stream, -1, -1, ignoreUpdatesUntilFinished);
+    }
 
-        public bool Playing => Stream.Playing;
-
-        internal SoundChannel(float volume = 1)
-        {
-            player = new WaveOutEvent()
-            {
-                Volume = volume
-            };
-
-            Stream = new SoundStream();
-
-            Initialized = false;
-        }
-
-        public void Dispose()
-        {
-            player.Dispose();
-            Stream.Dispose();
-
-            Initialized = false;
-        }
-
-        public void Play(WaveStream stream, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
-        {
-            stream.Position = 0;
-            Stream.UpdateSource(stream, stopTime, loopTime, ignoreUpdatesUntilPlayed);
-
-            if (!Stream.Playing)
-            {
-                Stream.Reset();
-                Stream.Play();
-            }
-
-            if (!Initialized)
-            {
-                player.Init(Stream);
-                Initialized = true;
-            }
-
-            player.Play();
-        }
-
-        public void Play(WaveStream stream, double loopTime, bool ignoreUpdatesUntilFinished = false)
-        {
-            Play(stream, -1, loopTime, ignoreUpdatesUntilFinished);
-        }
-
-        public void Play(WaveStream stream, bool ignoreUpdatesUntilFinished = false)
-        {
-            Play(stream, -1, -1, ignoreUpdatesUntilFinished);
-        }
-
-        public void ClearSoundLoopPoint(bool clearStopPoint = false)
-        {
-            Stream.LoopPoint = -1;
-            if (clearStopPoint)
-                Stream.StopPoint = -1;
-        }
-
-        public void ClearSoundStopPoint()
-        {
+    public void ClearSoundLoopPoint(bool clearStopPoint = false)
+    {
+        Stream.LoopPoint = -1;
+        if (clearStopPoint)
             Stream.StopPoint = -1;
-        }
+    }
 
-        public void StopStream()
-        {
-            Stream.Stop();
-        }
+    public void ClearSoundStopPoint()
+    {
+        Stream.StopPoint = -1;
+    }
 
-        public void StopPlayer()
-        {
-            player.Stop();
-        }
+    public void StopStream()
+    {
+        Stream.Stop();
+    }
 
-        public void Stop()
-        {
-            StopStream();
-            StopPlayer();
-        }
+    public void StopPlayer()
+    {
+        player.Stop();
+    }
 
-        public bool IsPlaying(WaveStream stream)
-        {
-            return Stream.Playing && Stream.Source == stream;
-        }
+    public void Stop()
+    {
+        StopStream();
+        StopPlayer();
+    }
+
+    public bool IsPlaying(WaveStream stream)
+    {
+        return Stream.Playing && Stream.Source == stream;
     }
 }

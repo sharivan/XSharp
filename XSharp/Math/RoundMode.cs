@@ -1,11 +1,10 @@
-﻿namespace XSharp.Math
+﻿namespace XSharp.Math;
+
+public enum RoundMode
 {
-    public enum RoundMode
-    {
-        NONE,
-        FLOOR,
-        CEIL,
-        TRUNCATE,
-        NEAREST,
-    }
+    NONE,
+    FLOOR,
+    CEIL,
+    TRUNCATE,
+    NEAREST,
 }

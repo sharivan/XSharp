@@ -3,162 +3,164 @@ using XSharp.Math;
 
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.Entities.Enemies
+namespace XSharp.Engine.Entities.Enemies;
+
+public abstract class Enemy : Sprite
 {
-    public abstract class Enemy : Sprite
+    public bool ReflectShots
     {
-        public bool ReflectShots
+        get;
+        protected set;
+    } = false;
+
+    public FixedSingle ContactDamage
+    {
+        get;
+        set;
+    }
+
+    public long SmallHealthDropOdd
+    {
+        get;
+        set;
+    }
+
+    public long BigHealthDropOdd
+    {
+        get;
+        set;
+    }
+
+    public long SmallAmmoDropOdd
+    {
+        get;
+        set;
+    }
+
+    public long BigAmmoDropOdd
+    {
+        get;
+        set;
+    }
+
+    public long LifeUpDropOdd
+    {
+        get;
+        set;
+    }
+
+    public long NothingDropOdd
+    {
+        get;
+        set;
+    }
+
+    public long TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeUpDropOdd + NothingDropOdd;
+
+    protected Enemy()
+    {
+        Directional = true;
+        CanGoOutOfMapBounds = true;
+    }
+
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
+
+        KillOnOffscreen = true;
+    }
+
+    protected virtual void OnContactDamage(Player player)
+    {
+        Hurt(player, ContactDamage);
+    }
+
+    protected override void OnTouching(Entity entity)
+    {
+        if (ContactDamage > 0 && entity is Player player)
+            OnContactDamage(player);
+
+        base.OnTouching(entity);
+    }
+
+    protected virtual void OnDamaged(Sprite attacker, FixedSingle damage)
+    {
+    }
+
+    protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
+    {
+        if (ReflectShots)
         {
-            get;
-            protected set;
-        } = false;
+            if (attacker is Weapon weapon)
+                weapon.Reflect();
 
-        public FixedSingle ContactDamage
-        {
-            get;
-            set;
-        }
-
-        public float SmallHealthDropOdd
-        {
-            get;
-            set;
-        }
-
-        public float BigHealthDropOdd
-        {
-            get;
-            set;
-        }
-
-        public float SmallAmmoDropOdd
-        {
-            get;
-            set;
-        }
-
-        public float BigAmmoDropOdd
-        {
-            get;
-            set;
-        }
-
-        public float LifeUpDropOdd
-        {
-            get;
-            set;
-        }
-
-        public float NothingDropOdd
-        {
-            get;
-            set;
-        }
-
-        public float TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeUpDropOdd + NothingDropOdd;
-
-        protected Enemy()
-        {
-            Directional = true;
-            CanGoOutOfMapBounds = true;
-        }
-
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
-
-            KillOnOffscreen = true;
-        }
-
-        protected virtual void OnContactDamage(Player player)
-        {
-            Hurt(player, ContactDamage);
-        }
-
-        protected override void OnTouching(Entity entity)
-        {
-            if (ContactDamage > 0 && entity is Player player)
-                OnContactDamage(player);
-
-            base.OnTouching(entity);
-        }
-
-        protected virtual void OnDamaged(Sprite attacker, FixedSingle damage)
-        {
-        }
-
-        protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
-        {
-            if (ReflectShots)
-            {
-                if (attacker is Weapon weapon)
-                    weapon.Reflect();
-
-                damage = 0;
-                return false;
-            }
-
-            if (Invincible)
-            {
-                if (attacker is Weapon weapon)
-                    weapon.OnHit(this, damage);
-
-                damage = 0;
-                return false;
-            }
-
-            if (base.OnTakeDamage(attacker, ref damage))
-            {
-                if (attacker is Weapon weapon)
-                    weapon.OnHit(this, damage);
-
-                return true;
-            }
-
+            damage = 0;
             return false;
         }
 
-        protected override void OnTakeDamagePost(Sprite attacker, FixedSingle damage)
+        if (Invincible)
         {
-            OnDamaged(attacker, damage);
-            base.OnTakeDamagePost(attacker, damage);
+            if (attacker is Weapon weapon)
+                weapon.OnHit(this, damage);
+
+            damage = 0;
+            return false;
         }
 
-        protected override void OnBroke()
+        if (base.OnTakeDamage(attacker, ref damage))
         {
-            Engine.CreateExplosionEffect(Hitbox.Center);
+            if (attacker is Weapon weapon)
+                weapon.OnHit(this, damage);
 
-            double random = Engine.RNG.NextDouble() * TotalDropOdd;
-            if (random < SmallHealthDropOdd)
-            {
-                Engine.DropSmallHealthRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
-                return;
-            }
-
-            random -= SmallHealthDropOdd;
-            if (random < BigHealthDropOdd)
-            {
-                Engine.DropBigHealthRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
-                return;
-            }
-
-            random -= BigHealthDropOdd;
-            if (random < SmallAmmoDropOdd)
-            {
-                Engine.DropSmallAmmoRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
-                return;
-            }
-
-            random -= SmallAmmoDropOdd;
-            if (random < BigAmmoDropOdd)
-            {
-                Engine.DropBigAmmoRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
-                return;
-            }
-
-            random -= BigAmmoDropOdd;
-            if (random < LifeUpDropOdd)
-                Engine.DropLifeUp(Hitbox.Center, ITEM_DURATION_FRAMES);
+            return true;
         }
+
+        return false;
+    }
+
+    protected override void OnTakeDamagePost(Sprite attacker, FixedSingle damage)
+    {
+        OnDamaged(attacker, damage);
+        base.OnTakeDamagePost(attacker, damage);
+    }
+
+    protected override void OnBroke()
+    {
+        Engine.CreateExplosionEffect(Hitbox.Center);
+
+        var random = Engine.RNG.NextLong(TotalDropOdd);
+        if (random > TotalDropOdd - NothingDropOdd)
+            return;
+
+        if (random < LifeUpDropOdd)
+        {
+            Engine.DropLifeUp(Hitbox.Center, ITEM_DURATION_FRAMES);
+            return;
+        }
+
+        random -= LifeUpDropOdd;
+        if (random < BigHealthDropOdd)
+        {
+            Engine.DropBigHealthRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
+            return;
+        }
+
+        random -= BigHealthDropOdd;
+        if (random < BigAmmoDropOdd)
+        {
+            Engine.DropBigAmmoRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
+            return;
+        }
+
+        random -= BigAmmoDropOdd;
+        if (random < SmallHealthDropOdd)
+        {
+            Engine.DropSmallHealthRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
+            return;
+        }
+
+        random -= SmallHealthDropOdd;
+        if (random < SmallAmmoDropOdd)
+            Engine.DropSmallAmmoRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
     }
 }

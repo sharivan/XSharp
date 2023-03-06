@@ -1,75 +1,74 @@
 ﻿using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Triggers
+namespace XSharp.Engine.Entities.Triggers;
+
+public class CheckpointSplitterTrigger : SplitterTrigger
 {
-    public class CheckpointSplitterTrigger : SplitterTrigger
+    public Checkpoint Checkpoint
     {
-        public Checkpoint Checkpoint
-        {
-            get;
-            set;
-        }
+        get;
+        set;
+    }
 
-        public SplitterTriggerDirection CheckpointDirection
-        {
-            get;
-            set;
-        } = SplitterTriggerDirection.FORWARD;
+    public SplitterTriggerDirection CheckpointDirection
+    {
+        get;
+        set;
+    } = SplitterTriggerDirection.FORWARD;
 
-        public Checkpoint LastCheckpoint
-        {
-            get;
-            private set;
-        } = null;
+    public Checkpoint LastCheckpoint
+    {
+        get;
+        private set;
+    } = null;
 
-        public Box LastCameraConstraintBox
-        {
-            get;
-            private set;
-        }
+    public Box LastCameraConstraintBox
+    {
+        get;
+        private set;
+    }
 
-        public int LastObjectTile
-        {
-            get;
-            private set;
-        }
+    public int LastObjectTile
+    {
+        get;
+        private set;
+    }
 
-        public int LastBackgroundTile
-        {
-            get;
-            private set;
-        }
+    public int LastBackgroundTile
+    {
+        get;
+        private set;
+    }
 
-        public int LastPalette
-        {
-            get;
-            private set;
-        }
+    public int LastPalette
+    {
+        get;
+        private set;
+    }
 
-        public CheckpointSplitterTrigger()
-        {
-        }
+    public CheckpointSplitterTrigger()
+    {
+    }
 
-        protected override void OnSplitterTriggerEvent(Entity obj, SplitterTriggerDirection direction)
-        {
-            base.OnSplitterTriggerEvent(obj, direction);
+    protected override void OnSplitterTriggerEvent(Entity obj, SplitterTriggerDirection direction)
+    {
+        base.OnSplitterTriggerEvent(obj, direction);
 
-            if (obj is Player)
+        if (obj is Player)
+        {
+            if (direction == CheckpointDirection)
             {
-                if (direction == CheckpointDirection)
-                {
-                    LastObjectTile = Engine.ObjectTile;
-                    LastBackgroundTile = Engine.BackgroundTile;
-                    LastPalette = Engine.Palette;
-                    LastCheckpoint = Engine.CurrentCheckpoint;
-                    LastCameraConstraintBox = Engine.CameraConstraintsBox;
-                    Engine.CurrentCheckpoint = Checkpoint;
-                }
-                else
-                {
-                    Engine.SetCheckpoint(LastCheckpoint, LastObjectTile, LastBackgroundTile, LastPalette);
-                    Engine.CameraConstraintsBox = LastCameraConstraintBox;
-                }
+                LastObjectTile = Engine.ObjectTile;
+                LastBackgroundTile = Engine.BackgroundTile;
+                LastPalette = Engine.Palette;
+                LastCheckpoint = Engine.CurrentCheckpoint;
+                LastCameraConstraintBox = Engine.CameraConstraintsBox;
+                Engine.CurrentCheckpoint = Checkpoint;
+            }
+            else
+            {
+                Engine.SetCheckpoint(LastCheckpoint, LastObjectTile, LastBackgroundTile, LastPalette);
+                Engine.CameraConstraintsBox = LastCameraConstraintBox;
             }
         }
     }

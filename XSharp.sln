@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XSharp", "XSharp\XSharp.csproj", "{55AD8C1E-FA85-4E17-ADA8-820F81B2A799}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XSharp", "XSharp\XSharp.csproj", "{55AD8C1E-FA85-4E17-ADA8-820F81B2A799}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D3D9Test", "D3D9Test\D3D9Test.csproj", "{B2DED961-1DAE-4F07-B380-1527CC67EE1F}"
 EndProject
@@ -16,6 +16,11 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NAudioTest", "NAudioTest\NAudioTest.csproj", "{3F5ACBB5-657C-4278-BE10-6AF7EC8130F9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MegaEDXCore", "MegaEDXCore\MegaEDXCore.csproj", "{76F4C615-086F-4BBA-82DA-7F6C33E4993A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{57C7EAFA-DAC9-475B-92FF-4A34536384B8}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

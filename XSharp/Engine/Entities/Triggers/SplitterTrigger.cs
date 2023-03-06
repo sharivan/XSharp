@@ -1,65 +1,64 @@
 ﻿using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Triggers
+namespace XSharp.Engine.Entities.Triggers;
+
+public enum SplitterTriggerOrientation
 {
-    public enum SplitterTriggerOrientation
+    HORIZONTAL,
+    VERTICAL
+}
+
+public enum SplitterTriggerDirection
+{
+    FORWARD,
+    BACKWARD
+}
+
+public delegate void SplitterTriggerEvent(SplitterTrigger source, Entity activator, SplitterTriggerDirection direction);
+
+public class SplitterTrigger : BaseTrigger
+{
+    public event SplitterTriggerEvent SplitterTriggerEvent;
+
+    public SplitterTriggerOrientation Orientation
     {
-        HORIZONTAL,
-        VERTICAL
+        get; set;
+    } = SplitterTriggerOrientation.VERTICAL;
+
+    public SplitterTrigger()
+    {
+        TouchingKind = TouchingKind.VECTOR;
     }
 
-    public enum SplitterTriggerDirection
+    protected virtual void OnSplitterTriggerEvent(Entity target, SplitterTriggerDirection side)
     {
-        FORWARD,
-        BACKWARD
+        SplitterTriggerEvent?.Invoke(this, target, side);
     }
 
-    public delegate void SplitterTriggerEvent(SplitterTrigger source, Entity activator, SplitterTriggerDirection direction);
-
-    public class SplitterTrigger : BaseTrigger
+    protected override void OnTrigger(Entity entity)
     {
-        public event SplitterTriggerEvent SplitterTriggerEvent;
+        base.OnTrigger(entity);
 
-        public SplitterTriggerOrientation Orientation
+        Vector targetOrigin = entity.GetVector(TouchingVectorKind).RoundToFloor();
+        Vector targetLastOrigin = entity.GetLastVector(TouchingVectorKind).RoundToFloor();
+
+        switch (Orientation)
         {
-            get; set;
-        } = SplitterTriggerOrientation.VERTICAL;
+            case SplitterTriggerOrientation.HORIZONTAL:
+                if (targetOrigin.Y < IntegerOrigin.Y && targetLastOrigin.Y >= IntegerOrigin.Y)
+                    OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
+                else if (targetOrigin.Y >= IntegerOrigin.Y && targetLastOrigin.Y < IntegerOrigin.Y)
+                    OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
 
-        public SplitterTrigger()
-        {
-            TouchingKind = TouchingKind.VECTOR;
-        }
+                break;
 
-        protected virtual void OnSplitterTriggerEvent(Entity target, SplitterTriggerDirection side)
-        {
-            SplitterTriggerEvent?.Invoke(this, target, side);
-        }
+            case SplitterTriggerOrientation.VERTICAL:
+                if (targetOrigin.X < IntegerOrigin.X && targetLastOrigin.X >= IntegerOrigin.X)
+                    OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
+                else if (targetOrigin.X >= IntegerOrigin.X && targetLastOrigin.X < IntegerOrigin.X)
+                    OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
 
-        protected override void OnTrigger(Entity entity)
-        {
-            base.OnTrigger(entity);
-
-            Vector targetOrigin = entity.GetVector(TouchingVectorKind).RoundToFloor();
-            Vector targetLastOrigin = entity.GetLastVector(TouchingVectorKind).RoundToFloor();
-
-            switch (Orientation)
-            {
-                case SplitterTriggerOrientation.HORIZONTAL:
-                    if (targetOrigin.Y < IntegerOrigin.Y && targetLastOrigin.Y >= IntegerOrigin.Y)
-                        OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
-                    else if (targetOrigin.Y >= IntegerOrigin.Y && targetLastOrigin.Y < IntegerOrigin.Y)
-                        OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
-
-                    break;
-
-                case SplitterTriggerOrientation.VERTICAL:
-                    if (targetOrigin.X < IntegerOrigin.X && targetLastOrigin.X >= IntegerOrigin.X)
-                        OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
-                    else if (targetOrigin.X >= IntegerOrigin.X && targetLastOrigin.X < IntegerOrigin.X)
-                        OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
-
-                    break;
-            }
+                break;
         }
     }
 }

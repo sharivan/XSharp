@@ -1,26 +1,25 @@
-﻿namespace XSharp.Engine.Entities.Items
+﻿namespace XSharp.Engine.Entities.Items;
+
+public class SubTankItem : Item
 {
-    public class SubTankItem : Item
+    public SubTankItem()
     {
-        public SubTankItem()
-        {
-            SpriteSheetName = "X Weapons";
-            DurationFrames = 0;
+        SpriteSheetName = "X Weapons";
+        DurationFrames = 0;
 
-            SetAnimationNames("SubTank");
-        }
+        SetAnimationNames("SubTank");
+    }
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
 
-            CurrentAnimationIndex = 0;
-            CurrentAnimation.StartFromBegin();
-        }
+        CurrentAnimationIndex = 0;
+        CurrentAnimation.StartFromBegin();
+    }
 
-        protected override void OnCollecting(Player player)
-        {
-            Engine.StartSubTankAcquiring();
-        }
+    protected override void OnCollecting(Player player)
+    {
+        Engine.StartSubTankAcquiring();
     }
 }

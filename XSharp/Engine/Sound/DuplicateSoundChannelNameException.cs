@@ -1,26 +1,25 @@
 ﻿using System;
 
-namespace XSharp.Engine.Sound
+namespace XSharp.Engine.Sound;
+
+public class DuplicateSoundChannelNameException : Exception
 {
-    public class DuplicateSoundChannelNameException : Exception
+    public string Name
     {
-        public string Name
-        {
-            get;
-        }
+        get;
+    }
 
-        public DuplicateSoundChannelNameException(string name) : this(name, $"Duplicate sound channel name '{name}'.")
-        {
-        }
+    public DuplicateSoundChannelNameException(string name) : this(name, $"Duplicate sound channel name '{name}'.")
+    {
+    }
 
-        public DuplicateSoundChannelNameException(string name, string message) : base(message)
-        {
-            Name = name;
-        }
+    public DuplicateSoundChannelNameException(string name, string message) : base(message)
+    {
+        Name = name;
+    }
 
-        public DuplicateSoundChannelNameException(string name, string message, Exception innerException) : base(message, innerException)
-        {
-            Name = name;
-        }
+    public DuplicateSoundChannelNameException(string name, string message, Exception innerException) : base(message, innerException)
+    {
+        Name = name;
     }
 }

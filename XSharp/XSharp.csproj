@@ -1,221 +1,20 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk"> 
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{55AD8C1E-FA85-4E17-ADA8-820F81B2A799}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <RootNamespace>XSharp</RootNamespace>
-    <AssemblyName>XSharp</AssemblyName>
-    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
+	<OutputType>WinExe</OutputType>
+	<TargetFramework>net7.0-windows</TargetFramework>
+    <LangVersion>preview</LangVersion>	
+    <Nullable>annotations</Nullable>
+	<UseWindowsForms>False</UseWindowsForms>
+	<ImplicitUsings>disable</ImplicitUsings>
+	<StartupObject>XSharp.Program</StartupObject>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<RepositoryUrl>https://github.com/sharivan/XSharp</RepositoryUrl>
+	<PackageProjectUrl>https://github.com/sharivan/XSharp</PackageProjectUrl>
+	<NeutralLanguage>en-001</NeutralLanguage>
+	<Title>X#</Title>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>x64</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <UseVSHostingProcess>true</UseVSHostingProcess>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>x64</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>XSharp.Program</StartupObject>
-  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="NAudio">
-      <Version>2.1.0</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio.Core">
-      <Version>2.1.0</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio.WinForms">
-      <Version>2.1.0</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio.WinMM">
-      <Version>2.1.0</Version>
-    </PackageReference>
-    <PackageReference Include="NLua">
-      <Version>1.6.2</Version>
-    </PackageReference>
-    <PackageReference Include="System.Configuration.ConfigurationManager">
-      <Version>7.0.0</Version>
-    </PackageReference>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Win32.Registry, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Win32.Registry.5.0.0\lib\net461\Microsoft.Win32.Registry.dll</HintPath>
-    </Reference>
-    <Reference Include="PresentationCore" />
-    <PackageReference Include="SharpDX" Version="4.2.0.0" />
-    <PackageReference Include="SharpDX.Desktop" Version="4.2.0.0" />
-    <PackageReference Include="SharpDX.Direct3D9" Version="4.2.0.0" />
-    <PackageReference Include="SharpDX.DirectInput" Version="4.2.0.0" />
-    <PackageReference Include="SharpDX.DirectSound" Version="4.2.0.0" />
-    <PackageReference Include="SharpDX.Mathematics" Version="4.2.0.0" />
-    <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Deployment" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Engine\BitSet.cs" />
-    <Compile Include="Engine\Collision\CollisionChecker.cs" />
-    <Compile Include="Engine\Collision\Parallelogram.cs" />
-    <Compile Include="Engine\Collision\TracerCollisionChecker.cs" />
-    <Compile Include="Engine\Collision\CollisionChecker.cs" />
-    <Compile Include="Engine\Collision\LanderCollisionChecker.cs" />
-    <Compile Include="Engine\Collision\Parallelogram.cs" />
-    <Compile Include="Engine\Collision\PixelCollisionChecker.cs" />
-    <Compile Include="Engine\Entities\Animation.cs" />
-    <Compile Include="Engine\Entities\BoxKind.cs" />
-    <Compile Include="Engine\Entities\Checkpoint.cs" />
-    <Compile Include="Engine\Entities\DuplicateEntityNameException.cs" />
-    <Compile Include="Engine\Entities\EnableDisable.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\BossHealthHUD.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\Penguin.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinFrozenBlock.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIce.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIceExplosionEffect.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinIceFragment.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinLever.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinSculpture.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\PenguinSnow.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Penguin\Mist.cs" />
-    <Compile Include="Engine\Entities\HUD\PlayerHealthHUD.cs" />
-    <Compile Include="Engine\Entities\Logical\LogicalBranch.cs" />
-    <Compile Include="Engine\Entities\Logical\LogicalEntity.cs" />
-    <Compile Include="Engine\Entities\Logical\LogicalLineTo.cs" />
-    <Compile Include="Engine\Entities\Logical\LogicalTimer.cs" />
-    <Compile Include="Engine\Entities\Objects\BossDoorEffect.cs" />
-    <Compile Include="Engine\Entities\Effects\DashSmokeEffect.cs" />
-    <Compile Include="Engine\Entities\Effects\DashSparkEffect.cs" />
-    <Compile Include="Engine\Entities\Effects\ExplosionEffect.cs" />
-    <Compile Include="Engine\Entities\Effects\SpriteEffect.cs" />
-    <Compile Include="Engine\Entities\Effects\WallKickEffect.cs" />
-    <Compile Include="Engine\Entities\Effects\WallSlideEffect.cs" />
-    <Compile Include="Engine\Entities\HUD\XDieExplosion.cs" />
-    <Compile Include="Engine\Entities\Enemies\BattonBoneG.cs" />
-    <Compile Include="Engine\Entities\Objects\BossDoor.cs" />
-    <Compile Include="Engine\Entities\Enemies\Scriver.cs" />
-    <Compile Include="Engine\Entities\EntityState.cs" />
-    <Compile Include="Engine\Entities\HUD\HealthHUD.cs" />
-    <Compile Include="Engine\Entities\HUD\ReadyHUD.cs" />
-    <Compile Include="Engine\Entities\Items\BigAmmoRecover.cs" />
-    <Compile Include="Engine\Entities\Items\BigHealthRecover.cs" />
-    <Compile Include="Engine\Entities\Items\HeartTank.cs" />
-    <Compile Include="Engine\Entities\Items\Item.cs" />
-    <Compile Include="Engine\Entities\Items\LifeUp.cs" />
-    <Compile Include="Engine\Entities\Items\SmallAmmoRecover.cs" />
-    <Compile Include="Engine\Entities\Items\SmallHealthRecover.cs" />
-    <Compile Include="Engine\Entities\Items\SubTankItem.cs" />
-    <Compile Include="Engine\Entities\Objects\Probe8201U.cs" />
-    <Compile Include="Engine\Entities\RespawnEntry.cs" />
-    <Compile Include="Engine\Entities\SpriteState.cs" />
-    <Compile Include="Engine\Entities\Triggers\CameraLockTrigger.cs" />
-    <Compile Include="Engine\Entities\Triggers\ChangeDynamicPropertyTrigger.cs" />
-    <Compile Include="Engine\Entities\Triggers\CheckpointSplitterTrigger.cs" />
-    <Compile Include="Engine\Entities\Triggers\CheckpointTriggerOnce.cs" />
-    <Compile Include="Engine\Entities\Triggers\SplitterTrigger.cs" />
-    <Compile Include="Engine\Entities\Triggers\Trigger.cs" />
-    <Compile Include="Engine\Entities\Triggers\TriggerHurt.cs" />
-    <Compile Include="Engine\Entities\Triggers\TriggerMultiple.cs" />
-    <Compile Include="Engine\Entities\Triggers\TriggerOnce.cs" />
-    <Compile Include="Engine\Entities\Triggers\TriggerPush.cs" />
-    <Compile Include="Engine\Entities\Triggers\TriggerTeleport.cs" />
-    <Compile Include="Engine\Entities\VectorKind.cs" />
-    <Compile Include="Engine\Entities\EntityList.cs" />
-    <Compile Include="Engine\FadingControl.cs" />
-    <Compile Include="Engine\Graphics\DuplicateSpriteSheetNameException .cs" />
-    <Compile Include="Engine\Graphics\DuplicatePaletteNameException.cs" />
-    <Compile Include="Engine\Graphics\Palette.cs" />
-    <Compile Include="Engine\Graphics\Tilemap.cs" />
-    <Compile Include="Engine\Graphics\Tileset.cs" />
-    <Compile Include="Engine\Sound\SoundChannel.cs" />
-    <Compile Include="Engine\Sound\DuplicateSoundChannelNameException.cs" />
-    <Compile Include="Engine\Sound\SoundStream.cs" />
-    <Compile Include="Engine\Collision\SpriteCollider.cs" />
-    <Compile Include="Engine\XSharpTupleExtensions.cs" />
-    <Compile Include="Engine\World\Block.cs" />
-    <Compile Include="Engine\Entities\Enemies\Bosses\Boss.cs" />
-    <Compile Include="Engine\Entities\Weapons\BusterCharged.cs" />
-    <Compile Include="Engine\Entities\Weapons\BusterLemon.cs" />
-    <Compile Include="Engine\Entities\Weapons\BusterSemiCharged.cs" />
-    <Compile Include="Engine\Entities\Effects\ChargingEffect.cs" />
-    <Compile Include="Engine\Collision\CollisionPlacement.cs" />
-    <Compile Include="Engine\Collision\CollisionFlags.cs" />
-    <Compile Include="Engine\Collision\CollisionData.cs" />
-    <Compile Include="Engine\Consts.cs" />
-    <Compile Include="Engine\Entities\Direction.cs" />
-    <Compile Include="Engine\Entities\Enemies\Enemy.cs" />
-    <Compile Include="Engine\Entities\Triggers\BaseTriggeer.cs" />
-    <Compile Include="Engine\GameEngine.cs" />
-    <Compile Include="Engine\Keys.cs" />
-    <Compile Include="Engine\World\Map.cs" />
-    <Compile Include="Engine\Entities\Weapons\Weapon.cs" />
-    <Compile Include="Math\FixedDouble.cs" />
-    <Compile Include="Math\FixedSingle.cs" />
-    <Compile Include="Engine\Entities\Entity.cs" />
-    <Compile Include="Engine\Partition.cs" />
-    <Compile Include="Engine\Entities\Player.cs" />
-    <Compile Include="Engine\World\Scene.cs" />
-    <Compile Include="Engine\Entities\Camera.cs" />
-    <Compile Include="Engine\Entities\Sprite.cs" />
-    <Compile Include="Engine\Graphics\SpriteSheet.cs" />
-    <Compile Include="Engine\World\Tile.cs" />
-    <Compile Include="Engine\World\Cell.cs" />
-    <Compile Include="Engine\World\World.cs" />
-    <Compile Include="Math\Geometry\Box.cs" />
-    <Compile Include="Math\Geometry\GeometrySet.cs" />
-    <Compile Include="Math\Geometry\IGeometry.cs" />
-    <Compile Include="Math\Geometry\LineSegment.cs" />
-    <Compile Include="Math\Geometry\Matrix2x2.cs" />
-    <Compile Include="Math\Geometry\RightTriangle.cs" />
-    <Compile Include="Math\Geometry\Vector.cs" />
-    <Compile Include="Math\Interval.cs" />
-    <Compile Include="Math\RoundMode.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Engine\Entities\HUD\HUD.cs" />
-    <Compile Include="ROM\CompressionCore.cs" />
-    <Compile Include="ROM\Deque.cs" />
-    <Compile Include="ROM\MegaEDCore.cs" />
-    <Compile Include="ROM\MMXCore.cs" />
-    <Compile Include="ROM\SNESCore.cs" />
     <Content Include="PaletteShader.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -302,26 +101,15 @@
     <EmbeddedResource Include="resources\sprites\Effects\Explosion.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <None Include="packages.config" />
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
     <Content Include="resources\roms\ShittyDash.mmx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -332,32 +120,30 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  
   <ItemGroup>
     <Folder Include="Engine\Entities\Armors\" />
     <Folder Include="Engine\Entities\Misc\" />
     <Folder Include="resources\maps\" />
     <Folder Include="sstates\" />
   </ItemGroup>
+  
   <ItemGroup>
     <EmbeddedResource Include="resources\tiles\Gator_Stage_Floor_Block.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
+  
   <ItemGroup>
     <EmbeddedResource Include="resources\sprites\X\X[small].png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
+  
   <ItemGroup>
     <EmbeddedResource Include="resources\sprites\X\Effects.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -366,14 +152,13 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Connected Services\" />
-  </ItemGroup>
+  
   <ItemGroup>
     <Content Include="PixelShader.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  
   <ItemGroup>
     <EmbeddedResource Include="resources\sprites\Enemies\X2\scriver.png" />
     <Content Include="resources\sounds\mmx2\X Semi Charged Shot.wav">
@@ -569,9 +354,19 @@
     <Content Include="resources\sounds\mmx\98 - MMX - Robot Suit %282%29.wav" />
     <Content Include="resources\sounds\mmx\99 - MMX - Robot Suit %283%29.wav" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <LangVersion>9.0</LangVersion>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.1.0" />
+    <PackageReference Include="NAudio.Core" Version="2.1.0" />
+    <PackageReference Include="NAudio.WinForms" Version="2.1.0" />
+    <PackageReference Include="NAudio.WinMM" Version="2.1.0" />
+    <PackageReference Include="NLua" Version="1.6.2" />
+    <PackageReference Include="SharpDX.Desktop" Version="4.2.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
+    <PackageReference Include="SharpDX" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Direct3D9" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.DirectInput" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.DirectSound" Version="4.2.0.0" />
+    <PackageReference Include="SharpDX.Mathematics" Version="4.2.0.0" />
+  </ItemGroup>
 </Project>

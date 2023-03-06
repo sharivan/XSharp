@@ -1,97 +1,96 @@
 ﻿using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Triggers
+namespace XSharp.Engine.Entities.Triggers;
+
+public delegate void TriggerEvent(BaseTrigger source, Entity activator);
+
+public abstract class BaseTrigger : Entity
 {
-    public delegate void TriggerEvent(BaseTrigger source, Entity activator);
+    private Box hitbox = Box.EMPTY_BOX;
 
-    public abstract class BaseTrigger : Entity
+    public event TriggerEvent StartTriggerEvent;
+    public event TriggerEvent TriggerEvent;
+    public event TriggerEvent StopTriggerEvent;
+
+    new public Box Hitbox
     {
-        private Box hitbox = Box.EMPTY_BOX;
+        get => base.Hitbox;
+        set => base.Hitbox = value;
+    }
 
-        public event TriggerEvent StartTriggerEvent;
-        public event TriggerEvent TriggerEvent;
-        public event TriggerEvent StopTriggerEvent;
+    public bool Enabled
+    {
+        get => CheckTouchingEntities;
+        set => CheckTouchingEntities = value;
+    }
 
-        new public Box Hitbox
+    public uint Triggers
+    {
+        get;
+        protected set;
+    }
+
+    public bool Once => MaxTriggers == 1;
+
+    public uint MaxTriggers
+    {
+        get;
+        protected set;
+    } = 0;
+
+    protected BaseTrigger()
+    {
+    }
+
+    protected override void OnStartTouch(Entity entity)
+    {
+        base.OnStartTouch(entity);
+
+        if (Enabled)
+            OnStartTrigger(entity);
+    }
+
+    protected override void OnTouching(Entity entity)
+    {
+        base.OnTouching(entity);
+
+        if (Enabled && (MaxTriggers == 0 || Triggers < MaxTriggers))
         {
-            get => base.Hitbox;
-            set => base.Hitbox = value;
+            Triggers++;
+            OnTrigger(entity);
         }
+    }
 
-        public bool Enabled
-        {
-            get => CheckTouchingEntities;
-            set => CheckTouchingEntities = value;
-        }
+    protected override void OnEndTouch(Entity entity)
+    {
+        base.OnEndTouch(entity);
 
-        public uint Triggers
-        {
-            get;
-            protected set;
-        }
+        if (Enabled)
+            OnStopTrigger(entity);
+    }
 
-        public bool Once => MaxTriggers == 1;
+    protected virtual void OnStartTrigger(Entity entity)
+    {
+        StartTriggerEvent?.Invoke(this, entity);
+    }
 
-        public uint MaxTriggers
-        {
-            get;
-            protected set;
-        } = 0;
+    protected virtual void OnTrigger(Entity entity)
+    {
+        TriggerEvent?.Invoke(this, entity);
+    }
 
-        protected BaseTrigger()
-        {
-        }
+    protected virtual void OnStopTrigger(Entity entity)
+    {
+        StopTriggerEvent?.Invoke(this, entity);
+    }
 
-        protected override void OnStartTouch(Entity entity)
-        {
-            base.OnStartTouch(entity);
+    protected override Box GetHitbox()
+    {
+        return hitbox;
+    }
 
-            if (Enabled)
-                OnStartTrigger(entity);
-        }
-
-        protected override void OnTouching(Entity entity)
-        {
-            base.OnTouching(entity);
-
-            if (Enabled && (MaxTriggers == 0 || Triggers < MaxTriggers))
-            {
-                Triggers++;
-                OnTrigger(entity);
-            }
-        }
-
-        protected override void OnEndTouch(Entity entity)
-        {
-            base.OnEndTouch(entity);
-
-            if (Enabled)
-                OnStopTrigger(entity);
-        }
-
-        protected virtual void OnStartTrigger(Entity entity)
-        {
-            StartTriggerEvent?.Invoke(this, entity);
-        }
-
-        protected virtual void OnTrigger(Entity entity)
-        {
-            TriggerEvent?.Invoke(this, entity);
-        }
-
-        protected virtual void OnStopTrigger(Entity entity)
-        {
-            StopTriggerEvent?.Invoke(this, entity);
-        }
-
-        protected override Box GetHitbox()
-        {
-            return hitbox;
-        }
-
-        protected override void SetHitbox(Box hitbox)
-        {
-            this.hitbox = hitbox;
-        }
+    protected override void SetHitbox(Box hitbox)
+    {
+        this.hitbox = hitbox;
     }
 }

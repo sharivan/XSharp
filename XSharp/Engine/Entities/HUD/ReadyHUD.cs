@@ -1,27 +1,26 @@
 ﻿using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.Entities.HUD
+namespace XSharp.Engine.Entities.HUD;
+
+public class ReadyHUD : HUD
 {
-    public class ReadyHUD : HUD
+    public ReadyHUD()
     {
-        public ReadyHUD()
-        {
-            Offset = READY_OFFSET;
-            SpriteSheetName = "Ready";
-        }
+        Offset = READY_OFFSET;
+        SpriteSheetName = "Ready";
+    }
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
 
-            CurrentAnimationIndex = 0;
-            CurrentAnimation.StartFromBegin();
-        }
+        CurrentAnimationIndex = 0;
+        CurrentAnimation.StartFromBegin();
+    }
 
-        protected internal override void OnAnimationEnd(Animation animation)
-        {
-            Engine.SpawnPlayer();
-            KillOnNextFrame();
-        }
+    protected internal override void OnAnimationEnd(Animation animation)
+    {
+        Engine.SpawnPlayer();
+        KillOnNextFrame();
     }
 }

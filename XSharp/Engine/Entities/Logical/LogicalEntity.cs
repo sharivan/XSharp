@@ -1,39 +1,38 @@
 ﻿using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Logical
+namespace XSharp.Engine.Entities.Logical;
+
+public abstract class LogicalEntity : Entity, IEnableDisable
 {
-    public abstract class LogicalEntity : Entity, IEnableDisable
+    public bool Enabled
     {
-        public bool Enabled
-        {
-            get;
-            set;
-        }
+        get;
+        set;
+    }
 
-        protected LogicalEntity()
-        {
-        }
+    protected LogicalEntity()
+    {
+    }
 
-        protected override Box GetHitbox()
-        {
-            return Box.EMPTY_BOX;
-        }
+    protected override Box GetHitbox()
+    {
+        return Box.EMPTY_BOX;
+    }
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
 
-            Enabled = true;
-        }
+        Enabled = true;
+    }
 
-        public void Enable()
-        {
-            Enabled = true;
-        }
+    public void Enable()
+    {
+        Enabled = true;
+    }
 
-        public void Disable()
-        {
-            Enabled = false;
-        }
+    public void Disable()
+    {
+        Enabled = false;
     }
 }

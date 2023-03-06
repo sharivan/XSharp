@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CA1822: Marcar membros como estáticos
+dotnet_diagnostic.CA1822.severity = none

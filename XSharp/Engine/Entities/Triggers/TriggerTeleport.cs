@@ -1,6 +1,5 @@
-﻿namespace XSharp.Engine.Entities.Triggers
+﻿namespace XSharp.Engine.Entities.Triggers;
+
+public class TriggerTeleport : BaseTrigger
 {
-    public class TriggerTeleport : BaseTrigger
-    {
-    }
 }

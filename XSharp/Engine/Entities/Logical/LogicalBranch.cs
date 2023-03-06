@@ -1,57 +1,56 @@
-﻿namespace XSharp.Engine.Entities.Logical
+﻿namespace XSharp.Engine.Entities.Logical;
+
+public delegate void LogicalBranchEvent(LogicalBranch source);
+
+public class LogicalBranch : LogicalEntity
 {
-    public delegate void LogicalBranchEvent(LogicalBranch source);
+    public event LogicalBranchEvent TrueEvent;
+    public event LogicalBranchEvent FalseEvent;
 
-    public class LogicalBranch : LogicalEntity
+    public bool Value
     {
-        public event LogicalBranchEvent TrueEvent;
-        public event LogicalBranchEvent FalseEvent;
+        get;
+        set;
+    }
 
-        public bool Value
-        {
-            get;
-            set;
-        }
+    public LogicalBranch()
+    {
+    }
 
-        public LogicalBranch()
-        {
-        }
+    public void SetValueTest(bool value)
+    {
+        if (!Enabled)
+            return;
 
-        public void SetValueTest(bool value)
-        {
-            if (!Enabled)
-                return;
+        Value = value;
+        Test();
+    }
 
-            Value = value;
-            Test();
-        }
+    public void Toggle()
+    {
+        if (!Enabled)
+            return;
 
-        public void Toggle()
-        {
-            if (!Enabled)
-                return;
+        Value = !Value;
+    }
 
-            Value = !Value;
-        }
+    public void ToggleTest()
+    {
+        if (!Enabled)
+            return;
 
-        public void ToggleTest()
-        {
-            if (!Enabled)
-                return;
+        Toggle();
+        Test();
+    }
 
-            Toggle();
-            Test();
-        }
+    public void Test()
+    {
+        if (!Enabled)
+            return;
 
-        public void Test()
-        {
-            if (!Enabled)
-                return;
-
-            if (Value)
-                TrueEvent?.Invoke(this);
-            else
-                FalseEvent?.Invoke(this);
-        }
+        if (Value)
+            TrueEvent?.Invoke(this);
+        else
+            FalseEvent?.Invoke(this);
     }
 }

@@ -9,9 +9,6 @@
 //------------------------------------------------------------------------------
 
 namespace XSharp.Properties {
-    using System;
-    
-    
     /// <summary>
     ///   Uma classe de recurso de tipo de alta segurança, para pesquisar cadeias de caracteres localizadas etc.
     /// </summary>

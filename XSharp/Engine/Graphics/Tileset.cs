@@ -2,21 +2,21 @@
 
 using SharpDX.Direct3D9;
 
-namespace XSharp.Engine.Graphics
+namespace XSharp.Engine.Graphics;
+
+public class Tileset : IDisposable
 {
-    public class Tileset : IDisposable
+    public Texture Texture
     {
-        public Texture Texture
-        {
-            get;
-        }
+        get;
+    }
 
-        public Tileset()
-        {
-        }
+    public Tileset()
+    {
+    }
 
-        public void Dispose()
-        {
-        }
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
     }
 }

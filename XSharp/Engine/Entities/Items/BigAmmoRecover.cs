@@ -1,33 +1,32 @@
 ﻿using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.Entities.Items
+namespace XSharp.Engine.Entities.Items;
+
+public enum BigAmmoRecoverState
 {
-    public enum BigAmmoRecoverState
+    DROPPING = 0,
+    IDLE = 1
+}
+
+public class BigAmmoRecover : Item
+{
+    public BigAmmoRecover()
     {
-        DROPPING = 0,
-        IDLE = 1
+        SpriteSheetName = "X Weapons";
+
+        SetAnimationNames("BigAmmoRecover");
     }
 
-    public class BigAmmoRecover : Item
+    protected internal override void OnSpawn()
     {
-        public BigAmmoRecover()
-        {
-            SpriteSheetName = "X Weapons";
+        base.OnSpawn();
 
-            SetAnimationNames("BigAmmoRecover");
-        }
+        CurrentAnimationIndex = 0;
+        CurrentAnimation.StartFromBegin();
+    }
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
-
-            CurrentAnimationIndex = 0;
-            CurrentAnimation.StartFromBegin();
-        }
-
-        protected override void OnCollecting(Player player)
-        {
-            player.ReloadAmmo(BIG_AMMO_RECOVER_AMOUNT);
-        }
+    protected override void OnCollecting(Player player)
+    {
+        player.ReloadAmmo(BIG_AMMO_RECOVER_AMOUNT);
     }
 }

@@ -2,28 +2,27 @@
 
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses
+namespace XSharp.Engine.Entities.Enemies.Bosses;
+
+public class BossHealthHUD : HealthHUD
 {
-    public class BossHealthHUD : HealthHUD
+    public Boss Boss
     {
-        public Boss Boss
-        {
-            get;
-            internal set;
-        }
+        get;
+        internal set;
+    }
 
-        public BossHealthHUD()
-        {
-            Left = BOSS_HP_LEFT;
-            Image = HUDImage.BOSS;
-        }
+    public BossHealthHUD()
+    {
+        Left = BOSS_HP_LEFT;
+        Image = HUDImage.BOSS;
+    }
 
-        protected internal override void UpdateOrigin()
-        {
-            Capacity = Boss.MaxHealth;
-            Value = Boss.Health;
+    protected internal override void PostThink()
+    {
+        Capacity = Boss.MaxHealth;
+        Value = Boss.Health;
 
-            base.UpdateOrigin();
-        }
+        base.PostThink();
     }
 }

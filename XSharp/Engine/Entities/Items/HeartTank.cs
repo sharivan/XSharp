@@ -1,26 +1,25 @@
-﻿namespace XSharp.Engine.Entities.Items
+﻿namespace XSharp.Engine.Entities.Items;
+
+public class HeartTank : Item
 {
-    public class HeartTank : Item
+    public HeartTank()
     {
-        public HeartTank()
-        {
-            DurationFrames = 0;
-            SpriteSheetName = "X Weapons";
+        DurationFrames = 0;
+        SpriteSheetName = "X Weapons";
 
-            SetAnimationNames("HeartTank");
-        }
+        SetAnimationNames("HeartTank");
+    }
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
 
-            CurrentAnimationIndex = 0;
-            CurrentAnimation.StartFromBegin();
-        }
+        CurrentAnimationIndex = 0;
+        CurrentAnimation.StartFromBegin();
+    }
 
-        protected override void OnCollecting(Player player)
-        {
-            Engine.StartHeartTankAcquiring();
-        }
+    protected override void OnCollecting(Player player)
+    {
+        Engine.StartHeartTankAcquiring();
     }
 }

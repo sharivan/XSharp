@@ -1,68 +1,67 @@
-﻿namespace XSharp.Engine.Entities.Triggers
+﻿namespace XSharp.Engine.Entities.Triggers;
+
+public enum DynamicProperty
 {
-    public enum DynamicProperty
+    OBJECT_TILE,
+    BACKGROUND_TILE,
+    PALETTE
+}
+
+public class ChangeDynamicPropertyTrigger : SplitterTrigger
+{
+    public DynamicProperty Property
     {
-        OBJECT_TILE,
-        BACKGROUND_TILE,
-        PALETTE
+        get; set;
     }
 
-    public class ChangeDynamicPropertyTrigger : SplitterTrigger
+    public int Forward
     {
-        public DynamicProperty Property
+        get; set;
+    }
+
+    public int Backward
+    {
+        get; set;
+    }
+
+    public ChangeDynamicPropertyTrigger()
+    {
+    }
+
+    private void ChangeProperty(int value)
+    {
+        switch (Property)
         {
-            get; set;
+            case DynamicProperty.OBJECT_TILE:
+                Engine.ObjectTile = value;
+                break;
+
+            case DynamicProperty.BACKGROUND_TILE:
+                Engine.BackgroundTile = value;
+                break;
+
+            case DynamicProperty.PALETTE:
+                Engine.Palette = value;
+                break;
         }
+    }
 
-        public int Forward
+    protected override void OnSplitterTriggerEvent(Entity obj, SplitterTriggerDirection direction)
+    {
+        base.OnSplitterTriggerEvent(obj, direction);
+
+        if (obj is not Player)
+            return;
+
+        switch (direction)
         {
-            get; set;
-        }
+            case SplitterTriggerDirection.BACKWARD:
+                ChangeProperty(Backward);
+                break;
 
-        public int Backward
-        {
-            get; set;
-        }
-
-        public ChangeDynamicPropertyTrigger()
-        {
-        }
-
-        private void ChangeProperty(int value)
-        {
-            switch (Property)
-            {
-                case DynamicProperty.OBJECT_TILE:
-                    Engine.ObjectTile = value;
-                    break;
-
-                case DynamicProperty.BACKGROUND_TILE:
-                    Engine.BackgroundTile = value;
-                    break;
-
-                case DynamicProperty.PALETTE:
-                    Engine.Palette = value;
-                    break;
-            }
-        }
-
-        protected override void OnSplitterTriggerEvent(Entity obj, SplitterTriggerDirection direction)
-        {
-            base.OnSplitterTriggerEvent(obj, direction);
-
-            if (obj is not Player)
-                return;
-
-            switch (direction)
-            {
-                case SplitterTriggerDirection.BACKWARD:
-                    ChangeProperty(Backward);
-                    break;
-
-                case SplitterTriggerDirection.FORWARD:
-                    ChangeProperty(Forward);
-                    break;
-            }
+            case SplitterTriggerDirection.FORWARD:
+                ChangeProperty(Forward);
+                break;
         }
     }
 }

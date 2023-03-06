@@ -1,53 +1,59 @@
 ﻿using XSharp.Math;
+using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Logical
+namespace XSharp.Engine.Entities.Logical;
+
+public delegate void LogicalLineToEvent(LogicalLineTo source);
+
+public class LogicalLineTo : LogicalBranch
 {
-    public delegate void LogicalLineToEvent(LogicalLineTo source);
+    private FixedSingle lastDistance;
 
-    public class LogicalLineTo : LogicalBranch
+    public event LogicalLineToEvent LogicalLineToEvent;
+
+    public Entity StartEntity
     {
-        private FixedSingle lastDistance;
+        get;
+        set;
+    }
 
-        public event LogicalLineToEvent LogicalLineToEvent;
+    public Entity EndEntity
+    {
+        get;
+        set;
+    }
 
-        public Entity StartEntity
+    public Metric Metric
+    {
+        get;
+        set;
+    } = Metric.EUCLIDIAN;
+
+    public LogicalLineTo()
+    {
+    }
+
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
+
+        lastDistance = StartEntity != null && EndEntity != null ? StartEntity.Origin.DistanceTo(EndEntity.Origin, Metric) : 0;
+    }
+
+    protected internal override void PostThink()
+    {
+        base.PostThink();
+
+        if (!Enabled)
+            return;
+
+        if (StartEntity != null && EndEntity != null)
         {
-            get;
-            set;
-        }
-
-        public Entity EndEntity
-        {
-            get;
-            set;
-        }
-
-        public LogicalLineTo()
-        {
-        }
-
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
-
-            lastDistance = StartEntity != null && EndEntity != null ? StartEntity.Origin.DistanceTo(EndEntity.Origin) : 0;
-        }
-
-        protected internal override void PostThink()
-        {
-            base.PostThink();
-
-            if (!Enabled)
-                return;
-
-            if (StartEntity != null && EndEntity != null)
+            FixedSingle distance = StartEntity.Origin.DistanceTo(EndEntity.Origin, Metric);
+            if (distance != lastDistance)
             {
-                FixedSingle distance = StartEntity.Origin.DistanceTo(EndEntity.Origin);
-                if (distance != lastDistance)
-                {
-                    LogicalLineToEvent?.Invoke(this);
-                    lastDistance = distance;
-                }
+                LogicalLineToEvent?.Invoke(this);
+                lastDistance = distance;
             }
         }
     }

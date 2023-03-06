@@ -3,590 +3,589 @@ using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin
+namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+
+public enum PenguinState
 {
-    public enum PenguinState
+    IDLE = 0,
+    INTRODUCING = 1,
+    SHOOTING_ICE = 2,
+    BLOWING = 3,
+    SLIDING = 4,
+    JUMPING = 5,
+    HANGING = 6,
+    TAKING_DAMAGE = 7,
+    IN_FLAMES = 8,
+    DYING = 9
+}
+
+public class Penguin : Boss
+{
+    public static readonly bool DONT_ATTACK = false;
+
+    private bool firstAttack;
+    private bool hanging;
+    private bool snowing;
+    private int snowingFrameCounter;
+    private bool wasShootingIce;
+    private int iceCount;
+    private PenguinLever lever;
+    private Mist mist;
+    private PenguinSculpture sculpture1;
+    private PenguinSculpture sculpture2;
+    private PenguinFrozenBlock frozenBlock;
+
+    public PenguinState State
     {
-        IDLE = 0,
-        INTRODUCING = 1,
-        SHOOTING_ICE = 2,
-        BLOWING = 3,
-        SLIDING = 4,
-        JUMPING = 5,
-        HANGING = 6,
-        TAKING_DAMAGE = 7,
-        IN_FLAMES = 8,
-        DYING = 9
+        get => GetState<PenguinState>();
+        set
+        {
+            if (DONT_ATTACK)
+            {
+                if (value is PenguinState.IDLE or PenguinState.INTRODUCING or PenguinState.TAKING_DAMAGE or PenguinState.DYING)
+                    SetState(value);
+            }
+            else
+            {
+                SetState(value);
+            }
+        }
     }
 
-    public class Penguin : Boss
+    public Penguin()
     {
-        public static readonly bool DONT_ATTACK = false;
+        Directional = true;
+        DefaultDirection = Direction.LEFT;
+        SpriteSheetName = "Penguin";
+        PaletteName = "penguinPalette";
 
-        private bool firstAttack;
-        private bool hanging;
-        private bool snowing;
-        private int snowingFrameCounter;
-        private bool wasShootingIce;
-        private int iceCount;
-        private PenguinLever lever;
-        private Mist mist;
-        private PenguinSculpture sculpture1;
-        private PenguinSculpture sculpture2;
-        private PenguinFrozenBlock frozenBlock;
+        ContactDamage = 6;
 
-        public PenguinState State
+        SetAnimationNames(
+            "FallingIntroducing", "LandingIntroducing", "Introducing", "IntroducingEnd", "Idle", "ShootingIce",
+            "PreSliding", "Sliding", "Blowing", "PreJumping", "Jumping", "Falling", "Landing", "Hanging",
+            "TakingDamage", "InFlames", "Dying"
+            );
+
+        SetupStateArray(typeof(PenguinState));
+        RegisterState(PenguinState.IDLE, OnIdle, "Idle");
+        RegisterState(PenguinState.INTRODUCING, "FallingIntroducing");
+        RegisterState(PenguinState.SHOOTING_ICE, OnShootingIce, "ShootingIce");
+        RegisterState(PenguinState.BLOWING, OnStartBlowing, OnBlowing, null, "Blowing");
+        RegisterState(PenguinState.SLIDING, OnStartSliding, OnSliding, OnEndSliding, "PreSliding");
+        RegisterState(PenguinState.JUMPING, OnStartJumping, OnJumping, null, "PreJumping");
+        RegisterState(PenguinState.HANGING, OnStartHanging, OnHanging, null, "Idle");
+        RegisterState(PenguinState.TAKING_DAMAGE, OnTakingDamage, "TakingDamage");
+        RegisterState(PenguinState.IN_FLAMES, OnInFlames, "InFlames");
+        RegisterState(PenguinState.DYING, OnStartDying, "Dying");
+
+        lever = Engine.CreateEntity<PenguinLever>();
+        mist = Engine.CreateEntity<Mist>();
+
+        sculpture1 = Engine.CreateEntity<PenguinSculpture>(new
         {
-            get => GetState<PenguinState>();
-            set
-            {
-                if (DONT_ATTACK)
-                {
-                    if (value is PenguinState.IDLE or PenguinState.INTRODUCING or PenguinState.TAKING_DAMAGE or PenguinState.DYING)
-                        SetState(value);
-                }
-                else
-                {
-                    SetState(value);
-                }
-            }
-        }
+            Shooter = this,
+            Respawnable = true
+        });
 
-        public Penguin()
+        sculpture2 = Engine.CreateEntity<PenguinSculpture>(new
         {
-            Directional = true;
-            DefaultDirection = Direction.LEFT;
-            SpriteSheetName = "Penguin";
-            PaletteName = "penguinPalette";
+            Shooter = this,
+            Respawnable = true
+        });
 
-            ContactDamage = 6;
-
-            SetAnimationNames(
-                "FallingIntroducing", "LandingIntroducing", "Introducing", "IntroducingEnd", "Idle", "ShootingIce",
-                "PreSliding", "Sliding", "Blowing", "PreJumping", "Jumping", "Falling", "Landing", "Hanging",
-                "TakingDamage", "InFlames", "Dying"
-                );
-
-            SetupStateArray(typeof(PenguinState));
-            RegisterState(PenguinState.IDLE, OnIdle, "Idle");
-            RegisterState(PenguinState.INTRODUCING, "FallingIntroducing");
-            RegisterState(PenguinState.SHOOTING_ICE, OnShootingIce, "ShootingIce");
-            RegisterState(PenguinState.BLOWING, OnStartBlowing, OnBlowing, null, "Blowing");
-            RegisterState(PenguinState.SLIDING, OnStartSliding, OnSliding, OnEndSliding, "PreSliding");
-            RegisterState(PenguinState.JUMPING, OnStartJumping, OnJumping, null, "PreJumping");
-            RegisterState(PenguinState.HANGING, OnStartHanging, OnHanging, null, "Idle");
-            RegisterState(PenguinState.TAKING_DAMAGE, OnTakingDamage, "TakingDamage");
-            RegisterState(PenguinState.IN_FLAMES, OnInFlames, "InFlames");
-            RegisterState(PenguinState.DYING, OnStartDying, "Dying");
-
-            lever = Engine.CreateEntity<PenguinLever>();
-            mist = Engine.CreateEntity<Mist>();
-
-            sculpture1 = Engine.CreateEntity<PenguinSculpture>(new
-            {
-                Shooter = this,
-                Respawnable = true
-            });
-
-            sculpture2 = Engine.CreateEntity<PenguinSculpture>(new
-            {
-                Shooter = this,
-                Respawnable = true
-            });
-
-            frozenBlock = Engine.CreateEntity<PenguinFrozenBlock>(new
-            {
-                Attacker = this,
-                Respawnable = true
-            });
-        }
-
-        public override FixedSingle GetGravity()
+        frozenBlock = Engine.CreateEntity<PenguinFrozenBlock>(new
         {
-            return hanging || State == PenguinState.DYING ? 0 : base.GetGravity();
-        }
+            Attacker = this,
+            Respawnable = true
+        });
+    }
 
-        protected override Box GetCollisionBox()
+    public override FixedSingle GetGravity()
+    {
+        return hanging || State == PenguinState.DYING ? 0 : base.GetGravity();
+    }
+
+    protected override Box GetCollisionBox()
+    {
+        return PENGUIN_COLLISION_BOX;
+    }
+
+    protected override Box GetHitbox()
+    {
+        return State switch
         {
-            return PENGUIN_COLLISION_BOX;
-        }
+            PenguinState.INTRODUCING => PENGUIN_COLLISION_BOX,
+            PenguinState.SLIDING => PENGUIN_SLIDE_HITBOX,
+            PenguinState.JUMPING => CurrentAnimationName == "Jumping" ? PENGUIN_JUMP_HITBOX : PENGUIN_HITBOX,
+            PenguinState.TAKING_DAMAGE => PENGUIN_TAKING_DAMAGE_HITBOX,
+            _ => PENGUIN_HITBOX,
+        };
+    }
 
-        protected override Box GetHitbox()
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
+
+        PaletteName = "penguinPalette";
+        firstAttack = true;
+        hanging = false;
+        snowing = false;
+        snowingFrameCounter = 0;
+        wasShootingIce = false;
+        iceCount = 0;
+        Direction = Direction.LEFT;
+        MaxHealth = BOSS_HP;
+
+        mist.Spawn();
+
+        SetState(PenguinState.INTRODUCING);
+    }
+
+    protected override void OnDeath()
+    {
+        sculpture1.Kill();
+        sculpture2.Kill();
+        mist.Kill();
+        lever.Kill();
+
+        base.OnDeath();
+    }
+
+    protected override void OnLanded()
+    {
+        base.OnLanded();
+
+        switch (State)
         {
-            return State switch
-            {
-                PenguinState.INTRODUCING => PENGUIN_COLLISION_BOX,
-                PenguinState.SLIDING => PENGUIN_SLIDE_HITBOX,
-                PenguinState.JUMPING => CurrentAnimationName == "Jumping" ? PENGUIN_JUMP_HITBOX : PENGUIN_HITBOX,
-                PenguinState.TAKING_DAMAGE => PENGUIN_TAKING_DAMAGE_HITBOX,
-                _ => PENGUIN_HITBOX,
-            };
-        }
+            case PenguinState.INTRODUCING:
+                SetCurrentAnimationByName("LandingIntroducing");
+                break;
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
-
-            PaletteName = "penguinPalette";
-            firstAttack = true;
-            hanging = false;
-            snowing = false;
-            snowingFrameCounter = 0;
-            wasShootingIce = false;
-            iceCount = 0;
-            Direction = Direction.LEFT;
-            MaxHealth = BOSS_HP;
-
-            mist.Spawn();
-
-            SetState(PenguinState.INTRODUCING);
-        }
-
-        protected override void OnDeath()
-        {
-            sculpture1.Kill();
-            sculpture2.Kill();
-            mist.Kill();
-            lever.Kill();
-
-            base.OnDeath();
-        }
-
-        protected override void OnLanded()
-        {
-            base.OnLanded();
-
-            switch (State)
-            {
-                case PenguinState.INTRODUCING:
-                    SetCurrentAnimationByName("LandingIntroducing");
-                    break;
-
-                case PenguinState.TAKING_DAMAGE:
-                    State = PenguinState.IDLE;
-                    break;
-
-                default:
-                    SetCurrentAnimationByName("Landing");
-                    break;
-            }
-
-            Velocity = Vector.NULL_VECTOR;
-        }
-
-        private void FlipSpeedAndDirection()
-        {
-            Velocity = -Velocity;
-            Direction = Direction.Oposite();
-        }
-
-        protected override void OnBlockedLeft()
-        {
-            base.OnBlockedLeft();
-
-            if (State == PenguinState.SLIDING && Direction == Direction.LEFT)
-                FlipSpeedAndDirection();
-        }
-
-        protected override void OnBlockedRight()
-        {
-            base.OnBlockedRight();
-
-            if (State == PenguinState.SLIDING && Direction == Direction.RIGHT)
-                FlipSpeedAndDirection();
-        }
-
-        protected override void OnBlockedUp()
-        {
-            base.OnBlockedUp();
-
-            Velocity = Vector.NULL_VECTOR;
-        }
-
-        private void ApplyKnockback(Sprite attacker)
-        {
-            FaceToEntity(attacker);
-            Velocity = (Direction == DefaultDirection ? PENGUIN_KNOCKBACK_SPEED_X : -PENGUIN_KNOCKBACK_SPEED_X, -PENGUIN_KNOCKBACK_SPEED_Y);
-            State = PenguinState.TAKING_DAMAGE;
-        }
-
-        protected override void OnDamaged(Sprite attacker, FixedSingle damage)
-        {
-            base.OnDamaged(attacker, damage);
-
-            if (State is PenguinState.IDLE or PenguinState.JUMPING or PenguinState.HANGING or PenguinState.SHOOTING_ICE)
-                ApplyKnockback(attacker);
-        }
-
-        private void OnIdle(EntityState state, long frameCounter)
-        {
-            if (frameCounter == 14)
-            {
-                if (firstAttack)
-                {
-                    firstAttack = false;
-                    FaceToPlayer();
-                    State = PenguinState.SHOOTING_ICE;
-                }
-                else if (wasShootingIce && iceCount < 4)
-                {
-                    FaceToPlayer();
-                    State = PenguinState.SHOOTING_ICE;
-                }
-                else
-                {
-                    FaceToPlayer();
-                    wasShootingIce = false;
-                    iceCount = 0;
-
-                    if (!DONT_ATTACK)
-                    {
-                        int value = Engine.RNG.Next(5);
-                        while (State == PenguinState.IDLE)
-                        {
-                            switch (value)
-                            {
-                                case 0:
-                                    State = PenguinState.SLIDING;
-                                    break;
-
-                                case 1:
-                                    State = PenguinState.SHOOTING_ICE;
-                                    break;
-
-                                case 2:
-                                    State = PenguinState.JUMPING;
-                                    break;
-
-                                case 3:
-                                    State = PenguinState.HANGING;
-                                    break;
-
-                                case 4:
-                                    if (!AllSculpturesAlive())
-                                        State = PenguinState.BLOWING;
-
-                                    break;
-                            }
-
-                            value = Engine.RNG.Next(4);
-                        }
-                    }
-                }
-            }
-        }
-
-        private bool AllSculpturesAlive()
-        {
-            return sculpture1.Alive && sculpture2.Alive;
-        }
-
-        private void OnShootingIce(EntityState state, long frameCounter)
-        {
-            if (frameCounter == PENGUIN_SHOT_START_FRAME)
-            {
-                ShootIce();
-                wasShootingIce = true;
+            case PenguinState.TAKING_DAMAGE:
                 State = PenguinState.IDLE;
+                break;
+
+            default:
+                SetCurrentAnimationByName("Landing");
+                break;
+        }
+
+        Velocity = Vector.NULL_VECTOR;
+    }
+
+    private void FlipSpeedAndDirection()
+    {
+        Velocity = -Velocity;
+        Direction = Direction.Oposite();
+    }
+
+    protected override void OnBlockedLeft()
+    {
+        base.OnBlockedLeft();
+
+        if (State == PenguinState.SLIDING && Direction == Direction.LEFT)
+            FlipSpeedAndDirection();
+    }
+
+    protected override void OnBlockedRight()
+    {
+        base.OnBlockedRight();
+
+        if (State == PenguinState.SLIDING && Direction == Direction.RIGHT)
+            FlipSpeedAndDirection();
+    }
+
+    protected override void OnBlockedUp()
+    {
+        base.OnBlockedUp();
+
+        Velocity = Vector.NULL_VECTOR;
+    }
+
+    private void ApplyKnockback(Sprite attacker)
+    {
+        FaceToEntity(attacker);
+        Velocity = (Direction == DefaultDirection ? PENGUIN_KNOCKBACK_SPEED_X : -PENGUIN_KNOCKBACK_SPEED_X, -PENGUIN_KNOCKBACK_SPEED_Y);
+        State = PenguinState.TAKING_DAMAGE;
+    }
+
+    protected override void OnDamaged(Sprite attacker, FixedSingle damage)
+    {
+        base.OnDamaged(attacker, damage);
+
+        if (State is PenguinState.IDLE or PenguinState.JUMPING or PenguinState.HANGING or PenguinState.SHOOTING_ICE)
+            ApplyKnockback(attacker);
+    }
+
+    private void OnIdle(EntityState state, long frameCounter)
+    {
+        if (frameCounter == 14)
+        {
+            if (firstAttack)
+            {
+                firstAttack = false;
+                FaceToPlayer();
+                State = PenguinState.SHOOTING_ICE;
             }
-        }
-
-        private void OnStartBlowing(EntityState state, EntityState lastState)
-        {
-        }
-
-        private void PlayBlowingSoundLoop()
-        {
-            Engine.PlaySound(5, "Chill Penguin Breath", 2.3305, 0.03018);
-        }
-
-        private void FinishBlowingSoundLoop()
-        {
-            Engine.ClearSoundLoopPoint(5, "Chill Penguin Breath", true);
-        }
-
-        private void StopBlowingSound()
-        {
-            Engine.StopSound(5, "Chill Penguin Breath");
-        }
-
-        private void OnBlowing(EntityState state, long frameCounter)
-        {
-            switch (frameCounter)
+            else if (wasShootingIce && iceCount < 4)
             {
-                case PENGUIN_SHOT_START_FRAME:
-                    PlayBlowingSoundLoop();
-                    break;
-
-                case PENGUIN_BLOW_FRAMES_TO_SPAWN_SCULPTURES:
-                    if (!sculpture1.Alive)
-                    {
-                        sculpture1.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.Y);
-                        sculpture1.Spawn();
-                    }
-
-                    if (!sculpture2.Alive)
-                    {
-                        sculpture2.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.Y);
-                        sculpture2.Spawn();
-                    }
-
-                    break;
-
-                case PENGUIN_BLOW_FRAMES:
-                    FinishBlowingSoundLoop();
-                    State = PenguinState.IDLE;
-                    break;
+                FaceToPlayer();
+                State = PenguinState.SHOOTING_ICE;
             }
-
-            if (frameCounter >= PENGUIN_SHOT_START_FRAME && frameCounter % 8 == 0)
-                ShootSnow();
-        }
-
-        private void ShootIce()
-        {
-            var ice = Engine.CreateEntity<PenguinIce>(new
+            else
             {
-                Shooter = this,
-                Bump = Engine.RNG.Next(2) == 1
-            });
+                FaceToPlayer();
+                wasShootingIce = false;
+                iceCount = 0;
 
-            ice.Spawn();
-            iceCount++;
-        }
-
-        private void ShootSnow()
-        {
-            var snow = Engine.CreateEntity<PenguinSnow>(new
-            {
-                Shooter = this
-            });
-
-            snow.Spawn();
-        }
-
-        private void OnStartSliding(EntityState state, EntityState lastState)
-        {
-            Invincible = true;
-            ReflectShots = true;
-        }
-
-        private void OnSliding(EntityState state, long frameCounter)
-        {
-            if (frameCounter >= 30)
-            {
-                if (frameCounter == 30)
-                    Engine.PlaySound(4, "Misc. dash, jump, move (3)");
-
-                Vector v = Velocity;
-                Vector a = PENGUIN_SLIDE_DECELARATION * (Direction == DefaultDirection ? Vector.LEFT_VECTOR : Vector.RIGHT_VECTOR);
-                v -= a;
-                if (v.X > 0 && Velocity.X < 0 || v.X < 0 && Velocity.X > 0 || v.X.Abs < PENGUIN_SLIDE_DECELARATION)
+                if (!DONT_ATTACK)
                 {
-                    Velocity = Vector.NULL_VECTOR;
-                    State = PenguinState.IDLE;
-                }
-                else
-                {
-                    Velocity = v;
-                }
-            }
-        }
-
-        private void OnEndSliding(EntityState state)
-        {
-            Invincible = false;
-            ReflectShots = false;
-        }
-
-        private void OnStartJumping(EntityState state, EntityState lastState)
-        {
-        }
-
-        private void OnJumping(EntityState state, long frameCounter)
-        {
-            if (!Landed && Velocity.Y > 0 && CurrentAnimationName != "Falling")
-                SetCurrentAnimationByName("Falling", 0);
-        }
-
-        private void OnStartHanging(EntityState state, EntityState laststate)
-        {
-            FaceToScreenCenter();
-        }
-
-        private void OnHanging(EntityState state, long frameCounter)
-        {
-            switch (frameCounter)
-            {
-                case PENGUIN_FRAMES_BEFORE_HANGING_JUMP:
-                    SetCurrentAnimationByName("PreJumping", 0);
-                    break;
-
-                case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG:
-                    Velocity = Vector.NULL_VECTOR;
-                    Origin = lever.Origin + (lever.Origin.X < Origin.X ? PENGUIN_HANGING_OFFSET : (-PENGUIN_HANGING_OFFSET.X, PENGUIN_HANGING_OFFSET.Y));
-                    hanging = true;
-                    SetCurrentAnimationByName("Hanging", 0);
-                    break;
-
-                case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG + PENGUIN_FRAMES_BEFORE_SNOW_AFTER_HANGING:
-                    snowing = true;
-                    snowingFrameCounter = 0;
-                    mist.MistDirection = Direction;
-                    mist.Play();
-                    break;
-
-                case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG + PENGUIN_FRAMES_BEFORE_STOP_HANGING:
-                    Velocity = Vector.NULL_VECTOR;
-                    hanging = false;
-                    SetCurrentAnimationByName("Falling", 0);
-                    break;
-            }
-        }
-
-        private void OnTakingDamage(EntityState state, long frameCounter)
-        {
-            hanging = false;
-            iceCount = 4;
-        }
-
-        private void OnInFlames(EntityState state, long frameCounter)
-        {
-        }
-
-        private void BreakSculptures()
-        {
-            if (sculpture1.Alive)
-                sculpture1.Break();
-
-            if (sculpture2.Alive)
-                sculpture2.Break();
-        }
-
-        private void BreakFrozenBlock()
-        {
-            if (frozenBlock.Alive)
-                frozenBlock.Break();
-        }
-
-        private void OnStartDying(EntityState state, EntityState lastState)
-        {
-            BreakSculptures();
-            BreakFrozenBlock();
-            lever.Hide();
-            mist.Stop();
-            Engine.Player.ResetExternalVelocity();
-        }
-
-        protected override void Think()
-        {
-            if (snowing)
-            {
-                var adictionalVelocity = (mist.MistDirection == Direction.LEFT ? -PENGUIN_HANGING_SNOWING_SPEED_X : PENGUIN_HANGING_SNOWING_SPEED_X, 0);
-                Engine.Player.AddExternalVelocity(adictionalVelocity);
-
-                if (sculpture1.Alive && !sculpture1.MarkedToRemove && !sculpture1.Broke)
-                    sculpture1.AddExternalVelocity(adictionalVelocity);
-
-                if (sculpture2.Alive && !sculpture2.MarkedToRemove && !sculpture2.Broke)
-                    sculpture2.AddExternalVelocity(adictionalVelocity);
-
-                snowingFrameCounter++;
-                if (snowingFrameCounter == PENGUIN_MIST_FRAMES)
-                {
-                    mist.Stop();
-                    snowing = false;
-                }
-            }
-
-            base.Think();
-        }
-
-        protected internal override void OnAnimationEnd(Animation animation)
-        {
-            base.OnAnimationEnd(animation);
-
-            switch (animation.FrameSequenceName)
-            {
-                case "PreSliding":
-                    SetCurrentAnimationByName("Sliding");
-
-                    if (Direction == DefaultDirection)
+                    int value = Engine.RNG.NextInt(5);
+                    while (State == PenguinState.IDLE)
                     {
-                        Velocity = PENGUIN_SLIDE_INITIAL_SPEED * Vector.LEFT_VECTOR;
-                        if (WorldCollider.BlockedLeft)
-                            FlipSpeedAndDirection();
-                    }
-                    else
-                    {
-                        Velocity = PENGUIN_SLIDE_INITIAL_SPEED * Vector.RIGHT_VECTOR;
-                        if (WorldCollider.BlockedRight)
-                            FlipSpeedAndDirection();
-                    }
-
-                    break;
-
-                case "PreJumping":
-                    switch (State)
-                    {
-                        case PenguinState.JUMPING:
+                        switch (value)
                         {
-                            FixedSingle jumpSpeedX = (Engine.Player.Origin.X - Origin.X) / PENGUIN_JUMP_FRAMES;
-                            Velocity = (jumpSpeedX, -PENGUIN_JUMP_SPEED_Y);
-                            break;
+                            case 0:
+                                State = PenguinState.SLIDING;
+                                break;
+
+                            case 1:
+                                State = PenguinState.SHOOTING_ICE;
+                                break;
+
+                            case 2:
+                                State = PenguinState.JUMPING;
+                                break;
+
+                            case 3:
+                                State = PenguinState.HANGING;
+                                break;
+
+                            case 4:
+                                if (!AllSculpturesAlive())
+                                    State = PenguinState.BLOWING;
+
+                                break;
                         }
 
-                        case PenguinState.HANGING:
-                        {
-                            FixedSingle jumpSpeedX = (lever.Origin.X - Origin.X) / PENGUIN_FRAMES_TO_HANG;
-                            Velocity = (jumpSpeedX, -PENGUIN_HANGING_JUMP_SPEED_Y);
-                            break;
-                        }
+                        value = Engine.RNG.NextInt(4);
                     }
-
-                    SetCurrentAnimationByName("Jumping");
-                    break;
-
-                case "LandingIntroducing":
-                    SetCurrentAnimationByName("Introducing");
-                    break;
-
-                case "Introducing" when !HealthFilling && Health == 0:
-                    StartHealthFilling();
-
-                    lever.Origin = World.World.GetSceneBoundingBoxFromPos(Origin).MiddleTop + (0, 12);
-                    lever.Spawn();
-                    break;
-
-                case "Landing":
-                    State = PenguinState.IDLE;
-                    break;
+                }
             }
         }
+    }
 
-        protected override void OnStartBattle()
+    private bool AllSculpturesAlive()
+    {
+        return sculpture1.Alive && sculpture2.Alive;
+    }
+
+    private void OnShootingIce(EntityState state, long frameCounter)
+    {
+        if (frameCounter == PENGUIN_SHOT_START_FRAME)
         {
-            base.OnStartBattle();
-
+            ShootIce();
+            wasShootingIce = true;
             State = PenguinState.IDLE;
         }
+    }
 
-        protected override void OnDying()
+    private void OnStartBlowing(EntityState state, EntityState lastState)
+    {
+    }
+
+    private void PlayBlowingSoundLoop()
+    {
+        Engine.PlaySound(5, "Chill Penguin Breath", 2.3305, 0.03018);
+    }
+
+    private void FinishBlowingSoundLoop()
+    {
+        Engine.ClearSoundLoopPoint(5, "Chill Penguin Breath", true);
+    }
+
+    private void StopBlowingSound()
+    {
+        Engine.StopSound(5, "Chill Penguin Breath");
+    }
+
+    private void OnBlowing(EntityState state, long frameCounter)
+    {
+        switch (frameCounter)
         {
-            StopBlowingSound();
-            hanging = false;
-            snowing = false;
-            Velocity = Vector.NULL_VECTOR;
-            State = PenguinState.DYING;
+            case PENGUIN_SHOT_START_FRAME:
+                PlayBlowingSoundLoop();
+                break;
+
+            case PENGUIN_BLOW_FRAMES_TO_SPAWN_SCULPTURES:
+                if (!sculpture1.Alive)
+                {
+                    sculpture1.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.Y);
+                    sculpture1.Spawn();
+                }
+
+                if (!sculpture2.Alive)
+                {
+                    sculpture2.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.Y);
+                    sculpture2.Spawn();
+                }
+
+                break;
+
+            case PENGUIN_BLOW_FRAMES:
+                FinishBlowingSoundLoop();
+                State = PenguinState.IDLE;
+                break;
         }
 
-        public void FreezePlayer()
+        if (frameCounter >= PENGUIN_SHOT_START_FRAME && frameCounter % 8 == 0)
+            ShootSnow();
+    }
+
+    private void ShootIce()
+    {
+        var ice = Engine.CreateEntity<PenguinIce>(new
         {
-            if (Alive && !Exploding && !Broke && !frozenBlock.Alive
-                && !Engine.Player.TakingDamage && !Engine.Player.Blinking)
+            Shooter = this,
+            Bump = Engine.RNG.NextInt(2) == 1
+        });
+
+        ice.Spawn();
+        iceCount++;
+    }
+
+    private void ShootSnow()
+    {
+        var snow = Engine.CreateEntity<PenguinSnow>(new
+        {
+            Shooter = this
+        });
+
+        snow.Spawn();
+    }
+
+    private void OnStartSliding(EntityState state, EntityState lastState)
+    {
+        Invincible = true;
+        ReflectShots = true;
+    }
+
+    private void OnSliding(EntityState state, long frameCounter)
+    {
+        if (frameCounter >= 30)
+        {
+            if (frameCounter == 30)
+                Engine.PlaySound(4, "Misc. dash, jump, move (3)");
+
+            Vector v = Velocity;
+            Vector a = PENGUIN_SLIDE_DECELARATION * (Direction == DefaultDirection ? Vector.LEFT_VECTOR : Vector.RIGHT_VECTOR);
+            v -= a;
+            if (v.X > 0 && Velocity.X < 0 || v.X < 0 && Velocity.X > 0 || v.X.Abs < PENGUIN_SLIDE_DECELARATION)
             {
-                frozenBlock.Spawn();
+                Velocity = Vector.NULL_VECTOR;
+                State = PenguinState.IDLE;
             }
+            else
+            {
+                Velocity = v;
+            }
+        }
+    }
+
+    private void OnEndSliding(EntityState state)
+    {
+        Invincible = false;
+        ReflectShots = false;
+    }
+
+    private void OnStartJumping(EntityState state, EntityState lastState)
+    {
+    }
+
+    private void OnJumping(EntityState state, long frameCounter)
+    {
+        if (!Landed && Velocity.Y > 0 && CurrentAnimationName != "Falling")
+            SetCurrentAnimationByName("Falling", 0);
+    }
+
+    private void OnStartHanging(EntityState state, EntityState laststate)
+    {
+        FaceToScreenCenter();
+    }
+
+    private void OnHanging(EntityState state, long frameCounter)
+    {
+        switch (frameCounter)
+        {
+            case PENGUIN_FRAMES_BEFORE_HANGING_JUMP:
+                SetCurrentAnimationByName("PreJumping", 0);
+                break;
+
+            case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG:
+                Velocity = Vector.NULL_VECTOR;
+                Origin = lever.Origin + (lever.Origin.X < Origin.X ? PENGUIN_HANGING_OFFSET : (-PENGUIN_HANGING_OFFSET.X, PENGUIN_HANGING_OFFSET.Y));
+                hanging = true;
+                SetCurrentAnimationByName("Hanging", 0);
+                break;
+
+            case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG + PENGUIN_FRAMES_BEFORE_SNOW_AFTER_HANGING:
+                snowing = true;
+                snowingFrameCounter = 0;
+                mist.MistDirection = Direction;
+                mist.Play();
+                break;
+
+            case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG + PENGUIN_FRAMES_BEFORE_STOP_HANGING:
+                Velocity = Vector.NULL_VECTOR;
+                hanging = false;
+                SetCurrentAnimationByName("Falling", 0);
+                break;
+        }
+    }
+
+    private void OnTakingDamage(EntityState state, long frameCounter)
+    {
+        hanging = false;
+        iceCount = 4;
+    }
+
+    private void OnInFlames(EntityState state, long frameCounter)
+    {
+    }
+
+    private void BreakSculptures()
+    {
+        if (sculpture1.Alive)
+            sculpture1.Break();
+
+        if (sculpture2.Alive)
+            sculpture2.Break();
+    }
+
+    private void BreakFrozenBlock()
+    {
+        if (frozenBlock.Alive)
+            frozenBlock.Break();
+    }
+
+    private void OnStartDying(EntityState state, EntityState lastState)
+    {
+        BreakSculptures();
+        BreakFrozenBlock();
+        lever.Hide();
+        mist.Stop();
+        Engine.Player.ResetExternalVelocity();
+    }
+
+    protected override void Think()
+    {
+        if (snowing)
+        {
+            var adictionalVelocity = (mist.MistDirection == Direction.LEFT ? -PENGUIN_HANGING_SNOWING_SPEED_X : PENGUIN_HANGING_SNOWING_SPEED_X, 0);
+            Engine.Player.AddExternalVelocity(adictionalVelocity);
+
+            if (sculpture1.Alive && !sculpture1.MarkedToRemove && !sculpture1.Broke)
+                sculpture1.AddExternalVelocity(adictionalVelocity);
+
+            if (sculpture2.Alive && !sculpture2.MarkedToRemove && !sculpture2.Broke)
+                sculpture2.AddExternalVelocity(adictionalVelocity);
+
+            snowingFrameCounter++;
+            if (snowingFrameCounter == PENGUIN_MIST_FRAMES)
+            {
+                mist.Stop();
+                snowing = false;
+            }
+        }
+
+        base.Think();
+    }
+
+    protected internal override void OnAnimationEnd(Animation animation)
+    {
+        base.OnAnimationEnd(animation);
+
+        switch (animation.FrameSequenceName)
+        {
+            case "PreSliding":
+                SetCurrentAnimationByName("Sliding");
+
+                if (Direction == DefaultDirection)
+                {
+                    Velocity = PENGUIN_SLIDE_INITIAL_SPEED * Vector.LEFT_VECTOR;
+                    if (WorldCollider.BlockedLeft)
+                        FlipSpeedAndDirection();
+                }
+                else
+                {
+                    Velocity = PENGUIN_SLIDE_INITIAL_SPEED * Vector.RIGHT_VECTOR;
+                    if (WorldCollider.BlockedRight)
+                        FlipSpeedAndDirection();
+                }
+
+                break;
+
+            case "PreJumping":
+                switch (State)
+                {
+                    case PenguinState.JUMPING:
+                    {
+                        FixedSingle jumpSpeedX = (Engine.Player.Origin.X - Origin.X) / PENGUIN_JUMP_FRAMES;
+                        Velocity = (jumpSpeedX, -PENGUIN_JUMP_SPEED_Y);
+                        break;
+                    }
+
+                    case PenguinState.HANGING:
+                    {
+                        FixedSingle jumpSpeedX = (lever.Origin.X - Origin.X) / PENGUIN_FRAMES_TO_HANG;
+                        Velocity = (jumpSpeedX, -PENGUIN_HANGING_JUMP_SPEED_Y);
+                        break;
+                    }
+                }
+
+                SetCurrentAnimationByName("Jumping");
+                break;
+
+            case "LandingIntroducing":
+                SetCurrentAnimationByName("Introducing");
+                break;
+
+            case "Introducing" when !HealthFilling && Health == 0:
+                StartHealthFilling();
+
+                lever.Origin = World.World.GetSceneBoundingBoxFromPos(Origin).MiddleTop + (0, 12);
+                lever.Spawn();
+                break;
+
+            case "Landing":
+                State = PenguinState.IDLE;
+                break;
+        }
+    }
+
+    protected override void OnStartBattle()
+    {
+        base.OnStartBattle();
+
+        State = PenguinState.IDLE;
+    }
+
+    protected override void OnDying()
+    {
+        StopBlowingSound();
+        hanging = false;
+        snowing = false;
+        Velocity = Vector.NULL_VECTOR;
+        State = PenguinState.DYING;
+    }
+
+    public void FreezePlayer()
+    {
+        if (Alive && !Exploding && !Broke && !frozenBlock.Alive
+            && !Engine.Player.TakingDamage && !Engine.Player.Blinking)
+        {
+            frozenBlock.Spawn();
         }
     }
 }

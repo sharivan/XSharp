@@ -1,75 +1,74 @@
-﻿namespace XSharp.Engine.Entities.Effects
+﻿namespace XSharp.Engine.Entities.Effects;
+
+public class ChargingEffect : SpriteEffect
 {
-    public class ChargingEffect : SpriteEffect
+    private int level;
+
+    private bool soundPlayed;
+
+    private Player charger;
+
+    public Player Charger
     {
-        private int level;
-
-        private bool soundPlayed;
-
-        private Player charger;
-
-        public Player Charger
+        get => charger;
+        set
         {
-            get => charger;
-            set
+            charger = value;
+            if (value != null)
             {
-                charger = value;
-                if (value != null)
-                {
-                    Origin = value.Hitbox.Center;
-                    Direction = value.Direction;
-                }
+                Origin = value.Hitbox.Center;
+                Direction = value.Direction;
             }
         }
+    }
 
-        public int Level
+    public int Level
+    {
+        get => level;
+
+        set
         {
-            get => level;
+            if (level is < 1 or > 2)
+                return;
 
-            set
-            {
-                if (level is < 1 or > 2)
-                    return;
+            level = value;
+            CurrentAnimationIndex = level - 1;
+        }
+    }
 
-                level = value;
-                CurrentAnimationIndex = level - 1;
-            }
+    public ChargingEffect()
+    {
+        SpriteSheetName = "X Charging Effects";
+        Directional = true;
+        PaletteName = "chargingEffectPalette";
+
+        SetAnimationNames("ChargingLevel1", "ChargingLevel2");
+    }
+
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
+
+        level = 1;
+    }
+
+    protected override void Think()
+    {
+        if (!soundPlayed)
+        {
+            Engine.PlaySound(2, "X Charge", 3.350, 1.585);
+            soundPlayed = true;
         }
 
-        public ChargingEffect()
-        {
-            SpriteSheetName = "X Charging Effects";
-            Directional = true;
-            PaletteName = "chargingEffectPalette";
+        Origin = Charger.Hitbox.Center;
+        Direction = Charger.Direction;
 
-            SetAnimationNames("ChargingLevel1", "ChargingLevel2");
-        }
+        base.Think();
+    }
 
-        protected internal override void OnSpawn()
-        {
-            base.OnSpawn();
-
-            level = 1;
-        }
-
-        protected override void Think()
-        {
-            if (!soundPlayed)
-            {
-                Engine.PlaySound(2, "X Charge", 3.350, 1.585);
-                soundPlayed = true;
-            }
-
-            Origin = Charger.Hitbox.Center;
-            Direction = Charger.Direction;
-
-            base.Think();
-        }
-
-        protected override void OnDeath()
-        {
-            Engine.StopSound(2, "X Charge");
-            base.OnDeath();
-        }
+    protected override void OnDeath()
+    {
+        Engine.StopSound(2, "X Charge");
+        base.OnDeath();
     }
 }

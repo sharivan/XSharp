@@ -1,55 +1,54 @@
 ﻿using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Collision
+namespace XSharp.Engine.Collision;
+
+public readonly struct CollisionPlacement
 {
-    public readonly struct CollisionPlacement
+    public CollisionData CollisionData
     {
-        public CollisionData CollisionData
-        {
-            get;
-        }
+        get;
+    }
 
-        public Box ObstableBox
-        {
-            get;
-        }
+    public Box ObstableBox
+    {
+        get;
+    }
 
-        public RightTriangle ObstableSlope
-        {
-            get;
-        }
+    public RightTriangle ObstableSlope
+    {
+        get;
+    }
 
-        public CollisionPlacement(CollisionData collisionData, Box obstableBox)
-        {
-            CollisionData = collisionData;
-            ObstableBox = obstableBox;
-            ObstableSlope = RightTriangle.EMPTY;
-        }
+    public CollisionPlacement(CollisionData collisionData, Box obstableBox)
+    {
+        CollisionData = collisionData;
+        ObstableBox = obstableBox;
+        ObstableSlope = RightTriangle.EMPTY;
+    }
 
-        public CollisionPlacement(CollisionData collisionData, RightTriangle obstacleSlope)
-        {
-            CollisionData = collisionData;
-            ObstableBox = Box.EMPTY_BOX;
-            ObstableSlope = obstacleSlope;
-        }
+    public CollisionPlacement(CollisionData collisionData, RightTriangle obstacleSlope)
+    {
+        CollisionData = collisionData;
+        ObstableBox = Box.EMPTY_BOX;
+        ObstableSlope = obstacleSlope;
+    }
 
-        public void Deconstruct(out CollisionData collisionData, out Box obstacleBox)
-        {
-            collisionData = CollisionData;
-            obstacleBox = ObstableBox;
-        }
+    public void Deconstruct(out CollisionData collisionData, out Box obstacleBox)
+    {
+        collisionData = CollisionData;
+        obstacleBox = ObstableBox;
+    }
 
-        public void Deconstruct(out CollisionData collisionData, out RightTriangle obstacleSlope)
-        {
-            collisionData = CollisionData;
-            obstacleSlope = ObstableSlope;
-        }
+    public void Deconstruct(out CollisionData collisionData, out RightTriangle obstacleSlope)
+    {
+        collisionData = CollisionData;
+        obstacleSlope = ObstableSlope;
+    }
 
-        public void Deconstruct(out CollisionData collisionData, out Box obstacleBox, out RightTriangle obstacleSlope)
-        {
-            collisionData = CollisionData;
-            obstacleBox = ObstableBox;
-            obstacleSlope = ObstableSlope;
-        }
+    public void Deconstruct(out CollisionData collisionData, out Box obstacleBox, out RightTriangle obstacleSlope)
+    {
+        collisionData = CollisionData;
+        obstacleBox = ObstableBox;
+        obstacleSlope = ObstableSlope;
     }
 }
