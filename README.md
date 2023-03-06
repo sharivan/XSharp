@@ -2,7 +2,7 @@
 
 ![](XSharp.png)
 
-This project aims to recreate an engine very similar to the SNES Mega Man X trilogy. You can test the executable version of this project by downloading the current release accessing https://github.com/sharivan/XSharp/releases. You will need the .NET Frameworkd 4.8.1 or newer to run this program.
+This project aims to recreate an engine very similar to the SNES Mega Man X trilogy. You can test the executable version of this project by downloading the current release accessing https://github.com/sharivan/XSharp/releases. You will need the .NET 7.0 or newer to run this program.
 
 You can control the X using the following keys:
 
@@ -17,7 +17,7 @@ Support to joypad was added, but there is no support to bind custom keys for now
 
 Shortcut Keys:
 
-  - CTRL + |: Toggle frame advance.
+  - Pause/Break: Toggle frame advance.
   - |: Next frame, if in frame advance mode. Otherwise, start the frame advance mode.
   - F5: Save state.
   - F7: Load state.
@@ -25,18 +25,18 @@ Shortcut Keys:
   - -: Previous save slot.
   - N: Toggle no clip.
   - M: Toggle no camera constraints.
-  - 1: Toggle draw collision box.
+  - 1: Toggle draw hitbox.
   - 2: Toggle show colliders.
-  - 3: Toggle draw map bounds.
-  - 4: Toggle draw touching map bounds.
-  - 5: Toggle draw highlighted pointing tiles (with mouse).
-  - 6: Toggle draw axis from X.
+  - 3: Toggle draw level bounds.
+  - 4: Toggle draw touching tilemap bounds.
+  - 5: Toggle draw highlighted pointing tiles (with mouse cursor).
+  - 6: Toggle draw axis from X origin.
   - 7: Toggle show info.
   - 8: Toggle show checkpoint bounds.
   - 9: Toggle show trigger bounds.
   - F1: Toggle background.
-  - F2: Toggle down layer.
-  - F3: Toggle up layer.
+  - F2: Toggle foreground down layer.
+  - F3: Toggle foreground up layer.
   - F4: Toggle sprites.
 
 Modifications currently in progress:
@@ -57,7 +57,6 @@ Some Pending Fixes:
 - Fix background position in some levels.
 - Fix triggers and camera lock in some levels.
 - Fix camera transitions.
-- Fix the collision with some parts of the levels, for example in the top igloo (containing the heart tank) of Penguin's stage.
 
 Future additions:
 
@@ -67,6 +66,5 @@ Future additions:
 - Weapons.
 - Demo recorder.
 - Embedded console.
-- General optimization, mainly in physics.
 - Support for other render APIs like D3D11 and OpenGL.
 - Add documentation.
