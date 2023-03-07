@@ -4,10 +4,12 @@ namespace XSharp.Engine.Entities.Objects;
 
 internal class BossDoorEffect : SpriteEffect
 {
+    private EntityReference<BossDoor> door;
+
     public BossDoor Door
     {
-        get;
-        internal set;
+        get => door;
+        set => door = value;
     }
 
     public BossDoorState State
@@ -20,6 +22,7 @@ internal class BossDoorEffect : SpriteEffect
     {
         SpriteSheetName = "Boos Door";
         Directional = false;
+        Respawnable = true;
 
         SetAnimationNames("Closed", "Opening", "PlayerCrossing", "Closing");
 
@@ -37,7 +40,7 @@ internal class BossDoorEffect : SpriteEffect
 
     private void OnStartOpening(EntityState state, EntityState lastState)
     {
-        Door.OnStartOpening();
+        Door?.OnStartOpening();
     }
 
     private void OnOpening(EntityState state, long frameCounter)
@@ -62,7 +65,14 @@ internal class BossDoorEffect : SpriteEffect
 
     private void OnEndClosing(EntityState state)
     {
-        Door.OnEndClosing();
+        Door?.OnEndClosing();
+    }
+
+    protected override void OnDeath()
+    {
+        Door = null;
+
+        base.OnDeath();
     }
 
     protected internal override void OnAnimationEnd(Animation animation)

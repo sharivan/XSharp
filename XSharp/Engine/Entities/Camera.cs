@@ -187,6 +187,7 @@ public class Camera : Entity
     public Camera()
     {
         TouchingKind = TouchingKind.VECTOR;
+        Respawnable = true;
     }
 
     public override void LoadState(BinaryReader reader)

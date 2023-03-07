@@ -292,12 +292,12 @@ public class GameEngine
     private Entity firstEntity;
     private Entity lastEntity;
     private int entityCount;
-    internal List<Entity> spawnedEntities;
-    internal List<Entity> removedEntities;
+    internal EntityList<Entity> spawnedEntities;
+    internal EntityList<Entity> removedEntities;
     internal Dictionary<Entity, RespawnEntry> autoRespawnableEntities;
-    private readonly List<Sprite> freezingSpriteExceptions;
-    private readonly List<Sprite>[] sprites;
-    private readonly List<HUD>[] huds;
+    private readonly EntityList<Sprite> freezingSpriteExceptions;
+    private readonly EntityList<Sprite>[] sprites;
+    private readonly EntityList<HUD>[] huds;
     private ushort currentLevel;
     private bool changeLevel;
     private ushort levelToChange;
@@ -308,7 +308,7 @@ public class GameEngine
 
     private long lastCurrentMemoryUsage;
     private MMXBox drawBox;
-    private Checkpoint currentCheckpoint;
+    private EntityReference<Checkpoint> currentCheckpoint;
     private readonly List<Vector> cameraConstraints;
 
     private bool frameAdvance;
@@ -380,6 +380,11 @@ public class GameEngine
     private int infoMessageFadingTime;
     private FadingControl infoMessageFadingControl;
 
+    private EntityReference<Camera> camera;
+    private EntityReference<Player> player;
+    private EntityReference<PlayerHealthHUD> hp;
+    private EntityReference<ReadyHUD> readyHUD;
+
     public Control Control
     {
         get;
@@ -413,26 +418,26 @@ public class GameEngine
 
     public Camera Camera
     {
-        get;
-        private set;
+        get => camera;
+        private set => camera = value;
     }
 
     public Player Player
     {
-        get;
-        private set;
+        get => player;
+        private set => player = value;
     }
 
     public PlayerHealthHUD HP
     {
-        get;
-        private set;
+        get => hp;
+        private set => hp = value;
     }
 
     public ReadyHUD ReadyHUD
     {
-        get;
-        private set;
+        get => readyHUD;
+        private set => readyHUD = value;
     }
 
     public FixedSingle HealthCapacity
@@ -560,7 +565,7 @@ public class GameEngine
 
         set
         {
-            mmx.SetLevel(mmx.Level, currentCheckpoint.Point, value, mmx.TileLoad, mmx.PalLoad);
+            mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, value, mmx.TileLoad, mmx.PalLoad);
             mmx.LoadTilesAndPalettes();
             mmx.LoadPalette(this, false);
             mmx.LoadPalette(this, true);
@@ -575,7 +580,7 @@ public class GameEngine
 
         set
         {
-            mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoad, value, mmx.PalLoad);
+            mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, mmx.ObjLoad, value, mmx.PalLoad);
             mmx.LoadTilesAndPalettes();
             mmx.LoadPalette(this, false);
             mmx.LoadPalette(this, true);
@@ -590,7 +595,7 @@ public class GameEngine
 
         set
         {
-            mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, value);
+            mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, value);
             mmx.LoadTilesAndPalettes();
             mmx.LoadPalette(this, false);
             mmx.LoadPalette(this, true);
@@ -805,7 +810,7 @@ public class GameEngine
         clock.Start();
         fpsTimer.Start();
 
-        freezingSpriteExceptions = new List<Sprite>();
+        freezingSpriteExceptions = new EntityList<Sprite>();
 
         spriteSheets = new List<SpriteSheet>();
         spriteSheetsByName = new Dictionary<string, SpriteSheet>();
@@ -1045,17 +1050,17 @@ public class GameEngine
         checkpoints = new List<Checkpoint>();
         entities = new Entity[MAX_ENTITIES];
         entitiesByName = new Dictionary<string, Entity>();
-        spawnedEntities = new List<Entity>();
-        removedEntities = new List<Entity>();
+        spawnedEntities = new EntityList<Entity>();
+        removedEntities = new EntityList<Entity>();
         autoRespawnableEntities = new Dictionary<Entity, RespawnEntry>();
-        sprites = new List<Sprite>[NUM_SPRITE_LAYERS];
-        huds = new List<HUD>[NUM_SPRITE_LAYERS];
+        sprites = new EntityList<Sprite>[NUM_SPRITE_LAYERS];
+        huds = new EntityList<HUD>[NUM_SPRITE_LAYERS];
 
         for (int i = 0; i < sprites.Length; i++)
-            sprites[i] = new List<Sprite>();
+            sprites[i] = new EntityList<Sprite>();
 
         for (int i = 0; i < huds.Length; i++)
-            huds[i] = new List<HUD>();
+            huds[i] = new EntityList<HUD>();
 
         firstFreeEntityIndex = 0;
         firstEntity = null;
@@ -2230,7 +2235,7 @@ public class GameEngine
 
         if (romLoaded)
         {
-            mmx.SetLevel(mmx.Level, currentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, mmx.PalLoad);
+            mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, mmx.PalLoad);
             mmx.LoadTilesAndPalettes();
             mmx.LoadPalette(this, false);
             mmx.LoadPalette(this, true);
@@ -2311,16 +2316,16 @@ public class GameEngine
 
     public void SetCheckpoint(Checkpoint value, int objectTile = -1, int backgroundTile = -1, int palette = -1)
     {
-        if (currentCheckpoint != value)
+        if (CurrentCheckpoint != value)
         {
             currentCheckpoint = value;
-            if (currentCheckpoint != null)
+            if (CurrentCheckpoint != null)
             {
-                CameraConstraintsBox = currentCheckpoint.Hitbox;
+                CameraConstraintsBox = CurrentCheckpoint.Hitbox;
 
                 if (romLoaded)
                 {
-                    mmx.SetLevel(mmx.Level, currentCheckpoint.Point, objectTile, backgroundTile, palette);
+                    mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, objectTile, backgroundTile, palette);
                     mmx.LoadTilesAndPalettes();
                     mmx.LoadPalette(this, false);
                     mmx.LoadPalette(this, true);
@@ -2711,10 +2716,44 @@ public class GameEngine
         RenderSprite(texture, palette, fadingControl, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
     }
 
-    public T CreateEntity<T>(dynamic initParams) where T : Entity
+    public EntityReference<T> CreateEntity<T>(dynamic initParams) where T : Entity
     {
+        if (entityCount == MAX_ENTITIES)
+            throw new IndexOutOfRangeException("Max entities reached the limit.");
+
         Type type = typeof(T);
         var entity = Activator.CreateInstance<T>();
+
+        entity.Index = firstFreeEntityIndex;
+        entities[firstFreeEntityIndex++] = entity;
+
+        if (lastEntity != null)
+            lastEntity.next = entity;
+
+        entity.previous = lastEntity;
+        entity.next = null;
+
+        firstEntity ??= entity;
+        lastEntity = entity;
+
+        if (entity.Name is not null and not "")
+            entitiesByName.Add(entity.Name, entity);
+
+        entityCount++;
+
+        for (int i = firstFreeEntityIndex; i < MAX_ENTITIES; i++)
+        {
+            if (entities[i] == null)
+            {
+                firstFreeEntityIndex = i;
+                break;
+            }
+        }
+
+        if (entity.CheckTouchingEntities)
+            partition.Insert(entity);
+
+        entity.OnCreate();
 
         if (initParams != null)
         {
@@ -2743,62 +2782,28 @@ public class GameEngine
             }
         }
 
-        AddEntity(entity);
         return entity;
     }
 
-    public T CreateEntity<T>() where T : Entity
+    public EntityReference<T> CreateEntity<T>() where T : Entity
     {
         return CreateEntity<T>(null);
     }
 
-    private void AddEntity(Entity entity)
-    {
-        if (entity.Index >= 0)
-            return;
-
-        if (entityCount == MAX_ENTITIES)
-            throw new IndexOutOfRangeException("Max entities reached the limit.");
-
-        if (lastEntity != null)
-            lastEntity.next = entity;
-
-        entity.previous = lastEntity;
-        entity.next = null;
-
-        firstEntity ??= entity;
-        lastEntity = entity;
-
-        entity.Index = firstFreeEntityIndex;
-        entities[firstFreeEntityIndex++] = entity;
-
-        if (entity.Name is not null and not "")
-            entitiesByName.Add(entity.Name, entity);
-
-        entityCount++;
-
-        for (int i = firstFreeEntityIndex; i < MAX_ENTITIES; i++)
-        {
-            if (entities[i] == null)
-            {
-                firstFreeEntityIndex = i;
-                break;
-            }
-        }
-
-        if (entity.CheckTouchingEntities)
-            partition.Insert(entity);
-    }
-
     private void RemoveEntity(Entity entity)
     {
+        foreach (var reference in entity.references)
+            reference.index = -1;
+
+        entity.references.Clear();
+
         if (entity.CheckTouchingEntities)
             partition.Remove(entity);
 
         int index = entity.Index;
 
-        var next = entity.next;
-        var previous = entity.previous;
+        Entity next = entity.next;
+        Entity previous = entity.previous;
 
         if (next != null)
             next.previous = previous;
@@ -3440,10 +3445,8 @@ public class GameEngine
         {
             if (spawnedEntities.Count > 0)
             {
-                for (int i = 0; i < spawnedEntities.Count; i++)
+                foreach (var added in spawnedEntities)
                 {
-                    var added = spawnedEntities[i];
-
                     if (added is Sprite sprite)
                     {
                         if (sprite is HUD hud)
@@ -3491,15 +3494,13 @@ public class GameEngine
                 }
             }
 
-            World.OnFrame();
-            Camera.OnFrame();
+            World?.OnFrame();
+            Camera?.OnFrame();
 
             if (removedEntities.Count > 0)
             {
-                for (int i = 0; i < removedEntities.Count; i++)
+                foreach (var removed in removedEntities)
                 {
-                    var removed = removedEntities[i];
-
                     if (removed is Sprite sprite)
                     {
                         if (sprite is HUD hud)
@@ -3642,7 +3643,7 @@ public class GameEngine
 
     public void LoadLevel()
     {
-        LoadLevel(currentLevel, (ushort) (CurrentCheckpoint != null ? CurrentCheckpoint.Index : 0));
+        LoadLevel(currentLevel, (ushort) (CurrentCheckpoint != null ? CurrentCheckpoint.Point : 0));
     }
 
     public void LoadLevel(ushort level, ushort checkpoint = 0)
@@ -3655,6 +3656,14 @@ public class GameEngine
             UnloadLevel();
 
             currentLevel = level;
+
+            Camera = Engine.CreateEntity<Camera>(new
+            {
+                Width = SCREEN_WIDTH,
+                Height = SCREEN_HEIGHT
+            });
+
+            Camera.Spawn();
 
             if (romLoaded)
             {
@@ -3679,8 +3688,6 @@ public class GameEngine
 
             loadingLevel = false;
             respawning = false;
-
-            Camera.Spawn();
 
             if (enableSpawningBlackScreen)
             {
@@ -4286,7 +4293,7 @@ public class GameEngine
         }
 
         if (respawning || SpawningBlackScreen)
-            FillRectangle(WorldBoxToScreen(Camera.BoundingBox), Color.Black, FadingControl);
+            FillRectangle(Camera != null ? WorldBoxToScreen(Camera.BoundingBox) : RenderRectangle, Color.Black, FadingControl);
 
         if (drawHitbox || showColliders || showDrawBox || showTriggerBounds)
         {
@@ -4520,12 +4527,12 @@ public class GameEngine
             line.End();
         }
 
-        if (showCheckpointBounds && currentCheckpoint != null)
-            DrawRectangle(WorldBoxToScreen(currentCheckpoint.Hitbox), 4, Color.Yellow);
+        if (showCheckpointBounds && CurrentCheckpoint != null)
+            DrawRectangle(WorldBoxToScreen(CurrentCheckpoint.Hitbox), 4, Color.Yellow);
 
         if (showInfoText && Player != null)
         {
-            string text = $"Checkpoint: {(currentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
+            string text = $"Checkpoint: {(CurrentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
             DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.White, out RawRectangle fontDimension);
 
             text = $"Camera: CX: {(float) Camera.Left * 256}({(float) (Camera.Left - lastCameraLeftTop.X) * 256}) CY: {(float) Camera.Top * 256}({(float) (Camera.Top - lastCameraLeftTop.Y) * 256})";
@@ -4580,7 +4587,7 @@ public class GameEngine
         lastPlayerVelocity.Write(writer);
         lastCameraLeftTop.Write(writer);
 
-        writer.Write(currentCheckpoint != null ? currentCheckpoint.Point : -1);
+        writer.Write(CurrentCheckpoint != null ? CurrentCheckpoint.Point : -1);
 
         writer.Write(cameraConstraints.Count);
         foreach (var constraint in cameraConstraints)
@@ -4694,7 +4701,7 @@ public class GameEngine
 
     public ChangeDynamicPropertyTrigger AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation)
     {
-        var trigger = CreateEntity<ChangeDynamicPropertyTrigger>(new
+        ChangeDynamicPropertyTrigger trigger = CreateEntity<ChangeDynamicPropertyTrigger>(new
         {
             Origin = origin,
             Hitbox = (origin, (-SCREEN_WIDTH * 0.5, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
@@ -4710,7 +4717,7 @@ public class GameEngine
 
     public Checkpoint AddCheckpoint(ushort index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
     {
-        var checkpoint = CreateEntity<Checkpoint>(new
+        Checkpoint checkpoint = CreateEntity<Checkpoint>(new
         {
             Point = index,
             boundingBox.Origin,
@@ -4729,7 +4736,7 @@ public class GameEngine
 
     public CheckpointTriggerOnce AddCheckpointTrigger(ushort index, Vector origin)
     {
-        var trigger = CreateEntity<CheckpointTriggerOnce>(new
+        CheckpointTriggerOnce trigger = CreateEntity<CheckpointTriggerOnce>(new
         {
             Origin = origin,
             Hitbox = (origin, (0, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
@@ -4759,7 +4766,7 @@ public class GameEngine
 
     internal Penguin AddPenguin(Vector origin)
     {
-        var penguin = CreateEntity<Penguin>(new
+        Penguin penguin = CreateEntity<Penguin>(new
         {
             Origin = origin
         });
@@ -4782,7 +4789,7 @@ public class GameEngine
 
     private Probe8201U AddProbe8201U(ushort subid, Vector origin)
     {
-        var probe = CreateEntity<Probe8201U>(new
+        Probe8201U probe = CreateEntity<Probe8201U>(new
         {
             Origin = origin,
             MovingVertically = (subid & 0x20) == 0,
@@ -4807,7 +4814,7 @@ public class GameEngine
 
     public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
     {
-        var trigger = CreateEntity<CameraLockTrigger>(new
+        CameraLockTrigger trigger = CreateEntity<CameraLockTrigger>(new
         {
             boundingBox.Origin,
             Hitbox = boundingBox
@@ -4885,7 +4892,7 @@ public class GameEngine
 
     internal void ShootLemon(Player shooter, Vector origin, bool dashLemon)
     {
-        var lemon = CreateEntity<BusterLemon>(new
+        BusterLemon lemon = CreateEntity<BusterLemon>(new
         {
             Shooter = shooter,
             Origin = origin,
@@ -4897,7 +4904,7 @@ public class GameEngine
 
     internal void ShootSemiCharged(Player shooter, Vector origin)
     {
-        var semiCharged = CreateEntity<BusterSemiCharged>(new
+        BusterSemiCharged semiCharged = CreateEntity<BusterSemiCharged>(new
         {
             Shooter = shooter,
             Origin = origin
@@ -4908,7 +4915,7 @@ public class GameEngine
 
     internal void ShootCharged(Player shooter, Vector origin)
     {
-        var charged = CreateEntity<BusterCharged>(new
+        BusterCharged charged = CreateEntity<BusterCharged>(new
         {
             Shooter = shooter,
             Origin = origin
@@ -4919,7 +4926,7 @@ public class GameEngine
 
     internal ChargingEffect StartChargingEffect(Player player)
     {
-        var effect = CreateEntity<ChargingEffect>(new
+        ChargingEffect effect = CreateEntity<ChargingEffect>(new
         {
             Charger = player
         });
@@ -4930,7 +4937,7 @@ public class GameEngine
 
     internal DashSparkEffect StartDashSparkEffect(Player player)
     {
-        var effect = CreateEntity<DashSparkEffect>(new
+        DashSparkEffect effect = CreateEntity<DashSparkEffect>(new
         {
             Player = player
         });
@@ -4941,7 +4948,7 @@ public class GameEngine
 
     internal DashSmokeEffect StartDashSmokeEffect(Player player)
     {
-        var effect = CreateEntity<DashSmokeEffect>(new
+        DashSmokeEffect effect = CreateEntity<DashSmokeEffect>(new
         {
             Player = player
         });
@@ -4952,7 +4959,7 @@ public class GameEngine
 
     internal WallSlideEffect StartWallSlideEffect(Player player)
     {
-        var effect = CreateEntity<WallSlideEffect>(new
+        WallSlideEffect effect = CreateEntity<WallSlideEffect>(new
         {
             Player = player
         });
@@ -4963,7 +4970,7 @@ public class GameEngine
 
     internal WallKickEffect StartWallKickEffect(Player player)
     {
-        var effect = CreateEntity<WallKickEffect>(new
+        WallKickEffect effect = CreateEntity<WallKickEffect>(new
         {
             Player = player
         });
@@ -4974,7 +4981,7 @@ public class GameEngine
 
     internal ExplosionEffect CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1)
     {
-        var effect = CreateEntity<ExplosionEffect>(new
+        ExplosionEffect effect = CreateEntity<ExplosionEffect>(new
         {
             Origin = origin,
             EffectSound = effectSound
@@ -4986,7 +4993,7 @@ public class GameEngine
 
     private XDieExplosion CreateXDieExplosionEffect(double phase)
     {
-        var effect = CreateEntity<XDieExplosion>(new
+        XDieExplosion effect = CreateEntity<XDieExplosion>(new
         {
             Offset = Player.Origin - Camera.LeftTop,
             Phase = phase
@@ -4998,7 +5005,7 @@ public class GameEngine
 
     public Scriver AddScriver(Vector origin)
     {
-        var scriver = CreateEntity<Scriver>(new
+        Scriver scriver = CreateEntity<Scriver>(new
         {
             Origin = origin
         });
@@ -5009,7 +5016,7 @@ public class GameEngine
 
     public BattonBoneG AddBattonBoneG(Vector origin)
     {
-        var battonBoneG = CreateEntity<BattonBoneG>(new
+        BattonBoneG battonBoneG = CreateEntity<BattonBoneG>(new
         {
             Origin = origin
         });
@@ -5401,14 +5408,6 @@ public class GameEngine
         partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
         resultSet = new EntityList<Entity>();
 
-        Camera = Engine.CreateEntity<Camera>(new
-        {
-            Width = SCREEN_WIDTH,
-            Height = SCREEN_HEIGHT
-        });
-
-        CameraConstraintsBox = World.BoundingBox;
-
         ResetDevice();
         ReloadLevel();
 
@@ -5514,7 +5513,7 @@ public class GameEngine
     {
         DyingEffectActive = false;
         respawning = true;
-        UnloadLevel();
+
         FadingControl.Reset();
         FadingControl.Start(Color.Black, 28, FadingFlags.COLORS, FadingFlags.COLORS, LoadLevel);
 
@@ -5531,7 +5530,7 @@ public class GameEngine
 
     public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames)
     {
-        var drop = CreateEntity<SmallHealthRecover>(new
+        SmallHealthRecover drop = CreateEntity<SmallHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5543,7 +5542,7 @@ public class GameEngine
 
     public BigHealthRecover DropBigHealthRecover(Vector origin, int durationFrames)
     {
-        var drop = CreateEntity<BigHealthRecover>(new
+        BigHealthRecover drop = CreateEntity<BigHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5555,7 +5554,7 @@ public class GameEngine
 
     public SmallAmmoRecover DropSmallAmmoRecover(Vector origin, int durationFrames)
     {
-        var drop = CreateEntity<SmallAmmoRecover>(new
+        SmallAmmoRecover drop = CreateEntity<SmallAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5567,7 +5566,7 @@ public class GameEngine
 
     public BigAmmoRecover DropBigAmmoRecover(Vector origin, int durationFrames)
     {
-        var drop = CreateEntity<BigAmmoRecover>(new
+        BigAmmoRecover drop = CreateEntity<BigAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5579,7 +5578,7 @@ public class GameEngine
 
     public LifeUp DropLifeUp(Vector origin, int durationFrames)
     {
-        var drop = CreateEntity<LifeUp>(new
+        LifeUp drop = CreateEntity<LifeUp>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5591,7 +5590,7 @@ public class GameEngine
 
     public SmallHealthRecover AddSmallHealthRecover(Vector origin)
     {
-        var item = CreateEntity<SmallHealthRecover>(new
+        SmallHealthRecover item = CreateEntity<SmallHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5603,7 +5602,7 @@ public class GameEngine
 
     public BigHealthRecover AddBigHealthRecover(Vector origin)
     {
-        var item = CreateEntity<BigHealthRecover>(new
+        BigHealthRecover item = CreateEntity<BigHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5615,7 +5614,7 @@ public class GameEngine
 
     public SmallAmmoRecover AddSmallAmmoRecover(Vector origin)
     {
-        var item = CreateEntity<SmallAmmoRecover>(new
+        SmallAmmoRecover item = CreateEntity<SmallAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5627,7 +5626,7 @@ public class GameEngine
 
     public BigAmmoRecover AddBigAmmoRecover(Vector origin)
     {
-        var item = CreateEntity<BigAmmoRecover>(new
+        BigAmmoRecover item = CreateEntity<BigAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5639,7 +5638,7 @@ public class GameEngine
 
     public LifeUp AddLifeUp(Vector origin)
     {
-        var item = CreateEntity<LifeUp>(new
+        LifeUp item = CreateEntity<LifeUp>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5651,7 +5650,7 @@ public class GameEngine
 
     public HeartTank AddHeartTank(Vector origin)
     {
-        var item = CreateEntity<HeartTank>(new
+        HeartTank item = CreateEntity<HeartTank>(new
         {
             Origin = origin
         });
@@ -5662,7 +5661,7 @@ public class GameEngine
 
     public SubTankItem AddSubTank(Vector origin)
     {
-        var item = CreateEntity<SubTankItem>(new
+        SubTankItem item = CreateEntity<SubTankItem>(new
         {
             Origin = origin
         });
@@ -5735,7 +5734,7 @@ public class GameEngine
     internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
     {
         bool secondDoor = (eventSubId & 0x80) != 0;
-        var door = CreateEntity<BossDoor>(new
+        BossDoor door = CreateEntity<BossDoor>(new
         {
             Origin = pos,
             Bidirectional = false,

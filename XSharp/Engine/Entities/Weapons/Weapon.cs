@@ -5,10 +5,12 @@ namespace XSharp.Engine.Entities.Weapons;
 
 public abstract class Weapon : Sprite
 {
+    private EntityReference<Sprite> shooter;
+
     public Sprite Shooter
     {
-        get;
-        protected set;
+        get => shooter;
+        protected set => shooter = value;
     }
 
     public FixedSingle BaseDamage => GetBaseDamage();

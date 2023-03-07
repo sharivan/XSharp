@@ -6,7 +6,7 @@ namespace XSharp.Engine.Entities.Triggers;
 
 public class CameraLockTrigger : BaseTrigger
 {
-    private readonly List<Vector> constraints;
+    private List<Vector> constraints;
 
     public IEnumerable<Vector> Constraints => constraints;
 

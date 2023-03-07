@@ -338,7 +338,7 @@ public class Animation
             transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(origin3);
         }
 
-        GameEngine.Engine.RenderSprite(texture, Sprite.Palette, Sprite.FadingSettings, drawBox.LeftTop, transform, RepeatX, RepeatY);
+        GameEngine.Engine.RenderSprite(texture, Sprite.Palette, Sprite.FadingControl, drawBox.LeftTop, transform, RepeatX, RepeatY);
     }
 
     internal void OnDeviceReset()

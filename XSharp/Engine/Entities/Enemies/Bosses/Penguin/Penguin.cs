@@ -29,11 +29,42 @@ public class Penguin : Boss
     private int snowingFrameCounter;
     private bool wasShootingIce;
     private int iceCount;
-    private PenguinLever lever;
-    private Mist mist;
-    private PenguinSculpture sculpture1;
-    private PenguinSculpture sculpture2;
-    private PenguinFrozenBlock frozenBlock;
+
+    private EntityReference<PenguinLever> lever;
+    private EntityReference<Mist> mist;
+    private EntityReference<PenguinSculpture> sculpture1;
+    private EntityReference<PenguinSculpture> sculpture2;
+    private EntityReference<PenguinFrozenBlock> frozenBlock;
+
+    private PenguinLever Lever
+    {
+        get => lever;
+        set => lever = value;
+    }
+
+    private Mist Mist
+    {
+        get => mist;
+        set => mist = value;
+    }
+
+    private PenguinSculpture Sculpture1
+    {
+        get => sculpture1;
+        set => sculpture1 = value;
+    }
+
+    private PenguinSculpture Sculpture2
+    {
+        get => sculpture2;
+        set => sculpture2 = value;
+    }
+
+    private PenguinFrozenBlock FrozenBlock
+    {
+        get => frozenBlock;
+        set => frozenBlock = value;
+    }
 
     public PenguinState State
     {
@@ -78,6 +109,11 @@ public class Penguin : Boss
         RegisterState(PenguinState.TAKING_DAMAGE, OnTakingDamage, "TakingDamage");
         RegisterState(PenguinState.IN_FLAMES, OnInFlames, "InFlames");
         RegisterState(PenguinState.DYING, OnStartDying, "Dying");
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
 
         lever = Engine.CreateEntity<PenguinLever>();
         mist = Engine.CreateEntity<Mist>();
@@ -137,17 +173,17 @@ public class Penguin : Boss
         Direction = Direction.LEFT;
         MaxHealth = BOSS_HP;
 
-        mist.Spawn();
+        Mist.Spawn();
 
         SetState(PenguinState.INTRODUCING);
     }
 
     protected override void OnDeath()
     {
-        sculpture1.Kill();
-        sculpture2.Kill();
-        mist.Kill();
-        lever.Kill();
+        Sculpture1.Kill();
+        Sculpture2.Kill();
+        Mist.Kill();
+        Lever.Kill();
 
         base.OnDeath();
     }
@@ -278,7 +314,7 @@ public class Penguin : Boss
 
     private bool AllSculpturesAlive()
     {
-        return sculpture1.Alive && sculpture2.Alive;
+        return Sculpture1.Alive && Sculpture2.Alive;
     }
 
     private void OnShootingIce(EntityState state, long frameCounter)
@@ -319,16 +355,16 @@ public class Penguin : Boss
                 break;
 
             case PENGUIN_BLOW_FRAMES_TO_SPAWN_SCULPTURES:
-                if (!sculpture1.Alive)
+                if (!Sculpture1.Alive)
                 {
-                    sculpture1.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.Y);
-                    sculpture1.Spawn();
+                    Sculpture1.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_1.Y);
+                    Sculpture1.Spawn();
                 }
 
-                if (!sculpture2.Alive)
+                if (!Sculpture2.Alive)
                 {
-                    sculpture2.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.Y);
-                    sculpture2.Spawn();
+                    Sculpture2.Origin = Origin + (Direction == Direction.RIGHT ? PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X : -PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.X, PENGUIN_SCUPTURE_ORIGIN_OFFSET_2.Y);
+                    Sculpture2.Spawn();
                 }
 
                 break;
@@ -345,7 +381,7 @@ public class Penguin : Boss
 
     private void ShootIce()
     {
-        var ice = Engine.CreateEntity<PenguinIce>(new
+        PenguinIce ice = Engine.CreateEntity<PenguinIce>(new
         {
             Shooter = this,
             Bump = Engine.RNG.NextInt(2) == 1
@@ -357,7 +393,7 @@ public class Penguin : Boss
 
     private void ShootSnow()
     {
-        var snow = Engine.CreateEntity<PenguinSnow>(new
+        PenguinSnow snow = Engine.CreateEntity<PenguinSnow>(new
         {
             Shooter = this
         });
@@ -424,7 +460,7 @@ public class Penguin : Boss
 
             case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG:
                 Velocity = Vector.NULL_VECTOR;
-                Origin = lever.Origin + (lever.Origin.X < Origin.X ? PENGUIN_HANGING_OFFSET : (-PENGUIN_HANGING_OFFSET.X, PENGUIN_HANGING_OFFSET.Y));
+                Origin = Lever.Origin + (Lever.Origin.X < Origin.X ? PENGUIN_HANGING_OFFSET : (-PENGUIN_HANGING_OFFSET.X, PENGUIN_HANGING_OFFSET.Y));
                 hanging = true;
                 SetCurrentAnimationByName("Hanging", 0);
                 break;
@@ -432,8 +468,8 @@ public class Penguin : Boss
             case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG + PENGUIN_FRAMES_BEFORE_SNOW_AFTER_HANGING:
                 snowing = true;
                 snowingFrameCounter = 0;
-                mist.MistDirection = Direction;
-                mist.Play();
+                Mist.MistDirection = Direction;
+                Mist.Play();
                 break;
 
             case PENGUIN_FRAMES_BEFORE_HANGING_JUMP + PENGUIN_FRAMES_TO_HANG + PENGUIN_FRAMES_BEFORE_STOP_HANGING:
@@ -456,25 +492,25 @@ public class Penguin : Boss
 
     private void BreakSculptures()
     {
-        if (sculpture1.Alive)
-            sculpture1.Break();
+        if (Sculpture1.Alive)
+            Sculpture1.Break();
 
-        if (sculpture2.Alive)
-            sculpture2.Break();
+        if (Sculpture2.Alive)
+            Sculpture2.Break();
     }
 
     private void BreakFrozenBlock()
     {
-        if (frozenBlock.Alive)
-            frozenBlock.Break();
+        if (FrozenBlock.Alive)
+            FrozenBlock.Break();
     }
 
     private void OnStartDying(EntityState state, EntityState lastState)
     {
         BreakSculptures();
         BreakFrozenBlock();
-        lever.Hide();
-        mist.Stop();
+        Lever.Hide();
+        Mist.Stop();
         Engine.Player.ResetExternalVelocity();
     }
 
@@ -482,19 +518,19 @@ public class Penguin : Boss
     {
         if (snowing)
         {
-            var adictionalVelocity = (mist.MistDirection == Direction.LEFT ? -PENGUIN_HANGING_SNOWING_SPEED_X : PENGUIN_HANGING_SNOWING_SPEED_X, 0);
+            var adictionalVelocity = (Mist.MistDirection == Direction.LEFT ? -PENGUIN_HANGING_SNOWING_SPEED_X : PENGUIN_HANGING_SNOWING_SPEED_X, 0);
             Engine.Player.AddExternalVelocity(adictionalVelocity);
 
-            if (sculpture1.Alive && !sculpture1.MarkedToRemove && !sculpture1.Broke)
-                sculpture1.AddExternalVelocity(adictionalVelocity);
+            if (Sculpture1.Alive && !Sculpture1.MarkedToRemove && !Sculpture1.Broke)
+                Sculpture1.AddExternalVelocity(adictionalVelocity);
 
-            if (sculpture2.Alive && !sculpture2.MarkedToRemove && !sculpture2.Broke)
-                sculpture2.AddExternalVelocity(adictionalVelocity);
+            if (Sculpture2.Alive && !Sculpture2.MarkedToRemove && !Sculpture2.Broke)
+                Sculpture2.AddExternalVelocity(adictionalVelocity);
 
             snowingFrameCounter++;
             if (snowingFrameCounter == PENGUIN_MIST_FRAMES)
             {
-                mist.Stop();
+                Mist.Stop();
                 snowing = false;
             }
         }
@@ -538,7 +574,7 @@ public class Penguin : Boss
 
                     case PenguinState.HANGING:
                     {
-                        FixedSingle jumpSpeedX = (lever.Origin.X - Origin.X) / PENGUIN_FRAMES_TO_HANG;
+                        FixedSingle jumpSpeedX = (Lever.Origin.X - Origin.X) / PENGUIN_FRAMES_TO_HANG;
                         Velocity = (jumpSpeedX, -PENGUIN_HANGING_JUMP_SPEED_Y);
                         break;
                     }
@@ -554,8 +590,8 @@ public class Penguin : Boss
             case "Introducing" when !HealthFilling && Health == 0:
                 StartHealthFilling();
 
-                lever.Origin = World.World.GetSceneBoundingBoxFromPos(Origin).MiddleTop + (0, 12);
-                lever.Spawn();
+                Lever.Origin = World.World.GetSceneBoundingBoxFromPos(Origin).MiddleTop + (0, 12);
+                Lever.Spawn();
                 break;
 
             case "Landing":
@@ -582,10 +618,10 @@ public class Penguin : Boss
 
     public void FreezePlayer()
     {
-        if (Alive && !Exploding && !Broke && !frozenBlock.Alive
+        if (Alive && !Exploding && !Broke && !FrozenBlock.Alive
             && !Engine.Player.TakingDamage && !Engine.Player.Blinking)
         {
-            frozenBlock.Spawn();
+            FrozenBlock.Spawn();
         }
     }
 }

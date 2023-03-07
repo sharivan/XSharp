@@ -148,7 +148,13 @@ public abstract class Boss : Enemy
     } = true;
 
     protected Boss()
+    {        
+    }
+
+    protected internal override void OnCreate()
     {
+        base.OnCreate();
+
         healthHUD = Engine.CreateEntity<BossHealthHUD>(new
         {
             Boss = this,
@@ -281,14 +287,14 @@ public abstract class Boss : Enemy
                 Engine.World.FadingSettings.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
                 Engine.World.FadingSettings.FadingColor = Color.White;
 
-                FadingSettings.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
-                FadingSettings.FadingColor = Color.Black;
+                FadingControl.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
+                FadingControl.FadingColor = Color.Black;
             }
             else if (ExplodingFrameCounter is >= (71 * 5) and < (71 * 5 + 30)) // On frame 355, start fading out boss from black to transparent. This fading take 30 frames. 
             {
                 float fadingLevel = (ExplodingFrameCounter - 71 * 5) / 29f;
-                FadingSettings.FadingLevel = new Vector4(1, 1, 1, fadingLevel);
-                FadingSettings.FadingColor = Color.Transparent;
+                FadingControl.FadingLevel = new Vector4(1, 1, 1, fadingLevel);
+                FadingControl.FadingColor = Color.Transparent;
             }
             else if (ExplodingFrameCounter is >= (78 * 5) and < (78 * 5 + 32)) // On frame 390, fade in the tilemaps
             {

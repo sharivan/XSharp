@@ -46,7 +46,7 @@ public abstract class Sprite : Entity
     private bool visible = true;
     private int layer = 0;
     private List<Animation> animations;
-    private readonly Dictionary<string, List<Animation>> animationsByName;
+    private Dictionary<string, List<Animation>> animationsByName;
     private int currentAnimationIndex = -1;
 
     protected SpriteCollider worldCollider;
@@ -228,9 +228,10 @@ public abstract class Sprite : Entity
         }
     }
 
-    public FadingControl FadingSettings
+    public FadingControl FadingControl
     {
         get;
+        private set;
     }
 
     public IEnumerable<Animation> Animations => animations;
@@ -454,7 +455,18 @@ public abstract class Sprite : Entity
 
     public Palette Palette
     {
-        get => palette;
+        get
+        {
+            if (palette == null)
+            {
+                if (PaletteName != null)
+                    palette = Engine.GetPaletteByName(PaletteName);
+                else if (PaletteIndex != -1)
+                    palette = Engine.GetPaletteByIndex(PaletteIndex);
+            }
+
+            return palette;
+        }
 
         protected set
         {
@@ -514,7 +526,18 @@ public abstract class Sprite : Entity
 
     public SpriteSheet SpriteSheet
     {
-        get => spriteSheet;
+        get
+        {
+            if (spriteSheet == null)
+            {
+                if (SpriteSheetName != null)
+                    spriteSheet = Engine.GetSpriteSheetByName(SpriteSheetName);
+                else if (SpriteSheetIndex != -1)
+                    spriteSheet = Engine.GetSpriteSheetByIndex(SpriteSheetIndex);
+            }
+
+            return spriteSheet;
+        }
 
         protected set
         {
@@ -549,7 +572,7 @@ public abstract class Sprite : Entity
         animations = new List<Animation>();
         animationsByName = new Dictionary<string, List<Animation>>();
 
-        FadingSettings = new FadingControl();
+        FadingControl = new FadingControl();
 
         touchingSpritesLeft = new EntityList<Sprite>();
         touchingSpritesRight = new EntityList<Sprite>();
@@ -1011,7 +1034,7 @@ public abstract class Sprite : Entity
         broke = false;
         MultiAnimation = false;
 
-        FadingSettings.Reset();
+        FadingControl.Reset();
 
         CurrentAnimationIndex = InitialAnimationIndex;
         CurrentAnimation?.StartFromBegin();
@@ -2104,20 +2127,13 @@ public abstract class Sprite : Entity
         blinkFrameCounter = 0;
         NoClip = false;
         InvisibleOnNextFrame = false;
-        FadingSettings.Reset();
+        FadingControl.Reset();
     }
 
     internal void OnDeviceReset()
     {
-        if (PaletteName != null)
-            palette = Engine.GetPaletteByName(PaletteName);
-        else if (PaletteIndex != -1)
-            palette = Engine.GetPaletteByIndex(PaletteIndex);
-
-        if (SpriteSheetName != null)
-            spriteSheet = Engine.GetSpriteSheetByName(SpriteSheetName);
-        else if (SpriteSheetIndex != -1)
-            spriteSheet = Engine.GetSpriteSheetByIndex(SpriteSheetIndex);
+        palette = null;
+        spriteSheet = null;
 
         foreach (var animation in animations)
             animation.OnDeviceReset();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization;
 
 using XSharp.Engine.Collision;
 using XSharp.Math.Geometry;
@@ -34,21 +35,22 @@ public abstract class Entity
 
     internal string name = null;
     private Vector origin = Vector.NULL_VECTOR;
-    internal Entity parent = null;
+    internal EntityReference parent = null;
 
     private bool wasOffScreen;
     private bool wasOutOfLiveArea;
 
-    internal readonly List<Entity> touchingEntities;
-    internal readonly List<Entity> childs;
-    private readonly EntityList<Entity> resultSet;
+    internal EntityList<Entity> touchingEntities;
+    internal EntityList<Entity> childs;
+    private EntityList<Entity> resultSet;
 
-    internal Entity previous;
-    internal Entity next;
+    internal EntityReference previous;
+    internal EntityReference next;
+    internal List<EntityReference> references;
 
     internal long frameToKill = -1;
 
-    private readonly List<EntityState> states;
+    private List<EntityState> states;
     private EntityState[] stateArray;
     private int currentStateID;
 
@@ -81,9 +83,9 @@ public abstract class Entity
             if (value != null && value.IsParent(this))
                 throw new ArgumentException("Cyclic parenting is not allowed.");
 
-            parent?.childs.Remove(this);
+            Parent?.childs.Remove(this);
             parent = value;
-            parent?.childs.Add(this);
+            Parent?.childs.Add(this);
         }
     }
 
@@ -264,13 +266,16 @@ public abstract class Entity
 
     protected Entity()
     {
-        touchingEntities = new List<Entity>();
-        childs = new List<Entity>();
+        touchingEntities = new EntityList<Entity>();
+        childs = new EntityList<Entity>();
         resultSet = new EntityList<Entity>();
-
+        references = new List<EntityReference>();
         states = new List<EntityState>();
-
         lastBox = new Box[BOXKIND_COUNT];
+    }
+
+    protected internal virtual void OnCreate()
+    {       
     }
 
     protected internal virtual void ReadInitParams(dynamic initParams)
@@ -621,23 +626,13 @@ public abstract class Entity
             resultSet.Clear();
             Engine.partition.Query(resultSet, TouchingBox, this, childs, !CheckTouchingWithDeadEntities);
 
-            for (int i = 0; i < touchingEntities.Count; i++)
+            foreach (var entity in touchingEntities)
             {
-                Entity entity = touchingEntities[i];
-                if (entity.Index < 0)
-                {
-                    touchingEntities.RemoveAt(i);
-                    i--;
-
-                    continue;
-                }
-
                 bool touching = CheckTouching(entity);
 
                 if (!touching || !resultSet.Contains(entity))
                 {
-                    touchingEntities.RemoveAt(i);
-                    i--;
+                    touchingEntities.Remove(entity);
                     OnEndTouch(entity);
                 }
                 else if (touching && (CheckTouchingWithDeadEntities || entity.Alive && !entity.MarkedToRemove))
@@ -722,7 +717,7 @@ public abstract class Entity
     protected internal virtual void Cleanup()
     {
         foreach (Entity child in childs)
-            child.parent = null;
+            child.Parent = null;
 
         childs.Clear();
         touchingEntities.Clear();

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace XSharp.Engine.Entities;
 
-public class EntityList<T> : IList<T> where T : Entity
+public class EntityList<T> : IList<T>, IReadOnlyList<T> where T : Entity
 {
     public class EntityListEnumerator : IEnumerator<T>
     {

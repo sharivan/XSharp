@@ -37,7 +37,7 @@ public class DashSparkEffect : SpriteEffect
         }
     }
 
-    private Player player;
+    private EntityReference<Player> player;
 
     public Player Player
     {
@@ -61,6 +61,14 @@ public class DashSparkEffect : SpriteEffect
         Directional = true;
 
         SetAnimationNames("PreDashSparkEffect", "DashSparkEffect");
+    }
+
+    protected override void OnDeath()
+    {
+        if (Player != null)
+            Player.DashSparkEffect = null;
+
+        base.OnDeath();
     }
 
     protected internal override void OnAnimationEnd(Animation animation)

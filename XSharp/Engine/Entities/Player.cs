@@ -74,7 +74,13 @@ public class Player : Sprite
 
     private bool spawnSoundPlayed;
 
-    private DashSparkEffect dashSparkEffect = null;
+    private EntityReference<DashSparkEffect> dashSparkEffect = null;
+
+    internal DashSparkEffect DashSparkEffect
+    {
+        get => dashSparkEffect;
+        set => dashSparkEffect = value;
+    }
 
     public bool CanWallJump => GetWallJumpDir() != Direction.NONE;
 
@@ -310,7 +316,7 @@ public class Player : Sprite
         private set;
     }
 
-    public ChargingEffect ChargingEffect
+    public EntityReference<ChargingEffect> ChargingEffect
     {
         get;
         private set;
@@ -320,6 +326,7 @@ public class Player : Sprite
     {
         SpriteSheetName = "X";
         Directional = true;
+        Respawnable = true;
     }
 
     public override void SaveState(BinaryWriter writer)
@@ -1373,9 +1380,10 @@ public class Player : Sprite
 
                                     if (Dashing)
                                     {
-                                        if (dashSparkEffect != null)
+                                        DashSparkEffect effect = dashSparkEffect;
+                                        if (effect != null)
                                         {
-                                            dashSparkEffect.KillOnNextFrame();
+                                            effect.KillOnNextFrame();
                                             dashSparkEffect = null;
                                         }
 
@@ -1412,9 +1420,10 @@ public class Player : Sprite
 
                         if (dashFrameCounter > DASH_DURATION)
                         {
-                            if (dashSparkEffect != null)
+                            DashSparkEffect effect = dashSparkEffect;
+                            if (effect != null)
                             {
-                                dashSparkEffect.KillOnNextFrame();
+                                effect.KillOnNextFrame();
                                 dashSparkEffect = null;
                             }
 
@@ -1436,10 +1445,14 @@ public class Player : Sprite
                             }
                         }
                     }
-                    else if (dashSparkEffect != null)
+                    else
                     {
-                        dashSparkEffect.KillOnNextFrame();
-                        dashSparkEffect = null;
+                        DashSparkEffect effect = dashSparkEffect;
+                        if (effect != null)
+                        {
+                            effect.KillOnNextFrame();
+                            dashSparkEffect = null;
+                        }
                     }
 
                     if (jumping)
@@ -1585,9 +1598,10 @@ public class Player : Sprite
 
                     PaletteName = "x1NormalPalette";
 
-                    if (ChargingEffect != null)
+                    ChargingEffect effect = ChargingEffect;
+                    if (effect != null)
                     {
-                        ChargingEffect.KillOnNextFrame();
+                        effect.KillOnNextFrame();
                         ChargingEffect = null;
                     }
 
@@ -1651,10 +1665,15 @@ public class Player : Sprite
                 int frame = chargingFrameCounter2 - 4;
                 PaletteName = (frame & 2) is 0 or 1 ? "chargeLevel1Palette" : "x1NormalPalette";
 
-                ChargingEffect ??= Engine.StartChargingEffect(this);
+                ChargingEffect effect = ChargingEffect;
+                if (effect == null)
+                {
+                    ChargingEffect = Engine.StartChargingEffect(this);
+                    effect = ChargingEffect;
+                }
 
                 if (chargingFrameCounter == 64)
-                    ChargingEffect.Level = 2;
+                    effect.Level = 2;
             }
         }
     }
@@ -1842,8 +1861,9 @@ public class Player : Sprite
         }
         else if (ContainsAnimationIndex(PlayerState.PRE_DASH, animation.Index, true))
         {
-            if (dashSparkEffect != null)
-                dashSparkEffect.State = DashingSparkEffectState.DASHING;
+            DashSparkEffect effect = dashSparkEffect;
+            if (effect != null)
+                effect.State = DashingSparkEffectState.DASHING;
 
             SetState(PlayerState.DASH, 0);
         }
@@ -2178,9 +2198,10 @@ public class Player : Sprite
         Freezed = true;
         charging = false;
 
-        if (ChargingEffect != null)
+        ChargingEffect effect = ChargingEffect;
+        if (effect != null)
         {
-            ChargingEffect.KillOnNextFrame();
+            effect.KillOnNextFrame();
             ChargingEffect = null;
         }
 

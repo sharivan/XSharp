@@ -50,6 +50,7 @@ public class Checkpoint : Entity
 
     public Checkpoint()
     {
+        Respawnable = true;
     }
 
     protected override Box GetHitbox()
@@ -67,5 +68,10 @@ public class Checkpoint : Entity
     protected override void SetHitbox(Box hitbox)
     {
         this.hitbox = hitbox;
+    }
+
+    public override string ToString()
+    {
+        return $"Checkpoint #{Point} {Origin} {Hitbox}";
     }
 }

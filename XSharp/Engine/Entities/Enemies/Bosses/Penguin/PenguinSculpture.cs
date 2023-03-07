@@ -50,7 +50,7 @@ public class PenguinSculpture : Enemy
         Exploding = true;
         Engine.PlaySound(4, "Ice Freeze");
 
-        var fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
+        PenguinIceExplosionEffect fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
         {
             Origin,
             InitialVelocity = (-PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED)

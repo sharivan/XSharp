@@ -1,4 +1,5 @@
-﻿using XSharp.Engine.Entities.Triggers;
+﻿using XSharp.Engine.Entities.Effects;
+using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.World;
 using XSharp.Math.Geometry;
 
@@ -41,7 +42,13 @@ public class BossDoor : BaseTrigger
     public event BossDoorEvent ClosingEvent;
     public event BossDoorEvent ClosedEvent;
 
-    private readonly BossDoorEffect effect;
+    private EntityReference<BossDoorEffect> effect;
+
+    private BossDoorEffect Effect
+    {
+        get => effect;
+        set => effect = value;
+    }
 
     public BossDoorOrientation Orientation
     {
@@ -63,8 +70,8 @@ public class BossDoor : BaseTrigger
 
     public BossDoorState State
     {
-        get => effect.State;
-        set => effect.State = value;
+        get => Effect.State;
+        set => Effect.State = value;
     }
 
     public bool StartBossBattle
@@ -74,8 +81,14 @@ public class BossDoor : BaseTrigger
     }
 
     public BossDoor()
+    {        
+    }
+
+    protected internal override void OnCreate()
     {
-        effect = Engine.CreateEntity<BossDoorEffect>(new
+        base.OnCreate();
+
+        Effect = Engine.CreateEntity<BossDoorEffect>(new
         {
             Door = this,
             Visible = false
@@ -88,15 +101,19 @@ public class BossDoor : BaseTrigger
 
         Hitbox = GetTriggerBoudingBox(Origin);
 
-        effect.Origin = (Origin.X, Origin.Y - 1);
-        effect.Spawn();
+        Effect.Origin = (Origin.X, Origin.Y - 1);
+        Effect.Spawn();
 
         State = BossDoorState.CLOSED;
     }
 
     protected override void OnDeath()
     {
-        effect.Kill();
+        if (Effect != null)
+        {
+            Effect.Kill();
+            Effect = null;
+        }
 
         base.OnDeath();
     }
@@ -112,8 +129,9 @@ public class BossDoor : BaseTrigger
             player.StartBossDoorCrossing();
             Engine.KillAllAliveEnemiesAndWeapons();
 
-            if (player.ChargingEffect != null)
-                Engine.FreezeSprites(player, effect, player.ChargingEffect);
+            ChargingEffect chargingEffect = player.ChargingEffect;
+            if (chargingEffect != null)
+                Engine.FreezeSprites(player, effect, chargingEffect);
             else
                 Engine.FreezeSprites(player, effect);
 
@@ -123,14 +141,14 @@ public class BossDoor : BaseTrigger
             if (!Bidirectional)
                 Enabled = false;
 
-            effect.Visible = true;
+            Effect.Visible = true;
             State = BossDoorState.OPENING;
         }
     }
 
     internal void OnStartClosed()
     {
-        effect.Visible = false;
+        Effect.Visible = false;
         ClosedEvent?.Invoke(this);
     }
 

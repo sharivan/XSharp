@@ -506,8 +506,12 @@ public class World : IDisposable
         if (checkpoint == null)
             return;
 
-        Vector screenLT = Engine.Camera.LeftTop;
-        Vector screenRB = Engine.Camera.RightBottom;
+        var camera = Engine.Camera;
+        if (camera == null)
+            return;
+
+        Vector screenLT = camera.LeftTop;
+        Vector screenRB = camera.RightBottom;
         Vector backgroundPos = checkpoint.BackgroundPos;
 
         Vector screenDelta = (checkpoint.Scroll & 0x2) != 0 ? Vector.NULL_VECTOR : (screenLT + checkpoint.CameraPos).Scale(0.5f) - backgroundPos;
@@ -543,8 +547,12 @@ public class World : IDisposable
 
     public void RenderForeground(int layer)
     {
-        Vector screenLT = Engine.Camera.LeftTop;
-        Vector screenRB = Engine.Camera.RightBottom;
+        var camera = Engine.Camera;
+        if (camera == null)
+            return;
+
+        Vector screenLT = camera.LeftTop;
+        Vector screenRB = camera.RightBottom;
 
         Cell start = GetSceneCellFromPos(screenLT);
         Cell end = GetSceneCellFromPos(screenRB);
