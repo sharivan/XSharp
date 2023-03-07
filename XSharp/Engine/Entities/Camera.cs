@@ -1,6 +1,5 @@
 ﻿using System.IO;
 
-using XSharp.Engine.Entities;
 using XSharp.Engine.Entities.Items;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -9,11 +8,11 @@ using static XSharp.Engine.Consts;
 
 using MMXWorld = XSharp.Engine.World.World;
 
-namespace XSharp.Engine;
+namespace XSharp.Engine.Entities;
 
 public class Camera : Entity
 {
-    private Entity focusOn = null;
+    private EntityReference focusOn = null;
     private Vector moveDistance;
 
     public bool NoConstraints
@@ -101,7 +100,7 @@ public class Camera : Entity
         get => base.Origin;
         set
         {
-            if (focusOn != null)
+            if (FocusOn != null)
                 return;
 
             SetOrigin(value);
@@ -150,7 +149,7 @@ public class Camera : Entity
         set
         {
             focusOn = value;
-            if (focusOn != null)
+            if (FocusOn != null)
                 MoveToFocus();
         }
     }
@@ -207,7 +206,7 @@ public class Camera : Entity
     {
         base.SaveState(writer);
 
-        writer.Write(focusOn != null ? focusOn.Index : -1);
+        writer.Write(FocusOn != null ? FocusOn.Index : -1);
         moveDistance.Write(writer);
         writer.Write(NoConstraints);
         Size.Write(writer);
@@ -266,7 +265,7 @@ public class Camera : Entity
 
     private Vector GetSmoothVelocity()
     {
-        return Engine.Player != null && focusOn == Engine.Player && Engine.Player.NoClip
+        return Engine.Player != null && FocusOn == Engine.Player && Engine.Player.NoClip
             ? (NO_CLIP_SPEED_BOOST, NO_CLIP_SPEED_BOOST)
             : (SmoothSpeed, SmoothSpeed);
     }
@@ -329,10 +328,10 @@ public class Camera : Entity
 
     private void MoveToFocus(Vector velocity)
     {
-        if (focusOn == null)
+        if (FocusOn == null)
             return;
 
-        Vector dest = focusOn.Origin;
+        Vector dest = FocusOn.Origin;
         MoveToOriginInternal(dest, velocity);
     }
 
@@ -366,7 +365,7 @@ public class Camera : Entity
 
     private bool DoMoving()
     {
-        if (focusOn != null)
+        if (FocusOn != null)
             MoveToFocus();
 
         Vector velocity = Velocity;

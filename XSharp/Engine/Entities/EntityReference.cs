@@ -3,55 +3,78 @@ using System.Collections.Generic;
 
 namespace XSharp.Engine.Entities;
 
-public class EntityReference
+public interface IEntityReference
 {
-    internal int index = -1;
-
-    public int Index
+    public int TargetIndex
     {
-        get => index;
-        set
-        {
-            Entity?.references.Remove(this);
-            index = value;
-            Entity?.references.Add(this);
-        }
+        get;
+        set;
     }
 
-    public Entity Entity
+    public Entity Target
     {
-        get => Index >= 0 ? GameEngine.Engine.entities [Index] : null;
-        set => Index = value != null ? value.Index : -1;
+        get;
+        set;
+    }
+}
+
+public abstract class EntityReference : IEntityReference
+{
+    public static EntityReference ReferenceTo(int index, Type fallBackEntityType)
+    {
+        if (index < 0)
+            return null;
+
+        EntityReference reference = GameEngine.Engine.entityReferences[index];
+        if (reference is not null)
+            return reference;
+
+        Type referenceType = typeof(EntityIndexReference<>);
+
+        var entity = GameEngine.Engine.entities[index];
+        referenceType = entity == null ? referenceType.MakeGenericType(entity.GetType()) : referenceType.MakeGenericType(fallBackEntityType);
+        reference = (EntityReference) Activator.CreateInstance(referenceType, true);
+        reference.TargetIndex = index;
+
+        return reference;
     }
 
-    public EntityReference(int index)
+    public static EntityReference ReferenceTo(Entity entity, Type fallBackEntityType)
     {
-        Index = index;
+        return entity == null ? null : ReferenceTo(entity.Index, fallBackEntityType);
     }
 
-    public EntityReference(Entity entity)
+    public abstract int TargetIndex
     {
-        Index = entity != null ? entity.Index : -1;
+        get;
+        set;
+    }
+
+    public Entity Target
+    {
+        get => TargetIndex >= 0 ? GameEngine.Engine.entities[TargetIndex] : null;
+        set => TargetIndex = value != null ? value.Index : -1;
     }
 
     public static implicit operator Entity(EntityReference reference)
     {
-        return reference?.Entity;
+        return reference?.Target;
     }
 
-    public static implicit operator EntityReference(Entity entity)
+    public static implicit operator EntityReference(Entity target)
     {
-        return entity != null ? new EntityReference(entity) : null;
+        return ReferenceTo(target, target != null ? target.GetType() : typeof(Entity));
     }
 
     public static bool operator ==(EntityReference reference1, EntityReference reference2)
     {
-        return EqualityComparer<Entity>.Default.Equals(reference1, reference2);
+        return ReferenceEquals(reference1, reference2)
+            || reference1 is not null && reference2 is not null && reference1.Equals(reference2);
     }
 
     public static bool operator ==(EntityReference reference, Entity entity)
     {
-        return reference is null ? entity is null : EqualityComparer<Entity>.Default.Equals(reference.Entity, entity);
+        return reference is null ? entity is null : EqualityComparer<Entity>.Default.Equals(reference.Target, entity);
     }
 
     public static bool operator ==(Entity entity, EntityReference reference)
@@ -76,79 +99,98 @@ public class EntityReference
 
     public override bool Equals(object? obj)
     {
-        return obj == Entity
+        var target = Target;
+        return obj == target
             || obj != null
             && (
-            obj is EntityReference reference && EqualityComparer<Entity>.Default.Equals(Entity, reference.Entity)
-            || obj is Entity entity && EqualityComparer<Entity>.Default.Equals(Entity, entity)
+            obj is EntityReference reference && EqualityComparer<Entity>.Default.Equals(target, reference.Target)
+            || obj is Entity entity && EqualityComparer<Entity>.Default.Equals(target, entity)
             );
     }
 
     public override int GetHashCode()
     {
-        return Index;
+        return TargetIndex;
     }
 
     public override string ToString()
     {
-        var entity = Entity;
-        return entity != null ? entity.ToString() : "null";
+        var target = Target;
+        return target != null ? target.ToString() : "null";
     }
 }
 
-#pragma warning disable CS0660 // O tipo define os operadores == ou !=, mas não substitui o Object.Equals(object o)
-#pragma warning disable CS0661 // O tipo define os operadores == ou !=, mas não substitui o Object.GetHashCode()
-public class EntityReference<T> : EntityReference where T : Entity
-#pragma warning restore CS0661 // O tipo define os operadores == ou !=, mas não substitui o Object.GetHashCode()
-#pragma warning restore CS0660 // O tipo define os operadores == ou !=, mas não substitui o Object.Equals(object o)
+public interface IEntityReference<T> : IEntityReference where T : Entity
 {
-    new public T Entity
+    new public T Target
     {
-        get => (T) base.Entity;
-        set => base.Entity = value;
+        get;
+        set;
     }
+}
 
-    public EntityReference(T entity) : base(entity)
+public abstract class EntityReference<T> : EntityReference, IEntityReference<T> where T : Entity
+{
+    new public T Target
     {
+        get => TargetIndex >= 0 ? (T) GameEngine.Engine.entities[TargetIndex] : null;
+        set => TargetIndex = value != null ? value.Index : -1;
     }
 
     public static implicit operator T(EntityReference<T> reference)
     {
-        return reference?.Entity;
+        return reference?.Target;
     }
 
-    public static implicit operator EntityReference<T>(T entity)
+    public static implicit operator EntityReference<T>(T target)
     {
-        return entity != null ? new EntityReference<T>(entity) : null;
+        var reference = ReferenceTo(target, typeof(T));
+        return reference is EntityIndexReference<T> referenceT ? referenceT : new EntityProxyReference<T>(reference);
+    }
+}
+
+internal class EntityIndexReference<T> : EntityReference<T> where T : Entity
+{
+    internal int targetIndex = -1;
+
+    public override int TargetIndex
+    {
+        get => targetIndex;
+
+        set
+        {
+            if (targetIndex >= 0)
+                GameEngine.Engine.entityReferences[targetIndex] = null;
+
+            targetIndex = value;
+
+            if (targetIndex >= 0)
+                GameEngine.Engine.entityReferences[targetIndex] = this;
+        }
     }
 
-    public static bool operator ==(EntityReference<T> reference1, EntityReference<T> reference2)
+    internal EntityIndexReference()
     {
-        return (EntityReference) reference1 == (EntityReference) reference2;
+    }
+}
+
+internal class EntityProxyReference<T> : EntityReference<T> where T : Entity
+{
+    private IEntityReference proxy;
+
+    public override int TargetIndex
+    {
+        get => proxy != null ? proxy.TargetIndex : -1;
+
+        set
+        {
+            if (proxy != null)
+                proxy.TargetIndex = value;
+        }
     }
 
-    public static bool operator ==(EntityReference<T> reference, T entity)
+    internal EntityProxyReference(IEntityReference proxy)
     {
-        return reference == (Entity) entity;
-    }
-
-    public static bool operator ==(T entity, EntityReference<T> reference)
-    {
-        return reference == entity;
-    }
-
-    public static bool operator !=(EntityReference<T> reference1, EntityReference<T> reference2)
-    {
-        return !(reference1.Entity == reference2);
-    }
-
-    public static bool operator !=(EntityReference<T> reference, T entity)
-    {
-        return !(reference == entity);
-    }
-
-    public static bool operator !=(T entity, EntityReference<T> reference)
-    {
-        return !(entity == reference.Entity);
+        this.proxy = proxy;
     }
 }

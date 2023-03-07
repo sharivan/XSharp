@@ -46,7 +46,6 @@ public abstract class Entity
 
     internal EntityReference previous;
     internal EntityReference next;
-    internal List<EntityReference> references;
 
     internal long frameToKill = -1;
 
@@ -269,7 +268,6 @@ public abstract class Entity
         touchingEntities = new EntityList<Entity>();
         childs = new EntityList<Entity>();
         resultSet = new EntityList<Entity>();
-        references = new List<EntityReference>();
         states = new List<EntityState>();
         lastBox = new Box[BOXKIND_COUNT];
     }

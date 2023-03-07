@@ -287,6 +287,7 @@ public class GameEngine
 
     private readonly List<Checkpoint> checkpoints;
     internal readonly Entity[] entities;
+    internal readonly EntityReference[] entityReferences;
     private readonly Dictionary<string, Entity> entitiesByName;
     private int firstFreeEntityIndex;
     private Entity firstEntity;
@@ -1049,6 +1050,7 @@ public class GameEngine
         RNG = new RNG();
         checkpoints = new List<Checkpoint>();
         entities = new Entity[MAX_ENTITIES];
+        entityReferences = new EntityReference[MAX_ENTITIES];
         entitiesByName = new Dictionary<string, Entity>();
         spawnedEntities = new EntityList<Entity>();
         removedEntities = new EntityList<Entity>();
@@ -2792,11 +2794,6 @@ public class GameEngine
 
     private void RemoveEntity(Entity entity)
     {
-        foreach (var reference in entity.references)
-            reference.index = -1;
-
-        entity.references.Clear();
-
         if (entity.CheckTouchingEntities)
             partition.Remove(entity);
 
@@ -2818,6 +2815,13 @@ public class GameEngine
             lastEntity = previous;
 
         entities[index] = null;
+
+        var reference = entityReferences[index];
+        if (reference is not null)
+        {
+            reference.TargetIndex = -1;
+            entityReferences[index] = null;
+        }
 
         if (entity.Name is not null and not "")
             entitiesByName.Remove(entity.Name);
@@ -2841,6 +2845,13 @@ public class GameEngine
 
                 entity.childs.Clear();
                 entities[i] = null;
+            }
+
+            var reference = entityReferences[i];
+            if (reference is not null)
+            {
+                reference.TargetIndex = -1;
+                entityReferences[i] = null;
             }
         }
 
@@ -4532,7 +4543,7 @@ public class GameEngine
 
         if (showInfoText && Player != null)
         {
-            string text = $"Checkpoint: {(CurrentCheckpoint != null ? currentCheckpoint.Index.ToString() : "none")}";
+            string text = $"Checkpoint: {(CurrentCheckpoint != null ? currentCheckpoint.TargetIndex.ToString() : "none")}";
             DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.White, out RawRectangle fontDimension);
 
             text = $"Camera: CX: {(float) Camera.Left * 256}({(float) (Camera.Left - lastCameraLeftTop.X) * 256}) CY: {(float) Camera.Top * 256}({(float) (Camera.Top - lastCameraLeftTop.Y) * 256})";
