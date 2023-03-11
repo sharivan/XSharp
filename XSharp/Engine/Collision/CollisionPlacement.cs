@@ -1,7 +1,9 @@
 ﻿using XSharp.Math.Geometry;
+using XSharp.Serialization;
 
 namespace XSharp.Engine.Collision;
 
+[Serializable]
 public readonly struct CollisionPlacement
 {
     public CollisionData CollisionData

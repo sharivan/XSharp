@@ -1,13 +1,16 @@
 ﻿using XSharp.Engine.Entities;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+using XSharp.Serialization;
 
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Collision;
 
+[Serializable]
 public class SpriteCollider
 {
+    private EntityReference<Sprite> owner;
     private Box box;
     private bool checkCollisionWithWorld;
     private bool checkCollisionWithSolidSprites;
@@ -30,10 +33,7 @@ public class SpriteCollider
     private bool rightMaskComputed;
     private bool innerMaskComputed;
 
-    public Sprite Owner
-    {
-        get;
-    }
+    public Sprite Owner => owner;
 
     public Box Box
     {
@@ -46,7 +46,7 @@ public class SpriteCollider
         }
     }
 
-    public EntityList<Sprite> IgnoreSprites
+    public EntitySet<Sprite> IgnoreSprites
     {
         get;
     }
@@ -232,7 +232,7 @@ public class SpriteCollider
 
     public SpriteCollider(Sprite owner, Box box, FixedSingle headheight, FixedSingle legsHeight, bool useCollisionPlacements = false, bool checkCollisionWithWorld = true, bool checkCollisionWithSolidSprites = false)
     {
-        Owner = owner;
+        this.owner = owner;
         this.box = box;
         UseCollisionPlacements = useCollisionPlacements;
         headHeight = headheight;
@@ -240,7 +240,7 @@ public class SpriteCollider
         this.checkCollisionWithWorld = checkCollisionWithWorld;
         this.checkCollisionWithSolidSprites = checkCollisionWithSolidSprites;
 
-        IgnoreSprites = new EntityList<Sprite>(owner);
+        IgnoreSprites = new EntitySet<Sprite>(owner);
 
         leftCollisionChecker = new LanderCollisionChecker()
         {

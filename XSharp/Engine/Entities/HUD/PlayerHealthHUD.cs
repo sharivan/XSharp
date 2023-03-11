@@ -6,6 +6,12 @@ public class PlayerHealthHUD : HealthHUD
 {
     public PlayerHealthHUD()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         Left = HP_LEFT;
         Image = HUDImage.X;
     }

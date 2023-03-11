@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization;
 
+using XSharp.Factories;
 using XSharp.Engine.Collision;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
+
+using SerializableAttribute = XSharp.Serialization.SerializableAttribute;
 
 namespace XSharp.Engine.Entities;
 
@@ -19,7 +20,8 @@ public enum TouchingKind
 public delegate void EntityEvent(Entity source);
 public delegate void EntityActivatorEvent(Entity source, Entity activator);
 
-public abstract class Entity
+[Serializable]
+public abstract class Entity : IIndexedNamedFactoryItem
 {
     public static GameEngine Engine => GameEngine.Engine;
 
@@ -33,6 +35,7 @@ public abstract class Entity
     public event EntityActivatorEvent TouchingEvent;
     public event EntityActivatorEvent EndTouchEvent;
 
+    internal int index = -1;
     internal string name = null;
     private Vector origin = Vector.NULL_VECTOR;
     internal EntityReference parent = null;
@@ -40,10 +43,11 @@ public abstract class Entity
     private bool wasOffScreen;
     private bool wasOutOfLiveArea;
 
-    internal EntityList<Entity> touchingEntities;
-    internal EntityList<Entity> childs;
-    private EntityList<Entity> resultSet;
+    internal EntitySet<Entity> touchingEntities;
+    internal EntitySet<Entity> childs;
+    private EntitySet<Entity> resultSet;
 
+    internal EntityReference reference;
     internal EntityReference previous;
     internal EntityReference next;
 
@@ -58,16 +62,20 @@ public abstract class Entity
 
     private Box[] lastBox;
 
+    public EntityFactory Factory => Engine.Entities;
+
+    IIndexedNamedFactory IIndexedNamedFactoryItem.Factory => Factory;
+
     public int Index
     {
-        get;
-        internal set;
-    } = -1;
+        get => index;
+        internal set => index = value;
+    }
 
     public string Name
     {
         get => name;
-        set => GameEngine.Engine.UpdateEntityName(this, value);
+        internal set => Engine.Entities.UpdateEntityName(this, value);
     }
 
     public Entity Parent
@@ -76,7 +84,7 @@ public abstract class Entity
 
         set
         {
-            if (parent == value)
+            if ((Entity) parent == value)
                 return;
 
             if (value != null && value.IsParent(this))
@@ -265,15 +273,15 @@ public abstract class Entity
 
     protected Entity()
     {
-        touchingEntities = new EntityList<Entity>();
-        childs = new EntityList<Entity>();
-        resultSet = new EntityList<Entity>();
+        touchingEntities = new EntitySet<Entity>();
+        childs = new EntitySet<Entity>();
+        resultSet = new EntitySet<Entity>();
         states = new List<EntityState>();
         lastBox = new Box[BOXKIND_COUNT];
     }
 
     protected internal virtual void OnCreate()
-    {       
+    {
     }
 
     protected internal virtual void ReadInitParams(dynamic initParams)
@@ -314,7 +322,7 @@ public abstract class Entity
         Type stateType = GetStateType();
         var state = (EntityState) Activator.CreateInstance(stateType);
 
-        state.Entity = this;
+        state.entity = this;
         state.ID = id;
         state.StartEvent += onStart;
         state.FrameEvent += onFrame;
@@ -495,76 +503,9 @@ public abstract class Entity
         return lastBox[kind.ToIndex()];
     }
 
-    public virtual void LoadState(BinaryReader reader)
+    public override int GetHashCode()
     {
-        name = reader.ReadString();
-        origin = new Vector(reader);
-
-        wasOffScreen = reader.ReadBoolean();
-        wasOutOfLiveArea = reader.ReadBoolean();
-
-        frameToKill = reader.ReadInt64();
-
-        currentStateID = reader.ReadInt32();
-
-        checkTouchingEntities = reader.ReadBoolean();
-        checkTouchingWithDeadEntities = reader.ReadBoolean();
-
-        for (int i = 0; i < lastBox.Length; i++)
-            lastBox[i] = new Box(reader);
-
-        Index = reader.ReadInt32();
-        LastOrigin = new Vector(reader);
-        Alive = reader.ReadBoolean();
-        Dead = reader.ReadBoolean();
-        MarkedToRemove = reader.ReadBoolean();
-        Respawnable = reader.ReadBoolean();
-        RespawnOnNear = reader.ReadBoolean();
-        MinimumIntervalToRespawn = reader.ReadInt32();
-        MinimumIntervalToKillOnOffScreen = reader.ReadInt32();
-        SpawnFrame = reader.ReadInt64();
-        DeathFrame = reader.ReadInt64();
-        Updating = reader.ReadBoolean();
-        Spawning = reader.ReadBoolean();
-        TouchingKind = (TouchingKind) reader.ReadInt32();
-        TouchingVectorKind = (VectorKind) reader.ReadInt32();
-        KillOnOffscreen = reader.ReadBoolean();
-    }
-
-    public virtual void SaveState(BinaryWriter writer)
-    {
-        writer.Write(name ?? "");
-        origin.Write(writer);
-
-        writer.Write(wasOffScreen);
-        writer.Write(wasOutOfLiveArea);
-
-        writer.Write(frameToKill);
-
-        writer.Write(currentStateID);
-
-        writer.Write(checkTouchingEntities);
-        writer.Write(checkTouchingWithDeadEntities);
-
-        foreach (var box in lastBox)
-            box.Write(writer);
-
-        writer.Write(Index);
-        LastOrigin.Write(writer);
-        writer.Write(Alive);
-        writer.Write(Dead);
-        writer.Write(MarkedToRemove);
-        writer.Write(Respawnable);
-        writer.Write(RespawnOnNear);
-        writer.Write(MinimumIntervalToRespawn);
-        writer.Write(MinimumIntervalToKillOnOffScreen);
-        writer.Write(SpawnFrame);
-        writer.Write(DeathFrame);
-        writer.Write(Updating);
-        writer.Write(Spawning);
-        writer.Write((int) TouchingKind);
-        writer.Write((int) TouchingVectorKind);
-        writer.Write(KillOnOffscreen);
+        return index;
     }
 
     public override string ToString()
@@ -852,8 +793,8 @@ public abstract class Entity
         Respawnable = true;
         RespawnOnNear = true;
 
-        if (!Engine.autoRespawnableEntities.ContainsKey(this))
-            Engine.autoRespawnableEntities.Add(this, new RespawnEntry(this, Origin));
+        if (!Engine.autoRespawnableEntities.ContainsKey(reference))
+            Engine.autoRespawnableEntities.Add(reference, new RespawnEntry(reference, Origin));
 
         UpdatePartition(true);
     }
@@ -863,7 +804,7 @@ public abstract class Entity
         Respawnable = false;
         RespawnOnNear = false;
 
-        Engine.autoRespawnableEntities.Remove(this);
+        Engine.autoRespawnableEntities.Remove(reference);
         UpdatePartition(true);
     }
 
@@ -885,5 +826,10 @@ public abstract class Entity
     public Direction GetVerticalDirection(Entity entity)
     {
         return GetVerticalDirection(entity.Origin);
+    }
+
+    public static implicit operator EntityReference(Entity entity)
+    {
+        return entity?.reference;
     }
 }

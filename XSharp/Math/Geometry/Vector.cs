@@ -1,10 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Globalization;
-using System.IO;
 using System.Runtime.CompilerServices;
 
-using XSharp.Engine;
+using XSharp.Serialization;
+using XSharp.Util;
+
+using TupleExtensions = XSharp.Util.TupleExtensions;
 
 namespace XSharp.Math.Geometry;
 
@@ -12,10 +14,13 @@ public class VectorTypeConverter : TypeConverter
 {
     public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
     {
-        var genericSourceType = sourceType.GetGenericTypeDefinition();
+        Type genericSourceType;
         return sourceType == typeof(Vector)
-            || (genericSourceType == typeof(ValueTuple<,>) || genericSourceType == typeof(Tuple<,>)
-            ? XSharpTupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
+            || sourceType.IsGenericType && (
+                ((genericSourceType = sourceType.GetGenericTypeDefinition()) == typeof(ValueTuple<,>)
+                || genericSourceType == typeof(Tuple<,>)
+            )
+            ? Util.TupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
             : base.CanConvertFrom(context, sourceType));
     }
 
@@ -25,12 +30,14 @@ public class VectorTypeConverter : TypeConverter
         if (sourceType == typeof(Vector))
             return value;
 
-        var genericSourceType = sourceType.GetGenericTypeDefinition();
-
-        if (genericSourceType == typeof(ValueTuple<,>) || genericSourceType == typeof(Tuple<,>))
+        if (sourceType.IsGenericType)
         {
-            var args = ((ITuple) value).ToArray<FixedSingle>();
-            return new Vector(args[0], args[1]);
+            var genericSourceType = sourceType.GetGenericTypeDefinition();
+            if (genericSourceType == typeof(ValueTuple<,>) || genericSourceType == typeof(Tuple<,>))
+            {
+                var args = ((ITuple) value).ToArray<FixedSingle>();
+                return new Vector(args[0], args[1]);
+            }
         }
 
         return base.ConvertFrom(context, culture, value);
@@ -42,11 +49,14 @@ public class VectorTypeConverter : TypeConverter
         if (destinationType == typeof(Vector))
             return vec;
 
-        var genericDestinationType = destinationType.GetGenericTypeDefinition();
+        if (destinationType.IsGenericType)
+        {
+            var genericDestinationType = destinationType.GetGenericTypeDefinition();
+            if (genericDestinationType == typeof(ValueTuple<,>) || genericDestinationType == typeof(Tuple<,>))
+                return TupleExtensions.ArrayToTuple(destinationType, vec.X, vec.Y);
+        }
 
-        return genericDestinationType == typeof(ValueTuple<,>) || genericDestinationType == typeof(Tuple<,>)
-            ? XSharpTupleExtensions.ArrayToTuple(destinationType, vec.X, vec.Y)
-            : base.ConvertTo(context, culture, value, destinationType);
+        return base.ConvertTo(context, culture, value, destinationType);
     }
 }
 
@@ -54,7 +64,7 @@ public class VectorTypeConverter : TypeConverter
 /// Vetor bidimensional
 /// </summary>
 [TypeConverter(typeof(VectorTypeConverter))]
-public struct Vector : IGeometry
+public struct Vector : IGeometry, ISerializable
 {
     public const GeometryType type = GeometryType.VECTOR;
 
@@ -87,6 +97,7 @@ public struct Vector : IGeometry
     public FixedSingle X
     {
         get;
+        private set;
     }
 
     /// <summary>
@@ -95,6 +106,7 @@ public struct Vector : IGeometry
     public FixedSingle Y
     {
         get;
+        private set;
     }
 
     /// <summary>
@@ -124,16 +136,21 @@ public struct Vector : IGeometry
 
     public Vector((FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2) { }
 
-    public Vector(BinaryReader reader)
+    public Vector(BinarySerializer reader)
     {
-        X = new FixedSingle(reader);
-        Y = new FixedSingle(reader);
+        Deserialize(reader);
     }
 
-    public void Write(BinaryWriter writer)
+    public void Deserialize(BinarySerializer reader)
     {
-        X.Write(writer);
-        Y.Write(writer);
+        X = reader.ReadFixedSingle();
+        Y = reader.ReadFixedSingle();
+    }
+
+    public void Serialize(BinarySerializer writer)
+    {
+        X.Serialize(writer);
+        Y.Serialize(writer);
     }
 
     public override int GetHashCode()

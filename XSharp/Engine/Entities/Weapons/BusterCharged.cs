@@ -1,4 +1,5 @@
 ﻿using XSharp.Engine.Entities.Enemies;
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -32,6 +33,12 @@ public class BusterCharged : Weapon
 
     public BusterCharged()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         SpriteSheetName = "X Weapons";
 
         SetupStateArray(typeof(ChargedState));
@@ -134,7 +141,7 @@ public class BusterCharged : Weapon
     {
         base.OnAnimationEnd(animation);
 
-        if (animation.FrameSequenceName != CurrentState.AnimationName)
+        if (animation.Name != CurrentState.AnimationName)
             return;
 
         if (Firing)

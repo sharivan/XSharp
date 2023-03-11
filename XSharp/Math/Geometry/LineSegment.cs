@@ -1,11 +1,13 @@
 ﻿using System;
 
+using XSharp.Serialization;
+
 namespace XSharp.Math.Geometry;
 
 /// <summary>
 /// Segmento de reta
 /// </summary>
-public struct LineSegment : IGeometry
+public struct LineSegment : IGeometry, ISerializable
 {
     public const GeometryType type = GeometryType.LINE_SEGMENT;
 
@@ -17,6 +19,7 @@ public struct LineSegment : IGeometry
     public Vector Start
     {
         get;
+        private set;
     }
 
     /// <summary>
@@ -25,6 +28,7 @@ public struct LineSegment : IGeometry
     public Vector End
     {
         get;
+        private set;
     }
 
     /// <summary>
@@ -41,6 +45,23 @@ public struct LineSegment : IGeometry
     {
         Start = start;
         End = end;
+    }
+
+    public LineSegment(BinarySerializer reader)
+    {
+        Deserialize(reader);
+    }
+
+    public void Deserialize(BinarySerializer reader)
+    {
+        Start = reader.ReadVector();
+        End = reader.ReadVector();
+    }
+
+    public void Serialize(BinarySerializer writer)
+    {
+        Start.Serialize(writer);
+        End.Serialize(writer);
     }
 
     public FixedSingle GetLength(Metric metric)

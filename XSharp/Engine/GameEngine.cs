@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -278,27 +276,21 @@ public class GameEngine
     private readonly List<Palette> palettes;
     private readonly Dictionary<string, Palette> palettesByName;
 
-    private readonly Dictionary<string, WaveStream> soundStreams;
+    internal readonly Dictionary<string, WaveEntry> soundStreams;
     private readonly List<SoundChannel> soundChannels;
     private readonly Dictionary<string, SoundChannel> soundChannelsByName;
 
     internal Partition<Entity> partition;
-    private EntityList<Entity> resultSet;
+    private EntitySet<Entity> resultSet;
 
-    private readonly List<Checkpoint> checkpoints;
-    internal readonly Entity[] entities;
-    internal readonly EntityReference[] entityReferences;
-    private readonly Dictionary<string, Entity> entitiesByName;
-    private int firstFreeEntityIndex;
-    private Entity firstEntity;
-    private Entity lastEntity;
-    private int entityCount;
-    internal EntityList<Entity> spawnedEntities;
-    internal EntityList<Entity> removedEntities;
-    internal Dictionary<Entity, RespawnEntry> autoRespawnableEntities;
-    private readonly EntityList<Sprite> freezingSpriteExceptions;
-    private readonly EntityList<Sprite>[] sprites;
-    private readonly EntityList<HUD>[] huds;
+    private List<EntityReference<Checkpoint>> checkpoints;
+
+    internal EntitySet<Entity> spawnedEntities;
+    internal EntitySet<Entity> removedEntities;
+    internal Dictionary<EntityReference, RespawnEntry> autoRespawnableEntities;
+    private readonly EntitySet<Sprite> freezingSpriteExceptions;
+    private readonly EntitySet<Sprite>[] sprites;
+    private readonly EntitySet<HUD>[] huds;
     private ushort currentLevel;
     private bool changeLevel;
     private ushort levelToChange;
@@ -385,6 +377,7 @@ public class GameEngine
     private EntityReference<Player> player;
     private EntityReference<PlayerHealthHUD> hp;
     private EntityReference<ReadyHUD> readyHUD;
+    private EntityReference<Boss> boss;
 
     public Control Control
     {
@@ -417,29 +410,19 @@ public class GameEngine
         private set;
     }
 
-    public Camera Camera
+    public EntityFactory Entities
     {
-        get => camera;
-        private set => camera = value;
+        get;
+        private set;
     }
 
-    public Player Player
-    {
-        get => player;
-        private set => player = value;
-    }
+    public Camera Camera => camera;
 
-    public PlayerHealthHUD HP
-    {
-        get => hp;
-        private set => hp = value;
-    }
+    public Player Player => player;
 
-    public ReadyHUD ReadyHUD
-    {
-        get => readyHUD;
-        private set => readyHUD = value;
-    }
+    public PlayerHealthHUD HP => hp;
+
+    public ReadyHUD ReadyHUD => readyHUD;
 
     public FixedSingle HealthCapacity
     {
@@ -501,6 +484,12 @@ public class GameEngine
         get;
         private set;
     }
+
+    public string ROMPath
+    {
+        get;
+        private set;
+    } = null;
 
     public Checkpoint CurrentCheckpoint
     {
@@ -617,7 +606,7 @@ public class GameEngine
         internal set;
     }
 
-    public IReadOnlyList<Checkpoint> Checkpoints => checkpoints;
+    public IReadOnlyList<EntityReference<Checkpoint>> Checkpoints => checkpoints;
 
     public long FrameCounter
     {
@@ -782,8 +771,8 @@ public class GameEngine
 
     public Boss Boss
     {
-        get;
-        private set;
+        get => boss;
+        private set => boss = value;
     }
 
     public bool BossBattle
@@ -811,7 +800,9 @@ public class GameEngine
         clock.Start();
         fpsTimer.Start();
 
-        freezingSpriteExceptions = new EntityList<Sprite>();
+        Entities = new EntityFactory();
+
+        freezingSpriteExceptions = new EntitySet<Sprite>();
 
         spriteSheets = new List<SpriteSheet>();
         spriteSheetsByName = new Dictionary<string, SpriteSheet>();
@@ -819,7 +810,7 @@ public class GameEngine
         palettes = new List<Palette>();
         palettesByName = new Dictionary<string, Palette>();
 
-        soundStreams = new Dictionary<string, WaveStream>();
+        soundStreams = new Dictionary<string, WaveEntry>();
         soundChannels = new List<SoundChannel>();
         soundChannelsByName = new Dictionary<string, SoundChannel>();
 
@@ -880,149 +871,42 @@ public class GameEngine
         CreateSoundChannel("Unused1", 0.25f);
         CreateSoundChannel("Unused2", 0.25f);
 
-        // 0
-        var stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\01 - MMX - X Regular Shot.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Regular Shot", stream);
-
-        // 1
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx2\X Semi Charged Shot.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Semi Charged Shot", stream);
-
-        // 2
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\02 - MMX - X Charge Shot.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Charge Shot", stream);
-
-        // 3
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\04 - MMX - X Charge.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Charge", stream);
-
-        // 4
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\07 - MMX - X Dash.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Dash", stream);
-
-        // 5
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\08 - MMX - X Jump.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Jump", stream);
-
-        // 6
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\09 - MMX - X Land.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Land", stream);
-
-        // 7
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\17 - MMX - X Fade In.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Fade In", stream);
-
-        // 8
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\30 - MMX - Small Hit.wav", SoundFormat.WAVE);
-        soundStreams.Add("Small Hit", stream);
-
-        // 9
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\10 - MMX - X Hurt.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Hurt", stream);
-
-        // 10
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\11 - MMX - X Die.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Die", stream);
-
-        // 11
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\56 - MMX - Enemy Die (1).wav", SoundFormat.WAVE);
-        soundStreams.Add("Enemy Die (1)", stream);
-
-        // 12
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\57 - MMX - Enemy Die (2).wav", SoundFormat.WAVE);
-        soundStreams.Add("Enemy Die (2)", stream);
-
-        // 13
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\58 - MMX - Enemy Die (3).wav", SoundFormat.WAVE);
-        soundStreams.Add("Enemy Die (3)", stream);
-
-        // 14
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\59 - MMX - Enemy Die (4).wav", SoundFormat.WAVE);
-        soundStreams.Add("Enemy Die (4)", stream);
-
-        // 15
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Upgrade Complete", stream);
-
-        // 16
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\18 - MMX - X Fade Out.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Fade Out", stream);
-
-        // 17
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\12 - Chill Penguin.mp3", SoundFormat.MP3);
-        soundStreams.Add("Chill Penguin", stream);
-
-        // 18
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\12 - MMX - X Life Gain.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Life Gain", stream);
-
-        // 19
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\13 - MMX - X Extra Life.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Extra Life", stream);
-
-        // 20
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav", SoundFormat.WAVE);
-        soundStreams.Add("X Sub Tank-Heart Powerup", stream);
-
-        // 21
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Door Opening.wav", SoundFormat.WAVE);
-        soundStreams.Add("Door Opening", stream);
-
-        // 22
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Door Closing.wav", SoundFormat.WAVE);
-        soundStreams.Add("Door Closing", stream);
-
-        // 23
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\19 - Boss Intro.mp3", SoundFormat.MP3);
-        soundStreams.Add("Boss Intro", stream);
-
-        // 24
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\20 - Boss Battle.mp3", SoundFormat.MP3);
-        soundStreams.Add("Boss Battle", stream);
-
-        // 25
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\ost\mmx\21 - Boss Defeated.mp3", SoundFormat.MP3);
-        soundStreams.Add("Boss Defeated", stream);
-
-        // 26
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\31 - MMX - Big Hit.wav", SoundFormat.WAVE);
-        soundStreams.Add("Big Hit", stream);
-
-        // 27
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\91 - MMX - Misc. dash, jump, move (3).wav", SoundFormat.WAVE);
-        soundStreams.Add("Misc. dash, jump, move (3)", stream);
-
-        // 28
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav", SoundFormat.WAVE);
-        soundStreams.Add("Chill Penguin Breath", stream);
-
-        // 29
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\34 - MMX - Ice.wav", SoundFormat.WAVE);
-        soundStreams.Add("Ice", stream);
-
-        // 30
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\35 - MMX - Ice Freeze.wav", SoundFormat.WAVE);
-        soundStreams.Add("Ice Freeze", stream);
-
-        // 31
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\36 - MMX - Ice Break.wav", SoundFormat.WAVE);
-        soundStreams.Add("Ice Break", stream);
-
-        // 32
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\29 - MMX - Enemy Helmet Hit.wav", SoundFormat.WAVE);
-        soundStreams.Add("Enemy Helmet Hit", stream);
-
-        // 33
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Boss Explosion.wav", SoundFormat.WAVE);
-        soundStreams.Add("Boss Explosion", stream);
-
-        // 34
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\Boss Final Explode.wav", SoundFormat.WAVE);
-        soundStreams.Add("Boss Final Explode", stream);
-
-        // 35
-        stream = WaveStreamUtil.FromFile(@"resources\sounds\mmx\68 - MMX - Enemy Sound (05).wav", SoundFormat.WAVE);
-        soundStreams.Add("Enemy Sound (05)", stream);
+        LoadSoundStream("X Regular Shot", @"resources\sounds\mmx\01 - MMX - X Regular Shot.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Semi Charged Shot", @"resources\sounds\mmx2\X Semi Charged Shot.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Charge Shot", @"resources\sounds\mmx\02 - MMX - X Charge Shot.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Charge", @"resources\sounds\mmx\04 - MMX - X Charge.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Dash", @"resources\sounds\mmx\07 - MMX - X Dash.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Jump", @"resources\sounds\mmx\08 - MMX - X Jump.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Land", @"resources\sounds\mmx\09 - MMX - X Land.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Fade In", @"resources\sounds\mmx\17 - MMX - X Fade In.wav", SoundFormat.WAVE);
+        LoadSoundStream("Small Hit", @"resources\sounds\mmx\30 - MMX - Small Hit.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Hurt", @"resources\sounds\mmx\10 - MMX - X Hurt.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Die", @"resources\sounds\mmx\11 - MMX - X Die.wav", SoundFormat.WAVE);
+        LoadSoundStream("Enemy Die (1)", @"resources\sounds\mmx\56 - MMX - Enemy Die (1).wav", SoundFormat.WAVE);
+        LoadSoundStream("Enemy Die (2)", @"resources\sounds\mmx\57 - MMX - Enemy Die (2).wav", SoundFormat.WAVE);
+        LoadSoundStream("Enemy Die (3)", @"resources\sounds\mmx\58 - MMX - Enemy Die (3).wav", SoundFormat.WAVE);
+        LoadSoundStream("Enemy Die (4)", @"resources\sounds\mmx\59 - MMX - Enemy Die (4).wav", SoundFormat.WAVE);
+        LoadSoundStream("X Upgrade Complete", @"resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Fade Out", @"resources\sounds\mmx\18 - MMX - X Fade Out.wav", SoundFormat.WAVE);
+        LoadSoundStream("Chill Penguin", @"resources\sounds\ost\mmx\12 - Chill Penguin.mp3", SoundFormat.MP3);
+        LoadSoundStream("X Life Gain", @"resources\sounds\mmx\12 - MMX - X Life Gain.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Extra Life", @"resources\sounds\mmx\13 - MMX - X Extra Life.wav", SoundFormat.WAVE);
+        LoadSoundStream("X Sub Tank-Heart Powerup", @"resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav", SoundFormat.WAVE);
+        LoadSoundStream("Door Opening", @"resources\sounds\mmx\Door Opening.wav", SoundFormat.WAVE);
+        LoadSoundStream("Door Closing", @"resources\sounds\mmx\Door Closing.wav", SoundFormat.WAVE);
+        LoadSoundStream("Boss Intro", @"resources\sounds\ost\mmx\19 - Boss Intro.mp3", SoundFormat.MP3);
+        LoadSoundStream("Boss Battle", @"resources\sounds\ost\mmx\20 - Boss Battle.mp3", SoundFormat.MP3);
+        LoadSoundStream("Boss Defeated", @"resources\sounds\ost\mmx\21 - Boss Defeated.mp3", SoundFormat.MP3);
+        LoadSoundStream("Big Hit", @"resources\sounds\mmx\31 - MMX - Big Hit.wav", SoundFormat.WAVE);
+        LoadSoundStream("Misc. dash, jump, move (3)", @"resources\sounds\mmx\91 - MMX - Misc. dash, jump, move (3).wav", SoundFormat.WAVE);
+        LoadSoundStream("Chill Penguin Breath", @"resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav", SoundFormat.WAVE);
+        LoadSoundStream("Ice", @"resources\sounds\mmx\34 - MMX - Ice.wav", SoundFormat.WAVE);
+        LoadSoundStream("Ice Freeze", @"resources\sounds\mmx\35 - MMX - Ice Freeze.wav", SoundFormat.WAVE);
+        LoadSoundStream("Ice Break", @"resources\sounds\mmx\36 - MMX - Ice Break.wav", SoundFormat.WAVE);
+        LoadSoundStream("Enemy Helmet Hit", @"resources\sounds\mmx\29 - MMX - Enemy Helmet Hit.wav", SoundFormat.WAVE);
+        LoadSoundStream("Boss Explosion", @"resources\sounds\mmx\Boss Explosion.wav", SoundFormat.WAVE);
+        LoadSoundStream("Boss Final Explode", @"resources\sounds\mmx\Boss Final Explode.wav", SoundFormat.WAVE);
+        LoadSoundStream("Enemy Sound (05)", @"resources\sounds\mmx\68 - MMX - Enemy Sound (05).wav", SoundFormat.WAVE);
 
         directInput = new DirectInput();
 
@@ -1048,26 +932,19 @@ public class GameEngine
         }
 
         RNG = new RNG();
-        checkpoints = new List<Checkpoint>();
-        entities = new Entity[MAX_ENTITIES];
-        entityReferences = new EntityReference[MAX_ENTITIES];
-        entitiesByName = new Dictionary<string, Entity>();
-        spawnedEntities = new EntityList<Entity>();
-        removedEntities = new EntityList<Entity>();
-        autoRespawnableEntities = new Dictionary<Entity, RespawnEntry>();
-        sprites = new EntityList<Sprite>[NUM_SPRITE_LAYERS];
-        huds = new EntityList<HUD>[NUM_SPRITE_LAYERS];
+        checkpoints = new List<EntityReference<Checkpoint>>();
+
+        spawnedEntities = new EntitySet<Entity>();
+        removedEntities = new EntitySet<Entity>();
+        autoRespawnableEntities = new Dictionary<EntityReference, RespawnEntry>();
+        sprites = new EntitySet<Sprite>[NUM_SPRITE_LAYERS];
+        huds = new EntitySet<HUD>[NUM_SPRITE_LAYERS];
 
         for (int i = 0; i < sprites.Length; i++)
-            sprites[i] = new EntityList<Sprite>();
+            sprites[i] = new EntitySet<Sprite>();
 
         for (int i = 0; i < huds.Length; i++)
-            huds[i] = new EntityList<HUD>();
-
-        firstFreeEntityIndex = 0;
-        firstEntity = null;
-        lastEntity = null;
-        entityCount = 0;
+            huds[i] = new EntitySet<HUD>();
 
         loadingLevel = true;
 
@@ -1075,6 +952,12 @@ public class GameEngine
         UpdateScale();
 
         Running = true;
+    }
+
+    private void LoadSoundStream(string name, string path, SoundFormat format)
+    {
+        var stream = WaveStreamUtil.FromFile(path, format);
+        soundStreams.Add(name, new WaveEntry(name, path, format, stream));
     }
 
     private void Unload()
@@ -2247,7 +2130,7 @@ public class GameEngine
             World.Tessellate();
         }
 
-        for (var entity = firstEntity; entity != null; entity = entity.next)
+        foreach (var entity in Entities)
         {
             if (entity is Sprite sprite)
                 sprite.OnDeviceReset();
@@ -2320,7 +2203,7 @@ public class GameEngine
     {
         if (CurrentCheckpoint != value)
         {
-            currentCheckpoint = value;
+            currentCheckpoint = Entities.GetReferenceTo(value);
             if (CurrentCheckpoint != null)
             {
                 CameraConstraintsBox = CurrentCheckpoint.Hitbox;
@@ -2718,142 +2601,9 @@ public class GameEngine
         RenderSprite(texture, palette, fadingControl, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
     }
 
-    public EntityReference<T> CreateEntity<T>(dynamic initParams) where T : Entity
-    {
-        if (entityCount == MAX_ENTITIES)
-            throw new IndexOutOfRangeException("Max entities reached the limit.");
-
-        Type type = typeof(T);
-        var entity = Activator.CreateInstance<T>();
-
-        entity.Index = firstFreeEntityIndex;
-        entities[firstFreeEntityIndex++] = entity;
-
-        if (lastEntity != null)
-            lastEntity.next = entity;
-
-        entity.previous = lastEntity;
-        entity.next = null;
-
-        firstEntity ??= entity;
-        lastEntity = entity;
-
-        if (entity.Name is not null and not "")
-            entitiesByName.Add(entity.Name, entity);
-
-        entityCount++;
-
-        for (int i = firstFreeEntityIndex; i < MAX_ENTITIES; i++)
-        {
-            if (entities[i] == null)
-            {
-                firstFreeEntityIndex = i;
-                break;
-            }
-        }
-
-        if (entity.CheckTouchingEntities)
-            partition.Insert(entity);
-
-        entity.OnCreate();
-
-        if (initParams != null)
-        {
-            Type attrsType = initParams.GetType();
-            System.Reflection.PropertyInfo[] attributes = attrsType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var attr in attributes)
-            {
-                string attrName = attr.Name;
-                object value = attr.GetValue(initParams);
-
-                var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(prop => prop.Name == attrName);
-                var property = (properties.FirstOrDefault(prop => prop.DeclaringType == type) ?? properties.First()) ?? throw new ArgumentException($"Attribute '{attr}' in entity class '{type.Name}' doesn't exist or isn't public.");
-
-                if (!property.CanWrite)
-                    throw new ArgumentException($"Attribute '{attr}' is not writable.");
-
-                Type propertyType = property.PropertyType;
-                Type valueType = value.GetType();
-                if (valueType != propertyType && !propertyType.IsAssignableFrom(valueType))
-                {
-                    TypeConverter conv = TypeDescriptor.GetConverter(propertyType);
-                    value = conv.ConvertFrom(value);
-                }
-
-                property.SetValue(entity, value);
-            }
-        }
-
-        return entity;
-    }
-
-    public EntityReference<T> CreateEntity<T>() where T : Entity
-    {
-        return CreateEntity<T>(null);
-    }
-
-    private void RemoveEntity(Entity entity)
-    {
-        if (entity.CheckTouchingEntities)
-            partition.Remove(entity);
-
-        int index = entity.Index;
-
-        Entity next = entity.next;
-        Entity previous = entity.previous;
-
-        if (next != null)
-            next.previous = previous;
-
-        if (previous != null)
-            previous.next = next;
-
-        if (entity == firstEntity)
-            firstEntity = next;
-
-        if (entity == lastEntity)
-            lastEntity = previous;
-
-        entities[index] = null;
-
-        var reference = entityReferences[index];
-        if (reference is not null)
-        {
-            reference.TargetIndex = -1;
-            entityReferences[index] = null;
-        }
-
-        if (entity.Name is not null and not "")
-            entitiesByName.Remove(entity.Name);
-
-        entity.Index = -1;
-        entityCount--;
-
-        if (index < firstFreeEntityIndex)
-            firstFreeEntityIndex = index;
-    }
-
     private void ClearEntities()
     {
-        for (int i = 0; i < MAX_ENTITIES; i++)
-        {
-            var entity = entities[i];
-            if (entity != null)
-            {
-                foreach (Entity child in entity.childs)
-                    child.parent = null;
-
-                entity.childs.Clear();
-                entities[i] = null;
-            }
-
-            var reference = entityReferences[i];
-            if (reference is not null)
-            {
-                reference.TargetIndex = -1;
-                entityReferences[i] = null;
-            }
-        }
+        Entities.Clear();
 
         foreach (var layer in sprites)
             layer.Clear();
@@ -2864,14 +2614,8 @@ public class GameEngine
         autoRespawnableEntities.Clear();
         spawnedEntities.Clear();
         removedEntities.Clear();
-        entitiesByName.Clear();
-        freezingSpriteExceptions.Clear();
-        partition.Clear();
 
-        firstFreeEntityIndex = 0;
-        entityCount = 0;
-        firstEntity = null;
-        lastEntity = null;
+        freezingSpriteExceptions.Clear();
     }
 
     private void OnSpawningBlackScreenComplete()
@@ -3372,7 +3116,7 @@ public class GameEngine
 
         if (DyingEffectActive)
         {
-            if (!Player.DeadByAbiss)
+            if (Player != null && !Player.DeadByAbiss)
             {
                 if (DyingEffectFrameCounter % 32 == 0)
                     CreateXDieExplosionEffect(DyingEffectFrameCounter % 64 == 0 ? 0 : System.Math.PI / 8);
@@ -3486,7 +3230,7 @@ public class GameEngine
             {
                 if (FreezingSprites)
                 {
-                    for (var entity = firstEntity; entity != null; entity = entity.next)
+                    foreach (var entity in Entities)
                     {
                         if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
                         {
@@ -3497,7 +3241,7 @@ public class GameEngine
                 }
                 else
                 {
-                    for (var entity = firstEntity; entity != null; entity = entity.next)
+                    foreach (var entity in Entities)
                     {
                         if (entity.Alive && entity != Camera)
                             entity.OnFrame();
@@ -3526,9 +3270,9 @@ public class GameEngine
                     removed.DeathFrame = FrameCounter;
 
                     if (!removed.Respawnable)
-                        RemoveEntity(removed);
+                        Entities.Remove(removed);
                     else if (removed.RespawnOnNear)
-                        removed.Origin = autoRespawnableEntities[removed].Origin;
+                        removed.Origin = autoRespawnableEntities[removed.reference].Origin;
                 }
 
                 removedEntities.Clear();
@@ -3652,6 +3396,41 @@ public class GameEngine
         CurrentCheckpoint = checkpoints.Count > 0 ? checkpoints[mmx.Point] : null;
     }
 
+    public void ReloadLevel()
+    {
+        LoadLevel(ROMPath, currentLevel, INITIAL_CHECKPOINT);
+    }
+
+    public void ReloadLevel(ushort level, ushort point)
+    {
+        LoadLevel(ROMPath, level, point);
+    }
+
+    public void LoadLevel(string romPath, ushort level, ushort point)
+    {
+
+        ROMPath = romPath;
+
+        if (LOAD_ROM)
+        {
+            mmx = new MMXCore();
+            mmx.LoadNewRom(romPath);
+            mmx.Init();
+
+            if (mmx.CheckROM() != 0)
+            {
+                romLoaded = true;
+                mmx.LoadFont();
+                mmx.LoadProperties();
+            }
+        }
+
+        LoadLevel(level, point);
+
+        if (romLoaded)
+            mmx.UpdateVRAMCache();
+    }
+
     public void LoadLevel()
     {
         LoadLevel(currentLevel, (ushort) (CurrentCheckpoint != null ? CurrentCheckpoint.Point : 0));
@@ -3668,7 +3447,7 @@ public class GameEngine
 
             currentLevel = level;
 
-            Camera = Engine.CreateEntity<Camera>(new
+            camera = Entities.Create<Camera>(new
             {
                 Width = SCREEN_WIDTH,
                 Height = SCREEN_HEIGHT
@@ -3727,9 +3506,9 @@ public class GameEngine
         partition.Clear();
 
         lastLives = Player != null ? Player.Lives : X_INITIAL_LIVES;
-        Player = null;
-        ReadyHUD = null;
-        HP = null;
+        player = null;
+        readyHUD = null;
+        hp = null;
 
         long currentMemoryUsage = GC.GetTotalMemory(true);
         long delta = currentMemoryUsage - lastCurrentMemoryUsage;
@@ -4274,7 +4053,7 @@ public class GameEngine
             {
                 if (FreezingSprites)
                 {
-                    for (var entity = firstEntity; entity != null; entity = entity.next)
+                    foreach (var entity in Entities)
                     {
                         if (entity != Camera && (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite)) && (entity is not HUD hud || freezingSpriteExceptions.Contains(hud)))
                             entity.PostThink();
@@ -4282,7 +4061,7 @@ public class GameEngine
                 }
                 else
                 {
-                    for (var entity = firstEntity; entity != null; entity = entity.next)
+                    foreach (var entity in Entities)
                     {
                         if (entity != Camera && entity is not HUD)
                             entity.PostThink();
@@ -4549,7 +4328,7 @@ public class GameEngine
             text = $"Camera: CX: {(float) Camera.Left * 256}({(float) (Camera.Left - lastCameraLeftTop.X) * 256}) CY: {(float) Camera.Top * 256}({(float) (Camera.Top - lastCameraLeftTop.Y) * 256})";
             DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, fontDimension.Top - fontDimension.Bottom, Color.White, out fontDimension);
 
-            text = $"Player: X: {(float) Player.Origin.X * 256}({(float) (Player.Origin.X - lastPlayerOrigin.X) * 256}) Y: {(float) Player.Origin.Y * 256}({(float) (Player.Origin.Y - lastPlayerOrigin.Y) * 256}) VX: {(float) Player.Velocity.X * 256}({(float) (Player.Velocity.X - lastPlayerVelocity.X) * 256}) VY: {(float) Player.Velocity.Y * -256}({(float) (Player.Velocity.Y - lastPlayerVelocity.Y) * -256}) Gravity: {(float) Player.GetGravity() * 256}";
+            text = $"Player: X: {(float) (Player.Origin.X * 256)}({(float) ((Player.Origin.X - lastPlayerOrigin.X) * 256)}) Y: {(float) (Player.Origin.Y * 256)}({(float) ((Player.Origin.Y - lastPlayerOrigin.Y) * 256)}) VX: {(float) (Player.Velocity.X * 256)}({(float) (Player.Velocity.X - lastPlayerVelocity.X) * 256}) VY: {(float) (Player.Velocity.Y * -256)}({(float) ((Player.Velocity.Y - lastPlayerVelocity.Y) * -256)}) Gravity: {(float) (Player.GetGravity() * 256)}";
             DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, 2 * (fontDimension.Top - fontDimension.Bottom), Color.White, out fontDimension);
         }
 
@@ -4587,106 +4366,325 @@ public class GameEngine
         }
     }
 
-    private void SaveState(BinaryWriter writer)
+    public void Deserialize(BinaryReader reader)
     {
-        RNG.SaveState(writer);
+        using var serializer = new EngineBinarySerializer(reader);
 
-        writer.Write(lastLives);
-        writer.Write(respawning);
+        if (LOAD_ROM)
+        {
+            string romPath = serializer.ReadString(false);
+            ushort level = serializer.ReadUShort();
+            ushort point = serializer.ReadUShort();
+            int objLoad = serializer.ReadInt();
+            int tileLoad = serializer.ReadInt();
+            int palLoad = serializer.ReadInt();
 
-        lastPlayerOrigin.Write(writer);
-        lastPlayerVelocity.Write(writer);
-        lastCameraLeftTop.Write(writer);
+            if (ROMPath != romPath)
+            {
+                ROMPath = romPath;
+                currentLevel = level;
 
-        writer.Write(CurrentCheckpoint != null ? CurrentCheckpoint.Point : -1);
+                if (LOAD_ROM)
+                {
+                    World.Clear();
 
-        writer.Write(cameraConstraints.Count);
-        foreach (var constraint in cameraConstraints)
-            constraint.Write(writer);
+                    DisposeResource(mmx);
 
-        HealthCapacity.Write(writer);
-        CameraConstraintsOrigin.Write(writer);
-        CameraConstraintsBox.Write(writer);
+                    mmx = new MMXCore();
+                    mmx.LoadNewRom(romPath);
+                    mmx.Init();
 
-        writer.Write(gameOver);
-        writer.Write(paused);
+                    if (mmx.CheckROM() != 0)
+                    {
+                        romLoaded = true;
+                        mmx.LoadFont();
+                        mmx.LoadProperties();
+                    }
 
-        Camera.SaveState(writer);
-        Player?.SaveState(writer);
+                    mmx.SetLevel(level, point, objLoad, tileLoad, palLoad);
 
-        DrawScale.Write(writer);
+                    mmx.LoadLevel();
+                    mmx.LoadEvents(this);
+                    mmx.LoadToWorld(this, false);
 
-        writer.Write(mmx.ObjLoad);
-        writer.Write(mmx.TileLoad);
-        writer.Write(mmx.PalLoad);
+                    mmx.LoadBackground();
+                    mmx.LoadToWorld(this, true);
 
-        writer.Write(BackgroundColor.ToAbgr());
-        writer.Write(Running);
-        writer.Write(FrameCounter);
-    }
+                    World.Tessellate();
 
-    private void LoadState(BinaryReader reader)
-    {
-        RNG.LoadState(reader);
+                    if (romLoaded)
+                        mmx.UpdateVRAMCache();
+                }
+            }
+            else if (level != currentLevel)
+            {
+                currentLevel = level;
 
-        lastLives = reader.ReadInt32();
-        respawning = reader.ReadBoolean();
+                World.Clear();
 
-        lastPlayerOrigin = new Vector(reader);
-        lastPlayerVelocity = new Vector(reader);
-        lastCameraLeftTop = new Vector(reader);
+                mmx.SetLevel(level, point, objLoad, tileLoad, palLoad);
 
-        int checkPointIndex = reader.ReadInt32();
+                mmx.LoadLevel();
+                mmx.LoadEvents(this);
+                mmx.LoadToWorld(this, false);
+
+                mmx.LoadBackground();
+                mmx.LoadToWorld(this, true);
+
+                World.Tessellate();
+
+                if (romLoaded)
+                    mmx.UpdateVRAMCache();
+
+                World.Tessellate();
+            }
+            else
+            {
+                mmx.SetLevel(level, point, objLoad, tileLoad, palLoad);
+                mmx.LoadTilesAndPalettes();
+                mmx.LoadPalette(this, false);
+                mmx.LoadPalette(this, true);
+                mmx.RefreshMapCache(this, false);
+                mmx.RefreshMapCache(this, true);
+            }
+        }
+
+        Entities.Deserialize(serializer);
+
+        RNG.Deserialize(serializer);
+
+        lastLives = serializer.ReadInt();
+        respawning = serializer.ReadBool();
+
+        lastPlayerOrigin = serializer.ReadVector();
+        lastPlayerVelocity = serializer.ReadVector();
+        lastCameraLeftTop = serializer.ReadVector();
+
+        var entries = new List<WaveEntry>();
+        int soundStreamCount = serializer.ReadInt();
+        for (int i = 0; i < soundStreamCount; i++)
+        {
+            string name = serializer.ReadString(false);
+            string path = serializer.ReadString(false);
+            SoundFormat format = serializer.ReadEnum<SoundFormat>();
+
+            entries.Add(new WaveEntry(name, path, format));
+        }
+
+        foreach (var (name, path, format) in entries)
+            if (!soundStreams.ContainsKey(name))
+                LoadSoundStream(name, path, format);
+
+        foreach (var channel in soundChannels)
+            channel.Deserialize(serializer);
+
+        partition.Deserialize(serializer);
+
+        checkpoints.Clear();
+        int checkpointCount = serializer.ReadInt();
+        for (int i = 0; i < checkpointCount; i++)
+        {
+            var checkpoint = serializer.ReadEntityReference<Checkpoint>();
+            checkpoints.Add(checkpoint);
+        }
+
+        int checkPointIndex = serializer.ReadInt();
         currentCheckpoint = checkPointIndex != -1 ? checkpoints[checkPointIndex] : null;
 
-        int constraintCount = reader.ReadInt32();
         cameraConstraints.Clear();
+        int constraintCount = serializer.ReadInt();
         for (int i = 0; i < constraintCount; i++)
         {
-            var constraint = new Vector(reader);
+            var constraint = new Vector(serializer);
             cameraConstraints.Add(constraint);
         }
 
-        HealthCapacity = new FixedSingle(reader);
-        CameraConstraintsOrigin = new Vector(reader);
-        CameraConstraintsBox = new MMXBox(reader);
+        HealthCapacity = serializer.ReadFixedSingle();
+        CameraConstraintsOrigin = serializer.ReadVector();
+        CameraConstraintsBox = serializer.ReadBox();
 
-        gameOver = reader.ReadBoolean();
-        paused = reader.ReadBoolean();
+        gameOver = serializer.ReadBool();
+        paused = serializer.ReadBool();
 
-        Camera?.LoadState(reader);
-        Player?.LoadState(reader);
+        DrawScale = serializer.ReadFixedSingle();
 
-        DrawScale = new FixedSingle(reader);
+        BackgroundColor = Color.FromAbgr(serializer.ReadInt());
+        Running = serializer.ReadBool();
+        FrameCounter = serializer.ReadLong();
 
-        mmx.ObjLoad = reader.ReadInt32();
-        mmx.TileLoad = reader.ReadInt32();
-        mmx.PalLoad = reader.ReadInt32();
+        spawnedEntities.Deserialize(serializer);
+        removedEntities.Deserialize(serializer);
 
-        BackgroundColor = Color.FromAbgr(reader.ReadInt32());
-        Running = reader.ReadBoolean();
-        FrameCounter = reader.ReadInt64();
+        autoRespawnableEntities.Clear();
+        int autoRespawnableEntityCount = serializer.ReadInt();
+        for (int i = 0; i < autoRespawnableEntityCount; i++)
+        {
+            var reference = serializer.ReadEntityReference();
+            var entry = serializer.ReadValue<RespawnEntry>();
+            autoRespawnableEntities.Add(reference, entry);
+        }
+
+        freezingSpriteExceptions.Deserialize(serializer);
+
+        foreach (var spriteLayer in sprites)
+            spriteLayer.Deserialize(serializer);
+
+        foreach (var hudLayer in huds)
+            hudLayer.Deserialize(serializer);
+
+        camera = serializer.ReadEntityReference<Camera>();
+        player = serializer.ReadEntityReference<Player>();
+        hp = serializer.ReadEntityReference<PlayerHealthHUD>();
+        readyHUD = serializer.ReadEntityReference<ReadyHUD>();
+        boss = serializer.ReadEntityReference<Boss>();
+
+        FadingControl.Deserialize(serializer);
+
+        FadingOSTLevel = serializer.ReadFloat();
+        FadingOSTInitialVolume = serializer.ReadFloat();
+        FadingOSTVolume = serializer.ReadFloat();
+        FadingOST = serializer.ReadBool();
+        FadeInOST = serializer.ReadBool();
+        FadingOSTFrames = serializer.ReadLong();
+        FadingOSTTick = serializer.ReadLong();
+        serializer.DeserializeProperty(nameof(OnFadingOSTComplete), this);
+        SpawningBlackScreen = serializer.ReadBool();
+        SpawningBlackScreenFrameCounter = serializer.ReadInt();
+        DyingEffectActive = serializer.ReadBool();
+        DyingEffectFrameCounter = serializer.ReadInt();
+        Freezing = serializer.ReadBool();
+        FreezingFrames = serializer.ReadInt();
+        serializer.DeserializeProperty(nameof(OnFreezeComplete), this);
+        FreezeFrameCounter = serializer.ReadInt();
+        FreezingFrameCounter = serializer.ReadInt();
+        FreezingSprites = serializer.ReadBool();
+        FreezingSpritesFrames = serializer.ReadInt();
+        FreezingSpritesFrameCounter = serializer.ReadInt();
+        serializer.DeserializeProperty(nameof(OnFreezeSpritesComplete), this);
+        serializer.DeserializeProperty(nameof(DelayedAction), this);
+        DelayedActionFrames = serializer.ReadInt();
+        DelayedActionFrameCounter = serializer.ReadInt();
+        BossBattle = serializer.ReadBool();
+        BossIntroducing = serializer.ReadBool();
+
+        serializer.Resolve();
     }
 
-    public void SaveState(int slot = -1)
+    public void Serialize(BinaryWriter writer)
     {
-        if (slot == -1)
-            slot = CurrentSaveSlot;
+        using var serializer = new EngineBinarySerializer(writer);
 
-        try
+        if (LOAD_ROM)
         {
-            string fileName = @"sstates\state." + slot;
-            Directory.CreateDirectory(Path.GetDirectoryName(fileName));
-            using var stream = new FileStream(fileName, FileMode.OpenOrCreate);
-            using var writer = new BinaryWriter(stream);
-            SaveState(writer);
+            serializer.WriteString(ROMPath, false);
+            serializer.WriteUShort(currentLevel);
+            serializer.WriteUShort(mmx.Point);
+            serializer.WriteInt(mmx.ObjLoad);
+            serializer.WriteInt(mmx.TileLoad);
+            serializer.WriteInt(mmx.PalLoad);
+        }
 
-            ShowInfoMessage($"State #{slot} saved.");
-        }
-        catch (IOException e)
+        Entities.Serialize(serializer);
+
+        RNG.Serialize(serializer);
+
+        serializer.WriteInt(lastLives);
+        serializer.WriteBool(respawning);
+
+        lastPlayerOrigin.Serialize(serializer);
+        lastPlayerVelocity.Serialize(serializer);
+        lastCameraLeftTop.Serialize(serializer);
+
+        serializer.WriteInt(soundStreams.Count);
+        foreach (var stream in soundStreams)
         {
-            ShowInfoMessage($"Error on saving state #{slot}: {e.Message}");
+            serializer.WriteString(stream.Value.Name, false);
+            serializer.WriteString(stream.Value.Path, false);
+            serializer.WriteEnum(stream.Value.Format);
         }
+
+        foreach (var channel in soundChannels)
+            channel.Serialize(serializer);
+
+        partition.Serialize(serializer);
+
+        serializer.WriteInt(checkpoints.Count);
+        foreach (var checkpoint in checkpoints)
+            serializer.WriteEntityReference(checkpoint);
+
+        serializer.WriteInt(CurrentCheckpoint != null ? CurrentCheckpoint.Point : -1);
+
+        serializer.WriteInt(cameraConstraints.Count);
+        foreach (var constraint in cameraConstraints)
+            constraint.Serialize(serializer);
+
+        HealthCapacity.Serialize(serializer);
+        CameraConstraintsOrigin.Serialize(serializer);
+        CameraConstraintsBox.Serialize(serializer);
+
+        serializer.WriteBool(gameOver);
+        serializer.WriteBool(paused);
+
+        DrawScale.Serialize(serializer);
+
+        serializer.WriteInt(BackgroundColor.ToAbgr());
+        serializer.WriteBool(Running);
+        serializer.WriteLong(FrameCounter);
+
+        spawnedEntities.Serialize(serializer);
+        removedEntities.Serialize(serializer);
+
+        serializer.WriteInt(autoRespawnableEntities.Count);
+        foreach (var respawnable in autoRespawnableEntities)
+        {
+            serializer.WriteEntityReference(respawnable.Key);
+            serializer.WriteValue(respawnable.Value);
+        }
+
+        freezingSpriteExceptions.Serialize(serializer);
+
+        foreach (var spriteLayer in sprites)
+            spriteLayer.Serialize(serializer);
+
+        foreach (var hudLayer in huds)
+            hudLayer.Serialize(serializer);
+
+        serializer.WriteEntityReference(camera);
+        serializer.WriteEntityReference(player);
+        serializer.WriteEntityReference(hp);
+        serializer.WriteEntityReference(readyHUD);
+        serializer.WriteEntityReference(boss);
+
+        FadingControl.Serialize(serializer);
+
+        serializer.WriteFloat(FadingOSTLevel);
+        serializer.WriteFloat(FadingOSTInitialVolume);
+        serializer.WriteFloat(FadingOSTVolume);
+        serializer.WriteBool(FadingOST);
+        serializer.WriteBool(FadeInOST);
+        serializer.WriteLong(FadingOSTFrames);
+        serializer.WriteLong(FadingOSTTick);
+        serializer.WriteDelegate(OnFadingOSTComplete);
+        serializer.WriteBool(SpawningBlackScreen);
+        serializer.WriteInt(SpawningBlackScreenFrameCounter);
+        serializer.WriteBool(DyingEffectActive);
+        serializer.WriteInt(DyingEffectFrameCounter);
+        serializer.WriteBool(Freezing);
+        serializer.WriteInt(FreezingFrames);
+        serializer.WriteDelegate(OnFreezeComplete);
+        serializer.WriteInt(FreezeFrameCounter);
+        serializer.WriteInt(FreezingFrameCounter);
+        serializer.WriteBool(FreezingSprites);
+        serializer.WriteInt(FreezingSpritesFrames);
+        serializer.WriteInt(FreezingSpritesFrameCounter);
+        serializer.WriteDelegate(OnFreezeSpritesComplete);
+        serializer.WriteDelegate(DelayedAction);
+        serializer.WriteInt(DelayedActionFrames);
+        serializer.WriteInt(DelayedActionFrameCounter);
+        serializer.WriteBool(BossBattle);
+        serializer.WriteBool(BossIntroducing);
+
+        writer.Flush();
     }
 
     public void LoadState(int slot = -1)
@@ -4700,7 +4698,7 @@ public class GameEngine
             Directory.CreateDirectory(Path.GetDirectoryName(fileName));
             using var stream = new FileStream(fileName, FileMode.Open);
             using var reader = new BinaryReader(stream);
-            LoadState(reader);
+            Deserialize(reader);
 
             ShowInfoMessage($"State #{slot} loaded.");
         }
@@ -4710,9 +4708,30 @@ public class GameEngine
         }
     }
 
+    public void SaveState(int slot = -1)
+    {
+        if (slot == -1)
+            slot = CurrentSaveSlot;
+
+        try
+        {
+            string fileName = @"sstates\state." + slot;
+            Directory.CreateDirectory(Path.GetDirectoryName(fileName));
+            using var stream = new FileStream(fileName, FileMode.Create);
+            using var writer = new BinaryWriter(stream);
+            Serialize(writer);
+
+            ShowInfoMessage($"State #{slot} saved.");
+        }
+        catch (IOException e)
+        {
+            ShowInfoMessage($"Error on saving state #{slot}: {e.Message}");
+        }
+    }
+
     public ChangeDynamicPropertyTrigger AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation)
     {
-        ChangeDynamicPropertyTrigger trigger = CreateEntity<ChangeDynamicPropertyTrigger>(new
+        ChangeDynamicPropertyTrigger trigger = Entities.Create<ChangeDynamicPropertyTrigger>(new
         {
             Origin = origin,
             Hitbox = (origin, (-SCREEN_WIDTH * 0.5, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
@@ -4728,7 +4747,7 @@ public class GameEngine
 
     public Checkpoint AddCheckpoint(ushort index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
     {
-        Checkpoint checkpoint = CreateEntity<Checkpoint>(new
+        Checkpoint checkpoint = Entities.Create<Checkpoint>(new
         {
             Point = index,
             boundingBox.Origin,
@@ -4747,11 +4766,11 @@ public class GameEngine
 
     public CheckpointTriggerOnce AddCheckpointTrigger(ushort index, Vector origin)
     {
-        CheckpointTriggerOnce trigger = CreateEntity<CheckpointTriggerOnce>(new
+        CheckpointTriggerOnce trigger = Entities.Create<CheckpointTriggerOnce>(new
         {
             Origin = origin,
             Hitbox = (origin, (0, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
-            Checkpoint = checkpoints[index]
+            Checkpoint = (Checkpoint) checkpoints[index]
         });
 
         trigger.Spawn();
@@ -4777,7 +4796,7 @@ public class GameEngine
 
     internal Penguin AddPenguin(Vector origin)
     {
-        Penguin penguin = CreateEntity<Penguin>(new
+        Penguin penguin = Entities.Create<Penguin>(new
         {
             Origin = origin
         });
@@ -4800,11 +4819,12 @@ public class GameEngine
 
     private Probe8201U AddProbe8201U(ushort subid, Vector origin)
     {
-        Probe8201U probe = CreateEntity<Probe8201U>(new
+        Probe8201U probe = Entities.Create<Probe8201U>(new
         {
             Origin = origin,
             MovingVertically = (subid & 0x20) == 0,
-            StartMovingBackward = (subid & 0x20) == 0
+            StartMovingBackward = (subid & 0x20) == 0,
+            MoveDistance = (subid & 0x04) != 0 ? 7 * PROBE8201U_BASE_MOVE_DISTANCE : PROBE8201U_BASE_MOVE_DISTANCE
         });
 
         probe.Place();
@@ -4825,7 +4845,7 @@ public class GameEngine
 
     public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
     {
-        CameraLockTrigger trigger = CreateEntity<CameraLockTrigger>(new
+        CameraLockTrigger trigger = Entities.Create<CameraLockTrigger>(new
         {
             boundingBox.Origin,
             Hitbox = boundingBox
@@ -4903,7 +4923,7 @@ public class GameEngine
 
     internal void ShootLemon(Player shooter, Vector origin, bool dashLemon)
     {
-        BusterLemon lemon = CreateEntity<BusterLemon>(new
+        BusterLemon lemon = Entities.Create<BusterLemon>(new
         {
             Shooter = shooter,
             Origin = origin,
@@ -4915,7 +4935,7 @@ public class GameEngine
 
     internal void ShootSemiCharged(Player shooter, Vector origin)
     {
-        BusterSemiCharged semiCharged = CreateEntity<BusterSemiCharged>(new
+        BusterSemiCharged semiCharged = Entities.Create<BusterSemiCharged>(new
         {
             Shooter = shooter,
             Origin = origin
@@ -4926,7 +4946,7 @@ public class GameEngine
 
     internal void ShootCharged(Player shooter, Vector origin)
     {
-        BusterCharged charged = CreateEntity<BusterCharged>(new
+        BusterCharged charged = Entities.Create<BusterCharged>(new
         {
             Shooter = shooter,
             Origin = origin
@@ -4935,53 +4955,53 @@ public class GameEngine
         charged.Spawn();
     }
 
-    internal ChargingEffect StartChargingEffect(Player player)
+    internal EntityReference<ChargingEffect> StartChargingEffect(Player player)
     {
-        ChargingEffect effect = CreateEntity<ChargingEffect>(new
+        ChargingEffect effect = Entities.Create<ChargingEffect>(new
         {
             Charger = player
         });
 
         effect.Spawn();
-        return effect;
+        return Engine.Entities.GetReferenceTo(effect);
     }
 
-    internal DashSparkEffect StartDashSparkEffect(Player player)
+    internal EntityReference<DashSparkEffect> StartDashSparkEffect(Player player)
     {
-        DashSparkEffect effect = CreateEntity<DashSparkEffect>(new
+        DashSparkEffect effect = Entities.Create<DashSparkEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return effect;
+        return Engine.Entities.GetReferenceTo(effect);
     }
 
-    internal DashSmokeEffect StartDashSmokeEffect(Player player)
+    internal EntityReference<DashSmokeEffect> StartDashSmokeEffect(Player player)
     {
-        DashSmokeEffect effect = CreateEntity<DashSmokeEffect>(new
+        DashSmokeEffect effect = Entities.Create<DashSmokeEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return effect;
+        return Engine.Entities.GetReferenceTo(effect);
     }
 
-    internal WallSlideEffect StartWallSlideEffect(Player player)
+    internal EntityReference<WallSlideEffect> StartWallSlideEffect(Player player)
     {
-        WallSlideEffect effect = CreateEntity<WallSlideEffect>(new
+        WallSlideEffect effect = Entities.Create<WallSlideEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return effect;
+        return Engine.Entities.GetReferenceTo(effect);
     }
 
     internal WallKickEffect StartWallKickEffect(Player player)
     {
-        WallKickEffect effect = CreateEntity<WallKickEffect>(new
+        WallKickEffect effect = Entities.Create<WallKickEffect>(new
         {
             Player = player
         });
@@ -4990,58 +5010,58 @@ public class GameEngine
         return effect;
     }
 
-    internal ExplosionEffect CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1)
+    internal EntityReference<ExplosionEffect> CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1)
     {
-        ExplosionEffect effect = CreateEntity<ExplosionEffect>(new
+        ExplosionEffect effect = Entities.Create<ExplosionEffect>(new
         {
             Origin = origin,
             EffectSound = effectSound
         });
 
         effect.Spawn();
-        return effect;
+        return Engine.Entities.GetReferenceTo(effect);
     }
 
-    private XDieExplosion CreateXDieExplosionEffect(double phase)
+    private EntityReference<XDieExplosion> CreateXDieExplosionEffect(double phase)
     {
-        XDieExplosion effect = CreateEntity<XDieExplosion>(new
+        XDieExplosion effect = Entities.Create<XDieExplosion>(new
         {
             Offset = Player.Origin - Camera.LeftTop,
             Phase = phase
         });
 
         effect.Spawn();
-        return effect;
+        return Engine.Entities.GetReferenceTo(effect);
     }
 
-    public Scriver AddScriver(Vector origin)
+    public EntityReference<Scriver> AddScriver(Vector origin)
     {
-        Scriver scriver = CreateEntity<Scriver>(new
+        Scriver scriver = Entities.Create<Scriver>(new
         {
             Origin = origin
         });
 
         scriver.Place();
-        return scriver;
+        return Engine.Entities.GetReferenceTo(scriver);
     }
 
-    public BattonBoneG AddBattonBoneG(Vector origin)
+    public EntityReference<BattonBoneG> AddBattonBoneG(Vector origin)
     {
-        BattonBoneG battonBoneG = CreateEntity<BattonBoneG>(new
+        BattonBoneG battonBoneG = Entities.Create<BattonBoneG>(new
         {
             Origin = origin
         });
 
         battonBoneG.Place();
-        return battonBoneG;
+        return Engine.Entities.GetReferenceTo(battonBoneG);
     }
 
     private void SpawnX(Vector origin)
     {
         if (Player != null)
-            RemoveEntity(Player);
+            Entities.Remove(Player);
 
-        Player = CreateEntity<Player>(new
+        player = Entities.Create<Player>(new
         {
             Name = "X",
             Origin = origin
@@ -5054,9 +5074,9 @@ public class GameEngine
     private void CreateHP()
     {
         if (HP != null)
-            RemoveEntity(HP);
+            Entities.Remove(HP);
 
-        HP = CreateEntity<PlayerHealthHUD>(new
+        hp = Entities.Create<PlayerHealthHUD>(new
         {
             Name = "HP"
         });
@@ -5067,9 +5087,9 @@ public class GameEngine
     private void StartReadyHUD()
     {
         if (ReadyHUD != null)
-            RemoveEntity(ReadyHUD);
+            Entities.Remove(ReadyHUD);
 
-        ReadyHUD = CreateEntity<ReadyHUD>(new
+        readyHUD = Entities.Create<ReadyHUD>(new
         {
             Name = "Ready"
         });
@@ -5391,36 +5411,14 @@ public class GameEngine
         channel.name = name;
     }
 
-    private void ReloadLevel()
-    {
-        if (LOAD_ROM)
-        {
-            mmx = new MMXCore();
-            mmx.LoadNewRom(@"resources\roms\" + ROM_NAME);
-            mmx.Init();
-
-            if (mmx.CheckROM() != 0)
-            {
-                romLoaded = true;
-                mmx.LoadFont();
-                mmx.LoadProperties();
-            }
-        }
-
-        LoadLevel(INITIAL_LEVEL, INITIAL_CHECKPOINT);
-
-        if (romLoaded)
-            mmx.UpdateVRAMCache();
-    }
-
     private void Execute()
     {
         World = new MMXWorld(32, 32);
         partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
-        resultSet = new EntityList<Entity>();
+        resultSet = new EntitySet<Entity>();
 
         ResetDevice();
-        ReloadLevel();
+        LoadLevel(@"resources\roms\" + ROM_NAME, INITIAL_LEVEL, INITIAL_CHECKPOINT);
 
         while (Running)
         {
@@ -5541,7 +5539,7 @@ public class GameEngine
 
     public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames)
     {
-        SmallHealthRecover drop = CreateEntity<SmallHealthRecover>(new
+        SmallHealthRecover drop = Entities.Create<SmallHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5553,7 +5551,7 @@ public class GameEngine
 
     public BigHealthRecover DropBigHealthRecover(Vector origin, int durationFrames)
     {
-        BigHealthRecover drop = CreateEntity<BigHealthRecover>(new
+        BigHealthRecover drop = Entities.Create<BigHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5565,7 +5563,7 @@ public class GameEngine
 
     public SmallAmmoRecover DropSmallAmmoRecover(Vector origin, int durationFrames)
     {
-        SmallAmmoRecover drop = CreateEntity<SmallAmmoRecover>(new
+        SmallAmmoRecover drop = Entities.Create<SmallAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5577,7 +5575,7 @@ public class GameEngine
 
     public BigAmmoRecover DropBigAmmoRecover(Vector origin, int durationFrames)
     {
-        BigAmmoRecover drop = CreateEntity<BigAmmoRecover>(new
+        BigAmmoRecover drop = Entities.Create<BigAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5589,7 +5587,7 @@ public class GameEngine
 
     public LifeUp DropLifeUp(Vector origin, int durationFrames)
     {
-        LifeUp drop = CreateEntity<LifeUp>(new
+        LifeUp drop = Entities.Create<LifeUp>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5601,7 +5599,7 @@ public class GameEngine
 
     public SmallHealthRecover AddSmallHealthRecover(Vector origin)
     {
-        SmallHealthRecover item = CreateEntity<SmallHealthRecover>(new
+        SmallHealthRecover item = Entities.Create<SmallHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5613,7 +5611,7 @@ public class GameEngine
 
     public BigHealthRecover AddBigHealthRecover(Vector origin)
     {
-        BigHealthRecover item = CreateEntity<BigHealthRecover>(new
+        BigHealthRecover item = Entities.Create<BigHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5625,7 +5623,7 @@ public class GameEngine
 
     public SmallAmmoRecover AddSmallAmmoRecover(Vector origin)
     {
-        SmallAmmoRecover item = CreateEntity<SmallAmmoRecover>(new
+        SmallAmmoRecover item = Entities.Create<SmallAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5637,7 +5635,7 @@ public class GameEngine
 
     public BigAmmoRecover AddBigAmmoRecover(Vector origin)
     {
-        BigAmmoRecover item = CreateEntity<BigAmmoRecover>(new
+        BigAmmoRecover item = Entities.Create<BigAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5649,7 +5647,7 @@ public class GameEngine
 
     public LifeUp AddLifeUp(Vector origin)
     {
-        LifeUp item = CreateEntity<LifeUp>(new
+        LifeUp item = Entities.Create<LifeUp>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5661,7 +5659,7 @@ public class GameEngine
 
     public HeartTank AddHeartTank(Vector origin)
     {
-        HeartTank item = CreateEntity<HeartTank>(new
+        HeartTank item = Entities.Create<HeartTank>(new
         {
             Origin = origin
         });
@@ -5672,7 +5670,7 @@ public class GameEngine
 
     public SubTankItem AddSubTank(Vector origin)
     {
-        SubTankItem item = CreateEntity<SubTankItem>(new
+        SubTankItem item = Entities.Create<SubTankItem>(new
         {
             Origin = origin
         });
@@ -5745,7 +5743,7 @@ public class GameEngine
     internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
     {
         bool secondDoor = (eventSubId & 0x80) != 0;
-        BossDoor door = CreateEntity<BossDoor>(new
+        BossDoor door = Entities.Create<BossDoor>(new
         {
             Origin = pos,
             Bidirectional = false,
@@ -5821,17 +5819,6 @@ public class GameEngine
         }
     }
 
-    public string GetEntityExclusiveName(string prefix, bool startWithCounterSuffix = false, int startCounterSuffix = 1)
-    {
-        int counter = startCounterSuffix;
-        string possibleName = startWithCounterSuffix ? prefix + counter++ : prefix;
-
-        for (Entity entity = GetEntityByname(prefix); entity != null; entity = GetEntityByname(possibleName))
-            possibleName = prefix + counter++;
-
-        return possibleName;
-    }
-
     public void FreezeSprites(int frames, Action onComplete, params Sprite[] exceptions)
     {
         FreezingSprites = true;
@@ -5863,7 +5850,7 @@ public class GameEngine
 
     public void KillAllAliveEnemies()
     {
-        for (Entity entity = firstEntity; entity != null; entity = entity.next)
+        foreach (var entity in Entities)
         {
             if (entity is Enemy)
                 entity.Kill();
@@ -5872,7 +5859,7 @@ public class GameEngine
 
     public void KillAllAliveWeapons()
     {
-        for (Entity entity = firstEntity; entity != null; entity = entity.next)
+        foreach (var entity in Entities)
         {
             if (entity is Weapon)
                 entity.Kill();
@@ -5881,35 +5868,11 @@ public class GameEngine
 
     public void KillAllAliveEnemiesAndWeapons()
     {
-        for (Entity entity = firstEntity; entity != null; entity = entity.next)
+        foreach (var entity in Entities)
         {
             if (entity is Enemy or Weapon)
                 entity.Kill();
         }
-    }
-
-    public Entity GetEntityByname(string name)
-    {
-        return entitiesByName.TryGetValue(name, out Entity result) ? result : null;
-    }
-
-    internal void UpdateEntityName(Entity entity, string name)
-    {
-        if (name == entity.Name)
-            return;
-
-        if (entitiesByName.ContainsKey(name))
-            throw new DuplicateEntityNameException(name);
-
-        if (entity.Alive)
-        {
-            if (entity.Name is not null and not "")
-                entitiesByName.Remove(entity.Name);
-
-            entitiesByName.Add(name, entity);
-        }
-
-        entity.name = name;
     }
 
     public void PlayBossIntroOST()

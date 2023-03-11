@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+using XSharp.Serialization;
 
 using static XSharp.Engine.Consts;
 
@@ -37,17 +37,21 @@ public abstract class Sprite : Entity
 
     private int paletteIndex = -1;
     private string paletteName = null;
+
+    [NotSerializable]
     private Palette palette = null;
 
     private int spriteSheetIndex = -1;
     private string spriteSheetName = null;
+
+    [NotSerializable]
     private SpriteSheet spriteSheet = null;
 
     private bool visible = true;
     private int layer = 0;
-    private List<Animation> animations;
-    private Dictionary<string, List<Animation>> animationsByName;
-    private int currentAnimationIndex = -1;
+
+    private (string name, int count)[] animationNames;
+    private AnimationReference currentAnimation = null;
 
     protected SpriteCollider worldCollider;
     protected SpriteCollider spriteCollider;
@@ -69,10 +73,16 @@ public abstract class Sprite : Entity
     private int blinkFrames;
     private int blinkFrameCounter = 0;
 
-    private EntityList<Sprite> touchingSpritesLeft;
-    private EntityList<Sprite> touchingSpritesUp;
-    private EntityList<Sprite> touchingSpritesRight;
-    private EntityList<Sprite> touchingSpritesDown;
+    private EntitySet<Sprite> touchingSpritesLeft;
+    private EntitySet<Sprite> touchingSpritesUp;
+    private EntitySet<Sprite> touchingSpritesRight;
+    private EntitySet<Sprite> touchingSpritesDown;
+
+    public AnimationFactory Animations
+    {
+        get;
+        private set;
+    }
 
     public bool Visible
     {
@@ -116,13 +126,56 @@ public abstract class Sprite : Entity
                 return CurrentAnimation != null ? CurrentAnimation.DrawBox : IntegerOrigin + Box.EMPTY_BOX;
 
             Box result = Box.EMPTY_BOX;
-            foreach (var animation in animations)
+            foreach (var animation in Animations)
             {
                 if (animation.Visible)
                     result |= animation.DrawBox;
             }
 
             return result;
+        }
+    }
+
+    public string CurrentAnimationName
+    {
+        get => currentAnimation?.TargetName;
+        set => SetCurrentAnimationByName(value);
+    }
+
+    public int CurrentAnimationIndex
+    {
+        get => currentAnimation is not null ? currentAnimation.TargetIndex : -1;
+        set => SetCurrentAnimationByIndex(value);
+    }
+
+    public Animation CurrentAnimation
+    {
+        get => currentAnimation;
+        set
+        {
+            Animation animation;
+            bool animating = false;
+            int animationFrame = -1;
+            if (!MultiAnimation)
+            {
+                animation = currentAnimation;
+                if (animation != null)
+                {
+                    animating = animation.Animating;
+                    animationFrame = animation.CurrentFrame;
+                    animation.Stop();
+                    animation.Visible = false;
+                }
+            }
+
+            currentAnimation = value;
+            animation = currentAnimation;
+            if (animation != null)
+            {
+                animation.CurrentFrame = animationFrame != -1 ? animationFrame : 0;
+                animation.Animating = animating;
+                animation.Visible = true;
+            }
         }
     }
 
@@ -174,7 +227,7 @@ public abstract class Sprite : Entity
         set;
     } = null;
 
-    public int InitialAnimationIndex => InitialAnimationName != null ? GetAnimationIndex(InitialAnimationName) : -1;
+    public int InitialAnimationIndex => InitialAnimationName is not null and not "" ? GetAnimationIndex(InitialAnimationName) : -1;
 
     new public SpriteState CurrentState => (SpriteState) base.CurrentState;
 
@@ -233,8 +286,6 @@ public abstract class Sprite : Entity
         get;
         private set;
     }
-
-    public IEnumerable<Animation> Animations => animations;
 
     public bool InvisibleOnNextFrame
     {
@@ -569,38 +620,59 @@ public abstract class Sprite : Entity
 
     protected Sprite()
     {
-        animations = new List<Animation>();
-        animationsByName = new Dictionary<string, List<Animation>>();
-
         FadingControl = new FadingControl();
 
-        touchingSpritesLeft = new EntityList<Sprite>();
-        touchingSpritesRight = new EntityList<Sprite>();
-        touchingSpritesUp = new EntityList<Sprite>();
-        touchingSpritesDown = new EntityList<Sprite>();
+        touchingSpritesLeft = new EntitySet<Sprite>();
+        touchingSpritesRight = new EntitySet<Sprite>();
+        touchingSpritesUp = new EntitySet<Sprite>();
+        touchingSpritesDown = new EntitySet<Sprite>();
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
+        Animations = new AnimationFactory(this);
     }
 
     public void SetAnimationNames(params string[] animationNames)
     {
+        (string name, int count)[] @params = new (string, int)[animationNames.Length];
+        for (int i = 0; i < animationNames.Length; i++)
+            @params[i] = (animationNames[i], 1);
+
+        SetAnimationNames(@params);
+    }
+
+    public void SetAnimationNames(params (string name, int count)[] animationNames)
+    {
         if (animationNames != null && animationNames.Length > 0)
         {
-            foreach (var animationName in animationNames)
-                animationsByName.Add(animationName, new());
-
-            InitialAnimationName = animationNames[0];
+            this.animationNames = animationNames;
+            InitialAnimationName = animationNames[0].name;
         }
         else
         {
-            foreach (var frameSequenceName in SpriteSheet.FrameSequenceNames)
-                animationsByName.Add(frameSequenceName, new List<Animation>());
-
-            InitialAnimationName = null;
+            SetAnimationNames();
         }
+    }
+
+    public void SetAnimationNames()
+    {
+        var names = SpriteSheet.FrameSequenceNames;
+        animationNames = new (string, int)[names.Count()];
+
+        int i = 0;
+        foreach (var name in names)
+            animationNames[i++] = (name, 1);
+
+        InitialAnimationName = null;
     }
 
     public int GetAnimationIndex(string animationName)
     {
-        return animationsByName.TryGetValue(animationName, out List<Animation> animations) ? animations.Count > 0 ? animations[0].Index : -1 : -1;
+        var animation = Animations[animationName];
+        return animation != null ? animation.Index : -1;
     }
 
     protected override Type GetStateType()
@@ -764,170 +836,12 @@ public abstract class Sprite : Entity
         return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
     }
 
-    public override void LoadState(BinaryReader reader)
+    protected virtual bool OnCreateAnimation(string animationName, ref Vector offset, ref int repeatX, ref int repeatY, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn)
     {
-        base.LoadState(reader);
-
-        paletteIndex = reader.ReadInt32();
-        paletteName = reader.ReadString();
-
-        spriteSheetIndex = reader.ReadInt32();
-        spriteSheetName = reader.ReadString();
-
-        visible = reader.ReadBoolean();
-        layer = reader.ReadInt32();
-        currentAnimationIndex = reader.ReadInt32();
-        Opacity = reader.ReadSingle();
-
-        lastBlockedUp = reader.ReadBoolean();
-        lastBlockedLeft = reader.ReadBoolean();
-        lastBlockedRight = reader.ReadBoolean();
-        lastLanded = reader.ReadBoolean();
-
-        int animationCount = reader.ReadInt32();
-        for (int i = 0; i < animationCount; i++)
-        {
-            Animation animation = animations[i];
-            animation.LoadState(reader);
-        }
-
-        CollisionData = (CollisionData) reader.ReadByte();
-        CheckCollisionWithWorld = reader.ReadBoolean();
-
-        vel = new Vector(reader);
-        LastVelocity = new Vector(reader);
-        NoClip = reader.ReadBoolean();
-        moving = reader.ReadBoolean();
-        Static = reader.ReadBoolean();
-        breakable = reader.ReadBoolean();
-        health = new FixedSingle(reader);
-        invincible = reader.ReadBoolean();
-        invincibilityFrames = reader.ReadInt32();
-        invincibilityFrameCounter = reader.ReadInt32();
-        broke = reader.ReadBoolean();
-        blinking = reader.ReadBoolean();
-        blinkFrames = reader.ReadInt32();
-        blinkFrameCounter = reader.ReadInt32();
-
-        ResourcesCreated = reader.ReadBoolean();
-        MultiAnimation = reader.ReadBoolean();
-        Directional = reader.ReadBoolean();
-        Direction = (Direction) reader.ReadInt32();
-        DefaultDirection = (Direction) reader.ReadInt32();
-        CollisionData = (CollisionData) reader.ReadInt32();
-        Inertial = reader.ReadBoolean();
-        CanSmash = reader.ReadBoolean();
-        InitialAnimationName = reader.ReadString();
-        InvisibleOnNextFrame = reader.ReadBoolean();
-        ExternalVelocity = new Vector(reader);
-        ResetExternalVelocityOnFrame = reader.ReadBoolean();
-        CanGoOutOfMapBounds = reader.ReadBoolean();
-        Animating = reader.ReadBoolean();
-        KnockPlayerOnHurt = reader.ReadBoolean();
+        return true;
     }
 
-    public override void SaveState(BinaryWriter writer)
-    {
-        base.SaveState(writer);
-
-        writer.Write(paletteIndex);
-        writer.Write(paletteName ?? "");
-
-        writer.Write(spriteSheetIndex);
-        writer.Write(spriteSheetName ?? "");
-
-        writer.Write(visible);
-        writer.Write(layer);
-        writer.Write(currentAnimationIndex);
-        writer.Write(Opacity);
-
-        writer.Write(lastBlockedUp);
-        writer.Write(lastBlockedLeft);
-        writer.Write(lastBlockedRight);
-        writer.Write(lastLanded);
-
-        if (animations != null)
-        {
-            writer.Write(animations.Count);
-            foreach (Animation animation in animations)
-                animation.SaveState(writer);
-        }
-        else
-        {
-            writer.Write(0);
-        }
-
-        writer.Write((byte) CollisionData);
-        writer.Write(CheckCollisionWithWorld);
-
-        vel.Write(writer);
-        LastVelocity.Write(writer);
-        writer.Write(NoClip);
-        writer.Write(moving);
-        writer.Write(Static);
-        writer.Write(breakable);
-        health.Write(writer);
-        writer.Write(invincible);
-        writer.Write(invincibilityFrames);
-        writer.Write(invincibilityFrameCounter);
-        writer.Write(broke);
-        writer.Write(blinking);
-        writer.Write(blinkFrames);
-        writer.Write(blinkFrameCounter);
-
-        writer.Write(ResourcesCreated);
-        writer.Write(MultiAnimation);
-        writer.Write(Directional);
-        writer.Write((int) Direction);
-        writer.Write((int) DefaultDirection);
-        writer.Write((int) CollisionData);
-        writer.Write(Inertial);
-        writer.Write(CanSmash);
-        writer.Write(InitialAnimationName ?? "");
-        writer.Write(InvisibleOnNextFrame);
-        ExternalVelocity.Write(writer);
-        writer.Write(ResetExternalVelocityOnFrame);
-        writer.Write(CanGoOutOfMapBounds);
-        writer.Write(Animating);
-        writer.Write(KnockPlayerOnHurt);
-    }
-
-    public Animation CurrentAnimation => GetAnimation(currentAnimationIndex);
-
-    public string CurrentAnimationName => CurrentAnimation?.FrameSequenceName;
-
-    public int CurrentAnimationIndex
-    {
-        get => currentAnimationIndex;
-        set
-        {
-            Animation animation;
-            bool animating = false;
-            int animationFrame = -1;
-            if (!MultiAnimation)
-            {
-                animation = CurrentAnimation;
-                if (animation != null)
-                {
-                    animating = animation.Animating;
-                    animationFrame = animation.CurrentSequenceIndex;
-                    animation.Stop();
-                    animation.Visible = false;
-                }
-            }
-
-            currentAnimationIndex = value;
-            animation = CurrentAnimation;
-            if (animation != null)
-            {
-                animation.CurrentSequenceIndex = animationFrame != -1 ? animationFrame : 0;
-                animation.Animating = animating;
-                animation.Visible = true;
-            }
-        }
-    }
-
-    protected virtual void OnCreateAnimation(int animationIndex, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn, ref bool add)
+    protected virtual void OnAnimationCreated(Animation animation)
     {
     }
 
@@ -981,7 +895,7 @@ public abstract class Sprite : Entity
             return CurrentAnimation != null ? CurrentAnimation.CurrentFrameHitbox : Box.EMPTY_BOX;
 
         Box result = Box.EMPTY_BOX;
-        foreach (var animation in animations)
+        foreach (var animation in Animations)
         {
             if (animation.Visible)
                 result |= animation.CurrentFrameHitbox;
@@ -997,12 +911,13 @@ public abstract class Sprite : Entity
 
     protected override Box GetDeadBox()
     {
-        if (animations.Count == 0)
+        if (Animations.Count == 0)
             return base.GetDeadBox();
 
-        Box drawBox = InitialAnimationName != null
-            ? GetFirstAnimationByName(InitialAnimationName).DrawBox
-            : InitialAnimationIndex >= 0 ? animations[InitialAnimationIndex].DrawBox : animations[0].DrawBox;
+        Animation animation;
+        Box drawBox = InitialAnimationName is not null and not "" && (animation = Animations[InitialAnimationName]) != null
+            ? animation.DrawBox
+            : InitialAnimationIndex >= 0 && InitialAnimationIndex < Animations.Count ? Animations[InitialAnimationIndex].DrawBox : Animations.Count > 0 ? Animations[0].DrawBox : Box.EMPTY_BOX;
 
         return (Directional && Direction != DefaultDirection ? drawBox.Mirror(Origin) : drawBox) - Origin;
     }
@@ -1136,40 +1051,32 @@ public abstract class Sprite : Entity
         worldCollider = CreateWorldCollider();
         spriteCollider = CreateSpriteCollider();
 
-        if (animationsByName.Count == 0 && SpriteSheet.FrameSequenceCount > 0)
+        if ((animationNames == null || animationNames.Length == 0) && SpriteSheet.FrameSequenceCount > 0)
             SetAnimationNames();
 
-        int animationIndex = 0;
-        var names = new List<string>(animationsByName.Keys);
-        foreach (var animationName in names)
+        if (animationNames != null)
         {
-            SpriteSheet.FrameSequence sequence = SpriteSheet.GetFrameSequence(animationName);
-            string frameSequenceName = sequence.Name;
-            Vector offset = Vector.NULL_VECTOR;
-            int count = 1;
-            int repeatX = 1;
-            int repeatY = 1;
-            int initialFrame = 0;
-            bool startVisible = false;
-            bool startOn = true;
-            bool add = true;
-
-            OnCreateAnimation(animationIndex, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
-
-            if (add)
+            foreach (var (name, count) in animationNames)
             {
-                int ai = animationIndex;
-                for (int i = 0; i < count; i++)
+                SpriteSheet.FrameSequence sequence = SpriteSheet.GetFrameSequence(name);
+                string frameSequenceName = sequence.Name;
+                Vector offset = Vector.NULL_VECTOR;
+                int repeatX = 1;
+                int repeatY = 1;
+                int initialFrame = 0;
+                bool startVisible = false;
+                bool startOn = true;
+
+                bool add = OnCreateAnimation(frameSequenceName, ref offset, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn);
+                if (add)
                 {
-                    var animation = new Animation(this, animationIndex, SpriteSheetIndex, frameSequenceName, offset, repeatX, repeatY, initialFrame, startVisible, startOn);
-                    animations.Add(animation);
-                    animationsByName[animationName].Add(animation);
-                    animationIndex++;
+                    for (int i = 0; i < count; i++)
+                    {
+                        var animation = Animations.Create(SpriteSheetIndex, frameSequenceName, offset, repeatX, repeatY, initialFrame, startVisible, startOn);
+                        animation.Name = Animations.GetExclusiveName(name);
+                        OnAnimationCreated(animation);
+                    }
                 }
-            }
-            else
-            {
-                animationsByName.Remove(animationName);
             }
         }
 
@@ -1872,53 +1779,51 @@ public abstract class Sprite : Entity
 
     public Animation GetAnimation(int index)
     {
-        return animations == null || index < 0 || index >= animations.Count ? null : animations[index];
+        return Animations[index];
     }
 
     public int GetAnimationIndexByName(string name)
     {
-        Animation animation = GetFirstAnimationByName(name);
+        Animation animation = GetAnimationByName(name);
         return animation != null ? animation.Index : -1;
     }
 
-    public Animation GetAnimationByName(string name)
+    public AnimationReference GetAnimationByName(string name)
     {
-        int index = GetAnimationIndexByName(name);
-        return index == -1 ? null : animations[index];
+        return Animations[name];
     }
 
-    public IEnumerable<Animation> GetAnimationsByName(string name)
+    public void SetCurrentAnimationByIndex(int index, int initialFrame = -1)
     {
-        return animationsByName.TryGetValue(name, out List<Animation> animations) ? animations : null;
+        var animation = Animations[index];
+        CurrentAnimation = animation;
+
+        if (initialFrame >= 0)
+            animation?.Start(initialFrame);
     }
 
-    public Animation GetFirstAnimationByName(string name)
+    public void SetCurrentAnimationByName(string name, int initialFrame = -1)
     {
-        return animationsByName.TryGetValue(name, out List<Animation> animations) ? animations.Count > 0 ? animations[0] : null : null;
-    }
+        var animation = Animations[name];
+        CurrentAnimation = animation;
 
-    public void SetCurrentAnimationByName(string name, int startIndex = -1)
-    {
-        Animation animation = GetFirstAnimationByName(name);
-        CurrentAnimationIndex = animation != null ? animation.Index : -1;
-
-        if (startIndex >= 0)
-            CurrentAnimation?.Start(startIndex);
+        if (initialFrame >= 0)
+            animation?.Start(initialFrame);
     }
 
     public void SetAnimationsVisibility(string name, bool visible)
     {
-        if (!animationsByName.TryGetValue(name, out List<Animation> animations))
+        var animation = Animations[name];
+        if (animation == null)
             return;
 
-        foreach (var animation in animations)
-            animation.Visible = visible;
+        animation.Visible = visible;
     }
 
     public void SetAnimationsVisibilityExclusively(string name, bool visible)
     {
-        foreach (var animation in animations)
-            animation.Visible = animation.FrameSequenceName == name ? visible : !visible;
+        foreach (var animation in Animations)
+            animation.Visible = animation.Name == name ? visible : !visible;
     }
 
     protected override bool PreThink()
@@ -1957,7 +1862,7 @@ public abstract class Sprite : Entity
 
         if (Animating)
         {
-            foreach (Animation animation in animations)
+            foreach (Animation animation in Animations)
                 animation.NextFrame();
         }
     }
@@ -2055,7 +1960,7 @@ public abstract class Sprite : Entity
 
         if (!InvisibleOnNextFrame)
         {
-            foreach (Animation animation in animations)
+            foreach (Animation animation in Animations)
                 animation.Render();
         }
     }
@@ -2135,7 +2040,7 @@ public abstract class Sprite : Entity
         palette = null;
         spriteSheet = null;
 
-        foreach (var animation in animations)
+        foreach (var animation in Animations)
             animation.OnDeviceReset();
     }
 

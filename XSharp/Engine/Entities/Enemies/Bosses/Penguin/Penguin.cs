@@ -1,4 +1,5 @@
-﻿using XSharp.Math;
+﻿using XSharp.Engine.Graphics;
+using XSharp.Math;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -36,35 +37,15 @@ public class Penguin : Boss
     private EntityReference<PenguinSculpture> sculpture2;
     private EntityReference<PenguinFrozenBlock> frozenBlock;
 
-    private PenguinLever Lever
-    {
-        get => lever;
-        set => lever = value;
-    }
+    private PenguinLever Lever => lever;
 
-    private Mist Mist
-    {
-        get => mist;
-        set => mist = value;
-    }
+    private Mist Mist => mist;
 
-    private PenguinSculpture Sculpture1
-    {
-        get => sculpture1;
-        set => sculpture1 = value;
-    }
+    private PenguinSculpture Sculpture1 => sculpture1;
 
-    private PenguinSculpture Sculpture2
-    {
-        get => sculpture2;
-        set => sculpture2 = value;
-    }
+    private PenguinSculpture Sculpture2 => sculpture2;
 
-    private PenguinFrozenBlock FrozenBlock
-    {
-        get => frozenBlock;
-        set => frozenBlock = value;
-    }
+    private PenguinFrozenBlock FrozenBlock => frozenBlock;
 
     public PenguinState State
     {
@@ -85,6 +66,12 @@ public class Penguin : Boss
 
     public Penguin()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         Directional = true;
         DefaultDirection = Direction.LEFT;
         SpriteSheetName = "Penguin";
@@ -109,28 +96,23 @@ public class Penguin : Boss
         RegisterState(PenguinState.TAKING_DAMAGE, OnTakingDamage, "TakingDamage");
         RegisterState(PenguinState.IN_FLAMES, OnInFlames, "InFlames");
         RegisterState(PenguinState.DYING, OnStartDying, "Dying");
-    }
 
-    protected internal override void OnCreate()
-    {
-        base.OnCreate();
+        lever = Engine.Entities.Create<PenguinLever>();
+        mist = Engine.Entities.Create<Mist>();
 
-        lever = Engine.CreateEntity<PenguinLever>();
-        mist = Engine.CreateEntity<Mist>();
-
-        sculpture1 = Engine.CreateEntity<PenguinSculpture>(new
+        sculpture1 = Engine.Entities.Create<PenguinSculpture>(new
         {
             Shooter = this,
             Respawnable = true
         });
 
-        sculpture2 = Engine.CreateEntity<PenguinSculpture>(new
+        sculpture2 = Engine.Entities.Create<PenguinSculpture>(new
         {
             Shooter = this,
             Respawnable = true
         });
 
-        frozenBlock = Engine.CreateEntity<PenguinFrozenBlock>(new
+        frozenBlock = Engine.Entities.Create<PenguinFrozenBlock>(new
         {
             Attacker = this,
             Respawnable = true
@@ -381,7 +363,7 @@ public class Penguin : Boss
 
     private void ShootIce()
     {
-        PenguinIce ice = Engine.CreateEntity<PenguinIce>(new
+        PenguinIce ice = Engine.Entities.Create<PenguinIce>(new
         {
             Shooter = this,
             Bump = Engine.RNG.NextInt(2) == 1
@@ -393,7 +375,7 @@ public class Penguin : Boss
 
     private void ShootSnow()
     {
-        PenguinSnow snow = Engine.CreateEntity<PenguinSnow>(new
+        PenguinSnow snow = Engine.Entities.Create<PenguinSnow>(new
         {
             Shooter = this
         });
@@ -542,7 +524,7 @@ public class Penguin : Boss
     {
         base.OnAnimationEnd(animation);
 
-        switch (animation.FrameSequenceName)
+        switch (animation.Name)
         {
             case "PreSliding":
                 SetCurrentAnimationByName("Sliding");

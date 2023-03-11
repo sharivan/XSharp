@@ -1,32 +1,48 @@
-﻿using System.IO;
-
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.Direct3D9;
 
+using XSharp.Factories;
 using XSharp.Engine.Entities;
-using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+using XSharp.Serialization;
 
 using MMXBox = XSharp.Math.Geometry.Box;
 using Sprite = XSharp.Engine.Entities.Sprite;
 
-namespace XSharp.Engine;
+namespace XSharp.Engine.Graphics;
 
 public delegate void AnimationFrameEvent(Animation animation, int frameSequenceIndex);
 
-public class Animation
+[Serializable]
+public class Animation : IIndexedNamedFactoryItem
 {
+    internal EntityReference<Sprite> sprite;
+    internal string name;
+
+    [NotSerializable]
     private SpriteSheet.FrameSequence sequence;
+
     private bool animating;
     private int currentSequenceIndex;
     private bool animationEndFired;
 
-    private readonly AnimationFrameEvent[] animationEvents;
+    private AnimationFrameEvent[] animationEvents;
 
-    public Sprite Sprite
+    public Sprite Sprite => sprite;
+
+    public IIndexedNamedFactory Factory => Sprite.Animations;
+
+    public int Index
     {
         get;
+        internal set;
+    }
+
+    public string Name
+    {
+        get => name;
+        set => Sprite.Animations.UpdateAnimationName(this, value);
     }
 
     public int SpriteSheetIndex
@@ -41,10 +57,13 @@ public class Animation
         private set;
     }
 
-    public int Index
+    private SpriteSheet.FrameSequence Sequence
     {
-        get;
-        private set;
+        get
+        {
+            sequence ??= SpriteSheet.GetFrameSequence(FrameSequenceName);
+            return sequence;
+        }
     }
 
     public SpriteSheet SpriteSheet => Sprite.SpriteSheet;
@@ -61,26 +80,26 @@ public class Animation
         set;
     } = Vector.NULL_VECTOR;
 
-    public int CurrentSequenceIndex
+    public int CurrentFrame
     {
         get => currentSequenceIndex;
 
         set
         {
-            currentSequenceIndex = value >= sequence.Count ? sequence.Count - 1 : value;
+            currentSequenceIndex = value >= Sequence.Count ? Sequence.Count - 1 : value;
             animationEndFired = false;
         }
     }
 
     public MMXBox CurrentFrameBoundingBox
-                => currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
+                => currentSequenceIndex < 0 || currentSequenceIndex > Sequence.Count
                 ? MMXBox.EMPTY_BOX
-                : sequence[currentSequenceIndex].BoundingBox;
+                : Sequence[currentSequenceIndex].BoundingBox;
 
     public MMXBox CurrentFrameHitbox
-                => currentSequenceIndex < 0 || currentSequenceIndex > sequence.Count
+                => currentSequenceIndex < 0 || currentSequenceIndex > Sequence.Count
                 ? MMXBox.EMPTY_BOX
-                : sequence[currentSequenceIndex].Hitbox;
+                : Sequence[currentSequenceIndex].Hitbox;
 
     public bool Visible
     {
@@ -101,7 +120,7 @@ public class Animation
         }
     }
 
-    public int LoopFromFrame => sequence.LoopFromSequenceIndex;
+    public int LoopFromFrame => Sequence.LoopFromSequenceIndex;
 
     public FixedSingle Rotation
     {
@@ -145,7 +164,7 @@ public class Animation
     {
         get
         {
-            var frame = sequence[currentSequenceIndex];
+            var frame = Sequence[currentSequenceIndex];
             var drawOrigin = DrawOrigin;
             var box = drawOrigin + frame.BoundingBox;
 
@@ -175,15 +194,17 @@ public class Animation
         }
     }
 
-    public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
-        : this(sprite, index, spriteSheetIndex, frameSequenceName, offset, FixedSingle.ZERO, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped)
+    public Animation()
     {
     }
 
-    public Animation(Sprite sprite, int index, int spriteSheetIndex, string frameSequenceName, Vector offset, FixedSingle rotation, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+    internal void Initialize(int spriteSheetIndex, string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
     {
-        Sprite = sprite;
-        Index = index;
+        Initialize(spriteSheetIndex, frameSequenceName, offset, FixedSingle.ZERO, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped);
+    }
+
+    internal void Initialize(int spriteSheetIndex, string frameSequenceName, Vector offset, FixedSingle rotation, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+    {
         SpriteSheetIndex = spriteSheetIndex;
         FrameSequenceName = frameSequenceName;
         Offset = offset;
@@ -203,38 +224,8 @@ public class Animation
         currentSequenceIndex = initialFrame;
         animationEndFired = false;
 
-        int count = sequence.Count;
+        int count = Sequence.Count;
         animationEvents = new AnimationFrameEvent[count];
-    }
-
-    public void SaveState(BinaryWriter writer)
-    {
-        writer.Write(Index);
-        writer.Write(Visible);
-        writer.Write(animating);
-
-        Rotation.Write(writer);
-        Scale.Write(writer);
-        writer.Write(Flipped);
-        writer.Write(Mirrored);
-
-        writer.Write(currentSequenceIndex);
-        writer.Write(animationEndFired);
-    }
-
-    public void LoadState(BinaryReader reader)
-    {
-        Index = reader.ReadInt32();
-        Visible = reader.ReadBoolean();
-        animating = reader.ReadBoolean();
-
-        Rotation = new FixedSingle(reader);
-        Scale = new FixedSingle(reader);
-        Flipped = reader.ReadBoolean();
-        Mirrored = reader.ReadBoolean();
-
-        currentSequenceIndex = reader.ReadInt32();
-        animationEndFired = reader.ReadBoolean();
     }
 
     public void SetEvent(int frameSequenceIndex, AnimationFrameEvent animationEvent)
@@ -274,15 +265,15 @@ public class Animation
     internal void NextFrame()
     {
         // Se a animação não está em execução ou não ouver pelo menos dois quadros na animação então não é necessário computar o próximo quadro da animação
-        if (!animating || animationEndFired || sequence.Count == 0)
+        if (!animating || animationEndFired || Sequence.Count == 0)
             return;
 
         animationEvents[currentSequenceIndex]?.Invoke(this, currentSequenceIndex);
         currentSequenceIndex++;
 
-        if (currentSequenceIndex >= sequence.Count)
+        if (currentSequenceIndex >= Sequence.Count)
         {
-            currentSequenceIndex = sequence.Count - 1;
+            currentSequenceIndex = Sequence.Count - 1;
 
             if (!animationEndFired)
             {
@@ -292,9 +283,9 @@ public class Animation
                     Sprite.OnAnimationEnd(this);
             }
 
-            if (sequence.LoopFromSequenceIndex != -1) // e se a animação está em looping, então o próximo frame deverá ser o primeiro frame da animação (não o frame inicial, definido por initialFrame)
+            if (Sequence.LoopFromSequenceIndex != -1) // e se a animação está em looping, então o próximo frame deverá ser o primeiro frame da animação (não o frame inicial, definido por initialFrame)
             {
-                currentSequenceIndex = sequence.LoopFromSequenceIndex;
+                currentSequenceIndex = Sequence.LoopFromSequenceIndex;
                 animationEndFired = false;
             }
         }
@@ -303,10 +294,10 @@ public class Animation
     public void Render()
     {
         // Se não estiver visível ou não ouver frames então não precisa desenhar nada
-        if (!Visible || sequence.Count == 0 || RepeatX <= 0 || RepeatY <= 0)
+        if (!Visible || Sequence.Count == 0 || RepeatX <= 0 || RepeatY <= 0)
             return;
 
-        var frame = sequence[currentSequenceIndex];
+        var frame = Sequence[currentSequenceIndex];
         MMXBox srcBox = frame.BoundingBox;
         Texture texture = frame.Texture;
 
@@ -343,11 +334,16 @@ public class Animation
 
     internal void OnDeviceReset()
     {
-        sequence = SpriteSheet.GetFrameSequence(FrameSequenceName);
+        sequence = null;
+    }
+
+    public override int GetHashCode()
+    {
+        return Index;
     }
 
     public override string ToString()
     {
-        return sequence.Name + (Rotation != 0 ? " rotation " + Rotation : "") + (Scale != 0 ? " scale " + Scale : "") + (Mirrored ? " mirrored" : "") + (Flipped ? " flipped" : "");
+        return Sequence.Name + (Rotation != 0 ? " rotation " + Rotation : "") + (Scale != 0 ? " scale " + Scale : "") + (Mirrored ? " mirrored" : "") + (Flipped ? " flipped" : "");
     }
 }

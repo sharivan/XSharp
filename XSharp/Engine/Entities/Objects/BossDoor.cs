@@ -44,11 +44,7 @@ public class BossDoor : BaseTrigger
 
     private EntityReference<BossDoorEffect> effect;
 
-    private BossDoorEffect Effect
-    {
-        get => effect;
-        set => effect = value;
-    }
+    private BossDoorEffect Effect => effect;
 
     public BossDoorOrientation Orientation
     {
@@ -81,14 +77,14 @@ public class BossDoor : BaseTrigger
     }
 
     public BossDoor()
-    {        
+    {
     }
 
     protected internal override void OnCreate()
     {
         base.OnCreate();
 
-        Effect = Engine.CreateEntity<BossDoorEffect>(new
+        effect = Engine.Entities.Create<BossDoorEffect>(new
         {
             Door = this,
             Visible = false
@@ -112,7 +108,7 @@ public class BossDoor : BaseTrigger
         if (Effect != null)
         {
             Effect.Kill();
-            Effect = null;
+            effect = null;
         }
 
         base.OnDeath();

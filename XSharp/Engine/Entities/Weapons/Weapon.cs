@@ -10,7 +10,7 @@ public abstract class Weapon : Sprite
     public Sprite Shooter
     {
         get => shooter;
-        protected set => shooter = value;
+        protected set => shooter = Engine.Entities.GetReferenceTo(value);
     }
 
     public FixedSingle BaseDamage => GetBaseDamage();
@@ -23,6 +23,12 @@ public abstract class Weapon : Sprite
 
     protected Weapon()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         Directional = true;
         CanGoOutOfMapBounds = true;
     }

@@ -1,4 +1,5 @@
-﻿using XSharp.Math;
+﻿using XSharp.Engine.Graphics;
+using XSharp.Math;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -32,11 +33,11 @@ public class HealthHUD : HUD
 
     private HUDImage image = HUDImage.NONE;
 
-    private int topAnimationIndex;
-    private int middleAnimationIndex;
-    private int middleEmptyAnimationIndex;
-    private int bottomAnimationIndex;
-    private int[] hudImageAnimationIndex;
+    private AnimationReference topAnimation;
+    private AnimationReference middleAnimation;
+    private AnimationReference middleEmptyAnimation;
+    private AnimationReference bottomAnimation;
+    private AnimationReference[] hudImageAnimation;
 
     public FixedSingle Left
     {
@@ -66,13 +67,13 @@ public class HealthHUD : HUD
             {
                 if (image != HUDImage.NONE)
                 {
-                    Animation animation = GetAnimation(hudImageAnimationIndex[(int) image]);
+                    Animation animation = hudImageAnimation[(int) image];
                     animation.Visible = false;
                 }
 
                 if (value != HUDImage.NONE)
                 {
-                    Animation animation = GetAnimation(hudImageAnimationIndex[(int) value]);
+                    Animation animation = hudImageAnimation[(int) value];
                     animation.Visible = true;
                 }
             }
@@ -81,21 +82,27 @@ public class HealthHUD : HUD
         }
     }
 
-    protected Animation TopAnimation => GetAnimation(topAnimationIndex);
+    protected Animation TopAnimation => topAnimation;
 
-    protected Animation MiddleAnimation => GetAnimation(middleAnimationIndex);
+    protected Animation MiddleAnimation => middleAnimation;
 
-    protected Animation MiddleEmptyAnimation => GetAnimation(middleEmptyAnimationIndex);
+    protected Animation MiddleEmptyAnimation => middleEmptyAnimation;
 
-    protected Animation BottomAnimation => GetAnimation(bottomAnimationIndex);
+    protected Animation BottomAnimation => bottomAnimation;
 
-    protected Animation ImageAnimation => Image != HUDImage.NONE ? GetAnimation(hudImageAnimationIndex[(int) Image]) : null;
+    protected Animation ImageAnimation => Image != HUDImage.NONE ? hudImageAnimation[(int) Image] : null;
 
     protected HealthHUD()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         SpriteSheetName = "HP";
 
-        hudImageAnimationIndex = new int[8];
+        hudImageAnimation = new AnimationReference[8];
     }
 
     protected internal override void OnSpawn()
@@ -104,9 +111,23 @@ public class HealthHUD : HUD
 
         MultiAnimation = true;
 
+        topAnimation = GetAnimationByName("HPTop");
+        middleAnimation = GetAnimationByName("HPMiddle");
+        middleEmptyAnimation = GetAnimationByName("HPMiddleEmpty");
+        bottomAnimation = GetAnimationByName("HPBottom");
+
+        hudImageAnimation[(int) HUDImage.RIDE_ARMOR] = GetAnimationByName("RideArmor");
+        hudImageAnimation[(int) HUDImage.ZERO] = GetAnimationByName("Zero");
+        hudImageAnimation[(int) HUDImage.X1_BOSS] = GetAnimationByName("X1Boss");
+        hudImageAnimation[(int) HUDImage.BOSS] = GetAnimationByName("Boss");
+        hudImageAnimation[(int) HUDImage.DOPPLER] = GetAnimationByName("Doppler");
+        hudImageAnimation[(int) HUDImage.W] = GetAnimationByName("W");
+        hudImageAnimation[(int) HUDImage.DOPPLER_PROTOTYPE] = GetAnimationByName("DopplerPrototype");
+        hudImageAnimation[(int) HUDImage.X] = GetAnimationByName("X");
+
         if (Image != HUDImage.NONE)
         {
-            Animation animation = GetAnimation(hudImageAnimationIndex[(int) Image]);
+            Animation animation = hudImageAnimation[(int) Image];
             animation.Visible = true;
         }
     }
@@ -127,88 +148,75 @@ public class HealthHUD : HUD
         MiddleAnimation.RepeatY = (int) Value;
     }
 
-    protected override void OnCreateAnimation(int animationIndex, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+    protected override bool OnCreateAnimation(string animationName, ref Vector offset, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn)
     {
-        base.OnCreateAnimation(animationIndex, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
-
-        switch (frameSequenceName)
+        switch (animationName)
         {
             case "HPTop":
                 startOn = true;
                 startVisible = true;
-                topAnimationIndex = animationIndex;
                 break;
 
             case "HPMiddle":
                 startOn = true;
                 startVisible = true;
-                middleAnimationIndex = animationIndex;
                 break;
 
             case "HPMiddleEmpty":
                 startOn = true;
                 startVisible = true;
-                middleEmptyAnimationIndex = animationIndex;
                 offset = (0, 4);
                 break;
 
             case "HPBottom":
                 startOn = true;
                 startVisible = true;
-                bottomAnimationIndex = animationIndex;
                 break;
 
             case "RideArmor":
                 startOn = true;
                 startVisible = Image == HUDImage.RIDE_ARMOR;
-                hudImageAnimationIndex[(int) HUDImage.RIDE_ARMOR] = animationIndex;
                 break;
 
             case "Zero":
                 startOn = true;
                 startVisible = Image == HUDImage.ZERO;
-                hudImageAnimationIndex[(int) HUDImage.ZERO] = animationIndex;
                 break;
 
             case "X1Boss":
                 startOn = true;
                 startVisible = Image == HUDImage.X1_BOSS;
-                hudImageAnimationIndex[(int) HUDImage.X1_BOSS] = animationIndex;
                 break;
 
             case "Boss":
                 startOn = true;
                 startVisible = Image == HUDImage.BOSS;
-                hudImageAnimationIndex[(int) HUDImage.BOSS] = animationIndex;
                 break;
 
             case "Doppler":
                 startOn = true;
                 startVisible = Image == HUDImage.DOPPLER;
-                hudImageAnimationIndex[(int) HUDImage.DOPPLER] = animationIndex;
                 break;
 
             case "W":
                 startOn = true;
                 startVisible = Image == HUDImage.W;
-                hudImageAnimationIndex[(int) HUDImage.W] = animationIndex;
                 break;
 
             case "DopplerPrototype":
                 startOn = true;
                 startVisible = Image == HUDImage.DOPPLER_PROTOTYPE;
-                hudImageAnimationIndex[(int) HUDImage.DOPPLER_PROTOTYPE] = animationIndex;
                 break;
 
             case "X":
                 startOn = true;
                 startVisible = Image == HUDImage.X;
-                hudImageAnimationIndex[(int) HUDImage.X] = animationIndex;
                 break;
 
             default:
-                add = false;
-                break;
+                return false;
         }
+
+        return base.OnCreateAnimation(animationName, ref offset, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn);
     }
 }

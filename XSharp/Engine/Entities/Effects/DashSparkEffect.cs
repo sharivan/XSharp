@@ -1,4 +1,5 @@
-﻿using XSharp.Math.Geometry;
+﻿using XSharp.Engine.Graphics;
+using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Effects;
 
@@ -44,7 +45,7 @@ public class DashSparkEffect : SpriteEffect
         get => player;
         set
         {
-            player = value;
+            player = Engine.Entities.GetReferenceTo(value);
             if (value != null)
             {
                 Origin = GetOrigin(value);
@@ -63,19 +64,11 @@ public class DashSparkEffect : SpriteEffect
         SetAnimationNames("PreDashSparkEffect", "DashSparkEffect");
     }
 
-    protected override void OnDeath()
-    {
-        if (Player != null)
-            Player.DashSparkEffect = null;
-
-        base.OnDeath();
-    }
-
     protected internal override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
 
-        if (animation.FrameSequenceName == "DashSparkEffect")
+        if (animation.Name == "DashSparkEffect")
             KillOnNextFrame();
     }
 }

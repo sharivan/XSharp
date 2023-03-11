@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using XSharp.Serialization;
+
 namespace XSharp.Math.Geometry;
 
 [Flags]
@@ -17,19 +19,21 @@ public enum RightTriangleSide
     ALL = BORDERS | INNER
 }
 
-public struct RightTriangle : IShape
+public struct RightTriangle : IShape, ISerializable
 {
     public const GeometryType type = GeometryType.RIGHT_TRIANGLE;
 
     public static readonly RightTriangle EMPTY = new(Vector.NULL_VECTOR, 0, 0);
-    private readonly FixedSingle hCathetus;
-    private readonly FixedSingle vCathetus;
+
+    private FixedSingle hCathetus;
+    private FixedSingle vCathetus;
 
     public GeometryType Type => type;
 
     public Vector Origin
     {
         get;
+        private set;
     }
 
     public Vector HypothenuseOpositeVertex => Origin;
@@ -126,6 +130,25 @@ public struct RightTriangle : IShape
     public RightTriangle(Box wrappingBox, bool vCathetusOnTheLeft, bool hCathetusOnTheTop)
         : this(wrappingBox.LeftTop, wrappingBox.Width, wrappingBox.Height, vCathetusOnTheLeft, hCathetusOnTheTop)
     {
+    }
+
+    public RightTriangle(BinarySerializer reader)
+    {
+        Deserialize(reader);
+    }
+
+    public void Deserialize(BinarySerializer reader)
+    {
+        Origin = reader.ReadVector();
+        hCathetus = reader.ReadFixedSingle();
+        vCathetus = reader.ReadFixedSingle();
+    }
+
+    public void Serialize(BinarySerializer writer)
+    {
+        Origin.Serialize(writer);
+        hCathetus.Serialize(writer);
+        vCathetus.Serialize(writer);
     }
 
     public FixedSingle GetLength(Metric metric)

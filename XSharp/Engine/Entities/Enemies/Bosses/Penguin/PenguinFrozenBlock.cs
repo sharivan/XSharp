@@ -8,10 +8,12 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 public class PenguinFrozenBlock : Sprite
 {
+    private EntityReference<Penguin> attacker;
+
     public Penguin Attacker
     {
-        get;
-        internal set;
+        get => attacker;
+        internal set => attacker = Engine.Entities.GetReferenceTo(value);
     }
 
     public bool Exploding
@@ -56,7 +58,7 @@ public class PenguinFrozenBlock : Sprite
         Exploding = true;
         Engine.PlaySound(4, "Ice Freeze");
 
-        PenguinIceExplosionEffect fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
+        PenguinIceExplosionEffect fragment = Engine.Entities.Create<PenguinIceExplosionEffect>(new
         {
             Origin,
             InitialVelocity = (-PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED)
@@ -64,7 +66,7 @@ public class PenguinFrozenBlock : Sprite
 
         fragment.Spawn();
 
-        fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
+        fragment = Engine.Entities.Create<PenguinIceExplosionEffect>(new
         {
             Origin,
             InitialVelocity = (PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED)
@@ -72,7 +74,7 @@ public class PenguinFrozenBlock : Sprite
 
         fragment.Spawn();
 
-        fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
+        fragment = Engine.Entities.Create<PenguinIceExplosionEffect>(new
         {
             Origin,
             InitialVelocity = (-PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED * FixedSingle.HALF)
@@ -80,7 +82,7 @@ public class PenguinFrozenBlock : Sprite
 
         fragment.Spawn();
 
-        fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
+        fragment = Engine.Entities.Create<PenguinIceExplosionEffect>(new
         {
             Origin,
             InitialVelocity = (PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED * FixedSingle.HALF)

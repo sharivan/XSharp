@@ -4,10 +4,13 @@ namespace XSharp.Engine.Entities.Triggers;
 
 public class CheckpointSplitterTrigger : SplitterTrigger
 {
+    private EntityReference<Checkpoint> checkpoint;
+    private EntityReference<Checkpoint> lastCheckpoint = null;
+
     public Checkpoint Checkpoint
     {
-        get;
-        set;
+        get => checkpoint;
+        set => checkpoint = Engine.Entities.GetReferenceTo(value);
     }
 
     public SplitterTriggerDirection CheckpointDirection
@@ -18,9 +21,9 @@ public class CheckpointSplitterTrigger : SplitterTrigger
 
     public Checkpoint LastCheckpoint
     {
-        get;
-        private set;
-    } = null;
+        get => lastCheckpoint;
+        private set => lastCheckpoint = Engine.Entities.GetReferenceTo(value);
+    }
 
     public Box LastCameraConstraintBox
     {

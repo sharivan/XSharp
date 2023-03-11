@@ -2,9 +2,9 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace XSharp.Engine;
+namespace XSharp.Util;
 
-public static class XSharpTupleExtensions
+public static class TupleExtensions
 {
     public static bool CanConvertTupleToArray<ArrayElementType>(Type tupleType)
     {

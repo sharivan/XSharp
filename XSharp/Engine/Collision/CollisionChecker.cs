@@ -4,11 +4,14 @@ using System.Linq;
 using XSharp.Engine.Entities;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+using XSharp.Serialization;
+using XSharp.Util;
 
 using MMXWorld = XSharp.Engine.World.World;
 
 namespace XSharp.Engine.Collision;
 
+[Serializable]
 public abstract class CollisionChecker
 {
     public static GameEngine Engine => GameEngine.Engine;
@@ -282,7 +285,7 @@ public abstract class CollisionChecker
     }
 
     protected List<CollisionPlacement> placements;
-    protected EntityList<Entity> resultSet;
+    protected EntitySet<Entity> resultSet;
     protected RightTriangle slopeTriangle;
 
     public TouchingKind TestKind
@@ -303,7 +306,7 @@ public abstract class CollisionChecker
         set;
     } = Box.EMPTY_BOX;
 
-    public EntityList<Sprite> IgnoreSprites
+    public EntitySet<Sprite> IgnoreSprites
     {
         get;
     }
@@ -339,8 +342,8 @@ public abstract class CollisionChecker
     protected CollisionChecker()
     {
         placements = new List<CollisionPlacement>();
-        resultSet = new EntityList<Entity>();
-        IgnoreSprites = new EntityList<Sprite>();
+        resultSet = new EntitySet<Entity>();
+        IgnoreSprites = new EntitySet<Sprite>();
     }
 
     protected abstract CollisionFlags GetCollisionVectorFlags();
@@ -377,7 +380,7 @@ public abstract class CollisionChecker
         IgnoreSprites.Clear();
         IgnoreSprites.AddRange(ignoreSprites);
     }
-    public void Setup(Vector testVector, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements)
+    public void Setup(Vector testVector, CollisionFlags ignoreFlags, EntitySet<Sprite> ignoreSprites, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements)
     {
         Setup(testVector, ignoreFlags, checkWithWorld, checkWithSolidSprites, computePlacements);
 
@@ -403,7 +406,7 @@ public abstract class CollisionChecker
         Setup(testVector, CollisionFlags.NONE, true, true, false, ignoreSprites);
     }
 
-    public void Setup(Vector testVector, EntityList<Sprite> ignoreSprites)
+    public void Setup(Vector testVector, EntitySet<Sprite> ignoreSprites)
     {
         Setup(testVector, CollisionFlags.NONE, ignoreSprites, true, true, false);
     }
@@ -423,7 +426,7 @@ public abstract class CollisionChecker
         Setup(testVector, ignoreFlags, true, true, false, ignoreSprites);
     }
 
-    public void Setup(Vector testVector, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites)
+    public void Setup(Vector testVector, CollisionFlags ignoreFlags, EntitySet<Sprite> ignoreSprites)
     {
         Setup(testVector, ignoreFlags, ignoreSprites, true, true, false);
     }
@@ -454,7 +457,7 @@ public abstract class CollisionChecker
         IgnoreSprites.AddRange(ignoreSprites);
     }
 
-    public void Setup(Box testBox, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements)
+    public void Setup(Box testBox, CollisionFlags ignoreFlags, EntitySet<Sprite> ignoreSprites, bool checkWithWorld, bool checkWithSolidSprites, bool computePlacements)
     {
         Setup(testBox, ignoreFlags, checkWithWorld, checkWithSolidSprites, computePlacements);
 
@@ -480,7 +483,7 @@ public abstract class CollisionChecker
         Setup(testBox, CollisionFlags.NONE, true, true, false, ignoreSprites);
     }
 
-    public void Setup(Box testBox, EntityList<Sprite> ignoreSprites)
+    public void Setup(Box testBox, EntitySet<Sprite> ignoreSprites)
     {
         Setup(testBox, CollisionFlags.NONE, ignoreSprites, true, true, false);
     }
@@ -500,7 +503,7 @@ public abstract class CollisionChecker
         Setup(testBox, ignoreFlags, true, true, false, ignoreSprites);
     }
 
-    public void Setup(Box testBox, CollisionFlags ignoreFlags, EntityList<Sprite> ignoreSprites)
+    public void Setup(Box testBox, CollisionFlags ignoreFlags, EntitySet<Sprite> ignoreSprites)
     {
         Setup(testBox, ignoreFlags, ignoreSprites, true, true, false);
     }

@@ -2343,31 +2343,4 @@ public class MMXCore : SNESCore
             }
         }
     }
-
-    private static readonly char[] UHEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-    private static readonly char[] LHEXDIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-
-    public static string IntToHex(int n, int digits)
-    {
-        return IntToHex(n, digits, false);
-    }
-
-    /**
-     * Returns a string of 8 hexadecimal digits (most significant digit first)
-     * corresponding to the integer <i>n</i>, which is treated as unsigned.
-     */
-    public static string IntToHex(int n, int digits, bool upcase)
-    {
-        char[] buf = new char[digits];
-
-        char[] hexDigits = upcase ? UHEXDIGITS : LHEXDIGITS;
-
-        for (int i = digits - 1; i >= 0; i--)
-        {
-            buf[i] = hexDigits[n & 0x0F];
-            n >>= 4;
-        }
-
-        return new string(buf);
-    }
 }

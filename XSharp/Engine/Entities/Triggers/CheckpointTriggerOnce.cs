@@ -4,10 +4,13 @@ namespace XSharp.Engine.Entities.Triggers;
 
 public class CheckpointTriggerOnce : Trigger
 {
+    private EntityReference<Checkpoint> checkpoint;
+    private EntityReference<Checkpoint> lastCheckpoint = null;
+
     public Checkpoint Checkpoint
     {
-        get;
-        set;
+        get => checkpoint;
+        set => checkpoint = value;
     }
 
     public bool Triggered
@@ -16,11 +19,7 @@ public class CheckpointTriggerOnce : Trigger
         private set;
     } = false;
 
-    public Checkpoint LastCheckpoint
-    {
-        get;
-        private set;
-    } = null;
+    public Checkpoint LastCheckpoint => lastCheckpoint;
 
     public Box LastCameraConstraintBox
     {
@@ -61,7 +60,7 @@ public class CheckpointTriggerOnce : Trigger
             LastObjectTile = Engine.ObjectTile;
             LastBackgroundTile = Engine.BackgroundTile;
             LastPalette = Engine.Palette;
-            LastCheckpoint = Engine.CurrentCheckpoint;
+            lastCheckpoint = Engine.CurrentCheckpoint;
             LastCameraConstraintBox = Engine.CameraConstraintsBox;
             Engine.CurrentCheckpoint = Checkpoint;
         }

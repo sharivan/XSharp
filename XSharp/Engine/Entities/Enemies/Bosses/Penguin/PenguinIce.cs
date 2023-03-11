@@ -9,11 +9,12 @@ public class PenguinIce : Enemy
 {
     private FixedSingle speed;
     private bool bumped;
+    private EntityReference<Penguin> shooter;
 
     public Penguin Shooter
     {
-        get;
-        internal set;
+        get => shooter;
+        internal set => shooter = Engine.Entities.GetReferenceTo(value);
     }
 
     public bool Bump
@@ -50,7 +51,7 @@ public class PenguinIce : Enemy
         Exploding = true;
         Engine.PlaySound(4, "Ice");
 
-        PenguinIceExplosionEffect fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
+        PenguinIceExplosionEffect fragment = Engine.Entities.Create<PenguinIceExplosionEffect>(new
         {
             Origin,
             InitialVelocity = (-PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED)
@@ -58,7 +59,7 @@ public class PenguinIce : Enemy
 
         fragment.Spawn();
 
-        fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
+        fragment = Engine.Entities.Create<PenguinIceExplosionEffect>(new
         {
             Origin,
             InitialVelocity = (PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED)
@@ -66,7 +67,7 @@ public class PenguinIce : Enemy
 
         fragment.Spawn();
 
-        fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
+        fragment = Engine.Entities.Create<PenguinIceExplosionEffect>(new
         {
             Origin,
             InitialVelocity = (-PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED * FixedSingle.HALF)
@@ -74,7 +75,7 @@ public class PenguinIce : Enemy
 
         fragment.Spawn();
 
-        fragment = Engine.CreateEntity<PenguinIceExplosionEffect>(new
+        fragment = Engine.Entities.Create<PenguinIceExplosionEffect>(new
         {
             Origin,
             InitialVelocity = (PENGUIN_ICE_FRAGMENT_SPEED, -PENGUIN_ICE_FRAGMENT_SPEED * FixedSingle.HALF)

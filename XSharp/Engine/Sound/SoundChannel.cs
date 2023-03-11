@@ -2,9 +2,11 @@
 
 using NAudio.Wave;
 
+using XSharp.Serialization;
+
 namespace XSharp.Engine.Sound;
 
-public class SoundChannel : IDisposable
+public class SoundChannel : IDisposable, ISerializable
 {
     internal string name;
     private WaveOutEvent player;
@@ -62,9 +64,9 @@ public class SoundChannel : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void Play(WaveStream stream, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
+    public void Play(WaveEntry stream, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
     {
-        stream.Position = 0;
+        stream.Stream.Position = 0;
         Stream.UpdateSource(stream, stopTime, loopTime, ignoreUpdatesUntilPlayed);
 
         if (!Stream.Playing)
@@ -82,12 +84,12 @@ public class SoundChannel : IDisposable
         player.Play();
     }
 
-    public void Play(WaveStream stream, double loopTime, bool ignoreUpdatesUntilFinished = false)
+    public void Play(WaveEntry stream, double loopTime, bool ignoreUpdatesUntilFinished = false)
     {
         Play(stream, -1, loopTime, ignoreUpdatesUntilFinished);
     }
 
-    public void Play(WaveStream stream, bool ignoreUpdatesUntilFinished = false)
+    public void Play(WaveEntry stream, bool ignoreUpdatesUntilFinished = false)
     {
         Play(stream, -1, -1, ignoreUpdatesUntilFinished);
     }
@@ -120,8 +122,31 @@ public class SoundChannel : IDisposable
         StopPlayer();
     }
 
-    public bool IsPlaying(WaveStream stream)
+    public bool IsPlaying(WaveEntry stream)
     {
         return Stream.Playing && Stream.Source == stream;
+    }
+
+    public void Deserialize(BinarySerializer serializer)
+    {       
+        Stream.Deserialize(serializer);
+        player.Volume = serializer.ReadFloat();
+
+        if (Stream.Playing)
+        {
+            if (!Initialized)
+            {
+                player.Init(Stream);
+                Initialized = true;
+            }
+
+            player.Play();
+        }
+    }
+
+    public void Serialize(BinarySerializer serializer)
+    {
+        Stream.Serialize(serializer);
+        serializer.WriteFloat(player.Volume);
     }
 }

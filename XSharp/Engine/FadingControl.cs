@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Reflection;
 
 using SharpDX;
+
+using XSharp.Serialization;
 
 using Color = SharpDX.Color;
 
@@ -19,7 +22,7 @@ public enum FadingFlags
     COLORS = RED | GREEN | BLUE
 }
 
-public class FadingControl
+public class FadingControl : ISerializable
 {
     public bool Fading
     {
@@ -169,5 +172,38 @@ public class FadingControl
                     );
             OnFadingComplete?.Invoke();
         }
+    }
+
+    public void Deserialize(BinarySerializer serializer)
+    {
+        Fading = serializer.ReadBool();
+        Flags = serializer.ReadEnum<FadingFlags>();
+        Paused = serializer.ReadBool();
+        float x = serializer.ReadFloat();
+        float y = serializer.ReadFloat();
+        float z = serializer.ReadFloat();
+        float w = serializer.ReadFloat();
+        FadingLevel = new Vector4(x, y, z, w);
+        FadingColor = Color.FromAbgr(serializer.ReadInt());
+        FadeIn = serializer.ReadEnum<FadingFlags>();
+        FadingFrames = serializer.ReadLong();
+        FadingTick = serializer.ReadLong();
+        serializer.DeserializeProperty(nameof(OnFadingComplete), this);
+    }
+
+    public void Serialize(BinarySerializer serializer)
+    {
+        serializer.WriteBool(Fading);
+        serializer.WriteEnum(Flags);
+        serializer.WriteBool(Paused);
+        serializer.WriteFloat(FadingLevel.X);
+        serializer.WriteFloat(FadingLevel.Y);
+        serializer.WriteFloat(FadingLevel.Z);
+        serializer.WriteFloat(FadingLevel.W);
+        serializer.WriteInt(FadingColor.ToAbgr());
+        serializer.WriteEnum(FadeIn);
+        serializer.WriteLong(FadingFrames);
+        serializer.WriteLong(FadingTick);
+        serializer.WriteDelegate(OnFadingComplete);
     }
 }

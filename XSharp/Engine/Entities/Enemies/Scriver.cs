@@ -28,6 +28,12 @@ public class Scriver : Enemy
 
     public Scriver()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         SpriteSheetName = "Scriver";
 
         SetAnimationNames("Idle", "Drilling", "Jumping", "Landing");

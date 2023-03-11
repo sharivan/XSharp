@@ -1,4 +1,6 @@
-﻿namespace XSharp.Engine.Entities.Effects;
+﻿using XSharp.Engine.Graphics;
+
+namespace XSharp.Engine.Entities.Effects;
 
 public enum ExplosionEffectSound
 {

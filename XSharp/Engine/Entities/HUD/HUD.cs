@@ -12,6 +12,12 @@ public abstract class HUD : Sprite
 
     protected HUD()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         Directional = false;
     }
 

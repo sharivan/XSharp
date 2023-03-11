@@ -1,17 +1,71 @@
-﻿namespace XSharp.Math;
+﻿using XSharp.Serialization;
 
-public readonly struct Interval
+namespace XSharp.Math;
+
+public struct Interval : ISerializable
 {
     public static readonly Interval EMPTY = MakeOpenInterval(0, 0);
+
+    public static Interval MakeInterval((FixedSingle pos, bool closed) v1, (FixedSingle pos, bool closed) v2)
+    {
+        bool closedLeft;
+        bool closedRight;
+        FixedSingle left;
+        FixedSingle right;
+
+        if (v1.pos < v2.pos)
+        {
+            closedLeft = v1.closed;
+            left = v1.pos;
+            closedRight = v2.closed;
+            right = v2.pos;
+        }
+        else
+        {
+            closedLeft = v2.closed;
+            left = v2.pos;
+            closedRight = v1.closed;
+            right = v1.pos;
+        }
+
+        return new(left, closedLeft, right, closedRight);
+    }
+
+    public static Interval MakeOpenInterval(FixedSingle v1, FixedSingle v2)
+    {
+        return new(FixedSingle.Min(v1, v2), false, FixedSingle.Max(v1, v2), false);
+    }
+
+    public static Interval MakeClosedInterval(FixedSingle v1, FixedSingle v2)
+    {
+        return new(FixedSingle.Min(v1, v2), true, FixedSingle.Max(v1, v2), true);
+    }
+
+    public static Interval MakeSemiOpenLeftInterval(FixedSingle v1, FixedSingle v2)
+    {
+        return new(FixedSingle.Min(v1, v2), false, FixedSingle.Max(v1, v2), true);
+    }
+
+    public static Interval MakeSemiOpenRightInterval(FixedSingle v1, FixedSingle v2)
+    {
+        return new(FixedSingle.Min(v1, v2), true, FixedSingle.Max(v1, v2), false);
+    }
+
+    public static Interval ReadInterval(BinarySerializer reader)
+    {
+        return new(reader);
+    }
 
     public FixedSingle Min
     {
         get;
+        private set;
     }
 
     public FixedSingle Max
     {
         get;
+        private set;
     }
 
     public bool IsOpenLeft => !IsClosedLeft;
@@ -19,6 +73,7 @@ public readonly struct Interval
     public bool IsClosedLeft
     {
         get;
+        private set;
     }
 
     public bool IsOpenRight => !IsClosedRight;
@@ -26,6 +81,7 @@ public readonly struct Interval
     public bool IsClosedRight
     {
         get;
+        private set;
     }
 
     public bool IsClosed => IsClosedLeft && IsClosedRight;
@@ -44,6 +100,27 @@ public readonly struct Interval
         IsClosedLeft = closedLeft;
         Max = max;
         IsClosedRight = closedRight;
+    }
+
+    private Interval(BinarySerializer reader)
+    {
+        Deserialize(reader);
+    }
+
+    public void Deserialize(BinarySerializer reader)
+    {
+        Min = reader.ReadFixedSingle();
+        IsClosedLeft = reader.ReadBool();
+        Max = reader.ReadFixedSingle();
+        IsClosedRight = reader.ReadBool();
+    }
+
+    public void Serialize(BinarySerializer writer)
+    {
+        Min.Serialize(writer);
+        writer.WriteBool(IsClosedLeft);
+        Max.Serialize(writer);
+        writer.WriteBool(IsClosedRight);
     }
 
     public override bool Equals(object obj)
@@ -179,51 +256,6 @@ public readonly struct Interval
     public bool IsOverlaping(Interval other)
     {
         return !Intersection(other).IsEmpty;
-    }
-
-    public static Interval MakeInterval((FixedSingle pos, bool closed) v1, (FixedSingle pos, bool closed) v2)
-    {
-        bool closedLeft;
-        bool closedRight;
-        FixedSingle left;
-        FixedSingle right;
-
-        if (v1.pos < v2.pos)
-        {
-            closedLeft = v1.closed;
-            left = v1.pos;
-            closedRight = v2.closed;
-            right = v2.pos;
-        }
-        else
-        {
-            closedLeft = v2.closed;
-            left = v2.pos;
-            closedRight = v1.closed;
-            right = v1.pos;
-        }
-
-        return new(left, closedLeft, right, closedRight);
-    }
-
-    public static Interval MakeOpenInterval(FixedSingle v1, FixedSingle v2)
-    {
-        return new(FixedSingle.Min(v1, v2), false, FixedSingle.Max(v1, v2), false);
-    }
-
-    public static Interval MakeClosedInterval(FixedSingle v1, FixedSingle v2)
-    {
-        return new(FixedSingle.Min(v1, v2), true, FixedSingle.Max(v1, v2), true);
-    }
-
-    public static Interval MakeSemiOpenLeftInterval(FixedSingle v1, FixedSingle v2)
-    {
-        return new(FixedSingle.Min(v1, v2), false, FixedSingle.Max(v1, v2), true);
-    }
-
-    public static Interval MakeSemiOpenRightInterval(FixedSingle v1, FixedSingle v2)
-    {
-        return new(FixedSingle.Min(v1, v2), true, FixedSingle.Max(v1, v2), false);
     }
 
     public override string ToString()

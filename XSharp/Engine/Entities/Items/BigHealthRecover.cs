@@ -18,6 +18,12 @@ public class BigHealthRecover : Item
 
     public BigHealthRecover()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         SpriteSheetName = "X Weapons";
 
         SetAnimationNames("BigHealthRecoverDropping", "BigHealthRecoverIdle");

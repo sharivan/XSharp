@@ -1,4 +1,6 @@
-﻿using static XSharp.Engine.Consts;
+﻿using XSharp.Engine.Graphics;
+
+using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.HUD;
 
@@ -6,6 +8,12 @@ public class ReadyHUD : HUD
 {
     public ReadyHUD()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         Offset = READY_OFFSET;
         SpriteSheetName = "Ready";
     }

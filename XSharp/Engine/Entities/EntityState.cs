@@ -1,25 +1,26 @@
 ﻿using System;
 
+using SerializableAttribute = XSharp.Serialization.SerializableAttribute;
+
 namespace XSharp.Engine.Entities;
 
 public delegate void EntityStateStartEvent(EntityState state, EntityState lastState);
 public delegate void EntityStateFrameEvent(EntityState state, long frameCounter);
 public delegate void EntityStateEndEvent(EntityState state);
 
+[Serializable]
 public class EntityState
 {
     public event EntityStateStartEvent StartEvent;
     public event EntityStateFrameEvent FrameEvent;
     public event EntityStateEndEvent EndEvent;
 
+    internal EntityReference entity;
+
     private EntitySubState[] subStates;
     private int currentSubStateID = -1;
 
-    public Entity Entity
-    {
-        get;
-        internal set;
-    }
+    public Entity Entity => entity;
 
     public int ID
     {
@@ -139,6 +140,7 @@ public delegate void EntitySubStateStartEvent(EntityState state, EntityState las
 public delegate void EntitySubStateFrameEvent(EntityState state, EntitySubState subState, long frameCounter);
 public delegate void EntitySubStateEndEvent(EntityState state, EntitySubState subState);
 
+[Serializable]
 public class EntitySubState
 {
     public event EntitySubStateStartEvent StartEvent;

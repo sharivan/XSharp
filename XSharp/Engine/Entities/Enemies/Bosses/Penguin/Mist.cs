@@ -76,10 +76,8 @@ public class Mist : HUD.HUD
         base.PostThink();
     }
 
-    protected override void OnCreateAnimation(int animationIndex, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+    protected override bool OnCreateAnimation(string frameSequenceName, ref Vector offset, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn)
     {
-        base.OnCreateAnimation(animationIndex, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
-
         switch (frameSequenceName)
         {
             case "Mist":
@@ -90,9 +88,10 @@ public class Mist : HUD.HUD
                 break;
 
             default:
-                add = false;
-                break;
+                return false;
         }
+
+        return base.OnCreateAnimation(frameSequenceName, ref offset, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn);
     }
 
     public void Play()

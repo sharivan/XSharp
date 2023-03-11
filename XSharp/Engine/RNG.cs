@@ -1,7 +1,8 @@
-﻿using System.IO;
+﻿using XSharp.Serialization;
 
 namespace XSharp.Engine;
-public class RNG
+
+public class RNG : ISerializable
 {
     private long seed;
 
@@ -10,14 +11,14 @@ public class RNG
         UpdateSeed(seed);
     }
 
-    public void LoadState(BinaryReader reader)
+    public void Deserialize(BinarySerializer reader)
     {
-        seed = reader.ReadInt64();
+        seed = reader.ReadLong();
     }
 
-    public void SaveState(BinaryWriter writer)
+    public void Serialize(BinarySerializer writer)
     {
-        writer.Write(seed);
+        writer.WriteLong(seed);
     }
 
     public void UpdateSeed(long seed)

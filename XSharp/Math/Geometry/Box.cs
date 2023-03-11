@@ -1,10 +1,10 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Globalization;
-using System.IO;
 using System.Runtime.CompilerServices;
 
-using XSharp.Engine;
+using XSharp.Serialization;
+using XSharp.Util;
 
 namespace XSharp.Math.Geometry;
 
@@ -44,13 +44,13 @@ public class BoxTypeConverter : TypeConverter
         var genericSourceType = sourceType.GetGenericTypeDefinition();
         return sourceType == typeof(Box)
             || (genericSourceType == typeof(ValueTuple<,>) || genericSourceType == typeof(Tuple<,>)
-            ? XSharpTupleExtensions.CanConvertTupleToArray<Vector>(sourceType)
+            ? Util.TupleExtensions.CanConvertTupleToArray<Vector>(sourceType)
             : genericSourceType == typeof(ValueTuple<,,>) || genericSourceType == typeof(Tuple<,,>)
-            ? XSharpTupleExtensions.CanConvertTupleToArray<Vector>(sourceType)
+            ? Util.TupleExtensions.CanConvertTupleToArray<Vector>(sourceType)
             : genericSourceType == typeof(ValueTuple<,,,>) || genericSourceType == typeof(Tuple<,,,>)
-            ? XSharpTupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
+            ? Util.TupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
             : genericSourceType == typeof(ValueTuple<,,,,,>) || genericSourceType == typeof(Tuple<,,,,,>)
-            ? XSharpTupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
+            ? Util.TupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
             : base.CanConvertFrom(context, sourceType));
     }
 
@@ -98,13 +98,13 @@ public class BoxTypeConverter : TypeConverter
         var genericDestinationType = destinationType.GetGenericTypeDefinition();
 
         return genericDestinationType == typeof(ValueTuple<,>) || genericDestinationType == typeof(Tuple<,>)
-            ? XSharpTupleExtensions.ArrayToTuple(destinationType, box.LeftTop, box.RightBottom)
+            ? Util.TupleExtensions.ArrayToTuple(destinationType, box.LeftTop, box.RightBottom)
             : genericDestinationType == typeof(ValueTuple<,,>) || genericDestinationType == typeof(Tuple<,,>)
-            ? XSharpTupleExtensions.ArrayToTuple(destinationType, box.Origin, box.Mins, box.Maxs)
+            ? Util.TupleExtensions.ArrayToTuple(destinationType, box.Origin, box.Mins, box.Maxs)
             : genericDestinationType == typeof(ValueTuple<,,,>) || genericDestinationType == typeof(Tuple<,,,>)
-            ? XSharpTupleExtensions.ArrayToTuple(destinationType, box.Left, box.Top, box.Width, box.Height)
+            ? Util.TupleExtensions.ArrayToTuple(destinationType, box.Left, box.Top, box.Width, box.Height)
             : genericDestinationType == typeof(ValueTuple<,,,,,>) || genericDestinationType == typeof(Tuple<,,,,,>)
-            ? XSharpTupleExtensions.ArrayToTuple(destinationType, box.Origin.X, box.Origin.Y, box.Left, box.Top, box.Width, box.Height)
+            ? Util.TupleExtensions.ArrayToTuple(destinationType, box.Origin.X, box.Origin.Y, box.Left, box.Top, box.Width, box.Height)
             : base.ConvertTo(context, culture, value, destinationType);
     }
 }
@@ -113,7 +113,7 @@ public class BoxTypeConverter : TypeConverter
 /// Retângulo bidimensional com lados paralelos aos eixos coordenados
 /// </summary>
 [TypeConverter(typeof(BoxTypeConverter))]
-public struct Box : IShape
+public struct Box : IShape, ISerializable
 {
     public const GeometryType type = GeometryType.BOX;
 
@@ -134,6 +134,7 @@ public struct Box : IShape
     public Vector Origin
     {
         get;
+        private set;
     }
 
     /// <summary>
@@ -142,6 +143,7 @@ public struct Box : IShape
     public Vector Mins
     {
         get;
+        private set;
     }
 
     /// <summary>
@@ -150,6 +152,7 @@ public struct Box : IShape
     public Vector Maxs
     {
         get;
+        private set;
     }
 
     public FixedSingle X => Origin.X;
@@ -303,24 +306,29 @@ public struct Box : IShape
 
     public Box((Vector, Vector) tuple) : this(tuple.Item1, tuple.Item2) { }
 
-    public Box(BinaryReader reader)
+    public Box(BinarySerializer reader)
     {
-        Origin = new Vector(reader);
-        Mins = new Vector(reader);
-        Maxs = new Vector(reader);
+        Deserialize(reader);
+    }
+
+    public void Deserialize(BinarySerializer reader)
+    {
+        Origin = reader.ReadVector();
+        Mins = reader.ReadVector();
+        Maxs = reader.ReadVector();
+    }
+
+    public void Serialize(BinarySerializer writer)
+    {
+        Origin.Serialize(writer);
+        Mins.Serialize(writer);
+        Maxs.Serialize(writer);
     }
 
     public FixedSingle GetLength(Metric metric)
     {
         return LeftTop.DistanceTo(RightTop, metric) + RightTop.DistanceTo(RightBottom, metric)
             + RightBottom.DistanceTo(LeftBottom, metric) + LeftBottom.DistanceTo(LeftTop, metric);
-    }
-
-    public void Write(BinaryWriter writer)
-    {
-        Origin.Write(writer);
-        Mins.Write(writer);
-        Maxs.Write(writer);
     }
 
     /// <summary>

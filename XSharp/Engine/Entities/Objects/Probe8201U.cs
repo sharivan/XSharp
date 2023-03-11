@@ -1,4 +1,5 @@
 ﻿using XSharp.Engine.Collision;
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -10,6 +11,7 @@ public class Probe8201U : Sprite
 {
     private Vector moveOrigin;
     private FixedSingle speed;
+    private bool movingBackward;
 
     private Animation rocket;
     private Animation rocketJet;
@@ -19,7 +21,7 @@ public class Probe8201U : Sprite
     {
         get;
         set;
-    } = 80;
+    } = PROBE8201U_BASE_MOVE_DISTANCE;
 
     public bool MovingVertically
     {
@@ -38,6 +40,7 @@ public class Probe8201U : Sprite
         SpriteSheetName = "Platforms";
         Directional = false;
         MultiAnimation = true;
+        KillOnOffscreen = false;
 
         SetAnimationNames("Probe8201U", "RocketPropellerJet", "RocketJet");
     }
@@ -73,22 +76,34 @@ public class Probe8201U : Sprite
 
         moveOrigin = Origin;
         speed = 0;
+        movingBackward = StartMovingBackward;
     }
 
-    protected override void Think()
+    private void MoveHorizontally()
     {
-        base.Think();
+        speed = !movingBackward
+            ? PROBE8201U_HORIZONTAL_SPEED
+            : -PROBE8201U_HORIZONTAL_SPEED;
 
-        var halfMoveDistance = MoveDistance * 0.5;
-        var distance = MovingVertically ? (Origin.Y - moveOrigin.Y).Abs : (Origin.X - moveOrigin.X).Abs;
+        Velocity = (speed, 0);
+
+        var distance = (Origin.X - moveOrigin.X).Abs;
+        if (speed > 0 && distance == MoveDistance)
+            movingBackward = !movingBackward;
+        else if (speed < 0 && distance == 0)
+            movingBackward = !movingBackward;
+    }
+
+    private void MoveVertically()
+    {
+        var halfMoveDistance = MoveDistance * FixedSingle.HALF;
+        var distance = (Origin.Y - moveOrigin.Y).Abs;
         if (distance <= halfMoveDistance)
             speed += StartMovingBackward ? -PROBE8201U_VERTICAL_ACCELERATION : PROBE8201U_VERTICAL_ACCELERATION;
         else
             speed += StartMovingBackward ? PROBE8201U_VERTICAL_ACCELERATION : -PROBE8201U_VERTICAL_ACCELERATION;
 
-        speed = speed.Clamp(-PROBE8201U_TERMINAL_VERTICAL_SPEED, PROBE8201U_TERMINAL_VERTICAL_SPEED);
-
-        Velocity = MovingVertically ? (0, speed) : (speed, 0);
+        Velocity = (0, speed.Clamp(-PROBE8201U_TERMINAL_VERTICAL_SPEED, PROBE8201U_TERMINAL_VERTICAL_SPEED));
 
         if (Velocity.Y < 0 && (
             StartMovingBackward && distance <= halfMoveDistance
@@ -107,5 +122,15 @@ public class Probe8201U : Sprite
             rocketPropellerJet.Visible = false;
             rocketJet.StartFromBegin();
         }
+    }
+
+    protected override void Think()
+    {
+        base.Think();
+
+        if (MovingVertically)
+            MoveVertically();
+        else
+            MoveHorizontally();
     }
 }

@@ -28,6 +28,12 @@ public class BattonBoneG : Enemy
 
     public BattonBoneG()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         SpriteSheetName = "BattonBoneG";
 
         SetAnimationNames("Idle", "Attacking");

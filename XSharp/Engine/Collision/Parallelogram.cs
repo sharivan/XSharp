@@ -3,6 +3,8 @@
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
+using SerializableAttribute = XSharp.Serialization.SerializableAttribute;
+
 namespace XSharp.Engine.Collision;
 
 public enum ParallelogramVertex
@@ -21,6 +23,7 @@ public enum ParallelogramSide
     BOTTOM = 3
 }
 
+[Serializable]
 public class Parallelogram : GeometrySet, IShape
 {
     private static void HorizontalParallelogram(Vector origin, Vector direction, FixedSingle smallWidth, out Box box, out RightTriangle triangle1, out RightTriangle triangle2)

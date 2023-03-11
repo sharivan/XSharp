@@ -1,69 +1,77 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using XSharp.Factories;
+using XSharp.Serialization;
+
 namespace XSharp.Engine.Entities;
 
-public interface IEntityReference
+public interface IEntityReference : IIndexedNamedFactoryItemReference<Entity>
 {
-    public int TargetIndex
+    IIndexedNamedFactory<Entity> IIndexedNamedFactoryItemReference<Entity>.Factory => GameEngine.Engine.Entities;
+
+    IIndexedFactory<Entity> IIndexedFactoryItemReference<Entity>.Factory => GameEngine.Engine.Entities;
+
+    INamedFactory<Entity> INamedFactoryItemReference<Entity>.Factory => GameEngine.Engine.Entities;
+
+    IFactory<Entity> IFactoryItemReference<Entity>.Factory => GameEngine.Engine.Entities;
+
+    IIndexedNamedFactory IIndexedNamedFactoryItemReference.Factory => GameEngine.Engine.Entities;
+
+    IIndexedFactory IIndexedFactoryItemReference.Factory => GameEngine.Engine.Entities;
+
+    INamedFactory INamedFactoryItemReference.Factory => GameEngine.Engine.Entities;
+
+    IFactory IFactoryItemReference.Factory => GameEngine.Engine.Entities;
+
+    new public Entity Target
     {
         get;
-        set;
     }
 
-    public Entity Target
-    {
-        get;
-        set;
-    }
+    Entity IIndexedNamedFactoryItemReference<Entity>.Target => Target;
+
+    Entity IIndexedFactoryItemReference<Entity>.Target => Target;
+
+    Entity INamedFactoryItemReference<Entity>.Target => Target;
+
+    Entity IFactoryItemReference<Entity>.Target => Target;
+
+    IIndexedNamedFactoryItem IIndexedNamedFactoryItemReference.Target => Target;
+
+    IIndexedFactoryItem IIndexedFactoryItemReference.Target => Target;
+
+    INamedFactoryItem INamedFactoryItemReference.Target => Target;
+
+    IFactoryItem IFactoryItemReference.Target => Target;
+
+    Type IFactoryItemReference.ItemDefaultType => typeof(Entity);
 }
 
-public abstract class EntityReference : IEntityReference
+public class EntityReference : IndexedNamedFactoryItemReference<Entity>, IEntityReference
 {
-    public static EntityReference ReferenceTo(int index, Type fallBackEntityType)
+    public override Entity Target
     {
-        if (index < 0)
-            return null;
-
-        EntityReference reference = GameEngine.Engine.entityReferences[index];
-        if (reference is not null)
-            return reference;
-
-        Type referenceType = typeof(EntityIndexReference<>);
-
-        var entity = GameEngine.Engine.entities[index];
-        referenceType = entity == null ? referenceType.MakeGenericType(entity.GetType()) : referenceType.MakeGenericType(fallBackEntityType);
-        reference = (EntityReference) Activator.CreateInstance(referenceType, true);
-        reference.TargetIndex = index;
-
-        return reference;
+        get
+        {
+            target ??= ((IIndexedNamedFactoryItemReference<Entity>) this).GetTargetFromIndex();
+            return target;
+        }
     }
 
-    public static EntityReference ReferenceTo(Entity entity, Type fallBackEntityType)
+    public override void Deserialize(BinarySerializer reader)
     {
-        return entity == null ? null : ReferenceTo(entity.Index, fallBackEntityType);
+        targetIndex = reader.ReadInt();
     }
 
-    public abstract int TargetIndex
+    public override void Serialize(BinarySerializer writer)
     {
-        get;
-        set;
-    }
-
-    public Entity Target
-    {
-        get => TargetIndex >= 0 ? GameEngine.Engine.entities[TargetIndex] : null;
-        set => TargetIndex = value != null ? value.Index : -1;
+        writer.WriteInt(TargetIndex);
     }
 
     public static implicit operator Entity(EntityReference reference)
     {
         return reference?.Target;
-    }
-
-    public static implicit operator EntityReference(Entity target)
-    {
-        return ReferenceTo(target, target != null ? target.GetType() : typeof(Entity));
     }
 
     public static bool operator ==(EntityReference reference1, EntityReference reference2)
@@ -100,7 +108,7 @@ public abstract class EntityReference : IEntityReference
     public override bool Equals(object? obj)
     {
         var target = Target;
-        return obj == target
+        return ReferenceEquals(obj, target)
             || obj != null
             && (
             obj is EntityReference reference && EqualityComparer<Entity>.Default.Equals(target, reference.Target)
@@ -108,89 +116,84 @@ public abstract class EntityReference : IEntityReference
             );
     }
 
+    protected override IndexedNamedFactory<Entity> GetFactory()
+    {
+        return GameEngine.Engine.Entities;
+    }
+
     public override int GetHashCode()
     {
         return TargetIndex;
     }
 
-    public override string ToString()
+    public override void UpdateTargetNameFromIndex()
     {
-        var target = Target;
-        return target != null ? target.ToString() : "null";
+    }
+
+    public override void UpdateTargetIndexFromName()
+    {
     }
 }
 
-public interface IEntityReference<T> : IEntityReference where T : Entity
+public interface IEntityReference<EntityType> : IEntityReference where EntityType : Entity
 {
-    new public T Target
+    new public EntityType Target
     {
         get;
-        set;
     }
+
+    Entity IEntityReference.Target => Target;
+
+    Entity IIndexedNamedFactoryItemReference<Entity>.Target => Target;
+
+    Entity IIndexedFactoryItemReference<Entity>.Target => Target;
+
+    Entity INamedFactoryItemReference<Entity>.Target => Target;
+
+    Entity IFactoryItemReference<Entity>.Target => Target;
+
+    IIndexedNamedFactoryItem IIndexedNamedFactoryItemReference.Target => Target;
+
+    IIndexedFactoryItem IIndexedFactoryItemReference.Target => Target;
+
+    INamedFactoryItem INamedFactoryItemReference.Target => Target;
+
+    IFactoryItem IFactoryItemReference.Target => Target;
+
+    Type IFactoryItemReference.ItemDefaultType => typeof(EntityType);
 }
 
-public abstract class EntityReference<T> : EntityReference, IEntityReference<T> where T : Entity
+public class EntityReference<EntityType> : EntityReference, IEntityReference<EntityType> where EntityType : Entity
 {
-    new public T Target
-    {
-        get => TargetIndex >= 0 ? (T) GameEngine.Engine.entities[TargetIndex] : null;
-        set => TargetIndex = value != null ? value.Index : -1;
-    }
+    new public EntityType Target => (EntityType) base.Target;
 
-    public static implicit operator T(EntityReference<T> reference)
+    public static implicit operator EntityType(EntityReference<EntityType> reference)
     {
         return reference?.Target;
     }
 
-    public static implicit operator EntityReference<T>(T target)
+    public static implicit operator EntityReference<EntityType>(EntityType target)
     {
-        var reference = ReferenceTo(target, typeof(T));
-        return reference is EntityIndexReference<T> referenceT ? referenceT : new EntityProxyReference<T>(reference);
+        return target?.Factory.GetReferenceTo(target);
     }
 }
 
-internal class EntityIndexReference<T> : EntityReference<T> where T : Entity
-{
-    internal int targetIndex = -1;
-
-    public override int TargetIndex
-    {
-        get => targetIndex;
-
-        set
-        {
-            if (targetIndex >= 0)
-                GameEngine.Engine.entityReferences[targetIndex] = null;
-
-            targetIndex = value;
-
-            if (targetIndex >= 0)
-                GameEngine.Engine.entityReferences[targetIndex] = this;
-        }
-    }
-
-    internal EntityIndexReference()
-    {
-    }
-}
-
-internal class EntityProxyReference<T> : EntityReference<T> where T : Entity
+internal class EntityProxyReference<EntityType> : EntityReference<EntityType> where EntityType : Entity
 {
     private IEntityReference proxy;
 
-    public override int TargetIndex
-    {
-        get => proxy != null ? proxy.TargetIndex : -1;
+    public override int TargetIndex => proxy != null ? proxy.TargetIndex : -1;
 
-        set
-        {
-            if (proxy != null)
-                proxy.TargetIndex = value;
-        }
-    }
+    public override string TargetName => proxy?.TargetName;
 
-    internal EntityProxyReference(IEntityReference proxy)
+    public EntityProxyReference(IEntityReference proxy)
     {
         this.proxy = proxy;
+    }
+
+    public override void Unset()
+    {
+        base.Unset();
+        proxy = null;
     }
 }

@@ -1,26 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+using XSharp.Serialization;
 
 namespace XSharp.Engine;
 
-internal class Partition<T> where T : Entity
+internal class Partition<T> : ISerializable where T : Entity
 {
-    private class PartitionQuad<U> where U : Entity
+    private class PartitionQuad<U> : ISerializable where U : Entity
     {
-        readonly Box box;
-        readonly EntityList<U> values;
+        Box box;
+        EntitySet<U> values;
 
         public int Count => values.Count;
+
+        public PartitionQuad()
+        {
+            values = new EntitySet<U>();
+        }
 
         public PartitionQuad(Box box)
         {
             this.box = box;
 
-            values = new EntityList<U>();
+            values = new EntitySet<U>();
         }
 
         public void Insert(U value)
@@ -28,7 +35,7 @@ internal class Partition<T> where T : Entity
             values.Add(value);
         }
 
-        public void Query(Vector v, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
+        public void Query(Vector v, EntitySet<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
         {
             if (!box.Contains(v))
                 return;
@@ -46,7 +53,7 @@ internal class Partition<T> where T : Entity
             }
         }
 
-        public void Query(LineSegment line, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
+        public void Query(LineSegment line, EntitySet<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
         {
             if (!box.HasIntersectionWith(line))
                 return;
@@ -64,7 +71,7 @@ internal class Partition<T> where T : Entity
             }
         }
 
-        public void Query(IGeometry geometry, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
+        public void Query(IGeometry geometry, EntitySet<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
         {
             if (!geometry.HasIntersectionWith(box))
                 return;
@@ -82,7 +89,7 @@ internal class Partition<T> where T : Entity
             }
         }
 
-        public void Query(Box box, EntityList<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
+        public void Query(Box box, EntitySet<U> result, U exclude, ICollection<U> addictionalExclusionList, bool aliveOnly = true)
         {
             if (!box.IsOverlaping(this.box))
                 return;
@@ -117,15 +124,29 @@ internal class Partition<T> where T : Entity
         {
             values.Clear();
         }
+
+        public void Deserialize(BinarySerializer reader)
+        {
+            box = reader.ReadBox();
+
+            values ??= new EntitySet<U>();
+            values.Deserialize(reader);
+        }
+
+        public void Serialize(BinarySerializer writer)
+        {
+            box.Serialize(writer);
+            values.Serialize(writer);
+        }
     }
 
-    private readonly Box box;
-    private readonly int rows;
-    private readonly int cols;
+    private Box box;
+    private int rows;
+    private int cols;
 
-    private readonly PartitionQuad<T>[,] cells;
-    private readonly FixedSingle cellWidth;
-    private readonly FixedSingle cellHeight;
+    private PartitionQuad<T>[,] quads;
+    private FixedSingle cellWidth;
+    private FixedSingle cellHeight;
 
     public Partition(FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height, int rows, int cols)
         : this(new Box(new Vector(left, top), Vector.NULL_VECTOR, new Vector(width, height)), rows, cols)
@@ -141,7 +162,7 @@ internal class Partition<T> where T : Entity
         cellWidth = box.Width / cols;
         cellHeight = box.Height / rows;
 
-        cells = new PartitionQuad<T>[cols, rows];
+        quads = new PartitionQuad<T>[cols, rows];
     }
 
     public void Insert(T item)
@@ -179,30 +200,30 @@ internal class Partition<T> where T : Entity
                 if (!cellBox.IsOverlaping(box))
                     continue;
 
-                if (cells[col, row] == null)
-                    cells[col, row] = new PartitionQuad<T>(cellBox);
+                if (quads[col, row] == null)
+                    quads[col, row] = new PartitionQuad<T>(cellBox);
 
-                cells[col, row].Insert(item);
+                quads[col, row].Insert(item);
             }
         }
     }
 
-    public int Query(EntityList<T> resultSet, Vector v, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Vector v, bool aliveOnly = true)
     {
         return Query(resultSet, v, null, null, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, Vector v, T exclude, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Vector v, T exclude, bool aliveOnly = true)
     {
         return Query(resultSet, v, exclude, null, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, Vector v, ICollection<T> exclusionList, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Vector v, ICollection<T> exclusionList, bool aliveOnly = true)
     {
         return Query(resultSet, v, null, exclusionList, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, Vector v, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Vector v, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
     {
         Vector lt = box.LeftTop;
 
@@ -216,27 +237,27 @@ internal class Partition<T> where T : Entity
         if (row < 0)
             row = 0;
 
-        cells[col, row]?.Query(v, resultSet, exclude, addictionalExclusionList, aliveOnly);
+        quads[col, row]?.Query(v, resultSet, exclude, addictionalExclusionList, aliveOnly);
 
         return resultSet.Count;
     }
 
-    public int Query(EntityList<T> resultSet, LineSegment line, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, LineSegment line, bool aliveOnly = true)
     {
         return Query(resultSet, line, null, null, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, LineSegment line, T exclude, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, LineSegment line, T exclude, bool aliveOnly = true)
     {
         return Query(resultSet, line, exclude, null, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, LineSegment line, ICollection<T> exclusionList, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, LineSegment line, ICollection<T> exclusionList, bool aliveOnly = true)
     {
         return Query(resultSet, line, null, exclusionList, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, LineSegment line, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, LineSegment line, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
     {
         var type = box.Intersection(line, out line);
         if (type == GeometryType.EMPTY)
@@ -256,28 +277,28 @@ internal class Partition<T> where T : Entity
             if (row < 0 || row >= rows || col < 0 || col >= cols)
                 continue;
 
-            cells[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly);
+            quads[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly);
         }
 
         return resultSet.Count;
     }
 
-    public int Query(EntityList<T> resultSet, Parallelogram parallelogram, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Parallelogram parallelogram, bool aliveOnly = true)
     {
         return Query(resultSet, parallelogram, null, null, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Parallelogram parallelogram, T exclude, bool aliveOnly = true)
     {
         return Query(resultSet, parallelogram, exclude, null, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, Parallelogram parallelogram, ICollection<T> exclusionList, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Parallelogram parallelogram, ICollection<T> exclusionList, bool aliveOnly = true)
     {
         return Query(resultSet, parallelogram, null, exclusionList, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Parallelogram parallelogram, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
     {
         Vector stepVector = CollisionChecker.GetStepVectorHorizontal(parallelogram.Direction, cellWidth);
         FixedSingle stepDistance = stepVector.Length;
@@ -310,29 +331,29 @@ internal class Partition<T> where T : Entity
             for (int col = startCol; col <= endCol; col++)
             {
                 for (int row = startRow; row <= endRow; row++)
-                    cells[col, row]?.Query(parallelogram, resultSet, exclude, addictionalExclusionList, aliveOnly);
+                    quads[col, row]?.Query(parallelogram, resultSet, exclude, addictionalExclusionList, aliveOnly);
             }
         }
 
         return resultSet.Count;
     }
 
-    public int Query(EntityList<T> resultSet, Box box, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Box box, bool aliveOnly = true)
     {
         return Query(resultSet, box, null, null, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, Box box, T exclude, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Box box, T exclude, bool aliveOnly = true)
     {
         return Query(resultSet, box, exclude, null, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, Box box, ICollection<T> exclusionList, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Box box, ICollection<T> exclusionList, bool aliveOnly = true)
     {
         return Query(resultSet, box, null, exclusionList, aliveOnly);
     }
 
-    public int Query(EntityList<T> resultSet, Box box, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
+    public int Query(EntitySet<T> resultSet, Box box, T exclude, ICollection<T> addictionalExclusionList, bool aliveOnly = true)
     {
         Vector lt = this.box.LeftTop;
 
@@ -362,7 +383,7 @@ internal class Partition<T> where T : Entity
         for (int col = startCol; col <= endCol; col++)
         {
             for (int row = startRow; row <= endRow; row++)
-                cells[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly);
+                quads[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly);
         }
 
         return resultSet.Count;
@@ -421,12 +442,12 @@ internal class Partition<T> where T : Entity
         {
             for (int row = startRow; row <= endRow; row++)
             {
-                if (cells[col, row] != null)
+                if (quads[col, row] != null)
                 {
-                    cells[col, row].Update(item);
+                    quads[col, row].Update(item);
 
-                    if (cells[col, row].Count == 0)
-                        cells[col, row] = null;
+                    if (quads[col, row].Count == 0)
+                        quads[col, row] = null;
                 }
                 else
                 {
@@ -435,10 +456,10 @@ internal class Partition<T> where T : Entity
                     if (!cellBox.IsOverlaping(box))
                         continue;
 
-                    if (cells[col, row] == null)
-                        cells[col, row] = new PartitionQuad<T>(cellBox);
+                    if (quads[col, row] == null)
+                        quads[col, row] = new PartitionQuad<T>(cellBox);
 
-                    cells[col, row].Insert(item);
+                    quads[col, row].Insert(item);
                 }
             }
         }
@@ -490,12 +511,12 @@ internal class Partition<T> where T : Entity
         {
             for (int row = startRow; row <= endRow; row++)
             {
-                if (cells[col, row] != null)
+                if (quads[col, row] != null)
                 {
-                    cells[col, row].Remove(item);
+                    quads[col, row].Remove(item);
 
-                    if (cells[col, row].Count == 0)
-                        cells[col, row] = null;
+                    if (quads[col, row].Count == 0)
+                        quads[col, row] = null;
                 }
             }
         }
@@ -507,10 +528,80 @@ internal class Partition<T> where T : Entity
         {
             for (int row = 0; row < rows; row++)
             {
-                if (cells[col, row] != null)
+                if (quads[col, row] != null)
                 {
-                    cells[col, row].Clear();
-                    cells[col, row] = null;
+                    quads[col, row].Clear();
+                    quads[col, row] = null;
+                }
+            }
+        }
+    }
+
+    private void ResizeQuads(int rows, int cols)
+    {
+        var newArray = new PartitionQuad<T>[rows, cols];
+        int minRows = System.Math.Min(quads.GetLength(0), newArray.GetLength(0));
+        int minCols = System.Math.Min(quads.GetLength(1), newArray.GetLength(1));
+
+        for (int i = 0; i < minCols; i++)
+            Array.Copy(quads, i * quads.GetLength(0), newArray, i * newArray.GetLength(0), minRows);
+
+        quads = newArray;
+    }
+
+    public void Deserialize(BinarySerializer serializer)
+    {
+        box = serializer.ReadBox();
+        rows = serializer.ReadInt();
+        cols = serializer.ReadInt();
+
+        if (quads == null)
+            quads = new PartitionQuad<T>[rows, cols];
+        else
+            ResizeQuads(rows, cols);
+
+        cellWidth = serializer.ReadFixedSingle();
+        cellHeight = serializer.ReadFixedSingle();
+
+        for (int col = 0; col < cols; col++)
+        {
+            for (int row = 0; row < rows; row++)
+            {
+                bool isSet = serializer.ReadBool();
+                if (isSet)
+                {
+                    var quad = new PartitionQuad<T>();
+                    quad.Deserialize(serializer);
+                    quads[row, col] = quad;
+                }
+                else
+                    quads[row, col] = null;
+            }
+        }
+    }
+
+    public void Serialize(BinarySerializer serializer)
+    {
+        box.Serialize(serializer);
+        serializer.WriteInt(rows);
+        serializer.WriteInt(cols);
+
+        cellWidth.Serialize(serializer);
+        cellHeight.Serialize(serializer);
+
+        for (int col = 0; col < cols; col++)
+        {
+            for (int row = 0; row < rows; row++)
+            {
+                var quad = quads[row, col];
+                if (quad == null)
+                {
+                    serializer.WriteBool(false);
+                }
+                else
+                {
+                    serializer.WriteBool(true);
+                    quad.Serialize(serializer);
                 }
             }
         }

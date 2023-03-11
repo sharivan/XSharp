@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-using XSharp.Engine.Entities.Items;
+﻿using XSharp.Engine.Entities.Items;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -187,31 +185,6 @@ public class Camera : Entity
     {
         TouchingKind = TouchingKind.VECTOR;
         Respawnable = true;
-    }
-
-    public override void LoadState(BinaryReader reader)
-    {
-        base.LoadState(reader);
-
-        int focusedObjectIndex = reader.ReadInt32();
-        focusOn = focusedObjectIndex >= 0 ? Engine.entities[focusedObjectIndex] : null;
-        moveDistance = new Vector(reader);
-        NoConstraints = reader.ReadBoolean();
-        Size = new Vector(reader);
-        SmoothSpeed = new FixedSingle(reader);
-        Velocity = new Vector(reader);
-    }
-
-    public override void SaveState(BinaryWriter writer)
-    {
-        base.SaveState(writer);
-
-        writer.Write(FocusOn != null ? FocusOn.Index : -1);
-        moveDistance.Write(writer);
-        writer.Write(NoConstraints);
-        Size.Write(writer);
-        SmoothSpeed.Write(writer);
-        Velocity.Write(writer);
     }
 
     protected override Box GetHitbox()

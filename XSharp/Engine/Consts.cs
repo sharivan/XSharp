@@ -14,7 +14,7 @@ public enum CollisionBoxType
 
 public class Consts
 {
-    public const int SAVE_SLOT_COUNT = 10;
+    public const int SAVE_SLOT_COUNT = 100;
     public const int KEY_BUFFER_COUNT = 60;
 
     // Tick rate
@@ -247,9 +247,10 @@ public class Consts
     // Probe 8201-U
 
     public static readonly Box PROBE8201U_HITBOX = (Vector.NULL_VECTOR, (-11, -27), (11, 27));
-    public static readonly FixedSingle PROBE8201U_TERMINAL_HORIZONTAL_SPEED = 0.25;
+    public static readonly FixedSingle PROBE8201U_HORIZONTAL_SPEED = 0.25;
     public static readonly FixedSingle PROBE8201U_TERMINAL_VERTICAL_SPEED = 1;
     public static readonly FixedSingle PROBE8201U_VERTICAL_ACCELERATION = 4 / 256.0;
+    public static readonly FixedSingle PROBE8201U_BASE_MOVE_DISTANCE = 80;
 
     // Render
 

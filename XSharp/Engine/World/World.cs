@@ -6,6 +6,7 @@ using SharpDX.Direct3D9;
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Math.Geometry;
+using XSharp.Util;
 
 using static XSharp.Engine.Consts;
 
@@ -22,6 +23,7 @@ public class World : IDisposable
 
     public static readonly Vector TILE_SIZE_VECTOR = new(TILE_SIZE, TILE_SIZE);
     public static readonly Vector TILE_FRAC_SIZE_VECTOR = new(TILE_FRAC_SIZE, TILE_FRAC_SIZE);
+
     private int backgroundSceneRowCount;
     private int backgroundSceneColCount;
 
@@ -801,7 +803,7 @@ public class World : IDisposable
         return collisionChecker.GetCollisionFlags();
     }
 
-    public CollisionFlags GetCollisionFlags(MMXBox collisionBox, EntityList<Entities.Sprite> ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+    public CollisionFlags GetCollisionFlags(MMXBox collisionBox, EntitySet<Entities.Sprite> ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
     {
         collisionChecker.Setup(collisionBox, ignore, ignoreSprites, checkWithWorld, checknWithSolidSprites, false);
         return collisionChecker.GetCollisionFlags();
@@ -820,7 +822,7 @@ public class World : IDisposable
         return collisionChecker.Placements;
     }
 
-    public IEnumerable<CollisionPlacement> GetCollisionPlacements(MMXBox collisionBox, EntityList<Entities.Sprite> ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
+    public IEnumerable<CollisionPlacement> GetCollisionPlacements(MMXBox collisionBox, EntitySet<Entities.Sprite> ignoreSprites, CollisionFlags ignore = CollisionFlags.NONE, bool checkWithWorld = true, bool checknWithSolidSprites = false)
     {
         collisionChecker.Setup(collisionBox, ignore, ignoreSprites, checkWithWorld, checknWithSolidSprites, true);
         collisionChecker.GetCollisionFlags();

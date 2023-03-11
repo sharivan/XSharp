@@ -1,16 +1,15 @@
 ﻿using System;
 
+using SerializableAttribute = XSharp.Serialization.SerializableAttribute;
+
 namespace XSharp.Engine.Entities;
 
+[Serializable]
 public class SpriteState : EntityState
 {
     private string animationName;
 
-    public Sprite Sprite
-    {
-        get => (Sprite) Entity;
-        set => Entity = value;
-    }
+    public Sprite Sprite => (Sprite) Entity;
 
     public int AnimationIndex
     {
@@ -115,6 +114,7 @@ public class SpriteState : EntityState
     }
 }
 
+[Serializable]
 public class SpriteSubState : EntitySubState
 {
     private string animationName;

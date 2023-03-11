@@ -1,4 +1,5 @@
 ﻿using XSharp.Engine.Entities.Effects;
+using XSharp.Engine.Graphics;
 
 namespace XSharp.Engine.Entities.Objects;
 
@@ -20,6 +21,12 @@ internal class BossDoorEffect : SpriteEffect
 
     public BossDoorEffect()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         SpriteSheetName = "Boos Door";
         Directional = false;
         Respawnable = true;
@@ -70,8 +77,7 @@ internal class BossDoorEffect : SpriteEffect
 
     protected override void OnDeath()
     {
-        Door = null;
-
+        door = null;
         base.OnDeath();
     }
 
@@ -81,11 +87,11 @@ internal class BossDoorEffect : SpriteEffect
 
         switch (State)
         {
-            case BossDoorState.OPENING when animation.FrameSequenceName == "Opening":
+            case BossDoorState.OPENING when animation.Name == "Opening":
                 State = BossDoorState.PLAYER_CROSSING;
                 break;
 
-            case BossDoorState.CLOSING when animation.FrameSequenceName == "Closing":
+            case BossDoorState.CLOSING when animation.Name == "Closing":
                 State = BossDoorState.CLOSED;
                 break;
         }

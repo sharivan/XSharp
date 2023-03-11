@@ -102,8 +102,10 @@ public abstract class Boss : Enemy
 
     public event BossDefeatedEvent BossDefeatedEvent;
 
-    private BossHealthHUD healthHUD;
+    private EntityReference<BossHealthHUD> healthHUD;
     private string bossPaletteName;
+
+    public BossHealthHUD HealthHUD => healthHUD;
 
     public bool HealthFilling
     {
@@ -148,14 +150,14 @@ public abstract class Boss : Enemy
     } = true;
 
     protected Boss()
-    {        
+    {
     }
 
     protected internal override void OnCreate()
     {
         base.OnCreate();
 
-        healthHUD = Engine.CreateEntity<BossHealthHUD>(new
+        healthHUD = Engine.Entities.Create<BossHealthHUD>(new
         {
             Boss = this,
             Visible = false
@@ -224,12 +226,12 @@ public abstract class Boss : Enemy
         bossPaletteName = PaletteName;
         Exploding = false;
 
-        healthHUD.Spawn();
+        HealthHUD.Spawn();
     }
 
     protected override void OnDeath()
     {
-        healthHUD.Kill();
+        HealthHUD.Kill();
 
         base.OnDeath();
     }
@@ -323,7 +325,7 @@ public abstract class Boss : Enemy
 
     protected void StartHealthFilling()
     {
-        healthHUD.Visible = true;
+        HealthHUD.Visible = true;
         HealthFilling = true;
         HealthFillingFrameCounter = 0;
     }

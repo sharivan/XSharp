@@ -1,8 +1,8 @@
 ﻿using System;
-using System.IO;
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Effects;
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -46,7 +46,7 @@ public class Player : Sprite
     private readonly Keys[] keyBuffer = new Keys[KEY_BUFFER_COUNT];
     protected bool death;
 
-    private readonly int[,] animationIndices = new int[Enum.GetNames(typeof(PlayerState)).Length, 3];
+    private readonly AnimationReference[,] animations = new AnimationReference[Enum.GetNames(typeof(PlayerState)).Length, 3];
 
     private long frameCounter = 0;
 
@@ -75,12 +75,11 @@ public class Player : Sprite
     private bool spawnSoundPlayed;
 
     private EntityReference<DashSparkEffect> dashSparkEffect = null;
+    private EntityReference<ChargingEffect> chargingEffect = null;
 
-    internal DashSparkEffect DashSparkEffect
-    {
-        get => dashSparkEffect;
-        set => dashSparkEffect = value;
-    }
+    internal DashSparkEffect DashSparkEffect => dashSparkEffect;
+
+    internal ChargingEffect ChargingEffect => chargingEffect;
 
     public bool CanWallJump => GetWallJumpDir() != Direction.NONE;
 
@@ -316,111 +315,11 @@ public class Player : Sprite
         private set;
     }
 
-    public EntityReference<ChargingEffect> ChargingEffect
-    {
-        get;
-        private set;
-    }
-
     public Player()
     {
         SpriteSheetName = "X";
         Directional = true;
         Respawnable = true;
-    }
-
-    public override void SaveState(BinaryWriter writer)
-    {
-        base.SaveState(writer);
-
-        for (int i = 0; i < KEY_BUFFER_COUNT; i++)
-            writer.Write((int) keyBuffer[i]);
-
-        writer.Write(lives);
-        writer.Write(death);
-
-        writer.Write(frameCounter);
-
-        writer.Write(jumping);
-        writer.Write(jumpingFrames);
-        writer.Write(dashReleased);
-        writer.Write(teleporting);
-
-        baseHSpeed.Write(writer);
-        writer.Write(lastMovingFrame);
-        writer.Write(dashFrameCounter);
-        writer.Write(spawning);
-        writer.Write(WallJumping);
-        writer.Write(wallJumpFrameCounter);
-        writer.Write(wallSlideFrameCounter);
-
-        writer.Write((int) state);
-        writer.Write((int) forcedState);
-        writer.Write((int) ForcedStateException);
-        writer.Write((int) stateDirection);
-        writer.Write(Shooting);
-        writer.Write(shots);
-        writer.Write(shotFrameCounter);
-        writer.Write(charging);
-        writer.Write(chargingFrameCounter);
-        writer.Write(chargingFrameCounter2);
-        writer.Write(shootingCharged);
-
-        writer.Write(spawnSoundPlayed);
-
-        writer.Write(CrossingBossDoor);
-        writer.Write(CanGoOutOfCameraBounds);
-        writer.Write(TakingDamageFrameCounter);
-        writer.Write(Freezed);
-        writer.Write(InputLocked);
-        writer.Write(DeadByAbiss);
-    }
-
-    public override void LoadState(BinaryReader reader)
-    {
-        base.LoadState(reader);
-
-        for (int i = 0; i < KEY_BUFFER_COUNT; i++)
-            keyBuffer[i] = (Keys) reader.ReadInt32();
-
-        lives = reader.ReadInt32();
-        death = reader.ReadBoolean();
-
-        frameCounter = reader.ReadInt64();
-
-        jumping = reader.ReadBoolean();
-        jumpingFrames = reader.ReadInt32();
-        dashReleased = reader.ReadBoolean();
-        teleporting = reader.ReadBoolean();
-
-        baseHSpeed = new FixedSingle(reader);
-        lastMovingFrame = reader.ReadInt64();
-        dashFrameCounter = reader.ReadInt32();
-        spawning = reader.ReadBoolean();
-        WallJumping = reader.ReadBoolean();
-        wallJumpFrameCounter = reader.ReadInt32();
-        wallSlideFrameCounter = reader.ReadInt32();
-
-        state = (PlayerState) reader.ReadInt32();
-        forcedState = (PlayerState) reader.ReadInt32();
-        ForcedStateException = (PlayerState) reader.ReadInt32();
-        stateDirection = (Direction) reader.ReadInt32();
-        Shooting = reader.ReadBoolean();
-        shots = reader.ReadInt32();
-        shotFrameCounter = reader.ReadInt32();
-        charging = reader.ReadBoolean();
-        chargingFrameCounter = reader.ReadInt32();
-        chargingFrameCounter2 = reader.ReadInt32();
-        shootingCharged = reader.ReadBoolean();
-
-        spawnSoundPlayed = reader.ReadBoolean();
-
-        CrossingBossDoor = reader.ReadBoolean();
-        CanGoOutOfCameraBounds = reader.ReadBoolean();
-        TakingDamageFrameCounter = reader.ReadInt32();
-        Freezed = reader.ReadBoolean();
-        InputLocked = reader.ReadBoolean();
-        DeadByAbiss = reader.ReadBoolean();
     }
 
     protected override Box GetCollisionBox()
@@ -458,17 +357,17 @@ public class Player : Sprite
         this.state = state;
         stateDirection = direction;
 
-        int animationIndex = GetAnimationIndex(state, Shooting);
-        if (animationIndex != CurrentAnimationIndex)
+        var animation = GetAnimation(state, Shooting);
+        if (animation != CurrentAnimation)
         {
-            CurrentAnimationIndex = animationIndex;
+            CurrentAnimation = animation;
             CurrentAnimation.Start(startAnimationIndex);
         }
     }
 
-    protected int GetAnimationIndex(PlayerState state, bool shooting)
+    protected AnimationReference GetAnimation(PlayerState state, bool shooting)
     {
-        return animationIndices[(int) state, shooting && !(spawning || teleporting || TopLadderClimbing || TopLadderDescending || PreLadderClimbing || PreWalking || TakingDamage || Dying || VictoryPosing) ? 1 : state == PlayerState.STAND && Tired ? 2 : 0];
+        return animations[(int) state, shooting && !(spawning || teleporting || TopLadderClimbing || TopLadderDescending || PreLadderClimbing || PreWalking || TakingDamage || Dying || VictoryPosing) ? 1 : state == PlayerState.STAND && Tired ? 2 : 0];
     }
 
     public Keys GetKeys(int latency)
@@ -664,7 +563,7 @@ public class Player : Sprite
                     }
                 }
 
-                if (state == PlayerState.FALL && !ContainsAnimationIndex(PlayerState.LAND, CurrentAnimationIndex, true))
+                if (state == PlayerState.FALL && !ContainsAnimation(PlayerState.LAND, CurrentAnimation, true))
                     PlaySound("X Land");
 
                 if (PressingLeft)
@@ -1602,7 +1501,7 @@ public class Player : Sprite
                     if (effect != null)
                     {
                         effect.KillOnNextFrame();
-                        ChargingEffect = null;
+                        chargingEffect = null;
                     }
 
                     if (!spawning && charging && chargingFrameCounter >= 4 && shots < MAX_SHOTS && !PreLadderClimbing && !TopLadderClimbing && !TopLadderDescending)
@@ -1668,7 +1567,7 @@ public class Player : Sprite
                 ChargingEffect effect = ChargingEffect;
                 if (effect == null)
                 {
-                    ChargingEffect = Engine.StartChargingEffect(this);
+                    chargingEffect = Engine.StartChargingEffect(this);
                     effect = ChargingEffect;
                 }
 
@@ -1730,18 +1629,42 @@ public class Player : Sprite
         Engine.ShootCharged(this, direction == Direction.RIGHT ? Hitbox.RightTop + shotOrigin : Hitbox.LeftTop + new Vector(-shotOrigin.X, shotOrigin.Y));
     }
 
-    private bool CanWallJumpLeft()
+    private bool CanWallJumpOnWorldLeft()
     {
         var collider = WorldCollider;
         var leftWallJumpBoxDetector = new Box(collider.Box.LeftTop - (8, 1), 8, collider.Box.Height - collider.LegsHeight - 1);
-        return Engine.World.GetCollisionFlags(leftWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE_WALL, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this).IsClimbable();
+        return Engine.World.GetCollisionFlags(leftWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE_WALL, true, false, this).IsClimbable();
+    }
+
+    private bool CanWallJumpOnSpritesLeft()
+    {
+        var collider = SpriteCollider;
+        var leftWallJumpBoxDetector = new Box(collider.Box.LeftTop - (1, 0), 1, collider.Box.Height - collider.LegsHeight);
+        return Engine.World.GetCollisionFlags(leftWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE_WALL, false, true, this).IsClimbable();
+    }
+
+    private bool CanWallJumpLeft()
+    {
+        return CheckCollisionWithWorld && CanWallJumpOnWorldLeft() || CheckCollisionWithSolidSprites && CanWallJumpOnSpritesLeft();
+    }
+
+    private bool CanWallJumpOnWorldRight()
+    {
+        var collider = WorldCollider;
+        var rightWallJumpBoxDetector = new Box(collider.Box.RightTop + (1, -1), 8, collider.Box.Height - collider.LegsHeight - 1);
+        return Engine.World.GetCollisionFlags(rightWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE_WALL, true, false, this).IsClimbable();
+    }
+
+    private bool CanWallJumpOnSpritesRight()
+    {
+        var collider = SpriteCollider;
+        var rightWallJumpBoxDetector = new Box(collider.Box.RightTop + (1, 0), 1, collider.Box.Height - collider.LegsHeight);
+        return Engine.World.GetCollisionFlags(rightWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE_WALL, false, true, this).IsClimbable();
     }
 
     private bool CanWallJumpRight()
     {
-        var collider = WorldCollider;
-        var rightWallJumpBoxDetector = new Box(collider.Box.RightTop + (1, -1), 8, collider.Box.Height - collider.LegsHeight - 1);
-        return Engine.World.GetCollisionFlags(rightWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE_WALL, CheckCollisionWithWorld, CheckCollisionWithSolidSprites, this).IsClimbable();
+        return CheckCollisionWithWorld && CanWallJumpOnWorldRight() || CheckCollisionWithSolidSprites && CanWallJumpOnSpritesRight();
     }
 
     public Direction GetWallJumpDir()
@@ -1804,12 +1727,12 @@ public class Player : Sprite
 
     private void RefreshAnimation()
     {
-        CurrentAnimationIndex = GetAnimationIndex(state, Shooting);
+        CurrentAnimation = GetAnimation(state, Shooting);
     }
 
-    protected bool ContainsAnimationIndex(PlayerState state, int index, bool checkShooting = false)
+    protected bool ContainsAnimation(PlayerState state, AnimationReference animation, bool checkShooting = false)
     {
-        return animationIndices[(int) state, 0] == index || checkShooting && animationIndices[(int) state, 1] == index;
+        return animations[(int) state, 0] == animation || checkShooting && animations[(int) state, 1] == animation;
     }
 
     private void OnKnockbackEnd()
@@ -1831,15 +1754,15 @@ public class Player : Sprite
     {
         base.OnAnimationEnd(animation);
 
-        if (CrossingBossDoor && !ContainsAnimationIndex(PlayerState.PRE_DASH, animation.Index, true))
+        if (CrossingBossDoor && !ContainsAnimation(PlayerState.PRE_DASH, animation, true))
             return;
 
-        if (ContainsAnimationIndex(PlayerState.SPAWN_END, animation.Index))
+        if (ContainsAnimation(PlayerState.SPAWN_END, animation))
         {
             spawning = false;
             SetStandState();
         }
-        else if (ContainsAnimationIndex(PlayerState.PRE_WALK, animation.Index, true))
+        else if (ContainsAnimation(PlayerState.PRE_WALK, animation, true))
         {
             if (Landed && Walking)
             {
@@ -1851,15 +1774,15 @@ public class Player : Sprite
                     TryMoveRight(false, PAUSE_AFTER_WALKING_SPEED_ENDS);
             }
         }
-        else if (ContainsAnimationIndex(PlayerState.JUMP, animation.Index, true))
+        else if (ContainsAnimation(PlayerState.JUMP, animation, true))
         {
             SetState(PlayerState.GOING_UP, 0);
         }
-        else if (ContainsAnimationIndex(PlayerState.LAND, animation.Index, true))
+        else if (ContainsAnimation(PlayerState.LAND, animation, true))
         {
             SetStandState();
         }
-        else if (ContainsAnimationIndex(PlayerState.PRE_DASH, animation.Index, true))
+        else if (ContainsAnimation(PlayerState.PRE_DASH, animation, true))
         {
             DashSparkEffect effect = dashSparkEffect;
             if (effect != null)
@@ -1867,7 +1790,7 @@ public class Player : Sprite
 
             SetState(PlayerState.DASH, 0);
         }
-        else if (ContainsAnimationIndex(PlayerState.POST_DASH, animation.Index, true))
+        else if (ContainsAnimation(PlayerState.POST_DASH, animation, true))
         {
             if (Landed)
             {
@@ -1884,7 +1807,7 @@ public class Player : Sprite
                 SetAirStateAnimation();
             }
         }
-        else if (ContainsAnimationIndex(PlayerState.PRE_LADDER_CLIMB, animation.Index, true))
+        else if (ContainsAnimation(PlayerState.PRE_LADDER_CLIMB, animation, true))
         {
             SetState(PlayerState.LADDER, 0);
 
@@ -1898,11 +1821,11 @@ public class Player : Sprite
             if (Shooting)
                 CurrentAnimation.Stop();
         }
-        else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animation.Index, true))
+        else if (ContainsAnimation(PlayerState.TOP_LADDER_CLIMB, animation, true))
         {
             SetStandState();
         }
-        else if (ContainsAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animation.Index, true))
+        else if (ContainsAnimation(PlayerState.TOP_LADDER_DESCEND, animation, true))
         {
             Origin += LADDER_MOVE_OFFSET * Vector.DOWN_VECTOR;
 
@@ -1918,11 +1841,11 @@ public class Player : Sprite
             if (Shooting)
                 CurrentAnimation.Stop();
         }
-        else if (ContainsAnimationIndex(PlayerState.TAKING_DAMAGE, animation.Index, false))
+        else if (ContainsAnimation(PlayerState.TAKING_DAMAGE, animation, false))
         {
             OnKnockbackEnd();
         }
-        else if (ContainsAnimationIndex(PlayerState.DYING, animation.Index, false))
+        else if (ContainsAnimation(PlayerState.DYING, animation, false))
         {
             Freezed = false;
             Engine.PlaySound(2, "X Die");
@@ -1931,7 +1854,7 @@ public class Player : Sprite
             Engine.StartDyingEffect();
             KillOnNextFrame();
         }
-        else if (ContainsAnimationIndex(PlayerState.VICTORY, animation.Index, false))
+        else if (ContainsAnimation(PlayerState.VICTORY, animation, false))
         {
             if (teleporting)
             {
@@ -1947,7 +1870,7 @@ public class Player : Sprite
                 SetStandState();
             }
         }
-        else if (ContainsAnimationIndex(PlayerState.PRE_TELEPORTING, animation.Index, false))
+        else if (ContainsAnimation(PlayerState.PRE_TELEPORTING, animation, false))
         {
             Invincible = true;
             Velocity = TELEPORT_SPEED * Vector.UP_VECTOR;
@@ -1983,162 +1906,154 @@ public class Player : Sprite
         }
     }
 
-    private void SetAnimationIndex(PlayerState state, int animationIndex, bool shooting, bool tired = false)
+    private void SetAnimation(PlayerState state, AnimationReference animation, bool shooting, bool tired = false)
     {
-        animationIndices[(int) state, shooting ? 1 : tired ? 2 : 0] = animationIndex;
+        animations[(int) state, shooting ? 1 : tired ? 2 : 0] = animation;
     }
 
-    protected override void OnCreateAnimation(int animationIndex, string frameSequenceName, ref Vector offset, ref int count, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn, ref bool add)
+    protected override void OnAnimationCreated(Animation animation)
     {
-        base.OnCreateAnimation(animationIndex, frameSequenceName, ref offset, ref count, ref repeatX, ref repeatY, ref initialFrame, ref startVisible, ref startOn, ref add);
-        startOn = false; // Por padrão, a animação de um jogador começa parada.
-        startVisible = false;
-
-        switch (frameSequenceName)
+        switch (animation.Name)
         {
             case "Spawn":
-                SetAnimationIndex(PlayerState.SPAWN, animationIndex, false);
-                SetAnimationIndex(PlayerState.TELEPORTING, animationIndex, false);
+                SetAnimation(PlayerState.SPAWN, animation, false);
+                SetAnimation(PlayerState.TELEPORTING, animation, false);
                 break;
 
             case "SpawnEnd":
-                SetAnimationIndex(PlayerState.SPAWN_END, animationIndex, false);
+                SetAnimation(PlayerState.SPAWN_END, animation, false);
                 break;
 
             case "Stand":
-                SetAnimationIndex(PlayerState.STAND, animationIndex, false);
+                SetAnimation(PlayerState.STAND, animation, false);
                 break;
 
             case "Shooting":
-                SetAnimationIndex(PlayerState.STAND, animationIndex, true);
+                SetAnimation(PlayerState.STAND, animation, true);
                 break;
 
             case "Tired":
-                SetAnimationIndex(PlayerState.STAND, animationIndex, false, true);
+                SetAnimation(PlayerState.STAND, animation, false, true);
                 break;
 
             case "PreWalking":
-                SetAnimationIndex(PlayerState.PRE_WALK, animationIndex, false);
+                SetAnimation(PlayerState.PRE_WALK, animation, false);
                 break;
 
             case "Walking":
-                SetAnimationIndex(PlayerState.WALK, animationIndex, false);
+                SetAnimation(PlayerState.WALK, animation, false);
                 break;
 
             case "ShootWalking":
-                SetAnimationIndex(PlayerState.WALK, animationIndex, true);
+                SetAnimation(PlayerState.WALK, animation, true);
                 break;
 
             case "Jumping":
-                SetAnimationIndex(PlayerState.JUMP, animationIndex, false);
+                SetAnimation(PlayerState.JUMP, animation, false);
                 break;
 
             case "ShootJumping":
-                SetAnimationIndex(PlayerState.JUMP, animationIndex, true);
+                SetAnimation(PlayerState.JUMP, animation, true);
                 break;
 
             case "GoingUp":
-                SetAnimationIndex(PlayerState.GOING_UP, animationIndex, false);
+                SetAnimation(PlayerState.GOING_UP, animation, false);
                 break;
 
             case "ShootGoingUp":
-                SetAnimationIndex(PlayerState.GOING_UP, animationIndex, true);
+                SetAnimation(PlayerState.GOING_UP, animation, true);
                 break;
 
             case "Falling":
-                SetAnimationIndex(PlayerState.FALL, animationIndex, false);
+                SetAnimation(PlayerState.FALL, animation, false);
                 break;
 
             case "ShootFalling":
-                SetAnimationIndex(PlayerState.FALL, animationIndex, true);
+                SetAnimation(PlayerState.FALL, animation, true);
                 break;
 
             case "Landing":
-                SetAnimationIndex(PlayerState.LAND, animationIndex, false);
+                SetAnimation(PlayerState.LAND, animation, false);
                 break;
 
             case "ShootLanding":
-                SetAnimationIndex(PlayerState.LAND, animationIndex, true);
+                SetAnimation(PlayerState.LAND, animation, true);
                 break;
 
             case "PreDashing":
-                SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, false);
+                SetAnimation(PlayerState.PRE_DASH, animation, false);
                 break;
 
             case "ShootPreDashing":
-                SetAnimationIndex(PlayerState.PRE_DASH, animationIndex, true);
+                SetAnimation(PlayerState.PRE_DASH, animation, true);
                 break;
 
             case "Dashing":
-                SetAnimationIndex(PlayerState.DASH, animationIndex, false);
+                SetAnimation(PlayerState.DASH, animation, false);
                 break;
 
             case "ShootDashing":
-                SetAnimationIndex(PlayerState.DASH, animationIndex, true);
+                SetAnimation(PlayerState.DASH, animation, true);
                 break;
 
             case "PostDashing":
-                SetAnimationIndex(PlayerState.POST_DASH, animationIndex, false);
+                SetAnimation(PlayerState.POST_DASH, animation, false);
                 break;
 
             case "ShootPostDashing":
-                SetAnimationIndex(PlayerState.POST_DASH, animationIndex, true);
+                SetAnimation(PlayerState.POST_DASH, animation, true);
                 break;
 
             case "WallSliding":
-                SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, false);
+                SetAnimation(PlayerState.WALL_SLIDE, animation, false);
                 break;
 
             case "ShootWallSliding":
-                SetAnimationIndex(PlayerState.WALL_SLIDE, animationIndex, true);
+                SetAnimation(PlayerState.WALL_SLIDE, animation, true);
                 break;
 
             case "WallJumping":
-                SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, false);
+                SetAnimation(PlayerState.WALL_JUMP, animation, false);
                 break;
 
             case "ShootWallJumping":
-                SetAnimationIndex(PlayerState.WALL_JUMP, animationIndex, true);
+                SetAnimation(PlayerState.WALL_JUMP, animation, true);
                 break;
 
             case "PreLadderClimbing":
-                SetAnimationIndex(PlayerState.PRE_LADDER_CLIMB, animationIndex, false);
+                SetAnimation(PlayerState.PRE_LADDER_CLIMB, animation, false);
                 break;
 
             case "LadderMoving":
-                SetAnimationIndex(PlayerState.LADDER, animationIndex, false);
+                SetAnimation(PlayerState.LADDER, animation, false);
                 break;
 
             case "ShootLadder":
-                SetAnimationIndex(PlayerState.LADDER, animationIndex, true);
+                SetAnimation(PlayerState.LADDER, animation, true);
                 break;
 
             case "TopLadderClimbing":
-                SetAnimationIndex(PlayerState.TOP_LADDER_CLIMB, animationIndex, false);
+                SetAnimation(PlayerState.TOP_LADDER_CLIMB, animation, false);
                 break;
 
             case "TopLadderDescending":
-                SetAnimationIndex(PlayerState.TOP_LADDER_DESCEND, animationIndex, false);
+                SetAnimation(PlayerState.TOP_LADDER_DESCEND, animation, false);
                 break;
 
             case "TakingDamage":
-                SetAnimationIndex(PlayerState.TAKING_DAMAGE, animationIndex, false);
+                SetAnimation(PlayerState.TAKING_DAMAGE, animation, false);
                 break;
 
             case "Dying":
-                SetAnimationIndex(PlayerState.DYING, animationIndex, false);
+                SetAnimation(PlayerState.DYING, animation, false);
                 break;
 
             case "Victory":
-                SetAnimationIndex(PlayerState.VICTORY, animationIndex, false);
+                SetAnimation(PlayerState.VICTORY, animation, false);
                 break;
 
             case "PreTeleporting":
-                SetAnimationIndex(PlayerState.PRE_TELEPORTING, animationIndex, false);
-                break;
-
-            default:
-                add = false;
+                SetAnimation(PlayerState.PRE_TELEPORTING, animation, false);
                 break;
         }
     }
@@ -2202,7 +2117,7 @@ public class Player : Sprite
         if (effect != null)
         {
             effect.KillOnNextFrame();
-            ChargingEffect = null;
+            chargingEffect = null;
         }
 
         SetState(PlayerState.DYING, 0);
