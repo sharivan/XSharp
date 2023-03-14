@@ -25,11 +25,6 @@ public class Map
     internal bool[,] mirrored;
     internal bool[,] upLayer;
 
-    public World World
-    {
-        get;
-    }
-
     public int ID
     {
         get;
@@ -65,9 +60,8 @@ public class Map
         }
     }
 
-    internal Map(World world, int id, CollisionData collisionData = CollisionData.NONE)
+    internal Map(int id, CollisionData collisionData = CollisionData.NONE)
     {
-        World = world;
         ID = id;
         CollisionData = collisionData;
 

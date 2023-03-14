@@ -207,7 +207,7 @@ public class SoundStream : WaveStream, ISerializable
         ignoreUpdatesUntilPlayed = serializer.ReadBool();
         StopPoint = serializer.ReadLong();
         LoopPoint = serializer.ReadLong();
-        Playing = serializer.ReadBool();        
+        Playing = serializer.ReadBool();
     }
 
     public void Serialize(BinarySerializer serializer)
@@ -223,6 +223,6 @@ public class SoundStream : WaveStream, ISerializable
         serializer.WriteBool(ignoreUpdatesUntilPlayed);
         serializer.WriteLong(StopPoint);
         serializer.WriteLong(LoopPoint);
-        serializer.WriteBool(Playing);       
+        serializer.WriteBool(Playing);
     }
 }

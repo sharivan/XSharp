@@ -13,14 +13,14 @@ public enum PenguinLeverState
     HIDING
 }
 
-public class PenguinLever : Sprite
+public class PenguinLever : Sprite, IStateEntity<PenguinLeverState>
 {
     private int showingFrameCounter;
 
     public PenguinLeverState State
     {
         get;
-        private set;
+        set;
     } = PenguinLeverState.IDLE;
 
     public PenguinLever()

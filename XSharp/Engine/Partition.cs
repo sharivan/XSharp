@@ -11,19 +11,19 @@ namespace XSharp.Engine;
 
 internal class Partition<T> : ISerializable where T : Entity
 {
-    private class PartitionQuad<U> : ISerializable where U : Entity
+    private class PartitionCell<U> : ISerializable where U : Entity
     {
         Box box;
         EntitySet<U> values;
 
         public int Count => values.Count;
 
-        public PartitionQuad()
+        public PartitionCell()
         {
             values = new EntitySet<U>();
         }
 
-        public PartitionQuad(Box box)
+        public PartitionCell(Box box)
         {
             this.box = box;
 
@@ -144,7 +144,7 @@ internal class Partition<T> : ISerializable where T : Entity
     private int rows;
     private int cols;
 
-    private PartitionQuad<T>[,] quads;
+    private PartitionCell<T>[,] grid;
     private FixedSingle cellWidth;
     private FixedSingle cellHeight;
 
@@ -162,7 +162,7 @@ internal class Partition<T> : ISerializable where T : Entity
         cellWidth = box.Width / cols;
         cellHeight = box.Height / rows;
 
-        quads = new PartitionQuad<T>[cols, rows];
+        grid = new PartitionCell<T>[cols, rows];
     }
 
     public void Insert(T item)
@@ -200,10 +200,10 @@ internal class Partition<T> : ISerializable where T : Entity
                 if (!cellBox.IsOverlaping(box))
                     continue;
 
-                if (quads[col, row] == null)
-                    quads[col, row] = new PartitionQuad<T>(cellBox);
+                if (grid[col, row] == null)
+                    grid[col, row] = new PartitionCell<T>(cellBox);
 
-                quads[col, row].Insert(item);
+                grid[col, row].Insert(item);
             }
         }
     }
@@ -237,7 +237,7 @@ internal class Partition<T> : ISerializable where T : Entity
         if (row < 0)
             row = 0;
 
-        quads[col, row]?.Query(v, resultSet, exclude, addictionalExclusionList, aliveOnly);
+        grid[col, row]?.Query(v, resultSet, exclude, addictionalExclusionList, aliveOnly);
 
         return resultSet.Count;
     }
@@ -277,7 +277,7 @@ internal class Partition<T> : ISerializable where T : Entity
             if (row < 0 || row >= rows || col < 0 || col >= cols)
                 continue;
 
-            quads[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly);
+            grid[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly);
         }
 
         return resultSet.Count;
@@ -331,7 +331,7 @@ internal class Partition<T> : ISerializable where T : Entity
             for (int col = startCol; col <= endCol; col++)
             {
                 for (int row = startRow; row <= endRow; row++)
-                    quads[col, row]?.Query(parallelogram, resultSet, exclude, addictionalExclusionList, aliveOnly);
+                    grid[col, row]?.Query(parallelogram, resultSet, exclude, addictionalExclusionList, aliveOnly);
             }
         }
 
@@ -383,7 +383,7 @@ internal class Partition<T> : ISerializable where T : Entity
         for (int col = startCol; col <= endCol; col++)
         {
             for (int row = startRow; row <= endRow; row++)
-                quads[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly);
+                grid[col, row]?.Query(box, resultSet, exclude, addictionalExclusionList, aliveOnly);
         }
 
         return resultSet.Count;
@@ -442,12 +442,12 @@ internal class Partition<T> : ISerializable where T : Entity
         {
             for (int row = startRow; row <= endRow; row++)
             {
-                if (quads[col, row] != null)
+                if (grid[col, row] != null)
                 {
-                    quads[col, row].Update(item);
+                    grid[col, row].Update(item);
 
-                    if (quads[col, row].Count == 0)
-                        quads[col, row] = null;
+                    if (grid[col, row].Count == 0)
+                        grid[col, row] = null;
                 }
                 else
                 {
@@ -456,10 +456,10 @@ internal class Partition<T> : ISerializable where T : Entity
                     if (!cellBox.IsOverlaping(box))
                         continue;
 
-                    if (quads[col, row] == null)
-                        quads[col, row] = new PartitionQuad<T>(cellBox);
+                    if (grid[col, row] == null)
+                        grid[col, row] = new PartitionCell<T>(cellBox);
 
-                    quads[col, row].Insert(item);
+                    grid[col, row].Insert(item);
                 }
             }
         }
@@ -511,12 +511,12 @@ internal class Partition<T> : ISerializable where T : Entity
         {
             for (int row = startRow; row <= endRow; row++)
             {
-                if (quads[col, row] != null)
+                if (grid[col, row] != null)
                 {
-                    quads[col, row].Remove(item);
+                    grid[col, row].Remove(item);
 
-                    if (quads[col, row].Count == 0)
-                        quads[col, row] = null;
+                    if (grid[col, row].Count == 0)
+                        grid[col, row] = null;
                 }
             }
         }
@@ -528,10 +528,10 @@ internal class Partition<T> : ISerializable where T : Entity
         {
             for (int row = 0; row < rows; row++)
             {
-                if (quads[col, row] != null)
+                if (grid[col, row] != null)
                 {
-                    quads[col, row].Clear();
-                    quads[col, row] = null;
+                    grid[col, row].Clear();
+                    grid[col, row] = null;
                 }
             }
         }
@@ -539,14 +539,14 @@ internal class Partition<T> : ISerializable where T : Entity
 
     private void ResizeQuads(int rows, int cols)
     {
-        var newArray = new PartitionQuad<T>[rows, cols];
-        int minRows = System.Math.Min(quads.GetLength(0), newArray.GetLength(0));
-        int minCols = System.Math.Min(quads.GetLength(1), newArray.GetLength(1));
+        var newArray = new PartitionCell<T>[rows, cols];
+        int minRows = System.Math.Min(grid.GetLength(0), newArray.GetLength(0));
+        int minCols = System.Math.Min(grid.GetLength(1), newArray.GetLength(1));
 
         for (int i = 0; i < minCols; i++)
-            Array.Copy(quads, i * quads.GetLength(0), newArray, i * newArray.GetLength(0), minRows);
+            Array.Copy(grid, i * grid.GetLength(0), newArray, i * newArray.GetLength(0), minRows);
 
-        quads = newArray;
+        grid = newArray;
     }
 
     public void Deserialize(BinarySerializer serializer)
@@ -555,8 +555,8 @@ internal class Partition<T> : ISerializable where T : Entity
         rows = serializer.ReadInt();
         cols = serializer.ReadInt();
 
-        if (quads == null)
-            quads = new PartitionQuad<T>[rows, cols];
+        if (grid == null)
+            grid = new PartitionCell<T>[rows, cols];
         else
             ResizeQuads(rows, cols);
 
@@ -570,12 +570,12 @@ internal class Partition<T> : ISerializable where T : Entity
                 bool isSet = serializer.ReadBool();
                 if (isSet)
                 {
-                    var quad = new PartitionQuad<T>();
-                    quad.Deserialize(serializer);
-                    quads[row, col] = quad;
+                    var cell = new PartitionCell<T>();
+                    cell.Deserialize(serializer);
+                    grid[row, col] = cell;
                 }
                 else
-                    quads[row, col] = null;
+                    grid[row, col] = null;
             }
         }
     }
@@ -593,15 +593,15 @@ internal class Partition<T> : ISerializable where T : Entity
         {
             for (int row = 0; row < rows; row++)
             {
-                var quad = quads[row, col];
-                if (quad == null)
+                var cell = grid[row, col];
+                if (cell == null)
                 {
                     serializer.WriteBool(false);
                 }
                 else
                 {
                     serializer.WriteBool(true);
-                    quad.Serialize(serializer);
+                    cell.Serialize(serializer);
                 }
             }
         }

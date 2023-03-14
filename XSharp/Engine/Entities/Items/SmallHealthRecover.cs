@@ -8,7 +8,7 @@ public enum SmallHealthRecoverState
     IDLE = 1
 }
 
-public class SmallHealthRecover : Item
+public class SmallHealthRecover : Item, IStateEntity<SmallHealthRecoverState>
 {
     public SmallHealthRecoverState State
     {

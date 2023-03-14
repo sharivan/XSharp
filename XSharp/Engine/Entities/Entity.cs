@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using XSharp.Factories;
 using XSharp.Engine.Collision;
+using XSharp.Factories;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -299,7 +299,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
         SetupStateArray(Enum.GetNames(t).Length);
     }
 
-    protected void SetupStateArray<T>() where T : Enum
+    protected void SetupStateArray<T>() where T : struct, Enum
     {
         SetupStateArray(typeof(T));
     }
@@ -358,52 +358,52 @@ public abstract class Entity : IIndexedNamedFactoryItem
         return RegisterState(id, null, null, null, subStateCount);
     }
 
-    protected EntityState RegisterState<T>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd) where T : Enum
+    protected EntityState RegisterState<T>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd) where T : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, onFrame, onEnd, 0);
     }
 
-    protected EntityState RegisterState<T>(T id, EntityStateStartEvent onStart) where T : Enum
+    protected EntityState RegisterState<T>(T id, EntityStateStartEvent onStart) where T : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, null, null, 0);
     }
 
-    protected EntityState RegisterState<T>(T id, EntityStateFrameEvent onFrame) where T : Enum
+    protected EntityState RegisterState<T>(T id, EntityStateFrameEvent onFrame) where T : struct, Enum
     {
         return RegisterState((int) (object) id, null, onFrame, null, 0);
     }
 
-    protected EntityState RegisterState<T>(T id, EntityStateEndEvent onEnd) where T : Enum
+    protected EntityState RegisterState<T>(T id, EntityStateEndEvent onEnd) where T : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, onEnd, 0);
     }
 
-    protected EntityState RegisterState<T>(T id) where T : Enum
+    protected EntityState RegisterState<T>(T id) where T : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, null, 0);
     }
 
-    protected EntityState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd) where T : Enum where U : Enum
+    protected EntityState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames(typeof(U)).Length);
     }
 
-    protected EntityState RegisterState<T, U>(T id, EntityStateStartEvent onStart) where T : Enum where U : Enum
+    protected EntityState RegisterState<T, U>(T id, EntityStateStartEvent onStart) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames(typeof(U)).Length);
     }
 
-    protected EntityState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame) where T : Enum where U : Enum
+    protected EntityState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames(typeof(U)).Length);
     }
 
-    protected EntityState RegisterState<T, U>(T id, EntityStateEndEvent onEnd) where T : Enum where U : Enum
+    protected EntityState RegisterState<T, U>(T id, EntityStateEndEvent onEnd) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames(typeof(U)).Length);
     }
 
-    protected EntityState RegisterState<T, U>(T id) where T : Enum where U : Enum
+    protected EntityState RegisterState<T, U>(T id) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length);
     }
@@ -420,12 +420,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
         return stateArray[id];
     }
 
-    protected internal T GetState<T>() where T : Enum
+    protected internal T GetState<T>() where T : struct, Enum
     {
         return (T) (object) CurrentStateID;
     }
 
-    protected internal void SetState<T>(T id) where T : Enum
+    protected internal void SetState<T>(T id) where T : struct, Enum
     {
         CurrentStateID = (int) (object) id;
     }

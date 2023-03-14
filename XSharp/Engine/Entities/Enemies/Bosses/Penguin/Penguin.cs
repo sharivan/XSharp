@@ -20,7 +20,7 @@ public enum PenguinState
     DYING = 9
 }
 
-public class Penguin : Boss
+public class Penguin : Boss, IStateEntity<PenguinState>
 {
     public static readonly bool DONT_ATTACK = false;
 

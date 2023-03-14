@@ -11,7 +11,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace XSharp.ROM;
+namespace XSharp.MegaEDX;
 
 public class MegaEDCore : IDisposable
 {

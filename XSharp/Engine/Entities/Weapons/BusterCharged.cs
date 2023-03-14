@@ -15,7 +15,7 @@ public enum ChargedState
     EXPLODING = 3
 }
 
-public class BusterCharged : Weapon
+public class BusterCharged : Weapon, IStateEntity<ChargedState>
 {
     private Entity hitEntity;
 
@@ -25,11 +25,17 @@ public class BusterCharged : Weapon
         internal set => base.Shooter = value;
     }
 
-    public bool Firing => GetState<ChargedState>() == ChargedState.FIRING;
+    public ChargedState State
+    {
+        get => GetState<ChargedState>();
+        set => SetState(value);
+    }
 
-    public bool Exploding => GetState<ChargedState>() == ChargedState.EXPLODING;
+    public bool Firing => State == ChargedState.FIRING;
 
-    public bool Hitting => GetState<ChargedState>() == ChargedState.HITTING;
+    public bool Exploding => State == ChargedState.EXPLODING;
+
+    public bool Hitting => State == ChargedState.HITTING;
 
     public BusterCharged()
     {

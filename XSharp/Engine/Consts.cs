@@ -508,9 +508,9 @@ public class Consts
     public static readonly bool ENABLE_OST = true;
 
     public static readonly bool LOAD_ROM = true;
-    public const string ROM_NAME = "ShittyDash.mmx";
+    public const string ROM_NAME = "BestGame.mmx";
     public static readonly bool SKIP_MENU = false;
     public static readonly bool SKIP_INTRO = false;
-    public const int INITIAL_LEVEL = 8;
+    public const int INITIAL_LEVEL = 11;
     public const int INITIAL_CHECKPOINT = 0;
 }

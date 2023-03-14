@@ -20,11 +20,6 @@ public class Block
 
     internal Map[,] maps;
 
-    public World World
-    {
-        get;
-    }
-
     public int ID
     {
         get;
@@ -37,9 +32,8 @@ public class Block
         set => maps[row, col] = value;
     }
 
-    internal Block(World world, int id)
+    internal Block(int id)
     {
-        World = world;
         ID = id;
 
         maps = new Map[SIDE_MAPS_PER_BLOCK, SIDE_MAPS_PER_BLOCK];
@@ -88,7 +82,7 @@ public class Block
         Map map = maps[cell.Row, cell.Col];
         if (map == null)
         {
-            map = World.AddMap();
+            map = GameEngine.Engine.World.AddMap();
             maps[cell.Row, cell.Col] = map;
         }
 

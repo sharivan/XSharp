@@ -1,8 +1,8 @@
 ﻿using SharpDX;
 using SharpDX.Direct3D9;
 
-using XSharp.Factories;
 using XSharp.Engine.Entities;
+using XSharp.Factories;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 using XSharp.Serialization;
@@ -15,7 +15,7 @@ namespace XSharp.Engine.Graphics;
 public delegate void AnimationFrameEvent(Animation animation, int frameSequenceIndex);
 
 [Serializable]
-public class Animation : IIndexedNamedFactoryItem
+public class Animation : IIndexedNamedFactoryItem, IRenderable
 {
     internal EntityReference<Sprite> sprite;
     internal string name;
@@ -291,7 +291,7 @@ public class Animation : IIndexedNamedFactoryItem
         }
     }
 
-    public void Render()
+    public void Render(IRenderTarget target)
     {
         // Se não estiver visível ou não ouver frames então não precisa desenhar nada
         if (!Visible || Sequence.Count == 0 || RepeatX <= 0 || RepeatY <= 0)

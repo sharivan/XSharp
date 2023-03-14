@@ -4,11 +4,6 @@ public class Tile
 {
     internal byte[] data;
 
-    public World World
-    {
-        get;
-    }
-
     public int ID
     {
         get;
@@ -20,14 +15,13 @@ public class Tile
         set => data = value;
     }
 
-    internal Tile(World world, int id)
-        : this(world, id, null)
+    internal Tile(int id)
+        : this(id, null)
     {
     }
 
-    internal Tile(World world, int id, byte[] data)
+    internal Tile(int id, byte[] data)
     {
-        World = world;
         ID = id;
         this.data = data;
     }

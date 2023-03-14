@@ -233,6 +233,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
             lastEntity = previous;
 
         entities[index] = null;
+        references[index] = null;
         reference.Unset();
 
         if (name is not null and not "")
@@ -263,7 +264,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
             var reference = references[i];
             if (reference is not null)
             {
-                reference.targetIndex = -1;
+                reference.Unset();
                 references[i] = null;
             }
         }

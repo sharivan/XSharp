@@ -15,7 +15,7 @@ public enum SemiChargedState
     EXPLODING = 3
 }
 
-public class BusterSemiCharged : Weapon
+public class BusterSemiCharged : Weapon, IStateEntity<SemiChargedState>
 {
     private Entity hitEntity;
 
@@ -23,6 +23,12 @@ public class BusterSemiCharged : Weapon
     {
         get => (Player) base.Shooter;
         internal set => base.Shooter = value;
+    }
+
+    public SemiChargedState State
+    {
+        get => GetState<SemiChargedState>();
+        set => SetState(value);
     }
 
     public bool Firing => GetState<SemiChargedState>() == SemiChargedState.FIRING;

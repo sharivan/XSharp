@@ -23,6 +23,12 @@ public class RespawnEntry : ISerializable
         Origin = origin;
     }
 
+    public void Deconstruct(out EntityReference entity, out Vector origin)
+    {
+        entity = Entity;
+        origin = Origin;
+    }
+
     public void Deserialize(BinarySerializer input)
     {
         var serializer = (EngineBinarySerializer) input;

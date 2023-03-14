@@ -19,7 +19,7 @@ public delegate void HurtEvent(Sprite source, Sprite victim, FixedSingle damage)
 public delegate void HealthChangedEvent(Sprite source, FixedSingle health);
 public delegate void AnimationEndEvent(Sprite source, Animation animation);
 
-public abstract class Sprite : Entity
+public abstract class Sprite : Entity, IRenderable
 {
     public event TakeDamageEvent TakeDamageEvent;
     public event HurtEvent HurtEvent;
@@ -708,52 +708,52 @@ public abstract class Sprite : Entity
         return RegisterState(id, null, null, null, subStateCount, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, onFrame, onEnd, 0, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, int animationIndex, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, int animationIndex, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, null, null, 0, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, null, onFrame, null, 0, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, onEnd, 0, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, int animationIndex, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, int animationIndex, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, null, 0, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, int animationIndex, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
     }
@@ -786,52 +786,52 @@ public abstract class Sprite : Entity
         return RegisterState(id, null, null, null, subStateCount, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, onFrame, onEnd, 0, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, string animationName, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, EntityStateStartEvent onStart, string animationName, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, null, null, 0, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, null, onFrame, null, 0, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, onEnd, 0, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T>(T id, string animationName, int initialFrame = 0) where T : Enum
+    protected SpriteState RegisterState<T>(T id, string animationName, int initialFrame = 0) where T : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, null, 0, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
     }
 
-    protected SpriteState RegisterState<T, U>(T id, string animationName, int initialFrame = 0) where T : Enum where U : Enum
+    protected SpriteState RegisterState<T, U>(T id, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
         return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
     }
@@ -1953,7 +1953,7 @@ public abstract class Sprite : Entity
     {
     }
 
-    public virtual void Render()
+    public virtual void Render(IRenderTarget target)
     {
         if (!Alive || MarkedToRemove || !Visible)
             return;
@@ -1961,7 +1961,7 @@ public abstract class Sprite : Entity
         if (!InvisibleOnNextFrame)
         {
             foreach (Animation animation in Animations)
-                animation.Render();
+                animation.Render(target);
         }
     }
 

@@ -2,8 +2,6 @@
 
 using NAudio.Wave;
 
-using XSharp.Serialization;
-
 namespace XSharp.Engine.Sound;
 
 public class WaveEntry : IDisposable

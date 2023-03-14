@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Reflection;
 
-using Microsoft.VisualBasic.FileIO;
-
 namespace XSharp.Serialization;
 
 public abstract class Serializer

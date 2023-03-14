@@ -30,7 +30,7 @@ public enum BossDoorDirection
 
 public delegate void BossDoorEvent(BossDoor source);
 
-public class BossDoor : BaseTrigger
+public class BossDoor : BaseTrigger, IStateEntity<BossDoorState>
 {
     private static Box GetTriggerBoudingBox(Vector origin)
     {

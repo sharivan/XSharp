@@ -31,11 +31,6 @@ public class Scene : IDisposable
     internal Block[,] blocks;
     internal VertexBuffer[] layers;
 
-    public World World
-    {
-        get;
-    }
-
     public int ID
     {
         get;
@@ -53,9 +48,8 @@ public class Scene : IDisposable
         private set;
     }
 
-    internal Scene(World world, int id)
+    internal Scene(int id)
     {
-        World = world;
         ID = id;
 
         blocks = new Block[SIDE_BLOCKS_PER_SCENE, SIDE_BLOCKS_PER_SCENE];
@@ -129,7 +123,7 @@ public class Scene : IDisposable
         Block block = blocks[cell.Row, cell.Col];
         if (block == null)
         {
-            block = World.AddBlock();
+            block = GameEngine.Engine.World.AddBlock();
             blocks[cell.Row, cell.Col] = block;
         }
 
@@ -280,8 +274,8 @@ public class Scene : IDisposable
     {
         Dispose();
 
-        layers[0] = new VertexBuffer(World.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
-        layers[1] = new VertexBuffer(World.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
+        layers[0] = new VertexBuffer(GameEngine.Engine.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
+        layers[1] = new VertexBuffer(GameEngine.Engine.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
 
         DataStream downLayerVBData = layers[0].Lock(0, 0, LockFlags.None);
         DataStream upLayerVBData = layers[1].Lock(0, 0, LockFlags.None);

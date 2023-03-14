@@ -286,8 +286,8 @@ public abstract class Boss : Enemy
             {
                 float fadingLevel = (ExplodingFrameCounter - 33 * 5) / 59f;
 
-                Engine.World.FadingSettings.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
-                Engine.World.FadingSettings.FadingColor = Color.White;
+                Engine.World.FadingControl.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
+                Engine.World.FadingControl.FadingColor = Color.White;
 
                 FadingControl.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
                 FadingControl.FadingColor = Color.Black;
@@ -301,8 +301,8 @@ public abstract class Boss : Enemy
             else if (ExplodingFrameCounter is >= (78 * 5) and < (78 * 5 + 32)) // On frame 390, fade in the tilemaps
             {
                 float fadingLevel = 1 - (ExplodingFrameCounter - 78 * 5) / 31f;
-                Engine.World.FadingSettings.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
-                Engine.World.FadingSettings.FadingColor = Color.White;
+                Engine.World.FadingControl.FadingLevel = new Vector4(fadingLevel, fadingLevel, fadingLevel, 0);
+                Engine.World.FadingControl.FadingColor = Color.White;
             }
             else if (ExplodingFrameCounter >= 78 * 5 + 32 + 2 * 60)
             {

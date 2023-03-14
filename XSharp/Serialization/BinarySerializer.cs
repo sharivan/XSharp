@@ -10,7 +10,6 @@ using System.Runtime.Serialization;
 using XSharp.Factories;
 using XSharp.Math;
 using XSharp.Math.Geometry;
-using XSharp.Util;
 
 using TupleExtensions = XSharp.Util.TupleExtensions;
 

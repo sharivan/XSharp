@@ -41,7 +41,7 @@ public class World : IDisposable
 
     private PixelCollisionChecker collisionChecker;
 
-    public FadingControl FadingSettings
+    public FadingControl FadingControl
     {
         get;
     }
@@ -110,7 +110,7 @@ public class World : IDisposable
         this.backgroundSceneRowCount = backgroundSceneRowCount;
         this.backgroundSceneColCount = backgroundSceneColCount;
 
-        FadingSettings = new FadingControl();
+        FadingControl = new FadingControl();
 
         tileList = new List<Tile>();
         backgroundTileList = new List<Tile>();
@@ -130,7 +130,7 @@ public class World : IDisposable
     public Tile AddTile(bool background = false)
     {
         int id = background ? backgroundTileList.Count : tileList.Count;
-        var result = new Tile(this, id);
+        var result = new Tile(id);
 
         if (background)
             backgroundTileList.Add(result);
@@ -143,7 +143,7 @@ public class World : IDisposable
     public Tile AddTile(byte[] source, bool background = false)
     {
         int id = background ? backgroundTileList.Count : tileList.Count;
-        var result = new Tile(this, id, source);
+        var result = new Tile(id, source);
 
         if (background)
             backgroundTileList.Add(result);
@@ -156,7 +156,7 @@ public class World : IDisposable
     public Map AddMap(CollisionData collisionData = CollisionData.NONE, bool background = false)
     {
         int id = background ? backgroundMapList.Count : mapList.Count;
-        var result = new Map(this, id, collisionData);
+        var result = new Map(id, collisionData);
 
         if (background)
             backgroundMapList.Add(result);
@@ -169,7 +169,7 @@ public class World : IDisposable
     public Block AddBlock(bool background = false)
     {
         int id = background ? backgroundBlockList.Count : blockList.Count;
-        var result = new Block(this, id);
+        var result = new Block(id);
 
         if (background)
             backgroundBlockList.Add(result);
@@ -182,7 +182,7 @@ public class World : IDisposable
     public Scene AddScene(bool background = false)
     {
         int id = background ? backgroundSceneList.Count : sceneList.Count;
-        var result = new Scene(this, id);
+        var result = new Scene(id);
 
         if (background)
             backgroundSceneList.Add(result);
@@ -541,7 +541,7 @@ public class World : IDisposable
                 {
                     Vector sceneLT = GetSceneLeftTop(row, col);
                     MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                    Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, BackgroundTilemap, BackgroundPalette, FadingSettings, sceneBox + screenDelta);
+                    Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, BackgroundTilemap, BackgroundPalette, FadingControl, sceneBox + screenDelta);
                 }
             }
         }
@@ -574,7 +574,7 @@ public class World : IDisposable
                 {
                     var sceneLT = GetSceneLeftTop(row, col);
                     MMXBox sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                    Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, ForegroundTilemap, ForegroundPalette, FadingSettings, sceneBox);
+                    Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, ForegroundTilemap, ForegroundPalette, FadingControl, sceneBox);
                 }
             }
         }
@@ -582,7 +582,7 @@ public class World : IDisposable
 
     public void OnFrame()
     {
-        FadingSettings.OnFrame();
+        FadingControl.OnFrame();
     }
 
     public static Cell GetTileCellFromPos(Vector pos)

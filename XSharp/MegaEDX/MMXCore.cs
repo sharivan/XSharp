@@ -27,7 +27,7 @@ using static XSharp.Engine.Consts;
 using Color = SharpDX.Color;
 using MMXBox = XSharp.Math.Geometry.Box;
 
-namespace XSharp.ROM;
+namespace XSharp.MegaEDX;
 
 public struct STileInfo
 {

@@ -39,7 +39,7 @@ public enum PlayerState
 }
 
 // TODO : This class needs a huge refactor
-public class Player : Sprite
+public class Player : Sprite, IStateEntity<PlayerState>
 {
     private int lives;
 
@@ -94,6 +94,12 @@ public class Player : Sprite
         get;
         set;
     } = false;
+
+    public PlayerState State
+    {
+        get => state;
+        set => SetState(value);
+    }
 
     public PlayerState ForcedState
     {

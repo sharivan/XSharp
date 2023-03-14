@@ -2,12 +2,6 @@
 
 namespace XSharp.Engine.Entities.Items;
 
-public enum SmallAmmoRecoverState
-{
-    DROPPING = 0,
-    IDLE = 1
-}
-
 public class SmallAmmoRecover : Item
 {
     public SmallAmmoRecover()

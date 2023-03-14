@@ -12,7 +12,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 
-namespace XSharp.ROM;
+namespace XSharp.MegaEDX;
 
 public struct Interrupts
 {

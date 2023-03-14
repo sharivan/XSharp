@@ -12,7 +12,7 @@ public enum BattonBoneGState
     ESCAPING = 2
 }
 
-public class BattonBoneG : Enemy
+public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
 {
     private bool flashing;
 

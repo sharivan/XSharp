@@ -9,7 +9,7 @@
 
 using System;
 
-namespace XSharp.ROM;
+namespace XSharp.MegaEDX;
 
 public struct MatchPair
 {

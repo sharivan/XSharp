@@ -13,7 +13,7 @@ public enum LemonState
     EXPLODING = 1
 }
 
-public class BusterLemon : Weapon
+public class BusterLemon : Weapon, IStateEntity<LemonState>
 {
     private bool reflected;
 
@@ -21,6 +21,12 @@ public class BusterLemon : Weapon
     {
         get => (Player) base.Shooter;
         internal set => base.Shooter = value;
+    }
+
+    public LemonState State
+    {
+        get => GetState<LemonState>();
+        set => SetState(value);
     }
 
     public bool DashLemon

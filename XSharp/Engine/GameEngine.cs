@@ -7,8 +7,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-using NAudio.Wave;
-
 using NLua;
 
 using SharpDX;
@@ -33,7 +31,7 @@ using XSharp.Engine.Sound;
 using XSharp.Engine.World;
 using XSharp.Math;
 using XSharp.Math.Geometry;
-using XSharp.ROM;
+using XSharp.MegaEDX;
 
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.World.World;
@@ -213,7 +211,7 @@ public sealed class ProgramConfiguratinSection : ConfigurationSection
     }
 }
 
-public class GameEngine
+public class GameEngine : IRenderable, IRenderTarget
 {
     public static GameEngine Engine
     {
@@ -259,12 +257,6 @@ public class GameEngine
     private Texture worldTexture;
     private Texture spritesTexture;
 
-    private int lastLives;
-    private bool respawning;
-    private Vector lastPlayerOrigin;
-    private Vector lastPlayerVelocity;
-    private Vector lastCameraLeftTop;
-
     private EffectHandle psFadingLevelHandle;
     private EffectHandle psFadingColorHandle;
     private EffectHandle plsFadingLevelHandle;
@@ -280,8 +272,20 @@ public class GameEngine
     private readonly List<SoundChannel> soundChannels;
     private readonly Dictionary<string, SoundChannel> soundChannelsByName;
 
+    private readonly DirectInput directInput;
+    private readonly Keyboard keyboard;
+    private Joystick joystick;
+
+    private Lua lua;
+
     internal Partition<Entity> partition;
     private EntitySet<Entity> resultSet;
+
+    private int lastLives;
+    private bool respawning;
+    private Vector lastPlayerOrigin;
+    private Vector lastPlayerVelocity;
+    private Vector lastCameraLeftTop;
 
     private List<EntityReference<Checkpoint>> checkpoints;
 
@@ -297,7 +301,6 @@ public class GameEngine
     private bool gameOver;
     private bool loadingLevel;
     private bool paused;
-    private Lua lua;
 
     private long lastCurrentMemoryUsage;
     private MMXBox drawBox;
@@ -335,10 +338,6 @@ public class GameEngine
 
     private MMXCore mmx;
     private bool romLoaded;
-
-    private readonly DirectInput directInput;
-    private readonly Keyboard keyboard;
-    private Joystick joystick;
 
     private bool drawBackground = true;
     private bool drawDownLayer = true;
@@ -3917,6 +3916,11 @@ public class GameEngine
 
     public void Render()
     {
+        Render(this);
+    }
+
+    public void Render(IRenderTarget target)
+    {
         // Time in milliseconds
         var totalMillis = clock.ElapsedTicks / clockFrequency * 1000;
         if (totalMillis < nextTick)
@@ -3986,11 +3990,11 @@ public class GameEngine
                 if (sprite == Player)
                 {
                     if (drawX)
-                        sprite.Render();
+                        sprite.Render(this);
                 }
                 else
                 {
-                    sprite.Render();
+                    sprite.Render(this);
                 }
             }
 
@@ -4023,11 +4027,11 @@ public class GameEngine
                 if (sprite == Player)
                 {
                     if (drawX)
-                        sprite.Render();
+                        sprite.Render(this);
                 }
                 else
                 {
-                    sprite.Render();
+                    sprite.Render(this);
                 }
             }
 
@@ -4041,7 +4045,7 @@ public class GameEngine
         foreach (var layer in huds)
         {
             foreach (var hud in layer)
-                hud.Render();
+                hud.Render(this);
         }
 
         Device.SetRenderTarget(0, backBuffer);
@@ -4539,6 +4543,7 @@ public class GameEngine
         boss = serializer.ReadEntityReference<Boss>();
 
         FadingControl.Deserialize(serializer);
+        World.FadingControl.Deserialize(serializer);
 
         FadingOSTLevel = serializer.ReadFloat();
         FadingOSTInitialVolume = serializer.ReadFloat();
@@ -4656,6 +4661,7 @@ public class GameEngine
         serializer.WriteEntityReference(boss);
 
         FadingControl.Serialize(serializer);
+        World.FadingControl.Serialize(serializer);
 
         serializer.WriteFloat(FadingOSTLevel);
         serializer.WriteFloat(FadingOSTInitialVolume);

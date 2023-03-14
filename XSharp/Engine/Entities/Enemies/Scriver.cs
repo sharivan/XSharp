@@ -14,7 +14,7 @@ public enum ScriverState
     LANDING = 3
 }
 
-public class Scriver : Enemy
+public class Scriver : Enemy, IStateEntity<ScriverState>
 {
     private bool flashing;
     private bool jumping;

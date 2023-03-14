@@ -128,7 +128,7 @@ public class SoundChannel : IDisposable, ISerializable
     }
 
     public void Deserialize(BinarySerializer serializer)
-    {       
+    {
         Stream.Deserialize(serializer);
         player.Volume = serializer.ReadFloat();
 
