@@ -1,12 +1,34 @@
-﻿using XSharp.Math;
+﻿using System.Reflection;
+
+using XSharp.Engine.Graphics;
+using XSharp.Math;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
-public class Mist : HUD.HUD
+internal class Mist : HUD.HUD
 {
+    [Precache]
+    internal static void Precache()
+    {
+        var mistSpriteSheet = Engine.CreateSpriteSheet("Mist", true, true);
+
+        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Mist.png"))
+        {
+            var texture = Engine.CreateImageTextureFromStream(stream);
+            mistSpriteSheet.CurrentTexture = texture;
+        }
+
+        var sequence = mistSpriteSheet.AddFrameSquence("Mist");
+        sequence.OriginOffset = Vector.NULL_VECTOR;
+        sequence.Hitbox = (Vector.NULL_VECTOR, Vector.NULL_VECTOR, (SCENE_SIZE, SCENE_SIZE));
+        sequence.AddFrame(0, 0, 0, 0, 256, 256, 1, true);
+
+        mistSpriteSheet.ReleaseCurrentTexture();
+    }
+
     public FixedSingle Speed
     {
         get;

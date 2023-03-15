@@ -1,4 +1,6 @@
-﻿using XSharp.Engine.Graphics;
+﻿using System.Reflection;
+
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -23,6 +25,184 @@ public enum PenguinState
 public class Penguin : Boss, IStateEntity<PenguinState>
 {
     public static readonly bool DONT_ATTACK = false;
+
+    [Precache]
+    new internal static void Precache()
+    {
+        var penguinPalette = Engine.CreatePalette("penguinPalette", PENGUIN_PALETTE);
+        var penguinSpriteSheet = Engine.CreateSpriteSheet("Penguin", true, true);
+
+        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.Bosses.X1.Penguin.png"))
+        {
+            var texture = Engine.CreateImageTextureFromStream(stream);
+            penguinSpriteSheet.CurrentTexture = texture;
+        }
+
+        penguinSpriteSheet.CurrentPalette = penguinPalette;
+
+        // 0
+        var sequence = penguinSpriteSheet.AddFrameSquence("FallingIntroducing");
+        sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
+        sequence.Hitbox = PENGUIN_COLLISION_BOX;
+        sequence.AddFrame(2, 15, 170, 20, 35, 44, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("LandingIntroducing");
+        sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
+        sequence.Hitbox = PENGUIN_COLLISION_BOX;
+        sequence.AddFrame(7, 1, 136, 172, 39, 35, 6);
+        sequence.AddFrame(6, -2, 96, 175, 38, 32, 6);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Introducing");
+        sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
+        sequence.Hitbox = PENGUIN_COLLISION_BOX;
+        sequence.AddFrame(6, 2, 6, 177, 38, 36, 6);
+        sequence.AddFrame(7, 0, 136, 172, 39, 35, 6);
+        sequence.AddFrame(6, -2, 96, 175, 38, 32, 5);
+        sequence.AddFrame(3, 3, 48, 76, 42, 37, 5);
+        sequence.AddFrame(3, 3, 94, 76, 43, 37, 5);
+        sequence.AddFrame(7, 2, 141, 77, 39, 36, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("IntroducingEnd");
+        sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
+        sequence.Hitbox = PENGUIN_COLLISION_BOX;
+        sequence.AddFrame(6, 2, 184, 77, 38, 36, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Idle");
+        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_HITBOX;
+        sequence.AddFrame(10, 4, 6, 77, 38, 36, 15);
+        sequence.AddFrame(10, 4, 184, 77, 38, 36, 15);
+        sequence.AddFrame(10, 4, 6, 77, 38, 36, 15);
+        sequence.AddFrame(10, 4, 184, 77, 38, 36, 15);
+        sequence.AddFrame(10, 4, 6, 77, 38, 36, 7);
+        sequence.AddFrame(11, 3, 136, 172, 39, 35, 7, true);
+        sequence.AddFrame(10, 4, 6, 77, 38, 36, 7);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("ShootingIce");
+        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_HITBOX;
+        sequence.AddFrame(11, 3, 136, 172, 39, 35, 6);
+        sequence.AddFrame(7, 5, 48, 76, 42, 37, 5);
+        sequence.AddFrame(7, 5, 94, 76, 43, 37, 5);
+        sequence.AddFrame(16, 3, 132, 129, 42, 35, 5);
+        sequence.AddFrame(14, 3, 174, 129, 43, 35, 5);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("PreSliding");
+        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_HITBOX;
+        sequence.AddFrame(7, 5, 48, 76, 42, 37, 11);
+        sequence.AddFrame(7, 5, 94, 76, 43, 37, 11);
+        sequence.AddFrame(8, 3, 90, 130, 37, 34, 7);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Sliding");
+        sequence.OriginOffset = -PENGUIN_SLIDE_HITBOX.Origin - PENGUIN_SLIDE_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_SLIDE_HITBOX;
+        sequence.AddFrame(0, 9, 221, 133, 40, 31, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Blowing");
+        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_HITBOX;
+        sequence.AddFrame(7, 5, 48, 76, 42, 37, 11);
+        sequence.AddFrame(7, 5, 94, 76, 43, 37, 11);
+        sequence.AddFrame(16, 3, 132, 129, 42, 35, 4, true);
+        sequence.AddFrame(14, 3, 174, 129, 43, 35, 4);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("PreJumping");
+        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_HITBOX;
+        sequence.AddFrame(5, 0, 96, 175, 38, 32, 5);
+        sequence.AddFrame(8, 6, 8, 127, 36, 38, 5);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Jumping");
+        sequence.OriginOffset = -PENGUIN_JUMP_HITBOX.Origin - PENGUIN_JUMP_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_JUMP_HITBOX;
+        sequence.AddFrame(10, 4, 47, 127, 37, 38, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Falling");
+        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_HITBOX;
+        sequence.AddFrame(5, 14, 170, 20, 35, 44, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Landing");
+        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_HITBOX;
+        sequence.AddFrame(11, 3, 136, 172, 39, 35, 6);
+        sequence.AddFrame(10, 0, 96, 175, 38, 32, 6);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Hanging");
+        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_HITBOX;
+        sequence.AddFrame(5, 19, 12, 4, 36, 60, 8);
+        sequence.AddFrame(5, 19, 54, 4, 34, 58, 8);
+        sequence.AddFrame(5, 19, 95, 4, 32, 60, 8);
+        sequence.AddFrame(6, 20, 131, 4, 32, 60, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("TakingDamage");
+        sequence.OriginOffset = -PENGUIN_TAKING_DAMAGE_HITBOX.Origin - PENGUIN_TAKING_DAMAGE_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_TAKING_DAMAGE_HITBOX;
+        sequence.AddFrame(14, 4, 9, 169, 35, 41, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Dying");
+        sequence.OriginOffset = -PENGUIN_TAKING_DAMAGE_HITBOX.Origin - PENGUIN_TAKING_DAMAGE_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_TAKING_DAMAGE_HITBOX;
+        sequence.AddFrame(15, 3, 9, 169, 35, 41, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("InFlames");
+        sequence.OriginOffset = -PENGUIN_TAKING_DAMAGE_HITBOX.Origin - PENGUIN_TAKING_DAMAGE_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_TAKING_DAMAGE_HITBOX;
+        sequence.AddFrame(16, 7, 52, 165, 38, 47, 21);
+
+        penguinSpriteSheet.CurrentPalette = null;
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Ice");
+        sequence.OriginOffset = -PENGUIN_ICE_HITBOX.Origin - PENGUIN_ICE_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_ICE_HITBOX;
+        sequence.AddFrame(0, 2, 57, 232, 14, 14, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("IceFragment");
+        sequence.OriginOffset = -PENGUIN_ICE_FRAGMENT_HITBOX.Origin - PENGUIN_ICE_FRAGMENT_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_ICE_FRAGMENT_HITBOX;
+        sequence.AddFrame(0, 0, 58, 216, 8, 8, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Sculpture");
+        sequence.OriginOffset = -PENGUIN_SCULPTURE_HITBOX.Origin - PENGUIN_SCULPTURE_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_SCULPTURE_HITBOX;
+        sequence.AddFrame(-2, -7, 82, 233, 13, 16, 19);
+        sequence.AddFrame(2, -3, 104, 224, 19, 24, 19);
+        sequence.AddFrame(4, -1, 183, 226, 23, 28, 19);
+        sequence.AddFrame(5, 0, 133, 217, 28, 32, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Lever");
+        sequence.OriginOffset = -PENGUIN_LEVER_HITBOX.Origin - PENGUIN_LEVER_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_LEVER_HITBOX;
+        sequence.AddFrame(-8, -4, 169, 225, 10, 16, 1, true);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("Snow");
+        sequence.OriginOffset = -PENGUIN_SNOW_HITBOX.Origin - PENGUIN_SNOW_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_SNOW_HITBOX;
+        sequence.AddFrame(1, 1, 186, 172, 18, 18, 1, true);
+        sequence.AddFrame(1, 1, 204, 172, 18, 18, 1);
+        sequence.AddFrame(2, 2, 222, 172, 18, 18, 1);
+        sequence.AddFrame(2, 2, 240, 172, 18, 18, 1);
+        sequence.AddFrame(2, 2, 258, 172, 18, 18, 1);
+        sequence.AddFrame(3, 3, 276, 172, 18, 18, 1);
+        sequence.AddFrame(3, 2, 186, 190, 18, 18, 1);
+        sequence.AddFrame(3, 2, 204, 190, 18, 18, 1);
+        sequence.AddFrame(4, 3, 222, 190, 18, 18, 1);
+        sequence.AddFrame(3, 3, 240, 190, 18, 18, 1);
+        sequence.AddFrame(3, 3, 258, 190, 18, 18, 1);
+        sequence.AddFrame(4, 4, 276, 190, 18, 18, 1);
+        sequence.AddFrame(2, 3, 186, 208, 18, 18, 1);
+        sequence.AddFrame(2, 3, 204, 208, 18, 18, 1);
+        sequence.AddFrame(3, 4, 222, 208, 18, 18, 1);
+
+        sequence = penguinSpriteSheet.AddFrameSquence("FrozenBlock");
+        sequence.OriginOffset = -PENGUIN_FROZEN_BLOCK_HITBOX.Origin - PENGUIN_FROZEN_BLOCK_HITBOX.Mins;
+        sequence.Hitbox = PENGUIN_FROZEN_BLOCK_HITBOX;
+        sequence.AddFrame(14, 3, 6, 216, 37, 38, 1, true);
+
+        penguinSpriteSheet.ReleaseCurrentTexture();
+    }
 
     private bool firstAttack;
     private bool hanging;

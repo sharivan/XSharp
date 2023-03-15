@@ -15,7 +15,7 @@ public class DashSmokeEffect : SpriteEffect
         };
     }
 
-    private Player player;
+    private EntityReference<Player> player;
 
     public Player Player
     {

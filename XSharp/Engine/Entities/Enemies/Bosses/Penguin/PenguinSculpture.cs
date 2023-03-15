@@ -1,4 +1,5 @@
 ﻿using XSharp.Engine.Entities.Weapons;
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -8,6 +9,12 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 public class PenguinSculpture : Enemy
 {
+    [Precache]
+    new internal static void Precache()
+    {
+        Engine.CallPrecacheAction(typeof(Penguin));
+    }
+
     private int frameCounter;
     private bool gravity;
     private EntityReference<Penguin> shooter;

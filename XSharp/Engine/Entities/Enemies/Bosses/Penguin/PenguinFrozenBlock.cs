@@ -1,4 +1,5 @@
 ﻿using XSharp.Engine.Collision;
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -8,6 +9,12 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 public class PenguinFrozenBlock : Sprite
 {
+    [Precache]
+    internal static void Precache()
+    {
+        Engine.CallPrecacheAction(typeof(Penguin));
+    }
+
     private EntityReference<Penguin> attacker;
 
     public Penguin Attacker

@@ -17,13 +17,15 @@ public enum SemiChargedState
 
 public class BusterSemiCharged : Weapon, IStateEntity<SemiChargedState>
 {
-    private Entity hitEntity;
+    private EntityReference<Entity> hitEntity;
 
     new public Player Shooter
     {
         get => (Player) base.Shooter;
         internal set => base.Shooter = value;
     }
+
+    public Entity HitEntity => hitEntity;
 
     public SemiChargedState State
     {
@@ -104,9 +106,9 @@ public class BusterSemiCharged : Weapon, IStateEntity<SemiChargedState>
 
     private void OnStartHitting(EntityState state, EntityState lastState)
     {
-        if (hitEntity != null)
+        if (HitEntity != null)
         {
-            Box otherHitbox = hitEntity.Hitbox;
+            Box otherHitbox = HitEntity.Hitbox;
             Vector center = Hitbox.Center;
             FixedSingle x = Direction == Direction.RIGHT ? otherHitbox.Left : otherHitbox.Right;
             FixedSingle y = center.Y < otherHitbox.Top ? otherHitbox.Top : center.Y > otherHitbox.Bottom ? otherHitbox.Bottom : Origin.Y;

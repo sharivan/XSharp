@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows.Forms;
 
 using NLua;
@@ -36,6 +37,7 @@ using XSharp.MegaEDX;
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.World.World;
 
+using Box = XSharp.Math.Geometry.Box;
 using Color = SharpDX.Color;
 using Configuration = System.Configuration.Configuration;
 using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
@@ -43,14 +45,12 @@ using Device9 = SharpDX.Direct3D9.Device;
 using DeviceType = SharpDX.Direct3D9.DeviceType;
 using DXSprite = SharpDX.Direct3D9.Sprite;
 using Font = SharpDX.Direct3D9.Font;
-using Box = XSharp.Math.Geometry.Box;
 using MMXWorld = XSharp.Engine.World.World;
 using Point = SharpDX.Point;
 using Rectangle = SharpDX.Rectangle;
 using RectangleF = SharpDX.RectangleF;
 using ResultCode = SharpDX.Direct3D9.ResultCode;
 using Sprite = XSharp.Engine.Entities.Sprite;
-using System.Threading;
 
 namespace XSharp.Engine;
 
@@ -290,6 +290,8 @@ public class GameEngine : IRenderable, IRenderTarget
 
     private List<EntityReference<Checkpoint>> checkpoints;
 
+    private EntityFactory entities;
+    private EntitySet<Entity> aliveEntities;
     internal EntitySet<Entity> spawnedEntities;
     internal EntitySet<Entity> removedEntities;
     internal Dictionary<EntityReference, RespawnEntry> autoRespawnableEntities;
@@ -379,6 +381,8 @@ public class GameEngine : IRenderable, IRenderTarget
     private EntityReference<ReadyHUD> readyHUD;
     private EntityReference<Boss> boss;
 
+    private Dictionary<Type, PrecacheAction> precacheActions;
+
     public Control Control
     {
         get;
@@ -410,11 +414,9 @@ public class GameEngine : IRenderable, IRenderTarget
         private set;
     }
 
-    public EntityFactory Entities
-    {
-        get;
-        private set;
-    }
+    public EntityFactory Entities => entities;
+
+    public IReadOnlySet<Entity> AliveEntities => aliveEntities;
 
     public Camera Camera => camera;
 
@@ -797,9 +799,24 @@ public class GameEngine : IRenderable, IRenderTarget
     {
         Control = control;
 
-        Entities = new EntityFactory();
+        RNG = new RNG();
+
+        entities = new EntityFactory();
+        aliveEntities = new EntitySet<Entity>();
+        spawnedEntities = new EntitySet<Entity>();
+        removedEntities = new EntitySet<Entity>();
+        autoRespawnableEntities = new Dictionary<EntityReference, RespawnEntry>();
+        sprites = new EntitySet<Sprite>[NUM_SPRITE_LAYERS];
+        huds = new EntitySet<HUD>[NUM_SPRITE_LAYERS];
+
+        for (int i = 0; i < sprites.Length; i++)
+            sprites[i] = new EntitySet<Sprite>();
+
+        for (int i = 0; i < huds.Length; i++)
+            huds[i] = new EntitySet<HUD>();
 
         freezingSpriteExceptions = new EntitySet<Sprite>();
+        checkpoints = new List<EntityReference<Checkpoint>>();
 
         spriteSheets = new List<SpriteSheet>();
         spriteSheetsByName = new Dictionary<string, SpriteSheet>();
@@ -813,6 +830,8 @@ public class GameEngine : IRenderable, IRenderTarget
 
         FadingControl = new FadingControl();
         infoMessageFadingControl = new FadingControl();
+
+        precacheActions = new Dictionary<Type, PrecacheAction>();
 
         lua = new Lua();
         lua.LoadCLRPackage(); // TODO : This can be DANGEROUS! Fix in the future by adding restrictions on the scripting.
@@ -842,7 +861,7 @@ public class GameEngine : IRenderable, IRenderTarget
             BackBufferCount = DOUBLE_BUFFERED ? 2 : 1,
             BackBufferFormat = FULL_SCREEN ? Format.X8R8G8B8 : Format.Unknown,
             BackBufferHeight = FULL_SCREEN ? Control.ClientSize.Height : 0,
-            BackBufferWidth = FULL_SCREEN ? Control.ClientSize.Width : 0,  
+            BackBufferWidth = FULL_SCREEN ? Control.ClientSize.Width : 0,
             PresentFlags = PresentFlags.LockableBackBuffer
         };
 
@@ -930,21 +949,6 @@ public class GameEngine : IRenderable, IRenderTarget
             joystick.Properties.BufferSize = 2048;
             joystick.Acquire();
         }
-
-        RNG = new RNG();
-        checkpoints = new List<EntityReference<Checkpoint>>();
-
-        spawnedEntities = new EntitySet<Entity>();
-        removedEntities = new EntitySet<Entity>();
-        autoRespawnableEntities = new Dictionary<EntityReference, RespawnEntry>();
-        sprites = new EntitySet<Sprite>[NUM_SPRITE_LAYERS];
-        huds = new EntitySet<HUD>[NUM_SPRITE_LAYERS];
-
-        for (int i = 0; i < sprites.Length; i++)
-            sprites[i] = new EntitySet<Sprite>();
-
-        for (int i = 0; i < huds.Length; i++)
-            huds[i] = new EntitySet<HUD>();
 
         loadingLevel = true;
 
@@ -1083,1041 +1087,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
         SetupQuad(VertexBuffer, SCREEN_WIDTH * 4, SCREEN_HEIGHT * 4);
 
-        // Create palettes
-
-        // 0
-        var x1NormalPalette = CreatePalette("x1NormalPalette", X1_NORMAL_PALETTE);
-
-        // 1
-        CreatePalette("chargeLevel1Palette", CHARGE_LEVEL_1_PALETTE);
-
-        // 2
-        CreatePalette("chargeLevel2Palette", CHARGE_LEVEL_2_PALETTE);
-
-        // 3
-        CreatePalette("chargingEffectPalette", CHARGE_EFFECT_PALETTE);
-
-        // 4
-        CreatePalette("flashingPalette", FLASHING_PALETTE);
-
-        // 5
-        var scriverPalette = CreatePalette("scriverPalette", SCRIVER_PALETTE);
-
-        // 6
-        var battonBoneGPalette = CreatePalette("battonBoneGPalette", BATTON_BONE_G_PALETTE);
-
-        // 7
-        var penguinPalette = CreatePalette("penguinPalette", PENGUIN_PALETTE);
-
-        // Create sprite sheets
-
-        // 0
-        var xSpriteSheet = CreateSpriteSheet("X", true, true);
-
-        // 1
-        var xWeaponsSpriteSheet = CreateSpriteSheet("X Weapons", true, true);
-
-        // 2
-        var xEffectsSpriteSheet = CreateSpriteSheet("X Effects", true, true);
-
-        // 3
-        var xChargingEffectsSpriteSheet = CreateSpriteSheet("X Charging Effects", true, false);
-
-        // 4
-        var scriverSpriteSheet = CreateSpriteSheet("Scriver", true, true);
-
-        // 5
-        var explosionSpriteSheet = CreateSpriteSheet("Explosion", true, true);
-
-        // 6
-        var hpSpriteSheet = CreateSpriteSheet("HP", true, true);
-
-        // 7
-        var readySpriteSheet = CreateSpriteSheet("Ready", true, true);
-
-        // 8
-        var battonBoneGSpriteSheet = CreateSpriteSheet("BattonBoneG", true, true);
-
-        // 9
-        var bossDoorSpriteSheet = CreateSpriteSheet("Boos Door", true, true);
-
-        // 10
-        var penguinSpriteSheet = CreateSpriteSheet("Penguin", true, true);
-
-        // 11
-        var mistSpriteSheet = CreateSpriteSheet("Mist", true, true);
-
-        // 12
-        var platformsSpriteSheet = CreateSpriteSheet("Platforms", true, true);
-
-        // Setup frame sequences (animations)
-
-        // X
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.X[small].png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            xSpriteSheet.CurrentTexture = texture;
-        }
-
-        xSpriteSheet.CurrentPalette = x1NormalPalette;
-
-        var sequence = xSpriteSheet.AddFrameSquence("Spawn");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(-4, 17, 5, 15, 8, 48);
-
-        sequence = xSpriteSheet.AddFrameSquence("SpawnEnd");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(-4, 17, 5, 15, 8, 48);
-        sequence.AddFrame(3, -2, 19, 34, 22, 29, 2);
-        sequence.AddFrame(8, 11, 46, 21, 30, 42);
-        sequence.AddFrame(8, 8, 84, 24, 30, 39);
-        sequence.AddFrame(8, 5, 120, 27, 30, 36);
-        sequence.AddFrame(8, 3, 156, 28, 30, 34);
-        sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
-
-        sequence = xSpriteSheet.AddFrameSquence("Stand");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(8, 3, 226, 29, 30, 34, 80, true);
-        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
-        sequence.AddFrame(8, 3, 295, 29, 30, 34, 8);
-        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
-        sequence.AddFrame(8, 3, 226, 29, 30, 34, 48);
-        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
-        sequence.AddFrame(8, 3, 295, 29, 30, 34, 4);
-        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
-        sequence.AddFrame(8, 3, 226, 29, 30, 34, 4);
-        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
-        sequence.AddFrame(8, 3, 295, 29, 30, 34, 4);
-        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
-
-        sequence = xSpriteSheet.AddFrameSquence("Tired");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(8, 4, 166, 331, 30, 35, 10, true);
-        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
-        sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
-        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
-        sequence.AddFrame(8, 4, 166, 331, 30, 35, 10);
-        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
-        sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
-        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
-        sequence.AddFrame(8, 4, 166, 331, 30, 35, 10);
-        sequence.AddFrame(8, 3, 262, 332, 30, 34, 2);
-        sequence.AddFrame(8, 3, 294, 332, 30, 34, 6);
-        sequence.AddFrame(8, 3, 262, 332, 30, 34, 2);
-        sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
-        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
-
-        sequence = xSpriteSheet.AddFrameSquence("Shooting");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(8, 3, 365, 29, 30, 34, 4);
-        sequence.AddFrame(8, 3, 402, 29, 29, 34, 12, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("PreWalking");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(8, 3, 5, 67, 30, 34, 5);
-
-        sequence = xSpriteSheet.AddFrameSquence("Walking");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(1, 3, 50, 67, 20, 34, 1, true);
-        sequence.AddFrame(3, 4, 75, 67, 23, 35, 2);
-        sequence.AddFrame(7, 3, 105, 68, 32, 34, 3);
-        sequence.AddFrame(10, 2, 145, 68, 34, 33, 3);
-        sequence.AddFrame(5, 2, 190, 68, 26, 33, 3);
-        sequence.AddFrame(3, 3, 222, 67, 22, 34, 2);
-        sequence.AddFrame(5, 4, 248, 67, 25, 35, 2);
-        sequence.AddFrame(5, 3, 280, 67, 30, 34, 3);
-        sequence.AddFrame(8, 2, 318, 68, 34, 33, 3);
-        sequence.AddFrame(7, 2, 359, 68, 29, 33, 3);
-        sequence.AddFrame(1, 3, 50, 67, 20, 34);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootWalking");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(1, 3, 41, 107, 29, 34, 1, true);
-        sequence.AddFrame(3, 4, 76, 107, 32, 35, 2);
-        sequence.AddFrame(7, 3, 115, 108, 35, 34, 3);
-        sequence.AddFrame(10, 2, 159, 108, 38, 33, 3);
-        sequence.AddFrame(5, 2, 204, 108, 34, 33, 3);
-        sequence.AddFrame(3, 3, 246, 107, 31, 34, 2);
-        sequence.AddFrame(5, 4, 284, 107, 33, 35, 2);
-        sequence.AddFrame(5, 3, 326, 107, 35, 34, 3);
-        sequence.AddFrame(8, 2, 369, 108, 37, 33, 3);
-        sequence.AddFrame(7, 2, 413, 108, 35, 33, 3);
-        sequence.AddFrame(1, 3, 41, 107, 29, 34);
-
-        sequence = xSpriteSheet.AddFrameSquence("Jumping");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(1, 0, 6, 148, 25, 37, 3);
-        sequence.AddFrame(-5, 1, 37, 148, 15, 41);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootJumping");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(1, 0, 201, 148, 29, 37, 3);
-        sequence.AddFrame(-5, 1, 240, 148, 24, 41);
-
-        sequence = xSpriteSheet.AddFrameSquence("GoingUp");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(-1, 5, 56, 146, 19, 46, 1, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(-1, 5, 271, 146, 27, 46, 1, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("Falling");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(1, 5, 80, 150, 23, 41, 4);
-        sequence.AddFrame(5, 6, 108, 150, 27, 42, 1, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootFalling");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
-        sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42, 1, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("Landing");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(1, 2, 139, 151, 24, 38, 2);
-        sequence.AddFrame(8, 1, 166, 153, 30, 32, 2);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootLanding");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(1, 2, 378, 151, 30, 38, 2);
-        sequence.AddFrame(8, 1, 413, 153, 36, 32, 2);
-
-        sequence = xSpriteSheet.AddFrameSquence("PreDashing");
-        sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
-        sequence.Hitbox = DASHING_HITBOX;
-        sequence.AddFrame(4, 12, 4, 335, 28, 31, 3);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootPreDashing");
-        sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
-        sequence.Hitbox = DASHING_HITBOX;
-        sequence.AddFrame(4, 12, 76, 335, 37, 31, 3);
-
-        sequence = xSpriteSheet.AddFrameSquence("Dashing");
-        sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
-        sequence.Hitbox = DASHING_HITBOX;
-        sequence.AddFrame(14, 7, 34, 341, 38, 26, 1, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootDashing");
-        sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
-        sequence.Hitbox = DASHING_HITBOX;
-        sequence.AddFrame(14, 7, 115, 341, 48, 26, 1, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("PostDashing");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(5, 0, 4, 335, 28, 31, 8);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootPostDashing");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(5, 0, 76, 335, 37, 31, 8);
-
-        sequence = xSpriteSheet.AddFrameSquence("WallSliding");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(5, 5, 5, 197, 25, 42, 5);
-        sequence.AddFrame(9, 7, 33, 196, 27, 43, 6);
-        sequence.AddFrame(9, 8, 64, 196, 28, 42, 1, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(5, 2 - 3, 158, 200, 31, 39, 5);
-        sequence.AddFrame(9 + 5, 7, 201, 196, 32, 43, 6);
-        sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42, 1, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("WallJumping");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(7, 2, 95, 199, 30, 39, 3);
-        sequence.AddFrame(5, 10, 128, 195, 27, 44);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootWallJumping");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(7, 1, 276, 200, 31, 38, 3);
-        sequence.AddFrame(5, 5, 315, 200, 32, 39);
-
-        sequence = xSpriteSheet.AddFrameSquence("PreLadderClimbing");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(3, 4, 7, 267, 21, 36, 8);
-
-        sequence = xSpriteSheet.AddFrameSquence("LadderMoving");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(2, 10, 111, 261, 18, 49, 8, true);
-        sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
-        sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
-        sequence.AddFrame(5, 14, 36, 261, 18, 49, 8);
-        sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
-        sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
-
-        sequence = xSpriteSheet.AddFrameSquence("ShootLadder");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(5, 14, 137, 261, 26, 48, 16, true);
-
-        sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.AddFrame(5, -11, 169, 281, 21, 32, 4);
-        sequence.AddFrame(2, -4, 195, 274, 18, 34, 4);
-
-        sequence = xSpriteSheet.AddFrameSquence("TopLadderDescending");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(2, -4, 195, 274, 18, 34, 4);
-        sequence.AddFrame(5, -11, 169, 281, 21, 32, 4);
-
-        sequence = xSpriteSheet.AddFrameSquence("TakingDamage");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(6, 1, 478, 157, 25, 36, 4);
-        sequence.AddFrame(10, -1, 509, 159, 29, 34, 1);
-        sequence.AddFrame(10, -1, 543, 159, 29, 34, 1);
-        sequence.AddFrame(11, 9, 578, 149, 32, 48, 2);
-        sequence.AddFrame(10, 1, 616, 159, 31, 34, 2);
-        sequence.AddFrame(11, 11, 654, 149, 32, 48, 2);
-        sequence.AddFrame(10, 1, 692, 159, 29, 34, 2);
-        sequence.AddFrame(11, 11, 727, 149, 32, 48, 2);
-        sequence.AddFrame(12, -1, 768, 159, 31, 34, 1);
-        sequence.AddFrame(10, 1, 804, 158, 29, 35, 1);
-        sequence.AddFrame(10, -1, 509, 159, 29, 34, 8);
-        sequence.AddFrame(6, 1, 478, 157, 25, 36, 2);
-
-        sequence = xSpriteSheet.AddFrameSquence("Dying");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(6, 1, 478, 157, 25, 36, 30);
-
-        sequence = xSpriteSheet.AddFrameSquence("Victory");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(7, 14, 221, 256, 28, 45, 10);
-        sequence.AddFrame(7, 14, 259, 256, 29, 45, 1);
-        sequence.AddFrame(7, 17, 297, 253, 34, 48, 2);
-        sequence.AddFrame(7, 14, 335, 256, 29, 45, 2);
-        sequence.AddFrame(7, 14, 373, 256, 31, 45, 3);
-        sequence.AddFrame(7, 14, 221, 256, 28, 45, 40);
-
-        sequence = xSpriteSheet.AddFrameSquence("PreTeleporting");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
-        sequence.AddFrame(8, 4, 156, 28, 30, 34);
-        sequence.AddFrame(8, 5, 120, 27, 30, 36);
-        sequence.AddFrame(8, 8, 84, 24, 30, 39);
-        sequence.AddFrame(8, 11, 46, 21, 30, 42);
-        sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
-        sequence.AddFrame(-4, 32, 5, 15, 8, 48);
-
-        sequence = xSpriteSheet.AddFrameSquence("DyingExplosion");
-        sequence.AddFrame(396, 344, 6, 6, 8, false, OriginPosition.CENTER);
-        sequence.AddFrame(406, 343, 8, 8, 8, false, OriginPosition.CENTER);
-        sequence.AddFrame(417, 342, 9, 9, 8, false, OriginPosition.CENTER);
-        sequence.AddFrame(429, 341, 11, 11, 8, true, OriginPosition.CENTER);
-        sequence.AddFrame(443, 339, 15, 15, 8, false, OriginPosition.CENTER);
-
-        xSpriteSheet.ReleaseCurrentTexture();
-
-        // X weapons
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Weapons.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            xWeaponsSpriteSheet.CurrentTexture = texture;
-        }
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShot", 0);
-        sequence.OriginOffset = -LEMON_HITBOX.Origin - LEMON_HITBOX.Mins;
-        sequence.Hitbox = LEMON_HITBOX;
-        sequence.AddFrame(0, -1, 123, 253, 8, 6);
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShotExplode");
-        sequence.OriginOffset = -LEMON_HITBOX.Origin - LEMON_HITBOX.Mins;
-        sequence.Hitbox = LEMON_HITBOX;
-        sequence.AddFrame(2, 1, 137, 250, 12, 12, 4);
-        sequence.AddFrame(2, 2, 154, 249, 13, 13, 2);
-        sequence.AddFrame(3, 3, 172, 248, 15, 15);
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotFiring");
-        sequence.OriginOffset = -SEMI_CHARGED_HITBOX1.Origin - SEMI_CHARGED_HITBOX1.Mins;
-        sequence.Hitbox = SEMI_CHARGED_HITBOX1;
-        sequence.AddFrame(-5, -2, 128, 563, 14, 14);
-        sequence.OriginOffset = -SEMI_CHARGED_HITBOX2.Origin - SEMI_CHARGED_HITBOX2.Mins;
-        sequence.Hitbox = SEMI_CHARGED_HITBOX2;
-        sequence.AddFrame(-9, -6, 128, 563, 14, 14);
-        sequence.AddFrame(-9, -1, 147, 558, 24, 24);
-        sequence.OriginOffset = -SEMI_CHARGED_HITBOX3.Origin - SEMI_CHARGED_HITBOX3.Mins;
-        sequence.Hitbox = SEMI_CHARGED_HITBOX3;
-        sequence.AddFrame(-11, 3, 147, 558, 24, 24);
-        sequence.AddFrame(-11, -3, 176, 564, 28, 12);
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShot");
-        sequence.OriginOffset = -SEMI_CHARGED_HITBOX3.Origin - SEMI_CHARGED_HITBOX3.Mins;
-        sequence.Hitbox = SEMI_CHARGED_HITBOX3;
-        sequence.AddFrame(3, -3, 176, 564, 28, 12);
-        sequence.AddFrame(3, -5, 210, 566, 32, 8, 3);
-        sequence.AddFrame(9, -5, 210, 566, 32, 8);
-        sequence.AddFrame(7, -1, 379, 562, 38, 16);
-        sequence.AddFrame(9, -3, 333, 564, 38, 12, 1, true); // loop point
-        sequence.AddFrame(8, 1, 292, 559, 36, 22, 2);
-        sequence.AddFrame(9, -3, 333, 564, 38, 12);
-        sequence.AddFrame(7, -1, 379, 562, 38, 16, 2);
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotHit");
-        sequence.OriginOffset = -SEMI_CHARGED_HITBOX2.Origin - SEMI_CHARGED_HITBOX2.Mins;
-        sequence.Hitbox = SEMI_CHARGED_HITBOX2;
-        sequence.AddFrame(-9, -6, 424, 563, 14, 14, 2);
-        sequence.AddFrame(-9, -1, 443, 558, 24, 24, 4);
-        sequence.AddFrame(-9, -6, 424, 563, 14, 14, 4);
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotExplode");
-        sequence.OriginOffset = -SEMI_CHARGED_HITBOX1.Origin - SEMI_CHARGED_HITBOX1.Mins;
-        sequence.AddFrame(487, 273, 16, 16);
-        sequence.AddFrame(507, 269, 24, 24);
-        sequence.AddFrame(535, 273, 16, 16);
-        sequence.AddFrame(555, 270, 22, 22);
-        sequence.AddFrame(581, 269, 24, 24);
-        sequence.AddFrame(609, 269, 24, 24);
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotFiring");
-        sequence.OriginOffset = -CHARGED_HITBOX1.Origin - CHARGED_HITBOX1.Mins;
-        sequence.Hitbox = CHARGED_HITBOX1;
-        sequence.AddFrame(-3, 1, 144, 440, 14, 20);
-        sequence.AddFrame(-2, -1, 170, 321, 23, 16, 3);
-        sequence.OriginOffset = -CHARGED_HITBOX2.Origin - CHARGED_HITBOX2.Mins;
-        sequence.Hitbox = CHARGED_HITBOX2;
-        sequence.AddFrame(-25, -10, 170, 321, 23, 16, 3);
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShot", 0);
-        sequence.OriginOffset = -CHARGED_HITBOX2.Origin - CHARGED_HITBOX2.Mins;
-        sequence.Hitbox = CHARGED_HITBOX2;
-        sequence.AddFrame(7, -2, 164, 433, 47, 32, 2, true);
-        sequence.AddFrame(2, -2, 216, 433, 40, 32, 2);
-        sequence.AddFrame(9, -2, 261, 432, 46, 32, 2);
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotHit");
-        sequence.OriginOffset = -CHARGED_HITBOX2.Origin - CHARGED_HITBOX2.Mins;
-        sequence.Hitbox = CHARGED_HITBOX2;
-        sequence.AddFrame(-26, -8, 315, 438, 14, 20, 2);
-        sequence.AddFrame(-25, -4, 336, 434, 24, 28, 2);
-        sequence.AddFrame(-26, -8, 315, 438, 14, 20, 4);
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotExplode");
-        sequence.OriginOffset = -CHARGED_HITBOX2.Origin - CHARGED_HITBOX2.Mins;
-        sequence.AddFrame(368, 434, 28, 28);
-        sequence.AddFrame(400, 435, 26, 26);
-        sequence.AddFrame(430, 434, 28, 28);
-        sequence.AddFrame(462, 433, 30, 30);
-        sequence.AddFrame(496, 432, 32, 32);
-        sequence.AddFrame(532, 432, 32, 32);
-
-        var smallHealthRecoverDroppingCollisionBox = new Box(Vector.NULL_VECTOR, (-4, -8), (4, 0));
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverDropping");
-        sequence.OriginOffset = -smallHealthRecoverDroppingCollisionBox.Mins;
-        sequence.Hitbox = smallHealthRecoverDroppingCollisionBox;
-        sequence.AddFrame(0, 0, 6, 138, 8, 8);
-        sequence.AddFrame(0, 0, 24, 114, 8, 8);
-        sequence.AddFrame(0, 0, 6, 138, 8, 8, 1, true);
-
-        var smallHealthRecoverIdleCollisionBox = new Box(Vector.NULL_VECTOR, (-5, -8), (5, 0));
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverIdle");
-        sequence.OriginOffset = -smallHealthRecoverIdleCollisionBox.Mins;
-        sequence.Hitbox = smallHealthRecoverIdleCollisionBox;
-        sequence.AddFrame(0, 0, 22, 138, 10, 8, 1, true);
-        sequence.AddFrame(0, 0, 40, 138, 10, 8, 2);
-        sequence.AddFrame(0, 0, 58, 138, 10, 8, 2);
-        sequence.AddFrame(0, 0, 40, 138, 10, 8, 2);
-        sequence.AddFrame(0, 0, 22, 138, 10, 8, 1);
-
-        var bigHealthRecoverDroppingCollisionBox = new Box(Vector.NULL_VECTOR, (-7, -12), (7, 0));
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("BigHealthRecoverDropping");
-        sequence.OriginOffset = -bigHealthRecoverDroppingCollisionBox.Mins;
-        sequence.Hitbox = bigHealthRecoverDroppingCollisionBox;
-        sequence.AddFrame(0, 0, 3, 150, 14, 12);
-        sequence.AddFrame(0, 0, 24, 114, 14, 12);
-        sequence.AddFrame(0, 0, 3, 150, 14, 12, 1, true);
-
-        var bigHealthRecoverIdleCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -12), (8, 0));
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("BigHealthRecoverIdle");
-        sequence.OriginOffset = -bigHealthRecoverIdleCollisionBox.Mins;
-        sequence.Hitbox = bigHealthRecoverIdleCollisionBox;
-        sequence.AddFrame(0, 0, 19, 150, 16, 12, 1, true);
-        sequence.AddFrame(0, 0, 37, 150, 16, 12, 2);
-        sequence.AddFrame(0, 0, 55, 150, 16, 12, 2);
-        sequence.AddFrame(0, 0, 37, 150, 16, 12, 2);
-        sequence.AddFrame(0, 0, 19, 150, 16, 12, 1);
-
-        var smallAmmoRecoverCollisionBox = new Box(Vector.NULL_VECTOR, (-4, -8), (4, 0));
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallAmmoRecover");
-        sequence.OriginOffset = -smallAmmoRecoverCollisionBox.Mins;
-        sequence.Hitbox = smallAmmoRecoverCollisionBox;
-        sequence.AddFrame(0, 0, 84, 138, 8, 8, 2, true);
-        sequence.AddFrame(0, 0, 100, 138, 8, 8, 2);
-        sequence.AddFrame(0, 0, 116, 138, 8, 8, 2);
-        sequence.AddFrame(0, 0, 100, 138, 8, 8, 2);
-
-        var bigAmmoRecoverCollisionBox = new Box(Vector.NULL_VECTOR, (-7, -14), (7, 0));
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("BigAmmoRecover");
-        sequence.OriginOffset = -bigAmmoRecoverCollisionBox.Mins;
-        sequence.Hitbox = bigAmmoRecoverCollisionBox;
-        sequence.AddFrame(0, 0, 81, 148, 14, 14, 2, true);
-        sequence.AddFrame(0, 0, 97, 148, 14, 14, 2);
-        sequence.AddFrame(0, 0, 113, 148, 14, 14, 2);
-        sequence.AddFrame(0, 0, 97, 148, 14, 14, 2);
-
-        var lifeUpCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -16), (8, 0));
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("LifeUp");
-        sequence.OriginOffset = -lifeUpCollisionBox.Mins;
-        sequence.Hitbox = lifeUpCollisionBox;
-        sequence.AddFrame(0, 0, 137, 146, 16, 16, 4, true);
-        sequence.AddFrame(0, 0, 157, 146, 16, 16, 4);
-
-        var heartTankCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -17), (8, 0));
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("HeartTank");
-        sequence.OriginOffset = -heartTankCollisionBox.Mins;
-        sequence.Hitbox = heartTankCollisionBox;
-        sequence.AddFrame(-1, 0, 183, 147, 14, 15, 11, true);
-        sequence.AddFrame(-2, -1, 199, 147, 12, 15, 11);
-        sequence.AddFrame(-3, -2, 213, 147, 10, 15, 11);
-        sequence.AddFrame(-2, -1, 225, 147, 12, 15, 11);
-
-        var subTankCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -19), (8, 0));
-
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SubTank");
-        sequence.OriginOffset = -subTankCollisionBox.Mins;
-        sequence.Hitbox = subTankCollisionBox;
-        sequence.AddFrame(2, 0, 247, 143, 20, 19, 4, true);
-        sequence.AddFrame(2, 0, 269, 143, 20, 19, 4);
-
-        xWeaponsSpriteSheet.ReleaseCurrentTexture();
-
-        // X effects
-        sequence = xChargingEffectsSpriteSheet.AddFrameSquence("ChargingLevel1");
-        AddChargingEffectFrames(sequence, 1);
-
-        sequence = xChargingEffectsSpriteSheet.AddFrameSquence("ChargingLevel2");
-        AddChargingEffectFrames(sequence, 2);
-
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Effects.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            xEffectsSpriteSheet.CurrentTexture = texture;
-        }
-
-        sequence = xEffectsSpriteSheet.AddFrameSquence("WallKickEffect");
-        sequence.AddFrame(0, 201, 11, 12, 2, false, OriginPosition.LEFT_TOP);
-
-        sequence = xEffectsSpriteSheet.AddFrameSquence("PreDashSparkEffect");
-        sequence.AddFrame(19, 124, 16, 32, 2, false, OriginPosition.LEFT_BOTTOM);
-
-        sequence = xEffectsSpriteSheet.AddFrameSquence("DashSparkEffect");
-        sequence.AddFrame(103, 124, 18, 32, 3, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(139, 124, 23, 32, 2, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(178, 124, 27, 32, 2, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(219, 124, 27, 32, 2, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(260, 124, 27, 32, 2, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(301, 124, 27, 32, 2, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(346, 124, 27, 32, 1, false, OriginPosition.LEFT_BOTTOM);
-
-        sequence = xEffectsSpriteSheet.AddFrameSquence("DashSmokeEffect");
-        sequence.AddFrame(3, 164, 8, 28, 4, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(17, 164, 8, 28, 1, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(44, 164, 10, 28, 2, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(58, 164, 10, 28, 1, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(71, 164, 13, 28, 2, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(85, 164, 13, 28, 1, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(99, 164, 13, 28, 1, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(112, 164, 14, 28, 2, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(126, 164, 14, 28, 1, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(140, 164, 14, 28, 1, false, OriginPosition.LEFT_BOTTOM);
-        sequence.AddFrame(154, 164, 13, 28, 1, false, OriginPosition.LEFT_BOTTOM);
-
-        sequence = xEffectsSpriteSheet.AddFrameSquence("WallSlideEffect");
-        sequence.AddFrame(0, 228, 8, 8, 4, false, OriginPosition.CENTER);
-        sequence.AddFrame(12, 227, 10, 11, 5, false, OriginPosition.CENTER);
-        sequence.AddFrame(29, 226, 13, 13, 5, false, OriginPosition.CENTER);
-        sequence.AddFrame(49, 226, 14, 14, 3, false, OriginPosition.CENTER);
-        sequence.AddFrame(70, 226, 14, 14, 3, false, OriginPosition.CENTER);
-        sequence.AddFrame(90, 226, 14, 14, 3, false, OriginPosition.CENTER);
-
-        xEffectsSpriteSheet.ReleaseCurrentTexture();
-
-        // Enemies
-
-        // Scriver
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.scriver.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            scriverSpriteSheet.CurrentTexture = texture;
-        }
-
-        scriverSpriteSheet.CurrentPalette = scriverPalette;
-
-        // 0
-        sequence = scriverSpriteSheet.AddFrameSquence("Idle");
-        sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
-        sequence.Hitbox = SCRIVER_HITBOX;
-        sequence.AddFrame(-5, 6, 4, 4, 35, 30, 1, true);
-
-        // 1
-        sequence = scriverSpriteSheet.AddFrameSquence("Jumping");
-        sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
-        sequence.Hitbox = SCRIVER_HITBOX;
-        sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
-        sequence.AddFrame(-7, 6, 78, 4, 35, 30, 5);
-        sequence.AddFrame(4, -3, 115, 4, 43, 30, 1, true);
-
-        // 2
-        sequence = scriverSpriteSheet.AddFrameSquence("Landing");
-        sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
-        sequence.Hitbox = SCRIVER_HITBOX;
-        sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
-
-        // 3
-        sequence = scriverSpriteSheet.AddFrameSquence("Drilling");
-        sequence.OriginOffset = -SCRIVER_DRILLING_HITBOX.Origin - SCRIVER_DRILLING_HITBOX.Mins;
-        sequence.Hitbox = SCRIVER_DRILLING_HITBOX;
-        sequence.AddFrame(-3, 0, 160, 10, 48, 24, 2, true);
-        sequence.AddFrame(-4, 1, 209, 9, 46, 25, 2);
-        sequence.AddFrame(-4, 0, 256, 10, 48, 24, 2);
-        sequence.AddFrame(-4, 1, 305, 9, 46, 25, 2);
-
-        // Batton Bone G
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.batton-bone-g.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            battonBoneGSpriteSheet.CurrentTexture = texture;
-        }
-
-        battonBoneGSpriteSheet.CurrentPalette = battonBoneGPalette;
-
-        var battonBoneGIdleHitbox = new Box(Vector.NULL_VECTOR, new Vector(-6, -18), new Vector(6, 0));
-        var battonBoneGAttackingHitbox = new Box(Vector.NULL_VECTOR, new Vector(-8, -14), new Vector(8, 0));
-
-        // 0
-        sequence = battonBoneGSpriteSheet.AddFrameSquence("Idle");
-        sequence.OriginOffset = -battonBoneGIdleHitbox.Mins;
-        sequence.Hitbox = battonBoneGIdleHitbox;
-        sequence.AddFrame(0, 4, 7, 1, 14, 23, 1, true);
-
-        // 1
-        sequence = battonBoneGSpriteSheet.AddFrameSquence("Attacking");
-        sequence.OriginOffset = -battonBoneGAttackingHitbox.Mins;
-        sequence.Hitbox = battonBoneGAttackingHitbox;
-        sequence.AddFrame(4, 7, 22, 1, 30, 23, 1, true);
-        sequence.AddFrame(10, 8, 53, 1, 39, 23, 3);
-        sequence.AddFrame(5, 6, 93, 1, 29, 23, 3);
-        sequence.AddFrame(3, 2, 123, 1, 23, 23, 3);
-        sequence.AddFrame(3, 5, 147, 1, 23, 23, 4);
-        sequence.AddFrame(4, 7, 22, 1, 30, 23, 3);
-
-        battonBoneGSpriteSheet.ReleaseCurrentTexture();
-
-        // Explosion
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Explosion.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            explosionSpriteSheet.CurrentTexture = texture;
-        }
-
-        sequence = explosionSpriteSheet.AddFrameSquence("Explosion");
-        sequence.AddFrame(0, 0, 38, 48, 1, false, OriginPosition.CENTER);
-        sequence.AddFrame(38, 0, 38, 48, 2, false, OriginPosition.CENTER);
-        sequence.AddFrame(0, 0, 38, 48, 3, false, OriginPosition.CENTER);
-        sequence.AddFrame(76, 0, 38, 48, 3, false, OriginPosition.CENTER);
-        sequence.AddFrame(114, 0, 38, 48, 3, false, OriginPosition.CENTER);
-        sequence.AddFrame(0, 48, 38, 48, 3, false, OriginPosition.CENTER);
-        sequence.AddFrame(38, 48, 38, 48, 3, false, OriginPosition.CENTER);
-        sequence.AddFrame(76, 48, 38, 48, 2, false, OriginPosition.CENTER);
-        sequence.AddFrame(114, 48, 38, 48, 2, false, OriginPosition.CENTER);
-
-        explosionSpriteSheet.ReleaseCurrentTexture();
-
-        // HP
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.HUD.HP.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            hpSpriteSheet.CurrentTexture = texture;
-        }
-
-        sequence = hpSpriteSheet.AddFrameSquence("HPTop");
-        sequence.AddFrame(0, 0, 14, 4, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("HPBottom");
-        sequence.AddFrame(0, 4, 14, 16, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("HPMiddle");
-        sequence.AddFrame(0, 20, 14, 2, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("HPMiddleEmpty");
-        sequence.AddFrame(0, 22, 14, 2, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("RideArmor");
-        sequence.AddFrame(14, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("Zero");
-        sequence.AddFrame(26, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("X1Boss");
-        sequence.AddFrame(38, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("Boss");
-        sequence.AddFrame(50, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("Doppler");
-        sequence.AddFrame(14, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("W");
-        sequence.AddFrame(26, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("DopplerPrototype");
-        sequence.AddFrame(38, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
-
-        sequence = hpSpriteSheet.AddFrameSquence("X");
-        sequence.AddFrame(50, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
-
-        hpSpriteSheet.ReleaseCurrentTexture();
-
-        // Ready
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.HUD.Ready.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            readySpriteSheet.CurrentTexture = texture;
-        }
-
-        sequence = readySpriteSheet.AddFrameSquence("Ready");
-        sequence.AddFrame(5, 22, 8, 13, 1, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(21, 22, 16, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(45, 22, 16, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(68, 22, 24, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(107, 22, 24, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(139, 22, 31, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(181, 22, 30, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(220, 22, 39, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(267, 22, 39, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(314, 22, 39, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(367, 22, 39, 13, 2, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(413, 22, 39, 13, 10, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(413, 22, 39, 13, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
-        sequence.AddFrame(413, 22, 39, 13, 9, false, OriginPosition.LEFT_TOP);
-
-        readySpriteSheet.ReleaseCurrentTexture();
-
-        // Boss Door
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Objects.BossDoor.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            bossDoorSpriteSheet.CurrentTexture = texture;
-        }
-
-        var bossDoorHitbox = new Box(Vector.NULL_VECTOR, (-8, -23), (24, 25));
-
-        sequence = bossDoorSpriteSheet.AddFrameSquence("Closed");
-        sequence.OriginOffset = -bossDoorHitbox.Mins;
-        sequence.Hitbox = bossDoorHitbox;
-        sequence.AddFrame(0, 0, 32, 0, 32, 48, 1, true);
-
-        sequence = bossDoorSpriteSheet.AddFrameSquence("Opening");
-        sequence.OriginOffset = -bossDoorHitbox.Mins;
-        sequence.Hitbox = bossDoorHitbox;
-        sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 64, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 160, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 224, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 160, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 224, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 256, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 288, 0, 32, 48, 4);
-
-        sequence = bossDoorSpriteSheet.AddFrameSquence("PlayerCrossing");
-        sequence.OriginOffset = -bossDoorHitbox.Mins;
-        sequence.Hitbox = bossDoorHitbox;
-        sequence.AddFrame(0, 0, 32, 48, 1, true);
-
-        sequence = bossDoorSpriteSheet.AddFrameSquence("Closing");
-        sequence.OriginOffset = -bossDoorHitbox.Mins;
-        sequence.Hitbox = bossDoorHitbox;
-        sequence.AddFrame(0, 0, 288, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 256, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 224, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 160, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 224, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 160, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 64, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
-        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
-        sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
-
-        bossDoorSpriteSheet.ReleaseCurrentTexture();
-
-        // Penguin
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.Bosses.X1.Penguin.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            penguinSpriteSheet.CurrentTexture = texture;
-        }
-
-        penguinSpriteSheet.CurrentPalette = penguinPalette;
-
-        // 0
-        sequence = penguinSpriteSheet.AddFrameSquence("FallingIntroducing");
-        sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
-        sequence.Hitbox = PENGUIN_COLLISION_BOX;
-        sequence.AddFrame(2, 15, 170, 20, 35, 44, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("LandingIntroducing");
-        sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
-        sequence.Hitbox = PENGUIN_COLLISION_BOX;
-        sequence.AddFrame(7, 1, 136, 172, 39, 35, 6);
-        sequence.AddFrame(6, -2, 96, 175, 38, 32, 6);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Introducing");
-        sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
-        sequence.Hitbox = PENGUIN_COLLISION_BOX;
-        sequence.AddFrame(6, 2, 6, 177, 38, 36, 6);
-        sequence.AddFrame(7, 0, 136, 172, 39, 35, 6);
-        sequence.AddFrame(6, -2, 96, 175, 38, 32, 5);
-        sequence.AddFrame(3, 3, 48, 76, 42, 37, 5);
-        sequence.AddFrame(3, 3, 94, 76, 43, 37, 5);
-        sequence.AddFrame(7, 2, 141, 77, 39, 36, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("IntroducingEnd");
-        sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
-        sequence.Hitbox = PENGUIN_COLLISION_BOX;
-        sequence.AddFrame(6, 2, 184, 77, 38, 36, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Idle");
-        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_HITBOX;
-        sequence.AddFrame(10, 4, 6, 77, 38, 36, 15);
-        sequence.AddFrame(10, 4, 184, 77, 38, 36, 15);
-        sequence.AddFrame(10, 4, 6, 77, 38, 36, 15);
-        sequence.AddFrame(10, 4, 184, 77, 38, 36, 15);
-        sequence.AddFrame(10, 4, 6, 77, 38, 36, 7);
-        sequence.AddFrame(11, 3, 136, 172, 39, 35, 7, true);
-        sequence.AddFrame(10, 4, 6, 77, 38, 36, 7);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("ShootingIce");
-        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_HITBOX;
-        sequence.AddFrame(11, 3, 136, 172, 39, 35, 6);
-        sequence.AddFrame(7, 5, 48, 76, 42, 37, 5);
-        sequence.AddFrame(7, 5, 94, 76, 43, 37, 5);
-        sequence.AddFrame(16, 3, 132, 129, 42, 35, 5);
-        sequence.AddFrame(14, 3, 174, 129, 43, 35, 5);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("PreSliding");
-        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_HITBOX;
-        sequence.AddFrame(7, 5, 48, 76, 42, 37, 11);
-        sequence.AddFrame(7, 5, 94, 76, 43, 37, 11);
-        sequence.AddFrame(8, 3, 90, 130, 37, 34, 7);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Sliding");
-        sequence.OriginOffset = -PENGUIN_SLIDE_HITBOX.Origin - PENGUIN_SLIDE_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_SLIDE_HITBOX;
-        sequence.AddFrame(0, 9, 221, 133, 40, 31, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Blowing");
-        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_HITBOX;
-        sequence.AddFrame(7, 5, 48, 76, 42, 37, 11);
-        sequence.AddFrame(7, 5, 94, 76, 43, 37, 11);
-        sequence.AddFrame(16, 3, 132, 129, 42, 35, 4, true);
-        sequence.AddFrame(14, 3, 174, 129, 43, 35, 4);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("PreJumping");
-        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_HITBOX;
-        sequence.AddFrame(5, 0, 96, 175, 38, 32, 5);
-        sequence.AddFrame(8, 6, 8, 127, 36, 38, 5);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Jumping");
-        sequence.OriginOffset = -PENGUIN_JUMP_HITBOX.Origin - PENGUIN_JUMP_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_JUMP_HITBOX;
-        sequence.AddFrame(10, 4, 47, 127, 37, 38, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Falling");
-        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_HITBOX;
-        sequence.AddFrame(5, 14, 170, 20, 35, 44, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Landing");
-        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_HITBOX;
-        sequence.AddFrame(11, 3, 136, 172, 39, 35, 6);
-        sequence.AddFrame(10, 0, 96, 175, 38, 32, 6);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Hanging");
-        sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_HITBOX;
-        sequence.AddFrame(5, 19, 12, 4, 36, 60, 8);
-        sequence.AddFrame(5, 19, 54, 4, 34, 58, 8);
-        sequence.AddFrame(5, 19, 95, 4, 32, 60, 8);
-        sequence.AddFrame(6, 20, 131, 4, 32, 60, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("TakingDamage");
-        sequence.OriginOffset = -PENGUIN_TAKING_DAMAGE_HITBOX.Origin - PENGUIN_TAKING_DAMAGE_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_TAKING_DAMAGE_HITBOX;
-        sequence.AddFrame(14, 4, 9, 169, 35, 41, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Dying");
-        sequence.OriginOffset = -PENGUIN_TAKING_DAMAGE_HITBOX.Origin - PENGUIN_TAKING_DAMAGE_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_TAKING_DAMAGE_HITBOX;
-        sequence.AddFrame(15, 3, 9, 169, 35, 41, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("InFlames");
-        sequence.OriginOffset = -PENGUIN_TAKING_DAMAGE_HITBOX.Origin - PENGUIN_TAKING_DAMAGE_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_TAKING_DAMAGE_HITBOX;
-        sequence.AddFrame(16, 7, 52, 165, 38, 47, 21);
-
-        penguinSpriteSheet.CurrentPalette = null;
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Ice");
-        sequence.OriginOffset = -PENGUIN_ICE_HITBOX.Origin - PENGUIN_ICE_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_ICE_HITBOX;
-        sequence.AddFrame(0, 2, 57, 232, 14, 14, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("IceFragment");
-        sequence.OriginOffset = -PENGUIN_ICE_FRAGMENT_HITBOX.Origin - PENGUIN_ICE_FRAGMENT_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_ICE_FRAGMENT_HITBOX;
-        sequence.AddFrame(0, 0, 58, 216, 8, 8, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Sculpture");
-        sequence.OriginOffset = -PENGUIN_SCULPTURE_HITBOX.Origin - PENGUIN_SCULPTURE_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_SCULPTURE_HITBOX;
-        sequence.AddFrame(-2, -7, 82, 233, 13, 16, 19);
-        sequence.AddFrame(2, -3, 104, 224, 19, 24, 19);
-        sequence.AddFrame(4, -1, 183, 226, 23, 28, 19);
-        sequence.AddFrame(5, 0, 133, 217, 28, 32, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Lever");
-        sequence.OriginOffset = -PENGUIN_LEVER_HITBOX.Origin - PENGUIN_LEVER_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_LEVER_HITBOX;
-        sequence.AddFrame(-8, -4, 169, 225, 10, 16, 1, true);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("Snow");
-        sequence.OriginOffset = -PENGUIN_SNOW_HITBOX.Origin - PENGUIN_SNOW_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_SNOW_HITBOX;
-        sequence.AddFrame(1, 1, 186, 172, 18, 18, 1, true);
-        sequence.AddFrame(1, 1, 204, 172, 18, 18, 1);
-        sequence.AddFrame(2, 2, 222, 172, 18, 18, 1);
-        sequence.AddFrame(2, 2, 240, 172, 18, 18, 1);
-        sequence.AddFrame(2, 2, 258, 172, 18, 18, 1);
-        sequence.AddFrame(3, 3, 276, 172, 18, 18, 1);
-        sequence.AddFrame(3, 2, 186, 190, 18, 18, 1);
-        sequence.AddFrame(3, 2, 204, 190, 18, 18, 1);
-        sequence.AddFrame(4, 3, 222, 190, 18, 18, 1);
-        sequence.AddFrame(3, 3, 240, 190, 18, 18, 1);
-        sequence.AddFrame(3, 3, 258, 190, 18, 18, 1);
-        sequence.AddFrame(4, 4, 276, 190, 18, 18, 1);
-        sequence.AddFrame(2, 3, 186, 208, 18, 18, 1);
-        sequence.AddFrame(2, 3, 204, 208, 18, 18, 1);
-        sequence.AddFrame(3, 4, 222, 208, 18, 18, 1);
-
-        sequence = penguinSpriteSheet.AddFrameSquence("FrozenBlock");
-        sequence.OriginOffset = -PENGUIN_FROZEN_BLOCK_HITBOX.Origin - PENGUIN_FROZEN_BLOCK_HITBOX.Mins;
-        sequence.Hitbox = PENGUIN_FROZEN_BLOCK_HITBOX;
-        sequence.AddFrame(14, 3, 6, 216, 37, 38, 1, true);
-
-        penguinSpriteSheet.ReleaseCurrentTexture();
-
-        // Snow
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Mist.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            mistSpriteSheet.CurrentTexture = texture;
-        }
-
-        sequence = mistSpriteSheet.AddFrameSquence("Mist");
-        sequence.OriginOffset = Vector.NULL_VECTOR;
-        sequence.Hitbox = (Vector.NULL_VECTOR, Vector.NULL_VECTOR, (SCENE_SIZE, SCENE_SIZE));
-        sequence.AddFrame(0, 0, 0, 0, 256, 256, 1, true);
-
-        mistSpriteSheet.ReleaseCurrentTexture();
-
-        // Platforms
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Objects.Platforms.png"))
-        {
-            var texture = CreateImageTextureFromStream(stream);
-            platformsSpriteSheet.CurrentTexture = texture;
-        }
-
-        sequence = platformsSpriteSheet.AddFrameSquence("Probe8201U");
-        sequence.OriginOffset = -PROBE8201U_HITBOX.Origin - PROBE8201U_HITBOX.Mins;
-        sequence.Hitbox = PROBE8201U_HITBOX;
-        sequence.AddFrame(-2, -3, 124, 107, 18, 48, 7, true);
-        sequence.AddFrame(-2, -3, 142, 107, 18, 48, 7);
-        sequence.AddFrame(-2, -3, 160, 107, 18, 48, 7);
-        sequence.AddFrame(-2, -3, 178, 107, 18, 48, 7);
-        sequence.AddFrame(-2, -3, 196, 107, 18, 48, 7);
-        sequence.AddFrame(-2, -3, 214, 107, 18, 48, 7);
-        sequence.AddFrame(-2, -3, 232, 107, 18, 48, 7);
-
-        sequence = platformsSpriteSheet.AddFrameSquence("RocketPropellerJet");
-        sequence.AddFrame(124, 155, 18, 23, 1, true, OriginPosition.MIDDLE_TOP);
-        sequence.AddFrame(142, 155, 18, 23, 1, false, OriginPosition.MIDDLE_TOP);
-        sequence.AddFrame(160, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
-        sequence.AddFrame(178, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
-        sequence.AddFrame(196, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
-
-        sequence = platformsSpriteSheet.AddFrameSquence("RocketJet");
-        sequence.AddFrame(124, 155, 18, 23, 1, true, OriginPosition.MIDDLE_TOP);
-        sequence.AddFrame(142, 155, 18, 23, 1, false, OriginPosition.MIDDLE_TOP);
-        sequence.AddFrame(214, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
-        sequence.AddFrame(232, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
-        sequence.AddFrame(124, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
-
-        platformsSpriteSheet.ReleaseCurrentTexture();
+        RecallPrecacheActions();
 
         // Load tiles & object positions from the ROM (if exist)
 
@@ -2133,7 +1103,7 @@ public class GameEngine : IRenderable, IRenderTarget
             World.Tessellate();
         }
 
-        foreach (var entity in Entities)
+        foreach (var entity in entities)
         {
             if (entity is Sprite sprite)
                 sprite.OnDeviceReset();
@@ -2206,7 +1176,7 @@ public class GameEngine : IRenderable, IRenderTarget
     {
         if (CurrentCheckpoint != value)
         {
-            currentCheckpoint = Entities.GetReferenceTo(value);
+            currentCheckpoint = entities.GetReferenceTo(value);
             if (CurrentCheckpoint != null)
             {
                 CameraConstraintsBox = CurrentCheckpoint.Hitbox;
@@ -2228,7 +1198,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    private void AddChargingEffectFrames(SpriteSheet.FrameSequence sequence, int level)
+    internal void AddChargingEffectFrames(SpriteSheet.FrameSequence sequence, int level)
     {
         sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 2), new Vector(27, 46) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, true, OriginPosition.CENTER);
@@ -2452,7 +1422,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    private Texture CreateChargingTexture(Vector[] points, bool[] large, int[] types, int level)
+    internal Texture CreateChargingTexture(Vector[] points, bool[] large, int[] types, int level)
     {
         int width1 = (int) NextHighestPowerOfTwo(CHARGING_EFFECT_HITBOX_SIZE);
         int height1 = (int) NextHighestPowerOfTwo(CHARGING_EFFECT_HITBOX_SIZE);
@@ -2606,7 +1576,8 @@ public class GameEngine : IRenderable, IRenderTarget
 
     private void ClearEntities()
     {
-        Entities.Clear();
+        entities.Clear();
+        aliveEntities.Clear();
 
         foreach (var layer in sprites)
             layer.Clear();
@@ -3205,6 +2176,8 @@ public class GameEngine : IRenderable, IRenderTarget
             {
                 foreach (var added in spawnedEntities)
                 {
+                    aliveEntities.Add(added);
+
                     if (added is Sprite sprite)
                     {
                         if (sprite is HUD hud)
@@ -3233,20 +2206,20 @@ public class GameEngine : IRenderable, IRenderTarget
             {
                 if (FreezingSprites)
                 {
-                    foreach (var entity in Entities)
+                    foreach (var entity in aliveEntities)
                     {
                         if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
                         {
-                            if (entity.Alive && entity != Camera)
+                            if (entity != Camera)
                                 entity.OnFrame();
                         }
                     }
                 }
                 else
                 {
-                    foreach (var entity in Entities)
+                    foreach (var entity in aliveEntities)
                     {
-                        if (entity.Alive && entity != Camera)
+                        if (entity != Camera)
                             entity.OnFrame();
                     }
                 }
@@ -3258,25 +2231,7 @@ public class GameEngine : IRenderable, IRenderTarget
             if (removedEntities.Count > 0)
             {
                 foreach (var removed in removedEntities)
-                {
-                    if (removed is Sprite sprite)
-                    {
-                        if (sprite is HUD hud)
-                            huds[sprite.Layer].Remove(hud);
-                        else
-                            sprites[sprite.Layer].Remove(sprite);
-                    }
-
-                    removed.Cleanup();
-                    removed.Alive = false;
-                    removed.Dead = true;
-                    removed.DeathFrame = FrameCounter;
-
-                    if (!removed.Respawnable)
-                        Entities.Remove(removed);
-                    else if (removed.RespawnOnNear)
-                        removed.Origin = autoRespawnableEntities[removed.reference].Origin;
-                }
+                    RemoveEntity(removed);
 
                 removedEntities.Clear();
             }
@@ -3450,7 +2405,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
             currentLevel = level;
 
-            camera = Entities.Create<Camera>(new
+            camera = entities.Create<Camera>(new
             {
                 Width = SCREEN_WIDTH,
                 Height = SCREEN_HEIGHT
@@ -3924,7 +2879,7 @@ public class GameEngine : IRenderable, IRenderTarget
         renderFrameCounter++;
 
         long elapsedTicks = clock.ElapsedTicks;
-        long remainingTicks = targetElapsedTime - (elapsedTicks - previousElapsedTicks);        
+        long remainingTicks = targetElapsedTime - (elapsedTicks - previousElapsedTicks);
 
         if (remainingTicks > 0)
         {
@@ -4068,7 +3023,7 @@ public class GameEngine : IRenderable, IRenderTarget
             {
                 if (FreezingSprites)
                 {
-                    foreach (var entity in Entities)
+                    foreach (var entity in aliveEntities)
                     {
                         if (entity != Camera && (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite)) && (entity is not HUD hud || freezingSpriteExceptions.Contains(hud)))
                             entity.PostThink();
@@ -4076,7 +3031,7 @@ public class GameEngine : IRenderable, IRenderTarget
                 }
                 else
                 {
-                    foreach (var entity in Entities)
+                    foreach (var entity in aliveEntities)
                     {
                         if (entity != Camera && entity is not HUD)
                             entity.PostThink();
@@ -4464,7 +3419,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
         }
 
-        Entities.Deserialize(serializer);
+        entities.Deserialize(serializer);
 
         RNG.Deserialize(serializer);
 
@@ -4527,6 +3482,7 @@ public class GameEngine : IRenderable, IRenderTarget
         Running = serializer.ReadBool();
         FrameCounter = serializer.ReadLong();
 
+        aliveEntities.Deserialize(serializer);
         spawnedEntities.Deserialize(serializer);
         removedEntities.Deserialize(serializer);
 
@@ -4601,7 +3557,7 @@ public class GameEngine : IRenderable, IRenderTarget
             serializer.WriteInt(mmx.PalLoad);
         }
 
-        Entities.Serialize(serializer);
+        entities.Serialize(serializer);
 
         RNG.Serialize(serializer);
 
@@ -4648,6 +3604,7 @@ public class GameEngine : IRenderable, IRenderTarget
         serializer.WriteBool(Running);
         serializer.WriteLong(FrameCounter);
 
+        aliveEntities.Serialize(serializer);
         spawnedEntities.Serialize(serializer);
         removedEntities.Serialize(serializer);
 
@@ -4748,9 +3705,9 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    public ChangeDynamicPropertyTrigger AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation)
+    public EntityReference<ChangeDynamicPropertyTrigger> AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation)
     {
-        ChangeDynamicPropertyTrigger trigger = Entities.Create<ChangeDynamicPropertyTrigger>(new
+        ChangeDynamicPropertyTrigger trigger = entities.Create<ChangeDynamicPropertyTrigger>(new
         {
             Origin = origin,
             Hitbox = (origin, (-SCREEN_WIDTH * 0.5, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
@@ -4761,12 +3718,12 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         trigger.Spawn();
-        return trigger;
+        return entities.GetReferenceTo(trigger);
     }
 
-    public Checkpoint AddCheckpoint(ushort index, Box boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
+    public EntityReference<Checkpoint> AddCheckpoint(ushort index, Box boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
     {
-        Checkpoint checkpoint = Entities.Create<Checkpoint>(new
+        Checkpoint checkpoint = entities.Create<Checkpoint>(new
         {
             Point = index,
             boundingBox.Origin,
@@ -4780,12 +3737,12 @@ public class GameEngine : IRenderable, IRenderTarget
 
         checkpoints.Add(checkpoint);
         checkpoint.Spawn();
-        return checkpoint;
+        return entities.GetReferenceTo(checkpoint);
     }
 
-    public CheckpointTriggerOnce AddCheckpointTrigger(ushort index, Vector origin)
+    public EntityReference<CheckpointTriggerOnce> AddCheckpointTrigger(ushort index, Vector origin)
     {
-        CheckpointTriggerOnce trigger = Entities.Create<CheckpointTriggerOnce>(new
+        CheckpointTriggerOnce trigger = entities.Create<CheckpointTriggerOnce>(new
         {
             Origin = origin,
             Hitbox = (origin, (0, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
@@ -4793,7 +3750,7 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         trigger.Spawn();
-        return trigger;
+        return entities.GetReferenceTo(trigger);
     }
 
     public Sprite AddObjectEvent(ushort id, ushort subid, Vector origin)
@@ -4813,9 +3770,9 @@ public class GameEngine : IRenderable, IRenderTarget
             };
     }
 
-    internal Penguin AddPenguin(Vector origin)
+    internal EntityReference<Penguin> AddPenguin(Vector origin)
     {
-        Penguin penguin = Entities.Create<Penguin>(new
+        Penguin penguin = entities.Create<Penguin>(new
         {
             Origin = origin
         });
@@ -4823,7 +3780,7 @@ public class GameEngine : IRenderable, IRenderTarget
         penguin.BossDefeatedEvent += OnBossDefeated;
         Boss = penguin;
 
-        return penguin;
+        return entities.GetReferenceTo(penguin);
     }
 
     private void OnBossDefeated(Boss boss, Player killer)
@@ -4836,9 +3793,9 @@ public class GameEngine : IRenderable, IRenderTarget
         Engine.DoDelayedAction((int) (6.5 * 60), () => killer.StartTeleporting(true));
     }
 
-    private Probe8201U AddProbe8201U(ushort subid, Vector origin)
+    private EntityReference<Probe8201U> AddProbe8201U(ushort subid, Vector origin)
     {
-        Probe8201U probe = Entities.Create<Probe8201U>(new
+        Probe8201U probe = entities.Create<Probe8201U>(new
         {
             Origin = origin,
             MovingVertically = (subid & 0x20) == 0,
@@ -4847,7 +3804,7 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         probe.Place();
-        return probe;
+        return entities.GetReferenceTo(probe);
     }
 
     private Sprite AddRideArmor(ushort subid, Vector origin)
@@ -4862,9 +3819,9 @@ public class GameEngine : IRenderable, IRenderTarget
         return null;
     }
 
-    public CameraLockTrigger AddCameraLockTrigger(Box boundingBox, IEnumerable<Vector> extensions)
+    public EntityReference<CameraLockTrigger> AddCameraLockTrigger(Box boundingBox, IEnumerable<Vector> extensions)
     {
-        CameraLockTrigger trigger = Entities.Create<CameraLockTrigger>(new
+        CameraLockTrigger trigger = entities.Create<CameraLockTrigger>(new
         {
             boundingBox.Origin,
             Hitbox = boundingBox
@@ -4940,9 +3897,9 @@ public class GameEngine : IRenderable, IRenderTarget
         cameraConstraints.Clear();
     }
 
-    internal void ShootLemon(Player shooter, Vector origin, bool dashLemon)
+    internal EntityReference<BusterLemon> ShootLemon(Player shooter, Vector origin, bool dashLemon)
     {
-        BusterLemon lemon = Entities.Create<BusterLemon>(new
+        BusterLemon lemon = entities.Create<BusterLemon>(new
         {
             Shooter = shooter,
             Origin = origin,
@@ -4950,137 +3907,140 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         lemon.Spawn();
+        return entities.GetReferenceTo(lemon);
     }
 
-    internal void ShootSemiCharged(Player shooter, Vector origin)
+    internal EntityReference<BusterSemiCharged> ShootSemiCharged(Player shooter, Vector origin)
     {
-        BusterSemiCharged semiCharged = Entities.Create<BusterSemiCharged>(new
+        BusterSemiCharged semiCharged = entities.Create<BusterSemiCharged>(new
         {
             Shooter = shooter,
             Origin = origin
         });
 
         semiCharged.Spawn();
+        return entities.GetReferenceTo(semiCharged);
     }
 
-    internal void ShootCharged(Player shooter, Vector origin)
+    internal EntityReference<BusterCharged> ShootCharged(Player shooter, Vector origin)
     {
-        BusterCharged charged = Entities.Create<BusterCharged>(new
+        BusterCharged charged = entities.Create<BusterCharged>(new
         {
             Shooter = shooter,
             Origin = origin
         });
 
         charged.Spawn();
+        return entities.GetReferenceTo(charged);
     }
 
     internal EntityReference<ChargingEffect> StartChargingEffect(Player player)
     {
-        ChargingEffect effect = Entities.Create<ChargingEffect>(new
+        ChargingEffect effect = entities.Create<ChargingEffect>(new
         {
             Charger = player
         });
 
         effect.Spawn();
-        return Engine.Entities.GetReferenceTo(effect);
+        return entities.GetReferenceTo(effect);
     }
 
     internal EntityReference<DashSparkEffect> StartDashSparkEffect(Player player)
     {
-        DashSparkEffect effect = Entities.Create<DashSparkEffect>(new
+        DashSparkEffect effect = entities.Create<DashSparkEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return Engine.Entities.GetReferenceTo(effect);
+        return entities.GetReferenceTo(effect);
     }
 
     internal EntityReference<DashSmokeEffect> StartDashSmokeEffect(Player player)
     {
-        DashSmokeEffect effect = Entities.Create<DashSmokeEffect>(new
+        DashSmokeEffect effect = entities.Create<DashSmokeEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return Engine.Entities.GetReferenceTo(effect);
+        return entities.GetReferenceTo(effect);
     }
 
     internal EntityReference<WallSlideEffect> StartWallSlideEffect(Player player)
     {
-        WallSlideEffect effect = Entities.Create<WallSlideEffect>(new
+        WallSlideEffect effect = entities.Create<WallSlideEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return Engine.Entities.GetReferenceTo(effect);
+        return entities.GetReferenceTo(effect);
     }
 
-    internal WallKickEffect StartWallKickEffect(Player player)
+    internal EntityReference<WallKickEffect> StartWallKickEffect(Player player)
     {
-        WallKickEffect effect = Entities.Create<WallKickEffect>(new
+        WallKickEffect effect = entities.Create<WallKickEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return effect;
+        return entities.GetReferenceTo(effect);
     }
 
     internal EntityReference<ExplosionEffect> CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1)
     {
-        ExplosionEffect effect = Entities.Create<ExplosionEffect>(new
+        ExplosionEffect effect = entities.Create<ExplosionEffect>(new
         {
             Origin = origin,
             EffectSound = effectSound
         });
 
         effect.Spawn();
-        return Engine.Entities.GetReferenceTo(effect);
+        return entities.GetReferenceTo(effect);
     }
 
     private EntityReference<XDieExplosion> CreateXDieExplosionEffect(double phase)
     {
-        XDieExplosion effect = Entities.Create<XDieExplosion>(new
+        XDieExplosion effect = entities.Create<XDieExplosion>(new
         {
             Offset = Player.Origin - Camera.LeftTop,
             Phase = phase
         });
 
         effect.Spawn();
-        return Engine.Entities.GetReferenceTo(effect);
+        return entities.GetReferenceTo(effect);
     }
 
     public EntityReference<Scriver> AddScriver(Vector origin)
     {
-        Scriver scriver = Entities.Create<Scriver>(new
+        Scriver scriver = entities.Create<Scriver>(new
         {
             Origin = origin
         });
 
         scriver.Place();
-        return Engine.Entities.GetReferenceTo(scriver);
+        return entities.GetReferenceTo(scriver);
     }
 
     public EntityReference<BattonBoneG> AddBattonBoneG(Vector origin)
     {
-        BattonBoneG battonBoneG = Entities.Create<BattonBoneG>(new
+        BattonBoneG battonBoneG = entities.Create<BattonBoneG>(new
         {
             Origin = origin
         });
 
         battonBoneG.Place();
-        return Engine.Entities.GetReferenceTo(battonBoneG);
+        return entities.GetReferenceTo(battonBoneG);
     }
 
     private void SpawnX(Vector origin)
     {
         if (Player != null)
-            Entities.Remove(Player);
+            RemoveEntity(Player, true);
 
-        player = Entities.Create<Player>(new
+        player = entities.Create<Player>(new
         {
             Name = "X",
             Origin = origin
@@ -5090,12 +4050,35 @@ public class GameEngine : IRenderable, IRenderTarget
         Player.Lives = lastLives;
     }
 
+    private void RemoveEntity(Entity entity, bool force = false)
+    {
+        if (entity is Sprite sprite)
+        {
+            if (sprite is HUD hud)
+                huds[sprite.Layer].Remove(hud);
+            else
+                sprites[sprite.Layer].Remove(sprite);
+        }
+
+        entity.Cleanup();
+        entity.Alive = false;
+        entity.Dead = true;
+        entity.DeathFrame = FrameCounter;
+
+        aliveEntities.Remove(entity);
+
+        if (force || !entity.Respawnable)
+            entities.Remove(entity);
+        else if (entity.RespawnOnNear)
+            entity.Origin = autoRespawnableEntities[entity.reference].Origin;
+    }
+
     private void CreateHP()
     {
         if (HP != null)
-            Entities.Remove(HP);
+            RemoveEntity(HP, true);
 
-        hp = Entities.Create<PlayerHealthHUD>(new
+        hp = entities.Create<PlayerHealthHUD>(new
         {
             Name = "HP"
         });
@@ -5106,9 +4089,9 @@ public class GameEngine : IRenderable, IRenderTarget
     private void StartReadyHUD()
     {
         if (ReadyHUD != null)
-            Entities.Remove(ReadyHUD);
+            RemoveEntity(ReadyHUD, true);
 
-        readyHUD = Entities.Create<ReadyHUD>(new
+        readyHUD = entities.Create<ReadyHUD>(new
         {
             Name = "Ready"
         });
@@ -5439,7 +4422,7 @@ public class GameEngine : IRenderable, IRenderTarget
         ResetDevice();
         LoadLevel(@"resources\roms\" + ROM_NAME, INITIAL_LEVEL, INITIAL_CHECKPOINT);
 
-        FrameCounter = 0;      
+        FrameCounter = 0;
         renderFrameCounter = 0;
         lastRenderFrameCounter = 0;
         previousElapsedTicks = 0;
@@ -5567,7 +4550,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames)
     {
-        SmallHealthRecover drop = Entities.Create<SmallHealthRecover>(new
+        SmallHealthRecover drop = entities.Create<SmallHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5579,7 +4562,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public BigHealthRecover DropBigHealthRecover(Vector origin, int durationFrames)
     {
-        BigHealthRecover drop = Entities.Create<BigHealthRecover>(new
+        BigHealthRecover drop = entities.Create<BigHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5591,7 +4574,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SmallAmmoRecover DropSmallAmmoRecover(Vector origin, int durationFrames)
     {
-        SmallAmmoRecover drop = Entities.Create<SmallAmmoRecover>(new
+        SmallAmmoRecover drop = entities.Create<SmallAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5603,7 +4586,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public BigAmmoRecover DropBigAmmoRecover(Vector origin, int durationFrames)
     {
-        BigAmmoRecover drop = Entities.Create<BigAmmoRecover>(new
+        BigAmmoRecover drop = entities.Create<BigAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5615,7 +4598,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public LifeUp DropLifeUp(Vector origin, int durationFrames)
     {
-        LifeUp drop = Entities.Create<LifeUp>(new
+        LifeUp drop = entities.Create<LifeUp>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -5627,7 +4610,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SmallHealthRecover AddSmallHealthRecover(Vector origin)
     {
-        SmallHealthRecover item = Entities.Create<SmallHealthRecover>(new
+        SmallHealthRecover item = entities.Create<SmallHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5639,7 +4622,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public BigHealthRecover AddBigHealthRecover(Vector origin)
     {
-        BigHealthRecover item = Entities.Create<BigHealthRecover>(new
+        BigHealthRecover item = entities.Create<BigHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5651,7 +4634,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SmallAmmoRecover AddSmallAmmoRecover(Vector origin)
     {
-        SmallAmmoRecover item = Entities.Create<SmallAmmoRecover>(new
+        SmallAmmoRecover item = entities.Create<SmallAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5663,7 +4646,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public BigAmmoRecover AddBigAmmoRecover(Vector origin)
     {
-        BigAmmoRecover item = Entities.Create<BigAmmoRecover>(new
+        BigAmmoRecover item = entities.Create<BigAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5675,7 +4658,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public LifeUp AddLifeUp(Vector origin)
     {
-        LifeUp item = Entities.Create<LifeUp>(new
+        LifeUp item = entities.Create<LifeUp>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -5687,7 +4670,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public HeartTank AddHeartTank(Vector origin)
     {
-        HeartTank item = Entities.Create<HeartTank>(new
+        HeartTank item = entities.Create<HeartTank>(new
         {
             Origin = origin
         });
@@ -5698,7 +4681,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SubTankItem AddSubTank(Vector origin)
     {
-        SubTankItem item = Entities.Create<SubTankItem>(new
+        SubTankItem item = entities.Create<SubTankItem>(new
         {
             Origin = origin
         });
@@ -5771,7 +4754,7 @@ public class GameEngine : IRenderable, IRenderTarget
     internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
     {
         bool secondDoor = (eventSubId & 0x80) != 0;
-        BossDoor door = Entities.Create<BossDoor>(new
+        BossDoor door = entities.Create<BossDoor>(new
         {
             Origin = pos,
             Bidirectional = false,
@@ -5878,7 +4861,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void KillAllAliveEnemies()
     {
-        foreach (var entity in Entities)
+        foreach (var entity in entities)
         {
             if (entity is Enemy)
                 entity.Kill();
@@ -5887,7 +4870,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void KillAllAliveWeapons()
     {
-        foreach (var entity in Entities)
+        foreach (var entity in entities)
         {
             if (entity is Weapon)
                 entity.Kill();
@@ -5896,7 +4879,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void KillAllAliveEnemiesAndWeapons()
     {
-        foreach (var entity in Entities)
+        foreach (var entity in entities)
         {
             if (entity is Enemy or Weapon)
                 entity.Kill();
@@ -5964,6 +4947,69 @@ public class GameEngine : IRenderable, IRenderTarget
         {
             sprites[sprite.Layer].Remove(sprite);
             sprites[layer].Add(sprite);
+        }
+    }
+
+    internal void CallPrecacheAction(Type baseType)
+    {
+        PrecacheAction first = null;
+        PrecacheAction previous = null;
+        bool shouldCall = false;
+
+        for (var type = baseType; type != null; type = type.BaseType)
+        {
+            string name = type.Name;
+            if (precacheActions.TryGetValue(type, out var action))
+            {
+                if (previous != null)
+                    previous.Parent = action;
+
+                break;
+            }
+
+            action = new PrecacheAction(type);
+            first ??= action;
+
+            var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            foreach (var method in methods)
+            {
+                Attribute attribute = method.GetCustomAttribute(typeof(PrecacheAttribute));
+                if (attribute != null)
+                {
+                    if (method.GetParameters().Length > 0)
+                        throw new Exception("Precache action should have no parameters.");
+
+                    if (method.ReturnType != typeof(void))
+                        throw new Exception("Precache action should have void as return type.");
+
+                    shouldCall = true;
+                    action.Method = method;
+                    precacheActions.Add(type, action);
+                }
+            }
+
+            if (previous != null)
+                previous.Parent = action;
+
+            previous = action;
+        }
+
+        if (shouldCall)
+            first.Call();
+    }
+
+    private void RecallPrecacheActions()
+    {
+        foreach (var kv in precacheActions)
+        {
+            var action = kv.Value;
+            action.Reset();
+        }
+
+        foreach (var kv in precacheActions)
+        {
+            var action = kv.Value;
+            action.Call();
         }
     }
 }

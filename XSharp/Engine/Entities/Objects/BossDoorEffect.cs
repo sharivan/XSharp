@@ -1,10 +1,79 @@
-﻿using XSharp.Engine.Entities.Effects;
+﻿using System.Reflection;
+
+using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Graphics;
+using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Objects;
 
 internal class BossDoorEffect : SpriteEffect
 {
+    [Precache]
+    new internal static void Precache()
+    {
+        var bossDoorSpriteSheet = Engine.CreateSpriteSheet("Boos Door", true, true);
+
+        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Objects.BossDoor.png"))
+        {
+            var texture = Engine.CreateImageTextureFromStream(stream);
+            bossDoorSpriteSheet.CurrentTexture = texture;
+        }
+
+        var bossDoorHitbox = new Box(Vector.NULL_VECTOR, (-8, -23), (24, 25));
+
+        var sequence = bossDoorSpriteSheet.AddFrameSquence("Closed");
+        sequence.OriginOffset = -bossDoorHitbox.Mins;
+        sequence.Hitbox = bossDoorHitbox;
+        sequence.AddFrame(0, 0, 32, 0, 32, 48, 1, true);
+
+        sequence = bossDoorSpriteSheet.AddFrameSquence("Opening");
+        sequence.OriginOffset = -bossDoorHitbox.Mins;
+        sequence.Hitbox = bossDoorHitbox;
+        sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 64, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 160, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 224, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 160, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 224, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 256, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 288, 0, 32, 48, 4);
+
+        sequence = bossDoorSpriteSheet.AddFrameSquence("PlayerCrossing");
+        sequence.OriginOffset = -bossDoorHitbox.Mins;
+        sequence.Hitbox = bossDoorHitbox;
+        sequence.AddFrame(0, 0, 32, 48, 1, true);
+
+        sequence = bossDoorSpriteSheet.AddFrameSquence("Closing");
+        sequence.OriginOffset = -bossDoorHitbox.Mins;
+        sequence.Hitbox = bossDoorHitbox;
+        sequence.AddFrame(0, 0, 288, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 256, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 224, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 160, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 224, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 192, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 160, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 64, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 128, 0, 32, 48, 4);
+        sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
+        sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
+
+        bossDoorSpriteSheet.ReleaseCurrentTexture();
+    }
+
     private EntityReference<BossDoor> door;
 
     public BossDoor Door

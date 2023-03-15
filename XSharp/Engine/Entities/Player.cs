@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Effects;
@@ -41,6 +42,297 @@ public enum PlayerState
 // TODO : This class needs a huge refactor
 public class Player : Sprite, IStateEntity<PlayerState>
 {
+    [Precache]
+    internal static void Precache()
+    {
+        var x1NormalPalette = Engine.CreatePalette("x1NormalPalette", X1_NORMAL_PALETTE);
+
+        var xSpriteSheet = Engine.CreateSpriteSheet("X", true, true);
+
+        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.X[small].png"))
+        {
+            var texture = Engine.CreateImageTextureFromStream(stream);
+            xSpriteSheet.CurrentTexture = texture;
+        }
+
+        xSpriteSheet.CurrentPalette = x1NormalPalette;
+
+        var sequence = xSpriteSheet.AddFrameSquence("Spawn");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(-4, 17, 5, 15, 8, 48);
+
+        sequence = xSpriteSheet.AddFrameSquence("SpawnEnd");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(-4, 17, 5, 15, 8, 48);
+        sequence.AddFrame(3, -2, 19, 34, 22, 29, 2);
+        sequence.AddFrame(8, 11, 46, 21, 30, 42);
+        sequence.AddFrame(8, 8, 84, 24, 30, 39);
+        sequence.AddFrame(8, 5, 120, 27, 30, 36);
+        sequence.AddFrame(8, 3, 156, 28, 30, 34);
+        sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
+
+        sequence = xSpriteSheet.AddFrameSquence("Stand");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(8, 3, 226, 29, 30, 34, 80, true);
+        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+        sequence.AddFrame(8, 3, 295, 29, 30, 34, 8);
+        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+        sequence.AddFrame(8, 3, 226, 29, 30, 34, 48);
+        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+        sequence.AddFrame(8, 3, 295, 29, 30, 34, 4);
+        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+        sequence.AddFrame(8, 3, 226, 29, 30, 34, 4);
+        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+        sequence.AddFrame(8, 3, 295, 29, 30, 34, 4);
+        sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
+
+        sequence = xSpriteSheet.AddFrameSquence("Tired");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(8, 4, 166, 331, 30, 35, 10, true);
+        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
+        sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
+        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
+        sequence.AddFrame(8, 4, 166, 331, 30, 35, 10);
+        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
+        sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
+        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
+        sequence.AddFrame(8, 4, 166, 331, 30, 35, 10);
+        sequence.AddFrame(8, 3, 262, 332, 30, 34, 2);
+        sequence.AddFrame(8, 3, 294, 332, 30, 34, 6);
+        sequence.AddFrame(8, 3, 262, 332, 30, 34, 2);
+        sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
+        sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
+
+        sequence = xSpriteSheet.AddFrameSquence("Shooting");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(8, 3, 365, 29, 30, 34, 4);
+        sequence.AddFrame(8, 3, 402, 29, 29, 34, 12, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("PreWalking");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(8, 3, 5, 67, 30, 34, 5);
+
+        sequence = xSpriteSheet.AddFrameSquence("Walking");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(1, 3, 50, 67, 20, 34, 1, true);
+        sequence.AddFrame(3, 4, 75, 67, 23, 35, 2);
+        sequence.AddFrame(7, 3, 105, 68, 32, 34, 3);
+        sequence.AddFrame(10, 2, 145, 68, 34, 33, 3);
+        sequence.AddFrame(5, 2, 190, 68, 26, 33, 3);
+        sequence.AddFrame(3, 3, 222, 67, 22, 34, 2);
+        sequence.AddFrame(5, 4, 248, 67, 25, 35, 2);
+        sequence.AddFrame(5, 3, 280, 67, 30, 34, 3);
+        sequence.AddFrame(8, 2, 318, 68, 34, 33, 3);
+        sequence.AddFrame(7, 2, 359, 68, 29, 33, 3);
+        sequence.AddFrame(1, 3, 50, 67, 20, 34);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootWalking");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(1, 3, 41, 107, 29, 34, 1, true);
+        sequence.AddFrame(3, 4, 76, 107, 32, 35, 2);
+        sequence.AddFrame(7, 3, 115, 108, 35, 34, 3);
+        sequence.AddFrame(10, 2, 159, 108, 38, 33, 3);
+        sequence.AddFrame(5, 2, 204, 108, 34, 33, 3);
+        sequence.AddFrame(3, 3, 246, 107, 31, 34, 2);
+        sequence.AddFrame(5, 4, 284, 107, 33, 35, 2);
+        sequence.AddFrame(5, 3, 326, 107, 35, 34, 3);
+        sequence.AddFrame(8, 2, 369, 108, 37, 33, 3);
+        sequence.AddFrame(7, 2, 413, 108, 35, 33, 3);
+        sequence.AddFrame(1, 3, 41, 107, 29, 34);
+
+        sequence = xSpriteSheet.AddFrameSquence("Jumping");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(1, 0, 6, 148, 25, 37, 3);
+        sequence.AddFrame(-5, 1, 37, 148, 15, 41);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootJumping");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(1, 0, 201, 148, 29, 37, 3);
+        sequence.AddFrame(-5, 1, 240, 148, 24, 41);
+
+        sequence = xSpriteSheet.AddFrameSquence("GoingUp");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(-1, 5, 56, 146, 19, 46, 1, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(-1, 5, 271, 146, 27, 46, 1, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("Falling");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(1, 5, 80, 150, 23, 41, 4);
+        sequence.AddFrame(5, 6, 108, 150, 27, 42, 1, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootFalling");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
+        sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42, 1, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("Landing");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(1, 2, 139, 151, 24, 38, 2);
+        sequence.AddFrame(8, 1, 166, 153, 30, 32, 2);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootLanding");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(1, 2, 378, 151, 30, 38, 2);
+        sequence.AddFrame(8, 1, 413, 153, 36, 32, 2);
+
+        sequence = xSpriteSheet.AddFrameSquence("PreDashing");
+        sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
+        sequence.Hitbox = DASHING_HITBOX;
+        sequence.AddFrame(4, 12, 4, 335, 28, 31, 3);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootPreDashing");
+        sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
+        sequence.Hitbox = DASHING_HITBOX;
+        sequence.AddFrame(4, 12, 76, 335, 37, 31, 3);
+
+        sequence = xSpriteSheet.AddFrameSquence("Dashing");
+        sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
+        sequence.Hitbox = DASHING_HITBOX;
+        sequence.AddFrame(14, 7, 34, 341, 38, 26, 1, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootDashing");
+        sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
+        sequence.Hitbox = DASHING_HITBOX;
+        sequence.AddFrame(14, 7, 115, 341, 48, 26, 1, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("PostDashing");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(5, 0, 4, 335, 28, 31, 8);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootPostDashing");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(5, 0, 76, 335, 37, 31, 8);
+
+        sequence = xSpriteSheet.AddFrameSquence("WallSliding");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(5, 5, 5, 197, 25, 42, 5);
+        sequence.AddFrame(9, 7, 33, 196, 27, 43, 6);
+        sequence.AddFrame(9, 8, 64, 196, 28, 42, 1, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(5, 2 - 3, 158, 200, 31, 39, 5);
+        sequence.AddFrame(9 + 5, 7, 201, 196, 32, 43, 6);
+        sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42, 1, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("WallJumping");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(7, 2, 95, 199, 30, 39, 3);
+        sequence.AddFrame(5, 10, 128, 195, 27, 44);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootWallJumping");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(7, 1, 276, 200, 31, 38, 3);
+        sequence.AddFrame(5, 5, 315, 200, 32, 39);
+
+        sequence = xSpriteSheet.AddFrameSquence("PreLadderClimbing");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(3, 4, 7, 267, 21, 36, 8);
+
+        sequence = xSpriteSheet.AddFrameSquence("LadderMoving");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(2, 10, 111, 261, 18, 49, 8, true);
+        sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
+        sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
+        sequence.AddFrame(5, 14, 36, 261, 18, 49, 8);
+        sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
+        sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
+
+        sequence = xSpriteSheet.AddFrameSquence("ShootLadder");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(5, 14, 137, 261, 26, 48, 16, true);
+
+        sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.AddFrame(5, -11, 169, 281, 21, 32, 4);
+        sequence.AddFrame(2, -4, 195, 274, 18, 34, 4);
+
+        sequence = xSpriteSheet.AddFrameSquence("TopLadderDescending");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(2, -4, 195, 274, 18, 34, 4);
+        sequence.AddFrame(5, -11, 169, 281, 21, 32, 4);
+
+        sequence = xSpriteSheet.AddFrameSquence("TakingDamage");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(6, 1, 478, 157, 25, 36, 4);
+        sequence.AddFrame(10, -1, 509, 159, 29, 34, 1);
+        sequence.AddFrame(10, -1, 543, 159, 29, 34, 1);
+        sequence.AddFrame(11, 9, 578, 149, 32, 48, 2);
+        sequence.AddFrame(10, 1, 616, 159, 31, 34, 2);
+        sequence.AddFrame(11, 11, 654, 149, 32, 48, 2);
+        sequence.AddFrame(10, 1, 692, 159, 29, 34, 2);
+        sequence.AddFrame(11, 11, 727, 149, 32, 48, 2);
+        sequence.AddFrame(12, -1, 768, 159, 31, 34, 1);
+        sequence.AddFrame(10, 1, 804, 158, 29, 35, 1);
+        sequence.AddFrame(10, -1, 509, 159, 29, 34, 8);
+        sequence.AddFrame(6, 1, 478, 157, 25, 36, 2);
+
+        sequence = xSpriteSheet.AddFrameSquence("Dying");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(6, 1, 478, 157, 25, 36, 30);
+
+        sequence = xSpriteSheet.AddFrameSquence("Victory");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(7, 14, 221, 256, 28, 45, 10);
+        sequence.AddFrame(7, 14, 259, 256, 29, 45, 1);
+        sequence.AddFrame(7, 17, 297, 253, 34, 48, 2);
+        sequence.AddFrame(7, 14, 335, 256, 29, 45, 2);
+        sequence.AddFrame(7, 14, 373, 256, 31, 45, 3);
+        sequence.AddFrame(7, 14, 221, 256, 28, 45, 40);
+
+        sequence = xSpriteSheet.AddFrameSquence("PreTeleporting");
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
+        sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
+        sequence.AddFrame(8, 4, 156, 28, 30, 34);
+        sequence.AddFrame(8, 5, 120, 27, 30, 36);
+        sequence.AddFrame(8, 8, 84, 24, 30, 39);
+        sequence.AddFrame(8, 11, 46, 21, 30, 42);
+        sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
+        sequence.AddFrame(-4, 32, 5, 15, 8, 48);
+
+        sequence = xSpriteSheet.AddFrameSquence("DyingExplosion");
+        sequence.AddFrame(396, 344, 6, 6, 8, false, OriginPosition.CENTER);
+        sequence.AddFrame(406, 343, 8, 8, 8, false, OriginPosition.CENTER);
+        sequence.AddFrame(417, 342, 9, 9, 8, false, OriginPosition.CENTER);
+        sequence.AddFrame(429, 341, 11, 11, 8, true, OriginPosition.CENTER);
+        sequence.AddFrame(443, 339, 15, 15, 8, false, OriginPosition.CENTER);
+
+        xSpriteSheet.ReleaseCurrentTexture();
+    }
+
     private int lives;
 
     private readonly Keys[] keyBuffer = new Keys[KEY_BUFFER_COUNT];

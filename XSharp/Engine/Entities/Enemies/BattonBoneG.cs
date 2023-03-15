@@ -1,4 +1,7 @@
-﻿using XSharp.Math;
+﻿using System.Reflection;
+
+using XSharp.Engine.Graphics;
+using XSharp.Math;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -14,6 +17,44 @@ public enum BattonBoneGState
 
 public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
 {
+    [Precache]
+    new internal static void Precache()
+    {
+        var battonBoneGPalette = Engine.CreatePalette("battonBoneGPalette", BATTON_BONE_G_PALETTE);
+        var battonBoneGSpriteSheet = Engine.CreateSpriteSheet("BattonBoneG", true, true);
+
+        // Batton Bone G
+        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.batton-bone-g.png"))
+        {
+            var texture = Engine.CreateImageTextureFromStream(stream);
+            battonBoneGSpriteSheet.CurrentTexture = texture;
+        }
+
+        battonBoneGSpriteSheet.CurrentPalette = battonBoneGPalette;
+
+        var battonBoneGIdleHitbox = new Box(Vector.NULL_VECTOR, new Vector(-6, -18), new Vector(6, 0));
+        var battonBoneGAttackingHitbox = new Box(Vector.NULL_VECTOR, new Vector(-8, -14), new Vector(8, 0));
+
+        // 0
+        var sequence = battonBoneGSpriteSheet.AddFrameSquence("Idle");
+        sequence.OriginOffset = -battonBoneGIdleHitbox.Mins;
+        sequence.Hitbox = battonBoneGIdleHitbox;
+        sequence.AddFrame(0, 4, 7, 1, 14, 23, 1, true);
+
+        // 1
+        sequence = battonBoneGSpriteSheet.AddFrameSquence("Attacking");
+        sequence.OriginOffset = -battonBoneGAttackingHitbox.Mins;
+        sequence.Hitbox = battonBoneGAttackingHitbox;
+        sequence.AddFrame(4, 7, 22, 1, 30, 23, 1, true);
+        sequence.AddFrame(10, 8, 53, 1, 39, 23, 3);
+        sequence.AddFrame(5, 6, 93, 1, 29, 23, 3);
+        sequence.AddFrame(3, 2, 123, 1, 23, 23, 3);
+        sequence.AddFrame(3, 5, 147, 1, 23, 23, 4);
+        sequence.AddFrame(4, 7, 22, 1, 30, 23, 3);
+
+        battonBoneGSpriteSheet.ReleaseCurrentTexture();
+    }
+
     private bool flashing;
 
     public BattonBoneGState State

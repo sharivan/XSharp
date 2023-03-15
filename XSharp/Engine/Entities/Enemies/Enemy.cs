@@ -1,4 +1,5 @@
 ﻿using XSharp.Engine.Entities.Weapons;
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 
 using static XSharp.Engine.Consts;
@@ -7,6 +8,12 @@ namespace XSharp.Engine.Entities.Enemies;
 
 public abstract class Enemy : Sprite
 {
+    [Precache]
+    internal static void Precache()
+    {
+        Engine.CreatePalette("flashingPalette", FLASHING_PALETTE);
+    }
+
     public bool ReflectShots
     {
         get;

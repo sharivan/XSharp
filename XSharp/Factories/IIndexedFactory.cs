@@ -1,4 +1,6 @@
-﻿namespace XSharp.Factories;
+﻿using System.Collections.Generic;
+
+namespace XSharp.Factories;
 
 public interface IIndexedFactory : IFactory
 {
@@ -36,7 +38,7 @@ public interface IIndexedFactory : IFactory
     void UpdateReferenceIndex(IIndexedFactoryItemReference reference, int index);
 }
 
-public interface IIndexedFactory<ItemType> : IFactory<ItemType>, IIndexedFactory where ItemType : IIndexedFactoryItem
+public interface IIndexedFactory<ItemType> : IFactory<ItemType>, IReadOnlyList<ItemType>, IIndexedFactory where ItemType : IIndexedFactoryItem
 {
     new ItemType this[int index]
     {

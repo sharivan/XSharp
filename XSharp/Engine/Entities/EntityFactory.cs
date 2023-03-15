@@ -136,6 +136,8 @@ public class EntityFactory : IndexedNamedFactory<Entity>
             throw new IndexOutOfRangeException("Max entities reached the limit.");
 
         Type type = typeof(T);
+        GameEngine.Engine.CallPrecacheAction(type);
+
         int index = firstFreeEntityIndex++;
         var entity = new T();
         var reference = (EntityReference<T>) GetOrCreateReferenceTo(index, type);

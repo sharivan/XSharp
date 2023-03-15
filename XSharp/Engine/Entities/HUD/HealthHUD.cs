@@ -1,4 +1,6 @@
-﻿using XSharp.Engine.Graphics;
+﻿using System.Reflection;
+
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -21,6 +23,56 @@ public enum HUDImage
 
 public class HealthHUD : HUD
 {
+    [Precache]
+    internal static void Precache()
+    {
+        var hpSpriteSheet = Engine.CreateSpriteSheet("HP", true, true);
+
+        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.HUD.HP.png"))
+        {
+            var texture = Engine.CreateImageTextureFromStream(stream);
+            hpSpriteSheet.CurrentTexture = texture;
+        }
+
+        var sequence = hpSpriteSheet.AddFrameSquence("HPTop");
+        sequence.AddFrame(0, 0, 14, 4, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("HPBottom");
+        sequence.AddFrame(0, 4, 14, 16, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("HPMiddle");
+        sequence.AddFrame(0, 20, 14, 2, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("HPMiddleEmpty");
+        sequence.AddFrame(0, 22, 14, 2, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("RideArmor");
+        sequence.AddFrame(14, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("Zero");
+        sequence.AddFrame(26, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("X1Boss");
+        sequence.AddFrame(38, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("Boss");
+        sequence.AddFrame(50, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("Doppler");
+        sequence.AddFrame(14, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("W");
+        sequence.AddFrame(26, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("DopplerPrototype");
+        sequence.AddFrame(38, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+        sequence = hpSpriteSheet.AddFrameSquence("X");
+        sequence.AddFrame(50, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
+
+        hpSpriteSheet.ReleaseCurrentTexture();
+    }
+
     private static FixedSingle GetHeight(FixedSingle capacity)
     {
         return 4 + 2 * capacity + 16;

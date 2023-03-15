@@ -1,4 +1,7 @@
-﻿using XSharp.Engine.Collision;
+﻿using System.Reflection;
+
+using XSharp.Engine.Collision;
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -16,6 +19,50 @@ public enum ScriverState
 
 public class Scriver : Enemy, IStateEntity<ScriverState>
 {
+    [Precache]
+    new internal static void Precache()
+    {
+        var scriverPalette = Engine.CreatePalette("scriverPalette", SCRIVER_PALETTE);
+        var scriverSpriteSheet = Engine.CreateSpriteSheet("Scriver", true, true);
+
+        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.scriver.png"))
+        {
+            var texture = Engine.CreateImageTextureFromStream(stream);
+            scriverSpriteSheet.CurrentTexture = texture;
+        }
+
+        scriverSpriteSheet.CurrentPalette = scriverPalette;
+
+        // 0
+        var sequence = scriverSpriteSheet.AddFrameSquence("Idle");
+        sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
+        sequence.Hitbox = SCRIVER_HITBOX;
+        sequence.AddFrame(-5, 6, 4, 4, 35, 30, 1, true);
+
+        // 1
+        sequence = scriverSpriteSheet.AddFrameSquence("Jumping");
+        sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
+        sequence.Hitbox = SCRIVER_HITBOX;
+        sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
+        sequence.AddFrame(-7, 6, 78, 4, 35, 30, 5);
+        sequence.AddFrame(4, -3, 115, 4, 43, 30, 1, true);
+
+        // 2
+        sequence = scriverSpriteSheet.AddFrameSquence("Landing");
+        sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
+        sequence.Hitbox = SCRIVER_HITBOX;
+        sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
+
+        // 3
+        sequence = scriverSpriteSheet.AddFrameSquence("Drilling");
+        sequence.OriginOffset = -SCRIVER_DRILLING_HITBOX.Origin - SCRIVER_DRILLING_HITBOX.Mins;
+        sequence.Hitbox = SCRIVER_DRILLING_HITBOX;
+        sequence.AddFrame(-3, 0, 160, 10, 48, 24, 2, true);
+        sequence.AddFrame(-4, 1, 209, 9, 46, 25, 2);
+        sequence.AddFrame(-4, 0, 256, 10, 48, 24, 2);
+        sequence.AddFrame(-4, 1, 305, 9, 46, 25, 2);
+    }
+
     private bool flashing;
     private bool jumping;
     private int jumpCounter;

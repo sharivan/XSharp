@@ -1,4 +1,7 @@
-﻿using static XSharp.Engine.Consts;
+﻿using XSharp.Engine.Entities.Weapons;
+using XSharp.Engine.Graphics;
+
+using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Items;
 
@@ -10,6 +13,12 @@ public enum BigAmmoRecoverState
 
 public class BigAmmoRecover : Item
 {
+    [Precache]
+    internal static void Precache()
+    {
+        Engine.CallPrecacheAction(typeof(Weapon));
+    }
+
     public BigAmmoRecover()
     {
         SpriteSheetName = "X Weapons";

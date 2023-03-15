@@ -1,4 +1,5 @@
-﻿using XSharp.Math;
+﻿using XSharp.Engine.Graphics;
+using XSharp.Math;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -7,6 +8,12 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 public class PenguinIce : Enemy
 {
+    [Precache]
+    new internal static void Precache()
+    {
+        Engine.CallPrecacheAction(typeof(Penguin));
+    }
+
     private FixedSingle speed;
     private bool bumped;
     private EntityReference<Penguin> shooter;

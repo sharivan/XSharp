@@ -1,4 +1,5 @@
-﻿using XSharp.Math;
+﻿using XSharp.Engine.Graphics;
+using XSharp.Math;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -15,6 +16,12 @@ public enum PenguinLeverState
 
 public class PenguinLever : Sprite, IStateEntity<PenguinLeverState>
 {
+    [Precache]
+    internal static void Precache()
+    {
+        Engine.CallPrecacheAction(typeof(Penguin));
+    }
+
     private int showingFrameCounter;
 
     public PenguinLeverState State

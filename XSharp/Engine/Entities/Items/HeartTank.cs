@@ -1,7 +1,16 @@
-﻿namespace XSharp.Engine.Entities.Items;
+﻿using XSharp.Engine.Entities.Weapons;
+using XSharp.Engine.Graphics;
+
+namespace XSharp.Engine.Entities.Items;
 
 public class HeartTank : Item
 {
+    [Precache]
+    internal static void Precache()
+    {
+        Engine.CallPrecacheAction(typeof(Weapon));
+    }
+
     public HeartTank()
     {
         DurationFrames = 0;

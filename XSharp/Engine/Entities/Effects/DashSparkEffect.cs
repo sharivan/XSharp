@@ -45,7 +45,7 @@ public class DashSparkEffect : SpriteEffect
         get => player;
         set
         {
-            player = Engine.Entities.GetReferenceTo(value);
+            player = value;
             if (value != null)
             {
                 Origin = GetOrigin(value);

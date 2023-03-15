@@ -1,10 +1,17 @@
 ﻿using XSharp.Engine.Entities.Effects;
+using XSharp.Engine.Graphics;
 using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 public class PenguinIceExplosionEffect : SpriteEffect
 {
+    [Precache]
+    new internal static void Precache()
+    {
+        Engine.CallPrecacheAction(typeof(Penguin));
+    }
+
     public Vector InitialVelocity
     {
         get;

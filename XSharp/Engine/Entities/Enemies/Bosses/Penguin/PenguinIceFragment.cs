@@ -1,7 +1,15 @@
-﻿namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+﻿using XSharp.Engine.Graphics;
+
+namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 public class PenguinIceFragment : Sprite
 {
+    [Precache]
+    internal static void Precache()
+    {
+        Engine.CallPrecacheAction(typeof(Penguin));
+    }
+
     public PenguinIceFragment()
     {
         Directional = false;

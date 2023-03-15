@@ -1,4 +1,7 @@
-﻿using XSharp.Engine.Graphics;
+﻿using System.Reflection;
+
+using XSharp.Engine.Graphics;
+using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Effects;
 
@@ -13,6 +16,31 @@ public enum ExplosionEffectSound
 
 internal class ExplosionEffect : SpriteEffect
 {
+    [Precache]
+    new internal static void Precache()
+    {
+        var explosionSpriteSheet = Engine.CreateSpriteSheet("Explosion", true, true);
+
+        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Explosion.png"))
+        {
+            var texture = Engine.CreateImageTextureFromStream(stream);
+            explosionSpriteSheet.CurrentTexture = texture;
+        }
+
+        var sequence = explosionSpriteSheet.AddFrameSquence("Explosion");
+        sequence.AddFrame(0, 0, 38, 48, 1, false, OriginPosition.CENTER);
+        sequence.AddFrame(38, 0, 38, 48, 2, false, OriginPosition.CENTER);
+        sequence.AddFrame(0, 0, 38, 48, 3, false, OriginPosition.CENTER);
+        sequence.AddFrame(76, 0, 38, 48, 3, false, OriginPosition.CENTER);
+        sequence.AddFrame(114, 0, 38, 48, 3, false, OriginPosition.CENTER);
+        sequence.AddFrame(0, 48, 38, 48, 3, false, OriginPosition.CENTER);
+        sequence.AddFrame(38, 48, 38, 48, 3, false, OriginPosition.CENTER);
+        sequence.AddFrame(76, 48, 38, 48, 2, false, OriginPosition.CENTER);
+        sequence.AddFrame(114, 48, 38, 48, 2, false, OriginPosition.CENTER);
+
+        explosionSpriteSheet.ReleaseCurrentTexture();
+    }
+
     public ExplosionEffectSound EffectSound
     {
         get;
