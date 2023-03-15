@@ -838,7 +838,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
 
     protected override void OnBeforeMove(ref Vector origin)
     {
-        Box limit = Engine.World.BoundingBox;
+        Box limit = Engine.World.ForegroundLayout.BoundingBox;
         if (!CanGoOutOfCameraBounds && !CrossingBossDoor && !Engine.NoCameraConstraints && !Engine.Camera.NoConstraints)
             limit &= Engine.CameraConstraintsBox;
 

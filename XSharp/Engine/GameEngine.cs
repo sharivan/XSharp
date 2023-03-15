@@ -43,13 +43,14 @@ using Device9 = SharpDX.Direct3D9.Device;
 using DeviceType = SharpDX.Direct3D9.DeviceType;
 using DXSprite = SharpDX.Direct3D9.Sprite;
 using Font = SharpDX.Direct3D9.Font;
-using MMXBox = XSharp.Math.Geometry.Box;
+using Box = XSharp.Math.Geometry.Box;
 using MMXWorld = XSharp.Engine.World.World;
 using Point = SharpDX.Point;
 using Rectangle = SharpDX.Rectangle;
 using RectangleF = SharpDX.RectangleF;
 using ResultCode = SharpDX.Direct3D9.ResultCode;
 using Sprite = XSharp.Engine.Entities.Sprite;
+using System.Threading;
 
 namespace XSharp.Engine;
 
@@ -303,7 +304,7 @@ public class GameEngine : IRenderable, IRenderTarget
     private bool paused;
 
     private long lastCurrentMemoryUsage;
-    private MMXBox drawBox;
+    private Box drawBox;
     private EntityReference<Checkpoint> currentCheckpoint;
     private readonly List<Vector> cameraConstraints;
 
@@ -360,11 +361,11 @@ public class GameEngine : IRenderable, IRenderTarget
 
     // Create Clock and FPS counters
     private readonly Stopwatch clock = new();
-    private readonly double clockFrequency = Stopwatch.Frequency;
-    private readonly Stopwatch fpsTimer = new();
-    private int fpsFrames = 0;
-    private double nextTick = 0;
-    private readonly double tick = 1000D / TICKRATE;
+    private long previousElapsedTicks;
+    private long lastMeasuringFPSElapsedTicks;
+    private long targetElapsedTime;
+    private long renderFrameCounter;
+    private long lastRenderFrameCounter;
 
     private string infoMessage = null;
     private long infoMessageStartTime;
@@ -429,7 +430,7 @@ public class GameEngine : IRenderable, IRenderTarget
         set;
     } = X_INITIAL_HEALT_CAPACITY;
 
-    public MMXBox CameraConstraintsBox
+    public Box CameraConstraintsBox
     {
         get;
         set;
@@ -449,9 +450,9 @@ public class GameEngine : IRenderable, IRenderTarget
         set;
     }
 
-    public Vector MinCameraPos => NoCameraConstraints || Camera.NoConstraints ? World.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
+    public Vector MinCameraPos => NoCameraConstraints || Camera.NoConstraints ? World.ForegroundLayout.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
 
-    public Vector MaxCameraPos => NoCameraConstraints || Camera.NoConstraints ? World.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
+    public Vector MaxCameraPos => NoCameraConstraints || Camera.NoConstraints ? World.ForegroundLayout.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
 
     public bool Paused
     {
@@ -796,9 +797,6 @@ public class GameEngine : IRenderable, IRenderTarget
     {
         Control = control;
 
-        clock.Start();
-        fpsTimer.Start();
-
         Entities = new EntityFactory();
 
         freezingSpriteExceptions = new EntitySet<Sprite>();
@@ -835,14 +833,17 @@ public class GameEngine : IRenderable, IRenderTarget
 
         presentationParams = new PresentParameters
         {
-            Windowed = true,
+            Windowed = !FULL_SCREEN,
             SwapEffect = SwapEffect.Discard,
-            PresentationInterval = PresentInterval.One,
+            PresentationInterval = VSYNC ? PresentInterval.One : PresentInterval.Immediate,
+            FullScreenRefreshRateInHz = FULL_SCREEN ? TICKRATE : 0,
             AutoDepthStencilFormat = Format.D16,
             EnableAutoDepthStencil = true,
-            BackBufferFormat = Format.X8R8G8B8,
-            BackBufferHeight = Control.ClientSize.Height,
-            BackBufferWidth = Control.ClientSize.Width,
+            BackBufferCount = DOUBLE_BUFFERED ? 2 : 1,
+            BackBufferFormat = FULL_SCREEN ? Format.X8R8G8B8 : Format.Unknown,
+            BackBufferHeight = FULL_SCREEN ? Control.ClientSize.Height : 0,
+            BackBufferWidth = FULL_SCREEN ? Control.ClientSize.Width : 0,  
+            PresentFlags = PresentFlags.LockableBackBuffer
         };
 
         Direct3D = new Direct3D();
@@ -1012,7 +1013,10 @@ public class GameEngine : IRenderable, IRenderTarget
         device.SetRenderState(RenderState.AlphaBlendEnable, true);
         device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
         device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
-        device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.Modulate);
+        device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.SelectArg1);
+        device.SetTextureStageState(0, TextureStage.ColorArg1, TextureArgument.Texture);
+        device.SetTextureStageState(1, TextureStage.ColorOperation, TextureOperation.Disable);
+        device.SetTextureStageState(1, TextureStage.AlphaOperation, TextureOperation.Disable);
         device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
         device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
 
@@ -1524,7 +1528,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sequence.AddFrame(496, 432, 32, 32);
         sequence.AddFrame(532, 432, 32, 32);
 
-        var smallHealthRecoverDroppingCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-4, -8), (4, 0));
+        var smallHealthRecoverDroppingCollisionBox = new Box(Vector.NULL_VECTOR, (-4, -8), (4, 0));
 
         sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverDropping");
         sequence.OriginOffset = -smallHealthRecoverDroppingCollisionBox.Mins;
@@ -1533,7 +1537,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sequence.AddFrame(0, 0, 24, 114, 8, 8);
         sequence.AddFrame(0, 0, 6, 138, 8, 8, 1, true);
 
-        var smallHealthRecoverIdleCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-5, -8), (5, 0));
+        var smallHealthRecoverIdleCollisionBox = new Box(Vector.NULL_VECTOR, (-5, -8), (5, 0));
 
         sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverIdle");
         sequence.OriginOffset = -smallHealthRecoverIdleCollisionBox.Mins;
@@ -1544,7 +1548,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sequence.AddFrame(0, 0, 40, 138, 10, 8, 2);
         sequence.AddFrame(0, 0, 22, 138, 10, 8, 1);
 
-        var bigHealthRecoverDroppingCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-7, -12), (7, 0));
+        var bigHealthRecoverDroppingCollisionBox = new Box(Vector.NULL_VECTOR, (-7, -12), (7, 0));
 
         sequence = xWeaponsSpriteSheet.AddFrameSquence("BigHealthRecoverDropping");
         sequence.OriginOffset = -bigHealthRecoverDroppingCollisionBox.Mins;
@@ -1553,7 +1557,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sequence.AddFrame(0, 0, 24, 114, 14, 12);
         sequence.AddFrame(0, 0, 3, 150, 14, 12, 1, true);
 
-        var bigHealthRecoverIdleCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -12), (8, 0));
+        var bigHealthRecoverIdleCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -12), (8, 0));
 
         sequence = xWeaponsSpriteSheet.AddFrameSquence("BigHealthRecoverIdle");
         sequence.OriginOffset = -bigHealthRecoverIdleCollisionBox.Mins;
@@ -1564,7 +1568,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sequence.AddFrame(0, 0, 37, 150, 16, 12, 2);
         sequence.AddFrame(0, 0, 19, 150, 16, 12, 1);
 
-        var smallAmmoRecoverCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-4, -8), (4, 0));
+        var smallAmmoRecoverCollisionBox = new Box(Vector.NULL_VECTOR, (-4, -8), (4, 0));
 
         sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallAmmoRecover");
         sequence.OriginOffset = -smallAmmoRecoverCollisionBox.Mins;
@@ -1574,7 +1578,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sequence.AddFrame(0, 0, 116, 138, 8, 8, 2);
         sequence.AddFrame(0, 0, 100, 138, 8, 8, 2);
 
-        var bigAmmoRecoverCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-7, -14), (7, 0));
+        var bigAmmoRecoverCollisionBox = new Box(Vector.NULL_VECTOR, (-7, -14), (7, 0));
 
         sequence = xWeaponsSpriteSheet.AddFrameSquence("BigAmmoRecover");
         sequence.OriginOffset = -bigAmmoRecoverCollisionBox.Mins;
@@ -1584,7 +1588,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sequence.AddFrame(0, 0, 113, 148, 14, 14, 2);
         sequence.AddFrame(0, 0, 97, 148, 14, 14, 2);
 
-        var lifeUpCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -16), (8, 0));
+        var lifeUpCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -16), (8, 0));
 
         sequence = xWeaponsSpriteSheet.AddFrameSquence("LifeUp");
         sequence.OriginOffset = -lifeUpCollisionBox.Mins;
@@ -1592,7 +1596,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sequence.AddFrame(0, 0, 137, 146, 16, 16, 4, true);
         sequence.AddFrame(0, 0, 157, 146, 16, 16, 4);
 
-        var heartTankCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -17), (8, 0));
+        var heartTankCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -17), (8, 0));
 
         sequence = xWeaponsSpriteSheet.AddFrameSquence("HeartTank");
         sequence.OriginOffset = -heartTankCollisionBox.Mins;
@@ -1602,7 +1606,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sequence.AddFrame(-3, -2, 213, 147, 10, 15, 11);
         sequence.AddFrame(-2, -1, 225, 147, 12, 15, 11);
 
-        var subTankCollisionBox = new MMXBox(Vector.NULL_VECTOR, (-8, -19), (8, 0));
+        var subTankCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -19), (8, 0));
 
         sequence = xWeaponsSpriteSheet.AddFrameSquence("SubTank");
         sequence.OriginOffset = -subTankCollisionBox.Mins;
@@ -1712,8 +1716,8 @@ public class GameEngine : IRenderable, IRenderTarget
 
         battonBoneGSpriteSheet.CurrentPalette = battonBoneGPalette;
 
-        var battonBoneGIdleHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-6, -18), new Vector(6, 0));
-        var battonBoneGAttackingHitbox = new MMXBox(Vector.NULL_VECTOR, new Vector(-8, -14), new Vector(8, 0));
+        var battonBoneGIdleHitbox = new Box(Vector.NULL_VECTOR, new Vector(-6, -18), new Vector(6, 0));
+        var battonBoneGAttackingHitbox = new Box(Vector.NULL_VECTOR, new Vector(-8, -14), new Vector(8, 0));
 
         // 0
         sequence = battonBoneGSpriteSheet.AddFrameSquence("Idle");
@@ -1841,7 +1845,7 @@ public class GameEngine : IRenderable, IRenderTarget
             bossDoorSpriteSheet.CurrentTexture = texture;
         }
 
-        var bossDoorHitbox = new MMXBox(Vector.NULL_VECTOR, (-8, -23), (24, 25));
+        var bossDoorHitbox = new Box(Vector.NULL_VECTOR, (-8, -23), (24, 25));
 
         sequence = bossDoorSpriteSheet.AddFrameSquence("Closed");
         sequence.OriginOffset = -bossDoorHitbox.Mins;
@@ -2219,7 +2223,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
             else
             {
-                CameraConstraintsBox = World.BoundingBox;
+                CameraConstraintsBox = World.ForegroundLayout.BoundingBox;
             }
         }
     }
@@ -2317,7 +2321,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    private static void FillRegion(DataRectangle dataRect, int length, MMXBox box, int paletteIndex)
+    private static void FillRegion(DataRectangle dataRect, int length, Box box, int paletteIndex)
     {
         int dstX = (int) box.Left;
         int dstY = (int) box.Top;
@@ -2337,47 +2341,47 @@ public class GameEngine : IRenderable, IRenderTarget
 
     private static void DrawChargingPointLevel1Small(DataRectangle dataRect, int length, Vector point)
     {
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 1);
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 1, 1), 1);
     }
 
     private static void DrawChargingPointLevel1Large(DataRectangle dataRect, int length, Vector point)
     {
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 1);
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 2, 2), 1);
     }
 
     private static void DrawChargingPointLevel2Small1(DataRectangle dataRect, int length, Vector point)
     {
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 2);
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 1, 1), 2);
     }
 
     private static void DrawChargingPointLevel2Small2(DataRectangle dataRect, int length, Vector point)
     {
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 1, 1), 3);
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 1, 1), 3);
 
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y - 1, 1, 1), 4);
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y + 1, 1, 1), 4);
-        FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y, 1, 1), 4);
-        FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y, 1, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X, point.Y - 1, 1, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X, point.Y + 1, 1, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X - 1, point.Y, 1, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X + 1, point.Y, 1, 1), 4);
 
-        FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y - 1, 1, 1), 5);
-        FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y - 1, 1, 1), 5);
-        FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y + 1, 1, 1), 5);
-        FillRegion(dataRect, length, new MMXBox(point.X + 1, point.Y + 1, 1, 1), 5);
+        FillRegion(dataRect, length, new Box(point.X - 1, point.Y - 1, 1, 1), 5);
+        FillRegion(dataRect, length, new Box(point.X + 1, point.Y - 1, 1, 1), 5);
+        FillRegion(dataRect, length, new Box(point.X - 1, point.Y + 1, 1, 1), 5);
+        FillRegion(dataRect, length, new Box(point.X + 1, point.Y + 1, 1, 1), 5);
     }
 
     private static void DrawChargingPointLevel2Large1(DataRectangle dataRect, int length, Vector point)
     {
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 2);
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 2, 2), 2);
     }
 
     private static void DrawChargingPointLevel2Large2(DataRectangle dataRect, int length, Vector point)
     {
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y, 2, 2), 3);
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 2, 2), 3);
 
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y - 1, 2, 1), 4);
-        FillRegion(dataRect, length, new MMXBox(point.X, point.Y + 2, 2, 1), 4);
-        FillRegion(dataRect, length, new MMXBox(point.X - 1, point.Y, 1, 2), 4);
-        FillRegion(dataRect, length, new MMXBox(point.X + 2, point.Y, 1, 2), 4);
+        FillRegion(dataRect, length, new Box(point.X, point.Y - 1, 2, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X, point.Y + 2, 2, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X - 1, point.Y, 1, 2), 4);
+        FillRegion(dataRect, length, new Box(point.X + 2, point.Y, 1, 2), 4);
     }
 
     private static void DrawChargingPointSmall(DataRectangle dataRect, int length, Vector point, int level, int type)
@@ -2512,7 +2516,7 @@ public class GameEngine : IRenderable, IRenderTarget
         vb.Unlock();
     }
 
-    public void RenderSprite(Texture texture, Palette palette, FadingControl fadingControl, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
+    public void RenderSprite(Texture texture, Palette palette, FadingControl fadingControl, Box box, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
         RectangleF rDest = WorldBoxToScreen(box);
 
@@ -2571,7 +2575,7 @@ public class GameEngine : IRenderable, IRenderTarget
         sprite.End();
     }
 
-    public void RenderSprite(Texture texture, FadingControl fadingControl, MMXBox box, Matrix transform, int repeatX = 1, int repeatY = 1)
+    public void RenderSprite(Texture texture, FadingControl fadingControl, Box box, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
         RenderSprite(texture, null, fadingControl, box, transform, repeatX, repeatY);
     }
@@ -2579,25 +2583,25 @@ public class GameEngine : IRenderable, IRenderTarget
     public void RenderSprite(Texture texture, FadingControl fadingControl, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
         var description = texture.GetLevelDescription(0);
-        RenderSprite(texture, null, fadingControl, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
+        RenderSprite(texture, null, fadingControl, new Box(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
     }
 
     public void RenderSprite(Texture texture, FadingControl fadingControl, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
         var description = texture.GetLevelDescription(0);
-        RenderSprite(texture, null, fadingControl, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
+        RenderSprite(texture, null, fadingControl, new Box(x, y, description.Width, description.Height), transform, repeatX, repeatY);
     }
 
     public void RenderSprite(Texture texture, Palette palette, FadingControl fadingControl, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
         var description = texture.GetLevelDescription(0);
-        RenderSprite(texture, palette, fadingControl, new MMXBox(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
+        RenderSprite(texture, palette, fadingControl, new Box(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
     }
 
     public void RenderSprite(Texture texture, Palette palette, FadingControl fadingControl, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
         var description = texture.GetLevelDescription(0);
-        RenderSprite(texture, palette, fadingControl, new MMXBox(x, y, description.Width, description.Height), transform, repeatX, repeatY);
+        RenderSprite(texture, palette, fadingControl, new Box(x, y, description.Width, description.Height), transform, repeatX, repeatY);
     }
 
     private void ClearEntities()
@@ -2638,7 +2642,7 @@ public class GameEngine : IRenderable, IRenderTarget
         Keys keys = Keys.NONE;
         nextFrame = !frameAdvance;
 
-        if (Control.Focused)
+        if (ENABLE_BACKGROUND_INPUT || Control.Focused)
         {
             keyboard.Poll();
             var state = keyboard.GetCurrentState();
@@ -3302,12 +3306,12 @@ public class GameEngine : IRenderable, IRenderTarget
         return new((float) v.X, (float) v.Y, 0);
     }
 
-    public static Rectangle ToRectangle(MMXBox box)
+    public static Rectangle ToRectangle(Box box)
     {
         return new((int) box.Left, (int) box.Top, (int) box.Width, (int) box.Height);
     }
 
-    public static RectangleF ToRectangleF(MMXBox box)
+    public static RectangleF ToRectangleF(Box box)
     {
         return new((float) box.Left, (float) box.Top, (float) box.Width, (float) box.Height);
     }
@@ -3337,7 +3341,7 @@ public class GameEngine : IRenderable, IRenderTarget
         return (new Vector(v.X, v.Y) - drawBox.LeftTop) / DrawScale + Camera.LeftTop;
     }
 
-    public RectangleF WorldBoxToScreen(MMXBox box)
+    public RectangleF WorldBoxToScreen(Box box)
     {
         return ToRectangleF((box.LeftTopOrigin().RoundOriginToFloor() - Camera.LeftTop.RoundToFloor()) * DrawScale + drawBox.LeftTop);
     }
@@ -3470,7 +3474,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
             else
             {
-                CameraConstraintsBox = World.BoundingBox;
+                CameraConstraintsBox = World.ForegroundLayout.BoundingBox;
             }
 
             World.Tessellate();
@@ -3537,10 +3541,10 @@ public class GameEngine : IRenderable, IRenderTarget
         }*/
         drawOrigin = Vector.NULL_VECTOR;
 
-        drawBox = new MMXBox(drawOrigin.X, drawOrigin.Y, width, height);
+        drawBox = new Box(drawOrigin.X, drawOrigin.Y, width, height);
     }
 
-    private void DrawSlopeMap(MMXBox box, RightTriangle triangle, Color color, float strokeWidth)
+    private void DrawSlopeMap(Box box, RightTriangle triangle, Color color, float strokeWidth)
     {
         Vector tv1 = triangle.Origin;
         Vector tv2 = triangle.VCathetusOpositeVertex;
@@ -3574,7 +3578,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     private void DrawHighlightMap(int row, int col, CollisionData collisionData, Color color)
     {
-        MMXBox mapBox = GetMapBoundingBox(row, col);
+        Box mapBox = GetMapBoundingBox(row, col);
         if (collisionData.IsSolidBlock())
         {
             DrawRectangle(mapBox, 4, color);
@@ -3586,12 +3590,12 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, MMXBox collisionBox, Color color, bool ignoreSlopes = false)
+    private void CheckAndDrawTouchingMap(int row, int col, CollisionData collisionData, Box collisionBox, Color color, bool ignoreSlopes = false)
     {
-        MMXBox halfCollisionBox1 = (collisionBox.Left, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
-        MMXBox halfCollisionBox2 = (collisionBox.Left + collisionBox.Width * 0.5, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
+        Box halfCollisionBox1 = (collisionBox.Left, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
+        Box halfCollisionBox2 = (collisionBox.Left + collisionBox.Width * 0.5, collisionBox.Top, collisionBox.Width * 0.5, collisionBox.Height);
 
-        MMXBox mapBox = GetMapBoundingBox(row, col);
+        Box mapBox = GetMapBoundingBox(row, col);
         if (collisionData.IsSolidBlock() && CollisionChecker.HasIntersection(mapBox, collisionBox))
         {
             DrawRectangle(mapBox, 4, color);
@@ -3605,7 +3609,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    private void CheckAndDrawTouchingMaps(MMXBox collisionBox, Color color, bool ignoreSlopes = false)
+    private void CheckAndDrawTouchingMaps(Box collisionBox, Color color, bool ignoreSlopes = false)
     {
         Cell start = GetMapCellFromPos(collisionBox.LeftTop);
         Cell end = GetMapCellFromPos(collisionBox.RightBottom);
@@ -3616,14 +3620,14 @@ public class GameEngine : IRenderable, IRenderTarget
         if (startRow < 0)
             startRow = 0;
 
-        if (startRow >= World.MapRowCount)
-            startRow = World.MapRowCount - 1;
+        if (startRow >= World.ForegroundLayout.MapRowCount)
+            startRow = World.ForegroundLayout.MapRowCount - 1;
 
         if (startCol < 0)
             startCol = 0;
 
-        if (startCol >= World.MapColCount)
-            startCol = World.MapColCount - 1;
+        if (startCol >= World.ForegroundLayout.MapColCount)
+            startCol = World.ForegroundLayout.MapColCount - 1;
 
         int endRow = end.Row;
         int endCol = end.Col;
@@ -3631,21 +3635,21 @@ public class GameEngine : IRenderable, IRenderTarget
         if (endRow < 0)
             endRow = 0;
 
-        if (endRow >= World.MapRowCount)
-            endRow = World.MapRowCount - 1;
+        if (endRow >= World.ForegroundLayout.MapRowCount)
+            endRow = World.ForegroundLayout.MapRowCount - 1;
 
         if (endCol < 0)
             endCol = 0;
 
-        if (endCol >= World.MapColCount)
-            endCol = World.MapColCount - 1;
+        if (endCol >= World.ForegroundLayout.MapColCount)
+            endCol = World.ForegroundLayout.MapColCount - 1;
 
         for (int row = startRow; row <= endRow; row++)
         {
             for (int col = startCol; col <= endCol; col++)
             {
                 var v = new Vector(col * MAP_SIZE, row * MAP_SIZE);
-                Map map = World.GetMapFrom(v);
+                Map map = World.ForegroundLayout.GetMapFrom(v);
                 if (map != null)
                     CheckAndDrawTouchingMap(row, col, map.CollisionData, collisionBox, color, ignoreSlopes);
             }
@@ -3684,7 +3688,7 @@ public class GameEngine : IRenderable, IRenderTarget
         line.End();
     }
 
-    public void DrawRectangle(MMXBox box, float borderWith, Color color, FadingControl fadingControl = null)
+    public void DrawRectangle(Box box, float borderWith, Color color, FadingControl fadingControl = null)
     {
         DrawRectangle(WorldBoxToScreen(box), borderWith, color, fadingControl);
     }
@@ -3715,7 +3719,7 @@ public class GameEngine : IRenderable, IRenderTarget
         line.End();
     }
 
-    public void FillRectangle(MMXBox box, Color color, FadingControl fadingControl = null)
+    public void FillRectangle(Box box, Color color, FadingControl fadingControl = null)
     {
         FillRectangle(WorldBoxToScreen(box), color, fadingControl);
     }
@@ -3917,34 +3921,41 @@ public class GameEngine : IRenderable, IRenderTarget
     public void Render()
     {
         Render(this);
+        renderFrameCounter++;
+
+        long elapsedTicks = clock.ElapsedTicks;
+        long remainingTicks = targetElapsedTime - (elapsedTicks - previousElapsedTicks);        
+
+        if (remainingTicks > 0)
+        {
+            long msRemaining = 1000 * remainingTicks / Stopwatch.Frequency;
+            if (msRemaining > 0)
+                Thread.Sleep((int) msRemaining);
+        }
+
+        elapsedTicks = clock.ElapsedTicks;
+        previousElapsedTicks = elapsedTicks;
+
+        #region FPS and title update       
+        var deltaMilliseconds = 1000 * (elapsedTicks - lastMeasuringFPSElapsedTicks) / Stopwatch.Frequency;
+        if (deltaMilliseconds >= 1000)
+        {
+            lastMeasuringFPSElapsedTicks = elapsedTicks;
+
+            var deltaFrames = renderFrameCounter - lastRenderFrameCounter;
+            lastRenderFrameCounter = renderFrameCounter;
+
+            var fps = 1000.0 * deltaFrames / deltaMilliseconds;
+
+            // Update window title with FPS once every second
+            Control.Text = $"X# - FPS: {fps:F2} ({(float) deltaMilliseconds / deltaFrames:F2}ms/frame)";
+        }
+        #endregion
     }
 
     public void Render(IRenderTarget target)
     {
-        // Time in milliseconds
-        var totalMillis = clock.ElapsedTicks / clockFrequency * 1000;
-        if (totalMillis < nextTick)
-            return;
-
         bool nextFrame = OnFrame();
-        fpsFrames++;
-        nextTick = totalMillis + tick;
-
-        #region FPS and title update
-
-        if (fpsTimer.ElapsedMilliseconds > 1000)
-        {
-            var fps = 1000.0 * fpsFrames / fpsTimer.ElapsedMilliseconds;
-
-            // Update window title with FPS once every second
-            Control.Text = $"X# - FPS: {fps:F2} ({fpsTimer.ElapsedMilliseconds / fpsFrames:F2}ms/frame)";
-
-            // Restart the FPS counter
-            fpsTimer.Reset();
-            fpsTimer.Start();
-            fpsFrames = 0;
-        }
-        #endregion
 
         if (Device == null)
             return;
@@ -3974,7 +3985,7 @@ public class GameEngine : IRenderable, IRenderTarget
             World.RenderForeground(0);
 
         Device.SetRenderTarget(0, backBuffer);
-        DrawTexture(worldTexture);
+        DrawTexture(worldTexture, SAMPLER_STATE_LINEAR);
 
         if (drawSprites)
         {
@@ -3999,7 +4010,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
 
             Device.SetRenderTarget(0, backBuffer);
-            DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
+            DrawTexture(spritesTexture, SAMPLER_STATE_LINEAR);
         }
 
         if (drawUpLayer)
@@ -4010,7 +4021,7 @@ public class GameEngine : IRenderable, IRenderTarget
             World.RenderForeground(1);
 
             Device.SetRenderTarget(0, backBuffer);
-            DrawTexture(worldTexture);
+            DrawTexture(worldTexture, SAMPLER_STATE_LINEAR);
         }
 
         if (drawSprites)
@@ -4036,7 +4047,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
 
             Device.SetRenderTarget(0, backBuffer);
-            DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
+            DrawTexture(spritesTexture, SAMPLER_STATE_LINEAR);
         }
 
         Device.SetRenderTarget(0, spritesSurface);
@@ -4049,7 +4060,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
 
         Device.SetRenderTarget(0, backBuffer);
-        DrawTexture(spritesTexture, SPRITE_SAMPLER_STATE_LINEAR);
+        DrawTexture(spritesTexture, SAMPLER_STATE_LINEAR);
 
         if (nextFrame)
         {
@@ -4092,7 +4103,7 @@ public class GameEngine : IRenderable, IRenderTarget
         if (drawHitbox || showColliders || showDrawBox || showTriggerBounds)
         {
             resultSet.Clear();
-            partition.Query(resultSet, World.BoundingBox, false);
+            partition.Query(resultSet, World.ForegroundLayout.BoundingBox, false);
             foreach (Entity entity in resultSet)
             {
                 if (entity == Player)
@@ -4104,7 +4115,7 @@ public class GameEngine : IRenderable, IRenderTarget
                     {
                         if (drawHitbox)
                         {
-                            MMXBox hitbox = sprite.Hitbox;
+                            Box hitbox = sprite.Hitbox;
                             var rect = WorldBoxToScreen(hitbox);
 
                             if (!entity.Alive)
@@ -4134,7 +4145,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
                         if (showDrawBox)
                         {
-                            MMXBox drawBox = sprite.DrawBox;
+                            Box drawBox = sprite.DrawBox;
                             var rect = WorldBoxToScreen(drawBox);
                             FillRectangle(rect, BOUNDING_BOX_COLOR);
                         }
@@ -4227,7 +4238,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
             if (drawHitbox)
             {
-                MMXBox hitbox = Player.Hitbox;
+                Box hitbox = Player.Hitbox;
                 var rect = WorldBoxToScreen(hitbox);
                 FillRectangle(rect, HITBOX_COLOR);
 
@@ -4246,7 +4257,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
             if (showDrawBox)
             {
-                MMXBox drawBox = Player.DrawBox;
+                Box drawBox = Player.DrawBox;
                 var rect = WorldBoxToScreen(drawBox);
                 FillRectangle(rect, BOUNDING_BOX_COLOR);
             }
@@ -4270,35 +4281,35 @@ public class GameEngine : IRenderable, IRenderTarget
             Vector v = ScreenPointToVector(cursorPos.X / 4, cursorPos.Y / 4);
             DrawText($"Mouse Pos: X: {v.X} Y: {v.Y}", highlightMapTextFont, new RectangleF(0, 0, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
-            Scene scene = World.GetSceneFrom(v, false);
+            Scene scene = World.ForegroundLayout.GetSceneFrom(v);
             if (scene != null)
             {
                 Cell sceneCell = GetSceneCellFromPos(v);
-                MMXBox sceneBox = GetSceneBoundingBox(sceneCell);
+                Box sceneBox = GetSceneBoundingBox(sceneCell);
                 DrawRectangle(WorldBoxToScreen(sceneBox), 4, TOUCHING_MAP_COLOR);
                 DrawText($"Scene: ID: {scene.ID} Row: {sceneCell.Row} Col: {sceneCell.Col}", highlightMapTextFont, new RectangleF(0, 50, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
-                Block block = World.GetBlockFrom(v, false);
+                Block block = World.ForegroundLayout.GetBlockFrom(v);
                 if (block != null)
                 {
                     Cell blockCell = GetBlockCellFromPos(v);
-                    MMXBox blockBox = GetBlockBoundingBox(blockCell);
+                    Box blockBox = GetBlockBoundingBox(blockCell);
                     DrawRectangle(WorldBoxToScreen(blockBox), 4, TOUCHING_MAP_COLOR);
                     DrawText($"Block: ID: {block.ID} Row: {blockCell.Row} Col: {blockCell.Col}", highlightMapTextFont, new RectangleF(0, 100, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
-                    Map map = World.GetMapFrom(v, false);
+                    Map map = World.ForegroundLayout.GetMapFrom(v);
                     if (map != null)
                     {
                         Cell mapCell = GetMapCellFromPos(v);
-                        MMXBox mapBox = GetMapBoundingBox(mapCell);
+                        Box mapBox = GetMapBoundingBox(mapCell);
                         DrawRectangle(WorldBoxToScreen(mapBox), 4, TOUCHING_MAP_COLOR);
                         DrawText($"Map: ID: {map.ID} Row: {mapCell.Row} Col: {mapCell.Col}", highlightMapTextFont, new RectangleF(0, 150, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
-                        Tile tile = World.GetTileFrom(v, false);
+                        Tile tile = World.ForegroundLayout.GetTileFrom(v);
                         if (tile != null)
                         {
                             Cell tileCell = GetTileCellFromPos(v);
-                            MMXBox tileBox = GetTileBoundingBox(tileCell);
+                            Box tileBox = GetTileBoundingBox(tileCell);
                             DrawRectangle(WorldBoxToScreen(tileBox), 4, TOUCHING_MAP_COLOR);
                             DrawText($"Tile: ID: {tile.ID} Row: {tileCell.Row} Col: {tileCell.Col}", highlightMapTextFont, new RectangleF(0, 200, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
                         }
@@ -4543,7 +4554,8 @@ public class GameEngine : IRenderable, IRenderTarget
         boss = serializer.ReadEntityReference<Boss>();
 
         FadingControl.Deserialize(serializer);
-        World.FadingControl.Deserialize(serializer);
+        World.ForegroundLayout.FadingControl.Deserialize(serializer);
+        World.BackgroundLayout.FadingControl.Deserialize(serializer);
 
         FadingOSTLevel = serializer.ReadFloat();
         FadingOSTInitialVolume = serializer.ReadFloat();
@@ -4661,7 +4673,8 @@ public class GameEngine : IRenderable, IRenderTarget
         serializer.WriteEntityReference(boss);
 
         FadingControl.Serialize(serializer);
-        World.FadingControl.Serialize(serializer);
+        World.ForegroundLayout.FadingControl.Serialize(serializer);
+        World.BackgroundLayout.FadingControl.Serialize(serializer);
 
         serializer.WriteFloat(FadingOSTLevel);
         serializer.WriteFloat(FadingOSTInitialVolume);
@@ -4751,7 +4764,7 @@ public class GameEngine : IRenderable, IRenderTarget
         return trigger;
     }
 
-    public Checkpoint AddCheckpoint(ushort index, MMXBox boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
+    public Checkpoint AddCheckpoint(ushort index, Box boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
     {
         Checkpoint checkpoint = Entities.Create<Checkpoint>(new
         {
@@ -4849,7 +4862,7 @@ public class GameEngine : IRenderable, IRenderTarget
         return null;
     }
 
-    public CameraLockTrigger AddCameraLockTrigger(MMXBox boundingBox, IEnumerable<Vector> extensions)
+    public CameraLockTrigger AddCameraLockTrigger(Box boundingBox, IEnumerable<Vector> extensions)
     {
         CameraLockTrigger trigger = Entities.Create<CameraLockTrigger>(new
         {
@@ -4865,7 +4878,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     internal void UpdateCameraConstraintsBox()
     {
-        MMXBox boundingBox = CameraConstraintsBox;
+        Box boundingBox = CameraConstraintsBox;
         FixedSingle minX = boundingBox.Left;
         FixedSingle minY = boundingBox.Top;
         FixedSingle maxX = boundingBox.Right;
@@ -4889,7 +4902,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
         }
 
-        CameraConstraintsBox = new MMXBox(minX, minY, maxX - minX, maxY - minY);
+        CameraConstraintsBox = new Box(minX, minY, maxX - minX, maxY - minY);
     }
 
     public void SetCameraConstraints(Vector origin, IEnumerable<Vector> extensions)
@@ -5162,7 +5175,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, Texture texture, Texture palette, FadingControl fadingControl, MMXBox box)
+    public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, Texture texture, Texture palette, FadingControl fadingControl, Box box)
     {
         Device.SetStreamSource(0, vb, 0, vertexSize);
 
@@ -5420,11 +5433,20 @@ public class GameEngine : IRenderable, IRenderTarget
     private void Execute()
     {
         World = new MMXWorld(32, 32);
-        partition = new Partition<Entity>(World.BoundingBox, World.SceneRowCount, World.SceneColCount);
+        partition = new Partition<Entity>(World.ForegroundLayout.BoundingBox, World.ForegroundLayout.SceneRowCount, World.ForegroundLayout.SceneColCount);
         resultSet = new EntitySet<Entity>();
 
         ResetDevice();
         LoadLevel(@"resources\roms\" + ROM_NAME, INITIAL_LEVEL, INITIAL_CHECKPOINT);
+
+        FrameCounter = 0;      
+        renderFrameCounter = 0;
+        lastRenderFrameCounter = 0;
+        previousElapsedTicks = 0;
+        targetElapsedTime = Stopwatch.Frequency / TICKRATE;
+
+        clock.Start();
+        lastMeasuringFPSElapsedTicks = clock.ElapsedTicks;
 
         while (Running)
         {
@@ -5769,27 +5791,27 @@ public class GameEngine : IRenderable, IRenderTarget
         {
             if (secondDoor)
             {
-                Scene scene = World.GetSceneFrom(1, 29);
-                scene.SetMap(new Cell(7, 15), World.GetMapByID(0x176));
-                scene.SetMap(new Cell(8, 15), World.GetMapByID(0x207));
-                scene.SetMap(new Cell(9, 15), World.GetMapByID(0x20f));
+                Scene scene = World.ForegroundLayout.GetSceneFrom(1, 29);
+                scene.SetMap(new Cell(7, 15), World.ForegroundLayout.GetMapByID(0x176));
+                scene.SetMap(new Cell(8, 15), World.ForegroundLayout.GetMapByID(0x207));
+                scene.SetMap(new Cell(9, 15), World.ForegroundLayout.GetMapByID(0x20f));
 
-                scene = World.GetSceneFrom(1, 30);
-                scene.SetMap(new Cell(7, 0), World.GetMapByID(0x177));
-                scene.SetMap(new Cell(8, 0), World.GetMapByID(0x1b0));
-                scene.SetMap(new Cell(9, 0), World.GetMapByID(0x20b));
+                scene = World.ForegroundLayout.GetSceneFrom(1, 30);
+                scene.SetMap(new Cell(7, 0), World.ForegroundLayout.GetMapByID(0x177));
+                scene.SetMap(new Cell(8, 0), World.ForegroundLayout.GetMapByID(0x1b0));
+                scene.SetMap(new Cell(9, 0), World.ForegroundLayout.GetMapByID(0x20b));
             }
             else
             {
-                Scene scene = World.GetSceneFrom(1, 28);
-                scene.SetMap(new Cell(7, 15), World.GetMapByID(0x177));
-                scene.SetMap(new Cell(8, 15), World.GetMapByID(0x1b0));
-                scene.SetMap(new Cell(9, 15), World.GetMapByID(0x20b));
+                Scene scene = World.ForegroundLayout.GetSceneFrom(1, 28);
+                scene.SetMap(new Cell(7, 15), World.ForegroundLayout.GetMapByID(0x177));
+                scene.SetMap(new Cell(8, 15), World.ForegroundLayout.GetMapByID(0x1b0));
+                scene.SetMap(new Cell(9, 15), World.ForegroundLayout.GetMapByID(0x20b));
 
-                scene = World.GetSceneFrom(1, 29);
-                scene.SetMap(new Cell(7, 0), World.GetMapByID(0x177));
-                scene.SetMap(new Cell(8, 0), World.GetMapByID(0x1b0));
-                scene.SetMap(new Cell(9, 0), World.GetMapByID(0x20b));
+                scene = World.ForegroundLayout.GetSceneFrom(1, 29);
+                scene.SetMap(new Cell(7, 0), World.ForegroundLayout.GetMapByID(0x177));
+                scene.SetMap(new Cell(8, 0), World.ForegroundLayout.GetMapByID(0x1b0));
+                scene.SetMap(new Cell(9, 0), World.ForegroundLayout.GetMapByID(0x20b));
             }
         }
     }
@@ -5800,27 +5822,27 @@ public class GameEngine : IRenderable, IRenderTarget
         {
             if (secondDoor)
             {
-                Scene scene = World.GetSceneFrom(1, 29);
-                scene.SetMap(new Cell(7, 15), World.GetMapByID(0x172));
-                scene.SetMap(new Cell(8, 15), World.GetMapByID(0x173));
-                scene.SetMap(new Cell(9, 15), World.GetMapByID(0x174));
+                Scene scene = World.ForegroundLayout.GetSceneFrom(1, 29);
+                scene.SetMap(new Cell(7, 15), World.ForegroundLayout.GetMapByID(0x172));
+                scene.SetMap(new Cell(8, 15), World.ForegroundLayout.GetMapByID(0x173));
+                scene.SetMap(new Cell(9, 15), World.ForegroundLayout.GetMapByID(0x174));
 
-                scene = World.GetSceneFrom(1, 30);
-                scene.SetMap(new Cell(7, 0), World.GetMapByID(0x172));
-                scene.SetMap(new Cell(8, 0), World.GetMapByID(0x173));
-                scene.SetMap(new Cell(9, 0), World.GetMapByID(0x174));
+                scene = World.ForegroundLayout.GetSceneFrom(1, 30);
+                scene.SetMap(new Cell(7, 0), World.ForegroundLayout.GetMapByID(0x172));
+                scene.SetMap(new Cell(8, 0), World.ForegroundLayout.GetMapByID(0x173));
+                scene.SetMap(new Cell(9, 0), World.ForegroundLayout.GetMapByID(0x174));
             }
             else
             {
-                Scene scene = World.GetSceneFrom(1, 28);
-                scene.SetMap(new Cell(7, 15), World.GetMapByID(0x172));
-                scene.SetMap(new Cell(8, 15), World.GetMapByID(0x173));
-                scene.SetMap(new Cell(9, 15), World.GetMapByID(0x174));
+                Scene scene = World.ForegroundLayout.GetSceneFrom(1, 28);
+                scene.SetMap(new Cell(7, 15), World.ForegroundLayout.GetMapByID(0x172));
+                scene.SetMap(new Cell(8, 15), World.ForegroundLayout.GetMapByID(0x173));
+                scene.SetMap(new Cell(9, 15), World.ForegroundLayout.GetMapByID(0x174));
 
-                scene = World.GetSceneFrom(1, 29);
-                scene.SetMap(new Cell(7, 0), World.GetMapByID(0x172));
-                scene.SetMap(new Cell(8, 0), World.GetMapByID(0x173));
-                scene.SetMap(new Cell(9, 0), World.GetMapByID(0x174));
+                scene = World.ForegroundLayout.GetSceneFrom(1, 29);
+                scene.SetMap(new Cell(7, 0), World.ForegroundLayout.GetMapByID(0x172));
+                scene.SetMap(new Cell(8, 0), World.ForegroundLayout.GetMapByID(0x173));
+                scene.SetMap(new Cell(9, 0), World.ForegroundLayout.GetMapByID(0x174));
             }
         }
     }

@@ -1958,7 +1958,7 @@ public class MMXCore : SNESCore
             }
         }
 
-        Tile wtile = world.AddTile(imageData, background);
+        Tile wtile = background ? world.BackgroundLayout.AddTile(imageData) : world.ForegroundLayout.AddTile(imageData);
         return wtile;
     }
 
@@ -2015,7 +2015,7 @@ public class MMXCore : SNESCore
         {
             byte colisionByte = rom[pCollisions + i];
             var collisionData = (CollisionData) colisionByte;
-            Map wmap = engine.World.AddMap(collisionData, background);
+            Map wmap = background ? engine.World.BackgroundLayout.AddMap(collisionData) : engine.World.ForegroundLayout.AddMap(collisionData);
 
             uint tileData = ReadWord(map);
             byte palette = (byte) ((tileData >> 10) & 7);
@@ -2075,7 +2075,12 @@ public class MMXCore : SNESCore
         {
             Map map = maps[index];
             if (map != null)
-                world.SetMap(new Vector(x * MAP_SIZE + WORLD_OFFSET.X, y * MAP_SIZE + WORLD_OFFSET.Y), map, background);
+            {
+                if (background)
+                    world.BackgroundLayout.SetMap(new Vector(x * MAP_SIZE + WORLD_OFFSET.X, y * MAP_SIZE + WORLD_OFFSET.Y), map);
+                else
+                    world.ForegroundLayout.SetMap(new Vector(x * MAP_SIZE + WORLD_OFFSET.X, y * MAP_SIZE + WORLD_OFFSET.Y), map);
+            }
         }
     }
 
@@ -2120,7 +2125,10 @@ public class MMXCore : SNESCore
     {
         LoadPalette(engine, background);
 
-        engine.World.Resize(levelHeight, levelWidth, background);
+        if (background)
+            engine.World.BackgroundLayout.Resize(levelHeight, levelWidth);
+        else
+            engine.World.ForegroundLayout.Resize(levelHeight, levelWidth);
 
         RefreshMapCache(engine, background);
 

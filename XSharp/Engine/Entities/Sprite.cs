@@ -1618,7 +1618,7 @@ public abstract class Sprite : Entity, IRenderable
         var newOrigin = Origin + delta;
 
         if (!CanGoOutOfMapBounds)
-            Clamp(Engine.World.BoundingBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE), ref newOrigin);
+            Clamp(Engine.World.ForegroundLayout.BoundingBox.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE), ref newOrigin);
 
         OnBeforeMove(ref newOrigin);
         Origin = newOrigin;

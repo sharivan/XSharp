@@ -21,7 +21,7 @@ public class PixelCollisionChecker : CollisionChecker
 
         if (CheckWithWorld)
         {
-            Map map = World.GetMapFrom(vec);
+            Map map = World.ForegroundLayout.GetMapFrom(vec);
             if (map != null)
             {
                 Box mapBox = GetMapBoundingBox(GetMapCellFromPos(vec));
@@ -67,14 +67,14 @@ public class PixelCollisionChecker : CollisionChecker
         if (startRow < 0)
             startRow = 0;
 
-        if (startRow >= World.MapRowCount)
-            startRow = World.MapRowCount - 1;
+        if (startRow >= World.ForegroundLayout.MapRowCount)
+            startRow = World.ForegroundLayout.MapRowCount - 1;
 
         if (startCol < 0)
             startCol = 0;
 
-        if (startCol >= World.MapColCount)
-            startCol = World.MapColCount - 1;
+        if (startCol >= World.ForegroundLayout.MapColCount)
+            startCol = World.ForegroundLayout.MapColCount - 1;
 
         int endRow = end.Row;
         int endCol = end.Col;
@@ -82,14 +82,14 @@ public class PixelCollisionChecker : CollisionChecker
         if (endRow < 0)
             endRow = 0;
 
-        if (endRow >= World.MapRowCount)
-            endRow = World.MapRowCount - 1;
+        if (endRow >= World.ForegroundLayout.MapRowCount)
+            endRow = World.ForegroundLayout.MapRowCount - 1;
 
         if (endCol < 0)
             endCol = 0;
 
-        if (endCol >= World.MapColCount)
-            endCol = World.MapColCount - 1;
+        if (endCol >= World.ForegroundLayout.MapColCount)
+            endCol = World.ForegroundLayout.MapColCount - 1;
 
         CollisionFlags result = CollisionFlags.NONE;
 
@@ -100,7 +100,7 @@ public class PixelCollisionChecker : CollisionChecker
                 for (int col = startCol; col <= endCol; col++)
                 {
                     var mapPos = GetMapLeftTop(row, col);
-                    Map map = World.GetMapFrom(mapPos);
+                    Map map = World.ForegroundLayout.GetMapFrom(mapPos);
                     if (map != null)
                     {
                         Box mapBox = GetMapBoundingBox(row, col);

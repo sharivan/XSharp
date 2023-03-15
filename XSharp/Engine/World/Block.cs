@@ -82,7 +82,7 @@ public class Block
         Map map = maps[cell.Row, cell.Col];
         if (map == null)
         {
-            map = GameEngine.Engine.World.AddMap();
+            map = GameEngine.Engine.World.ForegroundLayout.AddMap();
             maps[cell.Row, cell.Col] = map;
         }
 
