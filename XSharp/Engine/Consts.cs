@@ -16,11 +16,16 @@ public class Consts
 {
     public const int SAVE_SLOT_COUNT = 100;
     public const int KEY_BUFFER_COUNT = 60;
+    public static readonly bool ENABLE_BACKGROUND_INPUT = true;
 
-    // Tick rate
+    // Device params
 
-    public static readonly FixedSingle TICKRATE = 60;
-    public static readonly FixedSingle TICK = 1D / TICKRATE;
+    public const int TICKRATE = 60;
+    public const double TICK = 1D / TICKRATE;
+    public static readonly bool DOUBLE_BUFFERED = false;
+    public static readonly bool VSYNC = true; // TODO : When false the refresh rate doesn't work fine, taking about half of frames. Please fix it!
+    public static readonly bool SAMPLER_STATE_LINEAR = false;
+    public static readonly bool FULL_SCREEN = false; // TODO : When true the app crash on device creating. Please fix it!
 
     // Sprite
 
@@ -273,8 +278,6 @@ public class Consts
     public static readonly FixedSingle DEFAULT_CLIENT_HEIGHT = DEFAULT_DRAW_SCALE * SCREEN_HEIGHT;
     public static readonly Vector DEFAULT_CLIENT_SIZE = (DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
     public static readonly Box DEFAULT_CLIENT_BOX = (DEFAULT_DRAW_ORIGIN.X, DEFAULT_DRAW_ORIGIN.Y, DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
-    public const bool VSYNC = false;
-    public const bool SPRITE_SAMPLER_STATE_LINEAR = false;
 
     // Debug
 
@@ -508,9 +511,9 @@ public class Consts
     public static readonly bool ENABLE_OST = true;
 
     public static readonly bool LOAD_ROM = true;
-    public const string ROM_NAME = "BestGame.mmx";
+    public const string ROM_NAME = "ShittyDash.mmx";
     public static readonly bool SKIP_MENU = false;
     public static readonly bool SKIP_INTRO = false;
-    public const int INITIAL_LEVEL = 11;
+    public const int INITIAL_LEVEL = 8;
     public const int INITIAL_CHECKPOINT = 0;
 }

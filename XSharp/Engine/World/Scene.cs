@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using SharpDX;
 using SharpDX.Direct3D9;
 
+using XSharp.Engine.Graphics;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
 
-using MMXBox = XSharp.Math.Geometry.Box;
+using Box = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.World;
 
@@ -30,6 +31,7 @@ public class Scene : IDisposable
 
     internal Block[,] blocks;
     internal VertexBuffer[] layers;
+    internal List<Tilemap> tilemaps;
 
     public int ID
     {
@@ -54,6 +56,8 @@ public class Scene : IDisposable
 
         blocks = new Block[SIDE_BLOCKS_PER_SCENE, SIDE_BLOCKS_PER_SCENE];
         layers = new VertexBuffer[3];
+
+        tilemaps = new List<Tilemap>();
     }
 
     public Tile GetTileFrom(Vector pos)
@@ -123,7 +127,7 @@ public class Scene : IDisposable
         Block block = blocks[cell.Row, cell.Col];
         if (block == null)
         {
-            block = GameEngine.Engine.World.AddBlock();
+            block = GameEngine.Engine.World.ForegroundLayout.AddBlock();
             blocks[cell.Row, cell.Col] = block;
         }
 
@@ -152,7 +156,7 @@ public class Scene : IDisposable
         SetBlock(new Vector(cell.Col * BLOCK_SIZE, cell.Row * BLOCK_SIZE), block);
     }
 
-    public void FillRectangle(MMXBox box, Map map)
+    public void FillRectangle(Box box, Map map)
     {
         Vector boxLT = box.LeftTop;
         Vector boxSize = box.DiagonalVector;
@@ -172,7 +176,7 @@ public class Scene : IDisposable
             RefreshLayers(box);
     }
 
-    public void FillRectangle(MMXBox box, Block block)
+    public void FillRectangle(Box box, Block block)
     {
         Vector boxLT = box.LeftTop;
         Vector boxSize = box.DiagonalVector;
@@ -192,7 +196,7 @@ public class Scene : IDisposable
             RefreshLayers(box);
     }
 
-    private void RefreshLayers(MMXBox box)
+    private void RefreshLayers(Box box)
     {
         Cell start = GetBlockCellFromPos(box.LeftTop);
         int startCol = start.Col;

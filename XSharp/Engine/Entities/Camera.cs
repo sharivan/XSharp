@@ -215,8 +215,8 @@ public class Camera : Entity
 
         FixedSingle minX = minCameraPos.X + w2;
         FixedSingle minY = minCameraPos.Y + h2;
-        FixedSingle maxX = FixedSingle.Min(maxCameraPos.X, World.Width) - w2;
-        FixedSingle maxY = FixedSingle.Min(maxCameraPos.Y, World.Height) - h2;
+        FixedSingle maxX = FixedSingle.Min(maxCameraPos.X, World.ForegroundLayout.Width) - w2;
+        FixedSingle maxY = FixedSingle.Min(maxCameraPos.Y, World.ForegroundLayout.Height) - h2;
 
         if (x < minX)
             x = minX;
