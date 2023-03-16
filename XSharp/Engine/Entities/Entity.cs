@@ -271,6 +271,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
         set;
     } = false;
 
+    public long FrameCounter
+    {
+        get;
+        private set;
+    }
+
     protected Entity()
     {
         touchingEntities = new EntitySet<Entity>();
@@ -545,7 +551,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
         wasOutOfLiveArea = outOfLiveArea;
 
-        if (KillOnOffscreen && Engine.FrameCounter - SpawnFrame >= MinimumIntervalToKillOnOffScreen && outOfLiveArea)
+        if (KillOnOffscreen && FrameCounter >= MinimumIntervalToKillOnOffScreen && outOfLiveArea)
         {
             Kill();
             return;
@@ -609,6 +615,8 @@ public abstract class Entity : IIndexedNamedFactoryItem
             return;
 
         CurrentState?.OnFrame();
+
+        FrameCounter++;
     }
 
     protected virtual void OnStartTouch(Entity entity)
@@ -682,6 +690,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public virtual void Spawn()
     {
+        FrameCounter = 0;
         SpawnFrame = Engine.FrameCounter;
         Spawning = true;
         CheckTouchingEntities = true;

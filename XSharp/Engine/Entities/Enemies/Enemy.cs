@@ -1,4 +1,6 @@
-﻿using XSharp.Engine.Entities.Weapons;
+﻿using SharpDX;
+
+using XSharp.Engine.Entities.Weapons;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 
@@ -8,6 +10,26 @@ namespace XSharp.Engine.Entities.Enemies;
 
 public abstract class Enemy : Sprite
 {
+    public static readonly Color[] FLASHING_PALETTE = new Color[]
+    {
+        Color.Transparent, // 0
+        new Color(248, 248, 248, 255), // 1
+        new Color(240, 248, 248, 255), // 2
+        new Color(232, 248, 248, 255), // 3
+        new Color(224, 248, 248, 255), // 4
+        new Color(216, 248, 248, 255), // 5
+        new Color(208, 248, 248, 255), // 6
+        new Color(200, 248, 248, 255), // 7
+        new Color(192, 248, 248, 255), // 8
+        new Color(184, 248, 248, 255), // 9
+        new Color(176, 248, 248, 255), // 10
+        new Color(168, 248, 248, 255), // 11
+        new Color(160, 248, 248, 255), // 12
+        new Color(152, 248, 248, 255), // 13
+        new Color(144, 248, 248, 255), // 14
+        new Color(136, 248, 248, 255) // 15
+    };
+
     [Precache]
     internal static void Precache()
     {
@@ -75,6 +97,13 @@ public abstract class Enemy : Sprite
         base.OnSpawn();
 
         KillOnOffscreen = true;
+
+        NothingDropOdd = 9000; // 90%
+        SmallHealthDropOdd = 300; // 3%
+        BigHealthDropOdd = 100; // 1%
+        SmallAmmoDropOdd = 400; // 4%
+        BigAmmoDropOdd = 175; // 1.75%
+        LifeUpDropOdd = 25; // 0.25%
     }
 
     protected virtual void OnContactDamage(Player player)

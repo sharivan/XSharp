@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 
+using SharpDX;
+
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -17,6 +19,26 @@ public enum BattonBoneGState
 
 public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
 {
+    public static readonly Color[] BATTON_BONE_G_PALETTE = new Color[]
+    {
+        Color.Transparent, // 0
+        new Color(64, 136, 64, 255), // 1
+        new Color(248, 192, 240, 255), // 2
+        new Color(240, 48, 80, 255), // 3
+        new Color(224, 216, 128, 255), // 4
+        new Color(200, 160, 80, 255), // 5           
+        new Color(152, 112, 48, 255), // 6
+        new Color(120, 72, 48, 255), // 7
+        new Color(104, 232, 168, 255), // 8
+        new Color(96, 72, 128, 255), // 9
+        new Color(136, 104, 184, 255), // 10
+        new Color(168, 136, 224, 255), // 11
+        new Color(240, 240, 240, 255), // 12
+        new Color(160, 160, 160, 255), // 13
+        new Color(104, 104, 104, 255), // 14
+        new Color(40, 40, 40, 255), // 15
+    };
+
     [Precache]
     new internal static void Precache()
     {

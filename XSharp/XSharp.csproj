@@ -12,7 +12,10 @@
 	<PackageProjectUrl>https://github.com/sharivan/XSharp</PackageProjectUrl>
 	<NeutralLanguage>en-001</NeutralLanguage>
 	<Title>X#</Title>
-  </PropertyGroup>
+  </PropertyGroup> 
+  <ItemGroup>
+    <None Remove="resources\sprites\Enemies\X\RayBit.png" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="PaletteShader.hlsl">
@@ -73,6 +76,9 @@
     <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
     <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
     <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
+    <EmbeddedResource Include="resources\sprites\Enemies\X\RayBit.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Objects\Platforms.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -275,7 +281,9 @@
     <Content Include="resources\sounds\mmx\37 - MMX - Alert 1.wav" />
     <Content Include="resources\sounds\mmx\38 - MMX - Alert 2.wav" />
     <Content Include="resources\sounds\mmx\39 - MMX - Armadillo Charge.wav" />
-    <Content Include="resources\sounds\mmx\40 - MMX - Armadillo Laser.wav" />
+    <Content Include="resources\sounds\mmx\40 - MMX - Armadillo Laser.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\mmx\41 - MMX - Spark Mandrill Punch.wav" />
     <Content Include="resources\sounds\mmx\42 - MMX - Beam Pulse.wav" />
     <Content Include="resources\sounds\mmx\43 - MMX - Beep %281%29.wav" />

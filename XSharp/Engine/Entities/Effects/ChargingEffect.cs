@@ -1,11 +1,61 @@
-﻿using XSharp.Engine.Graphics;
+﻿using SharpDX;
 
-using static XSharp.Engine.Consts;
+using XSharp.Engine.Graphics;
 
 namespace XSharp.Engine.Entities.Effects;
 
 public class ChargingEffect : SpriteEffect
 {
+    public static readonly Color[] CHARGE_EFFECT_PALETTE = new Color[]
+    {
+        Color.Transparent, // 0
+        new Color(136, 248, 248, 255), // 1
+        new Color(248, 224, 112, 255), // 2
+        new Color(248, 248, 248, 255), // 3
+        new Color(240, 176, 56, 255), // 4
+        new Color(240, 144, 96, 255) // 5
+    };
+
+    public static readonly Color[] CHARGE_LEVEL_1_PALETTE = new Color[]
+        {
+        Color.Transparent, // 0
+        new Color(248, 248, 248, 255), // 1
+        new Color(232, 224, 64, 255), // 2
+        new Color(240, 104, 192, 255), // 3
+        new Color(160, 240, 240, 255), // 4
+        new Color(80, 216, 240, 255), // 5
+        new Color(24, 128, 224, 255), // 6
+        new Color(0, 184, 248, 255), // 7
+        new Color(0, 144, 240, 255), // 8
+        new Color(32, 104, 240, 255), // 9
+        new Color(248, 176, 128, 255), // 10
+        new Color(184, 96, 72, 255), // 11
+        new Color(128, 64, 32, 255), // 12
+        new Color(248, 248, 248, 255), // 13
+        new Color(176, 176, 176, 255), // 14
+        new Color(24, 80, 224, 255) // 15
+        };
+
+    public static readonly Color[] CHARGE_LEVEL_2_PALETTE = new Color[]
+    {
+        Color.Transparent, // 0
+        new Color(248, 248, 248, 255), // 1
+        new Color(232, 224, 64, 255), // 2
+        new Color(240, 104, 192, 255), // 3
+        new Color(224, 224, 248, 255), // 4
+        new Color(200, 176, 248, 255), // 5
+        new Color(152, 136, 240, 255), // 6
+        new Color(176, 168, 248, 255), // 7
+        new Color(176, 136, 248, 255), // 8
+        new Color(136, 112, 232, 255), // 9
+        new Color(248, 176, 128, 255), // 10
+        new Color(184, 96, 72, 255), // 11
+        new Color(128, 64, 32, 255), // 12
+        new Color(248, 248, 248, 255), // 13
+        new Color(176, 176, 176, 255), // 14
+        new Color(144, 0, 216, 255) // 15
+    };
+
     [Precache]
     new internal static void Precache()
     {

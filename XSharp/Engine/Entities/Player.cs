@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Reflection;
 
+using SharpDX;
+
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Graphics;
@@ -42,6 +44,42 @@ public enum PlayerState
 // TODO : This class needs a huge refactor
 public class Player : Sprite, IStateEntity<PlayerState>
 {
+    public static readonly Color[] X1_NORMAL_PALETTE = new Color[]
+    {
+        Color.Transparent, // 0
+        new Color(224, 224, 224, 255), // 1
+        new Color(232, 224, 64, 255), // 2
+        new Color(240, 64, 16, 255), // 3
+        new Color(120, 216, 240, 255), // 4
+        new Color(80, 160, 240, 255), // 5
+        new Color(24, 88, 176, 255), // 6
+        new Color(0, 128, 248, 255), // 7
+        new Color(0, 64, 240, 255), // 8
+        new Color(32, 48, 128, 255), // 9
+        new Color(248, 176, 128, 255), // 10
+        new Color(184, 96, 72, 255), // 11
+        new Color(128, 64, 32, 255), // 12
+        new Color(240, 240, 240, 255), // 13
+        new Color(152, 152, 152, 255), // 14
+        new Color(24, 24, 24, 255), // 15
+        Color.Transparent, // 16
+        new Color(248, 248, 248, 255), // 17
+        new Color(240, 248, 248, 255), // 18
+        new Color(232, 248, 248, 255), // 19
+        new Color(224, 248, 248, 255), // 20
+        new Color(216, 248, 248, 255), // 21
+        new Color(208, 248, 248, 255), // 22
+        new Color(200, 248, 248, 255), // 23
+        new Color(192, 248, 248, 255), // 24
+        new Color(184, 248, 248, 255), // 25
+        new Color(176, 248, 248, 255), // 26
+        new Color(168, 248, 248, 255), // 27
+        new Color(160, 248, 248, 255), // 28
+        new Color(152, 248, 248, 255), // 29
+        new Color(144, 248, 248, 255), // 30
+        new Color(136, 248, 248, 255) // 31
+    };
+
     [Precache]
     internal static void Precache()
     {

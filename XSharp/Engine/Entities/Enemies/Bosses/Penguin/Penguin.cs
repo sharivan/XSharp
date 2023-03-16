@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 
+using SharpDX;
+
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -25,6 +27,43 @@ public enum PenguinState
 public class Penguin : Boss, IStateEntity<PenguinState>
 {
     public static readonly bool DONT_ATTACK = false;
+
+    public static readonly Color[] PENGUIN_PALETTE = new Color[]
+    {
+        Color.Transparent, // 0
+        Color.FromBgra(0xFF303040), // 1
+        Color.FromBgra(0xFF3870F0), // 2
+        Color.FromBgra(0xFFD08050), // 3
+        Color.FromBgra(0xFFF8B050), // 4
+        Color.FromBgra(0xFFF0F0F0), // 5           
+        Color.FromBgra(0xFFB0B0C8), // 6
+        Color.FromBgra(0xFF686880), // 7
+        Color.FromBgra(0xFF185068), // 8
+        Color.FromBgra(0xFF205898), // 9
+        Color.FromBgra(0xFFF03808), // A
+        Color.FromBgra(0xFFA83008), // B
+        Color.FromBgra(0xFF683010), // C
+        Color.FromBgra(0xFF9870D8), // D
+        Color.FromBgra(0xFF6848B8), // E
+        Color.FromBgra(0xFF282828), // F
+
+        Color.Transparent, // 10
+        Color.FromBgra(0xFF404800), // 11
+        Color.FromBgra(0xFFF8F8F8), // 12
+        Color.FromBgra(0xFFC8D8E0), // 13
+        Color.FromBgra(0xFF98C0D0), // 14
+        Color.FromBgra(0xFF70A8B8), // 15
+        Color.FromBgra(0xFF4090A8), // 16
+        Color.FromBgra(0xFF187898), // 17
+        Color.FromBgra(0xFF185058), // 18
+        Color.FromBgra(0xFF803090), // 19
+        Color.FromBgra(0xFFB0F8F8), // 1A
+        Color.FromBgra(0xFFA8F8F8), // 1B
+        Color.FromBgra(0xFFA0F8F8), // 1C
+        Color.FromBgra(0xFF98F8F8), // 1D
+        Color.FromBgra(0xFF90F8F8), // 1E
+        Color.FromBgra(0xFF88F8F8) // 1F
+    };
 
     [Precache]
     new internal static void Precache()

@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 
+using SharpDX;
+
 using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
@@ -19,6 +21,26 @@ public enum ScriverState
 
 public class Scriver : Enemy, IStateEntity<ScriverState>
 {
+    public static readonly Color[] SCRIVER_PALETTE = new Color[]
+    {
+        Color.Transparent, // 0
+        new Color(48, 40, 96, 255), // 1
+        new Color(72, 64, 144, 255), // 2
+        new Color(112, 104, 224, 255), // 3
+        new Color(176, 168, 248, 255), // 4
+        new Color(112, 64, 40, 255), // 5
+        new Color(168, 104, 56, 255), // 6
+        new Color(192, 152, 80, 255), // 7
+        new Color(224, 216, 128, 255), // 8
+        new Color(16, 128, 80, 255), // 9
+        new Color(32, 160, 136, 255), // 10
+        new Color(40, 240, 192, 255), // 11
+        new Color(72, 80, 72, 255), // 12
+        new Color(128, 136, 128, 255), // 13
+        new Color(200, 208, 200, 255), // 14
+        new Color(32, 32, 32, 255) // 15
+    };
+
     [Precache]
     new internal static void Precache()
     {

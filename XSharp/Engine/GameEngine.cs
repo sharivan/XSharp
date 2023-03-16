@@ -22,6 +22,7 @@ using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Enemies;
 using XSharp.Engine.Entities.Enemies.Bosses;
 using XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+using XSharp.Engine.Entities.Enemies.RayBit;
 using XSharp.Engine.Entities.HUD;
 using XSharp.Engine.Entities.Items;
 using XSharp.Engine.Entities.Objects;
@@ -381,7 +382,7 @@ public class GameEngine : IRenderable, IRenderTarget
     private EntityReference<ReadyHUD> readyHUD;
     private EntityReference<Boss> boss;
 
-    private Dictionary<Type, PrecacheAction> precacheActions;
+    private Dictionary<string, PrecacheAction> precacheActions;
 
     public Control Control
     {
@@ -831,7 +832,7 @@ public class GameEngine : IRenderable, IRenderTarget
         FadingControl = new FadingControl();
         infoMessageFadingControl = new FadingControl();
 
-        precacheActions = new Dictionary<Type, PrecacheAction>();
+        precacheActions = new Dictionary<string, PrecacheAction>();
 
         lua = new Lua();
         lua.LoadCLRPackage(); // TODO : This can be DANGEROUS! Fix in the future by adding restrictions on the scripting.
@@ -881,14 +882,14 @@ public class GameEngine : IRenderable, IRenderTarget
         // 6 - Unused
         // 7 - Unused
 
-        CreateSoundChannel("X", 0.25f);
-        CreateSoundChannel("Weapons", 0.25f);
-        CreateSoundChannel("Effects", 0.25f);
-        CreateSoundChannel("OST", 0.5f);
-        CreateSoundChannel("Enemies", 0.25f);
-        CreateSoundChannel("Ambient", 0.25f);
-        CreateSoundChannel("Unused1", 0.25f);
-        CreateSoundChannel("Unused2", 0.25f);
+        CreateSoundChannel("X", 0.25f); // 0
+        CreateSoundChannel("Weapons", 0.25f); // 1
+        CreateSoundChannel("Effects", 0.25f); // 2
+        CreateSoundChannel("OST", 0.5f); // 3
+        CreateSoundChannel("Enemies", 0.25f); // 4
+        CreateSoundChannel("Ambient", 0.25f); // 5
+        CreateSoundChannel("Unused1", 0.25f); // 6
+        CreateSoundChannel("Unused2", 0.25f); // 7
 
         LoadSoundStream("X Regular Shot", @"resources\sounds\mmx\01 - MMX - X Regular Shot.wav", SoundFormat.WAVE);
         LoadSoundStream("X Semi Charged Shot", @"resources\sounds\mmx2\X Semi Charged Shot.wav", SoundFormat.WAVE);
@@ -926,6 +927,7 @@ public class GameEngine : IRenderable, IRenderTarget
         LoadSoundStream("Boss Explosion", @"resources\sounds\mmx\Boss Explosion.wav", SoundFormat.WAVE);
         LoadSoundStream("Boss Final Explode", @"resources\sounds\mmx\Boss Final Explode.wav", SoundFormat.WAVE);
         LoadSoundStream("Enemy Sound (05)", @"resources\sounds\mmx\68 - MMX - Enemy Sound (05).wav", SoundFormat.WAVE);
+        LoadSoundStream("Armadillo Laser", @"resources\sounds\mmx\40 - MMX - Armadillo Laser.wav", SoundFormat.WAVE);
 
         directInput = new DirectInput();
 
@@ -3759,10 +3761,11 @@ public class GameEngine : IRenderable, IRenderTarget
             ? null
             : id switch
             {
-                0x02 when mmx.Type == 0 && mmx.Level == 8 => AddPenguin(origin), // Penguin
+                0x02 when mmx.Type == 0 && mmx.Level == 8 => AddPenguin(origin),
                 0x09 when mmx.Type == 1 => AddScriver(origin),
                 0x2D when mmx.Type == 0 => AddBattonBoneG(origin),
                 0x50 when mmx.Type == 1 => AddBattonBoneG(origin),
+                0x51 when mmx.Type == 0 => AddRayBit(origin),
                 0x2C when mmx.Type == 1 => AddProbe8201U(subid, origin),
                 0x2F => AddRideArmor(subid, origin),
                 0x4D => AddCapsule(subid, origin),
@@ -4033,6 +4036,17 @@ public class GameEngine : IRenderable, IRenderTarget
 
         battonBoneG.Place();
         return entities.GetReferenceTo(battonBoneG);
+    }
+
+    public EntityReference<RayBit> AddRayBit(Vector origin)
+    {
+        RayBit rayBit = entities.Create<RayBit>(new
+        {
+            Origin = origin
+        });
+
+        rayBit.Place();
+        return entities.GetReferenceTo(rayBit);
     }
 
     private void SpawnX(Vector origin)
@@ -4959,7 +4973,7 @@ public class GameEngine : IRenderable, IRenderTarget
         for (var type = baseType; type != null; type = type.BaseType)
         {
             string name = type.Name;
-            if (precacheActions.TryGetValue(type, out var action))
+            if (precacheActions.TryGetValue(type.FullName, out var action))
             {
                 if (previous != null)
                     previous.Parent = action;
@@ -4970,7 +4984,7 @@ public class GameEngine : IRenderable, IRenderTarget
             action = new PrecacheAction(type);
             first ??= action;
 
-            var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
             foreach (var method in methods)
             {
                 Attribute attribute = method.GetCustomAttribute(typeof(PrecacheAttribute));
@@ -4984,7 +4998,9 @@ public class GameEngine : IRenderable, IRenderTarget
 
                     shouldCall = true;
                     action.Method = method;
-                    precacheActions.Add(type, action);
+                    precacheActions.Add(type.FullName, action);
+
+                    break;
                 }
             }
 
