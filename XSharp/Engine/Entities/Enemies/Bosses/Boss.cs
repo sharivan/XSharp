@@ -2,6 +2,7 @@
 
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Weapons;
+using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -99,6 +100,16 @@ public abstract class Boss : Enemy
         (-18, -35) // 78
         // Fading back from white start before 30 frames
     };
+
+    [Precache]
+    new internal static void Precache()
+    {
+        Engine.PrecacheSound("Boss Intro", @"resources\sounds\ost\mmx\19 - Boss Intro.mp3");
+        Engine.PrecacheSound("Boss Battle", @"resources\sounds\ost\mmx\20 - Boss Battle.mp3");
+        Engine.PrecacheSound("Boss Defeated", @"resources\sounds\ost\mmx\21 - Boss Defeated.mp3");
+        Engine.PrecacheSound("Boss Explosion", @"resources\sounds\mmx\Boss Explosion.wav");
+        Engine.PrecacheSound("Boss Final Explode", @"resources\sounds\mmx\Boss Final Explode.wav");
+    }
 
     public event BossDefeatedEvent BossDefeatedEvent;
 

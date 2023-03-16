@@ -33,7 +33,15 @@ public abstract class Enemy : Sprite
     [Precache]
     internal static void Precache()
     {
-        Engine.CreatePalette("flashingPalette", FLASHING_PALETTE);
+        Engine.PrecacheSound("Small Hit", @"resources\sounds\mmx\30 - MMX - Small Hit.wav");
+        Engine.PrecacheSound("Big Hit", @"resources\sounds\mmx\31 - MMX - Big Hit.wav");
+        Engine.PrecacheSound("Enemy Die (1)", @"resources\sounds\mmx\56 - MMX - Enemy Die (1).wav");
+        Engine.PrecacheSound("Enemy Die (2)", @"resources\sounds\mmx\57 - MMX - Enemy Die (2).wav");
+        Engine.PrecacheSound("Enemy Die (3)", @"resources\sounds\mmx\58 - MMX - Enemy Die (3).wav");
+        Engine.PrecacheSound("Enemy Die (4)", @"resources\sounds\mmx\59 - MMX - Enemy Die (4).wav");
+        Engine.PrecacheSound("Armadillo Laser", @"resources\sounds\mmx\40 - MMX - Armadillo Laser.wav");
+
+        Engine.PrecachePalette("flashingPalette", FLASHING_PALETTE);
     }
 
     public bool ReflectShots

@@ -551,13 +551,13 @@ public class BinarySerializer : Serializer, IDisposable
 
     public Type ReadType()
     {
-        string name = ReadString();
+        string name = ReadString(false);
         return Type.GetType(name);
     }
 
     public void WriteType(Type type)
     {
-        WriteString(type.FullName);
+        WriteString(type.FullName, false);
     }
 
     public Type[] ReadTypes()
@@ -882,19 +882,21 @@ public class BinarySerializer : Serializer, IDisposable
         WriteDictionary((IDictionary) dictionary, typeof(KeyType), typeof(ValueType));
     }
 
-    private MethodInfo ReadMethodInfo()
+    public MethodInfo ReadMethodInfo()
     {
         var declaringType = ReadType();
-        string name = ReadString();
+        string name = ReadString(false);
         var types = ReadTypes();
-        return declaringType.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly, types);
+        bool isStatic = ReadBool();
+        return declaringType.GetMethod(name, (isStatic ? BindingFlags.Static : BindingFlags.Instance) | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly, types);
     }
 
-    private void WriteMethodInfo(MethodInfo info)
+    public void WriteMethodInfo(MethodInfo info)
     {
         WriteType(info.DeclaringType);
-        WriteString(info.Name);
+        WriteString(info.Name, false);        
         WriteTypes(info.GetParameters().Select((p) => p.ParameterType));
+        WriteBool(info.IsStatic);
     }
 
     public object ReadDelegate(bool nullable = true)

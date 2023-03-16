@@ -68,7 +68,13 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     [Precache]
     new internal static void Precache()
     {
-        var penguinPalette = Engine.CreatePalette("penguinPalette", PENGUIN_PALETTE);
+        Engine.PrecacheSound("Chill Penguin Breath", @"resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav");
+        Engine.PrecacheSound("Misc. dash, jump, move (3)", @"resources\sounds\mmx\91 - MMX - Misc. dash, jump, move (3).wav");
+        Engine.PrecacheSound("Ice", @"resources\sounds\mmx\34 - MMX - Ice.wav");
+        Engine.PrecacheSound("Ice Freeze", @"resources\sounds\mmx\35 - MMX - Ice Freeze.wav");
+        Engine.PrecacheSound("Ice Break", @"resources\sounds\mmx\36 - MMX - Ice Break.wav");
+
+        var penguinPalette = Engine.PrecachePalette("penguinPalette", PENGUIN_PALETTE);
         var penguinSpriteSheet = Engine.CreateSpriteSheet("Penguin", true, true);
 
         using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.Bosses.X1.Penguin.png"))

@@ -1,5 +1,6 @@
 ﻿using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Triggers;
+using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
 using XSharp.Math.Geometry;
 
@@ -32,6 +33,13 @@ public delegate void BossDoorEvent(BossDoor source);
 
 public class BossDoor : BaseTrigger, IStateEntity<BossDoorState>
 {
+    [Precache]
+    internal static void Precache()
+    {
+        Engine.PrecacheSound("Door Opening", @"resources\sounds\mmx\Door Opening.wav");
+        Engine.PrecacheSound("Door Closing", @"resources\sounds\mmx\Door Closing.wav");
+    }
+
     private static Box GetTriggerBoudingBox(Vector origin)
     {
         return (origin, (-13, -8), (8, 8));

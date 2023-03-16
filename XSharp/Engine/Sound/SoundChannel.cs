@@ -64,10 +64,10 @@ public class SoundChannel : IDisposable, ISerializable
         GC.SuppressFinalize(this);
     }
 
-    public void Play(WaveEntry stream, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
+    public void Play(PrecachedSound sound, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
     {
-        stream.Stream.Position = 0;
-        Stream.UpdateSource(stream, stopTime, loopTime, ignoreUpdatesUntilPlayed);
+        sound.Stream.Position = 0;
+        Stream.UpdateSource(sound, stopTime, loopTime, ignoreUpdatesUntilPlayed);
 
         if (!Stream.Playing)
         {
@@ -84,14 +84,14 @@ public class SoundChannel : IDisposable, ISerializable
         player.Play();
     }
 
-    public void Play(WaveEntry stream, double loopTime, bool ignoreUpdatesUntilFinished = false)
+    public void Play(PrecachedSound sound, double loopTime, bool ignoreUpdatesUntilFinished = false)
     {
-        Play(stream, -1, loopTime, ignoreUpdatesUntilFinished);
+        Play(sound, -1, loopTime, ignoreUpdatesUntilFinished);
     }
 
-    public void Play(WaveEntry stream, bool ignoreUpdatesUntilFinished = false)
+    public void Play(PrecachedSound sound, bool ignoreUpdatesUntilFinished = false)
     {
-        Play(stream, -1, -1, ignoreUpdatesUntilFinished);
+        Play(sound, -1, -1, ignoreUpdatesUntilFinished);
     }
 
     public void ClearSoundLoopPoint(bool clearStopPoint = false)
@@ -122,9 +122,9 @@ public class SoundChannel : IDisposable, ISerializable
         StopPlayer();
     }
 
-    public bool IsPlaying(WaveEntry stream)
+    public bool IsPlaying(PrecachedSound sound)
     {
-        return Stream.Playing && Stream.Source == stream;
+        return Stream.Playing && Stream.Source == sound;
     }
 
     public void Deserialize(BinarySerializer serializer)

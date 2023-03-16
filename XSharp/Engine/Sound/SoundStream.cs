@@ -1,52 +1,15 @@
-﻿using System;
-using System.IO;
-
-using NAudio.Wave;
+﻿using NAudio.Wave;
 
 using XSharp.Serialization;
 
 namespace XSharp.Engine.Sound;
-
-public enum SoundFormat
-{
-    WAVE,
-    MP3
-}
-
-public static class WaveStreamUtil
-{
-    public static WaveStream FromStream(Stream stream, SoundFormat format)
-    {
-        return format switch
-        {
-            SoundFormat.WAVE => new WaveFileReader(stream),
-            SoundFormat.MP3 => new Mp3FileReader(stream),
-            _ => throw new ArgumentException($"Sound format is invalid: {format}"),
-        };
-    }
-
-    public static WaveStream FromFile(string waveFile, SoundFormat format)
-    {
-        return format switch
-        {
-            SoundFormat.WAVE => new WaveFileReader(waveFile),
-            SoundFormat.MP3 => new Mp3FileReader(waveFile),
-            _ => throw new ArgumentException($"Sound format is invalid: {format}"),
-        };
-    }
-
-    public static long TimeToBytePosition(WaveStream stream, double time)
-    {
-        return (long) (time * stream.WaveFormat.AverageBytesPerSecond);
-    }
-}
 
 /// <summary>
 /// Stream for playback
 /// </summary>
 public class SoundStream : WaveStream, ISerializable
 {
-    private WaveEntry source;
+    private PrecachedSound source;
     private bool ignoreUpdatesUntilPlayed;
 
     /// <summary>
@@ -54,7 +17,7 @@ public class SoundStream : WaveStream, ISerializable
     /// </summary>
     public override WaveFormat WaveFormat => source.Stream.WaveFormat;
 
-    public WaveEntry Source
+    public PrecachedSound Source
     {
         get => source;
         set => UpdateSource(value);
@@ -99,17 +62,17 @@ public class SoundStream : WaveStream, ISerializable
         Playing = false;
     }
 
-    public SoundStream(WaveEntry source, long stopPoint, long loopPoint)
+    public SoundStream(PrecachedSound source, long stopPoint, long loopPoint)
     {
         UpdateSource(source, stopPoint, loopPoint);
         Playing = true;
     }
 
-    public SoundStream(WaveEntry source, double stopTime, double loopTime) : this(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, loopTime) : -1) { }
+    public SoundStream(PrecachedSound source, double stopTime, double loopTime) : this(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, loopTime) : -1) { }
 
-    public SoundStream(WaveEntry source, long loopPoint) : this(source, -1, loopPoint) { }
+    public SoundStream(PrecachedSound source, long loopPoint) : this(source, -1, loopPoint) { }
 
-    public SoundStream(WaveEntry source) : this(source, -1, -1) { }
+    public SoundStream(PrecachedSound source) : this(source, -1, -1) { }
 
     public override int Read(byte[] buffer, int offset, int count)
     {
@@ -162,7 +125,7 @@ public class SoundStream : WaveStream, ISerializable
         ignoreUpdatesUntilPlayed = false;
     }
 
-    public void UpdateSource(WaveEntry source, long stopPoint, long loopPoint, bool ignoreUpdatesUntilPlayed = false)
+    public void UpdateSource(PrecachedSound source, long stopPoint, long loopPoint, bool ignoreUpdatesUntilPlayed = false)
     {
         if (this.ignoreUpdatesUntilPlayed)
             return;
@@ -173,32 +136,32 @@ public class SoundStream : WaveStream, ISerializable
         this.ignoreUpdatesUntilPlayed = ignoreUpdatesUntilPlayed;
     }
 
-    public void UpdateSource(WaveEntry source, long loopPoint, bool ignoreUpdatesUntilPlayed = false)
+    public void UpdateSource(PrecachedSound source, long loopPoint, bool ignoreUpdatesUntilPlayed = false)
     {
         UpdateSource(source, -1, loopPoint, ignoreUpdatesUntilPlayed);
     }
 
-    public void UpdateSource(WaveEntry source, bool ignoreUpdatesUntilPlayed = false)
+    public void UpdateSource(PrecachedSound source, bool ignoreUpdatesUntilPlayed = false)
     {
         UpdateSource(source, -1, -1, ignoreUpdatesUntilPlayed);
     }
 
-    public void UpdateSource(WaveEntry source, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
+    public void UpdateSource(PrecachedSound source, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
     {
         UpdateSource(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, loopTime) : -1, ignoreUpdatesUntilPlayed);
     }
 
-    public void UpdateSource(WaveEntry source, double loopTime, bool ignoreUpdatesUntilPlayed = false)
+    public void UpdateSource(PrecachedSound source, double loopTime, bool ignoreUpdatesUntilPlayed = false)
     {
         UpdateSource(source, -1, loopTime, ignoreUpdatesUntilPlayed);
     }
 
     public void Deserialize(BinarySerializer serializer)
     {
-        var soundName = serializer.ReadString();
-        if (soundName != null)
+        var path = serializer.ReadString();
+        if (path != null)
         {
-            source = GameEngine.Engine.soundStreams[soundName];
+            source = GameEngine.Engine.precachedSounds[GameEngine.Engine.precachedSoundsByFileName[path]];
             Position = serializer.ReadLong();
         }
         else
@@ -214,7 +177,7 @@ public class SoundStream : WaveStream, ISerializable
     {
         if (source != null)
         {
-            serializer.WriteString(source.Name);
+            serializer.WriteString(source.Path);
             serializer.WriteLong(Position);
         }
         else

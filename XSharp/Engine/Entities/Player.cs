@@ -83,7 +83,23 @@ public class Player : Sprite, IStateEntity<PlayerState>
     [Precache]
     internal static void Precache()
     {
-        var x1NormalPalette = Engine.CreatePalette("x1NormalPalette", X1_NORMAL_PALETTE);
+        Engine.PrecacheSound("X Regular Shot", @"resources\sounds\mmx\01 - MMX - X Regular Shot.wav");
+        Engine.PrecacheSound("X Semi Charged Shot", @"resources\sounds\mmx2\X Semi Charged Shot.wav");
+        Engine.PrecacheSound("X Charge Shot", @"resources\sounds\mmx\02 - MMX - X Charge Shot.wav");
+        Engine.PrecacheSound("X Charge", @"resources\sounds\mmx\04 - MMX - X Charge.wav");
+        Engine.PrecacheSound("X Dash", @"resources\sounds\mmx\07 - MMX - X Dash.wav");
+        Engine.PrecacheSound("X Jump", @"resources\sounds\mmx\08 - MMX - X Jump.wav");
+        Engine.PrecacheSound("X Land", @"resources\sounds\mmx\09 - MMX - X Land.wav");
+        Engine.PrecacheSound("X Fade In", @"resources\sounds\mmx\17 - MMX - X Fade In.wav");
+        Engine.PrecacheSound("X Hurt", @"resources\sounds\mmx\10 - MMX - X Hurt.wav");
+        Engine.PrecacheSound("X Die", @"resources\sounds\mmx\11 - MMX - X Die.wav");
+        Engine.PrecacheSound("X Upgrade Complete", @"resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav");
+        Engine.PrecacheSound("X Fade Out", @"resources\sounds\mmx\18 - MMX - X Fade Out.wav");
+        Engine.PrecacheSound("X Life Gain", @"resources\sounds\mmx\12 - MMX - X Life Gain.wav");
+        Engine.PrecacheSound("X Extra Life", @"resources\sounds\mmx\13 - MMX - X Extra Life.wav");
+        Engine.PrecacheSound("X Sub Tank-Heart Powerup", @"resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav");
+
+        var x1NormalPalette = Engine.PrecachePalette("x1NormalPalette", X1_NORMAL_PALETTE);
 
         var xSpriteSheet = Engine.CreateSpriteSheet("X", true, true);
 

@@ -14,6 +14,8 @@ public abstract class Weapon : Sprite
     [Precache]
     internal static void Precache()
     {
+        Engine.PrecacheSound("Enemy Helmet Hit", @"resources\sounds\mmx\29 - MMX - Enemy Helmet Hit.wav");
+
         var xWeaponsSpriteSheet = Engine.CreateSpriteSheet("X Weapons", true, true);
 
         using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Weapons.png"))

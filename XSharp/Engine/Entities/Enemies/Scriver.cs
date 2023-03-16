@@ -44,7 +44,7 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
     [Precache]
     new internal static void Precache()
     {
-        var scriverPalette = Engine.CreatePalette("scriverPalette", SCRIVER_PALETTE);
+        var scriverPalette = Engine.PrecachePalette("scriverPalette", SCRIVER_PALETTE);
         var scriverSpriteSheet = Engine.CreateSpriteSheet("Scriver", true, true);
 
         using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.scriver.png"))

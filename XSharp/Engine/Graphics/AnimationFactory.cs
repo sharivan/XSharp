@@ -23,15 +23,15 @@ public class AnimationFactory : IndexedNamedFactoryList<Animation>
         this.sprite = sprite;
     }
 
-    public Animation Create(int spriteSheetIndex, string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+    public Animation Create(string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
     {
-        return Create(spriteSheetIndex, frameSequenceName, offset, FixedSingle.ZERO, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped);
+        return Create(frameSequenceName, offset, FixedSingle.ZERO, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped);
     }
 
-    public Animation Create(int spriteSheetIndex, string frameSequenceName, Vector offset, FixedSingle rotation, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+    public Animation Create(string frameSequenceName, Vector offset, FixedSingle rotation, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
     {
         var animation = Create<Animation, AnimationReference>();
-        animation.Initialize(spriteSheetIndex, frameSequenceName, offset, rotation, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped);
+        animation.Initialize(frameSequenceName, offset, rotation, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped);
         return animation;
     }
 

@@ -265,14 +265,16 @@ public class GameEngine : IRenderable, IRenderTarget
     private EffectHandle plsFadingColorHandle;
 
     private readonly List<SpriteSheet> spriteSheets;
-    private readonly Dictionary<string, SpriteSheet> spriteSheetsByName;
+    private readonly Dictionary<string, int> spriteSheetsByName;
 
-    private readonly List<Palette> palettes;
-    private readonly Dictionary<string, Palette> palettesByName;
+    private readonly List<Palette> precachedPalettes;
+    private readonly Dictionary<string, int> precachedPalettesByName;
 
-    internal readonly Dictionary<string, WaveEntry> soundStreams;
+    internal readonly List<PrecachedSound> precachedSounds;
+    internal readonly Dictionary<string, int> precachedSoundsByName;
+    internal readonly Dictionary<string, int> precachedSoundsByFileName;
     private readonly List<SoundChannel> soundChannels;
-    private readonly Dictionary<string, SoundChannel> soundChannelsByName;
+    private readonly Dictionary<string, int> soundChannelsByName;
 
     private readonly DirectInput directInput;
     private readonly Keyboard keyboard;
@@ -290,8 +292,6 @@ public class GameEngine : IRenderable, IRenderTarget
     private Vector lastCameraLeftTop;
 
     private List<EntityReference<Checkpoint>> checkpoints;
-
-    private EntityFactory entities;
     private EntitySet<Entity> aliveEntities;
     internal EntitySet<Entity> spawnedEntities;
     internal EntitySet<Entity> removedEntities;
@@ -382,7 +382,7 @@ public class GameEngine : IRenderable, IRenderTarget
     private EntityReference<ReadyHUD> readyHUD;
     private EntityReference<Boss> boss;
 
-    private Dictionary<string, PrecacheAction> precacheActions;
+    internal Dictionary<string, PrecacheAction> precacheActions;
 
     public Control Control
     {
@@ -415,7 +415,10 @@ public class GameEngine : IRenderable, IRenderTarget
         private set;
     }
 
-    public EntityFactory Entities => entities;
+    public EntityFactory Entities
+    {
+        get;
+    }
 
     public IReadOnlySet<Entity> AliveEntities => aliveEntities;
 
@@ -802,7 +805,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
         RNG = new RNG();
 
-        entities = new EntityFactory();
+        Entities = new EntityFactory();
         aliveEntities = new EntitySet<Entity>();
         spawnedEntities = new EntitySet<Entity>();
         removedEntities = new EntitySet<Entity>();
@@ -820,14 +823,16 @@ public class GameEngine : IRenderable, IRenderTarget
         checkpoints = new List<EntityReference<Checkpoint>>();
 
         spriteSheets = new List<SpriteSheet>();
-        spriteSheetsByName = new Dictionary<string, SpriteSheet>();
+        spriteSheetsByName = new Dictionary<string, int>();
 
-        palettes = new List<Palette>();
-        palettesByName = new Dictionary<string, Palette>();
+        precachedPalettes = new List<Palette>();
+        precachedPalettesByName = new Dictionary<string, int>();
 
-        soundStreams = new Dictionary<string, WaveEntry>();
+        precachedSounds = new List<PrecachedSound>();
+        precachedSoundsByName = new Dictionary<string, int>();
+        precachedSoundsByFileName = new Dictionary<string, int>();
         soundChannels = new List<SoundChannel>();
-        soundChannelsByName = new Dictionary<string, SoundChannel>();
+        soundChannelsByName = new Dictionary<string, int>();
 
         FadingControl = new FadingControl();
         infoMessageFadingControl = new FadingControl();
@@ -891,44 +896,6 @@ public class GameEngine : IRenderable, IRenderTarget
         CreateSoundChannel("Unused1", 0.25f); // 6
         CreateSoundChannel("Unused2", 0.25f); // 7
 
-        LoadSoundStream("X Regular Shot", @"resources\sounds\mmx\01 - MMX - X Regular Shot.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Semi Charged Shot", @"resources\sounds\mmx2\X Semi Charged Shot.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Charge Shot", @"resources\sounds\mmx\02 - MMX - X Charge Shot.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Charge", @"resources\sounds\mmx\04 - MMX - X Charge.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Dash", @"resources\sounds\mmx\07 - MMX - X Dash.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Jump", @"resources\sounds\mmx\08 - MMX - X Jump.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Land", @"resources\sounds\mmx\09 - MMX - X Land.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Fade In", @"resources\sounds\mmx\17 - MMX - X Fade In.wav", SoundFormat.WAVE);
-        LoadSoundStream("Small Hit", @"resources\sounds\mmx\30 - MMX - Small Hit.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Hurt", @"resources\sounds\mmx\10 - MMX - X Hurt.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Die", @"resources\sounds\mmx\11 - MMX - X Die.wav", SoundFormat.WAVE);
-        LoadSoundStream("Enemy Die (1)", @"resources\sounds\mmx\56 - MMX - Enemy Die (1).wav", SoundFormat.WAVE);
-        LoadSoundStream("Enemy Die (2)", @"resources\sounds\mmx\57 - MMX - Enemy Die (2).wav", SoundFormat.WAVE);
-        LoadSoundStream("Enemy Die (3)", @"resources\sounds\mmx\58 - MMX - Enemy Die (3).wav", SoundFormat.WAVE);
-        LoadSoundStream("Enemy Die (4)", @"resources\sounds\mmx\59 - MMX - Enemy Die (4).wav", SoundFormat.WAVE);
-        LoadSoundStream("X Upgrade Complete", @"resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Fade Out", @"resources\sounds\mmx\18 - MMX - X Fade Out.wav", SoundFormat.WAVE);
-        LoadSoundStream("Chill Penguin", @"resources\sounds\ost\mmx\12 - Chill Penguin.mp3", SoundFormat.MP3);
-        LoadSoundStream("X Life Gain", @"resources\sounds\mmx\12 - MMX - X Life Gain.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Extra Life", @"resources\sounds\mmx\13 - MMX - X Extra Life.wav", SoundFormat.WAVE);
-        LoadSoundStream("X Sub Tank-Heart Powerup", @"resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav", SoundFormat.WAVE);
-        LoadSoundStream("Door Opening", @"resources\sounds\mmx\Door Opening.wav", SoundFormat.WAVE);
-        LoadSoundStream("Door Closing", @"resources\sounds\mmx\Door Closing.wav", SoundFormat.WAVE);
-        LoadSoundStream("Boss Intro", @"resources\sounds\ost\mmx\19 - Boss Intro.mp3", SoundFormat.MP3);
-        LoadSoundStream("Boss Battle", @"resources\sounds\ost\mmx\20 - Boss Battle.mp3", SoundFormat.MP3);
-        LoadSoundStream("Boss Defeated", @"resources\sounds\ost\mmx\21 - Boss Defeated.mp3", SoundFormat.MP3);
-        LoadSoundStream("Big Hit", @"resources\sounds\mmx\31 - MMX - Big Hit.wav", SoundFormat.WAVE);
-        LoadSoundStream("Misc. dash, jump, move (3)", @"resources\sounds\mmx\91 - MMX - Misc. dash, jump, move (3).wav", SoundFormat.WAVE);
-        LoadSoundStream("Chill Penguin Breath", @"resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav", SoundFormat.WAVE);
-        LoadSoundStream("Ice", @"resources\sounds\mmx\34 - MMX - Ice.wav", SoundFormat.WAVE);
-        LoadSoundStream("Ice Freeze", @"resources\sounds\mmx\35 - MMX - Ice Freeze.wav", SoundFormat.WAVE);
-        LoadSoundStream("Ice Break", @"resources\sounds\mmx\36 - MMX - Ice Break.wav", SoundFormat.WAVE);
-        LoadSoundStream("Enemy Helmet Hit", @"resources\sounds\mmx\29 - MMX - Enemy Helmet Hit.wav", SoundFormat.WAVE);
-        LoadSoundStream("Boss Explosion", @"resources\sounds\mmx\Boss Explosion.wav", SoundFormat.WAVE);
-        LoadSoundStream("Boss Final Explode", @"resources\sounds\mmx\Boss Final Explode.wav", SoundFormat.WAVE);
-        LoadSoundStream("Enemy Sound (05)", @"resources\sounds\mmx\68 - MMX - Enemy Sound (05).wav", SoundFormat.WAVE);
-        LoadSoundStream("Armadillo Laser", @"resources\sounds\mmx\40 - MMX - Armadillo Laser.wav", SoundFormat.WAVE);
-
         directInput = new DirectInput();
 
         keyboard = new Keyboard(directInput);
@@ -960,10 +927,37 @@ public class GameEngine : IRenderable, IRenderTarget
         Running = true;
     }
 
-    private void LoadSoundStream(string name, string path, SoundFormat format)
+    public bool PrecacheSound(string name, string path, out PrecachedSound sound)
     {
-        var stream = WaveStreamUtil.FromFile(path, format);
-        soundStreams.Add(name, new WaveEntry(name, path, format, stream));
+        if (precachedSoundsByFileName.TryGetValue(path, out int index))
+        {
+            sound = precachedSounds[index];
+            sound.AddName(name);
+
+            if (!precachedSoundsByName.ContainsKey(name))
+                precachedSoundsByName.Add(name, index);
+
+            return false;
+        }
+
+        if (precachedSoundsByName.TryGetValue(name, out index))
+        {
+            sound = precachedSounds[index];
+            return false;
+        }
+
+        var stream = WaveStreamUtil.FromFile(path);
+        sound = new PrecachedSound(name, path, stream);
+        index = precachedSounds.Count;
+        precachedSounds.Add(sound);
+        precachedSoundsByName.Add(name, index);
+        precachedSoundsByFileName.Add(path, index);
+        return true;
+    }
+
+    public bool PrecacheSound(string name, string path)
+    {
+        return PrecacheSound(name, path, out _);
     }
 
     private void Unload()
@@ -978,10 +972,12 @@ public class GameEngine : IRenderable, IRenderTarget
         soundChannels.Clear();
         soundChannelsByName.Clear();
 
-        foreach (var stream in soundStreams)
-            DisposeResource(stream.Value);
+        foreach (var sound in precachedSounds)
+            DisposeResource(sound);
 
-        soundStreams.Clear();
+        precachedSounds.Clear();
+        precachedSoundsByName.Clear();
+        precachedSoundsByFileName.Clear();
 
         DisposeResource(mmx);
         DisposeDevice();
@@ -1105,7 +1101,7 @@ public class GameEngine : IRenderable, IRenderTarget
             World.Tessellate();
         }
 
-        foreach (var entity in entities)
+        foreach (var entity in Entities)
         {
             if (entity is Sprite sprite)
                 sprite.OnDeviceReset();
@@ -1178,7 +1174,7 @@ public class GameEngine : IRenderable, IRenderTarget
     {
         if (CurrentCheckpoint != value)
         {
-            currentCheckpoint = entities.GetReferenceTo(value);
+            currentCheckpoint = Entities.GetReferenceTo(value);
             if (CurrentCheckpoint != null)
             {
                 CameraConstraintsBox = CurrentCheckpoint.Hitbox;
@@ -1578,7 +1574,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     private void ClearEntities()
     {
-        entities.Clear();
+        Entities.Clear();
         aliveEntities.Clear();
 
         foreach (var layer in sprites)
@@ -2407,7 +2403,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
             currentLevel = level;
 
-            camera = entities.Create<Camera>(new
+            camera = Entities.Create<Camera>(new
             {
                 Width = SCREEN_WIDTH,
                 Height = SCREEN_HEIGHT
@@ -2428,6 +2424,9 @@ public class GameEngine : IRenderable, IRenderTarget
 
                 CurrentCheckpoint = checkpoints[mmx.Point];
                 CameraConstraintsBox = CurrentCheckpoint.Hitbox;
+
+                if (mmx.Type == 0 && mmx.Level == 8)
+                    PrecacheSound("Chill Penguin", @"resources\sounds\ost\mmx\12 - Chill Penguin.mp3");
             }
             else
             {
@@ -2798,11 +2797,11 @@ public class GameEngine : IRenderable, IRenderTarget
         spriteSheets.Clear();
         spriteSheetsByName.Clear();
 
-        foreach (var palette in palettes)
+        foreach (var palette in precachedPalettes)
             DisposeResource(palette);
 
-        palettes.Clear();
-        palettesByName.Clear();
+        precachedPalettes.Clear();
+        precachedPalettesByName.Clear();
 
         World?.OnDisposeDevice();
 
@@ -3421,7 +3420,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
         }
 
-        entities.Deserialize(serializer);
+        Entities.Deserialize(serializer);
 
         RNG.Deserialize(serializer);
 
@@ -3432,23 +3431,123 @@ public class GameEngine : IRenderable, IRenderTarget
         lastPlayerVelocity = serializer.ReadVector();
         lastCameraLeftTop = serializer.ReadVector();
 
-        var entries = new List<WaveEntry>();
+        var entries = new List<PrecachedSound>();
+        var entriesByName = new HashSet<string>();
+        var entriesByFileName = new HashSet<string>();
+
         int soundStreamCount = serializer.ReadInt();
         for (int i = 0; i < soundStreamCount; i++)
         {
-            string name = serializer.ReadString(false);
-            string path = serializer.ReadString(false);
-            SoundFormat format = serializer.ReadEnum<SoundFormat>();
+            int nameCount = serializer.ReadInt();
+            var names = new string[nameCount];
 
-            entries.Add(new WaveEntry(name, path, format));
+            for (int j = 0; j < nameCount; j++)
+            {
+                string name = serializer.ReadString(false);
+                names[j] = name;
+            }
+
+            string path = serializer.ReadString(false);
+
+            var entry = new PrecachedSound(path, names);
+            entries.Add(entry);
+
+            foreach (var name in names)
+                entriesByName.Add(name);
+
+            entriesByFileName.Add(path);
         }
 
-        foreach (var (name, path, format) in entries)
-            if (!soundStreams.ContainsKey(name))
-                LoadSoundStream(name, path, format);
+        foreach (var (names, path, format) in entries)
+            foreach (var name in names)
+                PrecacheSound(name, path);
+
+        // TODO : The folowwing serialization & deserialization code for palettes and sprite sheets may crash the program.
+        // Please fix it in future to make full serialization for palettes and sprite sheets as accurate as the same method used for the sounds above. 
+
+        var precachedSoundPaths = new List<string>(precachedSoundsByFileName.Keys);
+        foreach (var path in precachedSoundPaths)
+        {
+            int index = precachedSoundsByFileName[path];
+            var sound = precachedSounds[index];
+            if (!entriesByFileName.Contains(path))
+            {
+                precachedSoundsByFileName.Remove(path);
+
+                foreach (var name in sound.Names)
+                    precachedSoundsByName.Remove(name);
+
+                precachedSounds[index] = null;
+            }
+        }
+
+        var precachedSoundNames = new List<string>(precachedSoundsByName.Keys);
+        foreach (var name in precachedSoundNames)
+        {
+            int index = precachedSoundsByName[name];
+            var sound = precachedSounds[index];
+            if (!entriesByName.Contains(name))
+            {
+                precachedSoundsByName.Remove(name);
+                sound.RemoveName(name);
+            }
+        }
 
         foreach (var channel in soundChannels)
             channel.Deserialize(serializer);
+
+        int paletteCount = serializer.ReadInt();
+        var paletteNames = new HashSet<string>();
+        for (int i = 0; i < paletteCount; i++)
+        {
+            string name = serializer.ReadString(false);
+            paletteNames.Add(name);
+        }
+
+        var precachedPaletteNames = new List<string>(precachedPalettesByName.Keys);
+        foreach (var name in precachedPaletteNames)
+        {
+            int index = precachedPalettesByName[name];
+            if (!paletteNames.Contains(name))
+            {
+                precachedPalettesByName.Remove(name);
+                precachedPalettes[index] = null;
+            }
+        }
+
+        int spriteSheetCount = serializer.ReadInt();
+        var spriteSheetNames = new HashSet<string>();
+        for (int i = 0; i < spriteSheetCount; i++)
+        {
+            string name = serializer.ReadString(false);
+            spriteSheetNames.Add(name);
+        }
+
+        var precachedSpriteSheetNames = new List<string>(spriteSheetsByName.Keys);
+        foreach (var name in precachedSpriteSheetNames)
+        {
+            int index = spriteSheetsByName[name];
+            if (!spriteSheetNames.Contains(name))
+            {
+                spriteSheetsByName.Remove(name);
+                spriteSheets[index] = null;
+            }
+        }
+
+        precacheActions.Clear();
+        int precacheActionCount = serializer.ReadInt();
+        for (int i = 0; i < precacheActionCount; i++)
+        {
+            string typeName = serializer.ReadString(false);
+            var action = new PrecacheAction(serializer);
+            precacheActions.Add(typeName, action);
+        }
+
+        foreach (var kv in precacheActions)
+        {
+            var action = kv.Value;
+            action.Call();
+        }
 
         partition.Deserialize(serializer);
 
@@ -3559,7 +3658,7 @@ public class GameEngine : IRenderable, IRenderTarget
             serializer.WriteInt(mmx.PalLoad);
         }
 
-        entities.Serialize(serializer);
+        Entities.Serialize(serializer);
 
         RNG.Serialize(serializer);
 
@@ -3570,16 +3669,42 @@ public class GameEngine : IRenderable, IRenderTarget
         lastPlayerVelocity.Serialize(serializer);
         lastCameraLeftTop.Serialize(serializer);
 
-        serializer.WriteInt(soundStreams.Count);
-        foreach (var stream in soundStreams)
+        serializer.WriteInt(precachedSounds.Count);
+        foreach (var sound in precachedSounds)
         {
-            serializer.WriteString(stream.Value.Name, false);
-            serializer.WriteString(stream.Value.Path, false);
-            serializer.WriteEnum(stream.Value.Format);
+            serializer.WriteInt(sound.Names.Count);
+            foreach (var name in sound.Names)
+                serializer.WriteString(name, false);
+
+            serializer.WriteString(sound.Path, false);
         }
 
         foreach (var channel in soundChannels)
             channel.Serialize(serializer);
+
+        serializer.WriteInt(precachedPalettesByName.Count);
+        foreach (var kv in precachedPalettesByName)
+        {
+            string name = kv.Key;
+            serializer.WriteString(name, false);
+        }
+
+        serializer.WriteInt(spriteSheetsByName.Count);
+        foreach (var kv in spriteSheetsByName)
+        {
+            string name = kv.Key;
+            serializer.WriteString(name, false);
+        }
+
+        serializer.WriteInt(precacheActions.Count);
+        foreach (var kv in precacheActions)
+        {
+            var typeName = kv.Key;
+            var action = kv.Value;
+
+            serializer.WriteString(typeName, false);
+            action.Serialize(serializer);
+        }
 
         partition.Serialize(serializer);
 
@@ -3709,7 +3834,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public EntityReference<ChangeDynamicPropertyTrigger> AddChangeDynamicPropertyTrigger(Vector origin, DynamicProperty prop, int forward, int backward, SplitterTriggerOrientation orientation)
     {
-        ChangeDynamicPropertyTrigger trigger = entities.Create<ChangeDynamicPropertyTrigger>(new
+        ChangeDynamicPropertyTrigger trigger = Entities.Create<ChangeDynamicPropertyTrigger>(new
         {
             Origin = origin,
             Hitbox = (origin, (-SCREEN_WIDTH * 0.5, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
@@ -3720,12 +3845,12 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         trigger.Spawn();
-        return entities.GetReferenceTo(trigger);
+        return Entities.GetReferenceTo(trigger);
     }
 
     public EntityReference<Checkpoint> AddCheckpoint(ushort index, Box boundingBox, Vector characterPos, Vector cameraPos, Vector backgroundPos, Vector forceBackground, uint scroll)
     {
-        Checkpoint checkpoint = entities.Create<Checkpoint>(new
+        Checkpoint checkpoint = Entities.Create<Checkpoint>(new
         {
             Point = index,
             boundingBox.Origin,
@@ -3739,12 +3864,12 @@ public class GameEngine : IRenderable, IRenderTarget
 
         checkpoints.Add(checkpoint);
         checkpoint.Spawn();
-        return entities.GetReferenceTo(checkpoint);
+        return Entities.GetReferenceTo(checkpoint);
     }
 
     public EntityReference<CheckpointTriggerOnce> AddCheckpointTrigger(ushort index, Vector origin)
     {
-        CheckpointTriggerOnce trigger = entities.Create<CheckpointTriggerOnce>(new
+        CheckpointTriggerOnce trigger = Entities.Create<CheckpointTriggerOnce>(new
         {
             Origin = origin,
             Hitbox = (origin, (0, -SCREEN_HEIGHT * 0.5), (SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5)),
@@ -3752,7 +3877,7 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         trigger.Spawn();
-        return entities.GetReferenceTo(trigger);
+        return Entities.GetReferenceTo(trigger);
     }
 
     public Sprite AddObjectEvent(ushort id, ushort subid, Vector origin)
@@ -3775,7 +3900,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     internal EntityReference<Penguin> AddPenguin(Vector origin)
     {
-        Penguin penguin = entities.Create<Penguin>(new
+        Penguin penguin = Entities.Create<Penguin>(new
         {
             Origin = origin
         });
@@ -3783,7 +3908,7 @@ public class GameEngine : IRenderable, IRenderTarget
         penguin.BossDefeatedEvent += OnBossDefeated;
         Boss = penguin;
 
-        return entities.GetReferenceTo(penguin);
+        return Entities.GetReferenceTo(penguin);
     }
 
     private void OnBossDefeated(Boss boss, Player killer)
@@ -3798,7 +3923,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     private EntityReference<Probe8201U> AddProbe8201U(ushort subid, Vector origin)
     {
-        Probe8201U probe = entities.Create<Probe8201U>(new
+        Probe8201U probe = Entities.Create<Probe8201U>(new
         {
             Origin = origin,
             MovingVertically = (subid & 0x20) == 0,
@@ -3807,7 +3932,7 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         probe.Place();
-        return entities.GetReferenceTo(probe);
+        return Entities.GetReferenceTo(probe);
     }
 
     private Sprite AddRideArmor(ushort subid, Vector origin)
@@ -3824,7 +3949,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public EntityReference<CameraLockTrigger> AddCameraLockTrigger(Box boundingBox, IEnumerable<Vector> extensions)
     {
-        CameraLockTrigger trigger = entities.Create<CameraLockTrigger>(new
+        CameraLockTrigger trigger = Entities.Create<CameraLockTrigger>(new
         {
             boundingBox.Origin,
             Hitbox = boundingBox
@@ -3902,7 +4027,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     internal EntityReference<BusterLemon> ShootLemon(Player shooter, Vector origin, bool dashLemon)
     {
-        BusterLemon lemon = entities.Create<BusterLemon>(new
+        BusterLemon lemon = Entities.Create<BusterLemon>(new
         {
             Shooter = shooter,
             Origin = origin,
@@ -3910,143 +4035,143 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         lemon.Spawn();
-        return entities.GetReferenceTo(lemon);
+        return Entities.GetReferenceTo(lemon);
     }
 
     internal EntityReference<BusterSemiCharged> ShootSemiCharged(Player shooter, Vector origin)
     {
-        BusterSemiCharged semiCharged = entities.Create<BusterSemiCharged>(new
+        BusterSemiCharged semiCharged = Entities.Create<BusterSemiCharged>(new
         {
             Shooter = shooter,
             Origin = origin
         });
 
         semiCharged.Spawn();
-        return entities.GetReferenceTo(semiCharged);
+        return Entities.GetReferenceTo(semiCharged);
     }
 
     internal EntityReference<BusterCharged> ShootCharged(Player shooter, Vector origin)
     {
-        BusterCharged charged = entities.Create<BusterCharged>(new
+        BusterCharged charged = Entities.Create<BusterCharged>(new
         {
             Shooter = shooter,
             Origin = origin
         });
 
         charged.Spawn();
-        return entities.GetReferenceTo(charged);
+        return Entities.GetReferenceTo(charged);
     }
 
     internal EntityReference<ChargingEffect> StartChargingEffect(Player player)
     {
-        ChargingEffect effect = entities.Create<ChargingEffect>(new
+        ChargingEffect effect = Entities.Create<ChargingEffect>(new
         {
             Charger = player
         });
 
         effect.Spawn();
-        return entities.GetReferenceTo(effect);
+        return Entities.GetReferenceTo(effect);
     }
 
     internal EntityReference<DashSparkEffect> StartDashSparkEffect(Player player)
     {
-        DashSparkEffect effect = entities.Create<DashSparkEffect>(new
+        DashSparkEffect effect = Entities.Create<DashSparkEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return entities.GetReferenceTo(effect);
+        return Entities.GetReferenceTo(effect);
     }
 
     internal EntityReference<DashSmokeEffect> StartDashSmokeEffect(Player player)
     {
-        DashSmokeEffect effect = entities.Create<DashSmokeEffect>(new
+        DashSmokeEffect effect = Entities.Create<DashSmokeEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return entities.GetReferenceTo(effect);
+        return Entities.GetReferenceTo(effect);
     }
 
     internal EntityReference<WallSlideEffect> StartWallSlideEffect(Player player)
     {
-        WallSlideEffect effect = entities.Create<WallSlideEffect>(new
+        WallSlideEffect effect = Entities.Create<WallSlideEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return entities.GetReferenceTo(effect);
+        return Entities.GetReferenceTo(effect);
     }
 
     internal EntityReference<WallKickEffect> StartWallKickEffect(Player player)
     {
-        WallKickEffect effect = entities.Create<WallKickEffect>(new
+        WallKickEffect effect = Entities.Create<WallKickEffect>(new
         {
             Player = player
         });
 
         effect.Spawn();
-        return entities.GetReferenceTo(effect);
+        return Entities.GetReferenceTo(effect);
     }
 
     internal EntityReference<ExplosionEffect> CreateExplosionEffect(Vector origin, ExplosionEffectSound effectSound = ExplosionEffectSound.ENEMY_DIE_1)
     {
-        ExplosionEffect effect = entities.Create<ExplosionEffect>(new
+        ExplosionEffect effect = Entities.Create<ExplosionEffect>(new
         {
             Origin = origin,
             EffectSound = effectSound
         });
 
         effect.Spawn();
-        return entities.GetReferenceTo(effect);
+        return Entities.GetReferenceTo(effect);
     }
 
     private EntityReference<XDieExplosion> CreateXDieExplosionEffect(double phase)
     {
-        XDieExplosion effect = entities.Create<XDieExplosion>(new
+        XDieExplosion effect = Entities.Create<XDieExplosion>(new
         {
             Offset = Player.Origin - Camera.LeftTop,
             Phase = phase
         });
 
         effect.Spawn();
-        return entities.GetReferenceTo(effect);
+        return Entities.GetReferenceTo(effect);
     }
 
     public EntityReference<Scriver> AddScriver(Vector origin)
     {
-        Scriver scriver = entities.Create<Scriver>(new
+        Scriver scriver = Entities.Create<Scriver>(new
         {
             Origin = origin
         });
 
         scriver.Place();
-        return entities.GetReferenceTo(scriver);
+        return Entities.GetReferenceTo(scriver);
     }
 
     public EntityReference<BattonBoneG> AddBattonBoneG(Vector origin)
     {
-        BattonBoneG battonBoneG = entities.Create<BattonBoneG>(new
+        BattonBoneG battonBoneG = Entities.Create<BattonBoneG>(new
         {
             Origin = origin
         });
 
         battonBoneG.Place();
-        return entities.GetReferenceTo(battonBoneG);
+        return Entities.GetReferenceTo(battonBoneG);
     }
 
     public EntityReference<RayBit> AddRayBit(Vector origin)
     {
-        RayBit rayBit = entities.Create<RayBit>(new
+        RayBit rayBit = Entities.Create<RayBit>(new
         {
             Origin = origin
         });
 
         rayBit.Place();
-        return entities.GetReferenceTo(rayBit);
+        return Entities.GetReferenceTo(rayBit);
     }
 
     private void SpawnX(Vector origin)
@@ -4054,7 +4179,7 @@ public class GameEngine : IRenderable, IRenderTarget
         if (Player != null)
             RemoveEntity(Player, true);
 
-        player = entities.Create<Player>(new
+        player = Entities.Create<Player>(new
         {
             Name = "X",
             Origin = origin
@@ -4082,7 +4207,7 @@ public class GameEngine : IRenderable, IRenderTarget
         aliveEntities.Remove(entity);
 
         if (force || !entity.Respawnable)
-            entities.Remove(entity);
+            Entities.Remove(entity);
         else if (entity.RespawnOnNear)
             entity.Origin = autoRespawnableEntities[entity.reference].Origin;
     }
@@ -4092,7 +4217,7 @@ public class GameEngine : IRenderable, IRenderTarget
         if (HP != null)
             RemoveEntity(HP, true);
 
-        hp = entities.Create<PlayerHealthHUD>(new
+        hp = Entities.Create<PlayerHealthHUD>(new
         {
             Name = "HP"
         });
@@ -4105,7 +4230,7 @@ public class GameEngine : IRenderable, IRenderTarget
         if (ReadyHUD != null)
             RemoveEntity(ReadyHUD, true);
 
-        readyHUD = entities.Create<ReadyHUD>(new
+        readyHUD = Entities.Create<ReadyHUD>(new
         {
             Name = "Ready"
         });
@@ -4228,51 +4353,58 @@ public class GameEngine : IRenderable, IRenderTarget
         Device.DrawPrimitives(PrimitiveType.TriangleList, 0, primitiveCount);
     }
 
-    public Palette CreatePalette(string name, Color[] colors, int count = 256)
+    public Palette PrecachePalette(string name, Color[] colors, int capacity = 256, bool raiseExceptionIfExist = false)
     {
-        if (palettesByName.ContainsKey(name))
-            throw new DuplicatePaletteNameException(name);
+        if (precachedPalettesByName.TryGetValue(name, out int index))
+        {
+            if (raiseExceptionIfExist)
+                throw new DuplicatePaletteNameException(name);
 
-        if (colors.Length > count)
-            throw new ArgumentException($"Length of colors should up to {count}.");
+            return precachedPalettes[index];
+        }
 
-        var texture = new Texture(Device, count, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
+        if (colors.Length > capacity)
+            throw new ArgumentException($"Length of colors should up to {capacity}.");
+
+        var texture = new Texture(Device, capacity, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
         DataRectangle rect = texture.LockRectangle(0, D3D9LockFlags.None);
 
-        using (var stream = new DataStream(rect.DataPointer, count * 1 * sizeof(int), true, true))
+        using (var stream = new DataStream(rect.DataPointer, capacity * 1 * sizeof(int), true, true))
         {
             for (int i = 0; i < colors.Length; i++)
                 stream.Write(colors[i].ToBgra());
 
-            for (int i = colors.Length; i < count; i++)
+            for (int i = colors.Length; i < capacity; i++)
                 stream.Write(0);
         }
 
         texture.UnlockRectangle(0);
 
+        index = precachedPalettes.Count;
         var result = new Palette
         {
             Texture = texture,
-            Index = palettes.Count,
-            name = name
+            Index = index,
+            name = name,
+            Count = colors.Length
         };
 
-        palettes.Add(result);
-        palettesByName.Add(name, result);
+        precachedPalettes.Add(result);
+        precachedPalettesByName.Add(name, index);
 
         return result;
     }
 
-    public Texture CreatePalette(Texture image, int count = 256)
+    public Texture PrecachePaletteTexture(Texture image, int capacity = 256)
     {
-        var palette = new Texture(Device, count, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
+        var palette = new Texture(Device, capacity, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
 
         DataRectangle paletteRect = palette.LockRectangle(0, D3D9LockFlags.None);
         DataRectangle imageRect = image.LockRectangle(0, D3D9LockFlags.None);
 
         try
         {
-            using var paletteStream = new DataStream(paletteRect.DataPointer, count * 1 * sizeof(int), true, true);
+            using var paletteStream = new DataStream(paletteRect.DataPointer, capacity * 1 * sizeof(int), true, true);
 
             int width = image.GetLevelDescription(0).Width;
             int height = image.GetLevelDescription(0).Height;
@@ -4291,7 +4423,7 @@ public class GameEngine : IRenderable, IRenderTarget
                 }
             }
 
-            for (int i = colors.Count; i < count; i++)
+            for (int i = colors.Count; i < capacity; i++)
                 paletteStream.Write(0);
         }
         finally
@@ -4305,12 +4437,12 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public Palette GetPaletteByIndex(int index)
     {
-        return index >= 0 && index < palettes.Count ? palettes[index] : null;
+        return index >= 0 && index < precachedPalettes.Count ? precachedPalettes[index] : null;
     }
 
     public Palette GetPaletteByName(string name)
     {
-        return palettesByName.TryGetValue(name, out Palette result) ? result : null;
+        return precachedPalettesByName.TryGetValue(name, out int index) ? precachedPalettes[index] : null;
     }
 
     internal void UpdatePaletteName(Palette palette, string name)
@@ -4318,44 +4450,50 @@ public class GameEngine : IRenderable, IRenderTarget
         if (name == palette.Name)
             return;
 
-        if (palettesByName.ContainsKey(name))
+        if (precachedPalettesByName.ContainsKey(name))
             throw new DuplicatePaletteNameException(name);
 
         if (palette.Name is not null and not "")
-            palettesByName.Remove(palette.Name);
+            precachedPalettesByName.Remove(palette.Name);
 
-        palettesByName.Add(name, palette);
+        precachedPalettesByName.Add(name, palette.Index);
 
         palette.name = name;
     }
 
-    private SpriteSheet AddSpriteSheet(SpriteSheet sheet, string name)
+    private SpriteSheet AddSpriteSheet(string name, SpriteSheet sheet, bool raiseExceptionIfExist = false)
     {
-        if (spriteSheetsByName.ContainsKey(name))
-            throw new DuplicateSpriteSheetNameException(name);
+        if (spriteSheetsByName.TryGetValue(name, out int index))
+        {
+            if (raiseExceptionIfExist)
+                throw new DuplicateSpriteSheetNameException(name);
 
-        sheet.Index = spriteSheets.Count;
+            return spriteSheets[index];
+        }
+
+        index = spriteSheets.Count;
+        sheet.Index = index;
         sheet.name = name;
 
         spriteSheets.Add(sheet);
-        spriteSheetsByName.Add(name, sheet);
+        spriteSheetsByName.Add(name, index);
 
         return sheet;
     }
 
-    public SpriteSheet CreateSpriteSheet(string name, bool disposeTexture = false, bool precache = false)
+    public SpriteSheet CreateSpriteSheet(string name, bool disposeTexture = false, bool precache = false, bool raiseExceptionIfExist = false)
     {
-        return AddSpriteSheet(new SpriteSheet(disposeTexture, precache), name);
+        return AddSpriteSheet(name, new SpriteSheet(disposeTexture, precache), raiseExceptionIfExist);
     }
 
-    public SpriteSheet CreateSpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false)
+    public SpriteSheet CreateSpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false, bool raiseExceptionIfExist = false)
     {
-        return AddSpriteSheet(new SpriteSheet(texture, disposeTexture, precache), name);
+        return AddSpriteSheet(name, new SpriteSheet(texture, disposeTexture, precache), raiseExceptionIfExist);
     }
 
-    public SpriteSheet CreateSpriteSheet(string name, string imageFileName, bool precache = false)
+    public SpriteSheet CreateSpriteSheet(string name, string imageFileName, bool precache = false, bool raiseExceptionIfExist = false)
     {
-        return AddSpriteSheet(new SpriteSheet(imageFileName, precache), name);
+        return AddSpriteSheet(name, new SpriteSheet(imageFileName, precache), raiseExceptionIfExist);
     }
 
     public SpriteSheet GetSpriteSheetByIndex(int index)
@@ -4365,7 +4503,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SpriteSheet GetSpriteSheetByName(string name)
     {
-        return spriteSheetsByName.TryGetValue(name, out SpriteSheet result) ? result : null;
+        return spriteSheetsByName.TryGetValue(name, out int index) ? spriteSheets[index] : null;
     }
 
     internal void UpdateSpriteSheetName(SpriteSheet sheet, string name)
@@ -4379,7 +4517,7 @@ public class GameEngine : IRenderable, IRenderTarget
         if (sheet.Name is not null and not "")
             spriteSheetsByName.Remove(sheet.Name);
 
-        spriteSheetsByName.Add(name, sheet);
+        spriteSheetsByName.Add(name, sheet.Index);
 
         sheet.name = name;
     }
@@ -4389,14 +4527,15 @@ public class GameEngine : IRenderable, IRenderTarget
         if (soundChannelsByName.ContainsKey(name))
             throw new DuplicateSoundChannelNameException(name);
 
+        int index = soundChannels.Count;
         var channel = new SoundChannel(volume)
         {
-            Index = soundChannels.Count,
+            Index = index,
             name = name
         };
 
         soundChannels.Add(channel);
-        soundChannelsByName.Add(name, channel);
+        soundChannelsByName.Add(name, index);
 
         return channel;
     }
@@ -4408,7 +4547,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SoundChannel GetSoundChannelByName(string name)
     {
-        return soundChannelsByName.TryGetValue(name, out SoundChannel result) ? result : null;
+        return soundChannelsByName.TryGetValue(name, out int index) ? soundChannels[index] : null;
     }
 
     internal void UpdateSoundChannelName(SoundChannel channel, string name)
@@ -4422,7 +4561,7 @@ public class GameEngine : IRenderable, IRenderTarget
         if (channel.Name is not null and not "")
             soundChannelsByName.Remove(channel.Name);
 
-        soundChannelsByName.Add(name, channel);
+        soundChannelsByName.Add(name, channel.Index);
 
         channel.name = name;
     }
@@ -4457,10 +4596,10 @@ public class GameEngine : IRenderable, IRenderTarget
         if (!ENABLE_OST && channelIndex == 3)
             return;
 
-        var stream = soundStreams[name];
+        var sound = precachedSounds[precachedSoundsByName[name]];
         var channel = soundChannels[channelIndex];
 
-        channel.Play(stream, stopTime, loopTime, ignoreUpdatesUntilPlayed);
+        channel.Play(sound, stopTime, loopTime, ignoreUpdatesUntilPlayed);
     }
 
     public void PlaySound(int channel, string name, double loopTime, bool ignoreUpdatesUntilFinished = false)
@@ -4475,19 +4614,19 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void ClearSoundLoopPoint(int channelIndex, string name, bool clearStopPoint = false)
     {
-        var stream = soundStreams[name];
+        var sound = precachedSounds[precachedSoundsByName[name]];
         var channel = soundChannels[channelIndex];
 
-        if (channel.IsPlaying(stream))
+        if (channel.IsPlaying(sound))
             channel.ClearSoundLoopPoint(clearStopPoint);
     }
 
     public void ClearSoundStopPoint(int channelIndex, string name)
     {
-        var stream = soundStreams[name];
+        var sound = precachedSounds[precachedSoundsByName[name]];
         var channel = soundChannels[channelIndex];
 
-        if (channel.IsPlaying(stream))
+        if (channel.IsPlaying(sound))
             channel.ClearSoundStopPoint();
     }
 
@@ -4518,10 +4657,10 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void StopSound(int channelIndex, string name)
     {
-        var stream = soundStreams[name];
+        var sound = precachedSounds[precachedSoundsByName[name]];
         var channel = soundChannels[channelIndex];
 
-        if (channel.IsPlaying(stream))
+        if (channel.IsPlaying(sound))
             channel.StopStream();
     }
 
@@ -4564,7 +4703,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SmallHealthRecover DropSmallHealthRecover(Vector origin, int durationFrames)
     {
-        SmallHealthRecover drop = entities.Create<SmallHealthRecover>(new
+        SmallHealthRecover drop = Entities.Create<SmallHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -4576,7 +4715,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public BigHealthRecover DropBigHealthRecover(Vector origin, int durationFrames)
     {
-        BigHealthRecover drop = entities.Create<BigHealthRecover>(new
+        BigHealthRecover drop = Entities.Create<BigHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -4588,7 +4727,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SmallAmmoRecover DropSmallAmmoRecover(Vector origin, int durationFrames)
     {
-        SmallAmmoRecover drop = entities.Create<SmallAmmoRecover>(new
+        SmallAmmoRecover drop = Entities.Create<SmallAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -4600,7 +4739,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public BigAmmoRecover DropBigAmmoRecover(Vector origin, int durationFrames)
     {
-        BigAmmoRecover drop = entities.Create<BigAmmoRecover>(new
+        BigAmmoRecover drop = Entities.Create<BigAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -4612,7 +4751,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public LifeUp DropLifeUp(Vector origin, int durationFrames)
     {
-        LifeUp drop = entities.Create<LifeUp>(new
+        LifeUp drop = Entities.Create<LifeUp>(new
         {
             Origin = origin,
             DurationFrames = durationFrames
@@ -4624,7 +4763,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SmallHealthRecover AddSmallHealthRecover(Vector origin)
     {
-        SmallHealthRecover item = entities.Create<SmallHealthRecover>(new
+        SmallHealthRecover item = Entities.Create<SmallHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -4636,7 +4775,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public BigHealthRecover AddBigHealthRecover(Vector origin)
     {
-        BigHealthRecover item = entities.Create<BigHealthRecover>(new
+        BigHealthRecover item = Entities.Create<BigHealthRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -4648,7 +4787,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SmallAmmoRecover AddSmallAmmoRecover(Vector origin)
     {
-        SmallAmmoRecover item = entities.Create<SmallAmmoRecover>(new
+        SmallAmmoRecover item = Entities.Create<SmallAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -4660,7 +4799,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public BigAmmoRecover AddBigAmmoRecover(Vector origin)
     {
-        BigAmmoRecover item = entities.Create<BigAmmoRecover>(new
+        BigAmmoRecover item = Entities.Create<BigAmmoRecover>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -4672,7 +4811,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public LifeUp AddLifeUp(Vector origin)
     {
-        LifeUp item = entities.Create<LifeUp>(new
+        LifeUp item = Entities.Create<LifeUp>(new
         {
             Origin = origin,
             DurationFrames = 0
@@ -4684,7 +4823,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public HeartTank AddHeartTank(Vector origin)
     {
-        HeartTank item = entities.Create<HeartTank>(new
+        HeartTank item = Entities.Create<HeartTank>(new
         {
             Origin = origin
         });
@@ -4695,7 +4834,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public SubTankItem AddSubTank(Vector origin)
     {
-        SubTankItem item = entities.Create<SubTankItem>(new
+        SubTankItem item = Entities.Create<SubTankItem>(new
         {
             Origin = origin
         });
@@ -4768,7 +4907,7 @@ public class GameEngine : IRenderable, IRenderTarget
     internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
     {
         bool secondDoor = (eventSubId & 0x80) != 0;
-        BossDoor door = entities.Create<BossDoor>(new
+        BossDoor door = Entities.Create<BossDoor>(new
         {
             Origin = pos,
             Bidirectional = false,
@@ -4875,7 +5014,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void KillAllAliveEnemies()
     {
-        foreach (var entity in entities)
+        foreach (var entity in Entities)
         {
             if (entity is Enemy)
                 entity.Kill();
@@ -4884,7 +5023,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void KillAllAliveWeapons()
     {
-        foreach (var entity in entities)
+        foreach (var entity in Entities)
         {
             if (entity is Weapon)
                 entity.Kill();
@@ -4893,7 +5032,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void KillAllAliveEnemiesAndWeapons()
     {
-        foreach (var entity in entities)
+        foreach (var entity in Entities)
         {
             if (entity is Enemy or Weapon)
                 entity.Kill();
@@ -4982,6 +5121,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
 
             action = new PrecacheAction(type);
+            precacheActions.Add(type.FullName, action);
             first ??= action;
 
             var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
@@ -4998,7 +5138,6 @@ public class GameEngine : IRenderable, IRenderTarget
 
                     shouldCall = true;
                     action.Method = method;
-                    precacheActions.Add(type.FullName, action);
 
                     break;
                 }

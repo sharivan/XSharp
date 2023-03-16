@@ -53,7 +53,7 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
     [Precache]
     new internal static void Precache()
     {
-        var palette = Engine.CreatePalette("rayBitPalette", RAYBIT_PALETTE);
+        var palette = Engine.PrecachePalette("rayBitPalette", RAYBIT_PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("RayBit", true, true);
 
         using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X.RayBit.png"))

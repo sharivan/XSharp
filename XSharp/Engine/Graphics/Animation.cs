@@ -45,12 +45,6 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         set => Sprite.Animations.UpdateAnimationName(this, value);
     }
 
-    public int SpriteSheetIndex
-    {
-        get;
-        private set;
-    }
-
     public string FrameSequenceName
     {
         get;
@@ -198,14 +192,13 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
     {
     }
 
-    internal void Initialize(int spriteSheetIndex, string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+    internal void Initialize(string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
     {
-        Initialize(spriteSheetIndex, frameSequenceName, offset, FixedSingle.ZERO, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped);
+        Initialize(frameSequenceName, offset, FixedSingle.ZERO, repeatX, repeatY, initialFrame, startVisible, startOn, mirrored, flipped);
     }
 
-    internal void Initialize(int spriteSheetIndex, string frameSequenceName, Vector offset, FixedSingle rotation, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
+    internal void Initialize(string frameSequenceName, Vector offset, FixedSingle rotation, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)
     {
-        SpriteSheetIndex = spriteSheetIndex;
         FrameSequenceName = frameSequenceName;
         Offset = offset;
         RepeatX = repeatX;

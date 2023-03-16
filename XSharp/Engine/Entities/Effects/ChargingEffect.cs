@@ -59,9 +59,9 @@ public class ChargingEffect : SpriteEffect
     [Precache]
     new internal static void Precache()
     {
-        Engine.CreatePalette("chargeLevel1Palette", CHARGE_LEVEL_1_PALETTE);
-        Engine.CreatePalette("chargeLevel2Palette", CHARGE_LEVEL_2_PALETTE);
-        Engine.CreatePalette("chargingEffectPalette", CHARGE_EFFECT_PALETTE);
+        Engine.PrecachePalette("chargeLevel1Palette", CHARGE_LEVEL_1_PALETTE);
+        Engine.PrecachePalette("chargeLevel2Palette", CHARGE_LEVEL_2_PALETTE);
+        Engine.PrecachePalette("chargingEffectPalette", CHARGE_EFFECT_PALETTE);
 
         var xChargingEffectsSpriteSheet = Engine.CreateSpriteSheet("X Charging Effects", true, false);
 

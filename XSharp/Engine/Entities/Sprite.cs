@@ -35,13 +35,11 @@ public abstract class Sprite : Entity, IRenderable
     public event SpriteEvent LandedEvent;
     public event SpriteEvent BrokeEvent;
 
-    private int paletteIndex = -1;
     private string paletteName = null;
 
     [NotSerializable]
     private Palette palette = null;
 
-    private int spriteSheetIndex = -1;
     private string spriteSheetName = null;
 
     [NotSerializable]
@@ -471,36 +469,7 @@ public abstract class Sprite : Entity, IRenderable
         protected set
         {
             paletteName = value;
-            if (paletteName == null)
-            {
-                palette = null;
-                paletteIndex = -1;
-            }
-            else
-            {
-                palette = Engine.GetPaletteByName(value);
-                paletteIndex = palette != null ? palette.Index : -1;
-            }
-        }
-    }
-
-    public int PaletteIndex
-    {
-        get => paletteIndex;
-
-        protected set
-        {
-            paletteIndex = value;
-            if (paletteIndex == -1)
-            {
-                palette = null;
-                paletteName = null;
-            }
-            else
-            {
-                palette = Engine.GetPaletteByIndex(value);
-                paletteName = palette?.Name;
-            }
+            palette = paletteName == null ? null : Engine.GetPaletteByName(value);
         }
     }
 
@@ -512,8 +481,6 @@ public abstract class Sprite : Entity, IRenderable
             {
                 if (PaletteName != null)
                     palette = Engine.GetPaletteByName(PaletteName);
-                else if (PaletteIndex != -1)
-                    palette = Engine.GetPaletteByIndex(PaletteIndex);
             }
 
             return palette;
@@ -522,16 +489,7 @@ public abstract class Sprite : Entity, IRenderable
         protected set
         {
             palette = value;
-            if (value != null)
-            {
-                paletteName = palette.Name;
-                paletteIndex = palette.Index;
-            }
-            else
-            {
-                paletteName = null;
-                paletteIndex = -1;
-            }
+            paletteName = value != null ? palette.Name : null;
         }
     }
 
@@ -542,36 +500,7 @@ public abstract class Sprite : Entity, IRenderable
         protected set
         {
             spriteSheetName = value;
-            if (spriteSheetName == null)
-            {
-                spriteSheet = null;
-                spriteSheetIndex = -1;
-            }
-            else
-            {
-                spriteSheet = Engine.GetSpriteSheetByName(value);
-                spriteSheetIndex = spriteSheet != null ? spriteSheet.Index : -1;
-            }
-        }
-    }
-
-    public int SpriteSheetIndex
-    {
-        get => spriteSheetIndex;
-
-        protected set
-        {
-            spriteSheetIndex = value;
-            if (spriteSheetIndex == -1)
-            {
-                spriteSheet = null;
-                spriteSheetName = null;
-            }
-            else
-            {
-                spriteSheet = Engine.GetSpriteSheetByIndex(value);
-                spriteSheetName = spriteSheet?.Name;
-            }
+            spriteSheet = spriteSheetName == null ? null : Engine.GetSpriteSheetByName(value);
         }
     }
 
@@ -583,8 +512,6 @@ public abstract class Sprite : Entity, IRenderable
             {
                 if (SpriteSheetName != null)
                     spriteSheet = Engine.GetSpriteSheetByName(SpriteSheetName);
-                else if (SpriteSheetIndex != -1)
-                    spriteSheet = Engine.GetSpriteSheetByIndex(SpriteSheetIndex);
             }
 
             return spriteSheet;
@@ -593,16 +520,7 @@ public abstract class Sprite : Entity, IRenderable
         protected set
         {
             spriteSheet = value;
-            if (value != null)
-            {
-                spriteSheetName = spriteSheet.Name;
-                spriteSheetIndex = spriteSheet.Index;
-            }
-            else
-            {
-                spriteSheetName = null;
-                spriteSheetIndex = -1;
-            }
+            spriteSheetName = value != null ? spriteSheet.Name : null;
         }
     }
 
@@ -1072,7 +990,7 @@ public abstract class Sprite : Entity, IRenderable
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        var animation = Animations.Create(SpriteSheetIndex, frameSequenceName, offset, repeatX, repeatY, initialFrame, startVisible, startOn);
+                        var animation = Animations.Create(frameSequenceName, offset, repeatX, repeatY, initialFrame, startVisible, startOn);
                         animation.Name = Animations.GetExclusiveName(name);
                         OnAnimationCreated(animation);
                     }

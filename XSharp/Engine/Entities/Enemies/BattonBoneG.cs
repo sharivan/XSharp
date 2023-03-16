@@ -42,7 +42,7 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
     [Precache]
     new internal static void Precache()
     {
-        var battonBoneGPalette = Engine.CreatePalette("battonBoneGPalette", BATTON_BONE_G_PALETTE);
+        var battonBoneGPalette = Engine.PrecachePalette("battonBoneGPalette", BATTON_BONE_G_PALETTE);
         var battonBoneGSpriteSheet = Engine.CreateSpriteSheet("BattonBoneG", true, true);
 
         // Batton Bone G

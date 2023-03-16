@@ -13,6 +13,8 @@ internal class Mist : HUD.HUD
     [Precache]
     internal static void Precache()
     {
+        Engine.PrecacheSound("Enemy Sound (05)", @"resources\sounds\mmx\68 - MMX - Enemy Sound (05).wav");
+
         var mistSpriteSheet = Engine.CreateSpriteSheet("Mist", true, true);
 
         using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Mist.png"))
