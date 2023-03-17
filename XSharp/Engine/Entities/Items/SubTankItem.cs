@@ -5,11 +5,13 @@ namespace XSharp.Engine.Entities.Items;
 
 public class SubTankItem : Item
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
         Engine.CallPrecacheAction(typeof(Weapon));
     }
+    #endregion
 
     public SubTankItem()
     {

@@ -256,8 +256,7 @@ public class GameEngine : IRenderable, IRenderTarget
     private Texture foregroundPalette;
     private Texture backgroundPalette;
 
-    private Texture worldTexture;
-    private Texture spritesTexture;
+    private Texture stageTexture;
 
     private EffectHandle psFadingLevelHandle;
     private EffectHandle psFadingColorHandle;
@@ -927,7 +926,7 @@ public class GameEngine : IRenderable, IRenderTarget
         Running = true;
     }
 
-    public bool PrecacheSound(string name, string path, out PrecachedSound sound)
+    public bool PrecacheSound(string name, string path, out PrecachedSound sound, bool raiseExceptionIfNameExists = true)
     {
         if (precachedSoundsByFileName.TryGetValue(path, out int index))
         {
@@ -942,6 +941,9 @@ public class GameEngine : IRenderable, IRenderTarget
 
         if (precachedSoundsByName.TryGetValue(name, out index))
         {
+            if (raiseExceptionIfNameExists)
+                throw new DuplicatePrecachedSoundNameException(name);
+
             sound = precachedSounds[index];
             return false;
         }
@@ -1022,8 +1024,7 @@ public class GameEngine : IRenderable, IRenderTarget
         device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
         device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
 
-        worldTexture = new Texture(device, SCREEN_WIDTH, SCREEN_HEIGHT, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
-        spritesTexture = new Texture(device, SCREEN_WIDTH, SCREEN_HEIGHT, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
+        stageTexture = new Texture(device, SCREEN_WIDTH, SCREEN_HEIGHT, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
 
         sprite = new DXSprite(device);
         line = new Line(device);
@@ -2807,8 +2808,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
         DisposeResource(whitePixelTexture);
         DisposeResource(blackPixelTexture);
-        DisposeResource(spritesTexture);
-        DisposeResource(worldTexture);
+        DisposeResource(stageTexture);
         DisposeResource(foregroundTilemap);
         DisposeResource(backgroundTilemap);
         DisposeResource(foregroundPalette);
@@ -2925,10 +2925,9 @@ public class GameEngine : IRenderable, IRenderTarget
         Device.SetTransform(TransformState.View, Matrix.Identity);
 
         var backBuffer = Device.GetRenderTarget(0);
-        var worldSurface = worldTexture.GetSurfaceLevel(0);
-        var spritesSurface = spritesTexture.GetSurfaceLevel(0);
+        var stageSurface = stageTexture.GetSurfaceLevel(0);
 
-        Device.SetRenderTarget(0, worldSurface);
+        Device.SetRenderTarget(0, stageSurface);
         Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
 
         if (drawBackground)
@@ -2940,14 +2939,8 @@ public class GameEngine : IRenderable, IRenderTarget
         if (drawDownLayer)
             World.RenderForeground(0);
 
-        Device.SetRenderTarget(0, backBuffer);
-        DrawTexture(worldTexture, SAMPLER_STATE_LINEAR);
-
         if (drawSprites)
         {
-            Device.SetRenderTarget(0, spritesSurface);
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
-
             // Render down layer sprites
             foreach (var sprite in sprites[0])
             {
@@ -2964,27 +2957,13 @@ public class GameEngine : IRenderable, IRenderTarget
                     sprite.Render(this);
                 }
             }
-
-            Device.SetRenderTarget(0, backBuffer);
-            DrawTexture(spritesTexture, SAMPLER_STATE_LINEAR);
         }
 
         if (drawUpLayer)
-        {
-            Device.SetRenderTarget(0, worldSurface);
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
-
             World.RenderForeground(1);
-
-            Device.SetRenderTarget(0, backBuffer);
-            DrawTexture(worldTexture, SAMPLER_STATE_LINEAR);
-        }
 
         if (drawSprites)
         {
-            Device.SetRenderTarget(0, spritesSurface);
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
-
             // Render up layer sprites
             foreach (var sprite in sprites[1])
             {
@@ -3001,13 +2980,7 @@ public class GameEngine : IRenderable, IRenderTarget
                     sprite.Render(this);
                 }
             }
-
-            Device.SetRenderTarget(0, backBuffer);
-            DrawTexture(spritesTexture, SAMPLER_STATE_LINEAR);
         }
-
-        Device.SetRenderTarget(0, spritesSurface);
-        Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
 
         foreach (var layer in huds)
         {
@@ -3016,7 +2989,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
 
         Device.SetRenderTarget(0, backBuffer);
-        DrawTexture(spritesTexture, SAMPLER_STATE_LINEAR);
+        DrawTexture(stageTexture, SAMPLER_STATE_LINEAR);
 
         if (nextFrame)
         {
@@ -3478,6 +3451,7 @@ public class GameEngine : IRenderable, IRenderTarget
                     precachedSoundsByName.Remove(name);
 
                 precachedSounds[index] = null;
+                sound.Dispose();
             }
         }
 
@@ -3541,12 +3515,6 @@ public class GameEngine : IRenderable, IRenderTarget
             string typeName = serializer.ReadString(false);
             var action = new PrecacheAction(serializer);
             precacheActions.Add(typeName, action);
-        }
-
-        foreach (var kv in precacheActions)
-        {
-            var action = kv.Value;
-            action.Call();
         }
 
         partition.Deserialize(serializer);
@@ -3928,7 +3896,7 @@ public class GameEngine : IRenderable, IRenderTarget
             Origin = origin,
             MovingVertically = (subid & 0x20) == 0,
             StartMovingBackward = (subid & 0x20) == 0,
-            MoveDistance = (subid & 0x04) != 0 ? 7 * PROBE8201U_BASE_MOVE_DISTANCE : PROBE8201U_BASE_MOVE_DISTANCE
+            MoveDistance = (subid & 0x04) != 0 ? 7 * Probe8201U.PROBE8201U_BASE_MOVE_DISTANCE : Probe8201U.PROBE8201U_BASE_MOVE_DISTANCE
         });
 
         probe.Place();
@@ -4353,11 +4321,11 @@ public class GameEngine : IRenderable, IRenderTarget
         Device.DrawPrimitives(PrimitiveType.TriangleList, 0, primitiveCount);
     }
 
-    public Palette PrecachePalette(string name, Color[] colors, int capacity = 256, bool raiseExceptionIfExist = false)
+    public Palette PrecachePalette(string name, Color[] colors, int capacity = 256, bool raiseExceptionIfNameAlreadyExists = true)
     {
         if (precachedPalettesByName.TryGetValue(name, out int index))
         {
-            if (raiseExceptionIfExist)
+            if (raiseExceptionIfNameAlreadyExists)
                 throw new DuplicatePaletteNameException(name);
 
             return precachedPalettes[index];
@@ -4461,11 +4429,11 @@ public class GameEngine : IRenderable, IRenderTarget
         palette.name = name;
     }
 
-    private SpriteSheet AddSpriteSheet(string name, SpriteSheet sheet, bool raiseExceptionIfExist = false)
+    private SpriteSheet AddSpriteSheet(string name, SpriteSheet sheet, bool raiseExceptionIfNameAlreadyExists = true)
     {
         if (spriteSheetsByName.TryGetValue(name, out int index))
         {
-            if (raiseExceptionIfExist)
+            if (raiseExceptionIfNameAlreadyExists)
                 throw new DuplicateSpriteSheetNameException(name);
 
             return spriteSheets[index];
@@ -4481,19 +4449,19 @@ public class GameEngine : IRenderable, IRenderTarget
         return sheet;
     }
 
-    public SpriteSheet CreateSpriteSheet(string name, bool disposeTexture = false, bool precache = false, bool raiseExceptionIfExist = false)
+    public SpriteSheet CreateSpriteSheet(string name, bool disposeTexture = false, bool precache = false, bool raiseExceptionIfNameAlreadyExists = true)
     {
-        return AddSpriteSheet(name, new SpriteSheet(disposeTexture, precache), raiseExceptionIfExist);
+        return AddSpriteSheet(name, new SpriteSheet(disposeTexture, precache), raiseExceptionIfNameAlreadyExists);
     }
 
-    public SpriteSheet CreateSpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false, bool raiseExceptionIfExist = false)
+    public SpriteSheet CreateSpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false, bool raiseExceptionIfNameAlreadyExists = true)
     {
-        return AddSpriteSheet(name, new SpriteSheet(texture, disposeTexture, precache), raiseExceptionIfExist);
+        return AddSpriteSheet(name, new SpriteSheet(texture, disposeTexture, precache), raiseExceptionIfNameAlreadyExists);
     }
 
-    public SpriteSheet CreateSpriteSheet(string name, string imageFileName, bool precache = false, bool raiseExceptionIfExist = false)
+    public SpriteSheet CreateSpriteSheet(string name, string imageFileName, bool precache = false, bool raiseExceptionIfNameAlreadyExists = true)
     {
-        return AddSpriteSheet(name, new SpriteSheet(imageFileName, precache), raiseExceptionIfExist);
+        return AddSpriteSheet(name, new SpriteSheet(imageFileName, precache), raiseExceptionIfNameAlreadyExists);
     }
 
     public SpriteSheet GetSpriteSheetByIndex(int index)

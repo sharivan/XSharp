@@ -8,6 +8,7 @@ namespace XSharp.Engine.Entities.Objects;
 
 internal class BossDoorEffect : SpriteEffect
 {
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
@@ -73,6 +74,7 @@ internal class BossDoorEffect : SpriteEffect
 
         bossDoorSpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     private EntityReference<BossDoor> door;
 

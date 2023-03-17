@@ -13,11 +13,13 @@ public enum BigAmmoRecoverState
 
 public class BigAmmoRecover : Item
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
         Engine.CallPrecacheAction(typeof(Weapon));
     }
+    #endregion
 
     public BigAmmoRecover()
     {

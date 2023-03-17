@@ -44,6 +44,7 @@ public enum PlayerState
 // TODO : This class needs a huge refactor
 public class Player : Sprite, IStateEntity<PlayerState>
 {
+    #region StaticFields
     public static readonly Color[] X1_NORMAL_PALETTE = new Color[]
     {
         Color.Transparent, // 0
@@ -79,7 +80,9 @@ public class Player : Sprite, IStateEntity<PlayerState>
         new Color(144, 248, 248, 255), // 30
         new Color(136, 248, 248, 255) // 31
     };
+    #endregion
 
+    #region Precache
     [Precache]
     internal static void Precache()
     {
@@ -386,6 +389,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
 
         xSpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     private int lives;
 

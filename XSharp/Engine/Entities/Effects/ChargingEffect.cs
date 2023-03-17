@@ -6,6 +6,7 @@ namespace XSharp.Engine.Entities.Effects;
 
 public class ChargingEffect : SpriteEffect
 {
+    #region StaticFields
     public static readonly Color[] CHARGE_EFFECT_PALETTE = new Color[]
     {
         Color.Transparent, // 0
@@ -55,7 +56,9 @@ public class ChargingEffect : SpriteEffect
         new Color(176, 176, 176, 255), // 14
         new Color(144, 0, 216, 255) // 15
     };
+    #endregion
 
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
@@ -71,6 +74,7 @@ public class ChargingEffect : SpriteEffect
         sequence = xChargingEffectsSpriteSheet.AddFrameSquence("ChargingLevel2");
         Engine.AddChargingEffectFrames(sequence, 2);
     }
+    #endregion
 
     private int level;
 

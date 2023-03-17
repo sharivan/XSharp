@@ -18,6 +18,7 @@ public enum RayBitState
 
 public class RayBit : Enemy, IStateEntity<RayBitState>
 {
+    #region StaticFields
     public static readonly Color[] RAYBIT_PALETTE = new Color[]
     {
         Color.Transparent, // 0
@@ -43,13 +44,16 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
 
     public static readonly Box HITBOX = ((0, -1), (-12, -11), (12, 11));
     public static readonly Box COLLISION_BOX = ((0, -1), (-12, -11), (12, 11));
+    public static readonly FixedSingle COLLISION_BOX_LEGS_HEIGHT = 13;
 
     public static readonly FixedSingle JUMPING_SPEED_X = 384 / 256.0;
     public static readonly FixedSingle JUMPING_SPEED_Y = -960 / 256.0;
 
     public static readonly FixedSingle SHOT_OFFSET_ORIGIN_X = 11;
     public static readonly FixedSingle SHOT_OFFSET_ORIGIN_Y = -21;
+    #endregion
 
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
@@ -109,6 +113,7 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
 
         spriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     public RayBitState State
     {
@@ -150,6 +155,11 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
         return COLLISION_BOX;
     }
 
+    protected override FixedSingle GetCollisionBoxLegsHeight()
+    {
+        return COLLISION_BOX_LEGS_HEIGHT;
+    }
+
     protected internal override void OnSpawn()
     {
         base.OnSpawn();
@@ -174,21 +184,21 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
     {
         base.OnBlockedUp();
 
-        Velocity = Vector.NULL_VECTOR;
+        //Velocity = Vector.NULL_VECTOR;
     }
 
     protected override void OnBlockedLeft()
     {
         base.OnBlockedLeft();
 
-        Velocity = Vector.NULL_VECTOR;
+        //Velocity = Vector.NULL_VECTOR;
     }
 
     protected override void OnBlockedRight()
     {
         base.OnBlockedRight();
 
-        Velocity = Vector.NULL_VECTOR;
+        //Velocity = Vector.NULL_VECTOR;
     }
 
     private RayBitState RandomNonIdleState()

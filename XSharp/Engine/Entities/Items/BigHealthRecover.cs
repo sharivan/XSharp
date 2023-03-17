@@ -13,11 +13,13 @@ public enum BigHealthRecoverState
 
 public class BigHealthRecover : Item, IStateEntity<BigHealthRecoverState>
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
         Engine.CallPrecacheAction(typeof(Weapon));
     }
+    #endregion
 
     public BigHealthRecoverState State
     {

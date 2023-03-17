@@ -7,11 +7,13 @@ namespace XSharp.Engine.Entities.Items;
 
 public class SmallAmmoRecover : Item
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
         Engine.CallPrecacheAction(typeof(Weapon));
     }
+    #endregion
 
     public SmallAmmoRecover()
     {

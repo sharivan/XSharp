@@ -132,7 +132,7 @@ public struct FixedDouble : ISerializable, IComparable<FixedDouble>
 
     public override int GetHashCode()
     {
-        return (int) RawValue;
+        return (int) (RawValue >> 16);
     }
 
     public static FixedDouble FromRawValue(long rawValue)

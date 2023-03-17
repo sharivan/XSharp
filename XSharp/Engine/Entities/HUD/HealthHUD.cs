@@ -23,6 +23,7 @@ public enum HUDImage
 
 public class HealthHUD : HUD
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
@@ -72,6 +73,7 @@ public class HealthHUD : HUD
 
         hpSpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     private static FixedSingle GetHeight(FixedSingle capacity)
     {

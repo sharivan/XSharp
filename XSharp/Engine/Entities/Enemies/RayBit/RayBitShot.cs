@@ -6,17 +6,21 @@ namespace XSharp.Engine.Entities.Enemies.RayBit;
 
 public class RayBitShot : Enemy
 {
+    #region StaticFields
     public static readonly FixedSingle CONTACT_DAMAGE = 2;
 
     public static readonly Box HITBOX = ((0, 0), (-7, -7), (7, 7));
 
     public static readonly Vector SPEED = (576 / 256.0, 0);
+    #endregion
 
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
         Engine.CallPrecacheAction(typeof(RayBit));
     }
+    #endregion
 
     public EntityReference<RayBit> shooter;
 

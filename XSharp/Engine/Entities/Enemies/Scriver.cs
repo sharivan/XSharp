@@ -13,14 +13,16 @@ namespace XSharp.Engine.Entities.Enemies;
 
 public enum ScriverState
 {
-    IDLE = 0,
-    DRILLING = 1,
-    JUMPING = 2,
-    LANDING = 3
+    IDLE = 0,   
+    JUMPING = 1,
+    LANDING = 2,
+    DRILLING = 3,
+    END_DRILLING = 4
 }
 
 public class Scriver : Enemy, IStateEntity<ScriverState>
 {
+    #region StaticFields
     public static readonly Color[] SCRIVER_PALETTE = new Color[]
     {
         Color.Transparent, // 0
@@ -41,6 +43,19 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
         new Color(32, 32, 32, 255) // 15
     };
 
+    public static readonly FixedSingle SCRIVER_START_JUMP_OFFSET_X = 10;
+    public static readonly FixedSingle SCRIVER_START_JUMP_OFFSET_Y = -6;
+    public static readonly FixedSingle SCRIVER_JUMP_VELOCITY_X = 384 / 256.0;
+    public static readonly FixedSingle SCRIVER_JUMP_VELOCITY_Y = -1280 / 256.0;
+    public const int SCRIVER_HEALTH = 4;
+    public static readonly FixedSingle SCRIVER_CONTACT_DAMAGE = 2;
+    public static readonly Box SCRIVER_HITBOX = ((-2, 0), (-16, -12), (16, 12));
+    public static readonly Box SCRIVER_DRILLING_HITBOX = ((8, 0), (-24, -12), (24, 12));
+    public static readonly Box SCRIVER_COLLISION_BOX = ((-2, 0), (-9, -12), (9, 12));
+    public static readonly FixedSingle SCRIVER_COLLISION_BOX_LEGS_HEIGHT = 6;
+    #endregion
+
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
@@ -55,13 +70,11 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
 
         scriverSpriteSheet.CurrentPalette = scriverPalette;
 
-        // 0
         var sequence = scriverSpriteSheet.AddFrameSquence("Idle");
         sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
         sequence.Hitbox = SCRIVER_HITBOX;
         sequence.AddFrame(-5, 6, 4, 4, 35, 30, 1, true);
 
-        // 1
         sequence = scriverSpriteSheet.AddFrameSquence("Jumping");
         sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
         sequence.Hitbox = SCRIVER_HITBOX;
@@ -69,21 +82,27 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
         sequence.AddFrame(-7, 6, 78, 4, 35, 30, 5);
         sequence.AddFrame(4, -3, 115, 4, 43, 30, 1, true);
 
-        // 2
         sequence = scriverSpriteSheet.AddFrameSquence("Landing");
         sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
         sequence.Hitbox = SCRIVER_HITBOX;
         sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
 
-        // 3
         sequence = scriverSpriteSheet.AddFrameSquence("Drilling");
         sequence.OriginOffset = -SCRIVER_DRILLING_HITBOX.Origin - SCRIVER_DRILLING_HITBOX.Mins;
         sequence.Hitbox = SCRIVER_DRILLING_HITBOX;
-        sequence.AddFrame(-3, 0, 160, 10, 48, 24, 2, true);
-        sequence.AddFrame(-4, 1, 209, 9, 46, 25, 2);
-        sequence.AddFrame(-4, 0, 256, 10, 48, 24, 2);
-        sequence.AddFrame(-4, 1, 305, 9, 46, 25, 2);
+        sequence.AddFrame(-3, 1, 160, 36, 40, 25, 4);
+        sequence.AddFrame(-3, 0, 160, 10, 48, 24, 2, true); // 0, 1
+        sequence.AddFrame(-4, 1, 209, 9, 46, 25, 2); // 2, 3
+        sequence.AddFrame(-4, 0, 256, 10, 48, 24, 2); // 4, 5
+        sequence.AddFrame(-4, 1, 305, 9, 46, 25, 2); // 6, 7
+
+        sequence = scriverSpriteSheet.AddFrameSquence("EndDrilling");
+        sequence.OriginOffset = -SCRIVER_DRILLING_HITBOX.Origin - SCRIVER_DRILLING_HITBOX.Mins;
+        sequence.Hitbox = SCRIVER_DRILLING_HITBOX;
+        sequence.AddFrame(-4, 0, 256, 10, 48, 24, 14);
+        sequence.AddFrame(-4, 0, 209, 37, 41, 24, 7);
     }
+    #endregion
 
     private bool flashing;
     private bool jumping;
@@ -105,13 +124,14 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
 
         SpriteSheetName = "Scriver";
 
-        SetAnimationNames("Idle", "Drilling", "Jumping", "Landing");
+        SetAnimationNames("Idle", "Jumping", "Landing", "Drilling", "EndDrilling");
 
         SetupStateArray(typeof(ScriverState));
-        RegisterState(ScriverState.IDLE, OnIdle, "Idle");
-        RegisterState(ScriverState.DRILLING, OnDrilling, "Drilling");
+        RegisterState(ScriverState.IDLE, OnIdle, "Idle");        
         RegisterState(ScriverState.JUMPING, OnJumping, "Jumping");
         RegisterState(ScriverState.LANDING, OnLanding, "Landing");
+        RegisterState(ScriverState.DRILLING, OnDrilling, "Drilling");
+        RegisterState(ScriverState.END_DRILLING, OnEndDrilling, "EndDrilling");
     }
 
     protected internal override void OnSpawn()
@@ -139,7 +159,7 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
 
     protected override FixedSingle GetCollisionBoxLegsHeight()
     {
-        return SCRIVER_SIDE_COLLIDER_BOTTOM_CLIP;
+        return SCRIVER_COLLISION_BOX_LEGS_HEIGHT;
     }
 
     protected override Box GetCollisionBox()
@@ -219,10 +239,17 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
 
     private void OnDrilling(EntityState state, long frameCounter)
     {
-        if (frameCounter >= 12 && (Engine.Player.Origin.X - Origin.X).Abs > 50)
-            State = ScriverState.IDLE;
+        long frame = (frameCounter - 4) % 8;
+        if (frame == 6 && (Engine.Player.Origin.X - Origin.X).Abs > 50)
+            State = ScriverState.END_DRILLING;
         else
             FaceToPlayer();
+    }
+
+    private void OnEndDrilling(EntityState state, long frameCounter)
+    {
+        if (frameCounter >= 21)
+            State = ScriverState.IDLE;
     }
 
     protected override bool PreThink()

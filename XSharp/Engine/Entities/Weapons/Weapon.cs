@@ -11,6 +11,7 @@ namespace XSharp.Engine.Entities.Weapons;
 
 public abstract class Weapon : Sprite
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
@@ -197,6 +198,7 @@ public abstract class Weapon : Sprite
 
         xWeaponsSpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     private EntityReference<Sprite> shooter;
 

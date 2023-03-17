@@ -16,7 +16,7 @@ public class Consts
 {
     public const int SAVE_SLOT_COUNT = 100;
     public const int KEY_BUFFER_COUNT = 60;
-    public static readonly bool ENABLE_BACKGROUND_INPUT = true;
+    public static readonly bool ENABLE_BACKGROUND_INPUT = false;
 
     // Device params
 
@@ -24,7 +24,7 @@ public class Consts
     public const double TICK = 1D / TICKRATE;
     public static readonly bool DOUBLE_BUFFERED = false;
     public static readonly bool VSYNC = true; // TODO : When false the refresh rate doesn't work fine, taking about half of frames. Please fix it!
-    public static readonly bool SAMPLER_STATE_LINEAR = false;
+    public static readonly bool SAMPLER_STATE_LINEAR = true;
     public static readonly bool FULL_SCREEN = false; // TODO : When true the app crash on device creating. Please fix it!
 
     // Sprite
@@ -164,98 +164,6 @@ public class Consts
     public const int LEMON_DAMAGE = 2;
     public const int SEMI_CHARGED_DAMAGE = 4;
     public const int CHARGED_DAMAGE = 8;
-
-    // Enemies
-
-    public const int BOSS_HP = 32;
-    public const int DEFAULT_BOSS_INVINCIBILITY_TIME = 68;
-    public static readonly FixedSingle BOSS_HP_LEFT = 233;
-
-    // Scriver
-
-    public static readonly FixedSingle SCRIVER_START_JUMP_OFFSET_X = 10;
-    public static readonly FixedSingle SCRIVER_START_JUMP_OFFSET_Y = -6;
-    public static readonly FixedSingle SCRIVER_JUMP_VELOCITY_X = 384 / 256.0;
-    public static readonly FixedSingle SCRIVER_JUMP_VELOCITY_Y = -1280 / 256.0;
-    public const int SCRIVER_HEALTH = 4;
-    public static readonly FixedSingle SCRIVER_CONTACT_DAMAGE = 2;
-    public static readonly Box SCRIVER_HITBOX = ((-2, 0), (-16, -12), (16, 12));
-    public static readonly Box SCRIVER_DRILLING_HITBOX = ((8, 0), (-24, -12), (24, 12));
-    public static readonly Box SCRIVER_COLLISION_BOX = ((-2, 0), (-9, -12), (9, 12));
-    public static readonly FixedSingle SCRIVER_SIDE_COLLIDER_BOTTOM_CLIP = 6;
-
-    // Batton Bone G
-
-    public static readonly FixedSingle BATTON_BONE_G_ATTACK_SPEED = 256 / 256.0;
-    public static readonly FixedSingle BATTON_BONE_G_ESCAPE_SPEED = 512 / 256.0;
-    public const int BATTON_BONE_G_HEALTH = 3;
-    public static readonly FixedSingle BATTON_BONE_G_CONTACT_DAMAGE = 1;
-
-    // Penguin
-
-    public static readonly Box PENGUIN_COLLISION_BOX = ((0, 2), (-14, -17), (14, 17));
-    public static readonly Box PENGUIN_HITBOX = ((0, 2), (-10, -15), (10, 15));
-    public static readonly Box PENGUIN_JUMP_HITBOX = ((2, -12), (-9, -12), (9, 12));
-    public static readonly Box PENGUIN_SLIDE_HITBOX = ((-8, 8), (-17, -9), (17, 9));
-    public static readonly Box PENGUIN_TAKING_DAMAGE_HITBOX = ((10, -7), (-9, -12), (9, 12));
-
-    public const int PENGUIN_JUMP_FRAMES = 68;
-    public static readonly FixedSingle PENGUIN_JUMP_SPEED_Y = 2174 / 256.0;
-
-    public const int PENGUIN_FRAMES_BEFORE_HANGING_JUMP = 22;
-    public const int PENGUIN_FRAMES_TO_HANG = 32;
-    public const int PENGUIN_FRAMES_BEFORE_SNOW_AFTER_HANGING = 27;
-    public const int PENGUIN_FRAMES_BEFORE_STOP_HANGING = 56;
-    public const int PENGUIN_MIST_FRAMES = 120;
-    public static readonly FixedSingle PENGUIN_HANGING_JUMP_SPEED_Y = 2014 / 256.0;
-    public static readonly Vector PENGUIN_HANGING_OFFSET = (10, 24);
-    public static readonly FixedSingle PENGUIN_HANGING_SNOWING_SPEED_X = 512 / 256.0;
-
-    public static readonly FixedSingle PENGUIN_KNOCKBACK_SPEED_X = 1;
-    public static readonly FixedSingle PENGUIN_KNOCKBACK_SPEED_Y = 545 / 256.0;
-
-    public static readonly FixedSingle PENGUIN_SLIDE_INITIAL_SPEED = 1536 / 256.0;
-    public static readonly FixedSingle PENGUIN_SLIDE_DECELARATION = 16 / 256.0;
-
-    public const int PENGUIN_SHOT_START_FRAME = 16;
-    public static readonly Vector PENGUIN_SHOT_ORIGIN_OFFSET = (26, -2);
-
-    public const int PENGUIN_SNOW_FRAMES = 40;
-    public static readonly Box PENGUIN_SNOW_HITBOX = (Vector.NULL_VECTOR, (-5, -5), (5, 5));
-    public static readonly FixedSingle PENGUIN_SNOW_SPEED = 512 / 256.0;
-    public static readonly Box PENGUIN_BLOW_HITBOX = (Vector.NULL_VECTOR, (-13, -6), (13, 6));
-    public static readonly FixedSingle PENGUIN_BLOW_DISTANCE_FROM_HITBOX = 29;
-    public const int PENGUIN_BLOW_FRAMES = 116;
-
-    public const int PENGUIN_BLOW_FRAMES_TO_SPAWN_SCULPTURES = 56;
-    public static readonly Vector PENGUIN_SCUPTURE_ORIGIN_OFFSET_1 = (48, -16);
-    public static readonly Vector PENGUIN_SCUPTURE_ORIGIN_OFFSET_2 = (80, -16);
-    public static readonly Box PENGUIN_SCULPTURE_HITBOX = ((0, 2), (-8, -16), (8, 16));
-    public static readonly FixedSingle PENGUIN_SCULPTURE_INITIAL_DISTANCE_FROM_SNOW = 23;
-    public const int PENGUIN_SCULPTURE_FRAMES_TO_GRAVITY = 60;
-
-    public static readonly Box PENGUIN_ICE_HITBOX = (Vector.NULL_VECTOR, (-5, -5), (5, 5));
-    public static readonly FixedSingle PENGUIN_ICE_SPEED = 1024 / 256.0;
-    public static readonly FixedSingle PENGUIN_ICE_SPEED2_X = 512 / 256.0;
-    public static readonly FixedSingle PENGUIN_ICE_SPEED2_Y = 545 / 256.0;
-    public static readonly FixedSingle PENGUIN_ICE_BUMP_SPEED2_Y = 395 / 256.0;
-
-    public static readonly Box PENGUIN_ICE_FRAGMENT_HITBOX = (Vector.NULL_VECTOR, (-4, -4), (4, 4));
-    public static readonly FixedSingle PENGUIN_ICE_FRAGMENT_SPEED = 2;
-
-    public static readonly Box PENGUIN_LEVER_HITBOX = (Vector.NULL_VECTOR, (-13, -12), (13, 12));
-    public const int PENGUIN_LEVER_MOVING_FRAMES = 16;
-
-    public const int HITS_TO_BREAK_FROZEN_BLOCK = 24;
-    public static readonly Box PENGUIN_FROZEN_BLOCK_HITBOX = ((0, -1), (-6, -14), (6, 14));
-
-    // Probe 8201-U
-
-    public static readonly Box PROBE8201U_HITBOX = (Vector.NULL_VECTOR, (-11, -27), (11, 27));
-    public static readonly FixedSingle PROBE8201U_HORIZONTAL_SPEED = 0.25;
-    public static readonly FixedSingle PROBE8201U_TERMINAL_VERTICAL_SPEED = 1;
-    public static readonly FixedSingle PROBE8201U_VERTICAL_ACCELERATION = 4 / 256.0;
-    public static readonly FixedSingle PROBE8201U_BASE_MOVE_DISTANCE = 80;
 
     // Render
 

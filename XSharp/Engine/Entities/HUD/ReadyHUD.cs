@@ -9,6 +9,7 @@ namespace XSharp.Engine.Entities.HUD;
 
 public class ReadyHUD : HUD
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
@@ -48,6 +49,7 @@ public class ReadyHUD : HUD
 
         readySpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     public ReadyHUD()
     {

@@ -26,6 +26,7 @@ public enum PenguinState
 
 public class Penguin : Boss, IStateEntity<PenguinState>
 {
+    #region StaticFields
     public static readonly bool DONT_ATTACK = false;
 
     public static readonly Color[] PENGUIN_PALETTE = new Color[]
@@ -65,6 +66,64 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         Color.FromBgra(0xFF88F8F8) // 1F
     };
 
+    public static readonly Box PENGUIN_COLLISION_BOX = ((0, 2), (-14, -17), (14, 17));
+    public static readonly Box PENGUIN_HITBOX = ((0, 2), (-10, -15), (10, 15));
+    public static readonly Box PENGUIN_JUMP_HITBOX = ((2, -12), (-9, -12), (9, 12));
+    public static readonly Box PENGUIN_SLIDE_HITBOX = ((-8, 8), (-17, -9), (17, 9));
+    public static readonly Box PENGUIN_TAKING_DAMAGE_HITBOX = ((10, -7), (-9, -12), (9, 12));
+
+    public const int PENGUIN_JUMP_FRAMES = 68;
+    public static readonly FixedSingle PENGUIN_JUMP_SPEED_Y = 2174 / 256.0;
+
+    public const int PENGUIN_FRAMES_BEFORE_HANGING_JUMP = 22;
+    public const int PENGUIN_FRAMES_TO_HANG = 32;
+    public const int PENGUIN_FRAMES_BEFORE_SNOW_AFTER_HANGING = 27;
+    public const int PENGUIN_FRAMES_BEFORE_STOP_HANGING = 56;
+    public const int PENGUIN_MIST_FRAMES = 120;
+    public static readonly FixedSingle PENGUIN_HANGING_JUMP_SPEED_Y = 2014 / 256.0;
+    public static readonly Vector PENGUIN_HANGING_OFFSET = (10, 24);
+    public static readonly FixedSingle PENGUIN_HANGING_SNOWING_SPEED_X = 512 / 256.0;
+
+    public static readonly FixedSingle PENGUIN_KNOCKBACK_SPEED_X = 1;
+    public static readonly FixedSingle PENGUIN_KNOCKBACK_SPEED_Y = 545 / 256.0;
+
+    public static readonly FixedSingle PENGUIN_SLIDE_INITIAL_SPEED = 1536 / 256.0;
+    public static readonly FixedSingle PENGUIN_SLIDE_DECELARATION = 16 / 256.0;
+
+    public const int PENGUIN_SHOT_START_FRAME = 16;
+    public static readonly Vector PENGUIN_SHOT_ORIGIN_OFFSET = (26, -2);
+
+    public const int PENGUIN_SNOW_FRAMES = 40;
+    public static readonly Box PENGUIN_SNOW_HITBOX = (Vector.NULL_VECTOR, (-5, -5), (5, 5));
+    public static readonly FixedSingle PENGUIN_SNOW_SPEED = 512 / 256.0;
+    public static readonly Box PENGUIN_BLOW_HITBOX = (Vector.NULL_VECTOR, (-13, -6), (13, 6));
+    public static readonly FixedSingle PENGUIN_BLOW_DISTANCE_FROM_HITBOX = 29;
+
+    public const int PENGUIN_BLOW_FRAMES_TO_SPAWN_SCULPTURES = 56;
+    public static readonly Vector PENGUIN_SCUPTURE_ORIGIN_OFFSET_1 = (48, -16);
+    public static readonly Vector PENGUIN_SCUPTURE_ORIGIN_OFFSET_2 = (80, -16);
+    public static readonly Box PENGUIN_SCULPTURE_HITBOX = ((0, 2), (-8, -16), (8, 16));
+    public static readonly FixedSingle PENGUIN_SCULPTURE_INITIAL_DISTANCE_FROM_SNOW = 23;
+    public const int PENGUIN_SCULPTURE_FRAMES_TO_GRAVITY = 60;
+    public const int PENGUIN_BLOW_FRAMES = 116;
+
+    public static readonly Box PENGUIN_ICE_HITBOX = (Vector.NULL_VECTOR, (-5, -5), (5, 5));
+    public static readonly FixedSingle PENGUIN_ICE_SPEED = 1024 / 256.0;
+    public static readonly FixedSingle PENGUIN_ICE_SPEED2_X = 512 / 256.0;
+    public static readonly FixedSingle PENGUIN_ICE_SPEED2_Y = 545 / 256.0;
+    public static readonly FixedSingle PENGUIN_ICE_BUMP_SPEED2_Y = 395 / 256.0;
+
+    public static readonly Box PENGUIN_ICE_FRAGMENT_HITBOX = (Vector.NULL_VECTOR, (-4, -4), (4, 4));
+    public static readonly FixedSingle PENGUIN_ICE_FRAGMENT_SPEED = 2;
+
+    public static readonly Box PENGUIN_LEVER_HITBOX = (Vector.NULL_VECTOR, (-13, -12), (13, 12));
+    public const int PENGUIN_LEVER_MOVING_FRAMES = 16;
+
+    public const int HITS_TO_BREAK_FROZEN_BLOCK = 24;
+    public static readonly Box PENGUIN_FROZEN_BLOCK_HITBOX = ((0, -1), (-6, -14), (6, 14));
+    #endregion
+
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
@@ -248,6 +307,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
         penguinSpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     private bool firstAttack;
     private bool hanging;

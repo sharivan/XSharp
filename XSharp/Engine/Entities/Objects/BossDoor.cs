@@ -33,12 +33,14 @@ public delegate void BossDoorEvent(BossDoor source);
 
 public class BossDoor : BaseTrigger, IStateEntity<BossDoorState>
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
         Engine.PrecacheSound("Door Opening", @"resources\sounds\mmx\Door Opening.wav");
         Engine.PrecacheSound("Door Closing", @"resources\sounds\mmx\Door Closing.wav");
     }
+    #endregion
 
     private static Box GetTriggerBoudingBox(Vector origin)
     {

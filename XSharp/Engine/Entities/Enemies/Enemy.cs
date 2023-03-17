@@ -105,6 +105,8 @@ public abstract class Enemy : Sprite
         base.OnSpawn();
 
         KillOnOffscreen = true;
+        Health = 1;
+        ContactDamage = 1;
 
         NothingDropOdd = 9000; // 90%
         SmallHealthDropOdd = 300; // 3%

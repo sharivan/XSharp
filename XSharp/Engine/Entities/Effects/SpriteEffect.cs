@@ -8,6 +8,7 @@ namespace XSharp.Engine.Entities.Effects;
 
 public abstract class SpriteEffect : Sprite
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
@@ -57,6 +58,7 @@ public abstract class SpriteEffect : Sprite
 
         xEffectsSpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     public bool HasGravity
     {

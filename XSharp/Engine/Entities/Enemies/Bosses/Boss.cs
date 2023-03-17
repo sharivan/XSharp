@@ -16,6 +16,7 @@ public delegate void BossDefeatedEvent(Boss boss, Player killer);
 
 public abstract class Boss : Enemy
 {
+    #region StaticFields
     // The interval between each position is five frames.
     private static readonly Vector[] EXPLOSION_ORIGIN_OFFSETS =
     {
@@ -101,6 +102,12 @@ public abstract class Boss : Enemy
         // Fading back from white start before 30 frames
     };
 
+    public const int BOSS_HP = 32;
+    public const int DEFAULT_BOSS_INVINCIBILITY_TIME = 68;
+    public static readonly FixedSingle BOSS_HP_LEFT = 233;
+    #endregion
+
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
@@ -110,6 +117,7 @@ public abstract class Boss : Enemy
         Engine.PrecacheSound("Boss Explosion", @"resources\sounds\mmx\Boss Explosion.wav");
         Engine.PrecacheSound("Boss Final Explode", @"resources\sounds\mmx\Boss Final Explode.wav");
     }
+    #endregion
 
     public event BossDefeatedEvent BossDefeatedEvent;
 

@@ -1,6 +1,6 @@
 ﻿using XSharp.Engine.Entities.HUD;
 
-using static XSharp.Engine.Consts;
+using static XSharp.Engine.Entities.Enemies.Bosses.Boss;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses;
 

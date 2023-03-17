@@ -3,17 +3,19 @@ using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Consts;
+using static XSharp.Engine.Entities.Enemies.Bosses.Penguin.Penguin;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 public class PenguinSculpture : Enemy
 {
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
         Engine.CallPrecacheAction(typeof(Penguin));
     }
+    #endregion
 
     private int frameCounter;
     private bool gravity;

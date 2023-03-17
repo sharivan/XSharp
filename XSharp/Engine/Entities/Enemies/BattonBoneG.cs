@@ -19,6 +19,12 @@ public enum BattonBoneGState
 
 public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
 {
+    #region StaticFields
+    public static readonly FixedSingle BATTON_BONE_G_ATTACK_SPEED = 256 / 256.0;
+    public static readonly FixedSingle BATTON_BONE_G_ESCAPE_SPEED = 512 / 256.0;
+    public const int BATTON_BONE_G_HEALTH = 2;
+    public static readonly FixedSingle BATTON_BONE_G_CONTACT_DAMAGE = 1;
+
     public static readonly Color[] BATTON_BONE_G_PALETTE = new Color[]
     {
         Color.Transparent, // 0
@@ -38,7 +44,9 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
         new Color(104, 104, 104, 255), // 14
         new Color(40, 40, 40, 255), // 15
     };
+    #endregion
 
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
@@ -76,6 +84,7 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
 
         battonBoneGSpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     private bool flashing;
 

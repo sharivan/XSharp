@@ -10,6 +10,7 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 internal class Mist : HUD.HUD
 {
+    #region Precache
     [Precache]
     internal static void Precache()
     {
@@ -30,6 +31,7 @@ internal class Mist : HUD.HUD
 
         mistSpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     public FixedSingle Speed
     {

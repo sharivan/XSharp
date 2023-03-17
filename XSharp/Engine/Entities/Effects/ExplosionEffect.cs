@@ -16,6 +16,7 @@ public enum ExplosionEffectSound
 
 internal class ExplosionEffect : SpriteEffect
 {
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
@@ -40,6 +41,7 @@ internal class ExplosionEffect : SpriteEffect
 
         explosionSpriteSheet.ReleaseCurrentTexture();
     }
+    #endregion
 
     public ExplosionEffectSound EffectSound
     {

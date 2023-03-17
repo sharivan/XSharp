@@ -6,11 +6,13 @@ namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 public class PenguinIceExplosionEffect : SpriteEffect
 {
+    #region Precache
     [Precache]
     new internal static void Precache()
     {
         Engine.CallPrecacheAction(typeof(Penguin));
     }
+    #endregion
 
     public Vector InitialVelocity
     {
