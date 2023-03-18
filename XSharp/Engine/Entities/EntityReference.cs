@@ -176,6 +176,47 @@ public class EntityReference<EntityType> : EntityReference, IEntityReference<Ent
     {
         return target?.Factory.GetReferenceTo(target);
     }
+
+    public static bool operator ==(EntityReference<EntityType> reference1, EntityReference<EntityType> reference2)
+    {
+        return ReferenceEquals(reference1, reference2)
+            || reference1 is not null && reference2 is not null && reference1.Equals(reference2);
+    }
+
+    public static bool operator ==(EntityReference<EntityType> reference, EntityType entity)
+    {
+        return reference is null ? entity is null : EqualityComparer<Entity>.Default.Equals(reference.Target, entity);
+    }
+
+    public static bool operator ==(EntityType entity, EntityReference<EntityType> reference)
+    {
+        return reference == entity;
+    }
+
+    public static bool operator !=(EntityReference<EntityType> reference1, EntityReference<EntityType> reference2)
+    {
+        return !(reference1 == reference2);
+    }
+
+    public static bool operator !=(EntityReference<EntityType> reference, EntityType entity)
+    {
+        return !(reference == entity);
+    }
+
+    public static bool operator !=(EntityType entity, EntityReference<EntityType> reference)
+    {
+        return !(entity == reference);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return TargetIndex;
+    }
 }
 
 internal class EntityProxyReference<EntityType> : EntityReference<EntityType> where EntityType : Entity

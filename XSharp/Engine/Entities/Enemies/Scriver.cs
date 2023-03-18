@@ -126,7 +126,7 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
 
         SetAnimationNames("Idle", "Jumping", "Landing", "Drilling", "EndDrilling");
 
-        SetupStateArray(typeof(ScriverState));
+        SetupStateArray<ScriverState>();
         RegisterState(ScriverState.IDLE, OnIdle, "Idle");        
         RegisterState(ScriverState.JUMPING, OnJumping, "Jumping");
         RegisterState(ScriverState.LANDING, OnLanding, "Landing");

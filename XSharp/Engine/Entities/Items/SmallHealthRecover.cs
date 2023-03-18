@@ -39,7 +39,7 @@ public class SmallHealthRecover : Item, IStateEntity<SmallHealthRecoverState>
 
         SetAnimationNames("SmallHealthRecoverDropping", "SmallHealthRecoverIdle");
 
-        SetupStateArray(typeof(SmallHealthRecoverState));
+        SetupStateArray<SmallHealthRecoverState>();
         RegisterState(SmallHealthRecoverState.DROPPING, "SmallHealthRecoverDropping");
         RegisterState(SmallHealthRecoverState.IDLE, "SmallHealthRecoverIdle");
     }

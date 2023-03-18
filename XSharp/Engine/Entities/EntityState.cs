@@ -22,6 +22,8 @@ public class EntityState
 
     public Entity Entity => entity;
 
+    public bool Current => Entity.CurrentStateID == ID;
+
     public int ID
     {
         get;
@@ -74,7 +76,8 @@ public class EntityState
     public EntitySubState RegisterSubState(int id, EntitySubStateStartEvent onStart, EntitySubStateFrameEvent onFrame, EntitySubStateEndEvent onEnd)
     {
         var subState = (EntitySubState) Activator.CreateInstance(GetSubStateType());
-        subState.State = this;
+        subState.entity = entity;
+        subState.stateID = ID;
         subState.ID = id;
         subState.StartEvent += onStart;
         subState.FrameEvent += onFrame;
@@ -108,11 +111,28 @@ public class EntityState
         FrameCounter = 0;
         StartEvent?.Invoke(this, lastState);
 
-        if (HasSubStates)
+        if (Current && HasSubStates)
         {
-            var lastSubState = CurrentSubState;
+            var lastSubState = lastState != null && lastState.HasSubStates ? lastState.CurrentSubState : null;
             lastSubState?.OnEnd();
-            currentSubStateID = InitialSubStateID;
+
+            switch (Entity.SubStateChangeMode)
+            {
+                case SubStateChangeMode.PRESERVE_LAST:
+                    currentSubStateID = lastSubState != null ? lastSubState.ID : InitialSubStateID;
+                    break;
+
+                case SubStateChangeMode.PRESERVE_CURRENT:
+                    if (currentSubStateID == -1)
+                        currentSubStateID = InitialSubStateID;
+
+                    break;
+
+                case SubStateChangeMode.RESET_CURRENT:
+                    currentSubStateID = InitialSubStateID;
+                    break;
+            }
+            
             CurrentSubState?.OnStart(lastState, lastSubState);
         }
     }
@@ -147,13 +167,24 @@ public class EntitySubState
     public event EntitySubStateFrameEvent FrameEvent;
     public event EntitySubStateEndEvent EndEvent;
 
-    public EntityState State
+    internal EntityReference entity = null;
+    internal int stateID = -1;
+
+    public Entity Entity => entity;
+
+    public bool Current
     {
-        get;
-        internal set;
+        get
+        {
+            if (Entity.CurrentStateID != stateID)
+                return false;
+
+            var currentState = Entity.GetStateByID(Entity.CurrentStateID);
+            return currentState != null && currentState.HasSubStates && currentState.CurrentSubState == this;
+        }
     }
 
-    public Entity Entity => State.Entity;
+    public EntityState State => stateID != -1 ? Entity.GetStateByID(stateID) : null;
 
     public int ID
     {

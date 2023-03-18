@@ -370,7 +370,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
             "TakingDamage", "InFlames", "Dying"
             );
 
-        SetupStateArray(typeof(PenguinState));
+        SetupStateArray<PenguinState>();
         RegisterState(PenguinState.IDLE, OnIdle, "Idle");
         RegisterState(PenguinState.INTRODUCING, "FallingIntroducing");
         RegisterState(PenguinState.SHOOTING_ICE, OnShootingIce, "ShootingIce");

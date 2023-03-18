@@ -746,7 +746,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
 
     public void SetStandState(Direction direction, int startAnimationIndex = 0, bool stop = true)
     {
-        if (LandedOnTopLadder)
+        if (LandedOnTopLadder && !BlockedUp && AutoAdjustOnTheFloor)
             AdjustOnTheFloor();
 
         if (stop)

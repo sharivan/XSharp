@@ -138,7 +138,7 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
 
         SetAnimationNames("Idle", "PreJumping", "Jumping", "Falling", "Shooting");
 
-        SetupStateArray(typeof(RayBitState));
+        SetupStateArray<RayBitState>();
         RegisterState(RayBitState.IDLE, OnStartIdle, OnIdle, null, "Idle");
         RegisterState(RayBitState.JUMPING, OnStartJumping, OnJumping, null, "PreJumping");
         RegisterState(RayBitState.FALLING, "Falling");
@@ -178,27 +178,6 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
 
         if (State is RayBitState.JUMPING or RayBitState.FALLING)
             State = RayBitState.IDLE;
-    }
-
-    protected override void OnBlockedUp()
-    {
-        base.OnBlockedUp();
-
-        //Velocity = Vector.NULL_VECTOR;
-    }
-
-    protected override void OnBlockedLeft()
-    {
-        base.OnBlockedLeft();
-
-        //Velocity = Vector.NULL_VECTOR;
-    }
-
-    protected override void OnBlockedRight()
-    {
-        base.OnBlockedRight();
-
-        //Velocity = Vector.NULL_VECTOR;
     }
 
     private RayBitState RandomNonIdleState()

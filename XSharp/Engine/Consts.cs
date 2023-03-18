@@ -8,8 +8,7 @@ namespace XSharp.Engine;
 public enum CollisionBoxType
 {
     X1,
-    X2X3,
-    XSHARP
+    X2X3
 }
 
 public class Consts
@@ -156,8 +155,6 @@ public class Consts
     public const int BIG_HEALTH_RECOVER_AMOUNT = 8;
     public const int SMALL_AMMO_RECOVER_AMOUNT = 2;
     public const int BIG_AMMO_RECOVER_AMOUNT = 8;
-
-    // Weapons
 
     // X-Buster
 

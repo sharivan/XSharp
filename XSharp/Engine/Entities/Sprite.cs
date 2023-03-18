@@ -424,6 +424,18 @@ public abstract class Sprite : Entity, IRenderable
         protected set => spriteCollider.CheckCollisionWithSolidSprites = value;
     }
 
+    public bool CanBeCarriedWhenLanded
+    {
+        get;
+        set;
+    } = true;
+
+    public bool AutoAdjustOnTheFloor
+    {
+        get;
+        set;
+    } = true;
+
     public bool BlockedUp => !NoClip && (CheckCollisionWithWorld && WorldCollider.BlockedUp || CheckCollisionWithSolidSprites && SpriteCollider.BlockedUp);
 
     public bool BlockedLeft => !NoClip && (CheckCollisionWithWorld && WorldCollider.BlockedLeft || CheckCollisionWithSolidSprites && SpriteCollider.BlockedLeft);
@@ -969,7 +981,7 @@ public abstract class Sprite : Entity, IRenderable
         worldCollider = CreateWorldCollider();
         spriteCollider = CreateSpriteCollider();
 
-        if ((animationNames == null || animationNames.Length == 0) && SpriteSheet.FrameSequenceCount > 0)
+        if ((animationNames == null || animationNames.Length == 0) && SpriteSheet != null && SpriteSheet.FrameSequenceCount > 0)
             SetAnimationNames();
 
         if (animationNames != null)
@@ -1524,7 +1536,7 @@ public abstract class Sprite : Entity, IRenderable
         {
             if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
             {
-                if (Landed)
+                if (Landed && !BlockedUp && AutoAdjustOnTheFloor)
                     AdjustOnTheFloor();
                 //else
                 //    TryMoveContactFloor();
@@ -1584,9 +1596,14 @@ public abstract class Sprite : Entity, IRenderable
                 {
                     if (sprite != physicsParent)
                     {
+                        if (!sprite.CanBeCarriedWhenLanded)
+                            delta = delta.YVector;
+
                         sprite.DoPhysics(this, delta);
                         sprite.TryMoveContactFloor();
-                        sprite.AdjustOnTheFloor();
+
+                        if (sprite.Landed && !sprite.BlockedUp && sprite.AutoAdjustOnTheFloor)
+                            sprite.AdjustOnTheFloor();
                     }
                 }
             }

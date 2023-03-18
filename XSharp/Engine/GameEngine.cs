@@ -20,6 +20,7 @@ using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Enemies;
+using XSharp.Engine.Entities.Enemies.AxeMax;
 using XSharp.Engine.Entities.Enemies.Bosses;
 using XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 using XSharp.Engine.Entities.Enemies.RayBit;
@@ -3482,10 +3483,12 @@ public class GameEngine : IRenderable, IRenderTarget
         foreach (var name in precachedPaletteNames)
         {
             int index = precachedPalettesByName[name];
+            var palette = precachedPalettes[index];
             if (!paletteNames.Contains(name))
             {
                 precachedPalettesByName.Remove(name);
                 precachedPalettes[index] = null;
+                palette.Dispose();
             }
         }
 
@@ -3501,21 +3504,40 @@ public class GameEngine : IRenderable, IRenderTarget
         foreach (var name in precachedSpriteSheetNames)
         {
             int index = spriteSheetsByName[name];
+            var spriteSheet = spriteSheets[index];
             if (!spriteSheetNames.Contains(name))
             {
                 spriteSheetsByName.Remove(name);
                 spriteSheets[index] = null;
+                spriteSheet.Dispose();
             }
         }
 
-        precacheActions.Clear();
+        var precacheActions = new Dictionary<string, PrecacheAction>();
+        var actionsToCall = new List<PrecacheAction>();
         int precacheActionCount = serializer.ReadInt();
         for (int i = 0; i < precacheActionCount; i++)
         {
             string typeName = serializer.ReadString(false);
             var action = new PrecacheAction(serializer);
             precacheActions.Add(typeName, action);
+            if (!this.precacheActions.ContainsKey(typeName))
+            {
+                this.precacheActions.Add(typeName, action);
+                action.Reset(false);
+                actionsToCall.Add(action);                
+            }
         }
+
+        var typeNames = new List<string>(this.precacheActions.Keys);
+        foreach (var typeName in typeNames)
+        {
+            if (!precacheActions.ContainsKey(typeName))
+                this.precacheActions.Remove(typeName);
+        }
+
+        foreach (var action in actionsToCall)
+            action.Call();
 
         partition.Deserialize(serializer);
 
@@ -3855,14 +3877,23 @@ public class GameEngine : IRenderable, IRenderTarget
             : id switch
             {
                 0x02 when mmx.Type == 0 && mmx.Level == 8 => AddPenguin(origin),
-                0x09 when mmx.Type == 1 => AddScriver(origin),
-                0x2D when mmx.Type == 0 => AddBattonBoneG(origin),
-                0x50 when mmx.Type == 1 => AddBattonBoneG(origin),
-                0x51 when mmx.Type == 0 => AddRayBit(origin),
+                0x04 when mmx.Type == 0 => AddFlammingle(subid, origin),
+                0x09 when mmx.Type == 1 => AddScriver(subid, origin),
+                0x0B when mmx.Type == 0 => AddAxeMax(subid, origin),
+                0x15 when mmx.Type == 0 => AddSpiky(subid, origin),
+                0x19 when mmx.Type == 0 => AddBombBeen(subid, origin),
                 0x2C when mmx.Type == 1 => AddProbe8201U(subid, origin),
-                0x2F => AddRideArmor(subid, origin),
+                0x2D when mmx.Type == 0 => AddBattonBoneG(subid, origin),
+                0x2F => AddArmorSoldier(subid, origin),
+                0x36 when mmx.Type == 0 => AddJamminger(subid, origin),
+                0x3A when mmx.Type == 0 => AddTombot(subid, origin),
                 0x4D => AddCapsule(subid, origin),
-                _ => mmx.Type == 0 && mmx.Level == 8 ? AddScriver(origin) : null
+                0x50 when mmx.Type == 1 => AddBattonBoneG(subid, origin),
+                0x51 when mmx.Type == 0 => AddRayBit(subid, origin),
+                0x53 when mmx.Type == 0 => AddSnowShooter(subid, origin),
+                0x54 when mmx.Type == 0 => AddSnowball(subid, origin),
+                0x57 when mmx.Type == 0 => AddIgloo(subid, origin),
+                _ => mmx.Type == 0 && mmx.Level == 8 ? AddScriver(subid, origin) : null
             };
     }
 
@@ -3887,32 +3918,6 @@ public class GameEngine : IRenderable, IRenderTarget
         killer.FaceToScreenCenter();
         PlayVictorySound();
         Engine.DoDelayedAction((int) (6.5 * 60), () => killer.StartTeleporting(true));
-    }
-
-    private EntityReference<Probe8201U> AddProbe8201U(ushort subid, Vector origin)
-    {
-        Probe8201U probe = Entities.Create<Probe8201U>(new
-        {
-            Origin = origin,
-            MovingVertically = (subid & 0x20) == 0,
-            StartMovingBackward = (subid & 0x20) == 0,
-            MoveDistance = (subid & 0x04) != 0 ? 7 * Probe8201U.PROBE8201U_BASE_MOVE_DISTANCE : Probe8201U.PROBE8201U_BASE_MOVE_DISTANCE
-        });
-
-        probe.Place();
-        return Entities.GetReferenceTo(probe);
-    }
-
-    private Sprite AddRideArmor(ushort subid, Vector origin)
-    {
-        // TODO : Implement
-        return null;
-    }
-
-    private Sprite AddCapsule(ushort subid, Vector origin)
-    {
-        // TODO : Implement
-        return null;
     }
 
     public EntityReference<CameraLockTrigger> AddCameraLockTrigger(Box boundingBox, IEnumerable<Vector> extensions)
@@ -4109,37 +4114,167 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(effect);
     }
 
-    public EntityReference<Scriver> AddScriver(Vector origin)
+    public EntityReference<Flammingle> AddFlammingle(ushort subid, Vector origin)
     {
-        Scriver scriver = Entities.Create<Scriver>(new
+        Flammingle entity = Entities.Create<Flammingle>(new
         {
             Origin = origin
         });
 
-        scriver.Place();
-        return Entities.GetReferenceTo(scriver);
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
     }
 
-    public EntityReference<BattonBoneG> AddBattonBoneG(Vector origin)
+    public EntityReference<Scriver> AddScriver(ushort subid, Vector origin)
     {
-        BattonBoneG battonBoneG = Entities.Create<BattonBoneG>(new
+        Scriver entity = Entities.Create<Scriver>(new
         {
             Origin = origin
         });
 
-        battonBoneG.Place();
-        return Entities.GetReferenceTo(battonBoneG);
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
     }
 
-    public EntityReference<RayBit> AddRayBit(Vector origin)
+    public EntityReference<AxeMax> AddAxeMax(ushort subid, Vector origin)
     {
-        RayBit rayBit = Entities.Create<RayBit>(new
+        AxeMax entity = Entities.Create<AxeMax>(new
         {
             Origin = origin
         });
 
-        rayBit.Place();
-        return Entities.GetReferenceTo(rayBit);
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Spiky> AddSpiky(ushort subid, Vector origin)
+    {
+        Spiky entity = Entities.Create<Spiky>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<BombBeen> AddBombBeen(ushort subid, Vector origin)
+    {
+        BombBeen entity = Entities.Create<BombBeen>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Probe8201U> AddProbe8201U(ushort subid, Vector origin)
+    {
+        Probe8201U entity = Entities.Create<Probe8201U>(new
+        {
+            Origin = origin,
+            MovingVertically = (subid & 0x20) == 0,
+            StartMovingBackward = (subid & 0x20) == 0,
+            MoveDistance = (subid & 0x04) != 0 ? 7 * Probe8201U.PROBE8201U_BASE_MOVE_DISTANCE : Probe8201U.PROBE8201U_BASE_MOVE_DISTANCE
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<BattonBoneG> AddBattonBoneG(ushort subid, Vector origin)
+    {
+        BattonBoneG entity = Entities.Create<BattonBoneG>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public ArmorSoldier AddArmorSoldier(ushort subid, Vector origin)
+    {
+        ArmorSoldier entity = Entities.Create<ArmorSoldier>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Jamminger> AddJamminger(ushort subid, Vector origin)
+    {
+        Jamminger entity = Entities.Create<Jamminger>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Tombot> AddTombot(ushort subid, Vector origin)
+    {
+        Tombot entity = Entities.Create<Tombot>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public Sprite AddCapsule(ushort subid, Vector origin)
+    {
+        // TODO : Implement
+        return null;
+    }
+
+    public EntityReference<RayBit> AddRayBit(ushort subid, Vector origin)
+    {
+        RayBit entity = Entities.Create<RayBit>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<SnowShooter> AddSnowShooter(ushort subid, Vector origin)
+    {
+        SnowShooter entity = Entities.Create<SnowShooter>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Snowball> AddSnowball(ushort subid, Vector origin)
+    {
+        Snowball entity = Entities.Create<Snowball>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Igloo> AddIgloo(ushort subid, Vector origin)
+    {
+        Igloo entity = Entities.Create<Igloo>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
     }
 
     private void SpawnX(Vector origin)

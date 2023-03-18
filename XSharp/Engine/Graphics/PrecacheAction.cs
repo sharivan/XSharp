@@ -77,10 +77,12 @@ public class PrecacheAction : ISerializable
         serializer.WriteBool(Called);
     }
 
-    internal void Reset()
+    internal void Reset(bool recursive = true)
     {
         Called = false;
-        Parent?.Reset();
+
+        if (recursive)
+            Parent?.Reset(true);
     }
 
     internal void Call()

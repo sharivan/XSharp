@@ -6,7 +6,7 @@ using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Objects;
 
-internal class BossDoorEffect : SpriteEffect
+internal class BossDoorEffect : SpriteEffect, IStateEntity<BossDoorState>
 {
     #region Precache
     [Precache]
@@ -104,7 +104,7 @@ internal class BossDoorEffect : SpriteEffect
 
         SetAnimationNames("Closed", "Opening", "PlayerCrossing", "Closing");
 
-        SetupStateArray(typeof(BossDoorState));
+        SetupStateArray<BossDoorState>();
         RegisterState(BossDoorState.CLOSED, OnStartClosed, "Closed");
         RegisterState(BossDoorState.OPENING, OnStartOpening, OnOpening, null, "Opening");
         RegisterState(BossDoorState.PLAYER_CROSSING, OnStartPlayerCrossing, OnPlayerCrossing, null, "PlayerCrossing");

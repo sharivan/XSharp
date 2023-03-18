@@ -110,7 +110,7 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
 
         SetAnimationNames("Idle", "Attacking");
 
-        SetupStateArray(typeof(BattonBoneGState));
+        SetupStateArray<BattonBoneGState>();
         RegisterState(BattonBoneGState.IDLE, OnIdle, "Idle");
         RegisterState(BattonBoneGState.ATTACKING, OnAttacking, "Attacking");
         RegisterState(BattonBoneGState.ESCAPING, OnEscaping, "Attacking");

@@ -5,12 +5,6 @@ using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Items;
 
-public enum BigAmmoRecoverState
-{
-    DROPPING = 0,
-    IDLE = 1
-}
-
 public class BigAmmoRecover : Item
 {
     #region Precache

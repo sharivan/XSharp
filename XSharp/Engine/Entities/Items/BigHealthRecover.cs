@@ -39,7 +39,7 @@ public class BigHealthRecover : Item, IStateEntity<BigHealthRecoverState>
 
         SetAnimationNames("BigHealthRecoverDropping", "BigHealthRecoverIdle");
 
-        SetupStateArray(typeof(BigHealthRecoverState));
+        SetupStateArray<BigHealthRecoverState>();
         RegisterState(BigHealthRecoverState.DROPPING, "BigHealthRecoverDropping");
         RegisterState(BigHealthRecoverState.IDLE, "BigHealthRecoverIdle");
     }

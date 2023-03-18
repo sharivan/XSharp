@@ -245,6 +245,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public int StateCount => states.Count;
 
+    public SubStateChangeMode SubStateChangeMode
+    {
+        get;
+        set;
+    } = SubStateChangeMode.PRESERVE_LAST;
+
     public int CurrentStateID
     {
         get => currentStateID;
@@ -421,7 +427,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
         states.Remove(state);
     }
 
-    protected EntityState GetStateByID(int id)
+    protected internal EntityState GetStateByID(int id)
     {
         return stateArray[id];
     }
@@ -431,9 +437,36 @@ public abstract class Entity : IIndexedNamedFactoryItem
         return (T) (object) CurrentStateID;
     }
 
+    protected internal T GetSubState<T>() where T : struct, Enum
+    {
+        return (T) (object) GetStateByID(CurrentStateID).CurrentSubStateID;
+    }
+
+    protected internal (U id, V subid) GetState<U, V>()
+        where U : struct, Enum
+        where V : struct, Enum
+    {
+        U id = GetState<U>();
+        V subid = GetSubState<V>();
+        return (id, subid);
+    }
+
     protected internal void SetState<T>(T id) where T : struct, Enum
     {
         CurrentStateID = (int) (object) id;
+    }
+
+    protected internal void SetSubState<T>(T id) where T : struct, Enum
+    {
+        GetStateByID(CurrentStateID).CurrentSubStateID = (int) (object) id;
+    }
+
+    protected internal void SetState<U, V>(U id, V subid)
+        where U : struct, Enum
+        where V : struct, Enum
+    {
+        SetState<U>(id);
+        SetSubState<V>(subid);
     }
 
     public bool IsTouching(Entity other)

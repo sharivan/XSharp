@@ -2,9 +2,20 @@
 
 namespace XSharp.Engine.Entities;
 
-internal interface IStateEntity<T> where T : struct, Enum
+internal interface IStateEntity<TState> where TState : struct, Enum
 {
-    public T State
+    public TState State
+    {
+        get;
+        set;
+    }
+}
+
+internal interface IStateEntity<TState, TSubState> : IStateEntity<TState>
+    where TState : struct, Enum
+    where TSubState : struct, Enum
+{
+    public TSubState SubState
     {
         get;
         set;
