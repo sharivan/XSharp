@@ -9,18 +9,6 @@ using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.AxeMax;
 
-public enum AxeMaxState
-{
-    IDLE = 0,
-    THROWING = 1
-}
-
-public enum AxeMaxSubState
-{
-    NOT_LAUGHING = 0,
-    LAUGHING = 1
-}
-
 public class AxeMax : Sprite
 {
     #region StaticFields
@@ -73,7 +61,7 @@ public class AxeMax : Sprite
         sequence.AddFrame(-4, 4, 200, 4, 39, 40, 6, true);
         sequence.AddFrame(-4, 4, 250, 4, 39, 40, 6);
         sequence.AddFrame(-4, 4, 300, 4, 39, 40, 6);
-        sequence.AddFrame(-4, 4, 250, 4, 39, 40, 6);
+        sequence.AddFrame(-4, 4, 250, 4, 39, 40, 6); // total of 24 frames
 
         sequence = spriteSheet.AddFrameSquence("Throwing");
         sequence.OriginOffset = -AxeMaxLumberjack.HITBOX.Origin - AxeMaxLumberjack.HITBOX.Mins;
@@ -186,6 +174,6 @@ public class AxeMax : Sprite
     public void MakeLumberjackLaugh()
     {
         if (Lumberjack != null)
-            Lumberjack.SubState = AxeMaxSubState.LAUGHING;
+            Lumberjack.MakeLaughing();
     }
 }

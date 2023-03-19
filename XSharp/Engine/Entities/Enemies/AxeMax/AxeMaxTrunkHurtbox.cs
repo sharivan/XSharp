@@ -65,9 +65,17 @@ public class AxeMaxTrunkHurtbox : Enemy
         base.OnSpawn();
 
         CheckCollisionWithWorld = false;
+        AutoAdjustOnTheFloor = false;
  
         Health = HP;
         ContactDamage = 0;
+
+        NothingDropOdd = 100; // 100%
+        SmallHealthDropOdd = 0; // 0%
+        BigHealthDropOdd = 0; // 0%
+        SmallAmmoDropOdd = 0; // 0%
+        BigAmmoDropOdd = 0; // 0%
+        LifeUpDropOdd = 0; // 0%
     }
 
     protected override void OnContactDamage(Player player)

@@ -4,7 +4,14 @@ using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.AxeMax;
 
-public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxState, AxeMaxSubState>
+public enum AxeMaxLumberjackState
+{
+    IDLE = 0,
+    LAUGHING = 1,
+    THROWING = 2
+}
+
+public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxLumberjackState>
 {
     #region StaticFields
     public static readonly FixedSingle HP = 16;
@@ -24,6 +31,8 @@ public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxState, AxeMaxSubState>
     #endregion
 
     private EntityReference<AxeMax> axeMax;
+    private int throwCounter;
+    private bool laughOnIdle;
 
     public AxeMax AxeMax
     {
@@ -31,19 +40,13 @@ public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxState, AxeMaxSubState>
         internal set => axeMax = value;
     }
 
-    public AxeMaxState State
+    public AxeMaxLumberjackState State
     {
-        get => GetState<AxeMaxState>();
+        get => GetState<AxeMaxLumberjackState>();
         set => SetState(value);
     }
 
-    public AxeMaxSubState SubState
-    {
-        get => GetSubState<AxeMaxSubState>();
-        set => SetSubState(value);
-    }
-
-    public bool Throwing => State == AxeMaxState.THROWING;
+    public bool Throwing => State == AxeMaxLumberjackState.THROWING;
 
     public AxeMaxLumberjack()
     {
@@ -60,35 +63,47 @@ public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxState, AxeMaxSubState>
 
         SetAnimationNames("Idle", "Laughing", "Throwing");
 
-        SetupStateArray<AxeMaxState>();
-
-        var state = (SpriteState) RegisterState<AxeMaxState, AxeMaxSubState>(AxeMaxState.IDLE, OnStartIdle, OnIdle, null);
-        state.RegisterSubState(AxeMaxSubState.NOT_LAUGHING, "Idle");
-        state.RegisterSubState(AxeMaxSubState.LAUGHING, "Laughing");
-
-        state = (SpriteState) RegisterState<AxeMaxState, AxeMaxSubState>(AxeMaxState.THROWING, OnThrowing);
-        state.RegisterSubState(AxeMaxSubState.NOT_LAUGHING, "Throwing");
-        state.RegisterSubState(AxeMaxSubState.LAUGHING, "Throwing");
+        SetupStateArray<AxeMaxLumberjackState>();
+        RegisterState(AxeMaxLumberjackState.IDLE, OnStartIdle, OnIdle, null, "Idle");
+        RegisterState(AxeMaxLumberjackState.LAUGHING, OnLaughing, "Laughing");
+        RegisterState(AxeMaxLumberjackState.THROWING, OnThrowing, "Throwing");
     }
 
     private void OnStartIdle(EntityState state, EntityState lastState)
     {
-        if (lastState != null && (AxeMaxState) lastState.ID == AxeMaxState.THROWING && !AxeMax.TrunkBase.Regenerating && AxeMax.TrunkBase.ThrownTrunkCount < AxeMax.TrunkCount)
-            State = AxeMaxState.THROWING;
+        if (lastState != null && (AxeMaxLumberjackState) lastState.ID == AxeMaxLumberjackState.THROWING && throwCounter < AxeMax.TrunkCount)
+            State = AxeMaxLumberjackState.THROWING;
+        else if (laughOnIdle)
+        {
+            laughOnIdle = false;
+            State = AxeMaxLumberjackState.LAUGHING;
+        }
     }
 
     private void OnIdle(EntityState state, long frameCounter)
     {
-        if (frameCounter >= 20 && AxeMax.TrunkBase.IsReady)
-            State = AxeMaxState.THROWING;
+        if (frameCounter >= 50 && AxeMax.TrunkBase.IsReady)
+        {
+            throwCounter = 0;
+            State = AxeMaxLumberjackState.THROWING;
+        }
+    }
+
+    private void OnLaughing(EntityState state, long frameCounter)
+    {
+        if (frameCounter >= 122)
+            State = AxeMaxLumberjackState.IDLE;
     }
 
     private void OnThrowing(EntityState state, long frameCounter)
     {
         if (frameCounter == 18)
+        {
+            throwCounter++;
             AxeMax.TrunkBase.ThrowTrunk();
+        }
         else if (frameCounter >= 48)
-            State = AxeMaxState.IDLE;
+            State = AxeMaxLumberjackState.IDLE;
     }
 
     public override FixedSingle GetGravity()
@@ -120,6 +135,14 @@ public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxState, AxeMaxSubState>
         Health = HP;
         ContactDamage = CONTACT_DAMAGE;
 
-        SetState(AxeMaxState.IDLE, AxeMaxSubState.NOT_LAUGHING);
+        throwCounter = 0;
+        laughOnIdle = false;
+
+        State = AxeMaxLumberjackState.IDLE;
+    }
+
+    internal void MakeLaughing()
+    {
+        laughOnIdle = true;
     }
 }

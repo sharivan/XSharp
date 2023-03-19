@@ -442,7 +442,7 @@ public class SpriteCollider
 
     public bool TryMoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE)
     {
-        return TryMoveContactFloor(QUERY_MAX_DISTANCE, ignore);
+        return TryMoveContactFloor(QUERY_MAX_DISTANCE * FixedSingle.HALF, ignore);
     }
 
     public bool TryMoveContactSlope(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE)

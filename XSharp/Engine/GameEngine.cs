@@ -297,8 +297,8 @@ public class GameEngine : IRenderable, IRenderTarget
     internal EntitySet<Entity> removedEntities;
     internal Dictionary<EntityReference, RespawnEntry> autoRespawnableEntities;
     private readonly EntitySet<Sprite> freezingSpriteExceptions;
-    private readonly EntitySet<Sprite>[] sprites;
-    private readonly EntitySet<HUD>[] huds;
+    private readonly List<Sprite>[] sprites;
+    private readonly List<HUD>[] huds;
     private ushort currentLevel;
     private bool changeLevel;
     private ushort levelToChange;
@@ -810,14 +810,14 @@ public class GameEngine : IRenderable, IRenderTarget
         spawnedEntities = new EntitySet<Entity>();
         removedEntities = new EntitySet<Entity>();
         autoRespawnableEntities = new Dictionary<EntityReference, RespawnEntry>();
-        sprites = new EntitySet<Sprite>[NUM_SPRITE_LAYERS];
-        huds = new EntitySet<HUD>[NUM_SPRITE_LAYERS];
+        sprites = new List<Sprite>[NUM_SPRITE_LAYERS];
+        huds = new List<HUD>[NUM_SPRITE_LAYERS];
 
         for (int i = 0; i < sprites.Length; i++)
-            sprites[i] = new EntitySet<Sprite>();
+            sprites[i] = new List<Sprite>();
 
         for (int i = 0; i < huds.Length; i++)
-            huds[i] = new EntitySet<HUD>();
+            huds[i] = new List<HUD>();
 
         freezingSpriteExceptions = new EntitySet<Sprite>();
         checkpoints = new List<EntityReference<Checkpoint>>();
@@ -2943,8 +2943,9 @@ public class GameEngine : IRenderable, IRenderTarget
         if (drawSprites)
         {
             // Render down layer sprites
-            foreach (var sprite in sprites[0])
+            for (int i = sprites[0].Count - 1; i >= 0; i--)
             {
+                var sprite = sprites[0][i];
                 if (!sprite.Alive || !sprite.Visible)
                     continue;
 
@@ -2966,8 +2967,9 @@ public class GameEngine : IRenderable, IRenderTarget
         if (drawSprites)
         {
             // Render up layer sprites
-            foreach (var sprite in sprites[1])
+            for (int i = sprites[1].Count - 1; i >= 0; i--)
             {
+                var sprite = sprites[1][i];
                 if (!sprite.Alive || !sprite.Visible)
                     continue;
 
@@ -2985,8 +2987,11 @@ public class GameEngine : IRenderable, IRenderTarget
 
         foreach (var layer in huds)
         {
-            foreach (var hud in layer)
+            for (int i = layer.Count - 1; i >= 0; i--)
+            {
+                var hud = layer[i];
                 hud.Render(this);
+            }
         }
 
         Device.SetRenderTarget(0, backBuffer);
@@ -3588,11 +3593,11 @@ public class GameEngine : IRenderable, IRenderTarget
 
         freezingSpriteExceptions.Deserialize(serializer);
 
-        foreach (var spriteLayer in sprites)
-            spriteLayer.Deserialize(serializer);
+        for (int i = 0; i < sprites.Length; i++)
+            sprites[i] = (List<Sprite>) serializer.ReadList<Sprite>(false);
 
-        foreach (var hudLayer in huds)
-            hudLayer.Deserialize(serializer);
+        for (int i = 0; i < huds.Length; i++)
+            huds[i] = (List<HUD>) serializer.ReadList<HUD>(false);
 
         camera = serializer.ReadEntityReference<Camera>();
         player = serializer.ReadEntityReference<Player>();
@@ -3735,10 +3740,10 @@ public class GameEngine : IRenderable, IRenderTarget
         freezingSpriteExceptions.Serialize(serializer);
 
         foreach (var spriteLayer in sprites)
-            spriteLayer.Serialize(serializer);
+            serializer.WriteList<Sprite>(spriteLayer, false);
 
         foreach (var hudLayer in huds)
-            hudLayer.Serialize(serializer);
+            serializer.WriteList<HUD>(hudLayer, false);
 
         serializer.WriteEntityReference(camera);
         serializer.WriteEntityReference(player);

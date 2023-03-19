@@ -23,7 +23,7 @@ public class AxeMaxTrunkBase : Sprite
     private EntityReference<AxeMax> axeMax;
     private List<EntityReference<AxeMaxTrunk>> trunkPile;
 
-    public bool IsReady => trunkPile.Count == TrunkCount && IsAllTrunksLanded();
+    public bool IsReady => trunkPile.Count == TrunkCount && IsAllTrunksReady();
 
     public bool FirstRegenerating
     {
@@ -81,16 +81,22 @@ public class AxeMaxTrunkBase : Sprite
         return HITBOX;
     }
 
-    private bool IsAllTrunksLanded()
+    private bool IsAllTrunksReady()
     {
         foreach (var trunkRef in trunkPile)
         {
             var trunk = (AxeMaxTrunk) trunkRef;
-            if (!trunk.Landed)
+            if (trunk == null || !trunk.Landed || !trunk.Idle)
                 return false;
         }
 
         return true;
+    }
+
+    internal Vector GetTrunkPositionFromIndex(int index)
+    {
+        var origin = IntegerOrigin;
+        return (origin.X, origin.Y - 16 * (index + 1));
     }
 
     protected internal override void OnSpawn()
@@ -112,8 +118,11 @@ public class AxeMaxTrunkBase : Sprite
     private void SpawnTrunk(int index)
     {
         AxeMaxTrunk trunk = Engine.Entities.Create<AxeMaxTrunk>();
+        trunkPile.Add(trunk);
+
         trunk.TrunkBase = this;
-        trunk.Origin = (Origin.X, Origin.Y - 16 * (index + 1));
+        trunk.Origin = GetTrunkPositionFromIndex(index);
+        trunk.TrunkIndex = index;
         trunk.Spawn();
     }
 
@@ -123,15 +132,23 @@ public class AxeMaxTrunkBase : Sprite
 
         if (!Regenerating)
         {
-            if (trunkPile.Count < TrunkCount && ThrownTrunkCount == 0 && IsAllTrunksLanded() && !AxeMax.Lumberjack.Throwing)
+            if (trunkPile.Count < TrunkCount)
             {
-                Regenerating = true;
-                SpawnTrunk(trunkPile.Count);
+                if (ThrownTrunkCount == 0 && !AxeMax.Lumberjack.Throwing)
+                {
+                    Regenerating = true;
+
+                    if (IsAllTrunksReady())
+                        SpawnTrunk(trunkPile.Count);
+                }
             }
         }
-        else if (trunkPile.Count == TrunkCount)
+        else
         {
-            Regenerating = false;
+            if (trunkPile.Count == TrunkCount)
+                Regenerating = false;
+            else if (IsAllTrunksReady())
+                SpawnTrunk(trunkPile.Count);
         }
     }
 
@@ -140,8 +157,11 @@ public class AxeMaxTrunkBase : Sprite
         foreach (var trunkRef in trunkPile)
         {
             var trunk = (AxeMaxTrunk) trunkRef;
-            trunk.TrunkBase = null;
-            trunk.Kill();
+            if (trunk != null)
+            {
+                trunk.TrunkBase = null;
+                trunk.Kill();
+            }
         }
 
         trunkPile.Clear();
@@ -154,19 +174,24 @@ public class AxeMaxTrunkBase : Sprite
         if (trunkPile.Count > 0)
         {
             var trunk = (AxeMaxTrunk) trunkPile[0];
-            if (trunk.Landed)
+            if (trunk != null && trunk.Landed && trunk.Idle)
             {
                 trunkPile.RemoveAt(0);
 
-                trunk.Throw(AxeMax.Direction);
                 ThrownTrunkCount++;
+                trunk.Throw(AxeMax.Direction);
+
+                for (int i = 0; i < trunkPile.Count; i++)
+                {
+                    trunk = (AxeMaxTrunk) trunkPile[i];
+                    trunk.TrunkIndex = i;
+                }
             }
         }
     }
 
     internal void NotifyTrunkReady(AxeMaxTrunk trunk)
     {
-        trunkPile.Add(trunk);
         if (trunkPile.Count < TrunkCount)
             SpawnTrunk(trunkPile.Count);
         else
@@ -178,6 +203,15 @@ public class AxeMaxTrunkBase : Sprite
         if (trunk.Thrown)
             ThrownTrunkCount--;
         else
+        {
             trunkPile.Remove(trunk);
+
+            for (int i = 0; i < trunkPile.Count; i++)
+            {
+                trunk = (AxeMaxTrunk) trunkPile[i];
+                if (trunk != null)
+                    trunk.TrunkIndex = i;
+            }
+        }
     }
 }

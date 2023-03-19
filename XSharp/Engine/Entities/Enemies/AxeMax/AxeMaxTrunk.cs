@@ -7,9 +7,9 @@ namespace XSharp.Engine.Entities.Enemies.AxeMax;
 
 public enum AxeMaxTrunkState
 {
-    SPAWNING,
-    IDLE,
-    THROWN
+    IDLE = 0,
+    RISING = 1,   
+    THROWN = 2
 }
 
 public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
@@ -45,6 +45,16 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
         set => SetState(value);
     }
 
+    public int TrunkIndex
+    {
+        get;
+        internal set;
+    }
+
+    public bool Rising => State == AxeMaxTrunkState.RISING;
+
+    public bool Idle => State == AxeMaxTrunkState.IDLE;
+
     public bool Thrown => State == AxeMaxTrunkState.THROWN;
 
     public AxeMaxTrunk()
@@ -62,8 +72,8 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
         SetAnimationNames("TrunkIdle", "TrunkThrown");
 
         SetupStateArray<AxeMaxTrunkState>();
-        RegisterState(AxeMaxTrunkState.IDLE, OnStartIdle, "TrunkIdle");
-        RegisterState(AxeMaxTrunkState.SPAWNING, OnSpawing, "TrunkIdle");
+        RegisterState(AxeMaxTrunkState.IDLE, OnStartIdle, OnIdle, null, "TrunkIdle");
+        RegisterState(AxeMaxTrunkState.RISING, OnRising, "TrunkIdle");
         RegisterState(AxeMaxTrunkState.THROWN, OnStartThrown, OnThrown, null, "TrunkThrown");
 
         hurtbox = Engine.Entities.Create<AxeMaxTrunkHurtbox>();
@@ -71,15 +81,30 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
 
     private void OnStartIdle(EntityState state, EntityState lastState)
     {
+        Hurtbox.Origin = Origin;
+        Hurtbox.Trunk = this;
+        Hurtbox.Spawn();
+
         TrunkBase?.NotifyTrunkReady(this);
     }
 
-    private void OnSpawing(EntityState state, long frameCounter)
+    private void OnIdle(EntityState state, long frameCounter)
     {
-        if (frameCounter >= 16)
+        if (Landed && (TrunkBase.AxeMax.Lumberjack == null || !TrunkBase.AxeMax.Lumberjack.Throwing) && IntegerOrigin != TrunkBase.GetTrunkPositionFromIndex(TrunkIndex))
+            State = AxeMaxTrunkState.RISING;
+    }
+
+    private void OnRising(EntityState state, long frameCounter)
+    {
+        var origin = IntegerOrigin;
+        var targetOrigin = TrunkBase.GetTrunkPositionFromIndex(TrunkIndex);
+
+        if (origin == targetOrigin)
             State = AxeMaxTrunkState.IDLE;
-        else
+        else if (origin.Y > targetOrigin.Y)
             Origin += Vector.UP_VECTOR;
+        else if (origin.Y < targetOrigin.Y)
+            Origin += Vector.DOWN_VECTOR;
     }
 
     private void OnStartThrown(EntityState state, EntityState lastState)
@@ -99,7 +124,7 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
 
     public override FixedSingle GetGravity()
     {
-        return Thrown ? 0 : base.GetGravity();
+        return Idle ? base.GetGravity() : 0;
     }
 
     protected internal override void OnSpawn()
@@ -109,12 +134,10 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
         CheckCollisionWithWorld = false;
         CheckCollisionWithSolidSprites = true;
         CanBeCarriedWhenLanded = false;
+        CanBePushedHorizontally = false;
+        CanBePushedVertically = false;
         AutoAdjustOnTheFloor = false;
         CollisionData = CollisionData.SOLID;
-
-        Hurtbox.Origin = Origin;
-        Hurtbox.Trunk = this;
-        Hurtbox.Spawn();
 
         if (TrunkBase.FirstRegenerating)
         {
@@ -123,7 +146,7 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
         else
         {
             Origin = (Origin.X, Origin.Y + 16);
-            State = AxeMaxTrunkState.SPAWNING;
+            State = AxeMaxTrunkState.RISING;
         }
     }
 

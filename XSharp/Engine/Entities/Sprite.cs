@@ -430,6 +430,18 @@ public abstract class Sprite : Entity, IRenderable
         set;
     } = true;
 
+    public bool CanBePushedHorizontally
+    {
+        get;
+        set;
+    } = true;
+
+    public bool CanBePushedVertically
+    {
+        get;
+        set;
+    } = true;
+
     public bool AutoAdjustOnTheFloor
     {
         get;
@@ -1120,7 +1132,7 @@ public abstract class Sprite : Entity, IRenderable
         return base.CheckTouching(entity);
     }
 
-    private static void MoveAlongSlope(SpriteCollider collider, RightTriangle slope, FixedSingle dx, bool gravity = true)
+    private static void MoveAlongSlope(SpriteCollider collider, RightTriangle slope, FixedSingle dx, bool gravity, bool autoAdjustOnTheFloor)
     {
         var lastLeftCollider = collider.LeftCollider;
         var lastRightCollider = collider.RightCollider;
@@ -1147,12 +1159,12 @@ public abstract class Sprite : Entity, IRenderable
         if (gravity)
             collider.TryMoveContactFloor();
 
-        if (collider.Landed)
+        if (collider.Landed && autoAdjustOnTheFloor)
             collider.AdjustOnTheFloor();
     }
 
     // TODO : Slope collision detection inside this method must be refined and some trash code should be removed.
-    private static void MoveX(SpriteCollider collider, FixedSingle dx, bool gravity = true, bool followSlopes = true)
+    private static void MoveX(SpriteCollider collider, FixedSingle dx, bool gravity, bool followSlopes, bool autoAdjustOnTheFloor)
     {
         Vector delta = (dx, 0);
 
@@ -1189,11 +1201,11 @@ public abstract class Sprite : Entity, IRenderable
                             collider.Translate((-delta).RoundToCeil());
 
                         if (wasLandedOnSlope)
-                            MoveAlongSlope(collider, lastSlope, stx_x);
+                            MoveAlongSlope(collider, lastSlope, stx_x, gravity, autoAdjustOnTheFloor);
                         else
                             collider.Translate((stx_x, 0));
 
-                        MoveAlongSlope(collider, slope, dx);
+                        MoveAlongSlope(collider, slope, dx, gravity, autoAdjustOnTheFloor);
                     }
                     else if (wasLandedOnSlope)
                     {
@@ -1202,7 +1214,7 @@ public abstract class Sprite : Entity, IRenderable
                         else
                             collider.Translate((-delta).RoundToCeil());
 
-                        MoveAlongSlope(collider, lastSlope, dx);
+                        MoveAlongSlope(collider, lastSlope, dx, gravity, autoAdjustOnTheFloor);
                     }
                 }
                 else if (!wasLanded)
@@ -1252,11 +1264,11 @@ public abstract class Sprite : Entity, IRenderable
                             collider.Translate((-delta).RoundToCeil());
 
                         if (wasLandedOnSlope)
-                            MoveAlongSlope(collider, lastSlope, stx_x);
+                            MoveAlongSlope(collider, lastSlope, stx_x, gravity, autoAdjustOnTheFloor);
                         else
                             collider.Translate((stx_x, 0));
 
-                        MoveAlongSlope(collider, slope, dx);
+                        MoveAlongSlope(collider, slope, dx, gravity, autoAdjustOnTheFloor);
                     }
                     else
                     {
@@ -1267,7 +1279,7 @@ public abstract class Sprite : Entity, IRenderable
                             else
                                 collider.Translate((-delta).RoundToCeil());
 
-                            MoveAlongSlope(collider, lastSlope, dx);
+                            MoveAlongSlope(collider, lastSlope, dx, gravity, autoAdjustOnTheFloor);
                         }
                     }
                 }
@@ -1280,7 +1292,7 @@ public abstract class Sprite : Entity, IRenderable
                         else
                             collider.Translate((-delta).RoundToCeil());
 
-                        MoveAlongSlope(collider, lastSlope, dx);
+                        MoveAlongSlope(collider, lastSlope, dx, gravity, autoAdjustOnTheFloor);
                     }
                 }
             }
@@ -1291,7 +1303,7 @@ public abstract class Sprite : Entity, IRenderable
         }
     }
 
-    private static void MoveX(SpriteCollider collider, Vector delta, bool gravity, bool wasLanded)
+    private static void MoveX(SpriteCollider collider, Vector delta, bool gravity, bool wasLanded, bool autoAdjustOnTheFloor)
     {
         var dx = delta.X;
 
@@ -1300,24 +1312,27 @@ public abstract class Sprite : Entity, IRenderable
             if (collider.LandedSlope.HCathetusSign == dx.Signal)
             {
                 if (gravity)
-                    MoveAlongSlope(collider, collider.LandedSlope, dx, gravity);
+                    MoveAlongSlope(collider, collider.LandedSlope, dx, gravity, autoAdjustOnTheFloor);
             }
             else
             {
-                MoveAlongSlope(collider, collider.LandedSlope, dx, gravity);
+                MoveAlongSlope(collider, collider.LandedSlope, dx, gravity, autoAdjustOnTheFloor);
             }
         }
         else
         {
-            MoveX(collider, dx, gravity);
+            MoveX(collider, dx, gravity, true, autoAdjustOnTheFloor);
         }
 
         if (delta.Y >= 0)
         {
             if (collider.Landed)
-                collider.AdjustOnTheFloor();
+            {
+                if (autoAdjustOnTheFloor)
+                    collider.AdjustOnTheFloor();
+            }
             else if (gravity && wasLanded)
-                collider.TryMoveContactSlope(QUERY_MAX_DISTANCE);
+                collider.TryMoveContactSlope(QUERY_MAX_DISTANCE * FixedSingle.HALF);
         }
     }
 
@@ -1345,7 +1360,7 @@ public abstract class Sprite : Entity, IRenderable
         }
     }
 
-    private Vector Move(SpriteCollider collider, Vector delta, bool gravity)
+    private Vector Move(SpriteCollider collider, Vector delta, bool gravity, bool autoAdjustOnTheFloor)
     {
         var lastBoxOrigin = collider.Box.Origin;
         bool wasLanded = collider.Landed;
@@ -1353,7 +1368,7 @@ public abstract class Sprite : Entity, IRenderable
         if (delta.Y > 0)
         {
             if (delta.X != 0)
-                MoveX(collider, delta, gravity, wasLanded);
+                MoveX(collider, delta, gravity, wasLanded, autoAdjustOnTheFloor);
 
             MoveY(collider, delta);
         }
@@ -1362,11 +1377,11 @@ public abstract class Sprite : Entity, IRenderable
             MoveY(collider, delta);
 
             if (delta.X != 0)
-                MoveX(collider, delta, gravity, wasLanded);
+                MoveX(collider, delta, gravity, wasLanded, autoAdjustOnTheFloor);
         }
         else if (delta.X != 0)
         {
-            MoveX(collider, delta, gravity, wasLanded);
+            MoveX(collider, delta, gravity, wasLanded, autoAdjustOnTheFloor);
         }
 
         return collider.Box.Origin - lastBoxOrigin;
@@ -1450,7 +1465,7 @@ public abstract class Sprite : Entity, IRenderable
 
     public bool TryMoveContactFloor(CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
     {
-        return TryMoveContactFloor(QUERY_MAX_DISTANCE, ignore, world, sprite);
+        return TryMoveContactFloor(QUERY_MAX_DISTANCE * FixedSingle.HALF, ignore, world, sprite);
     }
 
     public bool AdjustOnTheFloor(FixedSingle maxDistance, CollisionFlags ignore = CollisionFlags.NONE, bool world = true, bool sprite = true)
@@ -1517,7 +1532,7 @@ public abstract class Sprite : Entity, IRenderable
             if (CheckCollisionWithWorld)
             {
                 worldCollider.Box = CollisionBox;
-                delta = Move(worldCollider, delta, gravity != 0);
+                delta = Move(worldCollider, delta, gravity != 0, AutoAdjustOnTheFloor);
             }
 
             if (CheckCollisionWithSolidSprites)
@@ -1528,7 +1543,7 @@ public abstract class Sprite : Entity, IRenderable
                     spriteCollider.IgnoreSprites.Add(physicsParent);
 
                 spriteCollider.Box = Hitbox;
-                delta = Move(spriteCollider, delta, gravity != 0);
+                delta = Move(spriteCollider, delta, gravity != 0, AutoAdjustOnTheFloor);
             }
         }
 
@@ -1568,7 +1583,7 @@ public abstract class Sprite : Entity, IRenderable
             {
                 foreach (var sprite in touchingSpritesLeft)
                 {
-                    if (sprite != physicsParent)
+                    if (sprite != physicsParent && sprite.CanBePushedHorizontally)
                         sprite.DoPhysics(this, (deltaX, 0));
                 }
             }
@@ -1576,7 +1591,7 @@ public abstract class Sprite : Entity, IRenderable
             {
                 foreach (var sprite in touchingSpritesRight)
                 {
-                    if (sprite != physicsParent)
+                    if (sprite != physicsParent && sprite.CanBePushedHorizontally)
                         sprite.DoPhysics(this, (deltaX, 0));
                 }
             }
@@ -1585,7 +1600,7 @@ public abstract class Sprite : Entity, IRenderable
             {
                 foreach (var sprite in touchingSpritesDown)
                 {
-                    if (sprite != physicsParent)
+                    if (sprite != physicsParent && sprite.CanBePushedVertically)
                         sprite.DoPhysics(this, (0, deltaY));
                 }
             }
@@ -1594,11 +1609,8 @@ public abstract class Sprite : Entity, IRenderable
             {
                 foreach (var sprite in touchingSpritesUp)
                 {
-                    if (sprite != physicsParent)
+                    if (sprite != physicsParent && sprite.CanBeCarriedWhenLanded)
                     {
-                        if (!sprite.CanBeCarriedWhenLanded)
-                            delta = delta.YVector;
-
                         sprite.DoPhysics(this, delta);
                         sprite.TryMoveContactFloor();
 
