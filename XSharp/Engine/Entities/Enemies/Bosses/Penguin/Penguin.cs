@@ -6,8 +6,6 @@ using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Consts;
-
 namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 
 public enum PenguinState

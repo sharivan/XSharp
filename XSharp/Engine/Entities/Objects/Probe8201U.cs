@@ -5,8 +5,6 @@ using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Consts;
-
 namespace XSharp.Engine.Entities.Objects;
 
 public class Probe8201U : Sprite

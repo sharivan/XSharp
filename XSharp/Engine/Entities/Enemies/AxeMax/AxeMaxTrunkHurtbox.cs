@@ -66,7 +66,7 @@ public class AxeMaxTrunkHurtbox : Enemy
 
         CheckCollisionWithWorld = false;
         AutoAdjustOnTheFloor = false;
- 
+
         Health = HP;
         ContactDamage = 0;
 
@@ -83,7 +83,7 @@ public class AxeMaxTrunkHurtbox : Enemy
         base.OnContactDamage(player);
 
         if (Trunk.Thrown)
-            Trunk.TrunkBase.AxeMax.MakeLumberjackLaugh();           
+            Trunk.TrunkBase.AxeMax.MakeLumberjackLaugh();
 
         Break();
     }

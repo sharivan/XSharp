@@ -96,17 +96,22 @@ public abstract class Enemy : Sprite
 
     protected Enemy()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         Directional = true;
         CanGoOutOfMapBounds = true;
+        KillOnOffscreen = true;
+        Health = 1;
+        ContactDamage = 1;
     }
 
     protected internal override void OnSpawn()
     {
         base.OnSpawn();
-
-        KillOnOffscreen = true;
-        Health = 1;
-        ContactDamage = 1;
 
         NothingDropOdd = 9000; // 90%
         SmallHealthDropOdd = 300; // 3%

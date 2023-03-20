@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
 
 using XSharp.Factories;
 using XSharp.Serialization;
@@ -130,17 +127,22 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         return reference is EntityReference<EntityType> referenceT ? referenceT : new EntityProxyReference<EntityType>(reference);
     }
 
-    public EntityReference<T> Create<T>(dynamic initParams) where T : Entity, new()
+    public EntityReference Create(Type type, dynamic initParams)
     {
         if (Count == MAX_ENTITIES)
             throw new IndexOutOfRangeException("Max entities reached the limit.");
 
-        Type type = typeof(T);
+        if (!type.IsAssignableTo(typeof(Entity)))
+            throw new ArgumentException($"Type '{type}' is not a derived class from Entity class.");
+
+        if (type.IsAbstract)
+            throw new ArgumentException($"Type '{type}' is abstract.");
+
         GameEngine.Engine.CallPrecacheAction(type);
 
         int index = firstFreeEntityIndex++;
-        var entity = new T();
-        var reference = (EntityReference<T>) GetOrCreateReferenceTo(index, type);
+        var entity = (Entity) Activator.CreateInstance(type);
+        var reference = GetOrCreateReferenceTo(index, type);
 
         entity.Index = index;
         entity.reference = reference;
@@ -171,38 +173,18 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         }
 
         entity.OnCreate();
-
-        if (initParams != null)
-        {
-            Type attrsType = initParams.GetType();
-            PropertyInfo[] attributes = attrsType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var attr in attributes)
-            {
-                string attrName = attr.Name;
-                object value = attr.GetValue(initParams);
-
-                var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(prop => prop.Name == attrName);
-                var property = (properties.FirstOrDefault(prop => prop.DeclaringType == type) ?? properties.First()) ?? throw new ArgumentException($"Attribute '{attr}' in entity class '{type.Name}' doesn't exist or isn't public.");
-
-                if (!property.CanWrite)
-                    throw new ArgumentException($"Attribute '{attr}' is not writable.");
-
-                Type propertyType = property.PropertyType;
-                Type valueType = value.GetType();
-                if (valueType != propertyType && !propertyType.IsAssignableFrom(valueType))
-                {
-                    TypeConverter conv = TypeDescriptor.GetConverter(propertyType);
-                    value = conv.ConvertFrom(value);
-                }
-
-                property.SetValue(entity, value);
-            }
-        }
+        entity.Initialize(initParams);
+        entity.Reset();
 
         if (entity.CheckTouchingEntities)
             GameEngine.Engine.partition.Insert(entity);
 
         return reference;
+    }
+
+    public EntityReference<T> Create<T>(dynamic initParams) where T : Entity, new()
+    {
+        return (EntityReference<T>) Create(typeof(T), initParams);
     }
 
     public EntityReference<T> Create<T>() where T : Entity, new()

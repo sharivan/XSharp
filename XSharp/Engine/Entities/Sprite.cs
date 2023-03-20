@@ -1547,7 +1547,7 @@ public abstract class Sprite : Entity, IRenderable
             }
         }
 
-        if (delta.IsNull)
+        if (delta == Vector.NULL_VECTOR)
         {
             if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
             {

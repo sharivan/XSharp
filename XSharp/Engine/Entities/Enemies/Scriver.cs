@@ -7,13 +7,11 @@ using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Consts;
-
 namespace XSharp.Engine.Entities.Enemies;
 
 public enum ScriverState
 {
-    IDLE = 0,   
+    IDLE = 0,
     JUMPING = 1,
     LANDING = 2,
     DRILLING = 3,
@@ -127,7 +125,7 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
         SetAnimationNames("Idle", "Jumping", "Landing", "Drilling", "EndDrilling");
 
         SetupStateArray<ScriverState>();
-        RegisterState(ScriverState.IDLE, OnIdle, "Idle");        
+        RegisterState(ScriverState.IDLE, OnIdle, "Idle");
         RegisterState(ScriverState.JUMPING, OnJumping, "Jumping");
         RegisterState(ScriverState.LANDING, OnLanding, "Landing");
         RegisterState(ScriverState.DRILLING, OnDrilling, "Drilling");

@@ -295,7 +295,6 @@ public class GameEngine : IRenderable, IRenderTarget
     private EntitySet<Entity> aliveEntities;
     internal EntitySet<Entity> spawnedEntities;
     internal EntitySet<Entity> removedEntities;
-    internal Dictionary<EntityReference, RespawnEntry> autoRespawnableEntities;
     private readonly EntitySet<Sprite> freezingSpriteExceptions;
     private readonly List<Sprite>[] sprites;
     private readonly List<HUD>[] huds;
@@ -340,7 +339,7 @@ public class GameEngine : IRenderable, IRenderTarget
     private bool wasPressingToggleDrawUpLayer;
     private bool wasPressingToggleDrawSprites;
 
-    private MMXCore mmx;
+    private MMXCoreLoader mmx;
     private bool romLoaded;
 
     private bool drawBackground = true;
@@ -563,10 +562,10 @@ public class GameEngine : IRenderable, IRenderTarget
         {
             mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, value, mmx.TileLoad, mmx.PalLoad);
             mmx.LoadTilesAndPalettes();
-            mmx.LoadPalette(this, false);
-            mmx.LoadPalette(this, true);
-            mmx.RefreshMapCache(this, false);
-            mmx.RefreshMapCache(this, true);
+            mmx.LoadPalette(false);
+            mmx.LoadPalette(true);
+            mmx.RefreshMapCache(false);
+            mmx.RefreshMapCache(true);
         }
     }
 
@@ -578,10 +577,10 @@ public class GameEngine : IRenderable, IRenderTarget
         {
             mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, mmx.ObjLoad, value, mmx.PalLoad);
             mmx.LoadTilesAndPalettes();
-            mmx.LoadPalette(this, false);
-            mmx.LoadPalette(this, true);
-            mmx.RefreshMapCache(this, false);
-            mmx.RefreshMapCache(this, true);
+            mmx.LoadPalette(false);
+            mmx.LoadPalette(true);
+            mmx.RefreshMapCache(false);
+            mmx.RefreshMapCache(true);
         }
     }
 
@@ -593,10 +592,10 @@ public class GameEngine : IRenderable, IRenderTarget
         {
             mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, value);
             mmx.LoadTilesAndPalettes();
-            mmx.LoadPalette(this, false);
-            mmx.LoadPalette(this, true);
-            mmx.RefreshMapCache(this, false);
-            mmx.RefreshMapCache(this, true);
+            mmx.LoadPalette(false);
+            mmx.LoadPalette(true);
+            mmx.RefreshMapCache(false);
+            mmx.RefreshMapCache(true);
         }
     }
 
@@ -809,7 +808,6 @@ public class GameEngine : IRenderable, IRenderTarget
         aliveEntities = new EntitySet<Entity>();
         spawnedEntities = new EntitySet<Entity>();
         removedEntities = new EntitySet<Entity>();
-        autoRespawnableEntities = new Dictionary<EntityReference, RespawnEntry>();
         sprites = new List<Sprite>[NUM_SPRITE_LAYERS];
         huds = new List<HUD>[NUM_SPRITE_LAYERS];
 
@@ -1095,10 +1093,10 @@ public class GameEngine : IRenderable, IRenderTarget
         {
             mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, mmx.ObjLoad, mmx.TileLoad, mmx.PalLoad);
             mmx.LoadTilesAndPalettes();
-            mmx.LoadPalette(this, false);
-            mmx.LoadPalette(this, true);
-            mmx.RefreshMapCache(this, false);
-            mmx.RefreshMapCache(this, true);
+            mmx.LoadPalette(false);
+            mmx.LoadPalette(true);
+            mmx.RefreshMapCache(false);
+            mmx.RefreshMapCache(true);
 
             World.Tessellate();
         }
@@ -1185,10 +1183,10 @@ public class GameEngine : IRenderable, IRenderTarget
                 {
                     mmx.SetLevel(mmx.Level, CurrentCheckpoint.Point, objectTile, backgroundTile, palette);
                     mmx.LoadTilesAndPalettes();
-                    mmx.LoadPalette(this, false);
-                    mmx.LoadPalette(this, true);
-                    mmx.RefreshMapCache(this, false);
-                    mmx.RefreshMapCache(this, true);
+                    mmx.LoadPalette(false);
+                    mmx.LoadPalette(true);
+                    mmx.RefreshMapCache(false);
+                    mmx.RefreshMapCache(true);
                 }
             }
             else
@@ -1585,7 +1583,6 @@ public class GameEngine : IRenderable, IRenderTarget
         foreach (var layer in huds)
             layer.Clear();
 
-        autoRespawnableEntities.Clear();
         spawnedEntities.Clear();
         removedEntities.Clear();
 
@@ -2371,7 +2368,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
         if (LOAD_ROM)
         {
-            mmx = new MMXCore();
+            mmx = new MMXCoreLoader();
             mmx.LoadNewRom(romPath);
             mmx.Init();
 
@@ -2418,11 +2415,11 @@ public class GameEngine : IRenderable, IRenderTarget
                 mmx.SetLevel(level, checkpoint);
 
                 mmx.LoadLevel();
-                mmx.LoadEvents(this);
-                mmx.LoadToWorld(this, false);
+                mmx.LoadEventsToEngine();
+                mmx.LoadToWorld(false);
 
                 mmx.LoadBackground();
-                mmx.LoadToWorld(this, true);
+                mmx.LoadToWorld(true);
 
                 CurrentCheckpoint = checkpoints[mmx.Point];
                 CameraConstraintsBox = CurrentCheckpoint.Hitbox;
@@ -2463,7 +2460,6 @@ public class GameEngine : IRenderable, IRenderTarget
         DisposeResource(World);
 
         checkpoints.Clear();
-        autoRespawnableEntities.Clear();
         partition.Clear();
 
         lastLives = Player != null ? Player.Lives : X_INITIAL_LIVES;
@@ -3340,7 +3336,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
                     DisposeResource(mmx);
 
-                    mmx = new MMXCore();
+                    mmx = new MMXCoreLoader();
                     mmx.LoadNewRom(romPath);
                     mmx.Init();
 
@@ -3354,11 +3350,11 @@ public class GameEngine : IRenderable, IRenderTarget
                     mmx.SetLevel(level, point, objLoad, tileLoad, palLoad);
 
                     mmx.LoadLevel();
-                    mmx.LoadEvents(this);
-                    mmx.LoadToWorld(this, false);
+                    mmx.LoadEventsToEngine();
+                    mmx.LoadToWorld(false);
 
                     mmx.LoadBackground();
-                    mmx.LoadToWorld(this, true);
+                    mmx.LoadToWorld(true);
 
                     World.Tessellate();
 
@@ -3375,11 +3371,11 @@ public class GameEngine : IRenderable, IRenderTarget
                 mmx.SetLevel(level, point, objLoad, tileLoad, palLoad);
 
                 mmx.LoadLevel();
-                mmx.LoadEvents(this);
-                mmx.LoadToWorld(this, false);
+                mmx.LoadEventsToEngine();
+                mmx.LoadToWorld(false);
 
                 mmx.LoadBackground();
-                mmx.LoadToWorld(this, true);
+                mmx.LoadToWorld(true);
 
                 World.Tessellate();
 
@@ -3392,10 +3388,10 @@ public class GameEngine : IRenderable, IRenderTarget
             {
                 mmx.SetLevel(level, point, objLoad, tileLoad, palLoad);
                 mmx.LoadTilesAndPalettes();
-                mmx.LoadPalette(this, false);
-                mmx.LoadPalette(this, true);
-                mmx.RefreshMapCache(this, false);
-                mmx.RefreshMapCache(this, true);
+                mmx.LoadPalette(false);
+                mmx.LoadPalette(true);
+                mmx.RefreshMapCache(false);
+                mmx.RefreshMapCache(true);
             }
         }
 
@@ -3530,7 +3526,7 @@ public class GameEngine : IRenderable, IRenderTarget
             {
                 this.precacheActions.Add(typeName, action);
                 action.Reset(false);
-                actionsToCall.Add(action);                
+                actionsToCall.Add(action);
             }
         }
 
@@ -3581,15 +3577,6 @@ public class GameEngine : IRenderable, IRenderTarget
         aliveEntities.Deserialize(serializer);
         spawnedEntities.Deserialize(serializer);
         removedEntities.Deserialize(serializer);
-
-        autoRespawnableEntities.Clear();
-        int autoRespawnableEntityCount = serializer.ReadInt();
-        for (int i = 0; i < autoRespawnableEntityCount; i++)
-        {
-            var reference = serializer.ReadEntityReference();
-            var entry = serializer.ReadValue<RespawnEntry>();
-            autoRespawnableEntities.Add(reference, entry);
-        }
 
         freezingSpriteExceptions.Deserialize(serializer);
 
@@ -3664,14 +3651,24 @@ public class GameEngine : IRenderable, IRenderTarget
         lastPlayerVelocity.Serialize(serializer);
         lastCameraLeftTop.Serialize(serializer);
 
-        serializer.WriteInt(precachedSounds.Count);
+        int precachedSoundCount = 0;
         foreach (var sound in precachedSounds)
         {
-            serializer.WriteInt(sound.Names.Count);
-            foreach (var name in sound.Names)
-                serializer.WriteString(name, false);
+            if (sound != null)
+                precachedSoundCount++;
+        }
 
-            serializer.WriteString(sound.Path, false);
+        serializer.WriteInt(precachedSoundCount);
+        foreach (var sound in precachedSounds)
+        {
+            if (sound != null)
+            {
+                serializer.WriteInt(sound.Names.Count);
+                foreach (var name in sound.Names)
+                    serializer.WriteString(name, false);
+
+                serializer.WriteString(sound.Path, false);
+            }
         }
 
         foreach (var channel in soundChannels)
@@ -3729,13 +3726,6 @@ public class GameEngine : IRenderable, IRenderTarget
         aliveEntities.Serialize(serializer);
         spawnedEntities.Serialize(serializer);
         removedEntities.Serialize(serializer);
-
-        serializer.WriteInt(autoRespawnableEntities.Count);
-        foreach (var respawnable in autoRespawnableEntities)
-        {
-            serializer.WriteEntityReference(respawnable.Key);
-            serializer.WriteValue(respawnable.Value);
-        }
 
         freezingSpriteExceptions.Serialize(serializer);
 
@@ -4317,7 +4307,7 @@ public class GameEngine : IRenderable, IRenderTarget
         if (force || !entity.Respawnable)
             Entities.Remove(entity);
         else if (entity.RespawnOnNear)
-            entity.Origin = autoRespawnableEntities[entity.reference].Origin;
+            entity.Reset();
     }
 
     private void CreateHP()

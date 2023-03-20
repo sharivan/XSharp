@@ -1,14 +1,14 @@
-﻿using XSharp.Math;
-using XSharp.Math.Geometry;
-using XSharp.Engine.Collision;
+﻿using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
+using XSharp.Math;
+using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.AxeMax;
 
 public enum AxeMaxTrunkState
 {
     IDLE = 0,
-    RISING = 1,   
+    RISING = 1,
     THROWN = 2
 }
 
@@ -57,6 +57,8 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
 
     public bool Thrown => State == AxeMaxTrunkState.THROWN;
 
+    public bool Ready => Idle && IntegerOrigin.Y == TrunkBase.GetTrunkPositionFromIndex(TrunkIndex).Y && Landed;
+
     public AxeMaxTrunk()
     {
     }
@@ -90,7 +92,10 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
 
     private void OnIdle(EntityState state, long frameCounter)
     {
-        if (Landed && (TrunkBase.AxeMax.Lumberjack == null || !TrunkBase.AxeMax.Lumberjack.Throwing) && IntegerOrigin != TrunkBase.GetTrunkPositionFromIndex(TrunkIndex))
+        var origin = IntegerOrigin;
+        var targetOrigin = TrunkBase.GetTrunkPositionFromIndex(TrunkIndex);
+
+        if (TrunkBase.Landed && (TrunkBase.AxeMax.Lumberjack == null || !TrunkBase.AxeMax.Lumberjack.Throwing) && origin.Y > targetOrigin.Y)
             State = AxeMaxTrunkState.RISING;
     }
 
@@ -99,16 +104,18 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
         var origin = IntegerOrigin;
         var targetOrigin = TrunkBase.GetTrunkPositionFromIndex(TrunkIndex);
 
-        if (origin == targetOrigin)
+        if (origin.Y <= targetOrigin.Y)
             State = AxeMaxTrunkState.IDLE;
-        else if (origin.Y > targetOrigin.Y)
+        else
             Origin += Vector.UP_VECTOR;
-        else if (origin.Y < targetOrigin.Y)
-            Origin += Vector.DOWN_VECTOR;
     }
 
     private void OnStartThrown(EntityState state, EntityState lastState)
     {
+        if (!Alive || MarkedToRemove)
+            return;
+
+        TrunkBase.ThrownTrunkCount++;
         Velocity = (Direction == Direction.LEFT ? -SPEED : SPEED, 0);
         Hurtbox.ContactDamage = AxeMaxTrunkHurtbox.CONTACT_DAMAGE;
     }
@@ -141,7 +148,7 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
 
         if (TrunkBase.FirstRegenerating)
         {
-            State = AxeMaxTrunkState.IDLE;           
+            State = AxeMaxTrunkState.IDLE;
         }
         else
         {
@@ -150,11 +157,25 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
         }
     }
 
+    protected override void Think()
+    {
+        base.Think();
+
+        if (TrunkIndex >= 0)
+        {
+            if (Ready)
+                TrunkBase.readyTrunks.Set(TrunkIndex);
+            else
+                TrunkBase.readyTrunks.Reset(TrunkIndex);
+        }
+    }
+
     protected override void OnDeath()
     {
         Hurtbox.Trunk = null;
         Hurtbox.Kill();
 
+        TrunkIndex = -1;
         TrunkBase?.NotifyTrunkDeath(this);
 
         base.OnDeath();
@@ -164,6 +185,7 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
     {
         if (State == AxeMaxTrunkState.IDLE)
         {
+            CheckCollisionWithSolidSprites = false;
             Direction = direction;
             State = AxeMaxTrunkState.THROWN;
         }

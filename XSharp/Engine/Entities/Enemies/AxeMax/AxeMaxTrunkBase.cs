@@ -1,8 +1,10 @@
-﻿using XSharp.Math;
-using XSharp.Math.Geometry;
+﻿using System.Collections.Generic;
+
 using XSharp.Engine.Collision;
-using System.Collections.Generic;
 using XSharp.Engine.Graphics;
+using XSharp.Math;
+using XSharp.Math.Geometry;
+using XSharp.Util;
 
 namespace XSharp.Engine.Entities.Enemies.AxeMax;
 
@@ -22,6 +24,7 @@ public class AxeMaxTrunkBase : Sprite
 
     private EntityReference<AxeMax> axeMax;
     private List<EntityReference<AxeMaxTrunk>> trunkPile;
+    internal BitSet readyTrunks;
 
     public bool IsReady => trunkPile.Count == TrunkCount && IsAllTrunksReady();
 
@@ -48,7 +51,7 @@ public class AxeMaxTrunkBase : Sprite
     public int ThrownTrunkCount
     {
         get;
-        private set;
+        internal set;
     }
 
     public IReadOnlyList<EntityReference<AxeMaxTrunk>> TrunkPile => trunkPile;
@@ -69,6 +72,7 @@ public class AxeMaxTrunkBase : Sprite
         InitialAnimationName = "TrunkBase";
 
         trunkPile = new List<EntityReference<AxeMaxTrunk>>();
+        readyTrunks = new BitSet();
     }
 
     public override FixedSingle GetGravity()
@@ -81,16 +85,9 @@ public class AxeMaxTrunkBase : Sprite
         return HITBOX;
     }
 
-    private bool IsAllTrunksReady()
+    internal bool IsAllTrunksReady()
     {
-        foreach (var trunkRef in trunkPile)
-        {
-            var trunk = (AxeMaxTrunk) trunkRef;
-            if (trunk == null || !trunk.Landed || !trunk.Idle)
-                return false;
-        }
-
-        return true;
+        return trunkPile.Count == 0 || readyTrunks.Test(0, trunkPile.Count);
     }
 
     internal Vector GetTrunkPositionFromIndex(int index)
@@ -112,7 +109,10 @@ public class AxeMaxTrunkBase : Sprite
         ThrownTrunkCount = 0;
 
         trunkPile.Clear();
-        SpawnTrunk(0);
+        readyTrunks.Clear();
+
+        for (int i = 0; i < TrunkCount; i++)
+            SpawnTrunk(i);
     }
 
     private void SpawnTrunk(int index)
@@ -132,22 +132,17 @@ public class AxeMaxTrunkBase : Sprite
 
         if (!Regenerating)
         {
-            if (trunkPile.Count < TrunkCount)
+            if (trunkPile.Count < TrunkCount && ThrownTrunkCount == 0 && !AxeMax.Lumberjack.Throwing && IsAllTrunksReady())
             {
-                if (ThrownTrunkCount == 0 && !AxeMax.Lumberjack.Throwing)
-                {
-                    Regenerating = true;
-
-                    if (IsAllTrunksReady())
-                        SpawnTrunk(trunkPile.Count);
-                }
+                Regenerating = true;
+                SpawnTrunk(trunkPile.Count);
             }
         }
-        else
+        else if (IsAllTrunksReady())
         {
             if (trunkPile.Count == TrunkCount)
                 Regenerating = false;
-            else if (IsAllTrunksReady())
+            else
                 SpawnTrunk(trunkPile.Count);
         }
     }
@@ -165,6 +160,7 @@ public class AxeMaxTrunkBase : Sprite
         }
 
         trunkPile.Clear();
+        readyTrunks.Clear();
 
         base.OnDeath();
     }
@@ -174,17 +170,28 @@ public class AxeMaxTrunkBase : Sprite
         if (trunkPile.Count > 0)
         {
             var trunk = (AxeMaxTrunk) trunkPile[0];
-            if (trunk != null && trunk.Landed && trunk.Idle)
+            if (trunk != null && trunk.Ready)
             {
                 trunkPile.RemoveAt(0);
+                readyTrunks.Clear();
 
-                ThrownTrunkCount++;
                 trunk.Throw(AxeMax.Direction);
 
                 for (int i = 0; i < trunkPile.Count; i++)
                 {
                     trunk = (AxeMaxTrunk) trunkPile[i];
-                    trunk.TrunkIndex = i;
+
+                    if (trunk != null)
+                    {
+                        trunk.TrunkIndex = i;
+
+                        if (trunk.Ready)
+                            readyTrunks.Set(i);
+                        else
+                            readyTrunks.Reset(i);
+                    }
+                    else
+                        readyTrunks.Reset(i);
                 }
             }
         }
@@ -192,9 +199,15 @@ public class AxeMaxTrunkBase : Sprite
 
     internal void NotifyTrunkReady(AxeMaxTrunk trunk)
     {
-        if (trunkPile.Count < TrunkCount)
-            SpawnTrunk(trunkPile.Count);
-        else
+        if (trunk.TrunkIndex >= 0)
+        {
+            if (trunk.Ready)
+                readyTrunks.Set(trunk.TrunkIndex);
+            else
+                readyTrunks.Reset(trunk.TrunkIndex);
+        }
+
+        if (trunkPile.Count == TrunkCount)
             FirstRegenerating = false;
     }
 
@@ -205,12 +218,22 @@ public class AxeMaxTrunkBase : Sprite
         else
         {
             trunkPile.Remove(trunk);
+            readyTrunks.Clear();
 
             for (int i = 0; i < trunkPile.Count; i++)
             {
                 trunk = (AxeMaxTrunk) trunkPile[i];
                 if (trunk != null)
+                {
                     trunk.TrunkIndex = i;
+
+                    if (trunk.Ready)
+                        readyTrunks.Set(i);
+                    else
+                        readyTrunks.Reset(i);
+                }
+                else
+                    readyTrunks.Reset(i);
             }
         }
     }

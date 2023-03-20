@@ -6,8 +6,6 @@ using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Consts;
-
 using Color = SharpDX.Color;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses;

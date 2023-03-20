@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 
 using SharpDX;
 
@@ -37,7 +36,7 @@ public class AxeMax : Sprite
 
     #region Precache
     [Precache]
-    new internal static void Precache()
+    internal static void Precache()
     {
         var palette = Engine.PrecachePalette("axeMaxPalette", AXE_MAX_PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("AxeMax", true, true);
@@ -102,7 +101,6 @@ public class AxeMax : Sprite
         spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
-
 
     private EntityReference<AxeMaxTrunkBase> trunkBase;
     private EntityReference<AxeMaxLumberjack> lumberjack;
@@ -173,7 +171,6 @@ public class AxeMax : Sprite
 
     public void MakeLumberjackLaugh()
     {
-        if (Lumberjack != null)
-            Lumberjack.MakeLaughing();
+        Lumberjack?.MakeLaughing();
     }
 }
