@@ -7,9 +7,7 @@
     MegaEDX v1.3: https://github.com/rbrummett/megaedx_v1.3
  */
 
-using System;
 using System.Drawing;
-using System.IO;
 using System.Text;
 
 namespace XSharp.MegaEDX;
@@ -95,10 +93,10 @@ public class SNESCore : MegaEDCore
 {
     protected ushort dumpHeader;
     protected SNESHeader header;
-    protected ushort[] palCache;
-    protected ushort[] palSpriteCache;
-    protected byte[] vramCache;
-    protected byte[] spriteCache;
+    protected internal ushort[] palCache;
+    protected internal ushort[] palSpriteCache;
+    protected internal byte[] vramCache;
+    protected internal byte[] spriteCache;
 
     private static bool hirom;
 

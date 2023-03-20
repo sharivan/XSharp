@@ -15,12 +15,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Itens de Solução", "Itens
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NAudioTest", "NAudioTest\NAudioTest.csproj", "{3F5ACBB5-657C-4278-BE10-6AF7EC8130F9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MegaEDXCore", "MegaEDXCore\MegaEDXCore.csproj", "{76F4C615-086F-4BBA-82DA-7F6C33E4993A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MegaEDX", "MegaEDXCore\MegaEDX.csproj", "{76F4C615-086F-4BBA-82DA-7F6C33E4993A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{57C7EAFA-DAC9-475B-92FF-4A34536384B8}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XSharpDemo", "XSharpDemo\XSharpDemo.csproj", "{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -98,6 +100,22 @@ Global
 		{76F4C615-086F-4BBA-82DA-7F6C33E4993A}.Release|x64.Build.0 = Release|Any CPU
 		{76F4C615-086F-4BBA-82DA-7F6C33E4993A}.Release|x86.ActiveCfg = Release|Any CPU
 		{76F4C615-086F-4BBA-82DA-7F6C33E4993A}.Release|x86.Build.0 = Release|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Debug|ARM.Build.0 = Debug|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Debug|x64.Build.0 = Debug|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Debug|x86.Build.0 = Debug|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Release|ARM.ActiveCfg = Release|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Release|ARM.Build.0 = Release|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Release|x64.ActiveCfg = Release|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Release|x64.Build.0 = Release|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Release|x86.ActiveCfg = Release|Any CPU
+		{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

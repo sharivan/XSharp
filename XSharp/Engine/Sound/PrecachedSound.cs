@@ -43,10 +43,7 @@ public class PrecachedSound : IDisposable
         Path = path;
         Stream = stream;
 
-        if (names != null && names.Length > 0)
-            this.names = new HashSet<string>(names);
-        else
-            this.names = new HashSet<string>();
+        this.names = names != null && names.Length > 0 ? new HashSet<string>(names) : new HashSet<string>();
     }
 
     internal bool AddName(string name)

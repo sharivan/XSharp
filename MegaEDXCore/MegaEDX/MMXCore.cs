@@ -7,25 +7,7 @@
     MegaEDX v1.3: https://github.com/rbrummett/megaedx_v1.3
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-using SharpDX;
-using SharpDX.Direct3D9;
-
-using XSharp.Engine;
-using XSharp.Engine.Collision;
-using XSharp.Engine.Entities.Triggers;
-using XSharp.Engine.World;
-using XSharp.Math;
-using XSharp.Math.Geometry;
-
-using static XSharp.Engine.Consts;
-
-using Color = SharpDX.Color;
-using MMXBox = XSharp.Math.Geometry.Box;
+using System.Drawing;
 
 namespace XSharp.MegaEDX;
 
@@ -46,34 +28,34 @@ public struct STileInfo
 
 public struct CheckPointInfo
 {
-    internal uint offset;
+    public uint offset;
 
     // checkpoint data structure
-    internal uint objLoad;
-    internal uint tileLoad;
-    internal uint palLoad;
+    public uint objLoad;
+    public uint tileLoad;
+    public uint palLoad;
     // X2/X3 extra byte
-    internal uint byte0;
-    internal uint chX;
-    internal uint chY;
-    internal uint camX;
-    internal uint camY;
-    internal uint bkgX;
-    internal uint bkgY;
-    internal uint minX;
-    internal uint maxX;
-    internal uint minY;
-    internal uint maxY;
-    internal uint forceX;
-    internal uint forceY;
-    internal uint scroll;
-    internal uint telDwn;
+    public uint byte0;
+    public uint chX;
+    public uint chY;
+    public uint camX;
+    public uint camY;
+    public uint bkgX;
+    public uint bkgY;
+    public uint minX;
+    public uint maxX;
+    public uint minY;
+    public uint maxY;
+    public uint forceX;
+    public uint forceY;
+    public uint scroll;
+    public uint telDwn;
     // X2/X3 extra byte
-    internal uint byte1;
+    public uint byte1;
     // X3 extra byte
-    internal uint byte2;
+    public uint byte2;
 
-    internal void Reset()
+    public void Reset()
     {
         offset = 0;
         objLoad = 0;
@@ -101,21 +83,21 @@ public struct CheckPointInfo
 
 public struct EventInfo
 {
-    internal byte match; // seems to match some level information?
-    internal byte type; // 0=?, 1=cars,lights?, 2=?, 3=enemy
-    internal ushort ypos;
-    internal byte eventId;
-    internal byte eventSubId;
-    internal byte eventFlag;
-    internal ushort xpos;
+    public byte match; // seems to match some level information?
+    public byte type; // 0=?, 1=cars,lights?, 2=?, 3=enemy
+    public ushort ypos;
+    public byte eventId;
+    public byte eventSubId;
+    public byte eventFlag;
+    public ushort xpos;
 };
 
 public struct PropertyInfo
 {
-    internal uint hp;
-    internal uint damageMod;
+    public uint hp;
+    public uint damageMod;
 
-    internal void Reset()
+    public void Reset()
     {
         hp = 0;
         damageMod = 0;
@@ -124,6 +106,9 @@ public struct PropertyInfo
 
 public class MMXCore : SNESCore
 {
+    public const int SCREEN_WIDTH = 256; // In pixels
+    public const int SCREEN_HEIGHT = 224; // In pixels
+
     internal const uint NUM_SPRITE_TILES = 0x2000;
     internal const uint NUM_SPRITE_PALETTES = 0x200;
 
@@ -194,21 +179,21 @@ public class MMXCore : SNESCore
     internal static readonly uint[] p_blayout = { 0x868F4F, 0x868AB3, 0x868BDE, 0 };
     internal static readonly uint[] p_bscenes = { 0x868FBE, 0x868B22, 0x868C4D, 0 };
     internal static readonly uint[] p_bblocks = { 0x86902D, 0x868B91, 0x868CBC, 0 };
-    private readonly byte[] vram;
-    private readonly ushort[] mapping;
-    private readonly byte[] sceneLayout;
+    protected readonly byte[] vram;
+    protected readonly ushort[] mapping;
+    protected readonly byte[] sceneLayout;
 
-    private readonly uint[] palettesOffset;
-    private uint tileCmpPos;
-    private ushort tileCmpDest;
-    private ushort tileCmpSize;
-    private ushort tileCmpRealSize;
-    private uint tileDecPos;
-    private ushort tileDecDest;
-    private ushort tileDecSize;
+    protected readonly uint[] palettesOffset;
+    protected uint tileCmpPos;
+    protected ushort tileCmpDest;
+    protected ushort tileCmpSize;
+    protected ushort tileCmpRealSize;
+    protected uint tileDecPos;
+    protected ushort tileDecDest;
+    protected ushort tileDecSize;
 
     // checkpoints
-    private readonly List<CheckPointInfo> checkpointInfoTable;
+    protected readonly List<CheckPointInfo> checkpointInfoTable;
 
     public void UpdateVRAMCache()
     {
@@ -217,37 +202,37 @@ public class MMXCore : SNESCore
     }
 
     // graphics to palette
-    private readonly Dictionary<uint, uint> graphicsToPalette;
-    private readonly Dictionary<uint, uint> graphicsToAssembly;
-    private byte levelWidth;
-    private byte levelHeight;
-    private byte sceneUsed;
-    private uint pPalette;
-    private uint pPalBase;
-    private uint pLayout;
-    private uint pScenes;
-    private uint pBlocks;
-    private uint pMaps;
-    private uint pCollisions;
-    private readonly uint pEvents;
-    private uint pBorders;
-    private uint pLocks;
-    private readonly uint pProperties;
-    private uint pGfx;
-    private readonly uint pGfxPos;
-    private uint pGfxObj;
-    private uint pGfxPal;
-    private uint pSpriteAssembly;
-    private readonly uint[] pSpriteOffset;
-    private uint pCapsulePos;
+    protected readonly Dictionary<uint, uint> graphicsToPalette;
+    protected readonly Dictionary<uint, uint> graphicsToAssembly;
+    protected byte levelWidth;
+    protected byte levelHeight;
+    protected byte sceneUsed;
+    protected uint pPalette;
+    protected uint pPalBase;
+    protected uint pLayout;
+    protected uint pScenes;
+    protected uint pBlocks;
+    protected uint pMaps;
+    protected uint pCollisions;
+    protected readonly uint pEvents;
+    protected uint pBorders;
+    protected uint pLocks;
+    protected readonly uint pProperties;
+    protected uint pGfx;
+    protected readonly uint pGfxPos;
+    protected uint pGfxObj;
+    protected uint pGfxPal;
+    protected uint pSpriteAssembly;
+    protected readonly uint[] pSpriteOffset;
+    protected uint pCapsulePos;
 
-    private uint numLevels;
-    private uint numTiles;
-    private uint numMaps;
-    private uint numBlocks;
-    private uint numDecs;
-    private uint numCheckpoints;
-    private uint numGfxIds;
+    protected uint numLevels;
+    protected uint numTiles;
+    protected uint numMaps;
+    protected uint numBlocks;
+    protected uint numDecs;
+    protected uint numCheckpoints;
+    protected uint numGfxIds;
 
     private int objLoad;
     private int tileLoad;
@@ -259,34 +244,34 @@ public class MMXCore : SNESCore
     private bool sortOk;
 
     // ROM expansion
-    private static readonly string expandedROMString = "EXPANDED ROM ";
-    private static readonly ushort expandedROMVersion;
-    private static readonly uint expandedROMHeaderSize;
-    private static readonly uint expandedROMTrampolineOffset;
+    protected static readonly string expandedROMString = "EXPANDED ROM ";
+    protected static readonly ushort expandedROMVersion;
+    protected static readonly uint expandedROMHeaderSize;
+    protected static readonly uint expandedROMTrampolineOffset;
 
-    private uint eventBank;
-    private uint checkpointBank;
-    private uint lockBank;
-    private bool expandedROM;
-    private uint expandedVersion;
-    private uint expandedLayoutSize;
-    private uint expandedEventSize;
-    private readonly uint expandedSceneSize;
-    private uint expandedCheckpointSize;
-    private uint expandedLayoutScenes;
+    protected uint eventBank;
+    protected uint checkpointBank;
+    protected uint lockBank;
+    protected bool expandedROM;
+    protected uint expandedVersion;
+    protected uint expandedLayoutSize;
+    protected uint expandedEventSize;
+    protected readonly uint expandedSceneSize;
+    protected uint expandedCheckpointSize;
+    protected uint expandedLayoutScenes;
 
     // Events
-    private readonly List<EventInfo>[] eventTable;
+    protected readonly List<EventInfo>[] eventTable;
 
     // Properties
-    private readonly PropertyInfo[] propertyTable;
+    protected readonly PropertyInfo[] propertyTable;
 
     // SPRITE
-    private readonly HashSet<uint> spriteUpdate;
+    protected readonly HashSet<uint> spriteUpdate;
 
     // FONT
-    private readonly ushort[] fontPalCache;
-    private readonly byte[] fontCache;
+    protected readonly ushort[] fontPalCache;
+    protected readonly byte[] fontCache;
 
     public byte Type
     {
@@ -300,68 +285,68 @@ public class MMXCore : SNESCore
         private set;
     }
 
-    public Vector BackgroundPos
+    public Point BackgroundPos
     {
         get
         {
             if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
-                return Vector.NULL_VECTOR;
+                return System.Drawing.Point.Empty;
 
-            FixedSingle x = ReadWord(checkpointInfoTable[Point].bkgX);
-            FixedSingle y = ReadWord(checkpointInfoTable[Point].bkgY);
-            return new Vector(x, y);
+            int x = ReadWord(checkpointInfoTable[Point].bkgX);
+            int y = ReadWord(checkpointInfoTable[Point].bkgY);
+            return new Point(x, y);
         }
     }
 
-    public Vector CameraPos
+    public Point CameraPos
     {
         get
         {
             if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
-                return Vector.NULL_VECTOR;
+                return System.Drawing.Point.Empty;
 
-            FixedSingle x = ReadWord(checkpointInfoTable[Point].camX);
-            FixedSingle y = ReadWord(checkpointInfoTable[Point].camY);
-            return new Vector(x, y);
+            int x = ReadWord(checkpointInfoTable[Point].camX);
+            int y = ReadWord(checkpointInfoTable[Point].camY);
+            return new Point(x, y);
         }
     }
 
-    public Vector CharacterPos
+    public Point CharacterPos
     {
         get
         {
             if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
-                return Vector.NULL_VECTOR;
+                return System.Drawing.Point.Empty;
 
-            FixedSingle x = ReadWord(checkpointInfoTable[Point].chX);
-            FixedSingle y = ReadWord(checkpointInfoTable[Point].chY);
-            return new Vector(x, y);
+            int x = ReadWord(checkpointInfoTable[Point].chX);
+            int y = ReadWord(checkpointInfoTable[Point].chY);
+            return new Point(x, y);
         }
     }
 
-    public Vector MinCharacterPos
+    public Point MinCharacterPos
     {
         get
         {
             if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
-                return Vector.NULL_VECTOR;
+                return System.Drawing.Point.Empty;
 
-            FixedSingle x = ReadWord(checkpointInfoTable[Point].minX);
-            FixedSingle y = ReadWord(checkpointInfoTable[Point].minY);
-            return new Vector(x, y);
+            int x = ReadWord(checkpointInfoTable[Point].minX);
+            int y = ReadWord(checkpointInfoTable[Point].minY);
+            return new Point(x, y);
         }
     }
 
-    public Vector MaxCharacterPos
+    public Point MaxCharacterPos
     {
         get
         {
             if (checkpointInfoTable == null || checkpointInfoTable.Count == 0)
-                return Vector.NULL_VECTOR;
+                return System.Drawing.Point.Empty;
 
-            FixedSingle x = ReadWord(checkpointInfoTable[Point].maxX) + SCREEN_WIDTH;
-            FixedSingle y = ReadWord(checkpointInfoTable[Point].maxY) + SCREEN_HEIGHT;
-            return new Vector(x, y);
+            int x = ReadWord(checkpointInfoTable[Point].maxX) + SCREEN_WIDTH;
+            int y = ReadWord(checkpointInfoTable[Point].maxY) + SCREEN_HEIGHT;
+            return new Point(x, y);
         }
     }
 
@@ -419,7 +404,7 @@ public class MMXCore : SNESCore
         fontCache = new byte[0x4800];
     }
 
-    internal byte CheckROM()
+    public byte CheckROM()
     {
         LoadHeader();
         uint expandedHeader = 0;
@@ -546,7 +531,7 @@ public class MMXCore : SNESCore
         return 0;
     }
 
-    internal uint GetFontPointer()
+    public uint GetFontPointer()
     {
         if (Type < 3)
         {
@@ -565,7 +550,7 @@ public class MMXCore : SNESCore
         }
     }
 
-    internal void LoadFont()
+    public void LoadFont()
     {
         byte[] textCache = new byte[0x2000];
         CompressionCore.GFXRLE(rom, 0, textCache, 0, (int) GetFontPointer(), 0x1000, Type);
@@ -581,13 +566,13 @@ public class MMXCore : SNESCore
         }
     }
 
-    internal uint GetCheckPointPointer(uint p)
+    public uint GetCheckPointPointer(uint p)
     {
         //notice the bitwise operations
         return Snes2pc((int) (((p_checkp[Type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[Type] + SReadWord((uint) (p_checkp[Type] + Level * 2)) + p * 2)));
     }
 
-    internal uint GetCheckPointBasePointer()
+    public uint GetCheckPointBasePointer()
     {
         return Snes2pc((int) (((p_checkp[Type] & 0xFFFF) | (checkpointBank << 16)) + SReadWord(p_checkp[Type] + SReadWord((uint) (p_checkp[Type] + Level * 2)) + 0 * 2)));
     }
@@ -597,7 +582,7 @@ public class MMXCore : SNESCore
                                     { 0x2f1,0x3b4,0x3a7,0x3d9,0x3da,0x455,0x3c9,0x405,0x33b,0x22b,0x3cb,0x2ba,0x274,0xe6 } };
 
     //unsigned GetEventSize();
-    internal uint GetOrigEventSize()
+    public uint GetOrigEventSize()
     {
         return expandedROM ? expandedEventSize : origEventSize[Type, Level];
     }
@@ -606,14 +591,14 @@ public class MMXCore : SNESCore
                                     { 0x8c, 0x3e, 0x38, 0x40, 0x42, 0x5c, 0x2a, 0x4e, 0x5e, 0x5a, 0x16, 0x5a, 0x00 },
                                     { 0x4c, 0x4c, 0x38, 0x42, 0x60, 0x54, 0x4e, 0x52, 0x30, 0x2e, 0x4e, 0x46, 0x22 } };
 
-    internal uint GetOrigLayoutSize()
+    public uint GetOrigLayoutSize()
     {
         return expandedROM ? expandedLayoutSize : origLayoutSize[Type, Level];
     }
 
-    internal System.Drawing.Rectangle GetBoundingBox(ref EventInfo e)
+    public Rectangle GetBoundingBox(ref EventInfo e)
     {
-        var rect = new System.Drawing.Rectangle(0, 0, 0, 0);
+        var rect = new Rectangle(0, 0, 0, 0);
 
         if (e.type == 0x2 && e.eventId == 0 && pLocks != 0)
         {
@@ -763,7 +748,7 @@ public class MMXCore : SNESCore
         return rect;
     }
 
-    internal void LoadGFXs()
+    public void LoadGFXs()
     {
         pGfx = Snes2pc(p_gfxpos[Type]);
         pGfxObj = p_gfxobj[Type] != 0 ? Snes2pc(p_gfxobj[Type]) : 0x0;
@@ -804,7 +789,7 @@ public class MMXCore : SNESCore
 
     private static readonly IComparer<STileInfo> TileSortComparer = new TileSortComparator();
 
-    internal void LoadTiles()
+    public void LoadTiles()
     {
         byte tileSelect = (byte) TileLoad;
 
@@ -890,7 +875,7 @@ public class MMXCore : SNESCore
         SORT_TOTAL
     };
 
-    internal void SortTiles()
+    public void SortTiles()
     {
         byte[] tvram = new byte[0x8000];
         var sortTypes = new List<ESort>();
@@ -1054,7 +1039,7 @@ public class MMXCore : SNESCore
         }
     }
 
-    internal void SetLevel(ushort iLevel, ushort iPoint, int objLoad = -1, int tileLoad = -1, int palLoad = -1)
+    public void SetLevel(ushort iLevel, ushort iPoint, int objLoad = -1, int tileLoad = -1, int palLoad = -1)
     {
         Level = iLevel;
         Point = iPoint;
@@ -1067,7 +1052,7 @@ public class MMXCore : SNESCore
         PalLoad = palLoad;
     }
 
-    internal void LoadLevel(bool skipEvent = false, bool skipLayout = false)
+    public void LoadLevel(bool skipEvent = false, bool skipLayout = false)
     {
         //if (nmmx.type == 3) {
         //	LoadGFXs();
@@ -1178,7 +1163,7 @@ public class MMXCore : SNESCore
         expandedLayoutScenes = 0x40;
     }
 
-    internal void LoadBackground(bool skipLayout = false)
+    public void LoadBackground(bool skipLayout = false)
     {
         ushort pLevel = (ushort) (Level * 3);
         if (Type < 3)
@@ -1202,7 +1187,7 @@ public class MMXCore : SNESCore
         expandedLayoutScenes = 0x20;
     }
 
-    internal void LoadTilesAndPalettes()
+    public void LoadTilesAndPalettes()
     {
         // Load Palettes
         pPalBase = Snes2pc(p_palett[Type]);
@@ -1270,7 +1255,7 @@ public class MMXCore : SNESCore
             Tile4bpp2raw(vram, i << 5, vramCache, i << 6);
     }
 
-    internal void LoadEvents()
+    public void LoadEvents()
     {
         pBorders = 0;
         pLocks = 0;
@@ -1417,7 +1402,7 @@ public class MMXCore : SNESCore
         }
     }
 
-    internal void LoadProperties()
+    public void LoadProperties()
     {
         if (p_properties[Type] == 0)
             return;
@@ -1558,7 +1543,7 @@ public class MMXCore : SNESCore
         }
     }
 
-    internal void LoadCheckpoints()
+    public void LoadCheckpoints()
     {
         // count checkpoint trigger events
         numCheckpoints = (uint) ((Type < 3) ? 1 : 0);
@@ -1644,7 +1629,7 @@ public class MMXCore : SNESCore
         }
     }
 
-    internal void LoadGraphicsChange()
+    public void LoadGraphicsChange()
     {
         // just setup the palette for now
         graphicsToPalette.Clear();
@@ -1782,7 +1767,7 @@ public class MMXCore : SNESCore
         }
     }
 
-    internal void LoadPaletteDynamic()
+    public void LoadPaletteDynamic()
     {
         uint paletteOffset = (uint) ((Type == 0) ? 0x32260
                        : (Type == 1) ? 0x31DD1
@@ -1819,7 +1804,7 @@ public class MMXCore : SNESCore
         }
     }
 
-    internal void LoadLevelLayout()
+    public void LoadLevelLayout()
     {
         ushort writeIndex = 0;
 
@@ -1885,7 +1870,7 @@ public class MMXCore : SNESCore
         }
     }
 
-    internal void LoadLayout()
+    public void LoadLayout()
     {
         uint playout = pLayout; //address location of layout for this level
         levelWidth = rom[playout++]; //dereference operator. levelWidth equals value pointed to by address of playout++
@@ -1928,425 +1913,6 @@ public class MMXCore : SNESCore
 
                     if (scene + 1 > sceneUsed)
                         sceneUsed = (byte) (scene + 1);
-                }
-            }
-        }
-    }
-
-    private Map[] maps;
-
-    private int Transform(int color, bool notTransparent)
-    {
-        return !notTransparent ? 0 : (int) (((color & 0x1F) << 3) | ((color & 0x3E0) << 6) | ((color & 0x7C00) << 9) | 0xFF000000);
-    }
-
-    private Tile AddTile(World world, uint tile, bool transparent = false, bool background = false)
-    {
-        uint image = (tile & 0x3FF) << 6;
-
-        byte[] imageData = new byte[TILE_SIZE * TILE_SIZE * sizeof(byte)];
-        bool notNull = false;
-        using (var ms = new MemoryStream(imageData))
-        {
-            using var writter = new BinaryWriter(ms);
-            for (int i = 0; i < TILE_SIZE * TILE_SIZE; i++, image++)
-            {
-                var v = vramCache[image];
-                bool notTransparent = v != 0 || !transparent;
-                notNull |= notTransparent;
-                writter.Write(v);
-            }
-        }
-
-        Tile wtile = background ? world.BackgroundLayout.AddTile(imageData) : world.ForegroundLayout.AddTile(imageData);
-        return wtile;
-    }
-
-    private static void WriteTile(DataRectangle tilemapRect, byte[] data, int mapIndex, int tileRow, int tileCol, int subPalette, bool flipped, bool mirrored)
-    {
-        int mapRow = mapIndex / 32;
-        int mapCol = mapIndex % 32;
-
-        IntPtr ptr = tilemapRect.DataPointer;
-        ptr += mapCol * MAP_SIZE * sizeof(byte);
-        ptr += World.TILEMAP_WIDTH * mapRow * MAP_SIZE * sizeof(byte);
-        ptr += TILE_SIZE * tileCol * sizeof(byte);
-        ptr += World.TILEMAP_WIDTH * TILE_SIZE * tileRow * sizeof(byte);
-
-        if (flipped)
-            ptr += World.TILEMAP_WIDTH * (TILE_SIZE - 1) * sizeof(byte);
-
-        for (int row = 0; row < TILE_SIZE; row++)
-        {
-            int dataIndex = row * TILE_SIZE;
-            if (mirrored)
-                dataIndex += TILE_SIZE - 1;
-
-            using (var stream = new DataStream(ptr, TILE_SIZE * sizeof(byte), true, true))
-            {
-                for (int col = 0; col < TILE_SIZE; col++)
-                {
-                    stream.Write((byte) ((subPalette << 4) | (data != null ? data[dataIndex] : 0)));
-
-                    if (mirrored)
-                        dataIndex--;
-                    else
-                        dataIndex++;
-                }
-            }
-
-            if (flipped)
-                ptr -= World.TILEMAP_WIDTH * sizeof(byte);
-            else
-                ptr += World.TILEMAP_WIDTH * sizeof(byte);
-        }
-    }
-
-    internal void RefreshMapCache(GameEngine engine, bool background = false)
-    {
-        var tilemap = new Texture(engine.Device, World.TILEMAP_WIDTH, World.TILEMAP_HEIGHT, 1, Usage.None, Format.L8, Pool.Managed);
-        DataRectangle rect = tilemap.LockRectangle(0, LockFlags.Discard);
-
-        maps = new Map[0x400];
-
-        uint map = pMaps;
-        /* I didn't write this function, but basically the above loses a lot of data because size of a WORD is max 65535 and pMaps is a DWORD */
-        for (int i = 0; i < 0x400; i++)
-        {
-            byte colisionByte = rom[pCollisions + i];
-            var collisionData = (CollisionData) colisionByte;
-            Map wmap = background ? engine.World.BackgroundLayout.AddMap(collisionData) : engine.World.ForegroundLayout.AddMap(collisionData);
-
-            uint tileData = ReadWord(map);
-            byte palette = (byte) ((tileData >> 10) & 7);
-            byte subPalette = (byte) ((tileData >> 10) & 7);
-            bool flipped = (tileData & 0x8000) != 0;
-            bool mirrored = (tileData & 0x4000) != 0;
-            bool upLayer = (tileData & 0x2000) != 0;
-            map += 2;
-            Tile tile = AddTile(engine.World, tileData, true, background);
-            wmap.SetTile(new Vector(0, 0), tile, palette, flipped, mirrored, upLayer);
-            WriteTile(rect, tile?.data, i, 0, 0, palette, flipped, mirrored);
-
-            tileData = ReadWord(map);
-            palette = (byte) ((tileData >> 10) & 7);
-            flipped = (tileData & 0x8000) != 0;
-            mirrored = (tileData & 0x4000) != 0;
-            upLayer = (tileData & 0x2000) != 0;
-            map += 2;
-            tile = AddTile(engine.World, tileData, true, background);
-            wmap.SetTile(new Vector(TILE_SIZE, 0), tile, palette, flipped, mirrored, upLayer);
-            WriteTile(rect, tile?.data, i, 0, 1, palette, flipped, mirrored);
-
-            tileData = ReadWord(map);
-            palette = (byte) ((tileData >> 10) & 7);
-            flipped = (tileData & 0x8000) != 0;
-            mirrored = (tileData & 0x4000) != 0;
-            upLayer = (tileData & 0x2000) != 0;
-            map += 2;
-            tile = AddTile(engine.World, tileData, true, background);
-            wmap.SetTile(new Vector(0, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
-            WriteTile(rect, tile?.data, i, 1, 0, palette, flipped, mirrored);
-
-            tileData = ReadWord(map);
-            palette = (byte) ((tileData >> 10) & 7);
-            flipped = (tileData & 0x8000) != 0;
-            mirrored = (tileData & 0x4000) != 0;
-            upLayer = (tileData & 0x2000) != 0;
-            map += 2;
-            tile = AddTile(engine.World, tileData, true, background);
-            wmap.SetTile(new Vector(TILE_SIZE, TILE_SIZE), tile, palette, flipped, mirrored, upLayer);
-            WriteTile(rect, tile?.data, i, 1, 1, palette, flipped, mirrored);
-
-            maps[i] = wmap.IsNull ? null : wmap;
-        }
-
-        tilemap.UnlockRectangle(0);
-
-        if (background)
-            engine.BackgroundTilemap = tilemap;
-        else
-            engine.ForegroundTilemap = tilemap;
-    }
-
-    private void LoadMap(World world, int x, int y, ushort index, bool background = false)
-    {
-        if (index < maps.Length)
-        {
-            Map map = maps[index];
-            if (map != null)
-            {
-                if (background)
-                    world.BackgroundLayout.SetMap(new Vector(x * MAP_SIZE + WORLD_OFFSET.X, y * MAP_SIZE + WORLD_OFFSET.Y), map);
-                else
-                    world.ForegroundLayout.SetMap(new Vector(x * MAP_SIZE + WORLD_OFFSET.X, y * MAP_SIZE + WORLD_OFFSET.Y), map);
-            }
-        }
-    }
-
-    private void LoadSceneEx(World world, int x, int y, ushort index, bool background = false)
-    {
-        x <<= 4;
-        y <<= 4;
-        uint pmap = (uint) (index << 8);
-        for (int iy = 0; iy < 16; iy++)
-        {
-            for (int ix = 0; ix < 16; ix++)
-            {
-                LoadMap(world, x + ix, y + iy, mapping[pmap], background);
-                pmap++;
-            }
-        }
-    }
-
-    internal void LoadPalette(GameEngine engine, bool background = false)
-    {
-        var palette = new Texture(engine.Device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
-        DataRectangle rect = palette.LockRectangle(0, LockFlags.Discard);
-
-        using (var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
-        {
-            for (int i = 0; i < 16; i++)
-            {
-                for (int j = 0; j < 16; j++)
-                    stream.Write(new Color(Transform(palCache[(i << 4) | j], j != 0)).ToRgba());
-            }
-        }
-
-        palette.UnlockRectangle(0);
-
-        if (background)
-            engine.BackgroundPalette = palette;
-        else
-            engine.ForegroundPalette = palette;
-    }
-
-    public void LoadToWorld(GameEngine engine, bool background = false)
-    {
-        LoadPalette(engine, background);
-
-        if (background)
-            engine.World.BackgroundLayout.Resize(levelHeight, levelWidth);
-        else
-            engine.World.ForegroundLayout.Resize(levelHeight, levelWidth);
-
-        RefreshMapCache(engine, background);
-
-        uint tmpLayout = 0;
-        for (int y = 0; y < levelHeight; y++)
-        {
-            for (int x = 0; x < levelWidth; x++)
-                LoadSceneEx(engine.World, x, y, sceneLayout[tmpLayout++], background);
-        }
-    }
-
-    public void LoadEvents(GameEngine engine)
-    {
-        for (ushort point = 0; point < checkpointInfoTable.Count; point++)
-        {
-            CheckPointInfo info = checkpointInfoTable[point];
-
-            uint minX = ReadWord(info.minX);
-            uint minY = ReadWord(info.minY);
-            uint maxX = ReadWord(info.maxX);
-            uint maxY = ReadWord(info.maxY);
-            engine.AddCheckpoint(
-                point,
-                new MMXBox(minX, minY, maxX - minX + SCREEN_WIDTH, maxY - minY + SCREEN_HEIGHT),
-                new Vector(ReadWord(info.chX), ReadWord(info.chY)),
-                new Vector(ReadWord(info.camX), ReadWord(info.camY)),
-                new Vector(ReadWord(info.bkgX), ReadWord(info.bkgY)),
-                new Vector(ReadShort(info.forceX), ReadShort(info.forceY)),
-                ReadByte(info.scroll)
-                );
-        }
-
-        foreach (List<EventInfo> list in eventTable)
-        {
-            foreach (EventInfo info in list)
-            {
-                switch (info.type)
-                {
-                    case 0x00:
-                        switch (info.eventId)
-                        {
-                            case 0x01:
-                                if (info.eventSubId == 0x80)
-                                    engine.AddBigAmmoRecover((info.xpos, info.ypos));
-                                else
-                                    engine.AddSmallAmmoRecover((info.xpos, info.ypos));
-
-                                break;
-
-                            case 0x02:
-                                if (info.eventSubId == 0x80)
-                                    engine.AddBigHealthRecover((info.xpos, info.ypos));
-                                else
-                                    engine.AddSmallHealthRecover((info.xpos, info.ypos));
-
-                                break;
-
-                            case 0x04:
-                                engine.AddLifeUp((info.xpos, info.ypos));
-                                break;
-
-                            case 0x05:
-                                engine.AddSubTank((info.xpos, info.ypos));
-                                break;
-
-                            case 0x07:
-                                engine.AddBossDoor(info.eventSubId, (info.xpos, info.ypos));
-                                break;
-
-                            case 0x0B:
-                                engine.AddHeartTank((info.xpos, info.ypos));
-                                break;
-                        }
-
-                        break;
-
-                    case 0x02:
-                        switch (info.eventId)
-                        {
-                            case 0x00: // camera lock
-                            {
-                                uint pBase;
-                                if (expandedROM && expandedROMVersion >= 4)
-                                {
-                                    pBase = Snes2pc((int) (lockBank << 16) | (0x8000 + Level * 0x800 + info.eventSubId * 0x20));
-                                }
-                                else
-                                {
-                                    var borderOffset = ReadWord((int) (Snes2pc(pBorders) + 2 * info.eventSubId));
-                                    pBase = Snes2pc(borderOffset | ((pBorders >> 16) << 16));
-                                }
-
-                                int right = ReadWord(pBase);
-                                pBase += 2;
-                                int left = ReadWord(pBase);
-                                pBase += 2;
-                                int bottom = ReadWord(pBase);
-                                pBase += 2;
-                                int top = ReadWord(pBase);
-                                pBase += 2;
-
-                                var boudingBox = new MMXBox(left, top, right - left, bottom - top);
-
-                                uint lockNum = 0;
-
-                                var extensions = new List<Vector>();
-                                while (((expandedROM && expandedROMVersion >= 4) ? ReadWord(pBase) : rom[pBase]) != 0)
-                                {
-                                    MMXBox lockBox = boudingBox;
-                                    ushort camOffset = 0;
-                                    ushort camValue = 0;
-
-                                    if (expandedROM && expandedROMVersion >= 4)
-                                    {
-                                        camOffset = ReadWord(pBase);
-                                        pBase += 2;
-                                        camValue = ReadWord(pBase);
-                                        pBase += 2;
-                                    }
-                                    else
-                                    {
-                                        ushort offset = (ushort) ((rom[pBase] - 1) << 2);
-                                        camOffset = ReadWord(pLocks + offset + 0x0);
-                                        camValue = ReadWord(pLocks + offset + 0x2);
-                                        pBase++;
-                                    }
-
-                                    int lockX0 = (left + right) / 2;
-                                    int lockY0 = (top + bottom) / 2;
-
-                                    int lockLeft = lockX0;
-                                    int lockTop = lockY0;
-                                    int lockRight = lockX0;
-                                    int lockBottom = lockY0;
-
-                                    if (Type > 0)
-                                        camOffset -= 0x10;
-
-                                    if (camOffset is 0x1E5E or 0x1E6E or 0x1E68 or 0x1E60)
-                                    {
-                                        if (camOffset == 0x1E5E)
-                                        {
-                                            lockLeft = camValue;
-                                        }
-                                        else if (camOffset == 0x1E6E)
-                                        {
-                                            lockBottom = camValue + SCREEN_HEIGHT;
-                                        }
-                                        else if (camOffset == 0x1E68)
-                                        {
-                                            lockTop = camValue;
-                                        }
-                                        else if (camOffset == 0x1E60)
-                                        {
-                                            lockRight = camValue + SCREEN_WIDTH;
-                                        }
-                                    }
-
-                                    int lockX = lockLeft < lockX0 ? lockLeft : lockRight;
-                                    int lockY = lockTop < lockY0 ? lockTop : lockBottom;
-
-                                    extensions.Add((lockX - lockX0, lockY - lockY0));
-                                    lockNum++;
-                                }
-
-                                engine.AddCameraLockTrigger(boudingBox, extensions);
-                                break;
-                            }
-
-                            case 0x02:
-                            case 0x0B: // checkpoint trigger
-                            {
-                                engine.AddCheckpointTrigger((ushort) (info.eventSubId & 0xf), (info.xpos, info.ypos));
-                                break;
-                            }
-
-                            case 0x15: // dynamic change object/enemy tiles (vertical)
-                            {
-                                engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
-                                break;
-                            }
-
-                            case 0x16: // dynamic change background tiles tiles (vertical)
-                            {
-                                engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
-                                break;
-                            }
-
-                            case 0x17: // dynamic change palette (vertical)
-                            {
-                                engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.PALETTE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
-                                break;
-                            }
-
-                            case 0x18: // dynamic change object/enemy tiles (horizontal)
-                            {
-                                engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
-                                break;
-                            }
-
-                            case 0x19: // dynamic change background tiles tiles (horizontal)
-                            {
-                                engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
-                                break;
-                            }
-
-                            case 0x1A: // dynamic change palette (horizontal)
-                            {
-                                engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.PALETTE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
-                                break;
-                            }
-                        }
-
-                        break;
-
-                    case 0x03:
-                        engine.AddObjectEvent(info.eventId, info.eventSubId, (info.xpos, info.ypos));
-                        break;
                 }
             }
         }

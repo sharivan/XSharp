@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
 
 using XSharp.Engine.Collision;
 using XSharp.Factories;
@@ -35,6 +38,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
     public event EntityActivatorEvent TouchingEvent;
     public event EntityActivatorEvent EndTouchEvent;
 
+    private Dictionary<string, object> initParams = new();
     internal int index = -1;
     internal string name = null;
     private Vector origin = Vector.NULL_VECTOR;
@@ -290,6 +294,63 @@ public abstract class Entity : IIndexedNamedFactoryItem
         resultSet = new EntitySet<Entity>();
         states = new List<EntityState>();
         lastBox = new Box[BOXKIND_COUNT];
+    }
+
+    internal void Initialize(dynamic initParams)
+    {
+        if (initParams == null)
+            return;
+
+        Type type = GetType();
+        Type attrsType = initParams.GetType();
+        PropertyInfo[] attributes = attrsType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        foreach (var attr in attributes)
+        {
+            string attrName = attr.Name;
+            object value = attr.GetValue(initParams);
+
+            var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(prop => prop.Name == attrName);
+            var property = (properties.FirstOrDefault(prop => prop.DeclaringType == type) ?? properties.First()) ?? throw new ArgumentException($"Attribute '{attr}' in entity class '{type.Name}' doesn't exist or isn't public.");
+
+            if (!property.CanWrite)
+                throw new ArgumentException($"Field or property '{attr}' is not writable.");
+
+            if (property.GetCustomAttribute(typeof(NotStartupableAttribute)) != null)
+                throw new ArgumentException($"Field or property '{attr}' can't be initialized by this way.");
+
+            Type propertyType = property.PropertyType;
+            Type valueType = value.GetType();
+            if (valueType != propertyType && !propertyType.IsAssignableFrom(valueType))
+            {
+                TypeConverter conv = TypeDescriptor.GetConverter(propertyType);
+                value = conv.ConvertFrom(value);
+            }
+
+            this.initParams[property.Name] = value;
+        }
+    }
+
+    protected internal void Reset()
+    {
+        Type type = GetType();
+        foreach (var kv in initParams)
+        {
+            string name = kv.Key;
+            object value = kv.Value;
+
+            var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(prop => prop.Name == name);
+            var property = properties.FirstOrDefault(prop => prop.DeclaringType == type) ?? properties.First();
+
+            Type propertyType = property.PropertyType;
+            Type valueType = value.GetType();
+            if (valueType != propertyType && !propertyType.IsAssignableFrom(valueType))
+            {
+                TypeConverter conv = TypeDescriptor.GetConverter(propertyType);
+                value = conv.ConvertFrom(value);
+            }
+
+            property.SetValue(this, value);
+        }
     }
 
     protected internal virtual void OnCreate()
@@ -709,6 +770,9 @@ public abstract class Entity : IIndexedNamedFactoryItem
         Spawning = false;
         wasOffScreen = false;
         wasOutOfLiveArea = false;
+
+        if (Respawnable)
+            Reset();
     }
 
     public void KillOnNextFrame()
@@ -835,8 +899,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
         Respawnable = true;
         RespawnOnNear = true;
 
-        if (!Engine.autoRespawnableEntities.ContainsKey(reference))
-            Engine.autoRespawnableEntities.Add(reference, new RespawnEntry(reference, Origin));
+        initParams["Origin"] = Origin;
 
         UpdatePartition(true);
     }
@@ -846,7 +909,6 @@ public abstract class Entity : IIndexedNamedFactoryItem
         Respawnable = false;
         RespawnOnNear = false;
 
-        Engine.autoRespawnableEntities.Remove(reference);
         UpdatePartition(true);
     }
 

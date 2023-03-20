@@ -132,7 +132,7 @@ public class EntityState
                     currentSubStateID = InitialSubStateID;
                     break;
             }
-            
+
             CurrentSubState?.OnStart(lastState, lastSubState);
         }
     }

@@ -894,7 +894,7 @@ public class BinarySerializer : Serializer, IDisposable
     public void WriteMethodInfo(MethodInfo info)
     {
         WriteType(info.DeclaringType);
-        WriteString(info.Name, false);        
+        WriteString(info.Name, false);
         WriteTypes(info.GetParameters().Select((p) => p.ParameterType));
         WriteBool(info.IsStatic);
     }
@@ -1118,6 +1118,32 @@ public class BinarySerializer : Serializer, IDisposable
             property.SetValue(instance, value);
     }
 
+    private bool IsBasicType(Type type)
+    {
+        return type == typeof(bool)
+            || type == typeof(byte)
+            || type == typeof(sbyte)
+            || type == typeof(short)
+            || type == typeof(ushort)
+            || type == typeof(int)
+            || type == typeof(uint)
+            || type == typeof(long)
+            || type == typeof(ulong)
+            || type == typeof(float)
+            || type == typeof(double)
+            || type == typeof(char)
+            || type == typeof(string)
+            || type == typeof(FixedSingle)
+            || type == typeof(FixedDouble)
+            || type == typeof(Interval)
+            || type == typeof(Vector)
+            || type == typeof(LineSegment)
+            || type == typeof(Box)
+            || type == typeof(RightTriangle)
+            || type.IsAssignableTo(typeof(Delegate))
+            || type.IsEnum;
+    }
+
     public object ReadObject(bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true)
     {
         Future = null;
@@ -1130,6 +1156,9 @@ public class BinarySerializer : Serializer, IDisposable
         }
 
         var objectType = ReadType();
+
+        if (IsBasicType(objectType))
+            return ReadValue(objectType, false, false, false);
 
         if (!ignoreItems && objectType.IsAssignableTo(typeof(IFactoryItem)))
         {
@@ -1219,6 +1248,12 @@ public class BinarySerializer : Serializer, IDisposable
 
         var objectType = obj.GetType();
         WriteType(objectType);
+
+        if (IsBasicType(objectType))
+        {
+            WriteValue(objectType, obj, false, false, false);
+            return;
+        }
 
         if (!ignoreItems && obj is IFactoryItem item)
         {

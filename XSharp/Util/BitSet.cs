@@ -81,6 +81,142 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         1UL << 63
     };
 
+    private static readonly ulong[] START_MASK =
+    {
+        0xffffffffffffffffUL << 0,
+        0xffffffffffffffffUL << 1,
+        0xffffffffffffffffUL << 2,
+        0xffffffffffffffffUL << 3,
+        0xffffffffffffffffUL << 4,
+        0xffffffffffffffffUL << 5,
+        0xffffffffffffffffUL << 6,
+        0xffffffffffffffffUL << 7,
+        0xffffffffffffffffUL << 8,
+        0xffffffffffffffffUL << 9,
+        0xffffffffffffffffUL << 10,
+        0xffffffffffffffffUL << 11,
+        0xffffffffffffffffUL << 12,
+        0xffffffffffffffffUL << 13,
+        0xffffffffffffffffUL << 14,
+        0xffffffffffffffffUL << 15,
+        0xffffffffffffffffUL << 16,
+        0xffffffffffffffffUL << 17,
+        0xffffffffffffffffUL << 18,
+        0xffffffffffffffffUL << 19,
+        0xffffffffffffffffUL << 20,
+        0xffffffffffffffffUL << 21,
+        0xffffffffffffffffUL << 22,
+        0xffffffffffffffffUL << 23,
+        0xffffffffffffffffUL << 24,
+        0xffffffffffffffffUL << 25,
+        0xffffffffffffffffUL << 26,
+        0xffffffffffffffffUL << 27,
+        0xffffffffffffffffUL << 28,
+        0xffffffffffffffffUL << 29,
+        0xffffffffffffffffUL << 30,
+        0xffffffffffffffffUL << 31,
+        0xffffffffffffffffUL << 32,
+        0xffffffffffffffffUL << 33,
+        0xffffffffffffffffUL << 34,
+        0xffffffffffffffffUL << 35,
+        0xffffffffffffffffUL << 36,
+        0xffffffffffffffffUL << 37,
+        0xffffffffffffffffUL << 38,
+        0xffffffffffffffffUL << 39,
+        0xffffffffffffffffUL << 40,
+        0xffffffffffffffffUL << 41,
+        0xffffffffffffffffUL << 42,
+        0xffffffffffffffffUL << 43,
+        0xffffffffffffffffUL << 44,
+        0xffffffffffffffffUL << 45,
+        0xffffffffffffffffUL << 46,
+        0xffffffffffffffffUL << 47,
+        0xffffffffffffffffUL << 48,
+        0xffffffffffffffffUL << 49,
+        0xffffffffffffffffUL << 50,
+        0xffffffffffffffffUL << 51,
+        0xffffffffffffffffUL << 52,
+        0xffffffffffffffffUL << 53,
+        0xffffffffffffffffUL << 54,
+        0xffffffffffffffffUL << 55,
+        0xffffffffffffffffUL << 56,
+        0xffffffffffffffffUL << 57,
+        0xffffffffffffffffUL << 58,
+        0xffffffffffffffffUL << 59,
+        0xffffffffffffffffUL << 60,
+        0xffffffffffffffffUL << 61,
+        0xffffffffffffffffUL << 62,
+        0xffffffffffffffffUL << 63
+    };
+
+    private static readonly ulong[] END_MASK =
+    {
+        0xffffffffffffffffUL >> 63,
+        0xffffffffffffffffUL >> 62,
+        0xffffffffffffffffUL >> 61,
+        0xffffffffffffffffUL >> 60,
+        0xffffffffffffffffUL >> 59,
+        0xffffffffffffffffUL >> 58,
+        0xffffffffffffffffUL >> 57,
+        0xffffffffffffffffUL >> 56,
+        0xffffffffffffffffUL >> 55,
+        0xffffffffffffffffUL >> 54,
+        0xffffffffffffffffUL >> 53,
+        0xffffffffffffffffUL >> 52,
+        0xffffffffffffffffUL >> 51,
+        0xffffffffffffffffUL >> 50,
+        0xffffffffffffffffUL >> 49,
+        0xffffffffffffffffUL >> 48,
+        0xffffffffffffffffUL >> 47,
+        0xffffffffffffffffUL >> 46,
+        0xffffffffffffffffUL >> 45,
+        0xffffffffffffffffUL >> 44,
+        0xffffffffffffffffUL >> 43,
+        0xffffffffffffffffUL >> 42,
+        0xffffffffffffffffUL >> 41,
+        0xffffffffffffffffUL >> 40,
+        0xffffffffffffffffUL >> 39,
+        0xffffffffffffffffUL >> 38,
+        0xffffffffffffffffUL >> 37,
+        0xffffffffffffffffUL >> 36,
+        0xffffffffffffffffUL >> 35,
+        0xffffffffffffffffUL >> 34,
+        0xffffffffffffffffUL >> 33,
+        0xffffffffffffffffUL >> 32,
+        0xffffffffffffffffUL >> 31,
+        0xffffffffffffffffUL >> 30,
+        0xffffffffffffffffUL >> 29,
+        0xffffffffffffffffUL >> 28,
+        0xffffffffffffffffUL >> 27,
+        0xffffffffffffffffUL >> 26,
+        0xffffffffffffffffUL >> 25,
+        0xffffffffffffffffUL >> 24,
+        0xffffffffffffffffUL >> 23,
+        0xffffffffffffffffUL >> 22,
+        0xffffffffffffffffUL >> 21,
+        0xffffffffffffffffUL >> 20,
+        0xffffffffffffffffUL >> 19,
+        0xffffffffffffffffUL >> 18,
+        0xffffffffffffffffUL >> 17,
+        0xffffffffffffffffUL >> 16,
+        0xffffffffffffffffUL >> 15,
+        0xffffffffffffffffUL >> 14,
+        0xffffffffffffffffUL >> 13,
+        0xffffffffffffffffUL >> 12,
+        0xffffffffffffffffUL >> 11,
+        0xffffffffffffffffUL >> 10,
+        0xffffffffffffffffUL >> 9,
+        0xffffffffffffffffUL >> 8,
+        0xffffffffffffffffUL >> 7,
+        0xffffffffffffffffUL >> 6,
+        0xffffffffffffffffUL >> 5,
+        0xffffffffffffffffUL >> 4,
+        0xffffffffffffffffUL >> 3,
+        0xffffffffffffffffUL >> 2,
+        0xffffffffffffffffUL >> 1,
+        0xffffffffffffffffUL >> 0
+    };
+
     // Types and constants used in the functions below
     private const ulong M1 = 0x5555555555555555;  // Binary: 0101...
     private const ulong M2 = 0x3333333333333333;  // Binary: 00110011..
@@ -197,7 +333,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         }
     }
 
-    public int BitCount => bits.Count * BITS_PER_SLOT;
+    public int BitCount => SlotCount * BITS_PER_SLOT;
 
     public bool IsReadOnly => false;
 
@@ -258,6 +394,34 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return (slotBits & bitMask) != 0;
     }
 
+    public void Set(int start, int count)
+    {
+        int end = start + count;
+
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
+
+        int startSlot = start / BITS_PER_SLOT;
+        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
+
+        if (endSlot > SlotCount)
+            SlotCount = endSlot;
+
+        const ulong MASK = ~0UL;
+
+        if (endSlot == startSlot + 1)
+        {
+            bits[startSlot] |= (MASK << (start % BITS_PER_SLOT)) & (MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1));
+            return;
+        }
+
+        bits[startSlot] |= MASK << (start % BITS_PER_SLOT);
+        bits[endSlot - 1] |= MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1);
+
+        for (int i = startSlot + 1; i < endSlot - 1; i++)
+            bits[i] |= MASK;
+    }
+
     public bool Reset(int index)
     {
         if (index < 0)
@@ -270,6 +434,34 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
         SetSlotExcluding(slotIndex, bitMask);
         return (slotBits & bitMask) != 0;
+    }
+
+    public void Reset(int start, int count)
+    {
+        int end = start + count;
+
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
+
+        int startSlot = start / BITS_PER_SLOT;
+        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
+
+        if (endSlot > SlotCount)
+            SlotCount = endSlot;
+
+        const ulong MASK = ~0UL;
+
+        if (endSlot == startSlot + 1)
+        {
+            bits[startSlot] |= ~(MASK << (start % BITS_PER_SLOT)) & ~(MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1));
+            return;
+        }
+
+        bits[startSlot] &= ~(MASK << (start % BITS_PER_SLOT));
+        bits[endSlot - 1] &= ~(MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1));
+
+        for (int i = startSlot + 1; i < endSlot - 1; i++)
+            bits[i] = 0;
     }
 
     public bool Toggle(int index)
@@ -286,6 +478,46 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return test;
     }
 
+    public void Toggle(int start, int count)
+    {
+        int end = start + count;
+
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
+
+        int startSlot = start / BITS_PER_SLOT;
+        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
+
+        if (endSlot > SlotCount)
+            SlotCount = endSlot;
+
+        const ulong MASK = ~0UL;
+        ulong slotBits;
+        ulong START_MASK;
+
+        if (endSlot == startSlot + 1)
+        {
+            slotBits = bits[startSlot];
+            START_MASK = (MASK << (start % BITS_PER_SLOT)) & (MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1));
+            bits[startSlot] = ~(START_MASK ^ (START_MASK & ~slotBits)) | (slotBits & ~START_MASK);
+            return;
+        }
+
+        slotBits = bits[startSlot];
+        START_MASK = MASK << (start % BITS_PER_SLOT);
+        bits[startSlot] = ~(START_MASK ^ (START_MASK & ~slotBits)) | (slotBits & ~START_MASK);
+
+        slotBits = bits[endSlot - 1];
+        ulong END_MASK = MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1);
+        bits[endSlot - 1] = ~(END_MASK ^ (END_MASK & ~slotBits)) | (slotBits & ~END_MASK);
+
+        for (int i = startSlot + 1; i < endSlot - 1; i++)
+        {
+            slotBits = bits[i];
+            bits[i] = (MASK ^ (MASK & ~slotBits)) | (slotBits & ~MASK);
+        }
+    }
+
     public void Toggle(BitSet mask)
     {
         if (SlotCount < mask.SlotCount)
@@ -295,7 +527,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         {
             ulong maskSlotBits = mask.bits[i];
             ulong slotBits = bits[i];
-            bits[i] = maskSlotBits ^ maskSlotBits & ~slotBits | slotBits & ~maskSlotBits;
+            bits[i] = (maskSlotBits ^ (maskSlotBits & ~slotBits)) | (slotBits & ~maskSlotBits);
         }
     }
 
@@ -316,20 +548,79 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return (slotBits & bitMask) != 0;
     }
 
+    public bool Test(int start, int count)
+    {
+        int end = start + count;
+
+        if (start < 0 || end <= 0 || start >= end)
+            return false;
+
+        int startSlot = start / BITS_PER_SLOT;
+        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
+
+        if (endSlot > SlotCount)
+            return false;
+
+        const ulong MASK = ~0UL;
+        ulong START_MASK;
+        ulong slotBits;
+
+        if (endSlot == startSlot + 1)
+        {
+            START_MASK = (MASK << (start % BITS_PER_SLOT)) & (MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1));
+            slotBits = bits[startSlot];
+            if ((slotBits & START_MASK) != START_MASK)
+                return false;
+
+            return true;
+        }
+
+        START_MASK = MASK << (start % BITS_PER_SLOT);
+        slotBits = bits[startSlot];
+        if ((slotBits & START_MASK) != START_MASK)
+            return false;
+
+        ulong END_MASK = MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1);
+        slotBits = bits[endSlot - 1];
+        if ((slotBits & END_MASK) != END_MASK)
+            return false;
+
+        for (int i = startSlot + 1; i < endSlot - 1; i++)
+        {
+            slotBits = bits[i];
+            if (slotBits == 0)
+                return false;
+        }
+
+        return true;
+    }
+
     public int FirstSetBit(int start = 0)
     {
-        int startSlotIndex = start / BITS_PER_SLOT;
+        return FirstSetBit(start, SlotCount * BITS_PER_SLOT - start);
+    }
 
-        if (SlotCount <= startSlotIndex)
+    public int FirstSetBit(int start, int count)
+    {
+        int end = start + count;
+        if (end <= start)
             return -1;
 
-        int startBitIndex = start % BITS_PER_SLOT;
-        ulong bitMask = ~(MASK[startBitIndex] - 1);
+        int startSlot = start / BITS_PER_SLOT;
+        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
 
-        for (int i = startSlotIndex; i < bits.Count; i++)
+        ulong startBitmask = START_MASK[start % BITS_PER_SLOT];
+        ulong endBitmask = END_MASK[(end - 1) % BITS_PER_SLOT];
+
+        for (int i = startSlot; i < endSlot; i++)
         {
-            ulong slotBits = bits[i] & bitMask;
-            bitMask = ~0UL;
+            ulong slotBits = bits[i];
+
+            if (i == startSlot)
+                slotBits &= startBitmask;
+
+            if (i == endSlot - 1)
+                slotBits &= endBitmask;
 
             if (slotBits == 0)
                 continue;
@@ -343,7 +634,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void Clear()
     {
-        for (int i = 0; i < bits.Count; i++)
+        for (int i = 0; i < SlotCount; i++)
             bits[i] = 0;
     }
 
@@ -476,7 +767,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         for (int i = 0; i < SlotCount; i++)
         {
             ulong slotBits = bits[i];
-            ulong otherSlotBits = i < other.bits.Count ? other.bits[i] : 0;
+            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
 
             if ((slotBits & otherSlotBits) != slotBits)
                 return false;
@@ -511,7 +802,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         for (int i = 0; i < SlotCount; i++)
         {
             ulong slotBits = bits[i];
-            ulong otherSlotBits = i < other.bits.Count ? other.bits[i] : 0;
+            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
 
             if ((slotBits & otherSlotBits) != otherSlotBits)
                 return false;
@@ -545,7 +836,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         for (int i = 0; i < SlotCount; i++)
         {
             ulong slotBits = bits[i];
-            ulong otherSlotBits = i < other.bits.Count ? other.bits[i] : 0;
+            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
             if ((slotBits & otherSlotBits) != slotBits)
                 return false;
         }
@@ -572,7 +863,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         for (int i = 0; i < SlotCount; i++)
         {
             ulong slotBits = bits[i];
-            ulong otherSlotBits = i < other.bits.Count ? other.bits[i] : 0;
+            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
             if ((slotBits & otherSlotBits) != otherSlotBits)
                 return false;
         }
@@ -627,8 +918,8 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         int count = System.Math.Max(SlotCount, other.SlotCount);
         for (int i = 0; i < count; i++)
         {
-            ulong slotBits = i < bits.Count ? bits[i] : 0;
-            ulong otherSlotBits = i < other.bits.Count ? other.bits[i] : 0;
+            ulong slotBits = i < SlotCount ? bits[i] : 0;
+            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
             if (slotBits != otherSlotBits)
                 return false;
         }
@@ -720,8 +1011,8 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
         for (int i = 0; i < result.SlotCount; i++)
         {
-            ulong slotBits = i < bits.Count ? bits[i] : 0;
-            ulong otherSlotBits = i < other.bits.Count ? other.bits[i] : 0;
+            ulong slotBits = i < SlotCount ? bits[i] : 0;
+            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
             result.bits[i] = slotBits | otherSlotBits;
         }
     }
@@ -804,6 +1095,122 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
     public bool Remove(int item)
     {
         return Reset(item);
+    }
+
+    public void ShiftLeft(int bitsToShift)
+    {
+        ShiftRight(0, SlotCount * BITS_PER_SLOT, bitsToShift);
+    }
+
+    public void ShiftLeft(int start, int bitsToShift)
+    {
+        ShiftRight(start, SlotCount * BITS_PER_SLOT, bitsToShift);
+    }
+
+    // TODO : Fix me!
+    public void ShiftLeft(int start, int end, int bitsToShift)
+    {
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
+
+        if (bitsToShift >= end - start)
+        {
+            Reset(start, end - start);
+            return;
+        }
+
+        int startSlot = start / BITS_PER_SLOT;
+        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
+        int slotsToShift = endSlot - startSlot;
+
+        if (endSlot > SlotCount)
+            SlotCount = endSlot;
+
+        for (int i = endSlot - 1; i >= startSlot; i--)
+        {
+            ulong shifted = bits[i - slotsToShift] << bitsToShift;
+
+            if (bitsToShift > 0 && i > startSlot)
+            {
+                ulong carry = bits[i - 1] >> (BITS_PER_SLOT - bitsToShift);
+                shifted |= carry;
+            }
+
+            bits[i] = shifted;
+        }
+
+        ulong mask = ((1UL << (end - start + 1)) - 1UL) << start % BITS_PER_SLOT;
+        for (int i = startSlot; i < endSlot; i++)
+            bits[i] = (bits[i] & ~mask) | ((bits[i] & mask) << bitsToShift);
+    }
+
+    public void ShiftRight(int bitsToShift)
+    {
+        ShiftRight(0, SlotCount * BITS_PER_SLOT, bitsToShift);
+    }
+
+    public void ShiftRight(int start, int bitsToShift)
+    {
+        ShiftRight(start, SlotCount * BITS_PER_SLOT, bitsToShift);
+    }
+
+    // TODO : Fix me!
+    public void ShiftRight(int start, int end, int bitsToShift)
+    {
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
+
+        if (bitsToShift >= end - start)
+        {
+            Reset(start, end - start);
+            return;
+        }
+
+        int startSlot = start / BITS_PER_SLOT;
+        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
+        int slotsToShift = endSlot - startSlot;
+
+        if (endSlot > SlotCount)
+            SlotCount = endSlot;
+
+        ulong shifted = 0;
+
+        for (int i = endSlot - 1; i >= startSlot; i--)
+        {
+            ulong carry = i == startSlot ? bits[i] << (BITS_PER_SLOT - bitsToShift) : bits[i] << (BITS_PER_SLOT - bitsToShift) | shifted >> bitsToShift;
+            shifted = bits[i] >> bitsToShift;
+            bits[i] = carry;
+        }
+
+        int mask = (1 << bitsToShift) - 1;
+        ulong maskBits = (ulong) mask << (BITS_PER_SLOT - bitsToShift);
+
+        for (int i = endSlot - slotsToShift; i < endSlot; i++)
+        {
+            bits[i] &= maskBits;
+            bits[i] |= shifted << (BITS_PER_SLOT - bitsToShift);
+            shifted >>= bitsToShift;
+        }
+    }
+
+    public void RotateLeft(int start, int bitsToRotate)
+    {
+        RotateLeft(start, SlotCount * BITS_PER_SLOT, bitsToRotate);
+    }
+
+    // TODO : Implement me!
+    public void RotateLeft(int start, int end, int bitsToRotate)
+    {
+    }
+
+    public void RotateRight(int start, int bitsToRotate)
+    {
+        RotateRight(start, SlotCount * BITS_PER_SLOT, bitsToRotate);
+    }
+
+    // TODO : Implement me!
+    public void RotateRight(int start, int end, int bitsToRotate)
+    {
     }
 
     public IEnumerator<int> GetEnumerator()

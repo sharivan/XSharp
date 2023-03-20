@@ -942,7 +942,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
 
     protected override FixedSingle GetCollisionBoxHeadHeight()
     {
-        return 3;
+        return 8;
     }
 
     protected override FixedSingle GetCollisionBoxLegsHeight()
@@ -957,7 +957,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
 
     protected override FixedSingle GetHitboxLegsHeight()
     {
-        return 8;
+        return 5;
     }
 
     protected override bool IsUsingCollisionPlacements()
