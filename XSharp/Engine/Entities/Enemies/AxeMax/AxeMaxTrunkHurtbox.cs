@@ -16,6 +16,9 @@ public class AxeMaxTrunkHurtbox : Enemy
 
     private EntityReference<AxeMaxTrunk> trunk;
 
+    private string lastPaletteName;
+    private bool flashing;
+
     public AxeMaxTrunk Trunk
     {
         get => trunk;
@@ -70,12 +73,39 @@ public class AxeMaxTrunkHurtbox : Enemy
         Health = HP;
         ContactDamage = 0;
 
+        flashing = false;
+        lastPaletteName = null;
+
         NothingDropOdd = 100; // 100%
         SmallHealthDropOdd = 0; // 0%
         BigHealthDropOdd = 0; // 0%
         SmallAmmoDropOdd = 0; // 0%
         BigAmmoDropOdd = 0; // 0%
         LifeUpDropOdd = 0; // 0%
+    }
+
+    protected override bool PreThink()
+    {
+        if (flashing && lastPaletteName != null)
+        {
+            flashing = false;
+            Trunk.PaletteName = lastPaletteName;
+            lastPaletteName = null;
+        }
+
+        return base.PreThink();
+    }
+
+    protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
+    {
+        if (Trunk.PaletteName != null)
+        {
+            lastPaletteName = Trunk.PaletteName;
+            flashing = true;
+            Trunk.PaletteName = "flashingPalette";
+        }
+
+        return base.OnTakeDamage(attacker, ref damage);
     }
 
     protected override void OnContactDamage(Player player)
@@ -90,7 +120,16 @@ public class AxeMaxTrunkHurtbox : Enemy
 
     protected override void OnDeath()
     {
-        Trunk?.Kill();
+        if (Trunk != null)
+        {
+            if (lastPaletteName != null)
+            {
+                Trunk.PaletteName = lastPaletteName;
+                lastPaletteName = null;
+            }
+
+            Trunk.Kill();
+        }
 
         base.OnDeath();
     }

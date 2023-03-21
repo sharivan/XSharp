@@ -45,4 +45,24 @@ public static class DirectionExtensions
     {
         return (v.X > 0 ? Direction.RIGHT : v.X < 0 ? Direction.LEFT : 0) | (v.Y > 0 ? Direction.DOWN : v.Y < 0 ? Direction.UP : 0);
     }
+
+    public static Vector GetHorizontalUnitaryVector(this Direction direction)
+    {
+        return direction == Direction.LEFT ? Vector.LEFT_VECTOR : direction == Direction.RIGHT ? Vector.RIGHT_VECTOR : Vector.NULL_VECTOR;
+    }
+
+    public static Vector GetVerticalUnitaryVector(this Direction direction)
+    {
+        return direction == Direction.UP ? Vector.UP_VECTOR : direction == Direction.DOWN ? Vector.DOWN_VECTOR : Vector.NULL_VECTOR;
+    }
+
+    public static int GetHorizontalSignal(this Direction direction)
+    {
+        return direction == Direction.LEFT ? -1 : direction == Direction.RIGHT ? 1 : 0;
+    }
+
+    public static int GetVerticalSignal(this Direction direction)
+    {
+        return direction == Direction.UP ? -1 : direction == Direction.DOWN ? 1 : 0;
+    }
 }

@@ -44,6 +44,9 @@ public abstract class Enemy : Sprite
         Engine.PrecachePalette("flashingPalette", FLASHING_PALETTE);
     }
 
+    private string lastPaletteName;
+    private bool flashing;
+
     public bool ReflectShots
     {
         get;
@@ -113,12 +116,27 @@ public abstract class Enemy : Sprite
     {
         base.OnSpawn();
 
+        lastPaletteName = null;
+        flashing = false;
+
         NothingDropOdd = 9000; // 90%
         SmallHealthDropOdd = 300; // 3%
         BigHealthDropOdd = 100; // 1%
         SmallAmmoDropOdd = 400; // 4%
         BigAmmoDropOdd = 175; // 1.75%
         LifeUpDropOdd = 25; // 0.25%
+    }
+
+    protected override bool PreThink()
+    {
+        if (flashing && lastPaletteName != null)
+        {
+            flashing = false;
+            PaletteName = lastPaletteName;
+            lastPaletteName = null;
+        }
+
+        return base.PreThink();
     }
 
     protected virtual void OnContactDamage(Player player)
@@ -140,6 +158,13 @@ public abstract class Enemy : Sprite
 
     protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
     {
+        if (!flashing && PaletteName != null)
+        {
+            lastPaletteName = PaletteName;
+            flashing = true;
+            PaletteName = "flashingPalette";
+        }
+
         if (ReflectShots)
         {
             if (attacker is Weapon weapon)
@@ -177,7 +202,9 @@ public abstract class Enemy : Sprite
 
     protected override void OnBroke()
     {
-        Engine.CreateExplosionEffect(Hitbox.Center);
+        base.OnBroke();
+
+        Engine.CreateExplosionEffect(Origin);
 
         var random = Engine.RNG.NextLong(TotalDropOdd);
         if (random > TotalDropOdd - NothingDropOdd)
@@ -185,33 +212,45 @@ public abstract class Enemy : Sprite
 
         if (random < LifeUpDropOdd)
         {
-            Engine.DropLifeUp(Hitbox.Center, ITEM_DURATION_FRAMES);
+            Engine.DropLifeUp(Origin, ITEM_DURATION_FRAMES);
             return;
         }
 
         random -= LifeUpDropOdd;
         if (random < BigHealthDropOdd)
         {
-            Engine.DropBigHealthRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
+            Engine.DropBigHealthRecover(Origin, ITEM_DURATION_FRAMES);
             return;
         }
 
         random -= BigHealthDropOdd;
         if (random < BigAmmoDropOdd)
         {
-            Engine.DropBigAmmoRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
+            Engine.DropBigAmmoRecover(Origin, ITEM_DURATION_FRAMES);
             return;
         }
 
         random -= BigAmmoDropOdd;
         if (random < SmallHealthDropOdd)
         {
-            Engine.DropSmallHealthRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
+            Engine.DropSmallHealthRecover(Origin, ITEM_DURATION_FRAMES);
             return;
         }
 
         random -= SmallHealthDropOdd;
         if (random < SmallAmmoDropOdd)
-            Engine.DropSmallAmmoRecover(Hitbox.Center, ITEM_DURATION_FRAMES);
+            Engine.DropSmallAmmoRecover(Origin, ITEM_DURATION_FRAMES);
+    }
+
+    protected override void OnDeath()
+    {
+        if (flashing && lastPaletteName != null)
+        {
+            flashing = false;
+            PaletteName = lastPaletteName;
+            lastPaletteName = null;
+        }
+
+        base.OnDeath();
     }
 }

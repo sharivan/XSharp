@@ -490,7 +490,7 @@ public abstract class Sprite : Entity, IRenderable
     {
         get => paletteName;
 
-        protected set
+        set
         {
             paletteName = value;
             palette = paletteName == null ? null : Engine.GetPaletteByName(value);
@@ -510,7 +510,7 @@ public abstract class Sprite : Entity, IRenderable
             return palette;
         }
 
-        protected set
+        set
         {
             palette = value;
             paletteName = value != null ? palette.Name : null;
@@ -541,7 +541,7 @@ public abstract class Sprite : Entity, IRenderable
             return spriteSheet;
         }
 
-        protected set
+        set
         {
             spriteSheet = value;
             spriteSheetName = value != null ? spriteSheet.Name : null;
@@ -891,6 +891,9 @@ public abstract class Sprite : Entity, IRenderable
         broke = false;
         MultiAnimation = false;
 
+        if (Directional)
+            Direction = DefaultDirection;
+
         FadingControl.Reset();
 
         CurrentAnimationIndex = InitialAnimationIndex;
@@ -1062,10 +1065,10 @@ public abstract class Sprite : Entity, IRenderable
 
     public void Hurt(Sprite victim, FixedSingle damage)
     {
-        if (!Alive || broke || MarkedToRemove)
+        if (!Alive || MarkedToRemove)
             return;
 
-        if (!victim.Alive || victim.broke || victim.MarkedToRemove || health <= 0)
+        if (!victim.Alive || victim.broke || victim.MarkedToRemove || victim.health <= 0)
             return;
 
         if (victim.OnTakeDamage(this, ref damage))

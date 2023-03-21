@@ -15,10 +15,13 @@
   </PropertyGroup> 
   <ItemGroup>
     <None Remove="resources\sprites\Enemies\X\AxeMax.png" />
+    <None Remove="resources\sprites\Enemies\X\Bomb Been.png" />
     <None Remove="resources\sprites\Enemies\X\Flammingle.png" />
+    <None Remove="resources\sprites\Enemies\X\Jamminger.png" />
     <None Remove="resources\sprites\Enemies\X\RayBit.png" />
     <None Remove="resources\sprites\Enemies\X\Snowball.png" />
     <None Remove="resources\sprites\Enemies\X\SnowShooter.png" />
+    <None Remove="resources\sprites\Enemies\X\Spiky.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -83,7 +86,13 @@
     <EmbeddedResource Include="resources\sprites\Enemies\X\AxeMax.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\Enemies\X\Bomb Been.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Enemies\X\Flammingle.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\Enemies\X\Jamminger.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Enemies\X\RayBit.png">
@@ -93,6 +102,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Enemies\X\SnowShooter.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\Enemies\X\Spiky.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Objects\Platforms.png">

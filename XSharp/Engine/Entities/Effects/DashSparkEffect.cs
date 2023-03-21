@@ -58,10 +58,24 @@ public class DashSparkEffect : SpriteEffect
 
     public DashSparkEffect()
     {
+    }
+
+    protected internal override void OnCreate()
+    {
+        base.OnCreate();
+
         SpriteSheetName = "X Effects";
         Directional = true;
+        DefaultDirection = Direction.LEFT;
 
         SetAnimationNames("PreDashSparkEffect", "DashSparkEffect");
+    }
+
+    protected internal override void OnSpawn()
+    {
+        base.OnSpawn();
+
+        Direction = Player != null ? Player.Direction : DefaultDirection;
     }
 
     protected internal override void OnAnimationEnd(Animation animation)

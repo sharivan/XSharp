@@ -99,10 +99,11 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
         sequence.Hitbox = SCRIVER_DRILLING_HITBOX;
         sequence.AddFrame(-4, 0, 256, 10, 48, 24, 14);
         sequence.AddFrame(-4, 0, 209, 37, 41, 24, 7);
+
+        scriverSpriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 
-    private bool flashing;
     private bool jumping;
     private int jumpCounter;
 
@@ -121,6 +122,7 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
         base.OnCreate();
 
         SpriteSheetName = "Scriver";
+        PaletteName = "scriverPalette";
 
         SetAnimationNames("Idle", "Jumping", "Landing", "Drilling", "EndDrilling");
 
@@ -130,52 +132,6 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
         RegisterState(ScriverState.LANDING, OnLanding, "Landing");
         RegisterState(ScriverState.DRILLING, OnDrilling, "Drilling");
         RegisterState(ScriverState.END_DRILLING, OnEndDrilling, "EndDrilling");
-    }
-
-    protected internal override void OnSpawn()
-    {
-        base.OnSpawn();
-
-        flashing = false;
-        jumping = false;
-        jumpCounter = 0;
-
-        PaletteName = "scriverPalette";
-        Health = SCRIVER_HEALTH;
-        ContactDamage = SCRIVER_CONTACT_DAMAGE;
-        CollisionData = CollisionData.NONE;
-
-        NothingDropOdd = 950; // 95%
-        SmallHealthDropOdd = 30; // 3%
-        BigHealthDropOdd = 15; // 1.5%
-        SmallAmmoDropOdd = 0;
-        BigAmmoDropOdd = 0;
-        LifeUpDropOdd = 5; // 0.5%
-
-        State = ScriverState.IDLE;
-    }
-
-    protected override FixedSingle GetCollisionBoxLegsHeight()
-    {
-        return SCRIVER_COLLISION_BOX_LEGS_HEIGHT;
-    }
-
-    protected override Box GetCollisionBox()
-    {
-        return SCRIVER_COLLISION_BOX;
-    }
-
-    protected override Box GetHitbox()
-    {
-        return State == ScriverState.DRILLING ? SCRIVER_DRILLING_HITBOX : SCRIVER_HITBOX;
-    }
-
-    protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
-    {
-        flashing = true;
-        PaletteName = "flashingPalette";
-
-        return base.OnTakeDamage(attacker, ref damage);
     }
 
     private void OnIdle(EntityState state, long frameCounter)
@@ -250,14 +206,39 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
             State = ScriverState.IDLE;
     }
 
-    protected override bool PreThink()
+    protected internal override void OnSpawn()
     {
-        if (flashing)
-        {
-            flashing = false;
-            PaletteName = "scriverPalette";
-        }
+        base.OnSpawn();
 
-        return base.PreThink();
+        jumping = false;
+        jumpCounter = 0;
+
+        Health = SCRIVER_HEALTH;
+        ContactDamage = SCRIVER_CONTACT_DAMAGE;
+        CollisionData = CollisionData.NONE;
+
+        NothingDropOdd = 950; // 95%
+        SmallHealthDropOdd = 30; // 3%
+        BigHealthDropOdd = 15; // 1.5%
+        SmallAmmoDropOdd = 0;
+        BigAmmoDropOdd = 0;
+        LifeUpDropOdd = 5; // 0.5%
+
+        State = ScriverState.IDLE;
+    }
+
+    protected override FixedSingle GetCollisionBoxLegsHeight()
+    {
+        return SCRIVER_COLLISION_BOX_LEGS_HEIGHT;
+    }
+
+    protected override Box GetCollisionBox()
+    {
+        return SCRIVER_COLLISION_BOX;
+    }
+
+    protected override Box GetHitbox()
+    {
+        return State == ScriverState.DRILLING ? SCRIVER_DRILLING_HITBOX : SCRIVER_HITBOX;
     }
 }

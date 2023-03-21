@@ -21,8 +21,10 @@ using XSharp.Engine.Entities;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Enemies;
 using XSharp.Engine.Entities.Enemies.AxeMax;
+using XSharp.Engine.Entities.Enemies.BombBeen;
 using XSharp.Engine.Entities.Enemies.Bosses;
 using XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+using XSharp.Engine.Entities.Enemies.Flammingle;
 using XSharp.Engine.Entities.Enemies.RayBit;
 using XSharp.Engine.Entities.HUD;
 using XSharp.Engine.Entities.Items;
@@ -1020,8 +1022,8 @@ public class GameEngine : IRenderable, IRenderTarget
         device.SetTextureStageState(0, TextureStage.ColorArg1, TextureArgument.Texture);
         device.SetTextureStageState(1, TextureStage.ColorOperation, TextureOperation.Disable);
         device.SetTextureStageState(1, TextureStage.AlphaOperation, TextureOperation.Disable);
-        device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-        device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+        device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Wrap);
+        device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Wrap);
 
         stageTexture = new Texture(device, SCREEN_WIDTH, SCREEN_HEIGHT, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
 
@@ -4307,7 +4309,7 @@ public class GameEngine : IRenderable, IRenderTarget
         if (force || !entity.Respawnable)
             Entities.Remove(entity);
         else if (entity.RespawnOnNear)
-            entity.Reset();
+            entity.ResetFromInitParams();
     }
 
     private void CreateHP()

@@ -86,8 +86,6 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
     }
     #endregion
 
-    private bool flashing;
-
     public BattonBoneGState State
     {
         get => GetState<BattonBoneGState>();
@@ -127,8 +125,6 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
 
         CheckCollisionWithWorld = false;
 
-        flashing = false;
-
         PaletteName = "battonBoneGPalette";
         Health = BATTON_BONE_G_HEALTH;
         ContactDamage = BATTON_BONE_G_CONTACT_DAMAGE;
@@ -141,14 +137,6 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
         LifeUpDropOdd = 25; // 0.25%
 
         State = BattonBoneGState.IDLE;
-    }
-
-    protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
-    {
-        flashing = true;
-        PaletteName = "flashingPalette";
-
-        return base.OnTakeDamage(attacker, ref damage);
     }
 
     protected override void OnHurt(Sprite victim, FixedSingle damage)
@@ -180,7 +168,7 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
     {
         if (Engine.Player != null)
         {
-            Vector delta = Engine.Player.Origin - Origin;
+            var delta = Engine.Player.Origin - Origin;
             Velocity = BATTON_BONE_G_ATTACK_SPEED * delta.Versor(Metric.MAX);
         }
         else
@@ -200,16 +188,5 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
         {
             Velocity = BATTON_BONE_G_ESCAPE_SPEED * Vector.UP_VECTOR;
         }
-    }
-
-    protected override bool PreThink()
-    {
-        if (flashing)
-        {
-            flashing = false;
-            PaletteName = "battonBoneGPalette";
-        }
-
-        return base.PreThink();
     }
 }

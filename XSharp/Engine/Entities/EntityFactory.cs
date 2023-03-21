@@ -174,7 +174,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
 
         entity.OnCreate();
         entity.Initialize(initParams);
-        entity.Reset();
+        entity.ResetFromInitParams();
 
         if (entity.CheckTouchingEntities)
             GameEngine.Engine.partition.Insert(entity);

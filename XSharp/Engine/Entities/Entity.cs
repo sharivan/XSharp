@@ -330,7 +330,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
         }
     }
 
-    protected internal void Reset()
+    protected internal void ResetFromInitParams()
     {
         Type type = GetType();
         foreach (var kv in initParams)
@@ -526,8 +526,8 @@ public abstract class Entity : IIndexedNamedFactoryItem
         where U : struct, Enum
         where V : struct, Enum
     {
-        SetState<U>(id);
-        SetSubState<V>(subid);
+        SetState(id);
+        SetSubState(subid);
     }
 
     public bool IsTouching(Entity other)
@@ -808,6 +808,8 @@ public abstract class Entity : IIndexedNamedFactoryItem
         Spawning = false;
         Alive = true;
         Dead = false;
+
+        ResetFromInitParams();
 
         UpdatePartition(true);
     }
