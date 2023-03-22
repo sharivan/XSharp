@@ -65,6 +65,7 @@ public class RayBitShot : Enemy
 
         CheckCollisionWithWorld = false;
         ContactDamage = 0;
+        Invincible = true;
 
         SetCurrentAnimationByName("Shot");
     }

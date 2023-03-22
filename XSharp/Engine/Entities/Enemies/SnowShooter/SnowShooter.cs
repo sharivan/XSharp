@@ -37,7 +37,7 @@ public class SnowShooter : Enemy, IStateEntity<SnowShooterState>
         Color.FromBgra(0xFF183028)  // F
     };
 
-    public const int HEALTH = 10;
+    public const int HEALTH = 8;
     public static readonly FixedSingle CONTACT_DAMAGE = 3;
     public static readonly Box HITBOX = ((0, 32), (-7, -17), (7, 17));
 

@@ -57,6 +57,7 @@ internal class PenguinSnow : Enemy
         Direction = Shooter.Direction;
         Origin = Shooter.Origin + (Shooter.Direction == Shooter.DefaultDirection ? -PENGUIN_SHOT_ORIGIN_OFFSET.X : PENGUIN_SHOT_ORIGIN_OFFSET.X, PENGUIN_SHOT_ORIGIN_OFFSET.Y);
         Invincible = true;
+        ContactDamage = 0;
 
         frameCounter = 0;
 

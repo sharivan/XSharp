@@ -555,23 +555,38 @@ public class Penguin : Boss, IStateEntity<PenguinState>
                     {
                         case PenguinState.SHOOTING_ICE:
                         {
-                            switch (value)
+                            while (State == PenguinState.IDLE)
                             {
-                                case >= 0 and < 4:
-                                    State = PenguinState.SLIDING;
-                                    break;
+                                switch (value)
+                                {
+                                    case >= 0 and < 2:
+                                        State = PenguinState.SLIDING;
+                                        break;
 
-                                case >= 4 and < 6:
-                                    State = PenguinState.SHOOTING_ICE;
-                                    break;
+                                    case >= 2 and < 4:
+                                        State = PenguinState.SHOOTING_ICE;
+                                        break;
 
-                                case >= 6 and < 10:
-                                    State = PenguinState.JUMPING;
-                                    break;
+                                    case >= 4 and < 6:
+                                        State = PenguinState.JUMPING;
+                                        break;
 
-                                default:
-                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
-                                    break;
+                                    case >= 6 and < 12:
+                                        if (AtLeastOneSculpturesAlive())
+                                            State = PenguinState.HANGING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+
+                                    default:
+                                        if (!AllSculpturesAlive())
+                                            State = PenguinState.BLOWING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+                                }
                             }
 
                             break;
@@ -579,27 +594,38 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                         case PenguinState.BLOWING:
                         {
-                            switch (value)
+                            while (State == PenguinState.IDLE)
                             {
-                                case >= 0 and < 2:
-                                    State = PenguinState.SLIDING;
-                                    break;
+                                switch (value)
+                                {
+                                    case >= 0 and < 2:
+                                        State = PenguinState.SLIDING;
+                                        break;
 
-                                case >= 2 and < 4:
-                                    State = PenguinState.SHOOTING_ICE;
-                                    break;
+                                    case >= 2 and < 4:
+                                        State = PenguinState.SHOOTING_ICE;
+                                        break;
 
-                                case >= 4 and < 6:
-                                    State = PenguinState.JUMPING;
-                                    break;
+                                    case >= 4 and < 6:
+                                        State = PenguinState.JUMPING;
+                                        break;
 
-                                case >= 6 and < 14:
-                                    State = PenguinState.HANGING;
-                                    break;
+                                    case >= 6 and < 14:
+                                        if (AtLeastOneSculpturesAlive())
+                                            State = PenguinState.HANGING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
 
-                                default:
-                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
-                                    break;
+                                        break;
+
+                                    default:
+                                        if (!AllSculpturesAlive())
+                                            State = PenguinState.BLOWING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+                                }
                             }
 
                             break;
@@ -607,23 +633,38 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                         case PenguinState.SLIDING:
                         {
-                            switch (value)
+                            while (State == PenguinState.IDLE)
                             {
-                                case >= 0 and < 2:
-                                    State = PenguinState.SLIDING;
-                                    break;
+                                switch (value)
+                                {
+                                    case >= 0 and < 2:
+                                        State = PenguinState.SLIDING;
+                                        break;
 
-                                case >= 2 and < 10:
-                                    State = PenguinState.SHOOTING_ICE;
-                                    break;
+                                    case >= 2 and < 6:
+                                        State = PenguinState.SHOOTING_ICE;
+                                        break;
 
-                                case >= 10 and < 12:
-                                    State = PenguinState.JUMPING;
-                                    break;
+                                    case >= 6 and < 8:
+                                        State = PenguinState.JUMPING;
+                                        break;
 
-                                default:
-                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
-                                    break;
+                                    case >= 8 and < 12:
+                                        if (AtLeastOneSculpturesAlive())
+                                            State = PenguinState.HANGING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+
+                                    default:
+                                        if (!AllSculpturesAlive())
+                                            State = PenguinState.BLOWING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+                                }
                             }
 
                             break;
@@ -631,19 +672,34 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                         case PenguinState.JUMPING:
                         {
-                            switch (value)
+                            while (State == PenguinState.IDLE)
                             {
-                                case >= 0 and < 6:
-                                    State = PenguinState.SLIDING;
-                                    break;
+                                switch (value)
+                                {
+                                    case >= 0 and < 4:
+                                        State = PenguinState.SLIDING;
+                                        break;
 
-                                case >= 6 and < 12:
-                                    State = PenguinState.SHOOTING_ICE;
-                                    break;
+                                    case >= 4 and < 6:
+                                        State = PenguinState.SHOOTING_ICE;
+                                        break;
 
-                                default:
-                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
-                                    break;
+                                    case >= 6 and < 12:
+                                        if (AtLeastOneSculpturesAlive())
+                                            State = PenguinState.HANGING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+
+                                    default:
+                                        if (!AllSculpturesAlive())
+                                            State = PenguinState.BLOWING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+                                }
                             }
 
                             break;
@@ -651,19 +707,34 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                         case PenguinState.HANGING:
                         {
-                            switch (value)
+                            while (State == PenguinState.IDLE)
                             {
-                                case >= 0 and < 6:
-                                    State = PenguinState.SLIDING;
-                                    break;
+                                switch (value)
+                                {
+                                    case >= 0 and < 4:
+                                        State = PenguinState.SLIDING;
+                                        break;
 
-                                case >= 6 and < 12:
-                                    State = PenguinState.SHOOTING_ICE;
-                                    break;
+                                    case >= 4 and < 6:
+                                        State = PenguinState.SHOOTING_ICE;
+                                        break;
 
-                                default:
-                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
-                                    break;
+                                    case >= 6 and < 12:
+                                        if (AtLeastOneSculpturesAlive())
+                                            State = PenguinState.HANGING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+
+                                    default:
+                                        if (!AllSculpturesAlive())
+                                            State = PenguinState.BLOWING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+                                }
                             }
 
                             break;
@@ -672,19 +743,34 @@ public class Penguin : Boss, IStateEntity<PenguinState>
                         case PenguinState.TAKING_DAMAGE:
                         case PenguinState.IN_FLAMES:
                         {
-                            switch (value)
+                            while (State == PenguinState.IDLE)
                             {
-                                case >= 0 and < 8:
-                                    State = PenguinState.SLIDING;
-                                    break;
+                                switch (value)
+                                {
+                                    case >= 0 and < 2:
+                                        State = PenguinState.SLIDING;
+                                        break;
 
-                                case >= 8 and < 12:
-                                    State = PenguinState.SHOOTING_ICE;
-                                    break;
+                                    case >= 2 and < 6:
+                                        State = PenguinState.SHOOTING_ICE;
+                                        break;
 
-                                default:
-                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
-                                    break;
+                                    case >= 6 and < 12:
+                                        if (AtLeastOneSculpturesAlive())
+                                            State = PenguinState.HANGING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+
+                                    default:
+                                        if (!AllSculpturesAlive())
+                                            State = PenguinState.BLOWING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+                                }
                             }
 
                             break;
@@ -692,27 +778,38 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                         default:
                         {
-                            switch (value)
+                            while (State == PenguinState.IDLE)
                             {
-                                case >= 0 and < 4:
-                                    State = PenguinState.SLIDING;
-                                    break;
+                                switch (value)
+                                {
+                                    case >= 0 and < 2:
+                                        State = PenguinState.SLIDING;
+                                        break;
 
-                                case >= 4 and < 8:
-                                    State = PenguinState.SHOOTING_ICE;
-                                    break;
+                                    case >= 2 and < 4:
+                                        State = PenguinState.SHOOTING_ICE;
+                                        break;
 
-                                case >= 8 and < 10:
-                                    State = PenguinState.JUMPING;
-                                    break;
+                                    case >= 4 and < 8:
+                                        State = PenguinState.JUMPING;
+                                        break;
 
-                                case >= 10 and < 12:
-                                    State = PenguinState.HANGING;
-                                    break;
+                                    case >= 8 and < 12:
+                                        if (AtLeastOneSculpturesAlive())
+                                            State = PenguinState.HANGING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
 
-                                default:
-                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
-                                    break;
+                                        break;
+
+                                    default:
+                                        if (!AllSculpturesAlive())
+                                            State = PenguinState.BLOWING;
+                                        else
+                                            value = Engine.RNG.NextInt(16);
+
+                                        break;
+                                }
                             }
 
                             break;
@@ -721,6 +818,11 @@ public class Penguin : Boss, IStateEntity<PenguinState>
                 }
             }
         }
+    }
+
+    private bool AtLeastOneSculpturesAlive()
+    {
+        return Sculpture1.Alive || Sculpture2.Alive;
     }
 
     private bool AllSculpturesAlive()

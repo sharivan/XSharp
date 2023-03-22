@@ -160,7 +160,7 @@ public class Consts
 
     public const int LEMON_DAMAGE = 2;
     public const int SEMI_CHARGED_DAMAGE = 4;
-    public const int CHARGED_DAMAGE = 8;
+    public const int CHARGED_DAMAGE = 6;
 
     // Render
 

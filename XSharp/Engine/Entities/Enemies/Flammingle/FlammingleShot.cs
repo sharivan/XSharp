@@ -45,6 +45,7 @@ public class FlammingleShot : Enemy
 
         CheckCollisionWithWorld = false;
         ContactDamage = Flammingle.SHOT_DAMAGE;
+        Invincible = true;
     }
 
     protected override void OnContactDamage(Player player)

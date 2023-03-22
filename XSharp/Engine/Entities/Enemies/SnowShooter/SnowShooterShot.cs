@@ -45,5 +45,6 @@ public class SnowShooterShot : Enemy
 
         CheckCollisionWithWorld = false;
         ContactDamage = SnowShooter.SHOT_DAMAGE;
+        Invincible = true;
     }
 }
