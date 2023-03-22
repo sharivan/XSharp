@@ -22,7 +22,7 @@ public class SmallAmmoRecover : Item
         SetAnimationNames("SmallAmmoRecover");
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

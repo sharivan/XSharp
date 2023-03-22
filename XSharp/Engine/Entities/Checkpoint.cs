@@ -58,7 +58,7 @@ public class Checkpoint : Entity
         return hitbox;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

@@ -94,7 +94,7 @@ internal class BossDoorEffect : SpriteEffect, IStateEntity<BossDoorState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -152,7 +152,7 @@ internal class BossDoorEffect : SpriteEffect, IStateEntity<BossDoorState>
         base.OnDeath();
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
 

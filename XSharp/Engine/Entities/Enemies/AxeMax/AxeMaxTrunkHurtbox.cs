@@ -33,7 +33,7 @@ public class AxeMaxTrunkHurtbox : Enemy
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -63,7 +63,7 @@ public class AxeMaxTrunkHurtbox : Enemy
         return COLLISION_BOX;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

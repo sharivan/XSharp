@@ -60,7 +60,7 @@ public class AxeMaxTrunkBase : Sprite
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -96,7 +96,7 @@ public class AxeMaxTrunkBase : Sprite
         return (origin.X, origin.Y - 16 * (index + 1));
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -126,9 +126,9 @@ public class AxeMaxTrunkBase : Sprite
         trunk.Spawn();
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if (!Regenerating)
         {

@@ -971,7 +971,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
             Engine.OnPlayerTeleported();
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -1195,9 +1195,9 @@ public class Player : Sprite, IStateEntity<PlayerState>
         Clamp(limit.ClipTop(-2 * BLOCK_SIZE).ClipBottom(-2 * BLOCK_SIZE), ref origin);
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if (Engine.Paused)
         {
@@ -2106,7 +2106,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
             SetAirStateAnimation();
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
 

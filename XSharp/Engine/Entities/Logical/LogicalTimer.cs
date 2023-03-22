@@ -49,9 +49,9 @@ public class LogicalTimer : LogicalEntity
         Enabled = !Enabled;
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if (!Enabled)
             return;

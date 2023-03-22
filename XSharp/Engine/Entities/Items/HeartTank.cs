@@ -21,7 +21,7 @@ public class HeartTank : Item
         SetAnimationNames("HeartTank");
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

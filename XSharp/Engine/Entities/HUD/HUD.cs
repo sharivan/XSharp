@@ -14,14 +14,14 @@ public abstract class HUD : Sprite
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
         Directional = false;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -30,14 +30,10 @@ public abstract class HUD : Sprite
         Static = true;
     }
 
-    protected internal override void PostThink()
+    protected override void OnPostThink()
     {
-        base.PostThink();
+        base.OnPostThink();
 
         Origin = Engine.Camera.LeftTop + Offset;
-    }
-
-    protected internal override void UpdatePartition(bool force = false)
-    {
     }
 }

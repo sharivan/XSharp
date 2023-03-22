@@ -36,7 +36,7 @@ public class DashSmokeEffect : SpriteEffect
         SetAnimationNames("DashSmokeEffect");
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
         KillOnNextFrame();

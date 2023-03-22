@@ -130,7 +130,7 @@ public class PenguinSculpture : Enemy
         return base.OnTakeDamage(attacker, ref damage);
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -145,9 +145,9 @@ public class PenguinSculpture : Enemy
         SetCurrentAnimationByName("Sculpture");
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         frameCounter++;
         if (frameCounter == PENGUIN_SCULPTURE_FRAMES_TO_GRAVITY)

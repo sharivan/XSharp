@@ -77,7 +77,12 @@ public class FadingControl : ISerializable
         set;
     }
 
-    protected internal virtual void OnFrame()
+    internal void DoFrame()
+    {
+        OnFrame();
+    }
+
+    protected virtual void OnFrame()
     {
         if (Fading && !Paused)
         {

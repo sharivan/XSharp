@@ -43,7 +43,7 @@ public class BusterSemiCharged : Weapon, IStateEntity<SemiChargedState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -66,7 +66,7 @@ public class BusterSemiCharged : Weapon, IStateEntity<SemiChargedState>
         return SEMI_CHARGED_DAMAGE;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -129,7 +129,7 @@ public class BusterSemiCharged : Weapon, IStateEntity<SemiChargedState>
         SetState(SemiChargedState.EXPLODING);
     }
 
-    protected internal override void OnHit(Enemy enemy, FixedSingle damage)
+    protected override void OnHit(Enemy enemy, FixedSingle damage)
     {
         if (!enemy.Broke && enemy.Health > damage)
         {
@@ -149,7 +149,7 @@ public class BusterSemiCharged : Weapon, IStateEntity<SemiChargedState>
         base.OnDeath();
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
 

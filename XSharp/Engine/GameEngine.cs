@@ -26,6 +26,9 @@ using XSharp.Engine.Entities.Enemies.Bosses;
 using XSharp.Engine.Entities.Enemies.Bosses.Penguin;
 using XSharp.Engine.Entities.Enemies.Flammingle;
 using XSharp.Engine.Entities.Enemies.RayBit;
+using XSharp.Engine.Entities.Enemies.Snowball;
+using XSharp.Engine.Entities.Enemies.SnowShooter;
+using XSharp.Engine.Entities.Enemies.Tombot;
 using XSharp.Engine.Entities.HUD;
 using XSharp.Engine.Entities.Items;
 using XSharp.Engine.Entities.Objects;
@@ -1022,8 +1025,8 @@ public class GameEngine : IRenderable, IRenderTarget
         device.SetTextureStageState(0, TextureStage.ColorArg1, TextureArgument.Texture);
         device.SetTextureStageState(1, TextureStage.ColorOperation, TextureOperation.Disable);
         device.SetTextureStageState(1, TextureStage.AlphaOperation, TextureOperation.Disable);
-        device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Wrap);
-        device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Wrap);
+        device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
 
         stageTexture = new Texture(device, SCREEN_WIDTH, SCREEN_HEIGHT, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
 
@@ -1529,17 +1532,23 @@ public class GameEngine : IRenderable, IRenderTarget
             shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
         }
 
-        for (int i = 0; i < repeatX; i++)
+        var matTranslation = Matrix.Translation(rDest.Left, rDest.Top, 0);
+        Matrix matTransform = matTranslation * transform * matScaling;
+        sprite.Transform = matTransform;
+
+        if (repeatX > 1 || repeatY > 1)
         {
-            for (int j = 0; j < repeatY; j++)
-            {
-                float x = rDest.Left + i * rDest.Width;
-                float y = rDest.Top + j * rDest.Height;
-                var matTranslation = Matrix.Translation(x, y, 0);
-                Matrix matTransform = matTranslation * transform * matScaling;
-                sprite.Transform = matTransform;
-                sprite.Draw(texture, Color.FromRgba(0xffffffff));
-            }
+            Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Wrap);
+            Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Wrap);
+
+            sprite.Draw(texture, Color.FromRgba(0xffffffff), ToRectangleF(box.Scale(box.Origin, repeatX, repeatY) - box.Origin));
+        }
+        else
+        {
+            Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+            Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+            sprite.Draw(texture, Color.FromRgba(0xffffffff));
         }
 
         sprite.End();
@@ -2057,7 +2066,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     private void HandleScreenEffects()
     {
-        FadingControl.OnFrame();
+        FadingControl.DoFrame();
 
         if (FadingOST)
         {
@@ -2185,7 +2194,7 @@ public class GameEngine : IRenderable, IRenderTarget
                             sprites[sprite.Layer].Add(sprite);
                     }
 
-                    added.OnSpawn();
+                    added.NotifySpawn();
                     added.PostSpawn();
                 }
 
@@ -2199,7 +2208,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
             if (paused || Player != null && Player.Freezed && (!FreezingSprites || freezingSpriteExceptions.Contains(Player)))
             {
-                Player?.OnFrame();
+                Player?.DoFrame();
             }
             else
             {
@@ -2210,7 +2219,7 @@ public class GameEngine : IRenderable, IRenderTarget
                         if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
                         {
                             if (entity != Camera)
-                                entity.OnFrame();
+                                entity.DoFrame();
                         }
                     }
                 }
@@ -2219,13 +2228,13 @@ public class GameEngine : IRenderable, IRenderTarget
                     foreach (var entity in aliveEntities)
                     {
                         if (entity != Camera)
-                            entity.OnFrame();
+                            entity.DoFrame();
                     }
                 }
             }
 
             World?.OnFrame();
-            Camera?.OnFrame();
+            Camera?.DoFrame();
 
             if (removedEntities.Count > 0)
             {
@@ -2629,6 +2638,9 @@ public class GameEngine : IRenderable, IRenderTarget
         Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
         Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
 
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
         if (fadingControl != null)
         {
             Device.PixelShader = PixelShader;
@@ -2659,6 +2671,9 @@ public class GameEngine : IRenderable, IRenderTarget
 
         Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
         Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
 
         if (fadingControl != null)
         {
@@ -2693,6 +2708,9 @@ public class GameEngine : IRenderable, IRenderTarget
 
         Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
         Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
 
         if (fadingControl != null)
         {
@@ -2749,6 +2767,9 @@ public class GameEngine : IRenderable, IRenderTarget
 
         Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
         Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
 
         if (fadingControl != null)
         {
@@ -2867,6 +2888,9 @@ public class GameEngine : IRenderable, IRenderTarget
         Device.SetSamplerState(0, SamplerState.MagFilter, linear ? TextureFilter.Linear : TextureFilter.Point);
         Device.SetSamplerState(0, SamplerState.MinFilter, linear ? TextureFilter.Linear : TextureFilter.Point);
         Device.SetSamplerState(0, SamplerState.MipFilter, TextureFilter.None);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
 
         Device.SetStreamSource(0, VertexBuffer, 0, VERTEX_SIZE);
         Device.SetTexture(0, texture);
@@ -3053,7 +3077,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
                             if (!entity.Alive)
                             {
-                                if (entity.Respawnable)
+                                if (entity.Respawnable || entity.SpawnOnNear)
                                     FillRectangle(rect, DEAD_RESPAWNABLE_HITBOX_COLOR);
                                 else
                                     FillRectangle(rect, DEAD_HITBOX_COLOR);
@@ -4220,7 +4244,7 @@ public class GameEngine : IRenderable, IRenderTarget
             Origin = origin
         });
 
-        entity.Place();
+        entity.Place(false);
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4308,7 +4332,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
         if (force || !entity.Respawnable)
             Entities.Remove(entity);
-        else if (entity.RespawnOnNear)
+        else if (entity.SpawnOnNear)
             entity.ResetFromInitParams();
     }
 
@@ -4449,6 +4473,9 @@ public class GameEngine : IRenderable, IRenderTarget
 
         Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
         Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
 
         Device.DrawPrimitives(PrimitiveType.TriangleList, 0, primitiveCount);
     }
@@ -5203,7 +5230,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    internal void CallPrecacheAction(Type baseType)
+    public void CallPrecacheAction(Type baseType)
     {
         PrecacheAction first = null;
         PrecacheAction previous = null;
@@ -5251,6 +5278,11 @@ public class GameEngine : IRenderable, IRenderTarget
 
         if (shouldCall)
             first.Call();
+    }
+
+    public void CallPrecacheAction<EntityType>() where EntityType : Entity
+    {
+        CallPrecacheAction(typeof(EntityType));
     }
 
     private void RecallPrecacheActions()

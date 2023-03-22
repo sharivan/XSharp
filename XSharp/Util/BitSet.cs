@@ -595,9 +595,58 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return true;
     }
 
+    public int PopCount(int start = 0)
+    {
+        return PopCount(start, BitCount - start);
+    }
+
+    public int PopCount(int start, int count)
+    {
+        int end = start + count;
+
+        if (start < 0)
+            start = 0;
+
+        if (end <= 0 || start >= end)
+            return 0;
+
+        int startSlot = start / BITS_PER_SLOT;
+        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
+
+        if (endSlot > SlotCount)
+            endSlot = SlotCount;
+
+        const ulong MASK = ~0UL;
+        ulong START_MASK;
+        ulong slotBits;
+
+        if (endSlot == startSlot + 1)
+        {
+            START_MASK = (MASK << (start % BITS_PER_SLOT)) & (MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1));
+            slotBits = bits[startSlot];
+            return PopCount64(slotBits & START_MASK);
+        }
+
+        START_MASK = MASK << (start % BITS_PER_SLOT);
+        slotBits = bits[startSlot];
+        int result = PopCount64(slotBits & START_MASK);
+
+        ulong END_MASK = MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1);
+        slotBits = bits[endSlot - 1];
+        result += PopCount64(slotBits & END_MASK);
+
+        for (int i = startSlot + 1; i < endSlot - 1; i++)
+        {
+            slotBits = bits[i];
+            result += PopCount64(slotBits);
+        }
+
+        return result;
+    }
+
     public int FirstSetBit(int start = 0)
     {
-        return FirstSetBit(start, SlotCount * BITS_PER_SLOT - start);
+        return FirstSetBit(start, BitCount - start);
     }
 
     public int FirstSetBit(int start, int count)
@@ -1099,12 +1148,12 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void ShiftLeft(int bitsToShift)
     {
-        ShiftRight(0, SlotCount * BITS_PER_SLOT, bitsToShift);
+        ShiftRight(0, BitCount, bitsToShift);
     }
 
     public void ShiftLeft(int start, int bitsToShift)
     {
-        ShiftRight(start, SlotCount * BITS_PER_SLOT, bitsToShift);
+        ShiftRight(start, BitCount, bitsToShift);
     }
 
     // TODO : Fix me!
@@ -1146,12 +1195,12 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void ShiftRight(int bitsToShift)
     {
-        ShiftRight(0, SlotCount * BITS_PER_SLOT, bitsToShift);
+        ShiftRight(0, BitCount, bitsToShift);
     }
 
     public void ShiftRight(int start, int bitsToShift)
     {
-        ShiftRight(start, SlotCount * BITS_PER_SLOT, bitsToShift);
+        ShiftRight(start, BitCount, bitsToShift);
     }
 
     // TODO : Fix me!
@@ -1195,7 +1244,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void RotateLeft(int start, int bitsToRotate)
     {
-        RotateLeft(start, SlotCount * BITS_PER_SLOT, bitsToRotate);
+        RotateLeft(start, BitCount, bitsToRotate);
     }
 
     // TODO : Implement me!
@@ -1205,7 +1254,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void RotateRight(int start, int bitsToRotate)
     {
-        RotateRight(start, SlotCount * BITS_PER_SLOT, bitsToRotate);
+        RotateRight(start, BitCount, bitsToRotate);
     }
 
     // TODO : Implement me!

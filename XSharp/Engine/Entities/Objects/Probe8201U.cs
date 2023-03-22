@@ -104,7 +104,7 @@ public class Probe8201U : Sprite
         return 0;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -173,9 +173,9 @@ public class Probe8201U : Sprite
         }
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if (MovingVertically)
             MoveVertically();

@@ -22,7 +22,7 @@ public class PenguinIceFragment : Sprite
         SetAnimationNames("IceFragment");
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

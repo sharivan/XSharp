@@ -39,7 +39,7 @@ public class BombBeenBomb : Sprite, IStateEntity<BombBeenBombState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -103,10 +103,11 @@ public class BombBeenBomb : Sprite, IStateEntity<BombBeenBombState>
         return BombBeen.BOMB_COLLISION_BOX;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
+        KillOnOffscreen = true;
         Health = BombBeen.BOMB_HEALTH;
 
         tick = 0;

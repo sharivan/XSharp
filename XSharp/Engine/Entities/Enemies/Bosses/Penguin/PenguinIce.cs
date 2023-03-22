@@ -100,7 +100,7 @@ public class PenguinIce : Enemy
         return Bump ? base.GetGravity() : 0;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -151,9 +151,9 @@ public class PenguinIce : Enemy
         Explode();
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         Velocity = (Direction == Direction.RIGHT ? speed : -speed, Velocity.Y);
     }

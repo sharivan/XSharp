@@ -39,7 +39,7 @@ public class BusterLemon : Weapon, IStateEntity<LemonState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -70,7 +70,7 @@ public class BusterLemon : Weapon, IStateEntity<LemonState>
         return DashLemon ? 2 * LEMON_DAMAGE : LEMON_DAMAGE;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -104,7 +104,7 @@ public class BusterLemon : Weapon, IStateEntity<LemonState>
         KillOnNextFrame();
     }
 
-    protected internal override void OnHit(Enemy enemy, FixedSingle damage)
+    protected override void OnHit(Enemy enemy, FixedSingle damage)
     {
         Explode(enemy);
     }
@@ -146,7 +146,7 @@ public class BusterLemon : Weapon, IStateEntity<LemonState>
         base.OnDeath();
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
 

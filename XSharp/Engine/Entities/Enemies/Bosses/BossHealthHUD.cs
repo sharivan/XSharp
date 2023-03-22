@@ -18,11 +18,11 @@ public class BossHealthHUD : HealthHUD
         Image = HUDImage.BOSS;
     }
 
-    protected internal override void PostThink()
+    protected override void OnPostThink()
     {
         Capacity = Boss.MaxHealth;
         Value = Boss.Health;
 
-        base.PostThink();
+        base.OnPostThink();
     }
 }

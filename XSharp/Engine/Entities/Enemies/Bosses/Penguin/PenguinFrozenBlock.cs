@@ -102,7 +102,7 @@ public class PenguinFrozenBlock : Sprite
         Kill();
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -150,9 +150,9 @@ public class PenguinFrozenBlock : Sprite
         base.OnDeath();
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if ((Engine.Player.Keys.HasActionOrMovement()
             || Engine.Player.LastKeys.HasActionOrMovement())

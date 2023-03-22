@@ -119,14 +119,14 @@ public class ChargingEffect : SpriteEffect
         SetAnimationNames("ChargingLevel1", "ChargingLevel2");
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
         level = 1;
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
         if (!soundPlayed)
         {
@@ -137,7 +137,7 @@ public class ChargingEffect : SpriteEffect
         Origin = Charger.Hitbox.Center;
         Direction = Charger.Direction;
 
-        base.Think();
+        base.OnThink();
     }
 
     protected override void OnDeath()

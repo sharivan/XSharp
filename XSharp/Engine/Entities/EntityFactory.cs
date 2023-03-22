@@ -172,7 +172,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
             }
         }
 
-        entity.OnCreate();
+        entity.NotifyCreated();
         entity.Initialize(initParams);
         entity.ResetFromInitParams();
 

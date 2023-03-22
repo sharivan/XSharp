@@ -54,9 +54,9 @@ public class EntityState
             if (currentSubStateID != value)
             {
                 var lastSubState = CurrentSubState;
-                lastSubState?.OnEnd();
+                lastSubState?.NotifyEnd();
                 currentSubStateID = value;
-                CurrentSubState?.OnStart(null, lastSubState);
+                CurrentSubState?.NotifyStart(null, lastSubState);
             }
         }
     }
@@ -106,7 +106,12 @@ public class EntityState
         return RegisterSubState(id, null, null, null);
     }
 
-    protected internal virtual void OnStart(EntityState lastState)
+    internal void NotifyStart(EntityState lastState)
+    {
+        OnStart(lastState);
+    }
+
+    protected virtual void OnStart(EntityState lastState)
     {
         FrameCounter = 0;
         StartEvent?.Invoke(this, lastState);
@@ -114,7 +119,7 @@ public class EntityState
         if (Current && HasSubStates)
         {
             var lastSubState = lastState != null && lastState.HasSubStates ? lastState.CurrentSubState : null;
-            lastSubState?.OnEnd();
+            lastSubState?.NotifyEnd();
 
             switch (Entity.SubStateChangeMode)
             {
@@ -133,26 +138,36 @@ public class EntityState
                     break;
             }
 
-            CurrentSubState?.OnStart(lastState, lastSubState);
+            CurrentSubState?.NotifyStart(lastState, lastSubState);
         }
     }
 
-    protected internal virtual void OnFrame()
+    internal void DoFrame()
+    {
+        OnFrame();
+    }
+
+    protected virtual void OnFrame()
     {
         FrameEvent?.Invoke(this, FrameCounter);
 
         if (HasSubStates)
-            CurrentSubState?.OnFrame();
+            CurrentSubState?.DoFrame();
 
         FrameCounter++;
     }
 
-    protected internal virtual void OnEnd()
+    internal void NotifyEnd()
+    {
+        OnEnd();
+    }
+
+    protected virtual void OnEnd()
     {
         EndEvent?.Invoke(this);
 
         if (HasSubStates)
-            CurrentSubState?.OnEnd();
+            CurrentSubState?.NotifyEnd();
     }
 }
 
@@ -198,19 +213,34 @@ public class EntitySubState
         private set;
     } = 0;
 
-    protected internal virtual void OnStart(EntityState lastState, EntitySubState lastSubState)
+    internal void NotifyStart(EntityState lastState, EntitySubState lastSubState)
+    {
+        OnStart(lastState, lastSubState);
+    }
+
+    protected virtual void OnStart(EntityState lastState, EntitySubState lastSubState)
     {
         FrameCounter = 0;
         StartEvent?.Invoke(State, lastState, this, lastSubState);
     }
 
-    protected internal virtual void OnFrame()
+    internal void DoFrame()
+    {
+        OnFrame();
+    }
+
+    protected virtual void OnFrame()
     {
         FrameEvent?.Invoke(State, this, FrameCounter);
         FrameCounter++;
     }
 
-    protected internal virtual void OnEnd()
+    internal void NotifyEnd()
+    {
+        OnEnd();
+    }
+
+    protected virtual void OnEnd()
     {
         EndEvent?.Invoke(State, this);
     }

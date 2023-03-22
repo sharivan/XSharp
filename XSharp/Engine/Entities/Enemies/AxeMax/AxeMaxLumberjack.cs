@@ -52,7 +52,7 @@ public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxLumberjackState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -126,7 +126,7 @@ public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxLumberjackState>
         return COLLISION_BOX_LEGS_HEIGHT;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
