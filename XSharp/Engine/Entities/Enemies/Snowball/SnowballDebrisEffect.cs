@@ -65,7 +65,7 @@ public class SnowballDebrisEffect : SpriteEffect
         KillOnOffscreen = true;
         Blinking = false;
 
-        SetCurrentAnimationByName(ANIMATION_NAMES[(int) debrisType]);
+        SetCurrentAnimationByName(ANIMATION_NAMES[(int) debrisType]);        
     }
 
     protected override void OnThink()
