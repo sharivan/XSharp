@@ -41,7 +41,7 @@ public class XDieExplosion : HUD
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -52,7 +52,7 @@ public class XDieExplosion : HUD
         SetAnimationNames(("DyingExplosion", SparkCount));
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -60,9 +60,9 @@ public class XDieExplosion : HUD
         frameCounter = 0;
     }
 
-    protected internal override void PostThink()
+    protected override void OnPostThink()
     {
-        base.PostThink();
+        base.OnPostThink();
 
         double radius = (double) frameCounter / MaxFrames * MaxRadius;
         for (int i = 0; i < SparkCount; i++)

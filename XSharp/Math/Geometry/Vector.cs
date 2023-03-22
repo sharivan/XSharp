@@ -418,6 +418,19 @@ public struct Vector : IGeometry, ISerializable
         return System.Math.Sqrt(x * x + y * y);
     }
 
+    public FixedDouble GetLengthSquare()
+    {
+        if (X == 0)
+            return (FixedDouble) Y * (FixedDouble) Y;
+
+        if (Y == 0)
+            return (FixedDouble) X * (FixedDouble) X;
+
+        FixedDouble x = X;
+        FixedDouble y = Y;
+        return x * x + y * y;
+    }
+
     public FixedSingle GetLength(Metric metric)
     {
         return metric == Metric.EUCLIDIAN ? GetLength() : DistanceTo(NULL_VECTOR, metric);

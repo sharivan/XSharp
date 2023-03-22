@@ -328,7 +328,7 @@ public class Camera : Entity
         return VisibleBox(box).IsValid();
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -383,9 +383,9 @@ public class Camera : Entity
     }
 
     // TODO : Smooth movement is not working right for some situations. Please fix it!
-    protected internal override void PostThink()
+    protected override void OnPostThink()
     {
-        base.PostThink();
+        base.OnPostThink();
 
         DoMoving();
     }
@@ -394,7 +394,7 @@ public class Camera : Entity
     {
         base.OnStartTouch(entity);
 
-        if (entity.Alive || entity.Spawning || !entity.Respawnable || !entity.RespawnOnNear)
+        if (entity.Alive || entity.Spawning || !entity.SpawnOnNear)
             return;
 
         if ((!entity.Dead || Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn) && entity.IsInSpawnArea(VectorKind.ORIGIN))

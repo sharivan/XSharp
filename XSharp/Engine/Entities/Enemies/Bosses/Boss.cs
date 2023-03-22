@@ -170,7 +170,7 @@ public abstract class Boss : Enemy
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -232,7 +232,7 @@ public abstract class Boss : Enemy
         return base.OnTakeDamage(attacker, ref damage);
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -253,9 +253,9 @@ public abstract class Boss : Enemy
         base.OnDeath();
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if (HealthFilling)
         {

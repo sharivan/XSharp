@@ -19,7 +19,7 @@ public abstract class LogicalEntity : Entity, IEnableDisable
         return Box.EMPTY_BOX;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

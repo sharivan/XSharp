@@ -353,7 +353,7 @@ public abstract class Sprite : Entity, IRenderable
     {
         get
         {
-            Box box = Origin + (!Alive && Respawnable ? GetDeadBox() : GetHitbox());
+            Box box = Origin + (!Alive && (Respawnable || SpawnOnNear) ? GetDeadBox() : GetHitbox());
             return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
         }
 
@@ -570,7 +570,7 @@ public abstract class Sprite : Entity, IRenderable
         touchingSpritesDown = new EntitySet<Sprite>();
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -869,7 +869,7 @@ public abstract class Sprite : Entity, IRenderable
         return GetHitbox();
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -900,9 +900,9 @@ public abstract class Sprite : Entity, IRenderable
         CurrentAnimation?.StartFromBegin();
     }
 
-    protected internal override void PostSpawn()
+    protected override void OnPostSpawn()
     {
-        base.PostSpawn();
+        base.OnPostSpawn();
 
         if (CheckCollisionWithWorld || CheckCollisionWithSolidSprites)
         {
@@ -988,7 +988,12 @@ public abstract class Sprite : Entity, IRenderable
         return new SpriteCollider(this, Hitbox, GetHitboxHeadHeight(), GetHitboxLegsHeight(), IsUsingCollisionPlacements(), false, true);
     }
 
-    protected internal virtual void CreateResources()
+    internal void CreateResources()
+    {
+        OnCreateResources();
+    }
+
+    protected virtual void OnCreateResources()
     {
         if (ResourcesCreated)
             return;
@@ -1034,10 +1039,10 @@ public abstract class Sprite : Entity, IRenderable
         CreateResources();
     }
 
-    public override void Place()
+    public override void Place(bool respawnable = true)
     {
         CreateResources();
-        base.Place();
+        base.Place(respawnable);
 
         if (IsInSpawnArea(VectorKind.ORIGIN))
             Spawn();
@@ -1745,20 +1750,62 @@ public abstract class Sprite : Entity, IRenderable
 
     public void SetCurrentAnimationByIndex(int index, int initialFrame = -1)
     {
+        var lastAnimation = CurrentAnimation;
+
         var animation = Animations[index];
         CurrentAnimation = animation;
 
-        if (initialFrame >= 0)
-            animation?.Start(initialFrame);
+        if (animation == null)
+            return;
+
+        switch (initialFrame)
+        {
+            case -1: // current animation will continue from the current frame from the last animation
+                initialFrame = lastAnimation != null ? lastAnimation.CurrentFrame : 0;
+                break;
+
+            case -2: // current animation will continue from the current frame from the current animation
+                initialFrame = animation.CurrentFrame;
+                break;
+
+            default: // current animation will continue from the specified frame
+                if (initialFrame < 0)
+                    throw new ArgumentException($"Invalid negative initial frame '{initialFrame}'.");
+
+                break;
+        }
+
+        animation.Start(initialFrame);
     }
 
     public void SetCurrentAnimationByName(string name, int initialFrame = -1)
     {
+        var lastAnimation = CurrentAnimation;
+
         var animation = Animations[name];
         CurrentAnimation = animation;
 
-        if (initialFrame >= 0)
-            animation?.Start(initialFrame);
+        if (animation == null)
+            return;
+
+        switch (initialFrame)
+        {
+            case -1: // current animation will continue from the current frame from the last animation
+                initialFrame = lastAnimation != null ? lastAnimation.CurrentFrame : 0;
+                break;
+
+            case -2: // current animation will continue from the current frame from the current animation
+                initialFrame = animation.CurrentFrame;
+                break;
+
+            default: // current animation will continue from the specified frame
+                if (initialFrame < 0)
+                    throw new ArgumentException($"Invalid negative initial frame '{initialFrame}'.");
+
+                break;
+        }
+
+        animation.Start(initialFrame);
     }
 
     public void SetAnimationsVisibility(string name, bool visible)
@@ -1789,11 +1836,11 @@ public abstract class Sprite : Entity, IRenderable
         return base.PreThink();
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
     }
 
-    protected internal virtual void PostRender()
+    protected virtual void OnPostRender()
     {
         InvisibleOnNextFrame = false;
 
@@ -1868,9 +1915,9 @@ public abstract class Sprite : Entity, IRenderable
             Velocity = Velocity.YVector;
     }
 
-    protected internal override void PostThink()
+    protected override void OnPostThink()
     {
-        base.PostThink();
+        base.OnPostThink();
 
         if (!Alive || MarkedToRemove || Engine.Paused)
             return;
@@ -1886,7 +1933,7 @@ public abstract class Sprite : Entity, IRenderable
             }
         }
 
-        PostRender();
+        OnPostRender();
         DoPhysics();
     }
 
@@ -1910,12 +1957,25 @@ public abstract class Sprite : Entity, IRenderable
 
         if (!InvisibleOnNextFrame)
         {
-            foreach (Animation animation in Animations)
-                animation.Render(target);
+            if (MultiAnimation)
+            {
+                foreach (var animation in Animations)
+                    animation.Render(target);
+            }
+            else
+            {
+                var animation = CurrentAnimation;
+                animation?.Render(target);
+            }
         }
     }
 
-    protected internal virtual void OnAnimationEnd(Animation animation)
+    internal void NotifyAnimationEnd(Animation animation)
+    {
+        OnAnimationEnd(animation);
+    }
+
+    protected virtual void OnAnimationEnd(Animation animation)
     {
         AnimationEndEvent?.Invoke(this, animation);
     }
@@ -1968,9 +2028,9 @@ public abstract class Sprite : Entity, IRenderable
             Kill();
         }
     }
-    protected internal override void Cleanup()
+    protected override void OnCleanup()
     {
-        base.Cleanup();
+        base.OnCleanup();
 
         CurrentAnimationIndex = -1;
         moving = false;

@@ -166,7 +166,7 @@ public class BombBeen : Enemy, IStateEntity<BombBeenState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -239,7 +239,7 @@ public class BombBeen : Enemy, IStateEntity<BombBeenState>
         return HITBOX;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

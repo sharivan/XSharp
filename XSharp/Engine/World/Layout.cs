@@ -496,8 +496,8 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
         }
     }
 
-    public void OnFrame()
+    internal void OnFrame()
     {
-        FadingControl.OnFrame();
+        FadingControl.DoFrame();
     }
 }

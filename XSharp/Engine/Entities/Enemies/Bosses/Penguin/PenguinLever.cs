@@ -50,7 +50,7 @@ public class PenguinLever : Sprite, IStateEntity<PenguinLeverState>
         return PENGUIN_LEVER_HITBOX;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -77,9 +77,9 @@ public class PenguinLever : Sprite, IStateEntity<PenguinLeverState>
         }
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         switch (State)
         {

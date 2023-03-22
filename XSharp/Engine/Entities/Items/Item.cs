@@ -27,7 +27,7 @@ public abstract class Item : Sprite
         Directional = false;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -51,9 +51,9 @@ public abstract class Item : Sprite
         }
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if (DurationFrames > 0)
         {

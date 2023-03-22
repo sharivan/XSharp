@@ -60,7 +60,7 @@ public class DashSparkEffect : SpriteEffect
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -71,14 +71,14 @@ public class DashSparkEffect : SpriteEffect
         SetAnimationNames("PreDashSparkEffect", "DashSparkEffect");
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
         Direction = Player != null ? Player.Direction : DefaultDirection;
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
 

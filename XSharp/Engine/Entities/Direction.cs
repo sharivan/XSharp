@@ -65,4 +65,12 @@ public static class DirectionExtensions
     {
         return direction == Direction.UP ? -1 : direction == Direction.DOWN ? 1 : 0;
     }
+
+    public static Vector GetUnitaryVector(this Direction direction)
+    {
+        var huv = direction.GetHorizontalUnitaryVector();
+        var vuv = direction.GetVerticalUnitaryVector();
+        var s = huv + vuv;
+        return s.Versor();
+    }
 }

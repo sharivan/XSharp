@@ -2,19 +2,19 @@
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Enemies.Flammingle;
+namespace XSharp.Engine.Entities.Enemies.SnowShooter;
 
-public class FlammingleShot : Enemy
+public class SnowShooterShot : Enemy
 {
     #region Precache
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Flammingle));
+        Engine.CallPrecacheAction(typeof(SnowShooter));
     }
     #endregion
 
-    public FlammingleShot()
+    public SnowShooterShot()
     {
     }
 
@@ -22,8 +22,8 @@ public class FlammingleShot : Enemy
     {
         base.OnCreate();
 
-        PaletteName = "flamminglePalette";
-        SpriteSheetName = "Flammingle";
+        PaletteName = "snowShooterPalette";
+        SpriteSheetName = "SnowShooter";
 
         SetAnimationNames("Shot");
         InitialAnimationName = "Shot";
@@ -36,7 +36,7 @@ public class FlammingleShot : Enemy
 
     protected override Box GetHitbox()
     {
-        return Flammingle.SHOT_HITBOX;
+        return SnowShooter.SHOT_HITBOX;
     }
 
     protected override void OnSpawn()
@@ -44,13 +44,6 @@ public class FlammingleShot : Enemy
         base.OnSpawn();
 
         CheckCollisionWithWorld = false;
-        ContactDamage = Flammingle.SHOT_DAMAGE;
-    }
-
-    protected override void OnContactDamage(Player player)
-    {
-        base.OnContactDamage(player);
-
-        Kill();
+        ContactDamage = SnowShooter.SHOT_DAMAGE;
     }
 }

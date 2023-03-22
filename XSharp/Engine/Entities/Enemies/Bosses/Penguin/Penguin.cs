@@ -307,6 +307,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     }
     #endregion
 
+    private PenguinState lastState;
     private bool firstAttack;
     private bool hanging;
     private bool snowing;
@@ -351,7 +352,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -369,7 +370,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
             );
 
         SetupStateArray<PenguinState>();
-        RegisterState(PenguinState.IDLE, OnIdle, "Idle");
+        RegisterState(PenguinState.IDLE, OnStartIdle, OnIdle, null, "Idle");
         RegisterState(PenguinState.INTRODUCING, "FallingIntroducing");
         RegisterState(PenguinState.SHOOTING_ICE, OnShootingIce, "ShootingIce");
         RegisterState(PenguinState.BLOWING, OnStartBlowing, OnBlowing, null, "Blowing");
@@ -424,7 +425,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         };
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -440,6 +441,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
         Mist.Spawn();
 
+        lastState = PenguinState.INTRODUCING;
         SetState(PenguinState.INTRODUCING);
     }
 
@@ -519,6 +521,11 @@ public class Penguin : Boss, IStateEntity<PenguinState>
             ApplyKnockback(attacker);
     }
 
+    private void OnStartIdle(EntityState state, EntityState lastState)
+    {
+        this.lastState = lastState != null ? (PenguinState) lastState.ID : PenguinState.IDLE;
+    }
+
     private void OnIdle(EntityState state, long frameCounter)
     {
         if (frameCounter == 14)
@@ -542,35 +549,174 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                 if (!DONT_ATTACK)
                 {
-                    int value = Engine.RNG.NextInt(5);
-                    while (State == PenguinState.IDLE)
+                    int value = Engine.RNG.NextInt(16);
+
+                    switch (lastState)
                     {
-                        switch (value)
+                        case PenguinState.SHOOTING_ICE:
                         {
-                            case 0:
-                                State = PenguinState.SLIDING;
-                                break;
+                            switch (value)
+                            {
+                                case >= 0 and < 4:
+                                    State = PenguinState.SLIDING;
+                                    break;
 
-                            case 1:
-                                State = PenguinState.SHOOTING_ICE;
-                                break;
+                                case >= 4 and < 6:
+                                    State = PenguinState.SHOOTING_ICE;
+                                    break;
 
-                            case 2:
-                                State = PenguinState.JUMPING;
-                                break;
+                                case >= 6 and < 10:
+                                    State = PenguinState.JUMPING;
+                                    break;
 
-                            case 3:
-                                State = PenguinState.HANGING;
-                                break;
+                                default:
+                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
+                                    break;
+                            }
 
-                            case 4:
-                                if (!AllSculpturesAlive())
-                                    State = PenguinState.BLOWING;
-
-                                break;
+                            break;
                         }
 
-                        value = Engine.RNG.NextInt(4);
+                        case PenguinState.BLOWING:
+                        {
+                            switch (value)
+                            {
+                                case >= 0 and < 2:
+                                    State = PenguinState.SLIDING;
+                                    break;
+
+                                case >= 2 and < 4:
+                                    State = PenguinState.SHOOTING_ICE;
+                                    break;
+
+                                case >= 4 and < 6:
+                                    State = PenguinState.JUMPING;
+                                    break;
+
+                                case >= 6 and < 14:
+                                    State = PenguinState.HANGING;
+                                    break;
+
+                                default:
+                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
+                                    break;
+                            }
+
+                            break;
+                        }
+
+                        case PenguinState.SLIDING:
+                        {
+                            switch (value)
+                            {
+                                case >= 0 and < 2:
+                                    State = PenguinState.SLIDING;
+                                    break;
+
+                                case >= 2 and < 10:
+                                    State = PenguinState.SHOOTING_ICE;
+                                    break;
+
+                                case >= 10 and < 12:
+                                    State = PenguinState.JUMPING;
+                                    break;
+
+                                default:
+                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
+                                    break;
+                            }
+
+                            break;
+                        }
+
+                        case PenguinState.JUMPING:
+                        {
+                            switch (value)
+                            {
+                                case >= 0 and < 6:
+                                    State = PenguinState.SLIDING;
+                                    break;
+
+                                case >= 6 and < 12:
+                                    State = PenguinState.SHOOTING_ICE;
+                                    break;
+
+                                default:
+                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
+                                    break;
+                            }
+
+                            break;
+                        }
+
+                        case PenguinState.HANGING:
+                        {
+                            switch (value)
+                            {
+                                case >= 0 and < 6:
+                                    State = PenguinState.SLIDING;
+                                    break;
+
+                                case >= 6 and < 12:
+                                    State = PenguinState.SHOOTING_ICE;
+                                    break;
+
+                                default:
+                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
+                                    break;
+                            }
+
+                            break;
+                        }
+
+                        case PenguinState.TAKING_DAMAGE:
+                        case PenguinState.IN_FLAMES:
+                        {
+                            switch (value)
+                            {
+                                case >= 0 and < 8:
+                                    State = PenguinState.SLIDING;
+                                    break;
+
+                                case >= 8 and < 12:
+                                    State = PenguinState.SHOOTING_ICE;
+                                    break;
+
+                                default:
+                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
+                                    break;
+                            }
+
+                            break;
+                        }
+
+                        default:
+                        {                          
+                            switch (value)
+                            {
+                                case >= 0 and < 4:
+                                    State = PenguinState.SLIDING;
+                                    break;
+
+                                case >= 4 and < 8:
+                                    State = PenguinState.SHOOTING_ICE;
+                                    break;
+
+                                case >= 8 and < 10:
+                                    State = PenguinState.JUMPING;
+                                    break;
+
+                                case >= 10 and < 12:
+                                    State = PenguinState.HANGING;
+                                    break;
+
+                                default:
+                                    State = !AllSculpturesAlive() ? PenguinState.BLOWING : PenguinState.SLIDING;
+                                    break;
+                            }
+
+                            break;
+                        }
                     }
                 }
             }
@@ -779,7 +925,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         Engine.Player.ResetExternalVelocity();
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
         if (snowing)
         {
@@ -800,10 +946,10 @@ public class Penguin : Boss, IStateEntity<PenguinState>
             }
         }
 
-        base.Think();
+        base.OnThink();
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
 

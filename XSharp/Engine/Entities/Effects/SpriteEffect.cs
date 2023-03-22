@@ -75,7 +75,7 @@ public abstract class SpriteEffect : Sprite
         return HasGravity ? base.GetGravity() : FixedSingle.ZERO;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

@@ -81,7 +81,7 @@ internal class Mist : HUD.HUD
         Engine.ClearSoundLoopPoint(5, "Enemy Sound (05)", true);
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -90,7 +90,7 @@ internal class Mist : HUD.HUD
         ResetOffset();
     }
 
-    protected internal override void PostThink()
+    protected override void OnPostThink()
     {
         if (!Visible)
             return;
@@ -99,7 +99,7 @@ internal class Mist : HUD.HUD
         if (Offset.Y >= 0)
             ResetOffset();
 
-        base.PostThink();
+        base.OnPostThink();
     }
 
     protected override bool OnCreateAnimation(string frameSequenceName, ref Vector offset, ref int repeatX, ref int repeatY, ref int initialFrame, ref bool startVisible, ref bool startOn)

@@ -146,7 +146,7 @@ public class SpriteState : EntityState
         return RegisterSubState((int) (object) id, null, null, null, animationIndex, initialFrame);
     }
 
-    protected internal override void OnStart(EntityState lastState)
+    protected override void OnStart(EntityState lastState)
     {
         base.OnStart(lastState);
 
@@ -156,10 +156,7 @@ public class SpriteState : EntityState
                 AnimationIndex = Sprite.GetAnimationIndexByName(AnimationName);
 
             if (AnimationIndex >= 0)
-            {
-                Sprite.CurrentAnimationIndex = AnimationIndex;
-                Sprite.CurrentAnimation?.Start(InitialFrame);
-            }
+                Sprite.SetCurrentAnimationByIndex(AnimationIndex, InitialFrame);
         }
     }
 }
@@ -195,7 +192,7 @@ public class SpriteSubState : EntitySubState
         }
     }
 
-    protected internal override void OnStart(EntityState lastState, EntitySubState lastSubState)
+    protected override void OnStart(EntityState lastState, EntitySubState lastSubState)
     {
         base.OnStart(lastState, lastSubState);
 
@@ -205,10 +202,7 @@ public class SpriteSubState : EntitySubState
                 AnimationIndex = Sprite.GetAnimationIndexByName(AnimationName);
 
             if (AnimationIndex >= 0)
-            {
-                Sprite.CurrentAnimationIndex = AnimationIndex;
-                Sprite.CurrentAnimation?.Start(InitialFrame);
-            }
+                Sprite.SetCurrentAnimationByIndex(AnimationIndex, InitialFrame);
         }
     }
 }

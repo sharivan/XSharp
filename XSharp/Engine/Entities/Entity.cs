@@ -133,7 +133,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public virtual Box Hitbox
     {
-        get => Origin + (!Alive && Respawnable ? GetDeadBox() : GetHitbox());
+        get => Origin + (!Alive && (Respawnable || SpawnOnNear) ? GetDeadBox() : GetHitbox());
         protected set
         {
             SetHitbox(value - Origin);
@@ -167,7 +167,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
         set;
     } = false;
 
-    public bool RespawnOnNear
+    public bool SpawnOnNear
     {
         get;
         set;
@@ -263,12 +263,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
             if (currentStateID != value)
             {
                 EntityState lastState = CurrentState;
-                lastState?.OnEnd();
+                lastState?.NotifyEnd();
 
                 currentStateID = value;
 
                 EntityState currentState = CurrentState;
-                currentState?.OnStart(lastState);
+                currentState?.NotifyStart(lastState);
             }
         }
     }
@@ -353,11 +353,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
         }
     }
 
-    protected internal virtual void OnCreate()
+    internal void NotifyCreated()
     {
+        OnCreate();
     }
 
-    protected internal virtual void ReadInitParams(dynamic initParams)
+    protected virtual void OnCreate()
     {
     }
 
@@ -624,7 +625,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
         return Hitbox.RoundOriginToFloor().IsOverlaping(entity.Hitbox.RoundOriginToFloor());
     }
 
-    protected internal virtual void OnFrame()
+    internal void DoFrame()
+    {
+        OnFrame();
+    }
+
+    protected virtual void OnFrame()
     {
         if (frameToKill > 0 && Engine.FrameCounter >= frameToKill)
         {
@@ -703,12 +709,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
         if (!Alive || MarkedToRemove)
             return;
 
-        Think();
+        OnThink();
 
         if (!Alive || MarkedToRemove)
             return;
 
-        CurrentState?.OnFrame();
+        CurrentState?.DoFrame();
 
         FrameCounter++;
     }
@@ -734,12 +740,17 @@ public abstract class Entity : IIndexedNamedFactoryItem
         return true;
     }
 
-    protected virtual void Think()
+    protected virtual void OnThink()
     {
         ThinkEvent?.Invoke(this);
     }
 
-    protected internal virtual void PostThink()
+    internal void PostThink()
+    {
+        OnPostThink();
+    }
+
+    protected virtual void OnPostThink()
     {
         PostThinkEvent?.Invoke(this);
     }
@@ -755,7 +766,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
         OnDeath();
     }
 
-    protected internal virtual void Cleanup()
+    internal void Cleanup()
+    {
+        OnCleanup();
+    }
+
+    protected virtual void OnCleanup()
     {
         foreach (Entity child in childs)
             child.Parent = null;
@@ -796,14 +812,24 @@ public abstract class Entity : IIndexedNamedFactoryItem
         Engine.spawnedEntities.Add(this);
     }
 
-    protected internal virtual void OnSpawn()
+    internal void NotifySpawn()
+    {
+        OnSpawn();
+    }
+
+    protected virtual void OnSpawn()
     {
         LastOrigin = Origin;
 
         SpawnEvent?.Invoke(this);
     }
 
-    protected internal virtual void PostSpawn()
+    internal void PostSpawn()
+    {
+        OnPostSpawn();
+    }
+
+    protected virtual void OnPostSpawn()
     {
         Spawning = false;
         Alive = true;
@@ -843,7 +869,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
         Updating = false;
     }
 
-    protected internal virtual void UpdatePartition(bool force = false)
+    protected internal void UpdatePartition(bool force = false)
     {
         if (Updating || Index <= 0)
             return;
@@ -893,10 +919,10 @@ public abstract class Entity : IIndexedNamedFactoryItem
         return CollisionChecker.HasIntersection(GetBox(kind).RoundOriginToFloor(), Engine.Camera.SpawnBoundingBox.RoundOriginToFloor());
     }
 
-    public virtual void Place()
+    public virtual void Place(bool respawnable = true)
     {
-        Respawnable = true;
-        RespawnOnNear = true;
+        Respawnable = respawnable;
+        SpawnOnNear = true;
 
         initParams["Origin"] = Origin;
 
@@ -906,7 +932,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
     public virtual void Unplace()
     {
         Respawnable = false;
-        RespawnOnNear = false;
+        SpawnOnNear = false;
 
         UpdatePartition(true);
     }

@@ -175,6 +175,10 @@ public struct Box : IShape, ISerializable
 
     public LineSegment BottomSegment => new(LeftBottom, RightBottom);
 
+    public Interval HorizontalInterval => Interval.MakeSemiOpenRightInterval(Origin.X + Mins.X, Origin.X + Maxs.X);
+
+    public Interval VerticallInterval => Interval.MakeSemiOpenRightInterval(Origin.Y + Mins.Y, Origin.Y + Maxs.Y);
+
     /// <summary>
     /// Extremo superior esquerdo do retângulo (ou mínimos absolutos)
     /// </summary>

@@ -40,8 +40,9 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
     public const int HEALTH = 16;
     public static readonly FixedSingle CONTACT_DAMAGE = 3;
     public static readonly Box HITBOX = ((1, 14), (-5, -22), (5, 22));
+    public static readonly Box IDLE_HITBOX = ((1, 0), (-5, -36), (5, 36));
 
-    public static readonly FixedSingle ATTACK_DISTANCE_X = 50;
+    public static readonly FixedSingle ATTACK_DISTANCE_X = 104;
     public const int ATTACKING_FRAMES = 80;
     public const int FRAME_TO_SHOOT = 38;
 
@@ -128,6 +129,8 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
     }
     #endregion
 
+    private bool shooting;
+
     public FlammingleState State
     {
         get => GetState<FlammingleState>();
@@ -138,7 +141,7 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -152,17 +155,23 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
 
         SetupStateArray<FlammingleState>();
         RegisterState(FlammingleState.IDLE, OnIdle, "Idle");
-        RegisterState(FlammingleState.ATTACKING, OnAttacking, "Attacking");
+        RegisterState(FlammingleState.ATTACKING, OnStartAttacking, OnAttacking, null, "Attacking");
     }
 
     private void OnIdle(EntityState state, long frameCounter)
     {
         var player = Engine.Player;
-        if (frameCounter >= 4 && player != null
+        if (frameCounter >= 4 
+            && player != null
             && GetHorizontalDirection(player) == Direction.Oposite()
             && (player.Origin.X - Origin.X).Abs <= ATTACK_DISTANCE_X
-            && player.CollisionBox.Bottom >= Hitbox.Top && player.CollisionBox.Top <= Hitbox.Bottom)
+            && Hitbox.VerticallInterval.IsOverlaping(player.CollisionBox.VerticallInterval))
             State = FlammingleState.ATTACKING;
+    }
+
+    private void OnStartAttacking(EntityState state, EntityState lastState)
+    {
+        shooting = false;
     }
 
     private void OnAttacking(EntityState state, long frameCounter)
@@ -175,6 +184,8 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
 
     private EntityReference<FlammingleShot> Shoot()
     {
+        shooting = true;
+
         var player = Engine.Player;
         if (player != null)
         {
@@ -182,7 +193,7 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
             FlammingleShot shot = Engine.Entities.Create<FlammingleShot>(new
             {
                 Origin = Origin + (SHOT_OFFSET_X * Direction.GetHorizontalSignal(), -SHOT_OFFSET_Y),
-                Velocity = SHOT_SPEED * delta.Versor(Metric.MAX)
+                Velocity = SHOT_SPEED * delta.Versor()
             });
 
             shot.Spawn();
@@ -194,10 +205,10 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
 
     protected override Box GetHitbox()
     {
-        return HITBOX;
+        return State == FlammingleState.IDLE || State == FlammingleState.ATTACKING && !shooting ? IDLE_HITBOX : HITBOX;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -210,6 +221,8 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
         SmallAmmoDropOdd = 400; // 4%
         BigAmmoDropOdd = 175; // 1.75%
         LifeUpDropOdd = 25; // 0.25%
+
+        shooting = false;
 
         State = FlammingleState.IDLE;
     }

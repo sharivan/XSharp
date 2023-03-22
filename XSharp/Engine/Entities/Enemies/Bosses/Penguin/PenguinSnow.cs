@@ -49,7 +49,7 @@ internal class PenguinSnow : Enemy
         return false;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -63,9 +63,9 @@ internal class PenguinSnow : Enemy
         SetCurrentAnimationByName("Snow");
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         Velocity = (Direction == Direction.RIGHT ? PENGUIN_SNOW_SPEED : -PENGUIN_SNOW_SPEED, 0);
 

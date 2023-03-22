@@ -101,7 +101,7 @@ public abstract class Enemy : Sprite
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -112,7 +112,7 @@ public abstract class Enemy : Sprite
         ContactDamage = 1;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -177,7 +177,7 @@ public abstract class Enemy : Sprite
         if (Invincible)
         {
             if (attacker is Weapon weapon)
-                weapon.OnHit(this, damage);
+                weapon.NotifyHit(this, damage);
 
             damage = 0;
             return false;
@@ -186,7 +186,7 @@ public abstract class Enemy : Sprite
         if (base.OnTakeDamage(attacker, ref damage))
         {
             if (attacker is Weapon weapon)
-                weapon.OnHit(this, damage);
+                weapon.NotifyHit(this, damage);
 
             return true;
         }
@@ -200,11 +200,16 @@ public abstract class Enemy : Sprite
         base.OnTakeDamagePost(attacker, damage);
     }
 
+    protected virtual void OnExplode()
+    {
+        Engine.CreateExplosionEffect(Origin);
+    }
+
     protected override void OnBroke()
     {
         base.OnBroke();
 
-        Engine.CreateExplosionEffect(Origin);
+        OnExplode();
 
         var random = Engine.RNG.NextLong(TotalDropOdd);
         if (random > TotalDropOdd - NothingDropOdd)

@@ -36,7 +36,7 @@ public class WallKickEffect : SpriteEffect
         SetAnimationNames("WallKickEffect");
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
         KillOnNextFrame();

@@ -220,7 +220,7 @@ public abstract class Weapon : Sprite
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -233,7 +233,7 @@ public abstract class Weapon : Sprite
         return 1;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -249,7 +249,12 @@ public abstract class Weapon : Sprite
             OnHit(enemy, damage);
     }
 
-    protected internal virtual void OnHit(Enemy enemy, FixedSingle damage)
+    internal void NotifyHit(Enemy enemy, FixedSingle damage)
+    {
+        OnHit(enemy, damage);
+    }
+
+    protected virtual void OnHit(Enemy enemy, FixedSingle damage)
     {
         Engine.PlaySound(1, "Small Hit");
     }

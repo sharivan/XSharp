@@ -235,5 +235,5 @@ public class Consts
     public static readonly bool SKIP_MENU = false;
     public static readonly bool SKIP_INTRO = false;
     public const int INITIAL_LEVEL = 8;
-    public const int INITIAL_CHECKPOINT = 1;
+    public const int INITIAL_CHECKPOINT = 0;
 }

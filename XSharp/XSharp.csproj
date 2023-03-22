@@ -19,9 +19,11 @@
     <None Remove="resources\sprites\Enemies\X\Flammingle.png" />
     <None Remove="resources\sprites\Enemies\X\Jamminger.png" />
     <None Remove="resources\sprites\Enemies\X\RayBit.png" />
+    <None Remove="resources\sprites\Enemies\X\Snow Shooter.png" />
     <None Remove="resources\sprites\Enemies\X\Snowball.png" />
     <None Remove="resources\sprites\Enemies\X\SnowShooter.png" />
     <None Remove="resources\sprites\Enemies\X\Spiky.png" />
+    <None Remove="resources\sprites\Enemies\X\Tombot.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -101,10 +103,10 @@
     <EmbeddedResource Include="resources\sprites\Enemies\X\Snowball.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\SnowShooter.png">
+    <EmbeddedResource Include="resources\sprites\Enemies\X\Spiky.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\Spiky.png">
+    <EmbeddedResource Include="resources\sprites\Enemies\X\Tombot.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Objects\Platforms.png">
@@ -313,7 +315,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="resources\sounds\mmx\41 - MMX - Spark Mandrill Punch.wav" />
-    <Content Include="resources\sounds\mmx\42 - MMX - Beam Pulse.wav" />
+    <Content Include="resources\sounds\mmx\42 - MMX - Beam Pulse.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="resources\sounds\mmx\43 - MMX - Beep %281%29.wav" />
     <Content Include="resources\sounds\mmx\44 - MMX - Beep %282%29.wav" />
     <Content Include="resources\sounds\mmx\45 - MMX - Beep %283%29.wav" />
@@ -389,6 +393,12 @@
     <Content Include="resources\sounds\mmx\97 - MMX - Robot Suit %281%29.wav" />
     <Content Include="resources\sounds\mmx\98 - MMX - Robot Suit %282%29.wav" />
     <Content Include="resources\sounds\mmx\99 - MMX - Robot Suit %283%29.wav" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="resources\sprites\Enemies\X\Snow Shooter.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   
   <ItemGroup>

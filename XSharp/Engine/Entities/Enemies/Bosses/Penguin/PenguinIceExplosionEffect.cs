@@ -28,7 +28,7 @@ public class PenguinIceExplosionEffect : SpriteEffect
         SetAnimationNames("IceFragment");
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

@@ -22,7 +22,7 @@ public class LifeUp : Item
         SetAnimationNames("LifeUp");
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

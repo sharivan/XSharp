@@ -55,7 +55,7 @@ public class ReadyHUD : HUD
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -63,7 +63,7 @@ public class ReadyHUD : HUD
         SpriteSheetName = "Ready";
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -71,7 +71,7 @@ public class ReadyHUD : HUD
         CurrentAnimation.StartFromBegin();
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         Engine.SpawnPlayer();
         KillOnNextFrame();

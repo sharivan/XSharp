@@ -63,7 +63,7 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -134,7 +134,7 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
         return Idle ? base.GetGravity() : 0;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -157,9 +157,9 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
         }
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if (TrunkIndex >= 0)
         {

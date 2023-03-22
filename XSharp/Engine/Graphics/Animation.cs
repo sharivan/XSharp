@@ -12,7 +12,7 @@ using Sprite = XSharp.Engine.Entities.Sprite;
 
 namespace XSharp.Engine.Graphics;
 
-public delegate void AnimationFrameEvent(Animation animation, int frameSequenceIndex);
+public delegate void AnimationFrameEvent(Animation animation, int frame);
 
 [Serializable]
 public class Animation : IIndexedNamedFactoryItem, IRenderable
@@ -24,7 +24,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
     private SpriteSheet.FrameSequence sequence;
 
     private bool animating;
-    private int currentSequenceIndex;
+    private int currentFrame;
     private bool animationEndFired;
 
     private AnimationFrameEvent[] animationEvents;
@@ -62,7 +62,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
     public SpriteSheet SpriteSheet => Sprite.SpriteSheet;
 
-    public int InitialSequenceIndex
+    public int InitialFrame
     {
         get;
         set;
@@ -76,24 +76,24 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
     public int CurrentFrame
     {
-        get => currentSequenceIndex;
+        get => currentFrame;
 
         set
         {
-            currentSequenceIndex = value >= Sequence.Count ? Sequence.Count - 1 : value;
+            currentFrame = value >= Sequence.Count ? Sequence.Count - 1 : value;
             animationEndFired = false;
         }
     }
 
     public MMXBox CurrentFrameBoundingBox
-                => currentSequenceIndex < 0 || currentSequenceIndex > Sequence.Count
+                => CurrentFrame < 0 || CurrentFrame > Sequence.Count
                 ? MMXBox.EMPTY_BOX
-                : Sequence[currentSequenceIndex].BoundingBox;
+                : Sequence[CurrentFrame].BoundingBox;
 
     public MMXBox CurrentFrameHitbox
-                => currentSequenceIndex < 0 || currentSequenceIndex > Sequence.Count
+                => CurrentFrame < 0 || CurrentFrame > Sequence.Count
                 ? MMXBox.EMPTY_BOX
-                : Sequence[currentSequenceIndex].Hitbox;
+                : Sequence[CurrentFrame].Hitbox;
 
     public bool Visible
     {
@@ -114,7 +114,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         }
     }
 
-    public int LoopFromFrame => Sequence.LoopFromSequenceIndex;
+    public int LoopFromFrame => Sequence.LoopFromFrame;
 
     public FixedSingle Rotation
     {
@@ -158,7 +158,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
     {
         get
         {
-            var frame = Sequence[currentSequenceIndex];
+            var frame = Sequence[CurrentFrame];
             var drawOrigin = DrawOrigin;
             var box = drawOrigin + frame.BoundingBox;
 
@@ -205,7 +205,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         RepeatY = repeatY;
 
         sequence = SpriteSheet.GetFrameSequence(frameSequenceName);
-        InitialSequenceIndex = initialFrame;
+        InitialFrame = initialFrame;
         Visible = startVisible;
         animating = startOn;
         Mirrored = mirrored;
@@ -214,21 +214,21 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
         Scale = 1;
 
-        currentSequenceIndex = initialFrame;
+        currentFrame = initialFrame;
         animationEndFired = false;
 
         int count = Sequence.Count;
         animationEvents = new AnimationFrameEvent[count];
     }
 
-    public void SetEvent(int frameSequenceIndex, AnimationFrameEvent animationEvent)
+    public void SetEvent(int frame, AnimationFrameEvent animationEvent)
     {
-        animationEvents[frameSequenceIndex] = animationEvent;
+        animationEvents[frame] = animationEvent;
     }
 
-    public void ClearEvent(int frameSequenceIndex)
+    public void ClearEvent(int frame)
     {
-        SetEvent(frameSequenceIndex, null);
+        SetEvent(frame, null);
     }
 
     public void Start(int startIndex = -1)
@@ -237,7 +237,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         animating = true;
 
         if (startIndex >= 0)
-            currentSequenceIndex = InitialSequenceIndex + startIndex;
+            CurrentFrame = InitialFrame + startIndex;
     }
 
     public void StartFromBegin()
@@ -252,7 +252,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
     public void Reset()
     {
-        currentSequenceIndex = InitialSequenceIndex;
+        CurrentFrame = InitialFrame;
     }
 
     internal void NextFrame()
@@ -261,24 +261,24 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         if (!animating || animationEndFired || Sequence.Count == 0)
             return;
 
-        animationEvents[currentSequenceIndex]?.Invoke(this, currentSequenceIndex);
-        currentSequenceIndex++;
+        animationEvents[CurrentFrame]?.Invoke(this, CurrentFrame);
+        currentFrame++;
 
-        if (currentSequenceIndex >= Sequence.Count)
+        if (currentFrame >= Sequence.Count)
         {
-            currentSequenceIndex = Sequence.Count - 1;
+            currentFrame = Sequence.Count - 1;
 
             if (!animationEndFired)
             {
                 animationEndFired = true;
 
                 if (Sprite.MultiAnimation || Sprite.CurrentAnimation == this)
-                    Sprite.OnAnimationEnd(this);
+                    Sprite.NotifyAnimationEnd(this);
             }
 
-            if (Sequence.LoopFromSequenceIndex != -1) // e se a animação está em looping, então o próximo frame deverá ser o primeiro frame da animação (não o frame inicial, definido por initialFrame)
+            if (Sequence.LoopFromFrame != -1) // e se a animação está em looping, então o próximo frame deverá ser o primeiro frame da animação (não o frame inicial, definido por initialFrame)
             {
-                currentSequenceIndex = Sequence.LoopFromSequenceIndex;
+                currentFrame = Sequence.LoopFromFrame;
                 animationEndFired = false;
             }
         }
@@ -290,7 +290,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         if (!Visible || Sequence.Count == 0 || RepeatX <= 0 || RepeatY <= 0)
             return;
 
-        var frame = Sequence[currentSequenceIndex];
+        var frame = Sequence[CurrentFrame];
         MMXBox srcBox = frame.BoundingBox;
         Texture texture = frame.Texture;
 

@@ -8,7 +8,7 @@ public class PlayerHealthHUD : HealthHUD
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -16,11 +16,11 @@ public class PlayerHealthHUD : HealthHUD
         Image = HUDImage.X;
     }
 
-    protected internal override void PostThink()
+    protected override void OnPostThink()
     {
         Capacity = Engine.HealthCapacity;
         Value = Engine.Player != null ? Engine.Player.Health : 0;
 
-        base.PostThink();
+        base.OnPostThink();
     }
 }

@@ -127,7 +127,7 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -160,7 +160,7 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
         return COLLISION_BOX_LEGS_HEIGHT;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -231,9 +231,9 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
             State = RayBitState.IDLE;
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if (State != RayBitState.FALLING && Velocity.Y >= 0.5)
             State = RayBitState.FALLING;

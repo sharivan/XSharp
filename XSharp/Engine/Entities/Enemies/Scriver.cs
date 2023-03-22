@@ -117,7 +117,7 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -206,7 +206,7 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
             State = ScriverState.IDLE;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

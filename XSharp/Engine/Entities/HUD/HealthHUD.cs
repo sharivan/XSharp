@@ -150,7 +150,7 @@ public class HealthHUD : HUD
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -159,7 +159,7 @@ public class HealthHUD : HUD
         hudImageAnimation = new AnimationReference[8];
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -186,11 +186,11 @@ public class HealthHUD : HUD
         }
     }
 
-    protected internal override void PostThink()
+    protected override void OnPostThink()
     {
         Offset = (Left, GetTop(Capacity));
 
-        base.PostThink();
+        base.OnPostThink();
 
         var imageAnimation = ImageAnimation;
         if (imageAnimation != null)

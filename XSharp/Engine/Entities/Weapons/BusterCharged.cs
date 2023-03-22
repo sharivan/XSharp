@@ -41,7 +41,7 @@ public class BusterCharged : Weapon, IStateEntity<ChargedState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -64,7 +64,7 @@ public class BusterCharged : Weapon, IStateEntity<ChargedState>
         return CHARGED_DAMAGE;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -125,7 +125,7 @@ public class BusterCharged : Weapon, IStateEntity<ChargedState>
         SetState(ChargedState.EXPLODING);
     }
 
-    protected internal override void OnHit(Enemy enemy, FixedSingle damage)
+    protected override void OnHit(Enemy enemy, FixedSingle damage)
     {
         if (!enemy.Broke && enemy.Health > damage)
         {
@@ -143,7 +143,7 @@ public class BusterCharged : Weapon, IStateEntity<ChargedState>
         base.OnDeath();
     }
 
-    protected internal override void OnAnimationEnd(Animation animation)
+    protected override void OnAnimationEnd(Animation animation)
     {
         base.OnAnimationEnd(animation);
 

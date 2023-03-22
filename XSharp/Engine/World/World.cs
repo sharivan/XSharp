@@ -213,7 +213,7 @@ public class World : IDisposable
         ForegroundLayout.Render(layer);
     }
 
-    public void OnFrame()
+    internal void OnFrame()
     {
         ForegroundLayout.OnFrame();
         BackgroundLayout.OnFrame();

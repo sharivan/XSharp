@@ -31,7 +31,7 @@ public class BigHealthRecover : Item, IStateEntity<BigHealthRecoverState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -44,7 +44,7 @@ public class BigHealthRecover : Item, IStateEntity<BigHealthRecoverState>
         RegisterState(BigHealthRecoverState.IDLE, "BigHealthRecoverIdle");
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

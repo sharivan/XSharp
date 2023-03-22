@@ -115,7 +115,7 @@ public class AxeMax : Sprite
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -141,7 +141,7 @@ public class AxeMax : Sprite
         return AxeMaxTrunkBase.HITBOX;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

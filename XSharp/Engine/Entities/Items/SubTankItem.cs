@@ -21,7 +21,7 @@ public class SubTankItem : Item
         SetAnimationNames("SubTank");
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 

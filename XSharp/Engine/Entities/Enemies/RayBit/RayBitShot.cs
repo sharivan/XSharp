@@ -34,7 +34,7 @@ public class RayBitShot : Enemy
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -59,7 +59,7 @@ public class RayBitShot : Enemy
         return 0;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
@@ -69,9 +69,9 @@ public class RayBitShot : Enemy
         SetCurrentAnimationByName("Shot");
     }
 
-    protected override void Think()
+    protected override void OnThink()
     {
-        base.Think();
+        base.OnThink();
 
         if (FrameCounter < 12)
             Velocity = Vector.NULL_VECTOR;

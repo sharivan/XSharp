@@ -33,16 +33,16 @@ public class LogicalLineTo : LogicalBranch
     {
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
         lastDistance = StartEntity != null && EndEntity != null ? StartEntity.Origin.DistanceTo(EndEntity.Origin, Metric) : 0;
     }
 
-    protected internal override void PostThink()
+    protected override void OnPostThink()
     {
-        base.PostThink();
+        base.OnPostThink();
 
         if (!Enabled)
             return;

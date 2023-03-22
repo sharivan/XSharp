@@ -36,7 +36,7 @@ public class SpriteSheet : IDisposable
 
         public int Count => frames.Count;
 
-        public int LoopFromSequenceIndex
+        public int LoopFromFrame
         {
             get;
             set;
@@ -54,11 +54,11 @@ public class SpriteSheet : IDisposable
             set;
         }
 
-        internal FrameSequence(SpriteSheet sheet, string name, int loopFromSequenceIndex = -1)
+        internal FrameSequence(SpriteSheet sheet, string name, int loopFromFrame = -1)
         {
             Sheet = sheet;
             Name = name;
-            LoopFromSequenceIndex = loopFromSequenceIndex;
+            LoopFromFrame = loopFromFrame;
 
             frames = new List<Frame>();
         }
@@ -95,7 +95,7 @@ public class SpriteSheet : IDisposable
         public Frame AddFrame(int left, int top, int width, int height, int count = 1, bool loopPoint = false, OriginPosition originPosition = OriginPosition.CENTER)
         {
             if (loopPoint)
-                LoopFromSequenceIndex = frames.Count;
+                LoopFromFrame = frames.Count;
 
             Frame frame = Sheet.AddFrame(left, top, width, height, originPosition);
             AddRepeated(frame, count);
@@ -105,7 +105,7 @@ public class SpriteSheet : IDisposable
         public Frame AddFrame(FixedSingle originOffsetX, FixedSingle originOffsetY, int left, int top, int width, int height, int count = 1, bool loopPoint = false)
         {
             if (loopPoint)
-                LoopFromSequenceIndex = frames.Count;
+                LoopFromFrame = frames.Count;
 
             var boundingBox = new MMXBox(left + originOffsetX + OriginOffset.X, top + originOffsetY + OriginOffset.Y, left, top, width, height);
             Frame frame = Sheet.AddFrame(boundingBox, Hitbox);
@@ -116,7 +116,7 @@ public class SpriteSheet : IDisposable
         public Frame AddFrame(MMXBox boudingBox, MMXBox hitbox, int count = 1, bool loopPoint = false)
         {
             if (loopPoint)
-                LoopFromSequenceIndex = frames.Count;
+                LoopFromFrame = frames.Count;
 
             Frame frame = Sheet.AddFrame(boudingBox, hitbox);
             AddRepeated(frame, count);

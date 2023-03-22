@@ -100,7 +100,7 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
     {
     }
 
-    protected internal override void OnCreate()
+    protected override void OnCreate()
     {
         base.OnCreate();
 
@@ -119,7 +119,7 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
         return 0;
     }
 
-    protected internal override void OnSpawn()
+    protected override void OnSpawn()
     {
         base.OnSpawn();
 
