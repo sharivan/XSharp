@@ -4,6 +4,8 @@
 
 This project aims to recreate an engine very similar to the SNES Mega Man X trilogy. You can test the executable version of this project by downloading the current release accessing https://github.com/sharivan/XSharp/releases. You will need the .NET 7.0 or newer to run this program.
 
+A video showing the version v0.2.1-alpha released on March 23, 2023 can be watched at https://www.youtube.com/watch?v=5SOOVi5R4s8
+
 You can control the X using the following keys:
 
   - X: Dash.
@@ -13,7 +15,7 @@ You can control the X using the following keys:
   - Right Arrow: Move to Right.
   - Enter: Toggle pause.
 
-Support to joypad was added, but there is no support to bind custom keys for now.
+Support to joypad was added, but there is no support to bind custom keys for now. You can use joy2key or similar applications to keyboard to joypad mapping if you want.
 
 Shortcut Keys:
 
