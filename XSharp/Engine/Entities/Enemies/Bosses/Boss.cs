@@ -202,7 +202,7 @@ public abstract class Boss : Enemy
 
     protected override void OnDamaged(Sprite attacker, FixedSingle damage)
     {
-        Engine.PlaySound(2, "Big Hit");
+        Engine.PlaySound(2, "Big Hit", true);
         MakeInvincible(InvincibilityFrames);
 
         if (!Exploding)

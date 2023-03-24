@@ -62,6 +62,13 @@ internal class ExplosionEffect : SpriteEffect
         SetAnimationNames("Explosion");
     }
 
+    protected override void OnCreate()
+    {
+        base.OnCreate();
+
+        Layer = 1;
+    }
+
     protected override void OnSpawn()
     {
         base.OnSpawn();

@@ -4091,11 +4091,23 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(effect);
     }
 
+    private static Vector GetDashSparkOrigin(Player player)
+    {
+        return player.Direction switch
+        {
+            Direction.LEFT => player.Hitbox.LeftTop + (23 - 15, 20),
+            Direction.RIGHT => player.Hitbox.RightTop + (-23 + 15, 20),
+            _ => Vector.NULL_VECTOR,
+        };
+    }
+
     internal EntityReference<DashSparkEffect> StartDashSparkEffect(Player player)
     {
         DashSparkEffect effect = Entities.Create<DashSparkEffect>(new
         {
-            Player = player
+            Parent = player,
+            Origin = GetDashSparkOrigin(player),
+            player.Direction
         });
 
         effect.Spawn();

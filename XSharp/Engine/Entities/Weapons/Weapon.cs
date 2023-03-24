@@ -255,7 +255,7 @@ public abstract class Weapon : Sprite
 
     protected virtual void OnHit(Enemy enemy, FixedSingle damage)
     {
-        Engine.PlaySound(1, "Small Hit");
+        Engine.PlaySound(2, "Small Hit");
     }
 
     public void Hit(Enemy enemy)

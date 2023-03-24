@@ -11,16 +11,6 @@ public enum DashingSparkEffectState
 
 public class DashSparkEffect : SpriteEffect
 {
-    private static Vector GetOrigin(Player player)
-    {
-        return player.Direction switch
-        {
-            Direction.LEFT => player.Hitbox.LeftTop + (23 - 9, 20),
-            Direction.RIGHT => player.Hitbox.RightTop + (-23 + 9, 20),
-            _ => Vector.NULL_VECTOR,
-        };
-    }
-
     private DashingSparkEffectState state = DashingSparkEffectState.PRE_DASHING;
 
     public DashingSparkEffectState State
@@ -38,24 +28,6 @@ public class DashSparkEffect : SpriteEffect
         }
     }
 
-    private EntityReference<Player> player;
-
-    public Player Player
-    {
-        get => player;
-        set
-        {
-            player = value;
-            if (value != null)
-            {
-                Origin = GetOrigin(value);
-                Direction = value.Direction == Direction.RIGHT ? Direction.LEFT : Direction.RIGHT;
-            }
-
-            Parent = value;
-        }
-    }
-
     public DashSparkEffect()
     {
     }
@@ -68,13 +40,6 @@ public class DashSparkEffect : SpriteEffect
         DefaultDirection = Direction.LEFT;
 
         SetAnimationNames("PreDashSparkEffect", "DashSparkEffect");
-    }
-
-    protected override void OnSpawn()
-    {
-        base.OnSpawn();
-
-        Direction = Player != null ? Player.Direction : DefaultDirection;
     }
 
     protected override void OnAnimationEnd(Animation animation)
