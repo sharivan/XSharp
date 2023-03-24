@@ -227,7 +227,7 @@ public abstract class IndexedNamedFactory<ItemType> : IIndexedNamedFactory<ItemT
         return reference;
     }
 
-    public virtual void Deserialize(BinarySerializer serializer)
+    public virtual void Deserialize(ISerializer serializer)
     {
         if (itemsByName == null)
             itemsByName = new Dictionary<string, int>();
@@ -243,7 +243,7 @@ public abstract class IndexedNamedFactory<ItemType> : IIndexedNamedFactory<ItemT
         }
     }
 
-    public virtual void Serialize(BinarySerializer serializer)
+    public virtual void Serialize(ISerializer serializer)
     {
         serializer.WriteInt(itemsByName.Count);
         foreach (var (name, index) in itemsByName)
@@ -255,11 +255,11 @@ public abstract class IndexedNamedFactory<ItemType> : IIndexedNamedFactory<ItemT
 
     public void UpdateReferenceIndex(IIndexedFactoryItemReference reference, int index)
     {
-        ((IndexedNamedFactoryItemReference<ItemType>) reference).targetIndex = index;
+        ((IndexedNamedFactoryItemReference<ItemType>) reference).TargetIndex = index;
     }
 
     public void UpdateReferenceName(INamedFactoryItemReference reference, string name)
     {
-        ((IndexedNamedFactoryItemReference<ItemType>) reference).targetName = name;
+        ((IndexedNamedFactoryItemReference<ItemType>) reference).TargetName = name;
     }
 }

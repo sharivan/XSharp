@@ -35,7 +35,7 @@ public abstract class IndexedNamedFactoryList<ItemType> : IndexedNamedFactory<It
 
         var reference = new ReferenceType
         {
-            targetIndex = item.Index
+            TargetIndex = item.Index
         };
 
         OnCreateReference(reference);
@@ -54,7 +54,7 @@ public abstract class IndexedNamedFactoryList<ItemType> : IndexedNamedFactory<It
         references.Clear();
     }
 
-    public override void Deserialize(BinarySerializer serializer)
+    public override void Deserialize(ISerializer serializer)
     {
         base.Deserialize(serializer);
 
@@ -83,7 +83,7 @@ public abstract class IndexedNamedFactoryList<ItemType> : IndexedNamedFactory<It
         }
     }
 
-    public override void Serialize(BinarySerializer serializer)
+    public override void Serialize(ISerializer serializer)
     {
         base.Serialize(serializer);
 

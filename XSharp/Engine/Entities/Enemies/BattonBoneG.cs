@@ -169,7 +169,7 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
         if (Engine.Player != null)
         {
             var delta = Engine.Player.Origin - Origin;
-            Velocity = BATTON_BONE_G_ATTACK_SPEED * delta.Versor(Metric.MAX);
+            Velocity = BATTON_BONE_G_ATTACK_SPEED * delta.Versor();
         }
         else
         {

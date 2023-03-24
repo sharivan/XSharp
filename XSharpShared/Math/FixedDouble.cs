@@ -1,8 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 
-using XSharp.Serialization;
-
 namespace XSharp.Math;
 
 public class FixedDoubleTypeConverter : TypeConverter
@@ -39,7 +37,7 @@ public class FixedDoubleTypeConverter : TypeConverter
 }
 
 [TypeConverter(typeof(FixedDoubleTypeConverter))]
-public struct FixedDouble : ISerializable, IComparable<FixedDouble>
+public struct FixedDouble : IComparable<FixedDouble>
 {
     public const int FIXED_BITS_COUNT = 16;
     public const long FIXED_DIVISOR = 1L << FIXED_BITS_COUNT;
@@ -103,21 +101,6 @@ public struct FixedDouble : ISerializable, IComparable<FixedDouble>
     public FixedDouble(double value)
     {
         RawValue = (long) (value * FIXED_DIVISOR);
-    }
-
-    public FixedDouble(BinarySerializer reader)
-    {
-        Deserialize(reader);
-    }
-
-    public void Deserialize(BinarySerializer reader)
-    {
-        RawValue = reader.ReadLong();
-    }
-
-    public void Serialize(BinarySerializer writer)
-    {
-        writer.WriteLong(RawValue);
     }
 
     public override string ToString()

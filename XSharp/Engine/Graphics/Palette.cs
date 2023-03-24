@@ -49,12 +49,12 @@ public class Palette : IDisposable, ISerializable
     {
     }
 
-    internal Palette(BinarySerializer serializer)
+    internal Palette(ISerializer serializer)
     {
         Deserialize(serializer);
     }
 
-    public void Deserialize(BinarySerializer serializer)
+    public void Deserialize(ISerializer serializer)
     {
         name = serializer.ReadString();
         Index = serializer.ReadInt();
@@ -71,7 +71,7 @@ public class Palette : IDisposable, ISerializable
         GameEngine.Engine.PrecachePalette(name, colors, Count);
     }
 
-    public void Serialize(BinarySerializer serializer)
+    public void Serialize(ISerializer serializer)
     {
         serializer.WriteString(name);
         serializer.WriteInt(Index);

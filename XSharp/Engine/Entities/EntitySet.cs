@@ -313,13 +313,13 @@ public class EntitySet<T> : ISet<T>, IReadOnlySet<T>, ISerializable where T : En
         return builder.ToString();
     }
 
-    public void Deserialize(BinarySerializer reader)
+    public void Deserialize(ISerializer reader)
     {
         bitSet ??= new BitSet();
         bitSet.Deserialize(reader);
     }
 
-    public void Serialize(BinarySerializer writer)
+    public void Serialize(ISerializer writer)
     {
         bitSet.Serialize(writer);
     }

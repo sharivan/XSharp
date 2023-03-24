@@ -54,13 +54,13 @@ public class AnimationFactory : IndexedNamedFactoryList<Animation>
     protected override void SetItemIndex(Animation animation, IndexedNamedFactoryItemReference<Animation> reference, int index)
     {
         animation.Index = index;
-        ((AnimationReference) reference).targetIndex = index;
+        ((AnimationReference) reference).TargetIndex = index;
     }
 
     protected override void SetItemName(Animation animation, IndexedNamedFactoryItemReference<Animation> reference, string name)
     {
         animation.name = name;
-        ((AnimationReference) reference).targetName = name;
+        ((AnimationReference) reference).TargetName = name;
     }
 
     internal void UpdateAnimationName(Animation animation, string name)
@@ -92,13 +92,13 @@ public class AnimationFactory : IndexedNamedFactoryList<Animation>
         ((AnimationReference) reference).sprite = sprite;
     }
 
-    public override void Deserialize(BinarySerializer serializer)
+    public override void Deserialize(ISerializer serializer)
     {
         sprite = serializer.ReadItemReference<EntityReference<Sprite>>(false);
         base.Deserialize(serializer);
     }
 
-    public override void Serialize(BinarySerializer serializer)
+    public override void Serialize(ISerializer serializer)
     {
         serializer.WriteItemReference(sprite, false);
         base.Serialize(serializer);

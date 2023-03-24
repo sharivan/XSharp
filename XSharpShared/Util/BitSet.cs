@@ -705,7 +705,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return builder.ToString();
     }
 
-    public void Deserialize(BinarySerializer reader)
+    public void Deserialize(ISerializer reader)
     {
         bits ??= new List<ulong>();
 
@@ -714,7 +714,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
             bits[i] = reader.ReadULong();
     }
 
-    public void Serialize(BinarySerializer writer)
+    public void Serialize(ISerializer writer)
     {
         writer.WriteInt(SlotCount);
         foreach (var slotBits in bits)

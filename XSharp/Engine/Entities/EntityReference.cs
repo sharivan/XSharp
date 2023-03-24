@@ -59,12 +59,19 @@ public class EntityReference : IndexedNamedFactoryItemReference<Entity>, IEntity
         }
     }
 
-    public override void Deserialize(BinarySerializer reader)
+    public override string TargetName
     {
-        targetIndex = reader.ReadInt();
+        get => Target?.Name;
+
+        set => throw new InvalidOperationException("Can't update target name of a entity reference.");
     }
 
-    public override void Serialize(BinarySerializer writer)
+    public override void Deserialize(ISerializer reader)
+    {
+        TargetIndex = reader.ReadInt();
+    }
+
+    public override void Serialize(ISerializer writer)
     {
         writer.WriteInt(TargetIndex);
     }
@@ -223,7 +230,12 @@ internal class EntityProxyReference<EntityType> : EntityReference<EntityType> wh
 {
     private IEntityReference proxy;
 
-    public override int TargetIndex => proxy != null ? proxy.TargetIndex : -1;
+    public override int TargetIndex
+    {
+        get => proxy != null ? proxy.TargetIndex : -1;
+
+        set => throw new InvalidOperationException("Can't update the target index of a proxy reference.");
+    }
 
     public override string TargetName => proxy?.TargetName;
 

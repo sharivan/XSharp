@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
-using XSharp.Serialization;
 using XSharp.Util;
 
 using TupleExtensions = XSharp.Util.TupleExtensions;
@@ -64,7 +63,7 @@ public class VectorTypeConverter : TypeConverter
 /// Vetor bidimensional
 /// </summary>
 [TypeConverter(typeof(VectorTypeConverter))]
-public struct Vector : IGeometry, ISerializable
+public struct Vector : IGeometry
 {
     public const GeometryType type = GeometryType.VECTOR;
 
@@ -135,23 +134,6 @@ public struct Vector : IGeometry, ISerializable
     }
 
     public Vector((FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2) { }
-
-    public Vector(BinarySerializer reader)
-    {
-        Deserialize(reader);
-    }
-
-    public void Deserialize(BinarySerializer reader)
-    {
-        X = reader.ReadFixedSingle();
-        Y = reader.ReadFixedSingle();
-    }
-
-    public void Serialize(BinarySerializer writer)
-    {
-        X.Serialize(writer);
-        Y.Serialize(writer);
-    }
 
     public override int GetHashCode()
     {

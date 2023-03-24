@@ -6,10 +6,10 @@ namespace XSharp.Factories;
 
 public abstract class IndexedNamedFactoryItemReference<ItemType> : IIndexedNamedFactoryItemReference<ItemType> where ItemType : IIndexedNamedFactoryItem
 {
-    internal string targetName = null;
-    internal int targetIndex = -1;
+    protected string targetName = null;
+    protected int targetIndex = -1;
 
-    internal ItemType target = default;
+    protected ItemType target = default;
 
     public IndexedNamedFactory<ItemType> Factory => GetFactory();
 
@@ -24,22 +24,42 @@ public abstract class IndexedNamedFactoryItemReference<ItemType> : IIndexedNamed
         }
     }
 
-    public virtual int TargetIndex => targetIndex;
+    public virtual int TargetIndex
+    {
+        get => targetIndex;
 
-    public virtual string TargetName => targetName;
+        set
+        {
+            targetIndex = value;
+            targetName = null;
+            target = default;
+        }
+    }
+
+    public virtual string TargetName
+    {
+        get => targetName;
+
+        set
+        {
+            targetName = value;
+            targetIndex = -1;
+            target = default;
+        }
+    }
 
     protected IndexedNamedFactoryItemReference()
     {
     }
 
-    public virtual void Deserialize(BinarySerializer reader)
+    public virtual void Deserialize(ISerializer reader)
     {
         targetIndex = reader.ReadInt();
         targetName = reader.ReadString();
         target = default;
     }
 
-    public virtual void Serialize(BinarySerializer writer)
+    public virtual void Serialize(ISerializer writer)
     {
         writer.WriteInt(TargetIndex);
         writer.WriteString(TargetName);

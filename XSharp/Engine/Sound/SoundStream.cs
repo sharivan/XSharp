@@ -156,7 +156,7 @@ public class SoundStream : WaveStream, ISerializable
         UpdateSource(source, -1, loopTime, ignoreUpdatesUntilPlayed);
     }
 
-    public void Deserialize(BinarySerializer serializer)
+    public void Deserialize(ISerializer serializer)
     {
         var path = serializer.ReadString();
         if (path != null)
@@ -173,7 +173,7 @@ public class SoundStream : WaveStream, ISerializable
         Playing = serializer.ReadBool();
     }
 
-    public void Serialize(BinarySerializer serializer)
+    public void Serialize(ISerializer serializer)
     {
         if (source != null)
         {

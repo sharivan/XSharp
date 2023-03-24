@@ -30,12 +30,12 @@ public abstract class NamedFactoryItemReference<ItemType> : INamedFactoryItemRef
 
     protected abstract INamedFactory<ItemType> GetFactory();
 
-    public virtual void Deserialize(BinarySerializer reader)
+    public virtual void Deserialize(ISerializer reader)
     {
         targetName = reader.ReadString();
     }
 
-    public virtual void Serialize(BinarySerializer writer)
+    public virtual void Serialize(ISerializer writer)
     {
         writer.WriteString(targetName);
     }

@@ -418,5 +418,6 @@
   
   <ItemGroup>
     <ProjectReference Include="..\MegaEDXCore\MegaEDX.csproj" />
+    <ProjectReference Include="..\XSharpShared\XSharpShared.csproj" />
   </ItemGroup>
 </Project>

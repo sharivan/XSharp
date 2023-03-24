@@ -178,7 +178,7 @@ public class FadingControl : ISerializable
         }
     }
 
-    public void Deserialize(BinarySerializer serializer)
+    public void Deserialize(ISerializer serializer)
     {
         Fading = serializer.ReadBool();
         Flags = serializer.ReadEnum<FadingFlags>();
@@ -195,7 +195,7 @@ public class FadingControl : ISerializable
         serializer.DeserializeProperty(nameof(OnFadingComplete), this);
     }
 
-    public void Serialize(BinarySerializer serializer)
+    public void Serialize(ISerializer serializer)
     {
         serializer.WriteBool(Fading);
         serializer.WriteEnum(Flags);

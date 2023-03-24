@@ -3583,7 +3583,7 @@ public class GameEngine : IRenderable, IRenderTarget
         int constraintCount = serializer.ReadInt();
         for (int i = 0; i < constraintCount; i++)
         {
-            var constraint = new Vector(serializer);
+            var constraint = serializer.ReadVector();
             cameraConstraints.Add(constraint);
         }
 
@@ -3673,9 +3673,9 @@ public class GameEngine : IRenderable, IRenderTarget
         serializer.WriteInt(lastLives);
         serializer.WriteBool(respawning);
 
-        lastPlayerOrigin.Serialize(serializer);
-        lastPlayerVelocity.Serialize(serializer);
-        lastCameraLeftTop.Serialize(serializer);
+        serializer.WriteVector(lastPlayerOrigin);
+        serializer.WriteVector(lastPlayerVelocity);
+        serializer.WriteVector(lastCameraLeftTop);
 
         int precachedSoundCount = 0;
         foreach (var sound in precachedSounds)
@@ -3734,16 +3734,16 @@ public class GameEngine : IRenderable, IRenderTarget
 
         serializer.WriteInt(cameraConstraints.Count);
         foreach (var constraint in cameraConstraints)
-            constraint.Serialize(serializer);
+            serializer.WriteVector(constraint);
 
-        HealthCapacity.Serialize(serializer);
-        CameraConstraintsOrigin.Serialize(serializer);
-        CameraConstraintsBox.Serialize(serializer);
+        serializer.WriteFixedSingle(HealthCapacity);
+        serializer.WriteVector(CameraConstraintsOrigin);
+        serializer.WriteBox(CameraConstraintsBox);
 
         serializer.WriteBool(gameOver);
         serializer.WriteBool(paused);
 
-        DrawScale.Serialize(serializer);
+        serializer.WriteFixedSingle(DrawScale);
 
         serializer.WriteInt(BackgroundColor.ToAbgr());
         serializer.WriteBool(Running);

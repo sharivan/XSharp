@@ -127,7 +127,7 @@ public class SoundChannel : IDisposable, ISerializable
         return Stream.Playing && Stream.Source == sound;
     }
 
-    public void Deserialize(BinarySerializer serializer)
+    public void Deserialize(ISerializer serializer)
     {
         Stream.Deserialize(serializer);
         player.Volume = serializer.ReadFloat();
@@ -144,7 +144,7 @@ public class SoundChannel : IDisposable, ISerializable
         }
     }
 
-    public void Serialize(BinarySerializer serializer)
+    public void Serialize(ISerializer serializer)
     {
         Stream.Serialize(serializer);
         serializer.WriteFloat(player.Volume);

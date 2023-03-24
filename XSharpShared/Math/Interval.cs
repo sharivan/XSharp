@@ -2,7 +2,7 @@
 
 namespace XSharp.Math;
 
-public struct Interval : ISerializable
+public struct Interval
 {
     public static readonly Interval EMPTY = MakeOpenInterval(0, 0);
 
@@ -51,11 +51,6 @@ public struct Interval : ISerializable
         return new(FixedSingle.Min(v1, v2), true, FixedSingle.Max(v1, v2), false);
     }
 
-    public static Interval ReadInterval(BinarySerializer reader)
-    {
-        return new(reader);
-    }
-
     public FixedSingle Min
     {
         get;
@@ -100,27 +95,6 @@ public struct Interval : ISerializable
         IsClosedLeft = closedLeft;
         Max = max;
         IsClosedRight = closedRight;
-    }
-
-    private Interval(BinarySerializer reader)
-    {
-        Deserialize(reader);
-    }
-
-    public void Deserialize(BinarySerializer reader)
-    {
-        Min = reader.ReadFixedSingle();
-        IsClosedLeft = reader.ReadBool();
-        Max = reader.ReadFixedSingle();
-        IsClosedRight = reader.ReadBool();
-    }
-
-    public void Serialize(BinarySerializer writer)
-    {
-        Min.Serialize(writer);
-        writer.WriteBool(IsClosedLeft);
-        Max.Serialize(writer);
-        writer.WriteBool(IsClosedRight);
     }
 
     public override bool Equals(object obj)

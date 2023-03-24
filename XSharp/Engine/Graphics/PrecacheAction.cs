@@ -44,7 +44,7 @@ public class PrecacheAction : ISerializable
         Deserialize(serializer);
     }
 
-    public void Deserialize(BinarySerializer input)
+    public void Deserialize(ISerializer input)
     {
         var serializer = (EngineBinarySerializer) input;
 
@@ -59,7 +59,7 @@ public class PrecacheAction : ISerializable
         Called = serializer.ReadBool();
     }
 
-    public void Serialize(BinarySerializer output)
+    public void Serialize(ISerializer output)
     {
         var serializer = (EngineBinarySerializer) output;
 

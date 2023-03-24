@@ -30,12 +30,12 @@ public abstract class IndexedFactoryItemReference<ItemType> : IIndexedFactoryIte
 
     protected abstract IIndexedFactory<ItemType> GetFactory();
 
-    public virtual void Deserialize(BinarySerializer reader)
+    public virtual void Deserialize(ISerializer reader)
     {
         targetIndex = reader.ReadInt();
     }
 
-    public virtual void Serialize(BinarySerializer writer)
+    public virtual void Serialize(ISerializer writer)
     {
         writer.WriteInt(targetIndex);
     }

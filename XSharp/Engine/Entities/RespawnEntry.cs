@@ -3,7 +3,7 @@ using XSharp.Serialization;
 
 namespace XSharp.Engine.Entities;
 
-public class RespawnEntry : ISerializable
+public record RespawnEntry : ISerializable
 {
     public EntityReference Entity
     {
@@ -29,7 +29,7 @@ public class RespawnEntry : ISerializable
         origin = Origin;
     }
 
-    public void Deserialize(BinarySerializer input)
+    public void Deserialize(ISerializer input)
     {
         var serializer = (EngineBinarySerializer) input;
 
@@ -37,7 +37,7 @@ public class RespawnEntry : ISerializable
         Origin = serializer.ReadVector();
     }
 
-    public void Serialize(BinarySerializer output)
+    public void Serialize(ISerializer output)
     {
         var serializer = (EngineBinarySerializer) output;
 

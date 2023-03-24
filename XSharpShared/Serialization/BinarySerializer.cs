@@ -124,11 +124,11 @@ public class BinarySerializer : Serializer, IDisposable
             return reference != null ? reference.ToString() : "reference not resolved yet";
         }
 
-        public void Deserialize(BinarySerializer serializer)
+        public void Deserialize(ISerializer serializer)
         {
         }
 
-        public void Serialize(BinarySerializer serializer)
+        public void Serialize(ISerializer serializer)
         {
         }
     }
@@ -321,67 +321,67 @@ public class BinarySerializer : Serializer, IDisposable
         eventsToResolve = new List<(EventInfo, object, FutureDelegate)>();
     }
 
-    public byte ReadByte()
+    public override byte ReadByte()
     {
         return reader.ReadByte();
     }
 
-    public sbyte ReadSByte()
+    public override sbyte ReadSByte()
     {
         return reader.ReadSByte();
     }
 
-    public short ReadShort()
+    public override short ReadShort()
     {
         return reader.ReadInt16();
     }
 
-    public ushort ReadUShort()
+    public override ushort ReadUShort()
     {
         return reader.ReadUInt16();
     }
 
-    public int ReadInt()
+    public override int ReadInt()
     {
         return reader.ReadInt32();
     }
 
-    public uint ReadUInt()
+    public override uint ReadUInt()
     {
         return reader.ReadUInt32();
     }
 
-    public long ReadLong()
+    public override long ReadLong()
     {
         return reader.ReadInt64();
     }
 
-    public ulong ReadULong()
+    public override ulong ReadULong()
     {
         return reader.ReadUInt64();
     }
 
-    public float ReadFloat()
+    public override float ReadFloat()
     {
         return reader.ReadSingle();
     }
 
-    public double ReadDouble()
+    public override double ReadDouble()
     {
         return reader.ReadDouble();
     }
 
-    public bool ReadBool()
+    public override bool ReadBool()
     {
         return reader.ReadBoolean();
     }
 
-    public char ReadChar()
+    public override char ReadChar()
     {
         return reader.ReadChar();
     }
 
-    public string ReadString(bool nullable = true)
+    public override string ReadString(bool nullable = true)
     {
         if (nullable)
         {
@@ -393,107 +393,122 @@ public class BinarySerializer : Serializer, IDisposable
         return reader.ReadString();
     }
 
-    public FixedSingle ReadFixedSingle()
+    public override FixedSingle ReadFixedSingle()
     {
-        return new FixedSingle(this);
+        int rawValue = ReadInt();
+        return FixedSingle.FromRawValue(rawValue);
     }
 
-    public FixedDouble ReadFixedDouble()
+    public override FixedDouble ReadFixedDouble()
     {
-        return new FixedDouble(this);
+        long rawValue = ReadLong();
+        return FixedDouble.FromRawValue(rawValue);
     }
 
-    public Interval ReadInterval()
+    public override Interval ReadInterval()
     {
-        return Interval.ReadInterval(this);
+        byte flag = ReadByte();
+        FixedSingle min = ReadFixedSingle();
+        FixedSingle max = ReadFixedSingle();
+        return Interval.MakeInterval((min, (flag & 1) != 0), (max, (flag & 2) != 0));
     }
 
-    public Vector ReadVector()
+    public override Vector ReadVector()
     {
-        return new Vector(this);
+        FixedSingle x = ReadFixedSingle();
+        FixedSingle y = ReadFixedSingle();
+        return new Vector(x, y);
     }
 
-    public LineSegment ReadLineSegment()
+    public override LineSegment ReadLineSegment()
     {
-        return new LineSegment(this);
+        Vector start = ReadVector();
+        Vector end = ReadVector();
+        return new LineSegment(start, end);
     }
 
-    public Box ReadBox()
+    public override Box ReadBox()
     {
-        return new Box(this);
+        Vector origin = ReadVector();
+        Vector mins = ReadVector();
+        Vector maxs = ReadVector();
+        return new Box(origin, mins, maxs);
     }
 
-    public RightTriangle ReadRightTriangle()
+    public override RightTriangle ReadRightTriangle()
     {
-        return new RightTriangle(this);
+        Vector origin = ReadVector();
+        FixedSingle hCathetus = ReadFixedSingle();
+        FixedSingle vCathetus = ReadFixedSingle();
+        return new RightTriangle(origin, hCathetus, vCathetus);
     }
 
-    public T ReadEnum<T>() where T : Enum
+    public override T ReadEnum<T>()
     {
         return (T) ReadValue(Enum.GetUnderlyingType(typeof(T)));
     }
 
-    public void WriteByte(byte value)
+    public override void WriteByte(byte value)
     {
         writer.Write(value);
     }
 
-    public void WriteSByte(sbyte value)
+    public override void WriteSByte(sbyte value)
     {
         writer.Write(value);
     }
 
-    public void WriteShort(short value)
+    public override void WriteShort(short value)
     {
         writer.Write(value);
     }
 
-    public void WriteUShort(ushort value)
+    public override void WriteUShort(ushort value)
     {
         writer.Write(value);
     }
 
-    public void WriteInt(int value)
+    public override void WriteInt(int value)
     {
         writer.Write(value);
     }
 
-    public void WriteUInt(uint value)
+    public override void WriteUInt(uint value)
     {
         writer.Write(value);
     }
 
-    public void WriteLong(long value)
+    public override void WriteLong(long value)
     {
         writer.Write(value);
     }
 
-    public void WriteULong(ulong value)
+    public override void WriteULong(ulong value)
     {
         writer.Write(value);
     }
 
-    public void WriteFloat(float value)
+    public override void WriteFloat(float value)
     {
         writer.Write(value);
     }
 
-    public void WriteDouble(double value)
+    public override void WriteDouble(double value)
     {
         writer.Write(value);
     }
 
-    public void WriteBool(bool value)
+    public override void WriteBool(bool value)
     {
         writer.Write(value);
     }
 
-    public void WriteChar(char value)
+    public override void WriteChar(char value)
     {
         writer.Write(value);
     }
 
-    public void WriteString(string value, bool nullable = true)
+    public override void WriteString(string value, bool nullable = true)
     {
         if (nullable)
         {
@@ -509,42 +524,51 @@ public class BinarySerializer : Serializer, IDisposable
         writer.Write(value);
     }
 
-    public void WriteFixedSingle(FixedSingle value)
+    public override void WriteFixedSingle(FixedSingle value)
     {
-        value.Serialize(this);
+        WriteInt(value.RawValue);
     }
 
-    public void WriteFixedDouble(FixedDouble value)
+    public override void WriteFixedDouble(FixedDouble value)
     {
-        value.Serialize(this);
+        WriteLong(value.RawValue);
     }
 
-    public void WriteInterval(Interval value)
+    public override void WriteInterval(Interval value)
     {
-        value.Serialize(this);
+        byte flags = (byte) ((value.IsClosedLeft ? 1 : 0) | (value.IsClosedRight ? 2 : 0));
+        WriteByte(flags);
+        WriteFixedSingle(value.Min);
+        WriteFixedSingle(value.Max);
     }
 
-    public void WriteVector(Vector value)
+    public override void WriteVector(Vector value)
     {
-        value.Serialize(this);
+        WriteFixedSingle(value.X);
+        WriteFixedSingle(value.Y);
     }
 
-    public void WriteLineSegment(LineSegment value)
+    public override void WriteLineSegment(LineSegment value)
     {
-        value.Serialize(this);
+        WriteVector(value.Start);
+        WriteVector(value.End);
     }
 
-    public void WriteBox(Box value)
+    public override void WriteBox(Box value)
     {
-        value.Serialize(this);
+        WriteVector(value.Origin);
+        WriteVector(value.Mins);
+        WriteVector(value.Maxs);
     }
 
-    public void WriteRightTriangle(RightTriangle value)
+    public override void WriteRightTriangle(RightTriangle value)
     {
-        value.Serialize(this);
+        WriteVector(value.Origin);
+        WriteFixedSingle(value.RawHCathetus);
+        WriteFixedSingle(value.RawVCathetus);
     }
 
-    public void WriteEnum<T>(T value) where T : Enum
+    public override void WriteEnum<T>(T value)
     {
         WriteValue(Enum.GetUnderlyingType(typeof(T)), value);
     }
@@ -899,7 +923,7 @@ public class BinarySerializer : Serializer, IDisposable
         WriteBool(info.IsStatic);
     }
 
-    public object ReadDelegate(bool nullable = true)
+    public override object ReadDelegate(bool nullable = true)
     {
         Future = null;
 
@@ -923,7 +947,7 @@ public class BinarySerializer : Serializer, IDisposable
         return Delegate.CreateDelegate(delegateType, target, methodInfo);
     }
 
-    public void WriteDelegate(Delegate @delegate, bool nullable = true)
+    public override void WriteDelegate(Delegate @delegate, bool nullable = true)
     {
         if (nullable)
         {
@@ -982,7 +1006,7 @@ public class BinarySerializer : Serializer, IDisposable
         }
     }
 
-    public virtual IFactoryItemReference ReadItemReference(Type referenceType, bool nullable = true)
+    public override IFactoryItemReference ReadItemReference(Type referenceType, bool nullable = true)
     {
         Future = null;
 
@@ -1015,12 +1039,7 @@ public class BinarySerializer : Serializer, IDisposable
         return fakeReference;
     }
 
-    public ReferenceType ReadItemReference<ReferenceType>(bool nullable = true) where ReferenceType : IFactoryItemReference
-    {
-        return (ReferenceType) ReadItemReference(typeof(ReferenceType), nullable);
-    }
-
-    public virtual void WriteItemReference(IFactoryItemReference reference, bool nullable = true)
+    public override void WriteItemReference(IFactoryItemReference reference, bool nullable = true)
     {
         if (nullable)
         {
@@ -1144,7 +1163,7 @@ public class BinarySerializer : Serializer, IDisposable
             || type.IsEnum;
     }
 
-    public object ReadObject(bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true)
+    public override object ReadObject(bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true)
     {
         Future = null;
 
@@ -1233,7 +1252,7 @@ public class BinarySerializer : Serializer, IDisposable
         return false;
     }
 
-    public virtual void WriteObject(object obj, bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true)
+    public override void WriteObject(object obj, bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true)
     {
         if (nullable)
         {

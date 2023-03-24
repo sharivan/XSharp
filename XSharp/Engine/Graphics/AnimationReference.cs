@@ -16,13 +16,13 @@ public class AnimationReference : IndexedNamedFactoryItemReference<Animation>
     {
     }
 
-    public override void Deserialize(BinarySerializer serializer)
+    public override void Deserialize(ISerializer serializer)
     {
         sprite = serializer.ReadItemReference<EntityReference<Sprite>>(false);
         base.Deserialize(serializer);
     }
 
-    public override void Serialize(BinarySerializer serializer)
+    public override void Serialize(ISerializer serializer)
     {
         serializer.WriteItemReference(sprite, false);
         base.Serialize(serializer);
@@ -87,6 +87,6 @@ public class AnimationReference : IndexedNamedFactoryItemReference<Animation>
 
     public override int GetHashCode()
     {
-        return targetIndex;
+        return TargetIndex;
     }
 }

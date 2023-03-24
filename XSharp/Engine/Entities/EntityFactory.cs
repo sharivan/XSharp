@@ -274,13 +274,12 @@ public class EntityFactory : IndexedNamedFactory<Entity>
     protected override void SetItemIndex(Entity entity, IndexedNamedFactoryItemReference<Entity> reference, int index)
     {
         entity.Index = index;
-        ((EntityReference) reference).targetIndex = index;
+        ((EntityReference) reference).TargetIndex = index;
     }
 
     protected override void SetItemName(Entity entity, IndexedNamedFactoryItemReference<Entity> reference, string name)
     {
         entity.name = name;
-        ((EntityReference) reference).targetName = name;
     }
 
     protected override bool CanChangeName(Entity entity)
@@ -298,7 +297,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         return itemType == typeof(Entity) ? typeof(EntityReference) : typeof(EntityReference<>).MakeGenericType(itemType);
     }
 
-    public override void Deserialize(BinarySerializer input)
+    public override void Deserialize(ISerializer input)
     {
         base.Deserialize(input);
 
@@ -327,7 +326,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         lastEntity = serializer.ReadEntityReference();
     }
 
-    public override void Serialize(BinarySerializer output)
+    public override void Serialize(ISerializer output)
     {
         base.Serialize(output);
 

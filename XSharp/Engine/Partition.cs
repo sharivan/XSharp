@@ -125,7 +125,7 @@ internal class Partition<T> : ISerializable where T : Entity
             values.Clear();
         }
 
-        public void Deserialize(BinarySerializer reader)
+        public void Deserialize(ISerializer reader)
         {
             box = reader.ReadBox();
 
@@ -133,9 +133,9 @@ internal class Partition<T> : ISerializable where T : Entity
             values.Deserialize(reader);
         }
 
-        public void Serialize(BinarySerializer writer)
+        public void Serialize(ISerializer writer)
         {
-            box.Serialize(writer);
+            writer.WriteBox(box);
             values.Serialize(writer);
         }
     }
@@ -549,7 +549,7 @@ internal class Partition<T> : ISerializable where T : Entity
         grid = newArray;
     }
 
-    public void Deserialize(BinarySerializer serializer)
+    public void Deserialize(ISerializer serializer)
     {
         box = serializer.ReadBox();
         rows = serializer.ReadInt();
@@ -580,14 +580,14 @@ internal class Partition<T> : ISerializable where T : Entity
         }
     }
 
-    public void Serialize(BinarySerializer serializer)
+    public void Serialize(ISerializer serializer)
     {
-        box.Serialize(serializer);
+        serializer.WriteBox(box);
         serializer.WriteInt(rows);
         serializer.WriteInt(cols);
 
-        cellWidth.Serialize(serializer);
-        cellHeight.Serialize(serializer);
+        serializer.WriteFixedSingle(cellWidth);
+        serializer.WriteFixedSingle(cellHeight);
 
         for (int col = 0; col < cols; col++)
         {

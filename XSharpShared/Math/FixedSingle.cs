@@ -1,7 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
-
-using XSharp.Serialization;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Numerics;
 
 namespace XSharp.Math;
 
@@ -43,7 +44,7 @@ public class FixedSingleTypeConverter : TypeConverter
 }
 
 [TypeConverter(typeof(FixedSingleTypeConverter))]
-public struct FixedSingle : ISerializable, IComparable<FixedSingle>
+public struct FixedSingle : ISignedNumber<FixedSingle>
 {
     public const int FIXED_BITS_COUNT = 16;
     public const int FIXED_DIVISOR = 1 << FIXED_BITS_COUNT;
@@ -92,6 +93,18 @@ public struct FixedSingle : ISerializable, IComparable<FixedSingle>
 
     public int Signal => RawValue == 0 ? 0 : RawValue > 0 ? 1 : -1;
 
+    public static FixedSingle One => ONE;
+
+    public static int Radix => throw new NotImplementedException();
+
+    public static FixedSingle Zero => ZERO;
+
+    public static FixedSingle AdditiveIdentity => ZERO;
+
+    public static FixedSingle MultiplicativeIdentity => ONE;
+
+    public static FixedSingle NegativeOne => MINUS_ONE;
+
     private FixedSingle(int rawValue)
     {
         RawValue = rawValue;
@@ -107,24 +120,9 @@ public struct FixedSingle : ISerializable, IComparable<FixedSingle>
         RawValue = (int) (value * FIXED_DIVISOR);
     }
 
-    public FixedSingle(BinarySerializer reader)
-    {
-        Deserialize(reader);
-    }
-
-    public void Deserialize(BinarySerializer reader)
-    {
-        RawValue = reader.ReadInt();
-    }
-
-    public void Serialize(BinarySerializer writer)
-    {
-        writer.WriteInt(RawValue);
-    }
-
     public override string ToString()
     {
-        return DoubleValue.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return DoubleValue.ToString(CultureInfo.InvariantCulture);
     }
 
     public override bool Equals(object obj)
@@ -342,6 +340,21 @@ public struct FixedSingle : ISerializable, IComparable<FixedSingle>
         return new(src);
     }
 
+    public static FixedSingle operator %(FixedSingle left, FixedSingle right)
+    {
+        return left.IntValue % right.IntValue;
+    }
+
+    public static FixedSingle operator --(FixedSingle value)
+    {
+        return value - 1;
+    }
+
+    public static FixedSingle operator ++(FixedSingle value)
+    {
+        return value + 1;
+    }
+
     public static FixedSingle Min(FixedSingle f1, FixedSingle f2)
     {
         return f1 < f2 ? f1 : f2;
@@ -350,5 +363,205 @@ public struct FixedSingle : ISerializable, IComparable<FixedSingle>
     public static FixedSingle Max(FixedSingle f1, FixedSingle f2)
     {
         return f1 > f2 ? f1 : f2;
+    }
+
+    public int CompareTo(object? obj)
+    {
+        throw new NotImplementedException();
+    }
+
+    static FixedSingle INumberBase<FixedSingle>.Abs(FixedSingle value)
+    {
+        return value.Abs;
+    }
+
+    public static bool IsCanonical(FixedSingle value)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static bool IsComplexNumber(FixedSingle value)
+    {
+        return false;
+    }
+
+    public static bool IsEvenInteger(FixedSingle value)
+    {
+        return value.IntValue % 2 == 0 && value.FracPart == 0;
+    }
+
+    public static bool IsFinite(FixedSingle value)
+    {
+        return true;
+    }
+
+    public static bool IsImaginaryNumber(FixedSingle value)
+    {
+        return false;
+    }
+
+    public static bool IsInfinity(FixedSingle value)
+    {
+        return false;
+    }
+
+    public static bool IsInteger(FixedSingle value)
+    {
+        return value.FracPart == 0;
+    }
+
+    public static bool IsNaN(FixedSingle value)
+    {
+        return false;
+    }
+
+    public static bool IsNegative(FixedSingle value)
+    {
+        return value < 0;
+    }
+
+    public static bool IsNegativeInfinity(FixedSingle value)
+    {
+        return false;
+    }
+
+    public static bool IsNormal(FixedSingle value)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static bool IsOddInteger(FixedSingle value)
+    {
+        return value.IntValue % 2 != 0 && value.FracPart == 0;
+    }
+
+    public static bool IsPositive(FixedSingle value)
+    {
+        return value > 0;
+    }
+
+    public static bool IsPositiveInfinity(FixedSingle value)
+    {
+        return false;
+    }
+
+    public static bool IsRealNumber(FixedSingle value)
+    {
+        return true;
+    }
+
+    public static bool IsSubnormal(FixedSingle value)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static bool IsZero(FixedSingle value)
+    {
+        return value == 0;
+    }
+
+    public static FixedSingle MaxMagnitude(FixedSingle x, FixedSingle y)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static FixedSingle MaxMagnitudeNumber(FixedSingle x, FixedSingle y)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static FixedSingle MinMagnitude(FixedSingle x, FixedSingle y)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static FixedSingle MinMagnitudeNumber(FixedSingle x, FixedSingle y)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static FixedSingle Parse(ReadOnlySpan<char> s, NumberStyles style, IFormatProvider? provider)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static FixedSingle Parse(string s, NumberStyles style, IFormatProvider? provider)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static bool TryParse(ReadOnlySpan<char> s, NumberStyles style, IFormatProvider? provider, [MaybeNullWhen(false)] out FixedSingle result)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static bool TryParse([NotNullWhen(true)] string? s, NumberStyles style, IFormatProvider? provider, [MaybeNullWhen(false)] out FixedSingle result)
+    {
+        throw new NotImplementedException();
+    }
+
+    public bool Equals(FixedSingle other)
+    {
+        return this == other;
+    }
+
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        throw new NotImplementedException();
+    }
+
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static FixedSingle Parse(ReadOnlySpan<char> s, IFormatProvider? provider)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static bool TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, [MaybeNullWhen(false)] out FixedSingle result)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static FixedSingle Parse(string s, IFormatProvider? provider)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out FixedSingle result)
+    {
+        throw new NotImplementedException();
+    }
+
+    static bool INumberBase<FixedSingle>.TryConvertFromChecked<TOther>(TOther value, out FixedSingle result)
+    {
+        throw new NotImplementedException();
+    }
+
+    static bool INumberBase<FixedSingle>.TryConvertFromSaturating<TOther>(TOther value, out FixedSingle result)
+    {
+        throw new NotImplementedException();
+    }
+
+    static bool INumberBase<FixedSingle>.TryConvertFromTruncating<TOther>(TOther value, out FixedSingle result)
+    {
+        throw new NotImplementedException();
+    }
+
+    static bool INumberBase<FixedSingle>.TryConvertToChecked<TOther>(FixedSingle value, out TOther result)
+    {
+        throw new NotImplementedException();
+    }
+
+    static bool INumberBase<FixedSingle>.TryConvertToSaturating<TOther>(FixedSingle value, out TOther result)
+    {
+        throw new NotImplementedException();
+    }
+
+    static bool INumberBase<FixedSingle>.TryConvertToTruncating<TOther>(FixedSingle value, out TOther result)
+    {
+        throw new NotImplementedException();
     }
 }

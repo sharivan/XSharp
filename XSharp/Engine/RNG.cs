@@ -11,12 +11,12 @@ public class RNG : ISerializable
         UpdateSeed(seed);
     }
 
-    public void Deserialize(BinarySerializer reader)
+    public void Deserialize(ISerializer reader)
     {
         seed = reader.ReadLong();
     }
 
-    public void Serialize(BinarySerializer writer)
+    public void Serialize(ISerializer writer)
     {
         writer.WriteLong(seed);
     }

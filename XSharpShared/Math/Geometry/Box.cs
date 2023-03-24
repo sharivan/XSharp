@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
-using XSharp.Serialization;
 using XSharp.Util;
 
 namespace XSharp.Math.Geometry;
@@ -113,7 +112,7 @@ public class BoxTypeConverter : TypeConverter
 /// Retângulo bidimensional com lados paralelos aos eixos coordenados
 /// </summary>
 [TypeConverter(typeof(BoxTypeConverter))]
-public struct Box : IShape, ISerializable
+public struct Box : IShape
 {
     public const GeometryType type = GeometryType.BOX;
 
@@ -309,25 +308,6 @@ public struct Box : IShape, ISerializable
     }
 
     public Box((Vector, Vector) tuple) : this(tuple.Item1, tuple.Item2) { }
-
-    public Box(BinarySerializer reader)
-    {
-        Deserialize(reader);
-    }
-
-    public void Deserialize(BinarySerializer reader)
-    {
-        Origin = reader.ReadVector();
-        Mins = reader.ReadVector();
-        Maxs = reader.ReadVector();
-    }
-
-    public void Serialize(BinarySerializer writer)
-    {
-        Origin.Serialize(writer);
-        Mins.Serialize(writer);
-        Maxs.Serialize(writer);
-    }
 
     public FixedSingle GetLength(Metric metric)
     {

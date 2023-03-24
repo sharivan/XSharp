@@ -70,6 +70,12 @@ csharp_style_prefer_extended_property_pattern = true:suggestion
 # IDE0011: Adicionar chaves
 dotnet_diagnostic.IDE0011.severity = none
 
+# CS8602: Desreferência de uma referência possivelmente nula.
+dotnet_diagnostic.CS8602.severity = none
+
+# CS8604: Possível argumento de referência nula.
+dotnet_diagnostic.CS8604.severity = none
+
 [*.vb]
 #### Estilos de nomenclatura ####
 
