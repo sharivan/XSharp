@@ -65,7 +65,6 @@ public class DashSparkEffect : SpriteEffect
         base.OnCreate();
 
         SpriteSheetName = "X Effects";
-        Directional = true;
         DefaultDirection = Direction.LEFT;
 
         SetAnimationNames("PreDashSparkEffect", "DashSparkEffect");

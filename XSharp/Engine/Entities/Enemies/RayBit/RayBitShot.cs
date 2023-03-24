@@ -39,7 +39,6 @@ public class RayBitShot : Enemy
         base.OnCreate();
 
         SpriteSheetName = "RayBit";
-        Directional = true;
 
         SetAnimationNames("Shot");
     }

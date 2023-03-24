@@ -133,7 +133,6 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
 
         PaletteName = "rayBitPalette";
         SpriteSheetName = "RayBit";
-        Directional = true;
         DefaultDirection = Direction.LEFT;
 
         SetAnimationNames("Idle", "PreJumping", "Jumping", "Falling", "Shooting");

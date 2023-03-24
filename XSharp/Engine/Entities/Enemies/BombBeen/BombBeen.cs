@@ -170,7 +170,6 @@ public class BombBeen : Enemy, IStateEntity<BombBeenState>
     {
         base.OnCreate();
 
-        Directional = true;
         DefaultDirection = Direction.LEFT;
 
         PaletteName = "bombBeenPalette";

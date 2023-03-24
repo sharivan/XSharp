@@ -37,7 +37,6 @@ public class AxeMaxTrunkHurtbox : Enemy
     {
         base.OnCreate();
 
-        Directional = false;
         Invincible = true;
 
         trunk = (AxeMaxTrunk) Parent;
@@ -84,7 +83,7 @@ public class AxeMaxTrunkHurtbox : Enemy
         LifeUpDropOdd = 0; // 0%
     }
 
-    protected override bool PreThink()
+    protected override bool OnPreThink()
     {
         if (flashing && lastPaletteName != null)
         {
@@ -93,7 +92,7 @@ public class AxeMaxTrunkHurtbox : Enemy
             lastPaletteName = null;
         }
 
-        return base.PreThink();
+        return base.OnPreThink();
     }
 
     protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)

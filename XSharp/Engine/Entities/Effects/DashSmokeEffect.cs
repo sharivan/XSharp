@@ -31,7 +31,6 @@ public class DashSmokeEffect : SpriteEffect
     public DashSmokeEffect()
     {
         SpriteSheetName = "X Effects";
-        Directional = false;
 
         SetAnimationNames("DashSmokeEffect");
     }

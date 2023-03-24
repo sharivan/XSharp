@@ -183,24 +183,6 @@ public abstract class Sprite : Entity, IRenderable
         set;
     } = 1;
 
-    public bool Directional
-    {
-        get;
-        set;
-    } = false;
-
-    public Direction Direction
-    {
-        get;
-        set;
-    } = Direction.RIGHT;
-
-    public Direction DefaultDirection
-    {
-        get;
-        set;
-    } = Direction.RIGHT;
-
     public CollisionData CollisionData
     {
         get;
@@ -337,12 +319,12 @@ public abstract class Sprite : Entity, IRenderable
         get
         {
             Box box = IntegerOrigin + GetBoundingBox();
-            return Directional && Direction != DefaultDirection ? box.Mirror(IntegerOrigin) : box;
+            return Direction != DefaultDirection ? box.Mirror(IntegerOrigin) : box;
         }
 
         protected set
         {
-            Box boudingBox = Directional && Direction != DefaultDirection ? value.Mirror(IntegerOrigin) : value;
+            Box boudingBox = Direction != DefaultDirection ? value.Mirror(IntegerOrigin) : value;
             boudingBox -= IntegerOrigin;
             SetBoundingBox(boudingBox);
             UpdatePartition();
@@ -354,12 +336,12 @@ public abstract class Sprite : Entity, IRenderable
         get
         {
             Box box = Origin + (!Alive && (Respawnable || SpawnOnNear) ? GetDeadBox() : GetHitbox());
-            return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
+            return Direction != DefaultDirection ? box.Mirror(Origin) : box;
         }
 
         protected set
         {
-            Box hitbox = Directional && Direction != DefaultDirection ? value.Mirror(Origin) : value;
+            Box hitbox = Direction != DefaultDirection ? value.Mirror(Origin) : value;
             hitbox -= Origin;
             SetHitbox(hitbox);
         }
@@ -370,7 +352,7 @@ public abstract class Sprite : Entity, IRenderable
         get
         {
             Box box = Origin + GetTouchingBox();
-            return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
+            return Direction != DefaultDirection ? box.Mirror(Origin) : box;
         }
     }
 
@@ -379,7 +361,7 @@ public abstract class Sprite : Entity, IRenderable
         get
         {
             Box box = Origin + GetCollisionBox();
-            return Directional && Direction != DefaultDirection ? box.Mirror(Origin) : box;
+            return Direction != DefaultDirection ? box.Mirror(Origin) : box;
         }
     }
 
@@ -824,7 +806,7 @@ public abstract class Sprite : Entity, IRenderable
 
     protected virtual Box GetBoundingBox()
     {
-        return (Directional && Direction != DefaultDirection ? DrawBox.Mirror(IntegerOrigin) : DrawBox) - IntegerOrigin;
+        return (Direction != DefaultDirection ? DrawBox.Mirror(IntegerOrigin) : DrawBox) - IntegerOrigin;
     }
 
     protected virtual void SetBoundingBox(Box boudingBox)
@@ -861,7 +843,7 @@ public abstract class Sprite : Entity, IRenderable
             ? animation.DrawBox
             : InitialAnimationIndex >= 0 && InitialAnimationIndex < Animations.Count ? Animations[InitialAnimationIndex].DrawBox : Animations.Count > 0 ? Animations[0].DrawBox : Box.EMPTY_BOX;
 
-        return (Directional && Direction != DefaultDirection ? drawBox.Mirror(Origin) : drawBox) - Origin;
+        return (Direction != DefaultDirection ? drawBox.Mirror(Origin) : drawBox) - Origin;
     }
 
     protected virtual Box GetCollisionBox()
@@ -890,9 +872,6 @@ public abstract class Sprite : Entity, IRenderable
         invincibilityFrames = DEFAULT_INVINCIBLE_TIME;
         broke = false;
         MultiAnimation = false;
-
-        if (Directional)
-            Direction = DefaultDirection;
 
         FadingControl.Reset();
 
@@ -1823,7 +1802,7 @@ public abstract class Sprite : Entity, IRenderable
             animation.Visible = animation.Name == name ? visible : !visible;
     }
 
-    protected override bool PreThink()
+    protected override bool OnPreThink()
     {
         if (!Engine.Paused)
         {
@@ -1833,7 +1812,7 @@ public abstract class Sprite : Entity, IRenderable
             touchingSpritesDown.Clear();
         }
 
-        return base.PreThink();
+        return base.OnPreThink();
     }
 
     protected override void OnThink()

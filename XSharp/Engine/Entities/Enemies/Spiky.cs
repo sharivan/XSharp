@@ -110,8 +110,6 @@ public class Spiky : Enemy, IStateEntity<SpikyState>
     {
         base.OnCreate();
 
-        Directional = true;
-
         PaletteName = "spikyPalette";
         SpriteSheetName = "Spiky";
 

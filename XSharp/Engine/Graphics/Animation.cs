@@ -181,7 +181,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
             if (Flipped)
                 box = box.Flip(drawOrigin);
 
-            if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
+            if (Mirrored || Sprite.Direction != Sprite.DefaultDirection)
                 box = box.Mirror(drawOrigin);
 
             return box;
@@ -312,12 +312,12 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
         if (Flipped)
         {
-            if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
+            if (Mirrored || Sprite.Direction != Sprite.DefaultDirection)
                 transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, -1, 1) * Matrix.Translation(origin3);
             else
                 transform *= Matrix.Translation(-origin3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(origin3);
         }
-        else if (Mirrored || Sprite.Directional && Sprite.Direction != Sprite.DefaultDirection)
+        else if (Mirrored || Sprite.Direction != Sprite.DefaultDirection)
         {
             transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(origin3);
         }

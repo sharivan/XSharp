@@ -154,6 +154,16 @@ public struct Vector : IGeometry
         return "(" + X + ", " + Y + ")";
     }
 
+    public Vector Flip(Vector origin)
+    {
+        return (X, 2 * origin.Y - Y);
+    }
+
+    public Vector Mirror(Vector origin)
+    {
+        return (2 * origin.X - X, Y);
+    }
+
     public Vector Versor()
     {
         if (IsNull)

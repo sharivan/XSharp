@@ -132,6 +132,8 @@ public class BusterCharged : Weapon, IStateEntity<ChargedState>
             Damage = 0;
             hitEntity = enemy;
             SetState(ChargedState.HITTING);
+
+            base.OnHit(enemy, damage);
         }
     }
 

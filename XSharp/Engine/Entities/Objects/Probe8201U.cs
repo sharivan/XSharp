@@ -87,7 +87,6 @@ public class Probe8201U : Sprite
     public Probe8201U()
     {
         SpriteSheetName = "Platforms";
-        Directional = false;
         MultiAnimation = true;
         KillOnOffscreen = false;
 

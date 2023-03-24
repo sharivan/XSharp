@@ -127,7 +127,6 @@ public class AxeMax : Sprite
         lumberjack = Engine.Entities.Create<AxeMaxLumberjack>();
         Lumberjack.AxeMax = this;
 
-        Directional = true;
         DefaultDirection = Direction.LEFT;
     }
 

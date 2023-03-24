@@ -22,7 +22,6 @@ public class PenguinIceExplosionEffect : SpriteEffect
 
     public PenguinIceExplosionEffect()
     {
-        Directional = false;
         SpriteSheetName = "Penguin";
 
         SetAnimationNames("IceFragment");

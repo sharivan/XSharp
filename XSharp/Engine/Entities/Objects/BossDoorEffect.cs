@@ -99,7 +99,6 @@ internal class BossDoorEffect : SpriteEffect, IStateEntity<BossDoorState>
         base.OnCreate();
 
         SpriteSheetName = "Boos Door";
-        Directional = false;
         Respawnable = true;
 
         SetAnimationNames("Closed", "Opening", "PlayerCrossing", "Closing");

@@ -40,7 +40,6 @@ public class PenguinIce : Enemy
 
     public PenguinIce()
     {
-        Directional = true;
         SpriteSheetName = "Penguin";
         ContactDamage = 2;
 

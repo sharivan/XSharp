@@ -31,7 +31,6 @@ public class WallSlideEffect : SpriteEffect
     public WallSlideEffect()
     {
         SpriteSheetName = "X Effects";
-        Directional = true;
 
         SetAnimationNames("WallSlideEffect");
     }

@@ -356,7 +356,6 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     {
         base.OnCreate();
 
-        Directional = true;
         DefaultDirection = Direction.LEFT;
         SpriteSheetName = "Penguin";
         PaletteName = "penguinPalette";

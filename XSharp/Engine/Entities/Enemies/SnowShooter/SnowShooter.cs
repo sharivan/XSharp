@@ -105,7 +105,6 @@ public class SnowShooter : Enemy, IStateEntity<SnowShooterState>
     {
         base.OnCreate();
 
-        Directional = true;
         DefaultDirection = Direction.LEFT;
 
         PaletteName = "snowShooterPalette";

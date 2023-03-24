@@ -2208,6 +2208,9 @@ public class GameEngine : IRenderable, IRenderTarget
 
             if (paused || Player != null && Player.Freezed && (!FreezingSprites || freezingSpriteExceptions.Contains(Player)))
             {
+                Player?.PreThink();
+                Camera?.PreThink();
+
                 Player?.DoFrame();
             }
             else
@@ -2219,12 +2222,33 @@ public class GameEngine : IRenderable, IRenderTarget
                         if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
                         {
                             if (entity != Camera)
+                                entity.PreThink();
+                        }
+                    }
+
+                    Player?.PreThink();
+                    Camera?.PreThink();
+
+                    foreach (var entity in aliveEntities)
+                    {
+                        if (entity is not Sprite sprite || freezingSpriteExceptions.Contains(sprite))
+                        {
+                            if (entity != Camera)
                                 entity.DoFrame();
                         }
                     }
                 }
                 else
                 {
+                    foreach (var entity in aliveEntities)
+                    {
+                        if (entity != Camera)
+                            entity.PreThink();
+                    }
+
+                    Player?.PreThink();
+                    Camera?.PreThink();
+
                     foreach (var entity in aliveEntities)
                     {
                         if (entity != Camera)
@@ -5239,7 +5263,7 @@ public class GameEngine : IRenderable, IRenderTarget
         for (var type = baseType; type != null; type = type.BaseType)
         {
             string name = type.Name;
-            if (precacheActions.TryGetValue(type.FullName, out var action))
+            if (precacheActions.TryGetValue(type.AssemblyQualifiedName, out var action))
             {
                 if (previous != null)
                     previous.Parent = action;
@@ -5248,7 +5272,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
 
             action = new PrecacheAction(type);
-            precacheActions.Add(type.FullName, action);
+            precacheActions.Add(type.AssemblyQualifiedName, action);
             first ??= action;
 
             var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);

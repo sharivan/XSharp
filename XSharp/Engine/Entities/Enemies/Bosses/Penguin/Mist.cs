@@ -56,7 +56,6 @@ internal class Mist : HUD.HUD
     public Mist()
     {
         SpriteSheetName = "Mist";
-        Directional = false;
 
         SetAnimationNames("Mist");
     }

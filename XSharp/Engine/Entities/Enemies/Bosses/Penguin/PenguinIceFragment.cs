@@ -14,7 +14,6 @@ public class PenguinIceFragment : Sprite
 
     public PenguinIceFragment()
     {
-        Directional = false;
         SpriteSheetName = "Penguin";
         PaletteName = "penguinPalette";
         KillOnOffscreen = true;

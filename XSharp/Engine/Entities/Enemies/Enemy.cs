@@ -105,7 +105,6 @@ public abstract class Enemy : Sprite
     {
         base.OnCreate();
 
-        Directional = true;
         CanGoOutOfMapBounds = true;
         KillOnOffscreen = true;
         Health = 1;
@@ -127,7 +126,7 @@ public abstract class Enemy : Sprite
         LifeUpDropOdd = 25; // 0.25%
     }
 
-    protected override bool PreThink()
+    protected override bool OnPreThink()
     {
         if (flashing && lastPaletteName != null)
         {
@@ -136,7 +135,7 @@ public abstract class Enemy : Sprite
             lastPaletteName = null;
         }
 
-        return base.PreThink();
+        return base.OnPreThink();
     }
 
     protected virtual void OnContactDamage(Player player)

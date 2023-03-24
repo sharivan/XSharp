@@ -27,7 +27,6 @@ internal class PenguinSnow : Enemy
     public PenguinSnow()
     {
         Layer = 1;
-        Directional = true;
         SpriteSheetName = "Penguin";
         ContactDamage = 0;
 

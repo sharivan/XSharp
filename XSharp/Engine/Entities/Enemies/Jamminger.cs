@@ -130,8 +130,6 @@ public class Jamminger : Enemy, IStateEntity<JammingerState, JammingerSubState>
     {
         base.OnCreate();
 
-        Directional = false;
-
         PaletteName = "jammingerPalette";
         SpriteSheetName = "Jamminger";
 

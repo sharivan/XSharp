@@ -145,7 +145,6 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
     {
         base.OnCreate();
 
-        Directional = true;
         DefaultDirection = Direction.LEFT;
 
         PaletteName = "flamminglePalette";

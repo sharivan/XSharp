@@ -47,7 +47,6 @@ public class XDieExplosion : HUD
 
         SpriteSheetName = "X";
         PaletteName = "x1NormalPalette";
-        Directional = false;
 
         SetAnimationNames(("DyingExplosion", SparkCount));
     }

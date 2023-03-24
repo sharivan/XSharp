@@ -42,7 +42,10 @@ public abstract class Entity : IIndexedNamedFactoryItem
     internal int index = -1;
     internal string name = null;
     private Vector origin = Vector.NULL_VECTOR;
+    private Direction direction = Direction.RIGHT;
     internal EntityReference parent = null;
+
+    private bool doThink;
 
     private bool wasOffScreen;
     private bool wasOutOfLiveArea;
@@ -130,6 +133,33 @@ public abstract class Entity : IIndexedNamedFactoryItem
         get;
         internal set;
     }
+
+    public Direction Direction
+    {
+        get => direction;
+
+        set
+        {
+            if (value != direction)
+            {
+                direction = value;
+
+                foreach (Entity child in childs)
+                {
+                    child.Origin = child.Origin.Mirror(Origin);
+                    child.Direction = child.Direction.Oposite();
+                }
+
+                UpdatePartition();
+            }
+        }
+    }
+
+    public Direction DefaultDirection
+    {
+        get;
+        set;
+    } = Direction.RIGHT;
 
     public virtual Box Hitbox
     {
@@ -632,6 +662,9 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     protected virtual void OnFrame()
     {
+        if (!Alive || MarkedToRemove)
+            return;
+
         if (frameToKill > 0 && Engine.FrameCounter >= frameToKill)
         {
             frameToKill = -1;
@@ -645,26 +678,23 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
         wasOffScreen = offScreen;
 
+        if (!Alive || MarkedToRemove)
+            return;
+
         bool outOfLiveArea = !IsInLiveArea(VectorKind.ORIGIN);
         if (outOfLiveArea && !wasOutOfLiveArea)
             OnOutOfLiveArea();
 
         wasOutOfLiveArea = outOfLiveArea;
 
+        if (!Alive || MarkedToRemove)
+            return;
+
         if (KillOnOffscreen && FrameCounter >= MinimumIntervalToKillOnOffScreen && outOfLiveArea)
         {
             Kill();
             return;
         }
-
-        if (!Alive || MarkedToRemove)
-            return;
-
-        if (!PreThink())
-            return;
-
-        if (!Alive || MarkedToRemove)
-            return;
 
         if (CheckTouchingEntities)
         {
@@ -709,7 +739,8 @@ public abstract class Entity : IIndexedNamedFactoryItem
         if (!Alive || MarkedToRemove)
             return;
 
-        OnThink();
+        if (doThink)
+            OnThink();
 
         if (!Alive || MarkedToRemove)
             return;
@@ -734,7 +765,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
         EndTouchEvent?.Invoke(this, entity);
     }
 
-    protected virtual bool PreThink()
+    internal void PreThink()
+    {
+        doThink = Alive && !MarkedToRemove && OnPreThink();
+    }
+
+    protected virtual bool OnPreThink()
     {
         PreThinkEvent?.Invoke(this);
         return true;
@@ -800,6 +836,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public virtual void Spawn()
     {
+        Direction = DefaultDirection;
         FrameCounter = 0;
         SpawnFrame = Engine.FrameCounter;
         Spawning = true;

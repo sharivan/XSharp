@@ -55,8 +55,8 @@ public class Snowball : Enemy, IStateEntity<SnowballState>
     public static readonly Box BIG_COLLISION_BOX = ((0, 0), (-14, -14), (14, 14));
     public static readonly FixedSingle COLLISION_BOX_LEGS_HEIGHT = 8;
 
-    public static readonly FixedSingle DEBRIS_FAST_SPEED = 2;
-    public static readonly FixedSingle DEBRIS_SLOW_SPEED = 1;
+    public static readonly FixedSingle DEBRIS_FAST_SPEED = 3;
+    public static readonly FixedSingle DEBRIS_SLOW_SPEED = 1.5;
     #endregion
 
     #region Precache
@@ -122,7 +122,6 @@ public class Snowball : Enemy, IStateEntity<SnowballState>
     {
         base.OnCreate();
 
-        Directional = true;
         DefaultDirection = Direction.LEFT;
 
         PaletteName = "snowballPalette";

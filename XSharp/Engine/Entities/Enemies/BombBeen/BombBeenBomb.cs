@@ -43,7 +43,6 @@ public class BombBeenBomb : Sprite, IStateEntity<BombBeenBombState>
     {
         base.OnCreate();
 
-        Directional = true;
         DefaultDirection = Direction.LEFT;
 
         PaletteName = "bombBeenPalette";

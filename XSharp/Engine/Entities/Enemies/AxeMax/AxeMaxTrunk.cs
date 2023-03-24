@@ -69,7 +69,6 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
 
         PaletteName = "axeMaxPalette";
         SpriteSheetName = "AxeMax";
-        Directional = true;
 
         SetAnimationNames("TrunkIdle", "TrunkThrown");
 

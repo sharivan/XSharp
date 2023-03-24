@@ -66,7 +66,6 @@ public class AxeMaxTrunkBase : Sprite
 
         PaletteName = "axeMaxPalette";
         SpriteSheetName = "AxeMax";
-        Directional = false;
 
         SetAnimationNames("TrunkBase");
         InitialAnimationName = "TrunkBase";

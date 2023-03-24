@@ -22,7 +22,6 @@ public class TombotLoad : SpriteEffect
     {
         base.OnCreate();
 
-        Directional = true;
         DefaultDirection = Direction.LEFT;
 
         PaletteName = "tombotPalette";

@@ -24,7 +24,6 @@ public abstract class Item : Sprite
 
     protected Item()
     {
-        Directional = false;
     }
 
     protected override void OnSpawn()

@@ -40,7 +40,6 @@ public class PenguinFrozenBlock : Sprite
     public PenguinFrozenBlock()
     {
         Layer = 1;
-        Directional = true;
         SpriteSheetName = "Penguin";
         CollisionData = CollisionData.SOLID;
 

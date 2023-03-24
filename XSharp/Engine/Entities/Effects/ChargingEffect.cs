@@ -113,7 +113,6 @@ public class ChargingEffect : SpriteEffect
     public ChargingEffect()
     {
         SpriteSheetName = "X Charging Effects";
-        Directional = true;
         PaletteName = "chargingEffectPalette";
 
         SetAnimationNames("ChargingLevel1", "ChargingLevel2");
@@ -122,6 +121,10 @@ public class ChargingEffect : SpriteEffect
     protected override void OnSpawn()
     {
         base.OnSpawn();
+
+        Origin = Charger.Hitbox.Center;
+        Parent = Charger;
+        Direction = Charger.Direction;
 
         level = 1;
     }
@@ -133,9 +136,6 @@ public class ChargingEffect : SpriteEffect
             Engine.PlaySound(2, "X Charge", 3.350, 1.585);
             soundPlayed = true;
         }
-
-        Origin = Charger.Hitbox.Center;
-        Direction = Charger.Direction;
 
         base.OnThink();
     }

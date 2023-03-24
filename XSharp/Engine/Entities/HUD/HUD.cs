@@ -14,13 +14,6 @@ public abstract class HUD : Sprite
     {
     }
 
-    protected override void OnCreate()
-    {
-        base.OnCreate();
-
-        Directional = false;
-    }
-
     protected override void OnSpawn()
     {
         base.OnSpawn();

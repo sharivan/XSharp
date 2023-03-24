@@ -106,6 +106,8 @@ public class BusterLemon : Weapon, IStateEntity<LemonState>
 
     protected override void OnHit(Enemy enemy, FixedSingle damage)
     {
+        base.OnHit(enemy, damage);
+
         Explode(enemy);
     }
 

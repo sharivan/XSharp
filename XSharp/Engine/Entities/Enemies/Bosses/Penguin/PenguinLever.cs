@@ -34,7 +34,6 @@ public class PenguinLever : Sprite, IStateEntity<PenguinLeverState>
 
     public PenguinLever()
     {
-        Directional = true;
         SpriteSheetName = "Penguin";
 
         SetAnimationNames("Lever");

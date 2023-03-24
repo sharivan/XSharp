@@ -92,7 +92,7 @@ public class BinarySerializer : Serializer, IDisposable
 
         public object Value => reference;
 
-        public bool IsResolved => reference.Factory != null;
+        public bool IsResolved => reference == null || reference.Factory != null;
 
         public IFactory Factory => reference?.Factory;
 
@@ -576,12 +576,12 @@ public class BinarySerializer : Serializer, IDisposable
     public Type ReadType()
     {
         string name = ReadString(false);
-        return Type.GetType(name);
+        return Type.GetType(name, true);
     }
 
     public void WriteType(Type type)
     {
-        WriteString(type.FullName, false);
+        WriteString(type.AssemblyQualifiedName, false);
     }
 
     public Type[] ReadTypes()

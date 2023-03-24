@@ -31,7 +31,6 @@ public class WallKickEffect : SpriteEffect
     public WallKickEffect()
     {
         SpriteSheetName = "X Effects";
-        Directional = false;
 
         SetAnimationNames("WallKickEffect");
     }

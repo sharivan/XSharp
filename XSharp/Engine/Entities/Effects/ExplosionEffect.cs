@@ -58,7 +58,6 @@ internal class ExplosionEffect : SpriteEffect
     public ExplosionEffect()
     {
         SpriteSheetName = "Explosion";
-        Directional = false;
 
         SetAnimationNames("Explosion");
     }

@@ -224,7 +224,6 @@ public abstract class Weapon : Sprite
     {
         base.OnCreate();
 
-        Directional = true;
         CanGoOutOfMapBounds = true;
     }
 

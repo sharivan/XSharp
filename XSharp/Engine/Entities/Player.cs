@@ -673,8 +673,13 @@ public class Player : Sprite, IStateEntity<PlayerState>
 
     public Player()
     {
+    }
+
+    protected override void OnCreate()
+    {
+        base.OnCreate();
+
         SpriteSheetName = "X";
-        Directional = true;
         Respawnable = true;
     }
 
@@ -717,7 +722,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
         if (animation != CurrentAnimation)
         {
             CurrentAnimation = animation;
-            CurrentAnimation.Start(startAnimationIndex);
+            CurrentAnimation?.Start(startAnimationIndex);
         }
     }
 
@@ -1432,7 +1437,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
                                     else if (!TopLadderClimbing && !TopLadderDescending)
                                     {
                                         Velocity = new Vector(0, -LADDER_CLIMB_SPEED);
-                                        CurrentAnimation.Start();
+                                        CurrentAnimation?.Start();
                                     }
                                 }
                             }
@@ -1488,7 +1493,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
                                         else if (!TopLadderClimbing && !TopLadderDescending)
                                         {
                                             Velocity = new Vector(0, LADDER_CLIMB_SPEED);
-                                            CurrentAnimation.Start();
+                                            CurrentAnimation?.Start();
                                         }
                                     }
                                 }

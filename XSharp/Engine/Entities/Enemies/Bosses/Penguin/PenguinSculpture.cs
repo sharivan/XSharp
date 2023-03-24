@@ -35,7 +35,6 @@ public class PenguinSculpture : Enemy
 
     public PenguinSculpture()
     {
-        Directional = true;
         DefaultDirection = Direction.LEFT;
         SpriteSheetName = "Penguin";
 

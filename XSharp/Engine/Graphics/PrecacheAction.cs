@@ -25,7 +25,7 @@ public class PrecacheAction : ISerializable
     {
         get => parent != null ? GameEngine.Engine.precacheActions[parent] : null;
 
-        internal set => parent = value?.Type.FullName;
+        internal set => parent = value?.Type.AssemblyQualifiedName;
     }
 
     public bool Called
@@ -51,7 +51,7 @@ public class PrecacheAction : ISerializable
         parent = serializer.ReadString();
 
         string typeName = serializer.ReadString(false);
-        Type = Type.GetType(typeName);
+        Type = Type.GetType(typeName, true);
 
         bool hasMethod = serializer.ReadBool();
         Method = hasMethod ? serializer.ReadMethodInfo() : null;
@@ -64,7 +64,7 @@ public class PrecacheAction : ISerializable
         var serializer = (EngineBinarySerializer) output;
 
         serializer.WriteString(parent);
-        serializer.WriteString(Type.FullName, false);
+        serializer.WriteString(Type.AssemblyQualifiedName, false);
 
         if (Method != null)
         {
