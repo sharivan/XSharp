@@ -49,16 +49,7 @@ public class EntityState
     public int CurrentSubStateID
     {
         get => currentSubStateID;
-        set
-        {
-            if (currentSubStateID != value)
-            {
-                var lastSubState = CurrentSubState;
-                lastSubState?.NotifyEnd();
-                currentSubStateID = value;
-                CurrentSubState?.NotifyStart(null, lastSubState);
-            }
-        }
+        set => SetCurrentSubStateID(value);
     }
 
     public EntitySubState CurrentSubState => currentSubStateID >= 0 ? subStates[currentSubStateID] : null;
@@ -106,14 +97,27 @@ public class EntityState
         return RegisterSubState(id, null, null, null);
     }
 
-    internal void NotifyStart(EntityState lastState)
+    public void SetCurrentSubStateID(int id, bool resetFrameCounter = true)
     {
-        OnStart(lastState);
+        if (currentSubStateID != id)
+        {
+            var lastSubState = CurrentSubState;
+            lastSubState?.NotifyEnd();
+            currentSubStateID = id;
+            CurrentSubState?.NotifyStart(null, lastSubState, resetFrameCounter);
+        }
     }
 
-    protected virtual void OnStart(EntityState lastState)
+    internal void NotifyStart(EntityState lastState, bool resetFrameCounter = true)
     {
-        FrameCounter = 0;
+        OnStart(lastState, resetFrameCounter);
+    }
+
+    protected virtual void OnStart(EntityState lastState, bool resetFrameCounter = true)
+    {
+        if (resetFrameCounter)
+            FrameCounter = 0;
+
         StartEvent?.Invoke(this, lastState);
 
         if (Current && HasSubStates)
@@ -138,7 +142,7 @@ public class EntityState
                     break;
             }
 
-            CurrentSubState?.NotifyStart(lastState, lastSubState);
+            CurrentSubState?.NotifyStart(lastState, lastSubState, resetFrameCounter);
         }
     }
 
@@ -213,14 +217,16 @@ public class EntitySubState
         private set;
     } = 0;
 
-    internal void NotifyStart(EntityState lastState, EntitySubState lastSubState)
+    internal void NotifyStart(EntityState lastState, EntitySubState lastSubState, bool resetFrameCounter = true)
     {
-        OnStart(lastState, lastSubState);
+        OnStart(lastState, lastSubState, resetFrameCounter);
     }
 
-    protected virtual void OnStart(EntityState lastState, EntitySubState lastSubState)
+    protected virtual void OnStart(EntityState lastState, EntitySubState lastSubState, bool resetFrameCounter = true)
     {
-        FrameCounter = 0;
+        if (resetFrameCounter)
+            FrameCounter = 0;
+
         StartEvent?.Invoke(State, lastState, this, lastSubState);
     }
 

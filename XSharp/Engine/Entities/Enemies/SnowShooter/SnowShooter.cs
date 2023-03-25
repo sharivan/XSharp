@@ -40,14 +40,17 @@ public class SnowShooter : Enemy, IStateEntity<SnowShooterState>
     public const int HEALTH = 8;
     public static readonly FixedSingle CONTACT_DAMAGE = 3;
     public static readonly Box HITBOX = ((0, 32), (-7, -17), (7, 17));
-
-    public static readonly FixedSingle ATTACK_DISTANCE_X = 104;
+    
     public static readonly FixedSingle SHOT_SPEED = 1024 / 256.0;
     public static readonly FixedSingle SHOT_MAX_SPEED_Y = 614 / 256.0;
     public const int FRAMES_BETWEEN_SHOOTS = 128;
     public const int FRAMES_TO_SHOT = 40;
     public static readonly FixedSingle SHOT_DAMAGE = 2;
     public static readonly Box SHOT_HITBOX = ((0, 0), (-5, -5), (5, 5));
+
+    public static readonly FixedSingle ATTACK_DISTANCE_X = 150;
+    public static readonly RightTriangle LEFT_SHOT_SENSOR = new((-ATTACK_DISTANCE_X, 0), ATTACK_DISTANCE_X, ATTACK_DISTANCE_X);
+    public static readonly RightTriangle RIGHT_SHOT_SENSOR = new((ATTACK_DISTANCE_X, 0), -ATTACK_DISTANCE_X, ATTACK_DISTANCE_X);
     #endregion
 
     #region Precache
@@ -120,12 +123,18 @@ public class SnowShooter : Enemy, IStateEntity<SnowShooterState>
     private void OnIdle(EntityState state, long frameCounter)
     {
         var player = Engine.Player;
-        if (frameCounter >= FRAMES_BETWEEN_SHOOTS
-            && player != null
-            && GetHorizontalDirection(player) == Direction.Oposite()
-            && (player.Origin.X - Origin.X).Abs <= ATTACK_DISTANCE_X
-            && Hitbox.VerticallInterval.IsOverlaping(player.CollisionBox.VerticallInterval))
-            State = SnowShooterState.SHOOTING;
+        if (player != null)
+        {
+            if (GetHorizontalDirection(player) == Direction)
+                Direction = Direction.Oposite();
+
+            if (frameCounter >= FRAMES_BETWEEN_SHOOTS)
+            {
+                var sensor = Origin + (Direction == Direction.LEFT ? LEFT_SHOT_SENSOR : RIGHT_SHOT_SENSOR);
+                if (sensor.HasIntersectionWith(player.CollisionBox))
+                    State = SnowShooterState.SHOOTING;
+            }
+        }
     }
 
     private void OnShooting(EntityState state, long frameCounter)
@@ -137,7 +146,7 @@ public class SnowShooter : Enemy, IStateEntity<SnowShooterState>
         }
     }
 
-    public EntityReference<SnowShooterShot> Shoot()
+    private EntityReference<SnowShooterShot> Shoot()
     {
         FixedSingle vx;
         FixedSingle vy;

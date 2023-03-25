@@ -14,6 +14,7 @@
 	<Title>X#</Title>
   </PropertyGroup> 
   <ItemGroup>
+    <None Remove="resources\sprites\Effects\Smoke.png" />
     <None Remove="resources\sprites\Enemies\X\AxeMax.png" />
     <None Remove="resources\sprites\Enemies\X\Bomb Been.png" />
     <None Remove="resources\sprites\Enemies\X\Flammingle.png" />
@@ -24,6 +25,9 @@
     <None Remove="resources\sprites\Enemies\X\SnowShooter.png" />
     <None Remove="resources\sprites\Enemies\X\Spiky.png" />
     <None Remove="resources\sprites\Enemies\X\Tombot.png" />
+    <None Remove="resources\sprites\Enemies\X\Turn Cannon.png" />
+    <None Remove="resources\sprites\Objects\Boomer Kuwanger Elevator.png" />
+    <None Remove="resources\sprites\Objects\Hover Platform.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -85,6 +89,9 @@
     <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
     <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
     <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
+    <EmbeddedResource Include="resources\sprites\Effects\Smoke.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Enemies\X\AxeMax.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -107,6 +114,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Enemies\X\Tombot.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\Enemies\X\Turn Cannon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\Objects\Boomer Kuwanger Elevator.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\sprites\Objects\Hover Platform.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="resources\sprites\Objects\Platforms.png">
@@ -163,6 +179,10 @@
   
   <ItemGroup>
     <Folder Include="Engine\Entities\Armors\" />
+    <Folder Include="Engine\Entities\Enemies\Gunvolt\" />
+    <Folder Include="Engine\Entities\Enemies\MegaTortoise\" />
+    <Folder Include="Engine\Entities\Enemies\DigLabour\" />
+    <Folder Include="Engine\Entities\Enemies\DodgeBlaster\" />
     <Folder Include="Engine\Entities\Misc\" />
     <Folder Include="resources\maps\" />
     <Folder Include="sstates\" />

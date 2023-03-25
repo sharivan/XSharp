@@ -10,11 +10,11 @@ namespace XSharp.Engine.Entities.Objects;
 public class Probe8201U : Sprite
 {
     #region StaticFields
-    public static readonly Box PROBE8201U_HITBOX = (Vector.NULL_VECTOR, (-11, -27), (11, 27));
-    public static readonly FixedSingle PROBE8201U_HORIZONTAL_SPEED = 0.25;
-    public static readonly FixedSingle PROBE8201U_TERMINAL_VERTICAL_SPEED = 1;
-    public static readonly FixedSingle PROBE8201U_VERTICAL_ACCELERATION = 4 / 256.0;
-    public static readonly FixedSingle PROBE8201U_BASE_MOVE_DISTANCE = 80;
+    public static readonly Box HITBOX = (Vector.NULL_VECTOR, (-11, -27), (11, 27));
+    public static readonly FixedSingle HORIZONTAL_SPEED = 0.25;
+    public static readonly FixedSingle TERMINAL_VERTICAL_SPEED = 1;
+    public static readonly FixedSingle VERTICAL_ACCELERATION = 4 / 256.0;
+    public static readonly FixedSingle BASE_MOVE_DISTANCE = 80;
     #endregion
 
     #region Precache
@@ -30,8 +30,8 @@ public class Probe8201U : Sprite
         }
 
         var sequence = platformsSpriteSheet.AddFrameSquence("Probe8201U");
-        sequence.OriginOffset = -PROBE8201U_HITBOX.Origin - PROBE8201U_HITBOX.Mins;
-        sequence.Hitbox = PROBE8201U_HITBOX;
+        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
+        sequence.Hitbox = HITBOX;
         sequence.AddFrame(-2, -3, 124, 107, 18, 48, 7, true);
         sequence.AddFrame(-2, -3, 142, 107, 18, 48, 7);
         sequence.AddFrame(-2, -3, 160, 107, 18, 48, 7);
@@ -70,7 +70,7 @@ public class Probe8201U : Sprite
     {
         get;
         set;
-    } = PROBE8201U_BASE_MOVE_DISTANCE;
+    } = BASE_MOVE_DISTANCE;
 
     public bool MovingVertically
     {
@@ -86,6 +86,12 @@ public class Probe8201U : Sprite
 
     public Probe8201U()
     {
+    }
+
+    protected override void OnCreate()
+    {
+        base.OnCreate();
+
         SpriteSheetName = "Platforms";
         MultiAnimation = true;
         KillOnOffscreen = false;
@@ -95,7 +101,7 @@ public class Probe8201U : Sprite
 
     protected override Box GetHitbox()
     {
-        return PROBE8201U_HITBOX;
+        return HITBOX;
     }
 
     public override FixedSingle GetGravity()
@@ -130,8 +136,8 @@ public class Probe8201U : Sprite
     private void MoveHorizontally()
     {
         speed = !movingBackward
-            ? PROBE8201U_HORIZONTAL_SPEED
-            : -PROBE8201U_HORIZONTAL_SPEED;
+            ? HORIZONTAL_SPEED
+            : -HORIZONTAL_SPEED;
 
         Velocity = (speed, 0);
 
@@ -147,11 +153,11 @@ public class Probe8201U : Sprite
         var halfMoveDistance = MoveDistance * FixedSingle.HALF;
         var distance = (Origin.Y - moveOrigin.Y).Abs;
         if (distance <= halfMoveDistance)
-            speed += StartMovingBackward ? -PROBE8201U_VERTICAL_ACCELERATION : PROBE8201U_VERTICAL_ACCELERATION;
+            speed += StartMovingBackward ? -VERTICAL_ACCELERATION : VERTICAL_ACCELERATION;
         else
-            speed += StartMovingBackward ? PROBE8201U_VERTICAL_ACCELERATION : -PROBE8201U_VERTICAL_ACCELERATION;
+            speed += StartMovingBackward ? VERTICAL_ACCELERATION : -VERTICAL_ACCELERATION;
 
-        Velocity = (0, speed.Clamp(-PROBE8201U_TERMINAL_VERTICAL_SPEED, PROBE8201U_TERMINAL_VERTICAL_SPEED));
+        Velocity = (0, speed.Clamp(-TERMINAL_VERTICAL_SPEED, TERMINAL_VERTICAL_SPEED));
 
         if (Velocity.Y < 0 && (
             StartMovingBackward && distance <= halfMoveDistance

@@ -146,9 +146,9 @@ public class SpriteState : EntityState
         return RegisterSubState((int) (object) id, null, null, null, animationIndex, initialFrame);
     }
 
-    protected override void OnStart(EntityState lastState)
+    protected override void OnStart(EntityState lastState, bool resetFrameCounter = true)
     {
-        base.OnStart(lastState);
+        base.OnStart(lastState, resetFrameCounter);
 
         if (Current && Sprite != null && !HasSubStates)
         {
@@ -192,9 +192,9 @@ public class SpriteSubState : EntitySubState
         }
     }
 
-    protected override void OnStart(EntityState lastState, EntitySubState lastSubState)
+    protected override void OnStart(EntityState lastState, EntitySubState lastSubState, bool resetFrameCounter = true)
     {
-        base.OnStart(lastState, lastSubState);
+        base.OnStart(lastState, lastSubState, resetFrameCounter);
 
         if (Current && Sprite != null)
         {

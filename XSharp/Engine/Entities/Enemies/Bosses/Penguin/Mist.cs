@@ -60,7 +60,7 @@ internal class Mist : HUD.HUD
         SetAnimationNames("Mist");
     }
 
-    protected override Box GetBoundingBox()
+    protected override Box GetHitbox()
     {
         return (0, 0, 2 * SCENE_SIZE, 2 * SCENE_SIZE);
     }

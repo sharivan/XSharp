@@ -57,6 +57,12 @@ public struct FixedSingle : ISignedNumber<FixedSingle>
     public static readonly FixedSingle HALF = new(0.5);
     public static readonly FixedSingle ONE = new(1D);
     public static readonly FixedSingle TWO = new(2D);
+    public static readonly FixedSingle SQRT_2 = new(System.Math.Sqrt(2));
+    public static readonly FixedSingle SQRT_2_INVERSE = new(System.Math.Sqrt(0.5));
+    public static readonly FixedSingle SQRT_3 = new(System.Math.Sqrt(3));
+    public static readonly FixedSingle SQRT_3_INVERSE = new(System.Math.Sqrt(1.0 / 3));
+    public static readonly FixedSingle SQRT_5 = new(System.Math.Sqrt(5));
+    public static readonly FixedSingle SQRT_5_INVERSE = new(System.Math.Sqrt(0.2));
     public static readonly FixedSingle E = new(System.Math.E);
     public static readonly FixedSingle PI = new(System.Math.PI);
     public static readonly FixedSingle MIN_VALUE = new(int.MinValue);

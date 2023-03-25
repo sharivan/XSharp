@@ -289,6 +289,16 @@ public struct RightTriangle : IShape
                EqualityComparer<Vector>.Default.Equals(Origin, triangle.Origin);
     }
 
+    public RightTriangle Flip()
+    {
+        return new RightTriangle(Origin, hCathetus, -vCathetus);
+    }
+
+    public RightTriangle Mirror()
+    {
+        return new RightTriangle(Origin, -hCathetus, vCathetus);
+    }
+
     public static bool operator ==(RightTriangle left, RightTriangle right)
     {
         return left.Origin == right.Origin && left.hCathetus == right.hCathetus && left.vCathetus == right.vCathetus;

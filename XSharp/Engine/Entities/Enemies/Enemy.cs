@@ -8,6 +8,13 @@ using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies;
 
+public enum HitResponse
+{
+    ACCEPT = 0,
+    IGNORE = 1,
+    REFLECT = 2
+}
+
 public abstract class Enemy : Sprite
 {
     public static readonly Color[] FLASHING_PALETTE = new Color[]
@@ -47,53 +54,71 @@ public abstract class Enemy : Sprite
     private string lastPaletteName;
     private bool flashing;
 
-    public bool ReflectShots
+    public HitResponse HitResponse
     {
         get;
-        protected set;
-    } = false;
+        set;
+    } = HitResponse.ACCEPT;
+
+    public bool AcceptShots
+    {
+        get => HitResponse == HitResponse.ACCEPT;
+        set => HitResponse = HitResponse.ACCEPT;
+    }
+
+    public bool IgnoreShots
+    {
+        get => HitResponse == HitResponse.IGNORE;
+        set => HitResponse = HitResponse.IGNORE;
+    }
+
+    public bool ReflectShots
+    {
+        get => HitResponse == HitResponse.REFLECT;
+        set => HitResponse = HitResponse.REFLECT;
+    }
 
     public FixedSingle ContactDamage
     {
         get;
         set;
-    }
+    } = 1;
 
     public long SmallHealthDropOdd
     {
         get;
         set;
-    }
+    } = 0;
 
     public long BigHealthDropOdd
     {
         get;
         set;
-    }
+    } = 0;
 
     public long SmallAmmoDropOdd
     {
         get;
         set;
-    }
+    } = 0;
 
     public long BigAmmoDropOdd
     {
         get;
         set;
-    }
+    } = 0;
 
     public long LifeUpDropOdd
     {
         get;
         set;
-    }
+    } = 0;
 
     public long NothingDropOdd
     {
         get;
         set;
-    }
+    } = 100;
 
     public long TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeUpDropOdd + NothingDropOdd;
 
@@ -117,13 +142,6 @@ public abstract class Enemy : Sprite
 
         lastPaletteName = null;
         flashing = false;
-
-        NothingDropOdd = 9000; // 90%
-        SmallHealthDropOdd = 300; // 3%
-        BigHealthDropOdd = 100; // 1%
-        SmallAmmoDropOdd = 400; // 4%
-        BigAmmoDropOdd = 175; // 1.75%
-        LifeUpDropOdd = 25; // 0.25%
     }
 
     protected override bool OnPreThink()
@@ -157,12 +175,8 @@ public abstract class Enemy : Sprite
 
     protected override bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
     {
-        if (!flashing && PaletteName != null)
-        {
-            lastPaletteName = PaletteName;
-            flashing = true;
-            PaletteName = "flashingPalette";
-        }
+        if (IgnoreShots)
+            return false;
 
         if (ReflectShots)
         {
@@ -172,6 +186,13 @@ public abstract class Enemy : Sprite
             damage = 0;
             return false;
         }
+
+        if (AcceptShots && !flashing && PaletteName != null)
+        {
+            lastPaletteName = PaletteName;
+            flashing = true;
+            PaletteName = "flashingPalette";
+        }       
 
         if (Invincible)
         {

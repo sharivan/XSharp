@@ -7,7 +7,6 @@ public enum VectorKind
 {
     NONE = 0,
     ORIGIN = 1,
-    BOUDINGBOX_CENTER = 2,
     HITBOX_CENTER = 4,
     COLLISIONBOX_CENTER = 8,
     ALL = 255

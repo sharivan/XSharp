@@ -112,9 +112,10 @@ public abstract class Entity : IIndexedNamedFactoryItem
         get => origin;
         set
         {
+            value = value.TruncFracPart();
             LastOrigin = origin;
             Vector delta = value - origin;
-            origin = value.TruncFracPart();
+            origin = value;
 
             if (delta != Vector.NULL_VECTOR)
             {
@@ -146,14 +147,29 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
                 foreach (Entity child in childs)
                 {
-                    child.Origin = child.Origin.Mirror(Origin);
-                    child.Direction = child.Direction.Oposite();
+                    if (child.UpdateOriginFromParentDirection)
+                        child.Origin = child.Origin.Mirror(Origin);
+
+                    if (child.UpdateDirectionFromParent)
+                        child.Direction = child.Direction.Oposite();
                 }
 
                 UpdatePartition();
             }
         }
     }
+
+    public bool UpdateDirectionFromParent
+    {
+        get;
+        set;
+    } = true;
+
+    public bool UpdateOriginFromParentDirection
+    {
+        get;
+        set;
+    } = true;
 
     public Direction DefaultDirection
     {
@@ -163,15 +179,28 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public virtual Box Hitbox
     {
-        get => Origin + (!Alive && (Respawnable || SpawnOnNear) ? GetDeadBox() : GetHitbox());
+        get
+        {
+            Box box = Origin + (!Alive && (Respawnable || SpawnOnNear) ? GetDeadBox() : GetHitbox());
+            return Direction != DefaultDirection ? box.Mirror(Origin) : box;
+        }
+
         protected set
         {
-            SetHitbox(value - Origin);
-            UpdatePartition();
+            Box hitbox = Direction != DefaultDirection ? value.Mirror(Origin) : value;
+            hitbox -= Origin;
+            SetHitbox(hitbox);
         }
     }
 
-    public virtual Box TouchingBox => Origin + GetTouchingBox();
+    public virtual Box TouchingBox
+    {
+        get
+        {
+            Box box = Origin + GetTouchingBox();
+            return Direction != DefaultDirection ? box.Mirror(Origin) : box;
+        }
+    }
 
     public bool Alive
     {
@@ -288,22 +317,14 @@ public abstract class Entity : IIndexedNamedFactoryItem
     public int CurrentStateID
     {
         get => currentStateID;
-        set
-        {
-            if (currentStateID != value)
-            {
-                EntityState lastState = CurrentState;
-                lastState?.NotifyEnd();
-
-                currentStateID = value;
-
-                EntityState currentState = CurrentState;
-                currentState?.NotifyStart(lastState);
-            }
-        }
+        set => SetCurrentStateID(value);
     }
 
-    protected EntityState CurrentState => stateArray != null && CurrentStateID >= 0 ? stateArray[CurrentStateID] : null;
+    protected EntityState CurrentState
+    {
+        get => stateArray != null && CurrentStateID >= 0 ? stateArray[CurrentStateID] : null;
+        set => CurrentStateID = value != null ? value.ID : -1;
+    }
 
     public bool KillOnOffscreen
     {
@@ -543,14 +564,28 @@ public abstract class Entity : IIndexedNamedFactoryItem
         return (id, subid);
     }
 
-    protected internal void SetState<T>(T id) where T : struct, Enum
+    protected internal void SetCurrentStateID(int id, bool resetFrameCounter = true)
     {
-        CurrentStateID = (int) (object) id;
+        if (currentStateID != id)
+        {
+            EntityState lastState = CurrentState;
+            lastState?.NotifyEnd();
+
+            currentStateID = id;
+
+            EntityState currentState = CurrentState;
+            currentState?.NotifyStart(lastState, resetFrameCounter);
+        }
     }
 
-    protected internal void SetSubState<T>(T id) where T : struct, Enum
+    protected internal void SetState<T>(T id, bool resetFrameCounter = true) where T : struct, Enum
     {
-        GetStateByID(CurrentStateID).CurrentSubStateID = (int) (object) id;
+        SetCurrentStateID((int) (object) id, resetFrameCounter);
+    }
+
+    protected internal void SetSubState<T>(T id, bool resetFrameCounter = true) where T : struct, Enum
+    {
+        GetStateByID(CurrentStateID).SetCurrentSubStateID((int) (object) id, resetFrameCounter);
     }
 
     protected internal void SetState<U, V>(U id, V subid)

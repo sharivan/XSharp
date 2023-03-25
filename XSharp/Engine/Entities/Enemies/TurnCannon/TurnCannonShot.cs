@@ -2,19 +2,19 @@
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Enemies.SnowShooter;
+namespace XSharp.Engine.Entities.Enemies.TurnCannon;
 
-public class SnowShooterShot : Enemy
+public class TurnCannonShot : Enemy
 {
     #region Precache
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(SnowShooter));
+        Engine.CallPrecacheAction(typeof(TurnCannon));
     }
     #endregion
 
-    public SnowShooterShot()
+    public TurnCannonShot()
     {
     }
 
@@ -22,8 +22,8 @@ public class SnowShooterShot : Enemy
     {
         base.OnCreate();
 
-        PaletteName = "snowShooterPalette";
-        SpriteSheetName = "SnowShooter";
+        PaletteName = "TurnCannonPalette";
+        SpriteSheetName = "TurnCannon";
 
         SetAnimationNames("Shot");
         InitialAnimationName = "Shot";
@@ -36,7 +36,7 @@ public class SnowShooterShot : Enemy
 
     protected override Box GetHitbox()
     {
-        return SnowShooter.SHOT_HITBOX;
+        return TurnCannon.SHOT_HITBOX;
     }
 
     protected override void OnSpawn()
@@ -44,7 +44,7 @@ public class SnowShooterShot : Enemy
         base.OnSpawn();
 
         CheckCollisionWithWorld = false;
-        ContactDamage = SnowShooter.SHOT_DAMAGE;
+        ContactDamage = TurnCannon.SHOT_DAMAGE;
         IgnoreShots = true;
         Invincible = true;
     }

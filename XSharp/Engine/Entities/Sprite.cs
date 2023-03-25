@@ -82,6 +82,12 @@ public abstract class Sprite : Entity, IRenderable
         private set;
     }
 
+    public bool UpsideDown
+    {
+        get;
+        set;
+    } = false;
+
     public bool Visible
     {
         get => visible;
@@ -177,6 +183,12 @@ public abstract class Sprite : Entity, IRenderable
         }
     }
 
+    public bool MirrorAnimationFromDirection
+    {
+        get;
+        set;
+    } = true;
+
     public float Opacity
     {
         get;
@@ -209,7 +221,11 @@ public abstract class Sprite : Entity, IRenderable
 
     public int InitialAnimationIndex => InitialAnimationName is not null and not "" ? GetAnimationIndex(InitialAnimationName) : -1;
 
-    new public SpriteState CurrentState => (SpriteState) base.CurrentState;
+    new public SpriteState CurrentState
+    {
+        get => (SpriteState) base.CurrentState;
+        set => base.CurrentState = value;
+    }
 
     public bool Static
     {
@@ -313,48 +329,6 @@ public abstract class Sprite : Entity, IRenderable
         get;
         set;
     } = true;
-
-    public virtual Box BoundingBox
-    {
-        get
-        {
-            Box box = IntegerOrigin + GetBoundingBox();
-            return Direction != DefaultDirection ? box.Mirror(IntegerOrigin) : box;
-        }
-
-        protected set
-        {
-            Box boudingBox = Direction != DefaultDirection ? value.Mirror(IntegerOrigin) : value;
-            boudingBox -= IntegerOrigin;
-            SetBoundingBox(boudingBox);
-            UpdatePartition();
-        }
-    }
-
-    public override Box Hitbox
-    {
-        get
-        {
-            Box box = Origin + (!Alive && (Respawnable || SpawnOnNear) ? GetDeadBox() : GetHitbox());
-            return Direction != DefaultDirection ? box.Mirror(Origin) : box;
-        }
-
-        protected set
-        {
-            Box hitbox = Direction != DefaultDirection ? value.Mirror(Origin) : value;
-            hitbox -= Origin;
-            SetHitbox(hitbox);
-        }
-    }
-
-    public override Box TouchingBox
-    {
-        get
-        {
-            Box box = Origin + GetTouchingBox();
-            return Direction != DefaultDirection ? box.Mirror(Origin) : box;
-        }
-    }
 
     public virtual Box CollisionBox
     {
@@ -778,7 +752,6 @@ public abstract class Sprite : Entity, IRenderable
     {
         return kind switch
         {
-            VectorKind.BOUDINGBOX_CENTER => BoundingBox.Center,
             VectorKind.COLLISIONBOX_CENTER => CollisionBox.Center,
             _ => base.GetVector(kind)
         };
@@ -788,7 +761,6 @@ public abstract class Sprite : Entity, IRenderable
     {
         return kind switch
         {
-            VectorKind.BOUDINGBOX_CENTER => GetLastBox(BoxKind.BOUDINGBOX).Center,
             VectorKind.COLLISIONBOX_CENTER => GetLastBox(BoxKind.COLLISIONBOX).Center,
             _ => base.GetLastVector(kind)
         };
@@ -798,19 +770,9 @@ public abstract class Sprite : Entity, IRenderable
     {
         return kind switch
         {
-            BoxKind.BOUDINGBOX => BoundingBox,
             BoxKind.COLLISIONBOX => CollisionBox,
             _ => base.GetBox(kind)
         };
-    }
-
-    protected virtual Box GetBoundingBox()
-    {
-        return (Direction != DefaultDirection ? DrawBox.Mirror(IntegerOrigin) : DrawBox) - IntegerOrigin;
-    }
-
-    protected virtual void SetBoundingBox(Box boudingBox)
-    {
     }
 
     protected override Box GetHitbox()
@@ -843,7 +805,7 @@ public abstract class Sprite : Entity, IRenderable
             ? animation.DrawBox
             : InitialAnimationIndex >= 0 && InitialAnimationIndex < Animations.Count ? Animations[InitialAnimationIndex].DrawBox : Animations.Count > 0 ? Animations[0].DrawBox : Box.EMPTY_BOX;
 
-        return (Direction != DefaultDirection ? drawBox.Mirror(Origin) : drawBox) - Origin;
+        return (MirrorAnimationFromDirection && Direction != DefaultDirection ? drawBox.Mirror(Origin) : drawBox) - Origin;
     }
 
     protected virtual Box GetCollisionBox()

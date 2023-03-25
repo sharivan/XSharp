@@ -8,6 +8,7 @@ namespace XSharp.Engine.Graphics;
 public class PrecacheAction : ISerializable
 {
     private string parent;
+    private bool calling = false;
 
     public Type Type
     {
@@ -87,12 +88,24 @@ public class PrecacheAction : ISerializable
 
     internal void Call()
     {
-        Parent?.Call();
+        if (calling)
+            return;
 
-        if (!Called)
+        calling = true;
+
+        try
         {
-            Method?.Invoke(null, null);
-            Called = true;
+            Parent?.Call();
+
+            if (!Called)
+            {
+                Method?.Invoke(null, null);
+                Called = true;
+            }
+        }
+        finally
+        {
+            calling = false;
         }
     }
 }

@@ -6,9 +6,8 @@ namespace XSharp.Engine.Entities;
 public enum BoxKind
 {
     NONE = 0,
-    BOUDINGBOX = 1,
-    HITBOX = 2,
-    COLLISIONBOX = 4,
+    HITBOX = 1,
+    COLLISIONBOX = 2,
     ALL = 255
 }
 

@@ -29,6 +29,7 @@ using XSharp.Engine.Entities.Enemies.RayBit;
 using XSharp.Engine.Entities.Enemies.Snowball;
 using XSharp.Engine.Entities.Enemies.SnowShooter;
 using XSharp.Engine.Entities.Enemies.Tombot;
+using XSharp.Engine.Entities.Enemies.TurnCannon;
 using XSharp.Engine.Entities.HUD;
 using XSharp.Engine.Entities.Items;
 using XSharp.Engine.Entities.Objects;
@@ -1452,6 +1453,21 @@ public class GameEngine : IRenderable, IRenderTarget
     {
         var result = Texture.FromFile(Device, filePath, Usage.None, Pool.SystemMemory);
         return result;
+    }
+
+    public Texture CreateImageTextureFromEmbeddedResource(string path)
+    {
+        return CreateImageTextureFromEmbeddedResource(Assembly.GetExecutingAssembly(), path);
+    }
+
+    public Texture CreateImageTextureFromEmbeddedResource(Assembly assembly, string path)
+    {
+        string assemblyName = assembly.GetName().Name;
+        using (var stream = assembly.GetManifestResourceStream($"{assemblyName}.resources.{path}"))
+        {
+            var texture = Engine.CreateImageTextureFromStream(stream);
+            return texture;
+        }
     }
 
     public Texture CreateImageTextureFromStream(Stream stream)
@@ -3926,6 +3942,8 @@ public class GameEngine : IRenderable, IRenderTarget
                 0x09 when mmx.Type == 1 => AddScriver(subid, origin),
                 0x0B when mmx.Type == 0 => AddAxeMax(subid, origin),
                 0x15 when mmx.Type == 0 => AddSpiky(subid, origin),
+                0x16 when mmx.Type == 0 => AddHoverPlatform(subid, origin),
+                0x17 when mmx.Type == 0 => AddTurnCannon(subid, origin),
                 0x19 when mmx.Type == 0 => AddBombBeen(subid, origin),
                 0x2C when mmx.Type == 1 => AddProbe8201U(subid, origin),
                 0x2D when mmx.Type == 0 => AddBattonBoneG(subid, origin),
@@ -4114,6 +4132,23 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(effect);
     }
 
+    public EntityReference<Smoke> SpawnSmoke(Vector origin)
+    {
+        return SpawnSmoke(origin, Vector.NULL_VECTOR);
+    }
+
+    public EntityReference<Smoke> SpawnSmoke(Vector origin, Vector velocity)
+    {
+        Smoke effect = Entities.Create<Smoke>(new
+        {
+            Origin = origin,
+            Velocity = velocity
+        });
+
+        effect.Spawn();
+        return Entities.GetReferenceTo(effect);
+    }
+
     internal EntityReference<DashSmokeEffect> StartDashSmokeEffect(Player player)
     {
         DashSmokeEffect effect = Entities.Create<DashSmokeEffect>(new
@@ -4215,6 +4250,31 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+    public EntityReference<HoverPlatform> AddHoverPlatform(ushort subid, Vector origin)
+    {
+        HoverPlatform entity = Entities.Create<HoverPlatform>(new
+        {
+            Origin = origin,
+            Direction = (subid & 0x8) != 0 ? Direction.LEFT : Direction.RIGHT,
+            HasTurnCannon = true
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<TurnCannon> AddTurnCannon(ushort subid, Vector origin)
+    {
+        TurnCannon entity = Entities.Create<TurnCannon>(new
+        {
+            Origin = origin,
+            UpsideDown = (subid & 0x1) != 0
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
     public EntityReference<BombBeen> AddBombBeen(ushort subid, Vector origin)
     {
         BombBeen entity = Entities.Create<BombBeen>(new
@@ -4233,7 +4293,7 @@ public class GameEngine : IRenderable, IRenderTarget
             Origin = origin,
             MovingVertically = (subid & 0x20) == 0,
             StartMovingBackward = (subid & 0x20) == 0,
-            MoveDistance = (subid & 0x04) != 0 ? 7 * Probe8201U.PROBE8201U_BASE_MOVE_DISTANCE : Probe8201U.PROBE8201U_BASE_MOVE_DISTANCE
+            MoveDistance = (subid & 0x04) != 0 ? 7 * Probe8201U.BASE_MOVE_DISTANCE : Probe8201U.BASE_MOVE_DISTANCE
         });
 
         entity.Place();

@@ -45,6 +45,7 @@ public class FlammingleShot : Enemy
 
         CheckCollisionWithWorld = false;
         ContactDamage = Flammingle.SHOT_DAMAGE;
+        IgnoreShots = true;
         Invincible = true;
     }
 

@@ -274,6 +274,7 @@ public class Jamminger : Enemy, IStateEntity<JammingerState, JammingerSubState>
     {
         base.OnContactDamage(player);
 
-        SetState(JammingerState.LAUGHING, JammingerSubState.IDLE);
+        if (State is JammingerState.CHASING or JammingerState.SMOOTH_CHASING)
+            SetState(JammingerState.LAUGHING, JammingerSubState.IDLE);
     }
 }
