@@ -125,6 +125,8 @@ public class Jamminger : Enemy, IStateEntity<JammingerState, JammingerSubState>
     {
         base.OnCreate();
 
+        SpawnFacedToPlayer = false;
+
         PaletteName = "jammingerPalette";
         SpriteSheetName = "Jamminger";
 

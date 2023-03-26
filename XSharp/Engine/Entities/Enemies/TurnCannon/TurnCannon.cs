@@ -180,6 +180,7 @@ public class TurnCannon : Enemy, IStateEntity<TurnCannonState>
         DefaultDirection = Direction.LEFT;
         UpdateOriginFromParentDirection = false;
         UpdateDirectionFromParent = false;
+        SpawnFacedToPlayer = false;
 
         PaletteName = "TurnCannonPalette";
         SpriteSheetName = "TurnCannon";

@@ -135,6 +135,7 @@ public class Tombot : Enemy, IStateEntity<TombotState>
         base.OnCreate();
 
         DefaultDirection = Direction.LEFT;
+        SpawnFacedToPlayer = false;
 
         PaletteName = "tombotPalette";
         SpriteSheetName = "Tombot";

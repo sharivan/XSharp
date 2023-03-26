@@ -38,6 +38,8 @@ public class RayBitShot : Enemy
     {
         base.OnCreate();
 
+        SpawnFacedToPlayer = false;
+
         SpriteSheetName = "RayBit";
 
         SetAnimationNames("Shot");

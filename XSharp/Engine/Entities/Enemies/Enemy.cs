@@ -54,6 +54,12 @@ public abstract class Enemy : Sprite
     private string lastPaletteName;
     private bool flashing;
 
+    public bool SpawnFacedToPlayer
+    {
+        get;
+        set;
+    } = true;
+
     public HitResponse HitResponse
     {
         get;
@@ -72,43 +78,43 @@ public abstract class Enemy : Sprite
         set;
     } = 1;
 
-    public long SmallHealthDropOdd
+    public ulong SmallHealthDropOdd
     {
         get;
         set;
     } = 0;
 
-    public long BigHealthDropOdd
+    public ulong BigHealthDropOdd
     {
         get;
         set;
     } = 0;
 
-    public long SmallAmmoDropOdd
+    public ulong SmallAmmoDropOdd
     {
         get;
         set;
     } = 0;
 
-    public long BigAmmoDropOdd
+    public ulong BigAmmoDropOdd
     {
         get;
         set;
     } = 0;
 
-    public long LifeUpDropOdd
+    public ulong LifeUpDropOdd
     {
         get;
         set;
     } = 0;
 
-    public long NothingDropOdd
+    public ulong NothingDropOdd
     {
         get;
         set;
     } = 100;
 
-    public long TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeUpDropOdd + NothingDropOdd;
+    public ulong TotalDropOdd => SmallHealthDropOdd + BigHealthDropOdd + SmallAmmoDropOdd + BigAmmoDropOdd + LifeUpDropOdd + NothingDropOdd;
 
     protected Enemy()
     {
@@ -130,6 +136,9 @@ public abstract class Enemy : Sprite
 
         lastPaletteName = null;
         flashing = false;
+
+        if (SpawnFacedToPlayer && Engine.Player != null)
+            Direction = GetHorizontalDirection(Engine.Player);
     }
 
     protected override bool OnPreThink()
@@ -219,7 +228,7 @@ public abstract class Enemy : Sprite
 
         OnExplode();
 
-        var random = Engine.RNG.NextLong(TotalDropOdd);
+        var random = Engine.RNG.NextLong((ulong) TotalDropOdd);
         if (random > TotalDropOdd - NothingDropOdd)
             return;
 

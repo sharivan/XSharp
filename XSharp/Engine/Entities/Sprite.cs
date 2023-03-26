@@ -1998,9 +1998,7 @@ public abstract class Sprite : Entity, IRenderable
     public void FaceToPosition(Vector pos)
     {
         var faceDirection = GetHorizontalDirection(pos);
-
-        if (Direction == faceDirection)
-            Direction = Direction.Oposite();
+        Direction = faceDirection;
     }
 
     public void FaceToEntity(Entity entity)

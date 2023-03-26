@@ -543,7 +543,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
 
                 if (!DONT_ATTACK)
                 {
-                    int value = Engine.RNG.NextInt(16);
+                    var value = Engine.RNG.NextUInt(16);
 
                     switch (lastState)
                     {
@@ -569,7 +569,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
 
@@ -577,7 +577,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (!AllSculpturesAlive())
                                             State = ChillPenguinState.BLOWING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
                                 }
@@ -608,7 +608,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
 
@@ -616,7 +616,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (!AllSculpturesAlive())
                                             State = ChillPenguinState.BLOWING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
                                 }
@@ -647,7 +647,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
 
@@ -655,7 +655,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (!AllSculpturesAlive())
                                             State = ChillPenguinState.BLOWING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
                                 }
@@ -682,7 +682,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
 
@@ -690,7 +690,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (!AllSculpturesAlive())
                                             State = ChillPenguinState.BLOWING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
                                 }
@@ -717,7 +717,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
 
@@ -725,7 +725,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (!AllSculpturesAlive())
                                             State = ChillPenguinState.BLOWING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
                                 }
@@ -753,7 +753,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
 
@@ -761,7 +761,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (!AllSculpturesAlive())
                                             State = ChillPenguinState.BLOWING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
                                 }
@@ -792,7 +792,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
 
@@ -800,7 +800,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         if (!AllSculpturesAlive())
                                             State = ChillPenguinState.BLOWING;
                                         else
-                                            value = Engine.RNG.NextInt(16);
+                                            value = Engine.RNG.NextUInt(16);
 
                                         break;
                                 }
@@ -891,7 +891,7 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
         PenguinIce ice = Engine.Entities.Create<PenguinIce>(new
         {
             Shooter = this,
-            Bump = Engine.RNG.NextInt(2) == 1
+            Bump = Engine.RNG.NextUInt(2) == 1
         });
 
         ice.Spawn();

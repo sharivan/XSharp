@@ -1011,12 +1011,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public Direction GetHorizontalDirection(Vector pos)
     {
-        return Origin.X < pos.X ? Direction.LEFT : Direction.RIGHT;
+        return pos.X < Origin.X ? Direction.LEFT : Direction.RIGHT;
     }
 
     public Direction GetVerticalDirection(Vector pos)
     {
-        return Origin.Y < pos.Y ? Direction.UP : Direction.DOWN;
+        return pos.Y < Origin.Y ? Direction.UP : Direction.DOWN;
     }
 
     public Direction GetHorizontalDirection(Entity entity)

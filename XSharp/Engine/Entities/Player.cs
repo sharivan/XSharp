@@ -2445,7 +2445,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
         if (TakingDamage || Dying || Invincible || NoClip)
             return false;
 
-        Direction direction = attacker == null || attacker == this ? Direction : GetHorizontalDirection(attacker).Oposite();
+        Direction direction = attacker == null || attacker == this ? Direction : GetHorizontalDirection(attacker);
         DoHurtAnimation(direction, attacker.KnockPlayerOnHurt);
 
         if (Health > 0 && Health - damage <= 0)

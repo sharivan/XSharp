@@ -38,6 +38,7 @@ public class AxeMaxTrunkHurtbox : Enemy
         base.OnCreate();
 
         Invincible = true;
+        SpawnFacedToPlayer = false;
 
         trunk = (AxeMaxTrunk) Parent;
     }

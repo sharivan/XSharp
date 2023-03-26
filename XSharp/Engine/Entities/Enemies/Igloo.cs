@@ -51,6 +51,7 @@ public class Igloo : Enemy
         HitResponse = HitResponse.REFLECT; // TODO : This enemy should only reflect shots but Fire Wave (or another desired weapon).
         ContactDamage = 0;
         Health = HP;
+        SpawnFacedToPlayer = false;
 
         firstSpawn = true;
     }
@@ -80,7 +81,7 @@ public class Igloo : Enemy
         Tombot.Tombot tombot = Engine.Entities.Create<Tombot.Tombot>(new
         {
             Origin = Origin + TOMBOT_SPAWN_OFFSET_Y * Vector.DOWN_VECTOR,
-            Direction = player != null ? GetHorizontalDirection(player).Oposite() : Direction.RIGHT
+            Direction = player != null ? GetHorizontalDirection(player) : Direction.RIGHT
         });
 
         tombot.Spawn();

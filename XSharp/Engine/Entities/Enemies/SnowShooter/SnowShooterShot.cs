@@ -22,6 +22,8 @@ public class SnowShooterShot : Enemy
     {
         base.OnCreate();
 
+        SpawnFacedToPlayer = false;
+
         PaletteName = "snowShooterPalette";
         SpriteSheetName = "SnowShooter";
 

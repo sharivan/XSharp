@@ -22,6 +22,8 @@ public class FlammingleShot : Enemy
     {
         base.OnCreate();
 
+        SpawnFacedToPlayer = false;
+
         PaletteName = "flamminglePalette";
         SpriteSheetName = "Flammingle";
 

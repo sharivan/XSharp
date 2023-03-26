@@ -20,7 +20,7 @@
     <None Remove="Assets\Sprites\Enemies\X1\Dig Labour.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Dodge Blaster.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Flammingle.png" />
-    <None Remove="Assets\Sprites\Enemies\X1\Gunvolt.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Gun Volt.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Jamminger.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Jellyfish.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Mega Tortoise.png" />
@@ -117,7 +117,7 @@
     <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Flammingle.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Gunvolt.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Gun Volt.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Jamminger.png">
@@ -192,13 +192,13 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <Content Include="Assets\roms\ShittyDash.mmx">
+    <Content Include="Assets\ROMs\ShittyDash.mmx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\roms\BestGame.mmx">
+    <Content Include="Assets\ROMs\BestGame.mmx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\roms\ZeroIsJegue.mmx">
+    <Content Include="Assets\ROMs\ZeroIsJegue.mmx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -338,7 +338,9 @@
     <Content Include="Assets\Sounds\X1\22 - MMX - X Chameleon Sting %28Charged%29.wav" />
     <Content Include="Assets\Sounds\X1\23 - MMX - X Electric Spark.wav" />
     <Content Include="Assets\Sounds\X1\24 - MMX - X Fire Wave.wav" />
-    <Content Include="Assets\Sounds\X1\25 - MMX - X Homing Torpedo.wav" />
+    <Content Include="Assets\Sounds\X1\25 - MMX - X Homing Torpedo.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\Sounds\X1\26 - MMX - X Rolling Shield.wav" />
     <Content Include="Assets\Sounds\X1\27 - MMX - X Rolling Shiled %28Charged%29.wav" />
     <Content Include="Assets\Sounds\X1\28 - MMX - X Storm Tornado.wav" />
@@ -394,7 +396,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\Sounds\X1\54 - MMX - Eagle%27s Tornado.wav" />
-    <Content Include="Assets\Sounds\X1\55 - MMX - Electric Bolt.wav" />
+    <Content Include="Assets\Sounds\X1\55 - MMX - Electric Bolt.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\Sounds\X1\56 - MMX - Enemy Die %281%29.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

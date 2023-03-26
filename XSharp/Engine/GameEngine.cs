@@ -25,6 +25,7 @@ using XSharp.Engine.Entities.Enemies.BombBeen;
 using XSharp.Engine.Entities.Enemies.Bosses;
 using XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 using XSharp.Engine.Entities.Enemies.Flammingle;
+using XSharp.Engine.Entities.Enemies.GunVolt;
 using XSharp.Engine.Entities.Enemies.RayBit;
 using XSharp.Engine.Entities.Enemies.Snowball;
 using XSharp.Engine.Entities.Enemies.SnowShooter;
@@ -2164,7 +2165,7 @@ public class GameEngine : IRenderable, IRenderTarget
         if (!nextFrame)
             return false;
 
-        RNG.UpdateSeed(FrameCounter);
+        RNG.UpdateSeed((ulong) FrameCounter);
 
         if (Player != null)
         {
@@ -3331,7 +3332,7 @@ public class GameEngine : IRenderable, IRenderTarget
             text = $"Camera: CX: {(float) Camera.Left * 256}({(float) (Camera.Left - lastCameraLeftTop.X) * 256}) CY: {(float) Camera.Top * 256}({(float) (Camera.Top - lastCameraLeftTop.Y) * 256})";
             DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, fontDimension.Top - fontDimension.Bottom, Color.White, out fontDimension);
 
-            text = $"Player: X: {(float) (Player.Origin.X * 256)}({(float) ((Player.Origin.X - lastPlayerOrigin.X) * 256)}) Y: {(float) (Player.Origin.Y * 256)}({(float) ((Player.Origin.Y - lastPlayerOrigin.Y) * 256)}) VX: {(float) (Player.Velocity.X * 256)}({(float) (Player.Velocity.X - lastPlayerVelocity.X) * 256}) VY: {(float) (Player.Velocity.Y * -256)}({(float) ((Player.Velocity.Y - lastPlayerVelocity.Y) * -256)}) Gravity: {(float) (Player.GetGravity() * 256)}";
+            text = $"Player: X: {(float) Player.Origin.X * 256}({(float) (Player.Origin.X - lastPlayerOrigin.X) * 256}) Y: {(float) Player.Origin.Y * 256}({(float) (Player.Origin.Y - lastPlayerOrigin.Y) * 256}) VX: {(float) Player.Velocity.X * 256}({(float) (Player.Velocity.X - lastPlayerVelocity.X) * 256}) VY: {(float) Player.Velocity.Y * -256}({(float) (Player.Velocity.Y - lastPlayerVelocity.Y) * -256}) Gravity: {(float) Player.GetGravity() * 256}";
             DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, 2 * (fontDimension.Top - fontDimension.Bottom), Color.White, out fontDimension);
         }
 
@@ -3936,6 +3937,7 @@ public class GameEngine : IRenderable, IRenderTarget
                 0x16 when mmx.Type == 0 => AddHoverPlatform(subid, origin),
                 0x17 when mmx.Type == 0 => AddTurnCannon(subid, origin),
                 0x19 when mmx.Type == 0 => AddBombBeen(subid, origin),
+                0x29 when mmx.Type == 0 => AddGunVolt(subid, origin),
                 0x2C when mmx.Type == 1 => AddProbe8201U(subid, origin),
                 0x2D when mmx.Type == 0 => AddBattonBoneG(subid, origin),
                 0x2F => AddArmorSoldier(subid, origin),
@@ -4269,6 +4271,18 @@ public class GameEngine : IRenderable, IRenderTarget
     public EntityReference<BombBeen> AddBombBeen(ushort subid, Vector origin)
     {
         BombBeen entity = Entities.Create<BombBeen>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+
+    public EntityReference<GunVolt> AddGunVolt(ushort subid, Vector origin)
+    {
+        GunVolt entity = Entities.Create<GunVolt>(new
         {
             Origin = origin
         });

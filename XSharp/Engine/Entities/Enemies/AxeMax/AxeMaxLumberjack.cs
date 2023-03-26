@@ -59,6 +59,7 @@ public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxLumberjackState>
         PaletteName = "axeMaxPalette";
         SpriteSheetName = "AxeMax";
         DefaultDirection = Direction.LEFT;
+        SpawnFacedToPlayer = false;
 
         SetAnimationNames("Idle", "Laughing", "Throwing");
 

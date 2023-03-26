@@ -176,7 +176,7 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
 
     private RayBitState RandomNonIdleState()
     {
-        var random = Engine.RNG.NextInt(16);
+        var random = Engine.RNG.NextUInt(16);
         return random % 2 == 0 ? RayBitState.JUMPING : RayBitState.SHOOTING;
     }
 

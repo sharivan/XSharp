@@ -118,6 +118,7 @@ public class Snowball : Enemy, IStateEntity<SnowballState>
         base.OnCreate();
 
         DefaultDirection = Direction.LEFT;
+        SpawnFacedToPlayer = false;
 
         PaletteName = "snowballPalette";
         SpriteSheetName = "Snowball";

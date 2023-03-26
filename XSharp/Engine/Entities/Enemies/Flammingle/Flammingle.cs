@@ -141,6 +141,7 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
         base.OnCreate();
 
         DefaultDirection = Direction.LEFT;
+        SpawnFacedToPlayer = false;
 
         PaletteName = "flamminglePalette";
         SpriteSheetName = "Flammingle";
@@ -157,7 +158,7 @@ public class Flammingle : Enemy, IStateEntity<FlammingleState>
         var player = Engine.Player;
         if (frameCounter >= 4
             && player != null
-            && GetHorizontalDirection(player) == Direction.Oposite()
+            && GetHorizontalDirection(player) == Direction
             && (player.Origin.X - Origin.X).Abs <= ATTACK_DISTANCE_X
             && Hitbox.VerticallInterval.IsOverlaping(player.CollisionBox.VerticallInterval))
             State = FlammingleState.ATTACKING;

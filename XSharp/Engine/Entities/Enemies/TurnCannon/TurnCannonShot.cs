@@ -22,6 +22,8 @@ public class TurnCannonShot : Enemy
     {
         base.OnCreate();
 
+        SpawnFacedToPlayer = false;
+
         PaletteName = "TurnCannonPalette";
         SpriteSheetName = "TurnCannon";
 

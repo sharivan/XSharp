@@ -4,65 +4,64 @@ namespace XSharp.Engine;
 
 public class RNG : ISerializable
 {
-    private long seed;
+    private ulong seed;
 
-    internal RNG(long seed = 0)
+    internal RNG(ulong seed = 0)
     {
         UpdateSeed(seed);
     }
 
     public void Deserialize(ISerializer reader)
     {
-        seed = reader.ReadLong();
+        seed = reader.ReadULong();
     }
 
     public void Serialize(ISerializer writer)
     {
-        writer.WriteLong(seed);
+        writer.WriteULong(seed);
     }
 
-    public void UpdateSeed(long seed)
+    public void UpdateSeed(ulong seed)
     {
-        this.seed = seed & long.MaxValue; // It ensures that seed will be always positive.
+        this.seed = seed & ulong.MaxValue; // It ensures that seed will be always positive.
     }
 
-    public int NextInt()
+    public uint NextUInt()
     {
-        return (int) (NextLong() & int.MaxValue);
+        return (uint) NextULong();
     }
 
-    public int NextInt(int start, int end)
+    public uint NextUInt(uint start, uint end)
     {
-        return start + NextInt() % System.Math.Abs(end - start); // This one will change the distribution by using modulus, but original game does the same thing.
+        return start + NextUInt() % (end - start); // This one will change the distribution by using modulus, but original game does the same thing.
     }
 
-    public int NextInt(int count)
+    public uint NextUInt(uint count)
     {
-        return NextInt(0, count);
+        return NextUInt(0, count);
     }
 
-    public long NextLong()
+    public ulong NextULong()
     {
         // For now im using an algorithm similar to used by MMIX to generate random numbers.
         seed *= 6364136223846793005L;
         seed += 1442695040888963407L;
-        seed >>= 32;
-        seed &= long.MaxValue;
+        seed >>= 24;        
         return seed;
     }
 
-    public long NextLong(long start, long end)
+    public ulong NextULong(ulong start, ulong end)
     {
-        return start + NextLong() % System.Math.Abs(end - start);
+        return start + NextULong() % (end - start);
     }
 
-    public long NextLong(long count)
+    public ulong NextLong(ulong count)
     {
-        return NextLong(0, count);
+        return NextULong(0, count);
     }
 
     public double NextDouble()
     {
-        return (double) NextLong() / long.MaxValue;
+        return (double) NextULong() / ulong.MaxValue;
     }
 }

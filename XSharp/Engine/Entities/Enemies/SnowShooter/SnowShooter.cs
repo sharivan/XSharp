@@ -120,7 +120,7 @@ public class SnowShooter : Enemy, IStateEntity<SnowShooterState>
         var player = Engine.Player;
         if (player != null)
         {
-            if (GetHorizontalDirection(player) == Direction)
+            if (GetHorizontalDirection(player) != Direction)
                 Direction = Direction.Oposite();
 
             if (frameCounter >= FRAMES_BETWEEN_SHOOTS)
