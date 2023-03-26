@@ -57,35 +57,30 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
     [Precache]
     new internal static void Precache()
     {
-        var scriverPalette = Engine.PrecachePalette("scriverPalette", SCRIVER_PALETTE);
-        var scriverSpriteSheet = Engine.CreateSpriteSheet("Scriver", true, true);
+        var palette = Engine.PrecachePalette("scriverPalette", SCRIVER_PALETTE);
+        var spriteSheet = Engine.CreateSpriteSheet("Scriver", true, true);
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.scriver.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            scriverSpriteSheet.CurrentTexture = texture;
-        }
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.X2.scriver.png");
+        spriteSheet.CurrentPalette = palette;
 
-        scriverSpriteSheet.CurrentPalette = scriverPalette;
-
-        var sequence = scriverSpriteSheet.AddFrameSquence("Idle");
+        var sequence = spriteSheet.AddFrameSquence("Idle");
         sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
         sequence.Hitbox = SCRIVER_HITBOX;
         sequence.AddFrame(-5, 6, 4, 4, 35, 30, 1, true);
 
-        sequence = scriverSpriteSheet.AddFrameSquence("Jumping");
+        sequence = spriteSheet.AddFrameSquence("Jumping");
         sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
         sequence.Hitbox = SCRIVER_HITBOX;
         sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
         sequence.AddFrame(-7, 6, 78, 4, 35, 30, 5);
         sequence.AddFrame(4, -3, 115, 4, 43, 30, 1, true);
 
-        sequence = scriverSpriteSheet.AddFrameSquence("Landing");
+        sequence = spriteSheet.AddFrameSquence("Landing");
         sequence.OriginOffset = -SCRIVER_HITBOX.Origin - SCRIVER_HITBOX.Mins;
         sequence.Hitbox = SCRIVER_HITBOX;
         sequence.AddFrame(-3, 6, 40, 4, 37, 30, 5);
 
-        sequence = scriverSpriteSheet.AddFrameSquence("Drilling");
+        sequence = spriteSheet.AddFrameSquence("Drilling");
         sequence.OriginOffset = -SCRIVER_DRILLING_HITBOX.Origin - SCRIVER_DRILLING_HITBOX.Mins;
         sequence.Hitbox = SCRIVER_DRILLING_HITBOX;
         sequence.AddFrame(-3, 1, 160, 36, 40, 25, 4);
@@ -94,13 +89,13 @@ public class Scriver : Enemy, IStateEntity<ScriverState>
         sequence.AddFrame(-4, 0, 256, 10, 48, 24, 2); // 4, 5
         sequence.AddFrame(-4, 1, 305, 9, 46, 25, 2); // 6, 7
 
-        sequence = scriverSpriteSheet.AddFrameSquence("EndDrilling");
+        sequence = spriteSheet.AddFrameSquence("EndDrilling");
         sequence.OriginOffset = -SCRIVER_DRILLING_HITBOX.Origin - SCRIVER_DRILLING_HITBOX.Mins;
         sequence.Hitbox = SCRIVER_DRILLING_HITBOX;
         sequence.AddFrame(-4, 0, 256, 10, 48, 24, 14);
         sequence.AddFrame(-4, 0, 209, 37, 41, 24, 7);
 
-        scriverSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 

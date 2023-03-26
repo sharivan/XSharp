@@ -45,7 +45,7 @@ public class TurnCannonShot : Enemy
 
         CheckCollisionWithWorld = false;
         ContactDamage = TurnCannon.SHOT_DAMAGE;
-        IgnoreShots = true;
+        HitResponse = HitResponse.IGNORE;
         Invincible = true;
     }
 }

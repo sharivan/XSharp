@@ -2,9 +2,9 @@
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Entities.Enemies.Bosses.Penguin.Penguin;
+using static XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin.ChillPenguin;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 
 public class PenguinIce : Enemy
 {
@@ -12,15 +12,15 @@ public class PenguinIce : Enemy
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Penguin));
+        Engine.CallPrecacheAction(typeof(ChillPenguin));
     }
     #endregion
 
     private FixedSingle speed;
     private bool bumped;
-    private EntityReference<Penguin> shooter;
+    private EntityReference<ChillPenguin> shooter;
 
-    public Penguin Shooter
+    public ChillPenguin Shooter
     {
         get => shooter;
         internal set => shooter = Engine.Entities.GetReferenceTo(value);
@@ -40,7 +40,7 @@ public class PenguinIce : Enemy
 
     public PenguinIce()
     {
-        SpriteSheetName = "Penguin";
+        SpriteSheetName = "ChillPenguin";
         ContactDamage = 2;
 
         SetAnimationNames("Ice");
@@ -105,7 +105,7 @@ public class PenguinIce : Enemy
 
         Direction = Shooter.Direction;
         Origin = Shooter.Origin + (Shooter.Direction == Shooter.DefaultDirection ? -PENGUIN_SHOT_ORIGIN_OFFSET.X : PENGUIN_SHOT_ORIGIN_OFFSET.X, PENGUIN_SHOT_ORIGIN_OFFSET.Y);
-        ReflectShots = true;
+        HitResponse = HitResponse.REFLECT;
 
         Exploding = false;
         bumped = false;

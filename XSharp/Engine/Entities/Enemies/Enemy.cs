@@ -40,13 +40,13 @@ public abstract class Enemy : Sprite
     [Precache]
     internal static void Precache()
     {
-        Engine.PrecacheSound("Small Hit", @"resources\sounds\mmx\30 - MMX - Small Hit.wav");
-        Engine.PrecacheSound("Big Hit", @"resources\sounds\mmx\31 - MMX - Big Hit.wav");
-        Engine.PrecacheSound("Enemy Die (1)", @"resources\sounds\mmx\56 - MMX - Enemy Die (1).wav");
-        Engine.PrecacheSound("Enemy Die (2)", @"resources\sounds\mmx\57 - MMX - Enemy Die (2).wav");
-        Engine.PrecacheSound("Enemy Die (3)", @"resources\sounds\mmx\58 - MMX - Enemy Die (3).wav");
-        Engine.PrecacheSound("Enemy Die (4)", @"resources\sounds\mmx\59 - MMX - Enemy Die (4).wav");
-        Engine.PrecacheSound("Armadillo Laser", @"resources\sounds\mmx\40 - MMX - Armadillo Laser.wav");
+        Engine.PrecacheSound("Small Hit", @"X1\30 - MMX - Small Hit.wav");
+        Engine.PrecacheSound("Big Hit", @"X1\31 - MMX - Big Hit.wav");
+        Engine.PrecacheSound("Enemy Die (1)", @"X1\56 - MMX - Enemy Die (1).wav");
+        Engine.PrecacheSound("Enemy Die (2)", @"X1\57 - MMX - Enemy Die (2).wav");
+        Engine.PrecacheSound("Enemy Die (3)", @"X1\58 - MMX - Enemy Die (3).wav");
+        Engine.PrecacheSound("Enemy Die (4)", @"X1\59 - MMX - Enemy Die (4).wav");
+        Engine.PrecacheSound("Armadillo Laser", @"X1\40 - MMX - Armadillo Laser.wav");
 
         Engine.PrecachePalette("flashingPalette", FLASHING_PALETTE);
     }
@@ -60,23 +60,11 @@ public abstract class Enemy : Sprite
         set;
     } = HitResponse.ACCEPT;
 
-    public bool AcceptShots
-    {
-        get => HitResponse == HitResponse.ACCEPT;
-        set => HitResponse = HitResponse.ACCEPT;
-    }
+    public bool AcceptShots => HitResponse == HitResponse.ACCEPT;
 
-    public bool IgnoreShots
-    {
-        get => HitResponse == HitResponse.IGNORE;
-        set => HitResponse = HitResponse.IGNORE;
-    }
+    public bool IgnoreShots => HitResponse == HitResponse.IGNORE;
 
-    public bool ReflectShots
-    {
-        get => HitResponse == HitResponse.REFLECT;
-        set => HitResponse = HitResponse.REFLECT;
-    }
+    public bool ReflectShots => HitResponse == HitResponse.REFLECT;
 
     public FixedSingle ContactDamage
     {

@@ -37,8 +37,8 @@ public class BossDoor : BaseTrigger, IStateEntity<BossDoorState>
     [Precache]
     internal static void Precache()
     {
-        Engine.PrecacheSound("Door Opening", @"resources\sounds\mmx\Door Opening.wav");
-        Engine.PrecacheSound("Door Closing", @"resources\sounds\mmx\Door Closing.wav");
+        Engine.PrecacheSound("Door Opening", @"X1\Door Opening.wav");
+        Engine.PrecacheSound("Door Closing", @"X1\Door Closing.wav");
     }
     #endregion
 

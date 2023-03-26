@@ -109,11 +109,11 @@ public abstract class Boss : Enemy
     [Precache]
     new internal static void Precache()
     {
-        Engine.PrecacheSound("Boss Intro", @"resources\sounds\ost\mmx\19 - Boss Intro.mp3");
-        Engine.PrecacheSound("Boss Battle", @"resources\sounds\ost\mmx\20 - Boss Battle.mp3");
-        Engine.PrecacheSound("Boss Defeated", @"resources\sounds\ost\mmx\21 - Boss Defeated.mp3");
-        Engine.PrecacheSound("Boss Explosion", @"resources\sounds\mmx\Boss Explosion.wav");
-        Engine.PrecacheSound("Boss Final Explode", @"resources\sounds\mmx\Boss Final Explode.wav");
+        Engine.PrecacheSound("Boss Intro", @"OST\X1\19 - Boss Intro.mp3");
+        Engine.PrecacheSound("Boss Battle", @"OST\X1\20 - Boss Battle.mp3");
+        Engine.PrecacheSound("Boss Defeated", @"OST\X1\21 - Boss Defeated.mp3");
+        Engine.PrecacheSound("Boss Explosion", @"X1\Boss Explosion.wav");
+        Engine.PrecacheSound("Boss Final Explode", @"X1\Boss Final Explode.wav");
     }
     #endregion
 

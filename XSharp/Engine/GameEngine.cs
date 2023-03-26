@@ -23,7 +23,7 @@ using XSharp.Engine.Entities.Enemies;
 using XSharp.Engine.Entities.Enemies.AxeMax;
 using XSharp.Engine.Entities.Enemies.BombBeen;
 using XSharp.Engine.Entities.Enemies.Bosses;
-using XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+using XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 using XSharp.Engine.Entities.Enemies.Flammingle;
 using XSharp.Engine.Entities.Enemies.RayBit;
 using XSharp.Engine.Entities.Enemies.Snowball;
@@ -931,9 +931,9 @@ public class GameEngine : IRenderable, IRenderTarget
         Running = true;
     }
 
-    public bool PrecacheSound(string name, string path, out PrecachedSound sound, bool raiseExceptionIfNameExists = true)
+    public bool PrecacheSound(string name, string relativePath, out PrecachedSound sound, bool raiseExceptionIfNameExists = true)
     {
-        if (precachedSoundsByFileName.TryGetValue(path, out int index))
+        if (precachedSoundsByFileName.TryGetValue(relativePath, out int index))
         {
             sound = precachedSounds[index];
             sound.AddName(name);
@@ -953,18 +953,18 @@ public class GameEngine : IRenderable, IRenderTarget
             return false;
         }
 
-        var stream = WaveStreamUtil.FromFile(path);
-        sound = new PrecachedSound(name, path, stream);
+        var stream = WaveStreamUtil.FromFile(@"Assets\Sounds\" + relativePath);
+        sound = new PrecachedSound(name, relativePath, stream);
         index = precachedSounds.Count;
         precachedSounds.Add(sound);
         precachedSoundsByName.Add(name, index);
-        precachedSoundsByFileName.Add(path, index);
+        precachedSoundsByFileName.Add(relativePath, index);
         return true;
     }
 
-    public bool PrecacheSound(string name, string path)
+    public bool PrecacheSound(string name, string relativePath)
     {
-        return PrecacheSound(name, path, out _);
+        return PrecacheSound(name, relativePath, out _);
     }
 
     private void Unload()
@@ -1079,15 +1079,8 @@ public class GameEngine : IRenderable, IRenderTarget
 
         highlightMapTextFont = new Font(device, fontDescription);
 
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.white_pixel.png"))
-        {
-            whitePixelTexture = Texture.FromStream(device, stream);
-        }
-
-        using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.tiles.black_pixel.png"))
-        {
-            blackPixelTexture = Texture.FromStream(device, stream);
-        }
+        whitePixelTexture = Engine.CreateImageTextureFromEmbeddedResource("Tiles.white_pixel.png", Usage.None, Pool.Default);
+        blackPixelTexture = Engine.CreateImageTextureFromEmbeddedResource("Tiles.black_pixel.png", Usage.None, Pool.Default);
 
         SetupQuad(VertexBuffer, SCREEN_WIDTH * 4, SCREEN_HEIGHT * 4);
 
@@ -1449,30 +1442,28 @@ public class GameEngine : IRenderable, IRenderTarget
         return result;
     }
 
-    public Texture CreateImageTextureFromFile(string filePath)
+    public Texture CreateImageTextureFromFile(string filePath, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
     {
-        var result = Texture.FromFile(Device, filePath, Usage.None, Pool.SystemMemory);
+        var result = Texture.FromFile(Device, filePath, usage, pool);
         return result;
     }
 
-    public Texture CreateImageTextureFromEmbeddedResource(string path)
+    public Texture CreateImageTextureFromEmbeddedResource(string path, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
     {
-        return CreateImageTextureFromEmbeddedResource(Assembly.GetExecutingAssembly(), path);
+        return CreateImageTextureFromEmbeddedResource(Assembly.GetExecutingAssembly(), path, usage, pool);
     }
 
-    public Texture CreateImageTextureFromEmbeddedResource(Assembly assembly, string path)
+    public Texture CreateImageTextureFromEmbeddedResource(Assembly assembly, string path, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
     {
         string assemblyName = assembly.GetName().Name;
-        using (var stream = assembly.GetManifestResourceStream($"{assemblyName}.resources.{path}"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            return texture;
-        }
+        using var stream = assembly.GetManifestResourceStream($"{assemblyName}.Assets.{path}");
+        var texture = Engine.CreateImageTextureFromStream(stream, usage, pool);
+        return texture;
     }
 
-    public Texture CreateImageTextureFromStream(Stream stream)
+    public Texture CreateImageTextureFromStream(Stream stream, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
     {
-        var result = Texture.FromStream(Device, stream, Usage.None, Pool.SystemMemory);
+        var result = Texture.FromStream(Device, stream, usage, pool);
         return result;
     }
 
@@ -2476,7 +2467,7 @@ public class GameEngine : IRenderable, IRenderTarget
                 CameraConstraintsBox = CurrentCheckpoint.Hitbox;
 
                 if (mmx.Type == 0 && mmx.Level == 8)
-                    PrecacheSound("Chill Penguin", @"resources\sounds\ost\mmx\12 - Chill Penguin.mp3");
+                    PrecacheSound("Chill Penguin", @"OST\X1\12 - Chill Penguin.mp3");
             }
             else
             {
@@ -3733,7 +3724,7 @@ public class GameEngine : IRenderable, IRenderTarget
                 foreach (var name in sound.Names)
                     serializer.WriteString(name, false);
 
-                serializer.WriteString(sound.Path, false);
+                serializer.WriteString(sound.RelativePath, false);
             }
         }
 
@@ -3960,9 +3951,9 @@ public class GameEngine : IRenderable, IRenderTarget
             };
     }
 
-    internal EntityReference<Penguin> AddPenguin(Vector origin)
+    internal EntityReference<ChillPenguin> AddPenguin(Vector origin)
     {
-        Penguin penguin = Entities.Create<Penguin>(new
+        ChillPenguin penguin = Entities.Create<ChillPenguin>(new
         {
             Origin = origin
         });
@@ -4796,7 +4787,7 @@ public class GameEngine : IRenderable, IRenderTarget
         resultSet = new EntitySet<Entity>();
 
         ResetDevice();
-        LoadLevel(@"resources\roms\" + ROM_NAME, INITIAL_LEVEL, INITIAL_CHECKPOINT);
+        LoadLevel(@"Assets\ROMs\" + ROM_NAME, INITIAL_LEVEL, INITIAL_CHECKPOINT);
 
         FrameCounter = 0;
         renderFrameCounter = 0;

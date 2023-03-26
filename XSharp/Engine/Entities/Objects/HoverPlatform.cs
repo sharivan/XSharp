@@ -30,7 +30,7 @@ public class HoverPlatform : Sprite, IStateEntity<HoverPlatformState>, IControll
         Engine.CallPrecacheAction<TurnCannon>();
 
         var spriteSheet = Engine.CreateSpriteSheet("HoverPlatform", true, true);
-        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("sprites.Objects.Hover Platform.png");
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Objects.Hover Platform.png");
 
         var sequence = spriteSheet.AddFrameSquence("Moving");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;

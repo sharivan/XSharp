@@ -6,7 +6,7 @@ using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 
 internal class Mist : HUD.HUD
 {
@@ -14,22 +14,18 @@ internal class Mist : HUD.HUD
     [Precache]
     internal static void Precache()
     {
-        Engine.PrecacheSound("Enemy Sound (05)", @"resources\sounds\mmx\68 - MMX - Enemy Sound (05).wav");
+        Engine.PrecacheSound("Enemy Sound (05)", @"X1\68 - MMX - Enemy Sound (05).wav");
 
-        var mistSpriteSheet = Engine.CreateSpriteSheet("Mist", true, true);
+        var spriteSheet = Engine.CreateSpriteSheet("Mist", true, true);
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Mist.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            mistSpriteSheet.CurrentTexture = texture;
-        }
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Effects.Mist.png");
 
-        var sequence = mistSpriteSheet.AddFrameSquence("Mist");
+        var sequence = spriteSheet.AddFrameSquence("Mist");
         sequence.OriginOffset = Vector.NULL_VECTOR;
         sequence.Hitbox = (Vector.NULL_VECTOR, Vector.NULL_VECTOR, (SCENE_SIZE, SCENE_SIZE));
         sequence.AddFrame(0, 0, 0, 0, 256, 256, 1, true);
 
-        mistSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 

@@ -50,29 +50,23 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
     [Precache]
     new internal static void Precache()
     {
-        var battonBoneGPalette = Engine.PrecachePalette("battonBoneGPalette", BATTON_BONE_G_PALETTE);
-        var battonBoneGSpriteSheet = Engine.CreateSpriteSheet("BattonBoneG", true, true);
+        var palette = Engine.PrecachePalette("battonBoneGPalette", BATTON_BONE_G_PALETTE);
+        var spriteSheet = Engine.CreateSpriteSheet("BattonBoneG", true, true);
 
-        // Batton Bone G
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X2.batton-bone-g.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            battonBoneGSpriteSheet.CurrentTexture = texture;
-        }
-
-        battonBoneGSpriteSheet.CurrentPalette = battonBoneGPalette;
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.X2.batton-bone-g.png");
+        spriteSheet.CurrentPalette = palette;
 
         var battonBoneGIdleHitbox = new Box(Vector.NULL_VECTOR, new Vector(-6, -18), new Vector(6, 0));
         var battonBoneGAttackingHitbox = new Box(Vector.NULL_VECTOR, new Vector(-8, -14), new Vector(8, 0));
 
         // 0
-        var sequence = battonBoneGSpriteSheet.AddFrameSquence("Idle");
+        var sequence = spriteSheet.AddFrameSquence("Idle");
         sequence.OriginOffset = -battonBoneGIdleHitbox.Mins;
         sequence.Hitbox = battonBoneGIdleHitbox;
         sequence.AddFrame(0, 4, 7, 1, 14, 23, 1, true);
 
         // 1
-        sequence = battonBoneGSpriteSheet.AddFrameSquence("Attacking");
+        sequence = spriteSheet.AddFrameSquence("Attacking");
         sequence.OriginOffset = -battonBoneGAttackingHitbox.Mins;
         sequence.Hitbox = battonBoneGAttackingHitbox;
         sequence.AddFrame(4, 7, 22, 1, 30, 23, 1, true);
@@ -82,7 +76,7 @@ public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
         sequence.AddFrame(3, 5, 147, 1, 23, 23, 4);
         sequence.AddFrame(4, 7, 22, 1, 30, 23, 3);
 
-        battonBoneGSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 

@@ -35,7 +35,7 @@ public class Smoke : SpriteEffect
         var palette = Engine.PrecachePalette("SmokePalette", PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("Smoke", true, true);
 
-        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("sprites.Effects.Smoke.png");
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Effects.Smoke.png");
         spriteSheet.CurrentPalette = palette;
 
         var sequence = spriteSheet.AddFrameSquence("Smoke");

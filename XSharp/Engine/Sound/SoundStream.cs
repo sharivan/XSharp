@@ -177,7 +177,7 @@ public class SoundStream : WaveStream, ISerializable
     {
         if (source != null)
         {
-            serializer.WriteString(source.Path);
+            serializer.WriteString(source.RelativePath);
             serializer.WriteLong(Position);
         }
         else

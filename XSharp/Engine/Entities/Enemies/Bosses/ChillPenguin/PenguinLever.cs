@@ -2,9 +2,9 @@
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Entities.Enemies.Bosses.Penguin.Penguin;
+using static XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin.ChillPenguin;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 
 public enum PenguinLeverState
 {
@@ -20,7 +20,7 @@ public class PenguinLever : Sprite, IStateEntity<PenguinLeverState>
     [Precache]
     internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Penguin));
+        Engine.CallPrecacheAction(typeof(ChillPenguin));
     }
     #endregion
 
@@ -34,7 +34,7 @@ public class PenguinLever : Sprite, IStateEntity<PenguinLeverState>
 
     public PenguinLever()
     {
-        SpriteSheetName = "Penguin";
+        SpriteSheetName = "ChillPenguin";
 
         SetAnimationNames("Lever");
     }

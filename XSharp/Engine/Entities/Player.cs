@@ -45,7 +45,7 @@ public enum PlayerState
 public class Player : Sprite, IStateEntity<PlayerState>
 {
     #region StaticFields
-    public static readonly Color[] X1_NORMAL_PALETTE = new Color[]
+    public static readonly Color[] PALETTE = new Color[]
     {
         Color.Transparent, // 0
         new Color(224, 224, 224, 255), // 1
@@ -86,40 +86,34 @@ public class Player : Sprite, IStateEntity<PlayerState>
     [Precache]
     internal static void Precache()
     {
-        Engine.PrecacheSound("X Regular Shot", @"resources\sounds\mmx\01 - MMX - X Regular Shot.wav");
-        Engine.PrecacheSound("X Semi Charged Shot", @"resources\sounds\mmx2\X Semi Charged Shot.wav");
-        Engine.PrecacheSound("X Charge Shot", @"resources\sounds\mmx\02 - MMX - X Charge Shot.wav");
-        Engine.PrecacheSound("X Charge", @"resources\sounds\mmx\04 - MMX - X Charge.wav");
-        Engine.PrecacheSound("X Dash", @"resources\sounds\mmx\07 - MMX - X Dash.wav");
-        Engine.PrecacheSound("X Jump", @"resources\sounds\mmx\08 - MMX - X Jump.wav");
-        Engine.PrecacheSound("X Land", @"resources\sounds\mmx\09 - MMX - X Land.wav");
-        Engine.PrecacheSound("X Fade In", @"resources\sounds\mmx\17 - MMX - X Fade In.wav");
-        Engine.PrecacheSound("X Hurt", @"resources\sounds\mmx\10 - MMX - X Hurt.wav");
-        Engine.PrecacheSound("X Die", @"resources\sounds\mmx\11 - MMX - X Die.wav");
-        Engine.PrecacheSound("X Upgrade Complete", @"resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav");
-        Engine.PrecacheSound("X Fade Out", @"resources\sounds\mmx\18 - MMX - X Fade Out.wav");
-        Engine.PrecacheSound("X Life Gain", @"resources\sounds\mmx\12 - MMX - X Life Gain.wav");
-        Engine.PrecacheSound("X Extra Life", @"resources\sounds\mmx\13 - MMX - X Extra Life.wav");
-        Engine.PrecacheSound("X Sub Tank-Heart Powerup", @"resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav");
+        Engine.PrecacheSound("X Regular Shot", @"X1\01 - MMX - X Regular Shot.wav");
+        Engine.PrecacheSound("X Semi Charged Shot", @"X2\X Semi Charged Shot.wav");
+        Engine.PrecacheSound("X Charge Shot", @"X1\02 - MMX - X Charge Shot.wav");
+        Engine.PrecacheSound("X Charge", @"X1\04 - MMX - X Charge.wav");
+        Engine.PrecacheSound("X Dash", @"X1\07 - MMX - X Dash.wav");
+        Engine.PrecacheSound("X Jump", @"X1\08 - MMX - X Jump.wav");
+        Engine.PrecacheSound("X Land", @"X1\09 - MMX - X Land.wav");
+        Engine.PrecacheSound("X Fade In", @"X1\17 - MMX - X Fade In.wav");
+        Engine.PrecacheSound("X Hurt", @"X1\10 - MMX - X Hurt.wav");
+        Engine.PrecacheSound("X Die", @"X1\11 - MMX - X Die.wav");
+        Engine.PrecacheSound("X Upgrade Complete", @"X1\16 - MMX - X Upgrade Complete.wav");
+        Engine.PrecacheSound("X Fade Out", @"X1\18 - MMX - X Fade Out.wav");
+        Engine.PrecacheSound("X Life Gain", @"X1\12 - MMX - X Life Gain.wav");
+        Engine.PrecacheSound("X Extra Life", @"X1\13 - MMX - X Extra Life.wav");
+        Engine.PrecacheSound("X Sub Tank-Heart Powerup", @"X1\14 - MMX - X Sub Tank-Heart Powerup.wav");
 
-        var x1NormalPalette = Engine.PrecachePalette("x1NormalPalette", X1_NORMAL_PALETTE);
+        var palette = Engine.PrecachePalette("x1NormalPalette", PALETTE);
+        var spriteSheet = Engine.CreateSpriteSheet("X", true, true);
 
-        var xSpriteSheet = Engine.CreateSpriteSheet("X", true, true);
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.X.X[small].png");
+        spriteSheet.CurrentPalette = palette;
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.X[small].png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            xSpriteSheet.CurrentTexture = texture;
-        }
-
-        xSpriteSheet.CurrentPalette = x1NormalPalette;
-
-        var sequence = xSpriteSheet.AddFrameSquence("Spawn");
+        var sequence = spriteSheet.AddFrameSquence("Spawn");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(-4, 17, 5, 15, 8, 48);
 
-        sequence = xSpriteSheet.AddFrameSquence("SpawnEnd");
+        sequence = spriteSheet.AddFrameSquence("SpawnEnd");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(-4, 17, 5, 15, 8, 48);
@@ -130,7 +124,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
         sequence.AddFrame(8, 3, 156, 28, 30, 34);
         sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
 
-        sequence = xSpriteSheet.AddFrameSquence("Stand");
+        sequence = spriteSheet.AddFrameSquence("Stand");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(8, 3, 226, 29, 30, 34, 80, true);
@@ -146,7 +140,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
         sequence.AddFrame(8, 3, 295, 29, 30, 34, 4);
         sequence.AddFrame(8, 3, 261, 29, 30, 34, 4);
 
-        sequence = xSpriteSheet.AddFrameSquence("Tired");
+        sequence = spriteSheet.AddFrameSquence("Tired");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(8, 4, 166, 331, 30, 35, 10, true);
@@ -164,18 +158,18 @@ public class Player : Sprite, IStateEntity<PlayerState>
         sequence.AddFrame(8, 2, 230, 333, 30, 33, 10);
         sequence.AddFrame(8, 3, 198, 332, 30, 34, 10);
 
-        sequence = xSpriteSheet.AddFrameSquence("Shooting");
+        sequence = spriteSheet.AddFrameSquence("Shooting");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(8, 3, 365, 29, 30, 34, 4);
         sequence.AddFrame(8, 3, 402, 29, 29, 34, 12, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("PreWalking");
+        sequence = spriteSheet.AddFrameSquence("PreWalking");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(8, 3, 5, 67, 30, 34, 5);
 
-        sequence = xSpriteSheet.AddFrameSquence("Walking");
+        sequence = spriteSheet.AddFrameSquence("Walking");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(1, 3, 50, 67, 20, 34, 1, true);
@@ -190,7 +184,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
         sequence.AddFrame(7, 2, 359, 68, 29, 33, 3);
         sequence.AddFrame(1, 3, 50, 67, 20, 34);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootWalking");
+        sequence = spriteSheet.AddFrameSquence("ShootWalking");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(1, 3, 41, 107, 29, 34, 1, true);
@@ -205,114 +199,114 @@ public class Player : Sprite, IStateEntity<PlayerState>
         sequence.AddFrame(7, 2, 413, 108, 35, 33, 3);
         sequence.AddFrame(1, 3, 41, 107, 29, 34);
 
-        sequence = xSpriteSheet.AddFrameSquence("Jumping");
+        sequence = spriteSheet.AddFrameSquence("Jumping");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(1, 0, 6, 148, 25, 37, 3);
         sequence.AddFrame(-5, 1, 37, 148, 15, 41);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootJumping");
+        sequence = spriteSheet.AddFrameSquence("ShootJumping");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(1, 0, 201, 148, 29, 37, 3);
         sequence.AddFrame(-5, 1, 240, 148, 24, 41);
 
-        sequence = xSpriteSheet.AddFrameSquence("GoingUp");
+        sequence = spriteSheet.AddFrameSquence("GoingUp");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(-1, 5, 56, 146, 19, 46, 1, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootGoingUp");
+        sequence = spriteSheet.AddFrameSquence("ShootGoingUp");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(-1, 5, 271, 146, 27, 46, 1, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("Falling");
+        sequence = spriteSheet.AddFrameSquence("Falling");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(1, 5, 80, 150, 23, 41, 4);
         sequence.AddFrame(5, 6, 108, 150, 27, 42, 1, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootFalling");
+        sequence = spriteSheet.AddFrameSquence("ShootFalling");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(1, 5, 304, 150, 31, 41, 4);
         sequence.AddFrame(5 - 3, 6, 341, 150, 31, 42, 1, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("Landing");
+        sequence = spriteSheet.AddFrameSquence("Landing");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(1, 2, 139, 151, 24, 38, 2);
         sequence.AddFrame(8, 1, 166, 153, 30, 32, 2);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootLanding");
+        sequence = spriteSheet.AddFrameSquence("ShootLanding");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(1, 2, 378, 151, 30, 38, 2);
         sequence.AddFrame(8, 1, 413, 153, 36, 32, 2);
 
-        sequence = xSpriteSheet.AddFrameSquence("PreDashing");
+        sequence = spriteSheet.AddFrameSquence("PreDashing");
         sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
         sequence.Hitbox = DASHING_HITBOX;
         sequence.AddFrame(4, 12, 4, 335, 28, 31, 3);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootPreDashing");
+        sequence = spriteSheet.AddFrameSquence("ShootPreDashing");
         sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
         sequence.Hitbox = DASHING_HITBOX;
         sequence.AddFrame(4, 12, 76, 335, 37, 31, 3);
 
-        sequence = xSpriteSheet.AddFrameSquence("Dashing");
+        sequence = spriteSheet.AddFrameSquence("Dashing");
         sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
         sequence.Hitbox = DASHING_HITBOX;
         sequence.AddFrame(14, 7, 34, 341, 38, 26, 1, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootDashing");
+        sequence = spriteSheet.AddFrameSquence("ShootDashing");
         sequence.OriginOffset = -DASHING_HITBOX.Origin - DASHING_HITBOX.Mins;
         sequence.Hitbox = DASHING_HITBOX;
         sequence.AddFrame(14, 7, 115, 341, 48, 26, 1, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("PostDashing");
+        sequence = spriteSheet.AddFrameSquence("PostDashing");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(5, 0, 4, 335, 28, 31, 8);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootPostDashing");
+        sequence = spriteSheet.AddFrameSquence("ShootPostDashing");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(5, 0, 76, 335, 37, 31, 8);
 
-        sequence = xSpriteSheet.AddFrameSquence("WallSliding");
+        sequence = spriteSheet.AddFrameSquence("WallSliding");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(5, 5, 5, 197, 25, 42, 5);
         sequence.AddFrame(9, 7, 33, 196, 27, 43, 6);
         sequence.AddFrame(9, 8, 64, 196, 28, 42, 1, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootWallSliding");
+        sequence = spriteSheet.AddFrameSquence("ShootWallSliding");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(5, 2 - 3, 158, 200, 31, 39, 5);
         sequence.AddFrame(9 + 5, 7, 201, 196, 32, 43, 6);
         sequence.AddFrame(9 + 4, 8, 240, 196, 32, 42, 1, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("WallJumping");
+        sequence = spriteSheet.AddFrameSquence("WallJumping");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(7, 2, 95, 199, 30, 39, 3);
         sequence.AddFrame(5, 10, 128, 195, 27, 44);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootWallJumping");
+        sequence = spriteSheet.AddFrameSquence("ShootWallJumping");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(7, 1, 276, 200, 31, 38, 3);
         sequence.AddFrame(5, 5, 315, 200, 32, 39);
 
-        sequence = xSpriteSheet.AddFrameSquence("PreLadderClimbing");
+        sequence = spriteSheet.AddFrameSquence("PreLadderClimbing");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(3, 4, 7, 267, 21, 36, 8);
 
-        sequence = xSpriteSheet.AddFrameSquence("LadderMoving");
+        sequence = spriteSheet.AddFrameSquence("LadderMoving");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(2, 10, 111, 261, 18, 49, 8, true);
@@ -322,23 +316,23 @@ public class Player : Sprite, IStateEntity<PlayerState>
         sequence.AddFrame(5, 6, 60, 266, 20, 40, 3);
         sequence.AddFrame(4, 5, 84, 266, 20, 40, 3);
 
-        sequence = xSpriteSheet.AddFrameSquence("ShootLadder");
+        sequence = spriteSheet.AddFrameSquence("ShootLadder");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(5, 14, 137, 261, 26, 48, 16, true);
 
-        sequence = xSpriteSheet.AddFrameSquence("TopLadderClimbing");
+        sequence = spriteSheet.AddFrameSquence("TopLadderClimbing");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.AddFrame(5, -11, 169, 281, 21, 32, 4);
         sequence.AddFrame(2, -4, 195, 274, 18, 34, 4);
 
-        sequence = xSpriteSheet.AddFrameSquence("TopLadderDescending");
+        sequence = spriteSheet.AddFrameSquence("TopLadderDescending");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(2, -4, 195, 274, 18, 34, 4);
         sequence.AddFrame(5, -11, 169, 281, 21, 32, 4);
 
-        sequence = xSpriteSheet.AddFrameSquence("TakingDamage");
+        sequence = spriteSheet.AddFrameSquence("TakingDamage");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(6, 1, 478, 157, 25, 36, 4);
@@ -354,12 +348,12 @@ public class Player : Sprite, IStateEntity<PlayerState>
         sequence.AddFrame(10, -1, 509, 159, 29, 34, 8);
         sequence.AddFrame(6, 1, 478, 157, 25, 36, 2);
 
-        sequence = xSpriteSheet.AddFrameSquence("Dying");
+        sequence = spriteSheet.AddFrameSquence("Dying");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(6, 1, 478, 157, 25, 36, 30);
 
-        sequence = xSpriteSheet.AddFrameSquence("Victory");
+        sequence = spriteSheet.AddFrameSquence("Victory");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(7, 14, 221, 256, 28, 45, 10);
@@ -369,7 +363,7 @@ public class Player : Sprite, IStateEntity<PlayerState>
         sequence.AddFrame(7, 14, 373, 256, 31, 45, 3);
         sequence.AddFrame(7, 14, 221, 256, 28, 45, 40);
 
-        sequence = xSpriteSheet.AddFrameSquence("PreTeleporting");
+        sequence = spriteSheet.AddFrameSquence("PreTeleporting");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(8, 1, 191, 31, 30, 32, 3);
@@ -380,14 +374,14 @@ public class Player : Sprite, IStateEntity<PlayerState>
         sequence.AddFrame(3, -3, 19, 34, 22, 29, 2);
         sequence.AddFrame(-4, 32, 5, 15, 8, 48);
 
-        sequence = xSpriteSheet.AddFrameSquence("DyingExplosion");
+        sequence = spriteSheet.AddFrameSquence("DyingExplosion");
         sequence.AddFrame(396, 344, 6, 6, 8, false, OriginPosition.CENTER);
         sequence.AddFrame(406, 343, 8, 8, 8, false, OriginPosition.CENTER);
         sequence.AddFrame(417, 342, 9, 9, 8, false, OriginPosition.CENTER);
         sequence.AddFrame(429, 341, 11, 11, 8, true, OriginPosition.CENTER);
         sequence.AddFrame(443, 339, 15, 15, 8, false, OriginPosition.CENTER);
 
-        xSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 

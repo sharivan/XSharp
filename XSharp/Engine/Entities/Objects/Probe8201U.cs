@@ -21,15 +21,10 @@ public class Probe8201U : Sprite
     [Precache]
     internal static void Precache()
     {
-        var platformsSpriteSheet = Engine.CreateSpriteSheet("Platforms", true, true);
+        var spriteSheet = Engine.CreateSpriteSheet("Platforms", true, true);
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Objects.Platforms.png");
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Objects.Platforms.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            platformsSpriteSheet.CurrentTexture = texture;
-        }
-
-        var sequence = platformsSpriteSheet.AddFrameSquence("Probe8201U");
+        var sequence = spriteSheet.AddFrameSquence("Probe8201U");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(-2, -3, 124, 107, 18, 48, 7, true);
@@ -40,21 +35,21 @@ public class Probe8201U : Sprite
         sequence.AddFrame(-2, -3, 214, 107, 18, 48, 7);
         sequence.AddFrame(-2, -3, 232, 107, 18, 48, 7);
 
-        sequence = platformsSpriteSheet.AddFrameSquence("RocketPropellerJet");
+        sequence = spriteSheet.AddFrameSquence("RocketPropellerJet");
         sequence.AddFrame(124, 155, 18, 23, 1, true, OriginPosition.MIDDLE_TOP);
         sequence.AddFrame(142, 155, 18, 23, 1, false, OriginPosition.MIDDLE_TOP);
         sequence.AddFrame(160, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
         sequence.AddFrame(178, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
         sequence.AddFrame(196, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
 
-        sequence = platformsSpriteSheet.AddFrameSquence("RocketJet");
+        sequence = spriteSheet.AddFrameSquence("RocketJet");
         sequence.AddFrame(124, 155, 18, 23, 1, true, OriginPosition.MIDDLE_TOP);
         sequence.AddFrame(142, 155, 18, 23, 1, false, OriginPosition.MIDDLE_TOP);
         sequence.AddFrame(214, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
         sequence.AddFrame(232, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
         sequence.AddFrame(124, 155, 18, 23, 2, false, OriginPosition.MIDDLE_TOP);
 
-        platformsSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 

@@ -40,7 +40,7 @@ public class SnowShooter : Enemy, IStateEntity<SnowShooterState>
     public const int HEALTH = 8;
     public static readonly FixedSingle CONTACT_DAMAGE = 3;
     public static readonly Box HITBOX = ((0, 32), (-7, -17), (7, 17));
-    
+
     public static readonly FixedSingle SHOT_SPEED = 1024 / 256.0;
     public static readonly FixedSingle SHOT_MAX_SPEED_Y = 614 / 256.0;
     public const int FRAMES_BETWEEN_SHOOTS = 128;
@@ -57,17 +57,12 @@ public class SnowShooter : Enemy, IStateEntity<SnowShooterState>
     [Precache]
     new internal static void Precache()
     {
-        Engine.PrecacheSound("Beam Pulse", @"resources\sounds\mmx\42 - MMX - Beam Pulse.wav");
+        Engine.PrecacheSound("Beam Pulse", @"X1\42 - MMX - Beam Pulse.wav");
 
         var palette = Engine.PrecachePalette("snowShooterPalette", PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("SnowShooter", true, true);
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X.Snow Shooter.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            spriteSheet.CurrentTexture = texture;
-        }
-
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.X1.Snow Shooter.png");
         spriteSheet.CurrentPalette = palette;
 
         var sequence = spriteSheet.AddFrameSquence("Idle");

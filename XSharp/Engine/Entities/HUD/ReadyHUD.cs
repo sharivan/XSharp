@@ -13,15 +13,10 @@ public class ReadyHUD : HUD
     [Precache]
     internal static void Precache()
     {
-        var readySpriteSheet = Engine.CreateSpriteSheet("Ready", true, true);
+        var spriteSheet = Engine.CreateSpriteSheet("Ready", true, true);
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.HUD.Ready.png");
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.HUD.Ready.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            readySpriteSheet.CurrentTexture = texture;
-        }
-
-        var sequence = readySpriteSheet.AddFrameSquence("Ready");
+        var sequence = spriteSheet.AddFrameSquence("Ready");
         sequence.AddFrame(5, 22, 8, 13, 1, false, OriginPosition.LEFT_TOP);
         sequence.AddFrame(21, 22, 16, 13, 2, false, OriginPosition.LEFT_TOP);
         sequence.AddFrame(45, 22, 16, 13, 2, false, OriginPosition.LEFT_TOP);
@@ -47,7 +42,7 @@ public class ReadyHUD : HUD
         sequence.AddFrame(0, 0, 1, 1, 8, false, OriginPosition.LEFT_TOP);
         sequence.AddFrame(413, 22, 39, 13, 9, false, OriginPosition.LEFT_TOP);
 
-        readySpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 

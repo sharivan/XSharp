@@ -3,9 +3,9 @@ using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Entities.Enemies.Bosses.Penguin.Penguin;
+using static XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin.ChillPenguin;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 
 public class PenguinFrozenBlock : Sprite
 {
@@ -13,13 +13,13 @@ public class PenguinFrozenBlock : Sprite
     [Precache]
     internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Penguin));
+        Engine.CallPrecacheAction(typeof(ChillPenguin));
     }
     #endregion
 
-    private EntityReference<Penguin> attacker;
+    private EntityReference<ChillPenguin> attacker;
 
-    public Penguin Attacker
+    public ChillPenguin Attacker
     {
         get => attacker;
         internal set => attacker = Engine.Entities.GetReferenceTo(value);
@@ -40,7 +40,7 @@ public class PenguinFrozenBlock : Sprite
     public PenguinFrozenBlock()
     {
         Layer = 1;
-        SpriteSheetName = "Penguin";
+        SpriteSheetName = "ChillPenguin";
         CollisionData = CollisionData.SOLID;
 
         SetAnimationNames("FrozenBlock");

@@ -2,9 +2,9 @@
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Entities.Enemies.Bosses.Penguin.Penguin;
+using static XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin.ChillPenguin;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 
 internal class PenguinSnow : Enemy
 {
@@ -12,13 +12,13 @@ internal class PenguinSnow : Enemy
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Penguin));
+        Engine.CallPrecacheAction(typeof(ChillPenguin));
     }
     #endregion
 
     private int frameCounter;
 
-    public Penguin Shooter
+    public ChillPenguin Shooter
     {
         get;
         internal set;
@@ -27,7 +27,7 @@ internal class PenguinSnow : Enemy
     public PenguinSnow()
     {
         Layer = 1;
-        SpriteSheetName = "Penguin";
+        SpriteSheetName = "ChillPenguin";
         ContactDamage = 0;
 
         SetAnimationNames("Snow");
@@ -55,7 +55,7 @@ internal class PenguinSnow : Enemy
         CheckCollisionWithWorld = false;
         Direction = Shooter.Direction;
         Origin = Shooter.Origin + (Shooter.Direction == Shooter.DefaultDirection ? -PENGUIN_SHOT_ORIGIN_OFFSET.X : PENGUIN_SHOT_ORIGIN_OFFSET.X, PENGUIN_SHOT_ORIGIN_OFFSET.Y);
-        IgnoreShots = true;
+        HitResponse = HitResponse.IGNORE;
         Invincible = true;
         ContactDamage = 0;
 

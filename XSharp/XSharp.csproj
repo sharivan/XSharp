@@ -14,161 +14,191 @@
 	<Title>X#</Title>
   </PropertyGroup> 
   <ItemGroup>
-    <None Remove="resources\sprites\Effects\Smoke.png" />
-    <None Remove="resources\sprites\Enemies\X\AxeMax.png" />
-    <None Remove="resources\sprites\Enemies\X\Bomb Been.png" />
-    <None Remove="resources\sprites\Enemies\X\Flammingle.png" />
-    <None Remove="resources\sprites\Enemies\X\Jamminger.png" />
-    <None Remove="resources\sprites\Enemies\X\RayBit.png" />
-    <None Remove="resources\sprites\Enemies\X\Snow Shooter.png" />
-    <None Remove="resources\sprites\Enemies\X\Snowball.png" />
-    <None Remove="resources\sprites\Enemies\X\SnowShooter.png" />
-    <None Remove="resources\sprites\Enemies\X\Spiky.png" />
-    <None Remove="resources\sprites\Enemies\X\Tombot.png" />
-    <None Remove="resources\sprites\Enemies\X\Turn Cannon.png" />
-    <None Remove="resources\sprites\Objects\Boomer Kuwanger Elevator.png" />
-    <None Remove="resources\sprites\Objects\Hover Platform.png" />
+    <None Remove="Assets\Sprites\Effects\Smoke.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\AxeMax.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Bomb Been.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Dig Labour.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Dodge Blaster.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Flammingle.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Gunvolt.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Jamminger.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Jellyfish.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Mega Tortoise.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\RayBit.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Rush Roader.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Sine Faller.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Sky Claw.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Snow Shooter.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Snowball.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\SnowShooter.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Spiky.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Tombot.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Turn Cannon.png" />
+    <None Remove="Assets\Sprites\Objects\Boomer Kuwanger Elevator.png" />
+    <None Remove="Assets\Sprites\Objects\Hover Platform.png" />
+    <None Remove="Assets\Sprites\Thumbs.db" />
+    <None Remove="Assets\Sprites\X\Thumbs.db" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="PaletteShader.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\Boss Explosion.wav">
+    <Content Include="Assets\Sounds\X1\Boss Explosion.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\Boss Final Explode.wav">
+    <Content Include="Assets\Sounds\X1\Boss Final Explode.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\Door Closing.wav">
+    <Content Include="Assets\Sounds\X1\Door Closing.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\Door Opening.wav">
+    <Content Include="Assets\Sounds\X1\Door Opening.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\ost\mmx\01 - Capcom Logo.mp3" />
-    <Content Include="resources\sounds\ost\mmx\02 - Title Screen.mp3" />
-    <Content Include="resources\sounds\ost\mmx\03 - Password Screen.mp3" />
-    <Content Include="resources\sounds\ost\mmx\04 - Intro Stage.mp3" />
-    <Content Include="resources\sounds\ost\mmx\05 - Sigma Intro 1.mp3" />
-    <Content Include="resources\sounds\ost\mmx\06 - Sigma Boss Battle.mp3" />
-    <Content Include="resources\sounds\ost\mmx\07 - Zero 1.mp3" />
-    <Content Include="resources\sounds\ost\mmx\08 - Zero 2.mp3" />
-    <Content Include="resources\sounds\ost\mmx\09 - Stage Select 1.mp3" />
-    <Content Include="resources\sounds\ost\mmx\10 - Stage Intro.mp3" />
-    <Content Include="resources\sounds\ost\mmx\11 - Launch Octopus.mp3" />
-    <Content Include="resources\sounds\ost\mmx\12 - Chill Penguin.mp3">
+    <Content Include="Assets\Sounds\OST\X1\01 - Capcom Logo.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\02 - Title Screen.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\03 - Password Screen.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\04 - Intro Stage.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\05 - Sigma Intro 1.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\06 - Sigma Boss Battle.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\07 - Zero 1.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\08 - Zero 2.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\09 - Stage Select 1.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\10 - Stage Intro.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\11 - Launch Octopus.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\12 - Chill Penguin.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\ost\mmx\13 - Flame Mammoth.mp3" />
-    <Content Include="resources\sounds\ost\mmx\14 - Boomer Kuwanger.mp3" />
-    <Content Include="resources\sounds\ost\mmx\15 - Sting Chameleon.mp3" />
-    <Content Include="resources\sounds\ost\mmx\16 - Spark Mandrill.mp3" />
-    <Content Include="resources\sounds\ost\mmx\17 - Storm Eagle.mp3" />
-    <Content Include="resources\sounds\ost\mmx\18 - Armored Armadillo.mp3" />
-    <Content Include="resources\sounds\ost\mmx\19 - Boss Intro.mp3">
+    <Content Include="Assets\Sounds\OST\X1\13 - Flame Mammoth.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\14 - Boomer Kuwanger.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\15 - Sting Chameleon.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\16 - Spark Mandrill.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\17 - Storm Eagle.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\18 - Armored Armadillo.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\19 - Boss Intro.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\ost\mmx\20 - Boss Battle.mp3">
+    <Content Include="Assets\Sounds\OST\X1\20 - Boss Battle.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\ost\mmx\21 - Boss Defeated.mp3">
+    <Content Include="Assets\Sounds\OST\X1\21 - Boss Defeated.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\ost\mmx\22 - Weapon Screen.mp3" />
-    <Content Include="resources\sounds\ost\mmx\23 - Stage Select 2.mp3" />
-    <Content Include="resources\sounds\ost\mmx\24 - Sigma Fortress 1.mp3" />
-    <Content Include="resources\sounds\ost\mmx\25 - Sigma Fortress 2.mp3" />
-    <Content Include="resources\sounds\ost\mmx\26 - Sigma Fortress 3.mp3" />
-    <Content Include="resources\sounds\ost\mmx\27 - Sigma Intro 2.mp3" />
-    <Content Include="resources\sounds\ost\mmx\28 - Sigma Battle.mp3" />
-    <Content Include="resources\sounds\ost\mmx\29 - Stigma Defeated.mp3" />
-    <Content Include="resources\sounds\ost\mmx\30 - Sigma Battle 2.mp3" />
-    <Content Include="resources\sounds\ost\mmx\31 - Dr. Light.mp3" />
-    <Content Include="resources\sounds\ost\mmx\32 - Ending.mp3" />
-    <Content Include="resources\sounds\ost\mmx\33 - Castings.mp3" />
-    <Content Include="resources\sounds\ost\mmx\34 - Credits.mp3" />
-    <Content Include="resources\sounds\ost\mmx\999 - Test Track.mp3" />
-    <EmbeddedResource Include="resources\sprites\Effects\Smoke.png">
+    <Content Include="Assets\Sounds\OST\X1\22 - Weapon Screen.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\23 - Stage Select 2.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\24 - Sigma Fortress 1.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\25 - Sigma Fortress 2.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\26 - Sigma Fortress 3.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\27 - Sigma Intro 2.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\28 - Sigma Battle.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\29 - Stigma Defeated.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\30 - Sigma Battle 2.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\31 - Dr. Light.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\32 - Ending.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\33 - Castings.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\34 - Credits.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\999 - Test Track.mp3" />
+    <EmbeddedResource Include="Assets\Sprites\Effects\Smoke.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\AxeMax.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\AxeMax.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\Bomb Been.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Bomb Been.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\Flammingle.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Dig Labour.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\Jamminger.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Dodge Blaster.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\RayBit.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Flammingle.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\Snowball.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Gunvolt.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\Spiky.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Jamminger.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\Tombot.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Jellyfish.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\Turn Cannon.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Mega Tortoise.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Objects\Boomer Kuwanger Elevator.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\RayBit.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Objects\Hover Platform.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Rush Roader.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Objects\Platforms.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Sine Faller.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Effects\Mist.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Sky Claw.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\HUD\HP.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Snowball.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\HUD\Ready.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Spiky.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\Bosses\X1\Penguin.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Tombot.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Objects\BossDoor.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Turn Cannon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Enemies\X2\batton-bone-g.png" />
-    <EmbeddedResource Include="resources\tiles\black_pixel.png">
+    <EmbeddedResource Include="Assets\Sprites\Objects\Boomer Kuwanger Elevator.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\tiles\white_pixel.png">
+    <EmbeddedResource Include="Assets\Sprites\Objects\Hover Platform.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\Effects\Explosion.png">
+    <EmbeddedResource Include="Assets\Sprites\Objects\Platforms.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Effects\Mist.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\HUD\HP.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\HUD\Ready.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Enemies\Bosses\X1\Penguin.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Objects\BossDoor.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X2\batton-bone-g.png" />
+    <EmbeddedResource Include="Assets\Tiles\black_pixel.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Tiles\white_pixel.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Effects\Explosion.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <None Include="..\.editorconfig" Link=".editorconfig" />
-    <None Include="..\README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <Content Include="resources\roms\ShittyDash.mmx">
+    <Content Include="Assets\roms\ShittyDash.mmx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\roms\BestGame.mmx">
+    <Content Include="Assets\roms\BestGame.mmx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\roms\ZeroIsJegue.mmx">
+    <Content Include="Assets\roms\ZeroIsJegue.mmx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -179,32 +209,40 @@
   
   <ItemGroup>
     <Folder Include="Engine\Entities\Armors\" />
-    <Folder Include="Engine\Entities\Enemies\Gunvolt\" />
-    <Folder Include="Engine\Entities\Enemies\MegaTortoise\" />
-    <Folder Include="Engine\Entities\Enemies\DigLabour\" />
-    <Folder Include="Engine\Entities\Enemies\DodgeBlaster\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\BoomerKuwanger\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\ArmoredArmadillo\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\FlameMammoth\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\LauchOctupus\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\Bosspider\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\DRex\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\Velguarder\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\RangdaBangda\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\Vile\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\StingChameleon\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\SparkMandrill\" />
+    <Folder Include="Engine\Entities\Enemies\Bosses\StormEagle\" />
     <Folder Include="Engine\Entities\Misc\" />
-    <Folder Include="resources\maps\" />
+    <Folder Include="Assets\Maps\" />
     <Folder Include="sstates\" />
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="resources\tiles\Gator_Stage_Floor_Block.png">
+    <EmbeddedResource Include="Assets\Tiles\Gator_Stage_Floor_Block.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="resources\sprites\X\X[small].png">
+    <EmbeddedResource Include="Assets\Sprites\X\X[small].png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="resources\sprites\X\Effects.png">
+    <EmbeddedResource Include="Assets\Sprites\X\Effects.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\sprites\X\Weapons.png">
+    <EmbeddedResource Include="Assets\Sprites\X\Weapons.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
@@ -216,207 +254,207 @@
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="resources\sprites\Enemies\X2\scriver.png" />
-    <Content Include="resources\sounds\mmx2\X Semi Charged Shot.wav">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X2\scriver.png" />
+    <Content Include="Assets\Sounds\X2\X Semi Charged Shot.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\01 - MMX - X Regular Shot.wav">
+    <Content Include="Assets\Sounds\X1\01 - MMX - X Regular Shot.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\02 - MMX - X Charge Shot.wav">
+    <Content Include="Assets\Sounds\X1\02 - MMX - X Charge Shot.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\03 - MMX - X Super Charge Shot.wav">
+    <Content Include="Assets\Sounds\X1\03 - MMX - X Super Charge Shot.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\04 - MMX - X Charge.wav">
+    <Content Include="Assets\Sounds\X1\04 - MMX - X Charge.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\05 - MMX - X Charge + Shot.wav" />
-    <Content Include="resources\sounds\mmx\06 - MMX - X Charge + Super Shot.wav" />
-    <Content Include="resources\sounds\mmx\07 - MMX - X Dash.wav">
+    <Content Include="Assets\Sounds\X1\05 - MMX - X Charge + Shot.wav" />
+    <Content Include="Assets\Sounds\X1\06 - MMX - X Charge + Super Shot.wav" />
+    <Content Include="Assets\Sounds\X1\07 - MMX - X Dash.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\08 - MMX - X Jump.wav">
+    <Content Include="Assets\Sounds\X1\08 - MMX - X Jump.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\09 - MMX - X Land.wav">
+    <Content Include="Assets\Sounds\X1\09 - MMX - X Land.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\10 - MMX - X Hurt.wav">
+    <Content Include="Assets\Sounds\X1\10 - MMX - X Hurt.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\100 - MMX - Robot Suit %284%29.wav" />
-    <Content Include="resources\sounds\mmx\101 - MMX - Robot Suit %285%29.wav" />
-    <Content Include="resources\sounds\mmx\102 - MMX - Robot Suit %286%29.wav" />
-    <Content Include="resources\sounds\mmx\103 - MMX - Robot Suit %287%29.wav" />
-    <Content Include="resources\sounds\mmx\104 - MMX - Rocks %281%29.wav" />
-    <Content Include="resources\sounds\mmx\105 - MMX - Rocks %282%29.wav" />
-    <Content Include="resources\sounds\mmx\106 - MMX - Rocks %283%29.wav" />
-    <Content Include="resources\sounds\mmx\107 - MMX - Sigma Dog.wav" />
-    <Content Include="resources\sounds\mmx\108 - MMX - Sigma Teleport.wav" />
-    <Content Include="resources\sounds\mmx\109 - MMX - Spring 1.wav" />
-    <Content Include="resources\sounds\mmx\11 - MMX - X Die.wav">
+    <Content Include="Assets\Sounds\X1\100 - MMX - Robot Suit %284%29.wav" />
+    <Content Include="Assets\Sounds\X1\101 - MMX - Robot Suit %285%29.wav" />
+    <Content Include="Assets\Sounds\X1\102 - MMX - Robot Suit %286%29.wav" />
+    <Content Include="Assets\Sounds\X1\103 - MMX - Robot Suit %287%29.wav" />
+    <Content Include="Assets\Sounds\X1\104 - MMX - Rocks %281%29.wav" />
+    <Content Include="Assets\Sounds\X1\105 - MMX - Rocks %282%29.wav" />
+    <Content Include="Assets\Sounds\X1\106 - MMX - Rocks %283%29.wav" />
+    <Content Include="Assets\Sounds\X1\107 - MMX - Sigma Dog.wav" />
+    <Content Include="Assets\Sounds\X1\108 - MMX - Sigma Teleport.wav" />
+    <Content Include="Assets\Sounds\X1\109 - MMX - Spring 1.wav" />
+    <Content Include="Assets\Sounds\X1\11 - MMX - X Die.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\110 - MMX - Spring 2.wav" />
-    <Content Include="resources\sounds\mmx\111 - MMX - Stage Cursor Move.wav" />
-    <Content Include="resources\sounds\mmx\112 - MMX - Submarine 1.wav" />
-    <Content Include="resources\sounds\mmx\113 - MMX - Submarine 2.wav" />
-    <Content Include="resources\sounds\mmx\114 - MMX - Text Letter.wav" />
-    <Content Include="resources\sounds\mmx\115 - MMX - Underwater Bubble.wav" />
-    <Content Include="resources\sounds\mmx\116 - MMX - Underwater Sound.wav" />
-    <Content Include="resources\sounds\mmx\117 - MMX - Unknown %281%29.wav" />
-    <Content Include="resources\sounds\mmx\118 - MMX - Unknown %282%29.wav" />
-    <Content Include="resources\sounds\mmx\119 - MMX - Unknown %283%29.wav" />
-    <Content Include="resources\sounds\mmx\12 - MMX - X Life Gain.wav">
+    <Content Include="Assets\Sounds\X1\110 - MMX - Spring 2.wav" />
+    <Content Include="Assets\Sounds\X1\111 - MMX - Stage Cursor Move.wav" />
+    <Content Include="Assets\Sounds\X1\112 - MMX - Submarine 1.wav" />
+    <Content Include="Assets\Sounds\X1\113 - MMX - Submarine 2.wav" />
+    <Content Include="Assets\Sounds\X1\114 - MMX - Text Letter.wav" />
+    <Content Include="Assets\Sounds\X1\115 - MMX - Underwater Bubble.wav" />
+    <Content Include="Assets\Sounds\X1\116 - MMX - Underwater Sound.wav" />
+    <Content Include="Assets\Sounds\X1\117 - MMX - Unknown %281%29.wav" />
+    <Content Include="Assets\Sounds\X1\118 - MMX - Unknown %282%29.wav" />
+    <Content Include="Assets\Sounds\X1\119 - MMX - Unknown %283%29.wav" />
+    <Content Include="Assets\Sounds\X1\12 - MMX - X Life Gain.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\120 - MMX - unknown %284%29.wav" />
-    <Content Include="resources\sounds\mmx\121 - MMX - Wing Flap %281%29.wav" />
-    <Content Include="resources\sounds\mmx\122 - MMX - Wing Flap %282%29.wav" />
-    <Content Include="resources\sounds\mmx\123 - MMX - Wing Flap %283%29.wav" />
-    <Content Include="resources\sounds\mmx\124 - MMX - Wing Flap %284%29.wav" />
-    <Content Include="resources\sounds\mmx\125 - MMX - Wing Flap %285%29.wav" />
-    <Content Include="resources\sounds\mmx\13 - MMX - X Extra Life.wav">
+    <Content Include="Assets\Sounds\X1\120 - MMX - unknown %284%29.wav" />
+    <Content Include="Assets\Sounds\X1\121 - MMX - Wing Flap %281%29.wav" />
+    <Content Include="Assets\Sounds\X1\122 - MMX - Wing Flap %282%29.wav" />
+    <Content Include="Assets\Sounds\X1\123 - MMX - Wing Flap %283%29.wav" />
+    <Content Include="Assets\Sounds\X1\124 - MMX - Wing Flap %284%29.wav" />
+    <Content Include="Assets\Sounds\X1\125 - MMX - Wing Flap %285%29.wav" />
+    <Content Include="Assets\Sounds\X1\13 - MMX - X Extra Life.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\14 - MMX - X Sub Tank-Heart Powerup.wav">
+    <Content Include="Assets\Sounds\X1\14 - MMX - X Sub Tank-Heart Powerup.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\15 - MMX - X Powerup Infuse.wav" />
-    <Content Include="resources\sounds\mmx\16 - MMX - X Upgrade Complete.wav">
+    <Content Include="Assets\Sounds\X1\15 - MMX - X Powerup Infuse.wav" />
+    <Content Include="Assets\Sounds\X1\16 - MMX - X Upgrade Complete.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\17 - MMX - X Fade In.wav">
+    <Content Include="Assets\Sounds\X1\17 - MMX - X Fade In.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\18 - MMX - X Fade Out.wav">
+    <Content Include="Assets\Sounds\X1\18 - MMX - X Fade Out.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\19 - MMX - X Boomerang Cutter 1.wav" />
-    <Content Include="resources\sounds\mmx\20 - MMX - X Boomerang Cutter 2.wav" />
-    <Content Include="resources\sounds\mmx\21 - MMX - X Chameleon Sting.wav" />
-    <Content Include="resources\sounds\mmx\22 - MMX - X Chameleon Sting %28Charged%29.wav" />
-    <Content Include="resources\sounds\mmx\23 - MMX - X Electric Spark.wav" />
-    <Content Include="resources\sounds\mmx\24 - MMX - X Fire Wave.wav" />
-    <Content Include="resources\sounds\mmx\25 - MMX - X Homing Torpedo.wav" />
-    <Content Include="resources\sounds\mmx\26 - MMX - X Rolling Shield.wav" />
-    <Content Include="resources\sounds\mmx\27 - MMX - X Rolling Shiled %28Charged%29.wav" />
-    <Content Include="resources\sounds\mmx\28 - MMX - X Storm Tornado.wav" />
-    <Content Include="resources\sounds\mmx\29 - MMX - Enemy Helmet Hit.wav">
+    <Content Include="Assets\Sounds\X1\19 - MMX - X Boomerang Cutter 1.wav" />
+    <Content Include="Assets\Sounds\X1\20 - MMX - X Boomerang Cutter 2.wav" />
+    <Content Include="Assets\Sounds\X1\21 - MMX - X Chameleon Sting.wav" />
+    <Content Include="Assets\Sounds\X1\22 - MMX - X Chameleon Sting %28Charged%29.wav" />
+    <Content Include="Assets\Sounds\X1\23 - MMX - X Electric Spark.wav" />
+    <Content Include="Assets\Sounds\X1\24 - MMX - X Fire Wave.wav" />
+    <Content Include="Assets\Sounds\X1\25 - MMX - X Homing Torpedo.wav" />
+    <Content Include="Assets\Sounds\X1\26 - MMX - X Rolling Shield.wav" />
+    <Content Include="Assets\Sounds\X1\27 - MMX - X Rolling Shiled %28Charged%29.wav" />
+    <Content Include="Assets\Sounds\X1\28 - MMX - X Storm Tornado.wav" />
+    <Content Include="Assets\Sounds\X1\29 - MMX - Enemy Helmet Hit.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\30 - MMX - Small Hit.wav">
+    <Content Include="Assets\Sounds\X1\30 - MMX - Small Hit.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\31 - MMX - Big Hit.wav">
+    <Content Include="Assets\Sounds\X1\31 - MMX - Big Hit.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\32 - MMX - Energy Tank Health.wav">
+    <Content Include="Assets\Sounds\X1\32 - MMX - Energy Tank Health.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\33 - MMX - Energy Tank Full.wav">
+    <Content Include="Assets\Sounds\X1\33 - MMX - Energy Tank Full.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\34 - MMX - Ice.wav">
+    <Content Include="Assets\Sounds\X1\34 - MMX - Ice.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\35 - MMX - Ice Freeze.wav">
+    <Content Include="Assets\Sounds\X1\35 - MMX - Ice Freeze.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\36 - MMX - Ice Break.wav">
+    <Content Include="Assets\Sounds\X1\36 - MMX - Ice Break.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\37 - MMX - Alert 1.wav" />
-    <Content Include="resources\sounds\mmx\38 - MMX - Alert 2.wav" />
-    <Content Include="resources\sounds\mmx\39 - MMX - Armadillo Charge.wav" />
-    <Content Include="resources\sounds\mmx\40 - MMX - Armadillo Laser.wav">
+    <Content Include="Assets\Sounds\X1\37 - MMX - Alert 1.wav" />
+    <Content Include="Assets\Sounds\X1\38 - MMX - Alert 2.wav" />
+    <Content Include="Assets\Sounds\X1\39 - MMX - Armadillo Charge.wav" />
+    <Content Include="Assets\Sounds\X1\40 - MMX - Armadillo Laser.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\41 - MMX - Spark Mandrill Punch.wav" />
-    <Content Include="resources\sounds\mmx\42 - MMX - Beam Pulse.wav">
+    <Content Include="Assets\Sounds\X1\41 - MMX - Spark Mandrill Punch.wav" />
+    <Content Include="Assets\Sounds\X1\42 - MMX - Beam Pulse.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\43 - MMX - Beep %281%29.wav" />
-    <Content Include="resources\sounds\mmx\44 - MMX - Beep %282%29.wav" />
-    <Content Include="resources\sounds\mmx\45 - MMX - Beep %283%29.wav" />
-    <Content Include="resources\sounds\mmx\46 - MMX - Beep %284%29.wav" />
-    <Content Include="resources\sounds\mmx\47 - MMX - Beep %285%29.wav" />
-    <Content Include="resources\sounds\mmx\48 - MMX - Boomer Kuwanger Teleport.wav" />
-    <Content Include="resources\sounds\mmx\49 - MMX - Boss Door Close.wav">
+    <Content Include="Assets\Sounds\X1\43 - MMX - Beep %281%29.wav" />
+    <Content Include="Assets\Sounds\X1\44 - MMX - Beep %282%29.wav" />
+    <Content Include="Assets\Sounds\X1\45 - MMX - Beep %283%29.wav" />
+    <Content Include="Assets\Sounds\X1\46 - MMX - Beep %284%29.wav" />
+    <Content Include="Assets\Sounds\X1\47 - MMX - Beep %285%29.wav" />
+    <Content Include="Assets\Sounds\X1\48 - MMX - Boomer Kuwanger Teleport.wav" />
+    <Content Include="Assets\Sounds\X1\49 - MMX - Boss Door Close.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\50 - MMX - Bulldozer .wav" />
-    <Content Include="resources\sounds\mmx\51 - MMX - Can%27t Exit.wav" />
-    <Content Include="resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav">
+    <Content Include="Assets\Sounds\X1\50 - MMX - Bulldozer .wav" />
+    <Content Include="Assets\Sounds\X1\51 - MMX - Can%27t Exit.wav" />
+    <Content Include="Assets\Sounds\X1\52 - MMX - Chill Penguin Breath.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\53 - MMX - Door Open.wav">
+    <Content Include="Assets\Sounds\X1\53 - MMX - Door Open.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\54 - MMX - Eagle%27s Tornado.wav" />
-    <Content Include="resources\sounds\mmx\55 - MMX - Electric Bolt.wav" />
-    <Content Include="resources\sounds\mmx\56 - MMX - Enemy Die %281%29.wav">
+    <Content Include="Assets\Sounds\X1\54 - MMX - Eagle%27s Tornado.wav" />
+    <Content Include="Assets\Sounds\X1\55 - MMX - Electric Bolt.wav" />
+    <Content Include="Assets\Sounds\X1\56 - MMX - Enemy Die %281%29.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\57 - MMX - Enemy Die %282%29.wav">
+    <Content Include="Assets\Sounds\X1\57 - MMX - Enemy Die %282%29.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\58 - MMX - Enemy Die %283%29.wav">
+    <Content Include="Assets\Sounds\X1\58 - MMX - Enemy Die %283%29.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\59 - MMX - Enemy Die %284%29.wav">
+    <Content Include="Assets\Sounds\X1\59 - MMX - Enemy Die %284%29.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\60 - MMX - Enemy Missle Fire.wav" />
-    <Content Include="resources\sounds\mmx\61 - MMX - Enemy Motor 1 .wav" />
-    <Content Include="resources\sounds\mmx\62 - MMX - Enemy Motor 2.wav" />
-    <Content Include="resources\sounds\mmx\63 - MMX - Enemy Motor 3.wav" />
-    <Content Include="resources\sounds\mmx\64 - MMX - Enemy Sound %2801%29.wav" />
-    <Content Include="resources\sounds\mmx\65 - MMX - Enemy Sound %2802%29.wav" />
-    <Content Include="resources\sounds\mmx\66 - MMX - Enemy Sound %2803%29.wav" />
-    <Content Include="resources\sounds\mmx\67 - MMX - Enemy Sound %2804%29.wav" />
-    <Content Include="resources\sounds\mmx\68 - MMX - Enemy Sound %2805%29.wav">
+    <Content Include="Assets\Sounds\X1\60 - MMX - Enemy Missle Fire.wav" />
+    <Content Include="Assets\Sounds\X1\61 - MMX - Enemy Motor 1 .wav" />
+    <Content Include="Assets\Sounds\X1\62 - MMX - Enemy Motor 2.wav" />
+    <Content Include="Assets\Sounds\X1\63 - MMX - Enemy Motor 3.wav" />
+    <Content Include="Assets\Sounds\X1\64 - MMX - Enemy Sound %2801%29.wav" />
+    <Content Include="Assets\Sounds\X1\65 - MMX - Enemy Sound %2802%29.wav" />
+    <Content Include="Assets\Sounds\X1\66 - MMX - Enemy Sound %2803%29.wav" />
+    <Content Include="Assets\Sounds\X1\67 - MMX - Enemy Sound %2804%29.wav" />
+    <Content Include="Assets\Sounds\X1\68 - MMX - Enemy Sound %2805%29.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\69 - MMX - Enemy Sound %2806%29.wav" />
-    <Content Include="resources\sounds\mmx\70 - MMX - Enemy Sound %2807%29.wav" />
-    <Content Include="resources\sounds\mmx\71 - MMX - Enemy Sound %2808%29.wav" />
-    <Content Include="resources\sounds\mmx\72 - MMX - Enemy Sound %2809%29.wav" />
-    <Content Include="resources\sounds\mmx\73 - MMX - Enemy Sound %2810%29.wav" />
-    <Content Include="resources\sounds\mmx\74 - MMX - Enemy Sound %2811%29.wav" />
-    <Content Include="resources\sounds\mmx\75 - MMX - Enemy Sound %2812%29.wav" />
-    <Content Include="resources\sounds\mmx\76 - MMX - Flame Mammoth.wav" />
-    <Content Include="resources\sounds\mmx\77 - MMX - Heavy Machine %281%29.wav" />
-    <Content Include="resources\sounds\mmx\78 - MMX - Heavy Machine %282%29.wav" />
-    <Content Include="resources\sounds\mmx\79 - MMX - Heavy Machine %283%29.wav" />
-    <Content Include="resources\sounds\mmx\80 - MMX - Heavy Machine %284%29.wav" />
-    <Content Include="resources\sounds\mmx\81 - MMX - Heavy Machine %285%29.wav" />
-    <Content Include="resources\sounds\mmx\82 - MMX - Heavy Machine %286%29.wav" />
-    <Content Include="resources\sounds\mmx\83 - MMX - Heavy Machine %287%29.wav" />
-    <Content Include="resources\sounds\mmx\84 - MMX - Heavy Machine %288%29.wav" />
-    <Content Include="resources\sounds\mmx\85 - MMX - Intro Data Screen.wav" />
-    <Content Include="resources\sounds\mmx\86 - MMX - Mechanical Hum 1.wav" />
-    <Content Include="resources\sounds\mmx\87 - MMX - Mechanical Hum 2.wav" />
-    <Content Include="resources\sounds\mmx\88 - MMX - Mechanical Hum 3.wav" />
-    <Content Include="resources\sounds\mmx\89 - MMX - Misc. dash, jump, move %281%29.wav" />
-    <Content Include="resources\sounds\mmx\90 - MMX - Misc. dash, jump, move %282%29.wav" />
-    <Content Include="resources\sounds\mmx\91 - MMX - Misc. dash, jump, move %283%29.wav">
+    <Content Include="Assets\Sounds\X1\69 - MMX - Enemy Sound %2806%29.wav" />
+    <Content Include="Assets\Sounds\X1\70 - MMX - Enemy Sound %2807%29.wav" />
+    <Content Include="Assets\Sounds\X1\71 - MMX - Enemy Sound %2808%29.wav" />
+    <Content Include="Assets\Sounds\X1\72 - MMX - Enemy Sound %2809%29.wav" />
+    <Content Include="Assets\Sounds\X1\73 - MMX - Enemy Sound %2810%29.wav" />
+    <Content Include="Assets\Sounds\X1\74 - MMX - Enemy Sound %2811%29.wav" />
+    <Content Include="Assets\Sounds\X1\75 - MMX - Enemy Sound %2812%29.wav" />
+    <Content Include="Assets\Sounds\X1\76 - MMX - Flame Mammoth.wav" />
+    <Content Include="Assets\Sounds\X1\77 - MMX - Heavy Machine %281%29.wav" />
+    <Content Include="Assets\Sounds\X1\78 - MMX - Heavy Machine %282%29.wav" />
+    <Content Include="Assets\Sounds\X1\79 - MMX - Heavy Machine %283%29.wav" />
+    <Content Include="Assets\Sounds\X1\80 - MMX - Heavy Machine %284%29.wav" />
+    <Content Include="Assets\Sounds\X1\81 - MMX - Heavy Machine %285%29.wav" />
+    <Content Include="Assets\Sounds\X1\82 - MMX - Heavy Machine %286%29.wav" />
+    <Content Include="Assets\Sounds\X1\83 - MMX - Heavy Machine %287%29.wav" />
+    <Content Include="Assets\Sounds\X1\84 - MMX - Heavy Machine %288%29.wav" />
+    <Content Include="Assets\Sounds\X1\85 - MMX - Intro Data Screen.wav" />
+    <Content Include="Assets\Sounds\X1\86 - MMX - Mechanical Hum 1.wav" />
+    <Content Include="Assets\Sounds\X1\87 - MMX - Mechanical Hum 2.wav" />
+    <Content Include="Assets\Sounds\X1\88 - MMX - Mechanical Hum 3.wav" />
+    <Content Include="Assets\Sounds\X1\89 - MMX - Misc. dash, jump, move %281%29.wav" />
+    <Content Include="Assets\Sounds\X1\90 - MMX - Misc. dash, jump, move %282%29.wav" />
+    <Content Include="Assets\Sounds\X1\91 - MMX - Misc. dash, jump, move %283%29.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="resources\sounds\mmx\92 - MMX - Misc. dash, jump, move %284%29.wav" />
-    <Content Include="resources\sounds\mmx\93 - MMX - Misc. dash, jump, move %285%29.wav" />
-    <Content Include="resources\sounds\mmx\94 - MMX - Misc. dash, jump, move %286%29.wav" />
-    <Content Include="resources\sounds\mmx\95 - MMX - Misc. dash, jump, move %287%29.wav" />
-    <Content Include="resources\sounds\mmx\96 - MMX - Octopus Drain.wav" />
-    <Content Include="resources\sounds\mmx\97 - MMX - Robot Suit %281%29.wav" />
-    <Content Include="resources\sounds\mmx\98 - MMX - Robot Suit %282%29.wav" />
-    <Content Include="resources\sounds\mmx\99 - MMX - Robot Suit %283%29.wav" />
+    <Content Include="Assets\Sounds\X1\92 - MMX - Misc. dash, jump, move %284%29.wav" />
+    <Content Include="Assets\Sounds\X1\93 - MMX - Misc. dash, jump, move %285%29.wav" />
+    <Content Include="Assets\Sounds\X1\94 - MMX - Misc. dash, jump, move %286%29.wav" />
+    <Content Include="Assets\Sounds\X1\95 - MMX - Misc. dash, jump, move %287%29.wav" />
+    <Content Include="Assets\Sounds\X1\96 - MMX - Octopus Drain.wav" />
+    <Content Include="Assets\Sounds\X1\97 - MMX - Robot Suit %281%29.wav" />
+    <Content Include="Assets\Sounds\X1\98 - MMX - Robot Suit %282%29.wav" />
+    <Content Include="Assets\Sounds\X1\99 - MMX - Robot Suit %283%29.wav" />
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="resources\sprites\Enemies\X\Snow Shooter.png">
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Snow Shooter.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

@@ -6,9 +6,9 @@ using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 
-public enum PenguinState
+public enum ChillPenguinState
 {
     IDLE = 0,
     INTRODUCING = 1,
@@ -22,7 +22,7 @@ public enum PenguinState
     DYING = 9
 }
 
-public class Penguin : Boss, IStateEntity<PenguinState>
+public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
 {
     #region StaticFields
     public static readonly bool DONT_ATTACK = false;
@@ -125,36 +125,31 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     [Precache]
     new internal static void Precache()
     {
-        Engine.PrecacheSound("Chill Penguin Breath", @"resources\sounds\mmx\52 - MMX - Chill Penguin Breath.wav");
-        Engine.PrecacheSound("Misc. dash, jump, move (3)", @"resources\sounds\mmx\91 - MMX - Misc. dash, jump, move (3).wav");
-        Engine.PrecacheSound("Ice", @"resources\sounds\mmx\34 - MMX - Ice.wav");
-        Engine.PrecacheSound("Ice Freeze", @"resources\sounds\mmx\35 - MMX - Ice Freeze.wav");
-        Engine.PrecacheSound("Ice Break", @"resources\sounds\mmx\36 - MMX - Ice Break.wav");
+        Engine.PrecacheSound("Chill Penguin Breath", @"X1\52 - MMX - Chill Penguin Breath.wav");
+        Engine.PrecacheSound("Misc. dash, jump, move (3)", @"X1\91 - MMX - Misc. dash, jump, move (3).wav");
+        Engine.PrecacheSound("Ice", @"X1\34 - MMX - Ice.wav");
+        Engine.PrecacheSound("Ice Freeze", @"X1\35 - MMX - Ice Freeze.wav");
+        Engine.PrecacheSound("Ice Break", @"X1\36 - MMX - Ice Break.wav");
 
-        var penguinPalette = Engine.PrecachePalette("penguinPalette", PENGUIN_PALETTE);
-        var penguinSpriteSheet = Engine.CreateSpriteSheet("Penguin", true, true);
+        var palette = Engine.PrecachePalette("ChillPenguinPalette", PENGUIN_PALETTE);
+        var spriteSheet = Engine.CreateSpriteSheet("ChillPenguin", true, true);
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.Bosses.X1.Penguin.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            penguinSpriteSheet.CurrentTexture = texture;
-        }
-
-        penguinSpriteSheet.CurrentPalette = penguinPalette;
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.Bosses.X1.Penguin.png");
+        spriteSheet.CurrentPalette = palette;
 
         // 0
-        var sequence = penguinSpriteSheet.AddFrameSquence("FallingIntroducing");
+        var sequence = spriteSheet.AddFrameSquence("FallingIntroducing");
         sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
         sequence.Hitbox = PENGUIN_COLLISION_BOX;
         sequence.AddFrame(2, 15, 170, 20, 35, 44, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("LandingIntroducing");
+        sequence = spriteSheet.AddFrameSquence("LandingIntroducing");
         sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
         sequence.Hitbox = PENGUIN_COLLISION_BOX;
         sequence.AddFrame(7, 1, 136, 172, 39, 35, 6);
         sequence.AddFrame(6, -2, 96, 175, 38, 32, 6);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Introducing");
+        sequence = spriteSheet.AddFrameSquence("Introducing");
         sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
         sequence.Hitbox = PENGUIN_COLLISION_BOX;
         sequence.AddFrame(6, 2, 6, 177, 38, 36, 6);
@@ -164,12 +159,12 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         sequence.AddFrame(3, 3, 94, 76, 43, 37, 5);
         sequence.AddFrame(7, 2, 141, 77, 39, 36, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("IntroducingEnd");
+        sequence = spriteSheet.AddFrameSquence("IntroducingEnd");
         sequence.OriginOffset = -PENGUIN_COLLISION_BOX.Origin - PENGUIN_COLLISION_BOX.Mins;
         sequence.Hitbox = PENGUIN_COLLISION_BOX;
         sequence.AddFrame(6, 2, 184, 77, 38, 36, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Idle");
+        sequence = spriteSheet.AddFrameSquence("Idle");
         sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_HITBOX;
         sequence.AddFrame(10, 4, 6, 77, 38, 36, 15);
@@ -180,7 +175,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         sequence.AddFrame(11, 3, 136, 172, 39, 35, 7, true);
         sequence.AddFrame(10, 4, 6, 77, 38, 36, 7);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("ShootingIce");
+        sequence = spriteSheet.AddFrameSquence("ShootingIce");
         sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_HITBOX;
         sequence.AddFrame(11, 3, 136, 172, 39, 35, 6);
@@ -189,19 +184,19 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         sequence.AddFrame(16, 3, 132, 129, 42, 35, 5);
         sequence.AddFrame(14, 3, 174, 129, 43, 35, 5);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("PreSliding");
+        sequence = spriteSheet.AddFrameSquence("PreSliding");
         sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_HITBOX;
         sequence.AddFrame(7, 5, 48, 76, 42, 37, 11);
         sequence.AddFrame(7, 5, 94, 76, 43, 37, 11);
         sequence.AddFrame(8, 3, 90, 130, 37, 34, 7);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Sliding");
+        sequence = spriteSheet.AddFrameSquence("Sliding");
         sequence.OriginOffset = -PENGUIN_SLIDE_HITBOX.Origin - PENGUIN_SLIDE_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_SLIDE_HITBOX;
         sequence.AddFrame(0, 9, 221, 133, 40, 31, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Blowing");
+        sequence = spriteSheet.AddFrameSquence("Blowing");
         sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_HITBOX;
         sequence.AddFrame(7, 5, 48, 76, 42, 37, 11);
@@ -209,29 +204,29 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         sequence.AddFrame(16, 3, 132, 129, 42, 35, 4, true);
         sequence.AddFrame(14, 3, 174, 129, 43, 35, 4);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("PreJumping");
+        sequence = spriteSheet.AddFrameSquence("PreJumping");
         sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_HITBOX;
         sequence.AddFrame(5, 0, 96, 175, 38, 32, 5);
         sequence.AddFrame(8, 6, 8, 127, 36, 38, 5);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Jumping");
+        sequence = spriteSheet.AddFrameSquence("Jumping");
         sequence.OriginOffset = -PENGUIN_JUMP_HITBOX.Origin - PENGUIN_JUMP_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_JUMP_HITBOX;
         sequence.AddFrame(10, 4, 47, 127, 37, 38, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Falling");
+        sequence = spriteSheet.AddFrameSquence("Falling");
         sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_HITBOX;
         sequence.AddFrame(5, 14, 170, 20, 35, 44, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Landing");
+        sequence = spriteSheet.AddFrameSquence("Landing");
         sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_HITBOX;
         sequence.AddFrame(11, 3, 136, 172, 39, 35, 6);
         sequence.AddFrame(10, 0, 96, 175, 38, 32, 6);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Hanging");
+        sequence = spriteSheet.AddFrameSquence("Hanging");
         sequence.OriginOffset = -PENGUIN_HITBOX.Origin - PENGUIN_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_HITBOX;
         sequence.AddFrame(5, 19, 12, 4, 36, 60, 8);
@@ -239,34 +234,34 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         sequence.AddFrame(5, 19, 95, 4, 32, 60, 8);
         sequence.AddFrame(6, 20, 131, 4, 32, 60, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("TakingDamage");
+        sequence = spriteSheet.AddFrameSquence("TakingDamage");
         sequence.OriginOffset = -PENGUIN_TAKING_DAMAGE_HITBOX.Origin - PENGUIN_TAKING_DAMAGE_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_TAKING_DAMAGE_HITBOX;
         sequence.AddFrame(14, 4, 9, 169, 35, 41, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Dying");
+        sequence = spriteSheet.AddFrameSquence("Dying");
         sequence.OriginOffset = -PENGUIN_TAKING_DAMAGE_HITBOX.Origin - PENGUIN_TAKING_DAMAGE_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_TAKING_DAMAGE_HITBOX;
         sequence.AddFrame(15, 3, 9, 169, 35, 41, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("InFlames");
+        sequence = spriteSheet.AddFrameSquence("InFlames");
         sequence.OriginOffset = -PENGUIN_TAKING_DAMAGE_HITBOX.Origin - PENGUIN_TAKING_DAMAGE_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_TAKING_DAMAGE_HITBOX;
         sequence.AddFrame(16, 7, 52, 165, 38, 47, 21);
 
-        penguinSpriteSheet.CurrentPalette = null;
+        spriteSheet.CurrentPalette = null;
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Ice");
+        sequence = spriteSheet.AddFrameSquence("Ice");
         sequence.OriginOffset = -PENGUIN_ICE_HITBOX.Origin - PENGUIN_ICE_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_ICE_HITBOX;
         sequence.AddFrame(0, 2, 57, 232, 14, 14, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("IceFragment");
+        sequence = spriteSheet.AddFrameSquence("IceFragment");
         sequence.OriginOffset = -PENGUIN_ICE_FRAGMENT_HITBOX.Origin - PENGUIN_ICE_FRAGMENT_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_ICE_FRAGMENT_HITBOX;
         sequence.AddFrame(0, 0, 58, 216, 8, 8, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Sculpture");
+        sequence = spriteSheet.AddFrameSquence("Sculpture");
         sequence.OriginOffset = -PENGUIN_SCULPTURE_HITBOX.Origin - PENGUIN_SCULPTURE_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_SCULPTURE_HITBOX;
         sequence.AddFrame(-2, -7, 82, 233, 13, 16, 19);
@@ -274,12 +269,12 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         sequence.AddFrame(4, -1, 183, 226, 23, 28, 19);
         sequence.AddFrame(5, 0, 133, 217, 28, 32, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Lever");
+        sequence = spriteSheet.AddFrameSquence("Lever");
         sequence.OriginOffset = -PENGUIN_LEVER_HITBOX.Origin - PENGUIN_LEVER_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_LEVER_HITBOX;
         sequence.AddFrame(-8, -4, 169, 225, 10, 16, 1, true);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("Snow");
+        sequence = spriteSheet.AddFrameSquence("Snow");
         sequence.OriginOffset = -PENGUIN_SNOW_HITBOX.Origin - PENGUIN_SNOW_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_SNOW_HITBOX;
         sequence.AddFrame(1, 1, 186, 172, 18, 18, 1, true);
@@ -298,16 +293,16 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         sequence.AddFrame(2, 3, 204, 208, 18, 18, 1);
         sequence.AddFrame(3, 4, 222, 208, 18, 18, 1);
 
-        sequence = penguinSpriteSheet.AddFrameSquence("FrozenBlock");
+        sequence = spriteSheet.AddFrameSquence("FrozenBlock");
         sequence.OriginOffset = -PENGUIN_FROZEN_BLOCK_HITBOX.Origin - PENGUIN_FROZEN_BLOCK_HITBOX.Mins;
         sequence.Hitbox = PENGUIN_FROZEN_BLOCK_HITBOX;
         sequence.AddFrame(14, 3, 6, 216, 37, 38, 1, true);
 
-        penguinSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 
-    private PenguinState lastState;
+    private ChillPenguinState lastState;
     private bool firstAttack;
     private bool hanging;
     private bool snowing;
@@ -331,14 +326,14 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
     private PenguinFrozenBlock FrozenBlock => frozenBlock;
 
-    public PenguinState State
+    public ChillPenguinState State
     {
-        get => GetState<PenguinState>();
+        get => GetState<ChillPenguinState>();
         set
         {
             if (DONT_ATTACK)
             {
-                if (value is PenguinState.IDLE or PenguinState.INTRODUCING or PenguinState.TAKING_DAMAGE or PenguinState.DYING)
+                if (value is ChillPenguinState.IDLE or ChillPenguinState.INTRODUCING or ChillPenguinState.TAKING_DAMAGE or ChillPenguinState.DYING)
                     SetState(value);
             }
             else
@@ -348,7 +343,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         }
     }
 
-    public Penguin()
+    public ChillPenguin()
     {
     }
 
@@ -357,8 +352,8 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         base.OnCreate();
 
         DefaultDirection = Direction.LEFT;
-        SpriteSheetName = "Penguin";
-        PaletteName = "penguinPalette";
+        SpriteSheetName = "ChillPenguin";
+        PaletteName = "ChillPenguinPalette";
 
         ContactDamage = 6;
 
@@ -368,17 +363,17 @@ public class Penguin : Boss, IStateEntity<PenguinState>
             "TakingDamage", "InFlames", "Dying"
             );
 
-        SetupStateArray<PenguinState>();
-        RegisterState(PenguinState.IDLE, OnStartIdle, OnIdle, null, "Idle");
-        RegisterState(PenguinState.INTRODUCING, "FallingIntroducing");
-        RegisterState(PenguinState.SHOOTING_ICE, OnShootingIce, "ShootingIce");
-        RegisterState(PenguinState.BLOWING, OnStartBlowing, OnBlowing, null, "Blowing");
-        RegisterState(PenguinState.SLIDING, OnStartSliding, OnSliding, OnEndSliding, "PreSliding");
-        RegisterState(PenguinState.JUMPING, OnStartJumping, OnJumping, null, "PreJumping");
-        RegisterState(PenguinState.HANGING, OnStartHanging, OnHanging, null, "Idle");
-        RegisterState(PenguinState.TAKING_DAMAGE, OnTakingDamage, "TakingDamage");
-        RegisterState(PenguinState.IN_FLAMES, OnInFlames, "InFlames");
-        RegisterState(PenguinState.DYING, OnStartDying, "Dying");
+        SetupStateArray<ChillPenguinState>();
+        RegisterState(ChillPenguinState.IDLE, OnStartIdle, OnIdle, null, "Idle");
+        RegisterState(ChillPenguinState.INTRODUCING, "FallingIntroducing");
+        RegisterState(ChillPenguinState.SHOOTING_ICE, OnShootingIce, "ShootingIce");
+        RegisterState(ChillPenguinState.BLOWING, OnStartBlowing, OnBlowing, null, "Blowing");
+        RegisterState(ChillPenguinState.SLIDING, OnStartSliding, OnSliding, OnEndSliding, "PreSliding");
+        RegisterState(ChillPenguinState.JUMPING, OnStartJumping, OnJumping, null, "PreJumping");
+        RegisterState(ChillPenguinState.HANGING, OnStartHanging, OnHanging, null, "Idle");
+        RegisterState(ChillPenguinState.TAKING_DAMAGE, OnTakingDamage, "TakingDamage");
+        RegisterState(ChillPenguinState.IN_FLAMES, OnInFlames, "InFlames");
+        RegisterState(ChillPenguinState.DYING, OnStartDying, "Dying");
 
         lever = Engine.Entities.Create<PenguinLever>();
         mist = Engine.Entities.Create<Mist>();
@@ -404,7 +399,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
     public override FixedSingle GetGravity()
     {
-        return hanging || State == PenguinState.DYING ? 0 : base.GetGravity();
+        return hanging || State == ChillPenguinState.DYING ? 0 : base.GetGravity();
     }
 
     protected override Box GetCollisionBox()
@@ -416,10 +411,10 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     {
         return State switch
         {
-            PenguinState.INTRODUCING => PENGUIN_COLLISION_BOX,
-            PenguinState.SLIDING => PENGUIN_SLIDE_HITBOX,
-            PenguinState.JUMPING => CurrentAnimationName == "Jumping" ? PENGUIN_JUMP_HITBOX : PENGUIN_HITBOX,
-            PenguinState.TAKING_DAMAGE => PENGUIN_TAKING_DAMAGE_HITBOX,
+            ChillPenguinState.INTRODUCING => PENGUIN_COLLISION_BOX,
+            ChillPenguinState.SLIDING => PENGUIN_SLIDE_HITBOX,
+            ChillPenguinState.JUMPING => CurrentAnimationName == "Jumping" ? PENGUIN_JUMP_HITBOX : PENGUIN_HITBOX,
+            ChillPenguinState.TAKING_DAMAGE => PENGUIN_TAKING_DAMAGE_HITBOX,
             _ => PENGUIN_HITBOX,
         };
     }
@@ -428,7 +423,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     {
         base.OnSpawn();
 
-        PaletteName = "penguinPalette";
+        PaletteName = "ChillPenguinPalette";
         firstAttack = true;
         hanging = false;
         snowing = false;
@@ -440,8 +435,8 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
         Mist.Spawn();
 
-        lastState = PenguinState.INTRODUCING;
-        SetState(PenguinState.INTRODUCING);
+        lastState = ChillPenguinState.INTRODUCING;
+        SetState(ChillPenguinState.INTRODUCING);
     }
 
     protected override void OnDeath()
@@ -460,12 +455,12 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
         switch (State)
         {
-            case PenguinState.INTRODUCING:
+            case ChillPenguinState.INTRODUCING:
                 SetCurrentAnimationByName("LandingIntroducing");
                 break;
 
-            case PenguinState.TAKING_DAMAGE:
-                State = PenguinState.IDLE;
+            case ChillPenguinState.TAKING_DAMAGE:
+                State = ChillPenguinState.IDLE;
                 break;
 
             default:
@@ -486,7 +481,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     {
         base.OnBlockedLeft();
 
-        if (State == PenguinState.SLIDING && Direction == Direction.LEFT)
+        if (State == ChillPenguinState.SLIDING && Direction == Direction.LEFT)
             FlipSpeedAndDirection();
     }
 
@@ -494,7 +489,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     {
         base.OnBlockedRight();
 
-        if (State == PenguinState.SLIDING && Direction == Direction.RIGHT)
+        if (State == ChillPenguinState.SLIDING && Direction == Direction.RIGHT)
             FlipSpeedAndDirection();
     }
 
@@ -509,20 +504,20 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     {
         FaceToEntity(attacker);
         Velocity = (Direction == DefaultDirection ? PENGUIN_KNOCKBACK_SPEED_X : -PENGUIN_KNOCKBACK_SPEED_X, -PENGUIN_KNOCKBACK_SPEED_Y);
-        State = PenguinState.TAKING_DAMAGE;
+        State = ChillPenguinState.TAKING_DAMAGE;
     }
 
     protected override void OnDamaged(Sprite attacker, FixedSingle damage)
     {
         base.OnDamaged(attacker, damage);
 
-        if (State is PenguinState.IDLE or PenguinState.JUMPING or PenguinState.HANGING or PenguinState.SHOOTING_ICE)
+        if (State is ChillPenguinState.IDLE or ChillPenguinState.JUMPING or ChillPenguinState.HANGING or ChillPenguinState.SHOOTING_ICE)
             ApplyKnockback(attacker);
     }
 
     private void OnStartIdle(EntityState state, EntityState lastState)
     {
-        this.lastState = lastState != null ? (PenguinState) lastState.ID : PenguinState.IDLE;
+        this.lastState = lastState != null ? (ChillPenguinState) lastState.ID : ChillPenguinState.IDLE;
     }
 
     private void OnIdle(EntityState state, long frameCounter)
@@ -533,12 +528,12 @@ public class Penguin : Boss, IStateEntity<PenguinState>
             {
                 firstAttack = false;
                 FaceToPlayer();
-                State = PenguinState.SHOOTING_ICE;
+                State = ChillPenguinState.SHOOTING_ICE;
             }
             else if (wasShootingIce && iceCount < 4)
             {
                 FaceToPlayer();
-                State = PenguinState.SHOOTING_ICE;
+                State = ChillPenguinState.SHOOTING_ICE;
             }
             else
             {
@@ -552,27 +547,27 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                     switch (lastState)
                     {
-                        case PenguinState.SHOOTING_ICE:
+                        case ChillPenguinState.SHOOTING_ICE:
                         {
-                            while (State == PenguinState.IDLE)
+                            while (State == ChillPenguinState.IDLE)
                             {
                                 switch (value)
                                 {
                                     case >= 0 and < 2:
-                                        State = PenguinState.SLIDING;
+                                        State = ChillPenguinState.SLIDING;
                                         break;
 
                                     case >= 2 and < 4:
-                                        State = PenguinState.SHOOTING_ICE;
+                                        State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
                                     case >= 4 and < 6:
-                                        State = PenguinState.JUMPING;
+                                        State = ChillPenguinState.JUMPING;
                                         break;
 
                                     case >= 6 and < 12:
                                         if (AtLeastOneSculpturesAlive())
-                                            State = PenguinState.HANGING;
+                                            State = ChillPenguinState.HANGING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -580,7 +575,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                                     default:
                                         if (!AllSculpturesAlive())
-                                            State = PenguinState.BLOWING;
+                                            State = ChillPenguinState.BLOWING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -591,27 +586,27 @@ public class Penguin : Boss, IStateEntity<PenguinState>
                             break;
                         }
 
-                        case PenguinState.BLOWING:
+                        case ChillPenguinState.BLOWING:
                         {
-                            while (State == PenguinState.IDLE)
+                            while (State == ChillPenguinState.IDLE)
                             {
                                 switch (value)
                                 {
                                     case >= 0 and < 2:
-                                        State = PenguinState.SLIDING;
+                                        State = ChillPenguinState.SLIDING;
                                         break;
 
                                     case >= 2 and < 4:
-                                        State = PenguinState.SHOOTING_ICE;
+                                        State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
                                     case >= 4 and < 6:
-                                        State = PenguinState.JUMPING;
+                                        State = ChillPenguinState.JUMPING;
                                         break;
 
                                     case >= 6 and < 14:
                                         if (AtLeastOneSculpturesAlive())
-                                            State = PenguinState.HANGING;
+                                            State = ChillPenguinState.HANGING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -619,7 +614,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                                     default:
                                         if (!AllSculpturesAlive())
-                                            State = PenguinState.BLOWING;
+                                            State = ChillPenguinState.BLOWING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -630,27 +625,27 @@ public class Penguin : Boss, IStateEntity<PenguinState>
                             break;
                         }
 
-                        case PenguinState.SLIDING:
+                        case ChillPenguinState.SLIDING:
                         {
-                            while (State == PenguinState.IDLE)
+                            while (State == ChillPenguinState.IDLE)
                             {
                                 switch (value)
                                 {
                                     case >= 0 and < 2:
-                                        State = PenguinState.SLIDING;
+                                        State = ChillPenguinState.SLIDING;
                                         break;
 
                                     case >= 2 and < 6:
-                                        State = PenguinState.SHOOTING_ICE;
+                                        State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
                                     case >= 6 and < 8:
-                                        State = PenguinState.JUMPING;
+                                        State = ChillPenguinState.JUMPING;
                                         break;
 
                                     case >= 8 and < 12:
                                         if (AtLeastOneSculpturesAlive())
-                                            State = PenguinState.HANGING;
+                                            State = ChillPenguinState.HANGING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -658,7 +653,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                                     default:
                                         if (!AllSculpturesAlive())
-                                            State = PenguinState.BLOWING;
+                                            State = ChillPenguinState.BLOWING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -669,23 +664,23 @@ public class Penguin : Boss, IStateEntity<PenguinState>
                             break;
                         }
 
-                        case PenguinState.JUMPING:
+                        case ChillPenguinState.JUMPING:
                         {
-                            while (State == PenguinState.IDLE)
+                            while (State == ChillPenguinState.IDLE)
                             {
                                 switch (value)
                                 {
                                     case >= 0 and < 4:
-                                        State = PenguinState.SLIDING;
+                                        State = ChillPenguinState.SLIDING;
                                         break;
 
                                     case >= 4 and < 6:
-                                        State = PenguinState.SHOOTING_ICE;
+                                        State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
                                     case >= 6 and < 12:
                                         if (AtLeastOneSculpturesAlive())
-                                            State = PenguinState.HANGING;
+                                            State = ChillPenguinState.HANGING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -693,7 +688,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                                     default:
                                         if (!AllSculpturesAlive())
-                                            State = PenguinState.BLOWING;
+                                            State = ChillPenguinState.BLOWING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -704,23 +699,23 @@ public class Penguin : Boss, IStateEntity<PenguinState>
                             break;
                         }
 
-                        case PenguinState.HANGING:
+                        case ChillPenguinState.HANGING:
                         {
-                            while (State == PenguinState.IDLE)
+                            while (State == ChillPenguinState.IDLE)
                             {
                                 switch (value)
                                 {
                                     case >= 0 and < 4:
-                                        State = PenguinState.SLIDING;
+                                        State = ChillPenguinState.SLIDING;
                                         break;
 
                                     case >= 4 and < 6:
-                                        State = PenguinState.SHOOTING_ICE;
+                                        State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
                                     case >= 6 and < 12:
                                         if (AtLeastOneSculpturesAlive())
-                                            State = PenguinState.HANGING;
+                                            State = ChillPenguinState.HANGING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -728,7 +723,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                                     default:
                                         if (!AllSculpturesAlive())
-                                            State = PenguinState.BLOWING;
+                                            State = ChillPenguinState.BLOWING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -739,24 +734,24 @@ public class Penguin : Boss, IStateEntity<PenguinState>
                             break;
                         }
 
-                        case PenguinState.TAKING_DAMAGE:
-                        case PenguinState.IN_FLAMES:
+                        case ChillPenguinState.TAKING_DAMAGE:
+                        case ChillPenguinState.IN_FLAMES:
                         {
-                            while (State == PenguinState.IDLE)
+                            while (State == ChillPenguinState.IDLE)
                             {
                                 switch (value)
                                 {
                                     case >= 0 and < 2:
-                                        State = PenguinState.SLIDING;
+                                        State = ChillPenguinState.SLIDING;
                                         break;
 
                                     case >= 2 and < 6:
-                                        State = PenguinState.SHOOTING_ICE;
+                                        State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
                                     case >= 6 and < 12:
                                         if (AtLeastOneSculpturesAlive())
-                                            State = PenguinState.HANGING;
+                                            State = ChillPenguinState.HANGING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -764,7 +759,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                                     default:
                                         if (!AllSculpturesAlive())
-                                            State = PenguinState.BLOWING;
+                                            State = ChillPenguinState.BLOWING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -777,25 +772,25 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                         default:
                         {
-                            while (State == PenguinState.IDLE)
+                            while (State == ChillPenguinState.IDLE)
                             {
                                 switch (value)
                                 {
                                     case >= 0 and < 2:
-                                        State = PenguinState.SLIDING;
+                                        State = ChillPenguinState.SLIDING;
                                         break;
 
                                     case >= 2 and < 4:
-                                        State = PenguinState.SHOOTING_ICE;
+                                        State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
                                     case >= 4 and < 8:
-                                        State = PenguinState.JUMPING;
+                                        State = ChillPenguinState.JUMPING;
                                         break;
 
                                     case >= 8 and < 12:
                                         if (AtLeastOneSculpturesAlive())
-                                            State = PenguinState.HANGING;
+                                            State = ChillPenguinState.HANGING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -803,7 +798,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
                                     default:
                                         if (!AllSculpturesAlive())
-                                            State = PenguinState.BLOWING;
+                                            State = ChillPenguinState.BLOWING;
                                         else
                                             value = Engine.RNG.NextInt(16);
 
@@ -835,7 +830,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         {
             ShootIce();
             wasShootingIce = true;
-            State = PenguinState.IDLE;
+            State = ChillPenguinState.IDLE;
         }
     }
 
@@ -883,7 +878,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
 
             case PENGUIN_BLOW_FRAMES:
                 FinishBlowingSoundLoop();
-                State = PenguinState.IDLE;
+                State = ChillPenguinState.IDLE;
                 break;
         }
 
@@ -916,7 +911,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     private void OnStartSliding(EntityState state, EntityState lastState)
     {
         Invincible = true;
-        ReflectShots = true;
+        HitResponse = HitResponse.REFLECT;
     }
 
     private void OnSliding(EntityState state, long frameCounter)
@@ -932,7 +927,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
             if (v.X > 0 && Velocity.X < 0 || v.X < 0 && Velocity.X > 0 || v.X.Abs < PENGUIN_SLIDE_DECELARATION)
             {
                 Velocity = Vector.NULL_VECTOR;
-                State = PenguinState.IDLE;
+                State = ChillPenguinState.IDLE;
             }
             else
             {
@@ -944,7 +939,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     private void OnEndSliding(EntityState state)
     {
         Invincible = false;
-        ReflectShots = false;
+        HitResponse = HitResponse.ACCEPT;
     }
 
     private void OnStartJumping(EntityState state, EntityState lastState)
@@ -1077,14 +1072,14 @@ public class Penguin : Boss, IStateEntity<PenguinState>
             case "PreJumping":
                 switch (State)
                 {
-                    case PenguinState.JUMPING:
+                    case ChillPenguinState.JUMPING:
                     {
                         FixedSingle jumpSpeedX = (Engine.Player.Origin.X - Origin.X) / PENGUIN_JUMP_FRAMES;
                         Velocity = (jumpSpeedX, -PENGUIN_JUMP_SPEED_Y);
                         break;
                     }
 
-                    case PenguinState.HANGING:
+                    case ChillPenguinState.HANGING:
                     {
                         FixedSingle jumpSpeedX = (Lever.Origin.X - Origin.X) / PENGUIN_FRAMES_TO_HANG;
                         Velocity = (jumpSpeedX, -PENGUIN_HANGING_JUMP_SPEED_Y);
@@ -1107,7 +1102,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
                 break;
 
             case "Landing":
-                State = PenguinState.IDLE;
+                State = ChillPenguinState.IDLE;
                 break;
         }
     }
@@ -1116,7 +1111,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
     {
         base.OnStartBattle();
 
-        State = PenguinState.IDLE;
+        State = ChillPenguinState.IDLE;
     }
 
     protected override void OnDying()
@@ -1125,7 +1120,7 @@ public class Penguin : Boss, IStateEntity<PenguinState>
         hanging = false;
         snowing = false;
         Velocity = Vector.NULL_VECTOR;
-        State = PenguinState.DYING;
+        State = ChillPenguinState.DYING;
     }
 
     public void FreezePlayer()

@@ -20,15 +20,10 @@ internal class ExplosionEffect : SpriteEffect
     [Precache]
     new internal static void Precache()
     {
-        var explosionSpriteSheet = Engine.CreateSpriteSheet("Explosion", true, true);
+        var spriteSheet = Engine.CreateSpriteSheet("Explosion", true, true);
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Effects.Explosion.png");
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Effects.Explosion.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            explosionSpriteSheet.CurrentTexture = texture;
-        }
-
-        var sequence = explosionSpriteSheet.AddFrameSquence("Explosion");
+        var sequence = spriteSheet.AddFrameSquence("Explosion");
         sequence.AddFrame(0, 0, 38, 48, 1, false, OriginPosition.CENTER);
         sequence.AddFrame(38, 0, 38, 48, 2, false, OriginPosition.CENTER);
         sequence.AddFrame(0, 0, 38, 48, 3, false, OriginPosition.CENTER);
@@ -39,7 +34,7 @@ internal class ExplosionEffect : SpriteEffect
         sequence.AddFrame(76, 48, 38, 48, 2, false, OriginPosition.CENTER);
         sequence.AddFrame(114, 48, 38, 48, 2, false, OriginPosition.CENTER);
 
-        explosionSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 

@@ -66,12 +66,7 @@ public class Snowball : Enemy, IStateEntity<SnowballState>
         var palette = Engine.PrecachePalette("snowballPalette", PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("Snowball", true, true);
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X.Snowball.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            spriteSheet.CurrentTexture = texture;
-        }
-
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.X1.Snowball.png");
         spriteSheet.CurrentPalette = palette;
 
         var sequence = spriteSheet.AddFrameSquence("Small");

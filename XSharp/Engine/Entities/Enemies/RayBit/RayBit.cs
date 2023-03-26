@@ -60,12 +60,7 @@ public class RayBit : Enemy, IStateEntity<RayBitState>
         var palette = Engine.PrecachePalette("rayBitPalette", RAYBIT_PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("RayBit", true, true);
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X.RayBit.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            spriteSheet.CurrentTexture = texture;
-        }
-
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.X1.RayBit.png");
         spriteSheet.CurrentPalette = palette;
 
         var sequence = spriteSheet.AddFrameSquence("Idle");

@@ -77,7 +77,7 @@ public class TurnCannon : Enemy, IStateEntity<TurnCannonState>
         var palette = Engine.PrecachePalette("TurnCannonPalette", PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("TurnCannon", true, true);
 
-        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("sprites.Enemies.X.Turn Cannon.png");
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.X1.Turn Cannon.png");
         spriteSheet.CurrentPalette = palette;
 
         var sequence = spriteSheet.AddFrameSquence("TurningToShotHorizontallyFixed");

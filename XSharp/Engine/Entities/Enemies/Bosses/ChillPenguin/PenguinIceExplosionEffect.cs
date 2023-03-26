@@ -2,7 +2,7 @@
 using XSharp.Engine.Graphics;
 using XSharp.Math.Geometry;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 
 public class PenguinIceExplosionEffect : SpriteEffect
 {
@@ -10,7 +10,7 @@ public class PenguinIceExplosionEffect : SpriteEffect
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Penguin));
+        Engine.CallPrecacheAction(typeof(ChillPenguin));
     }
     #endregion
 
@@ -22,7 +22,7 @@ public class PenguinIceExplosionEffect : SpriteEffect
 
     public PenguinIceExplosionEffect()
     {
-        SpriteSheetName = "Penguin";
+        SpriteSheetName = "ChillPenguin";
 
         SetAnimationNames("IceFragment");
     }

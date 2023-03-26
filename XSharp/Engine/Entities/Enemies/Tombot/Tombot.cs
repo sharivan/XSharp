@@ -71,12 +71,7 @@ public class Tombot : Enemy, IStateEntity<TombotState>
         var palette = Engine.PrecachePalette("tombotPalette", PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("Tombot", true, true);
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X.Tombot.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            spriteSheet.CurrentTexture = texture;
-        }
-
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.X1.Tombot.png");
         spriteSheet.CurrentPalette = palette;
 
         var sequence = spriteSheet.AddFrameSquence("LiftOff");

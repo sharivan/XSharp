@@ -3,9 +3,9 @@ using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using static XSharp.Engine.Entities.Enemies.Bosses.Penguin.Penguin;
+using static XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin.ChillPenguin;
 
-namespace XSharp.Engine.Entities.Enemies.Bosses.Penguin;
+namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 
 public class PenguinSculpture : Enemy
 {
@@ -13,15 +13,15 @@ public class PenguinSculpture : Enemy
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Penguin));
+        Engine.CallPrecacheAction(typeof(ChillPenguin));
     }
     #endregion
 
     private int frameCounter;
     private bool gravity;
-    private EntityReference<Penguin> shooter;
+    private EntityReference<ChillPenguin> shooter;
 
-    public Penguin Shooter
+    public ChillPenguin Shooter
     {
         get => shooter;
         internal set => shooter = Engine.Entities.GetReferenceTo(value);
@@ -36,7 +36,7 @@ public class PenguinSculpture : Enemy
     public PenguinSculpture()
     {
         DefaultDirection = Direction.LEFT;
-        SpriteSheetName = "Penguin";
+        SpriteSheetName = "ChillPenguin";
 
         SetAnimationNames("Sculpture");
     }
@@ -166,7 +166,7 @@ public class PenguinSculpture : Enemy
     {
         base.OnStartTouch(entity);
 
-        if (entity is Penguin)
+        if (entity is ChillPenguin)
             Break();
     }
 }

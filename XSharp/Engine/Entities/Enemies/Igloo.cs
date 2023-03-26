@@ -48,7 +48,7 @@ public class Igloo : Enemy
     {
         base.OnSpawn();
 
-        ReflectShots = true; // TODO : This enemy should only reflect shots but Fire Wave (or another desired weapon).
+        HitResponse = HitResponse.REFLECT; // TODO : This enemy should only reflect shots but Fire Wave (or another desired weapon).
         ContactDamage = 0;
         Health = HP;
 

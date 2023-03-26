@@ -63,12 +63,7 @@ public class BombBeen : Enemy, IStateEntity<BombBeenState>
         var palette = Engine.PrecachePalette("bombBeenPalette", PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("BombBeen", true, true);
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Enemies.X.Bomb Been.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            spriteSheet.CurrentTexture = texture;
-        }
-
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.X1.Bomb Been.png");
         spriteSheet.CurrentPalette = palette;
 
         var sequence = spriteSheet.AddFrameSquence("Flying");

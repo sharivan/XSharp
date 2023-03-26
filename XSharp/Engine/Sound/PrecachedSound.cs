@@ -11,7 +11,7 @@ public class PrecachedSound : IDisposable
 
     public IReadOnlySet<string> Names => names;
 
-    public string Path
+    public string RelativePath
     {
         get;
     }
@@ -22,9 +22,9 @@ public class PrecachedSound : IDisposable
         internal set;
     }
 
-    public PrecachedSound(string name, string path, WaveStream stream = null)
+    public PrecachedSound(string name, string relativePath, WaveStream stream = null)
     {
-        Path = path;
+        RelativePath = relativePath;
         Stream = stream;
 
         names = new HashSet<string>
@@ -40,7 +40,7 @@ public class PrecachedSound : IDisposable
 
     public PrecachedSound(string path, WaveStream stream = null, params string[] names)
     {
-        Path = path;
+        RelativePath = path;
         Stream = stream;
 
         this.names = names != null && names.Length > 0 ? new HashSet<string>(names) : new HashSet<string>();
@@ -65,18 +65,18 @@ public class PrecachedSound : IDisposable
     public void Deconstruct(out IReadOnlySet<string> names, out string path)
     {
         names = Names;
-        path = Path;
+        path = RelativePath;
     }
 
     public void Deconstruct(out IReadOnlySet<string> names, out string path, out WaveStream stream)
     {
         names = Names;
-        path = Path;
+        path = RelativePath;
         stream = Stream;
     }
 
     public override string ToString()
     {
-        return $"{{Path={Path} Names=[{names}]}}";
+        return $"{{Relative Path={RelativePath} Names=[{names}]}}";
     }
 }

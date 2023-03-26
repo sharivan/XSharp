@@ -15,29 +15,24 @@ public abstract class Weapon : Sprite
     [Precache]
     internal static void Precache()
     {
-        Engine.PrecacheSound("Enemy Helmet Hit", @"resources\sounds\mmx\29 - MMX - Enemy Helmet Hit.wav");
+        Engine.PrecacheSound("Enemy Helmet Hit", @"X1\29 - MMX - Enemy Helmet Hit.wav");
 
-        var xWeaponsSpriteSheet = Engine.CreateSpriteSheet("X Weapons", true, true);
+        var spriteSheet = Engine.CreateSpriteSheet("X Weapons", true, true);
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.X.Weapons.png");
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.X.Weapons.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            xWeaponsSpriteSheet.CurrentTexture = texture;
-        }
-
-        var sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShot", 0);
+        var sequence = spriteSheet.AddFrameSquence("LemonShot", 0);
         sequence.OriginOffset = -LEMON_HITBOX.Origin - LEMON_HITBOX.Mins;
         sequence.Hitbox = LEMON_HITBOX;
         sequence.AddFrame(0, -1, 123, 253, 8, 6);
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("LemonShotExplode");
+        sequence = spriteSheet.AddFrameSquence("LemonShotExplode");
         sequence.OriginOffset = -LEMON_HITBOX.Origin - LEMON_HITBOX.Mins;
         sequence.Hitbox = LEMON_HITBOX;
         sequence.AddFrame(2, 1, 137, 250, 12, 12, 4);
         sequence.AddFrame(2, 2, 154, 249, 13, 13, 2);
         sequence.AddFrame(3, 3, 172, 248, 15, 15);
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotFiring");
+        sequence = spriteSheet.AddFrameSquence("SemiChargedShotFiring");
         sequence.OriginOffset = -SEMI_CHARGED_HITBOX1.Origin - SEMI_CHARGED_HITBOX1.Mins;
         sequence.Hitbox = SEMI_CHARGED_HITBOX1;
         sequence.AddFrame(-5, -2, 128, 563, 14, 14);
@@ -50,7 +45,7 @@ public abstract class Weapon : Sprite
         sequence.AddFrame(-11, 3, 147, 558, 24, 24);
         sequence.AddFrame(-11, -3, 176, 564, 28, 12);
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShot");
+        sequence = spriteSheet.AddFrameSquence("SemiChargedShot");
         sequence.OriginOffset = -SEMI_CHARGED_HITBOX3.Origin - SEMI_CHARGED_HITBOX3.Mins;
         sequence.Hitbox = SEMI_CHARGED_HITBOX3;
         sequence.AddFrame(3, -3, 176, 564, 28, 12);
@@ -62,14 +57,14 @@ public abstract class Weapon : Sprite
         sequence.AddFrame(9, -3, 333, 564, 38, 12);
         sequence.AddFrame(7, -1, 379, 562, 38, 16, 2);
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotHit");
+        sequence = spriteSheet.AddFrameSquence("SemiChargedShotHit");
         sequence.OriginOffset = -SEMI_CHARGED_HITBOX2.Origin - SEMI_CHARGED_HITBOX2.Mins;
         sequence.Hitbox = SEMI_CHARGED_HITBOX2;
         sequence.AddFrame(-9, -6, 424, 563, 14, 14, 2);
         sequence.AddFrame(-9, -1, 443, 558, 24, 24, 4);
         sequence.AddFrame(-9, -6, 424, 563, 14, 14, 4);
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SemiChargedShotExplode");
+        sequence = spriteSheet.AddFrameSquence("SemiChargedShotExplode");
         sequence.OriginOffset = -SEMI_CHARGED_HITBOX1.Origin - SEMI_CHARGED_HITBOX1.Mins;
         sequence.AddFrame(487, 273, 16, 16);
         sequence.AddFrame(507, 269, 24, 24);
@@ -78,7 +73,7 @@ public abstract class Weapon : Sprite
         sequence.AddFrame(581, 269, 24, 24);
         sequence.AddFrame(609, 269, 24, 24);
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotFiring");
+        sequence = spriteSheet.AddFrameSquence("ChargedShotFiring");
         sequence.OriginOffset = -CHARGED_HITBOX1.Origin - CHARGED_HITBOX1.Mins;
         sequence.Hitbox = CHARGED_HITBOX1;
         sequence.AddFrame(-3, 1, 144, 440, 14, 20);
@@ -87,21 +82,21 @@ public abstract class Weapon : Sprite
         sequence.Hitbox = CHARGED_HITBOX2;
         sequence.AddFrame(-25, -10, 170, 321, 23, 16, 3);
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShot", 0);
+        sequence = spriteSheet.AddFrameSquence("ChargedShot", 0);
         sequence.OriginOffset = -CHARGED_HITBOX2.Origin - CHARGED_HITBOX2.Mins;
         sequence.Hitbox = CHARGED_HITBOX2;
         sequence.AddFrame(7, -2, 164, 433, 47, 32, 2, true);
         sequence.AddFrame(2, -2, 216, 433, 40, 32, 2);
         sequence.AddFrame(9, -2, 261, 432, 46, 32, 2);
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotHit");
+        sequence = spriteSheet.AddFrameSquence("ChargedShotHit");
         sequence.OriginOffset = -CHARGED_HITBOX2.Origin - CHARGED_HITBOX2.Mins;
         sequence.Hitbox = CHARGED_HITBOX2;
         sequence.AddFrame(-26, -8, 315, 438, 14, 20, 2);
         sequence.AddFrame(-25, -4, 336, 434, 24, 28, 2);
         sequence.AddFrame(-26, -8, 315, 438, 14, 20, 4);
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("ChargedShotExplode");
+        sequence = spriteSheet.AddFrameSquence("ChargedShotExplode");
         sequence.OriginOffset = -CHARGED_HITBOX2.Origin - CHARGED_HITBOX2.Mins;
         sequence.AddFrame(368, 434, 28, 28);
         sequence.AddFrame(400, 435, 26, 26);
@@ -112,7 +107,7 @@ public abstract class Weapon : Sprite
 
         var smallHealthRecoverDroppingCollisionBox = new Box(Vector.NULL_VECTOR, (-4, -8), (4, 0));
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverDropping");
+        sequence = spriteSheet.AddFrameSquence("SmallHealthRecoverDropping");
         sequence.OriginOffset = -smallHealthRecoverDroppingCollisionBox.Mins;
         sequence.Hitbox = smallHealthRecoverDroppingCollisionBox;
         sequence.AddFrame(0, 0, 6, 138, 8, 8);
@@ -121,7 +116,7 @@ public abstract class Weapon : Sprite
 
         var smallHealthRecoverIdleCollisionBox = new Box(Vector.NULL_VECTOR, (-5, -8), (5, 0));
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallHealthRecoverIdle");
+        sequence = spriteSheet.AddFrameSquence("SmallHealthRecoverIdle");
         sequence.OriginOffset = -smallHealthRecoverIdleCollisionBox.Mins;
         sequence.Hitbox = smallHealthRecoverIdleCollisionBox;
         sequence.AddFrame(0, 0, 22, 138, 10, 8, 1, true);
@@ -132,7 +127,7 @@ public abstract class Weapon : Sprite
 
         var bigHealthRecoverDroppingCollisionBox = new Box(Vector.NULL_VECTOR, (-7, -12), (7, 0));
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("BigHealthRecoverDropping");
+        sequence = spriteSheet.AddFrameSquence("BigHealthRecoverDropping");
         sequence.OriginOffset = -bigHealthRecoverDroppingCollisionBox.Mins;
         sequence.Hitbox = bigHealthRecoverDroppingCollisionBox;
         sequence.AddFrame(0, 0, 3, 150, 14, 12);
@@ -141,7 +136,7 @@ public abstract class Weapon : Sprite
 
         var bigHealthRecoverIdleCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -12), (8, 0));
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("BigHealthRecoverIdle");
+        sequence = spriteSheet.AddFrameSquence("BigHealthRecoverIdle");
         sequence.OriginOffset = -bigHealthRecoverIdleCollisionBox.Mins;
         sequence.Hitbox = bigHealthRecoverIdleCollisionBox;
         sequence.AddFrame(0, 0, 19, 150, 16, 12, 1, true);
@@ -152,7 +147,7 @@ public abstract class Weapon : Sprite
 
         var smallAmmoRecoverCollisionBox = new Box(Vector.NULL_VECTOR, (-4, -8), (4, 0));
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SmallAmmoRecover");
+        sequence = spriteSheet.AddFrameSquence("SmallAmmoRecover");
         sequence.OriginOffset = -smallAmmoRecoverCollisionBox.Mins;
         sequence.Hitbox = smallAmmoRecoverCollisionBox;
         sequence.AddFrame(0, 0, 84, 138, 8, 8, 2, true);
@@ -162,7 +157,7 @@ public abstract class Weapon : Sprite
 
         var bigAmmoRecoverCollisionBox = new Box(Vector.NULL_VECTOR, (-7, -14), (7, 0));
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("BigAmmoRecover");
+        sequence = spriteSheet.AddFrameSquence("BigAmmoRecover");
         sequence.OriginOffset = -bigAmmoRecoverCollisionBox.Mins;
         sequence.Hitbox = bigAmmoRecoverCollisionBox;
         sequence.AddFrame(0, 0, 81, 148, 14, 14, 2, true);
@@ -172,7 +167,7 @@ public abstract class Weapon : Sprite
 
         var lifeUpCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -16), (8, 0));
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("LifeUp");
+        sequence = spriteSheet.AddFrameSquence("LifeUp");
         sequence.OriginOffset = -lifeUpCollisionBox.Mins;
         sequence.Hitbox = lifeUpCollisionBox;
         sequence.AddFrame(0, 0, 137, 146, 16, 16, 4, true);
@@ -180,7 +175,7 @@ public abstract class Weapon : Sprite
 
         var heartTankCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -17), (8, 0));
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("HeartTank");
+        sequence = spriteSheet.AddFrameSquence("HeartTank");
         sequence.OriginOffset = -heartTankCollisionBox.Mins;
         sequence.Hitbox = heartTankCollisionBox;
         sequence.AddFrame(-1, 0, 183, 147, 14, 15, 11, true);
@@ -190,13 +185,13 @@ public abstract class Weapon : Sprite
 
         var subTankCollisionBox = new Box(Vector.NULL_VECTOR, (-8, -19), (8, 0));
 
-        sequence = xWeaponsSpriteSheet.AddFrameSquence("SubTank");
+        sequence = spriteSheet.AddFrameSquence("SubTank");
         sequence.OriginOffset = -subTankCollisionBox.Mins;
         sequence.Hitbox = subTankCollisionBox;
         sequence.AddFrame(2, 0, 247, 143, 20, 19, 4, true);
         sequence.AddFrame(2, 0, 269, 143, 20, 19, 4);
 
-        xWeaponsSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 

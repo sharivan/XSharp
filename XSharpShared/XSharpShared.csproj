@@ -4,6 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>annotations</Nullable>
+    <RootNamespace>XSharp</RootNamespace>
   </PropertyGroup>
 
 </Project>

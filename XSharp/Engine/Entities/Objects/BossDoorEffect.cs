@@ -12,22 +12,17 @@ internal class BossDoorEffect : SpriteEffect, IStateEntity<BossDoorState>
     [Precache]
     new internal static void Precache()
     {
-        var bossDoorSpriteSheet = Engine.CreateSpriteSheet("Boos Door", true, true);
-
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.Objects.BossDoor.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            bossDoorSpriteSheet.CurrentTexture = texture;
-        }
+        var spriteSheet = Engine.CreateSpriteSheet("Boos Door", true, true);
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Objects.BossDoor.png");
 
         var bossDoorHitbox = new Box(Vector.NULL_VECTOR, (-8, -23), (24, 25));
 
-        var sequence = bossDoorSpriteSheet.AddFrameSquence("Closed");
+        var sequence = spriteSheet.AddFrameSquence("Closed");
         sequence.OriginOffset = -bossDoorHitbox.Mins;
         sequence.Hitbox = bossDoorHitbox;
         sequence.AddFrame(0, 0, 32, 0, 32, 48, 1, true);
 
-        sequence = bossDoorSpriteSheet.AddFrameSquence("Opening");
+        sequence = spriteSheet.AddFrameSquence("Opening");
         sequence.OriginOffset = -bossDoorHitbox.Mins;
         sequence.Hitbox = bossDoorHitbox;
         sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
@@ -47,12 +42,12 @@ internal class BossDoorEffect : SpriteEffect, IStateEntity<BossDoorState>
         sequence.AddFrame(0, 0, 256, 0, 32, 48, 4);
         sequence.AddFrame(0, 0, 288, 0, 32, 48, 4);
 
-        sequence = bossDoorSpriteSheet.AddFrameSquence("PlayerCrossing");
+        sequence = spriteSheet.AddFrameSquence("PlayerCrossing");
         sequence.OriginOffset = -bossDoorHitbox.Mins;
         sequence.Hitbox = bossDoorHitbox;
         sequence.AddFrame(0, 0, 32, 48, 1, true);
 
-        sequence = bossDoorSpriteSheet.AddFrameSquence("Closing");
+        sequence = spriteSheet.AddFrameSquence("Closing");
         sequence.OriginOffset = -bossDoorHitbox.Mins;
         sequence.Hitbox = bossDoorHitbox;
         sequence.AddFrame(0, 0, 288, 0, 32, 48, 4);
@@ -72,7 +67,7 @@ internal class BossDoorEffect : SpriteEffect, IStateEntity<BossDoorState>
         sequence.AddFrame(0, 0, 96, 0, 32, 48, 2);
         sequence.AddFrame(0, 0, 64, 0, 32, 48, 4);
 
-        bossDoorSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 

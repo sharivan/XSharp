@@ -64,7 +64,7 @@ public class RayBitShot : Enemy
 
         CheckCollisionWithWorld = false;
         ContactDamage = 0;
-        IgnoreShots = true;
+        HitResponse = HitResponse.IGNORE;
         Invincible = true;
 
         SetCurrentAnimationByName("Shot");

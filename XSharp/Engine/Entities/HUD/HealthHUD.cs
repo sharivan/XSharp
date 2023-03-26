@@ -27,51 +27,46 @@ public class HealthHUD : HUD
     [Precache]
     internal static void Precache()
     {
-        var hpSpriteSheet = Engine.CreateSpriteSheet("HP", true, true);
+        var spriteSheet = Engine.CreateSpriteSheet("HP", true, true);
+        spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.HUD.HP.png");
 
-        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("XSharp.resources.sprites.HUD.HP.png"))
-        {
-            var texture = Engine.CreateImageTextureFromStream(stream);
-            hpSpriteSheet.CurrentTexture = texture;
-        }
-
-        var sequence = hpSpriteSheet.AddFrameSquence("HPTop");
+        var sequence = spriteSheet.AddFrameSquence("HPTop");
         sequence.AddFrame(0, 0, 14, 4, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("HPBottom");
+        sequence = spriteSheet.AddFrameSquence("HPBottom");
         sequence.AddFrame(0, 4, 14, 16, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("HPMiddle");
+        sequence = spriteSheet.AddFrameSquence("HPMiddle");
         sequence.AddFrame(0, 20, 14, 2, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("HPMiddleEmpty");
+        sequence = spriteSheet.AddFrameSquence("HPMiddleEmpty");
         sequence.AddFrame(0, 22, 14, 2, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("RideArmor");
+        sequence = spriteSheet.AddFrameSquence("RideArmor");
         sequence.AddFrame(14, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("Zero");
+        sequence = spriteSheet.AddFrameSquence("Zero");
         sequence.AddFrame(26, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("X1Boss");
+        sequence = spriteSheet.AddFrameSquence("X1Boss");
         sequence.AddFrame(38, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("Boss");
+        sequence = spriteSheet.AddFrameSquence("Boss");
         sequence.AddFrame(50, 0, 12, 11, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("Doppler");
+        sequence = spriteSheet.AddFrameSquence("Doppler");
         sequence.AddFrame(14, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("W");
+        sequence = spriteSheet.AddFrameSquence("W");
         sequence.AddFrame(26, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("DopplerPrototype");
+        sequence = spriteSheet.AddFrameSquence("DopplerPrototype");
         sequence.AddFrame(38, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
 
-        sequence = hpSpriteSheet.AddFrameSquence("X");
+        sequence = spriteSheet.AddFrameSquence("X");
         sequence.AddFrame(50, 11, 12, 11, 1, true, OriginPosition.LEFT_TOP);
 
-        hpSpriteSheet.ReleaseCurrentTexture();
+        spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
 
