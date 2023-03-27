@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -27,6 +28,7 @@ using XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 using XSharp.Engine.Entities.Enemies.DigLabour;
 using XSharp.Engine.Entities.Enemies.Flammingle;
 using XSharp.Engine.Entities.Enemies.GunVolt;
+using XSharp.Engine.Entities.Enemies.MetallC15;
 using XSharp.Engine.Entities.Enemies.RayBit;
 using XSharp.Engine.Entities.Enemies.Snowball;
 using XSharp.Engine.Entities.Enemies.SnowShooter;
@@ -2194,16 +2196,64 @@ public class GameEngine : IRenderable, IRenderTarget
                 foreach (var added in spawnedEntities)
                 {
                     aliveEntities.Add(added);
+                    added.NotifySpawn();
 
                     if (added is Sprite sprite)
                     {
                         if (sprite is HUD hud)
-                            huds[sprite.Layer].Add(hud);
+                        {
+                            int newLayer = hud.Layer;
+                            if (newLayer < 0 || newLayer >= huds.Length)
+                                throw new IndexOutOfRangeException($"Invalid layer '{newLayer}'.");
+
+                            var layer = huds[newLayer];
+
+                            if (hud.priority >= 0)
+                            {
+                                layer.Insert(hud.priority, hud);
+
+                                for (int i = hud.priority + 1; i < layer.Count; i++)
+                                {
+                                    var otherHUD = layer[i];
+                                    otherHUD.priority = i;
+                                }
+                            }
+                            else
+                            {
+                                hud.priority = layer.Count;
+                                layer.Add(hud);
+                            }
+
+                            hud.priority = layer.Count - 1;
+                        }
                         else
-                            sprites[sprite.Layer].Add(sprite);
+                        {
+                            int newLayer = sprite.Layer;
+                            if (newLayer < 0 || newLayer >= huds.Length)
+                                throw new IndexOutOfRangeException($"Invalid layer '{newLayer}'.");
+
+                            var layer = sprites[newLayer];
+
+                            if (sprite.priority >= 0)
+                            {
+                                layer.Insert(sprite.priority, sprite);
+
+                                for (int i = sprite.priority + 1; i < layer.Count; i++)
+                                {
+                                    var otherSprite = layer[i];
+                                    otherSprite.priority = i;
+                                }
+                            }
+                            else
+                            {
+                                sprite.priority = layer.Count;
+                                layer.Add(sprite);
+                            }
+
+                            sprite.priority = layer.Count - 1;
+                        }
                     }
 
-                    added.NotifySpawn();
                     added.PostSpawn();
                 }
 
@@ -2340,6 +2390,22 @@ public class GameEngine : IRenderable, IRenderTarget
     public RectangleF WorldBoxToScreen(Box box)
     {
         return ToRectangleF((box.LeftTopOrigin().RoundOriginToFloor() - Camera.LeftTop.RoundToFloor()) * DrawScale + drawBox.LeftTop);
+    }
+
+    public IReadOnlyList<Sprite> GetSprites(int layer)
+    {
+        if (layer < 0 || layer >= sprites.Length)
+            throw new IndexOutOfRangeException($"Invalid layer '{layer}'.");
+
+        return sprites[layer];
+    }
+
+    public IReadOnlyList<HUD> GetHUDs(int layer)
+    {
+        if (layer < 0 || layer >= huds.Length)
+            throw new IndexOutOfRangeException($"Invalid layer '{layer}'.");
+
+        return huds[layer];
     }
 
     public void TogglePauseGame()
@@ -2998,9 +3064,8 @@ public class GameEngine : IRenderable, IRenderTarget
         if (drawSprites)
         {
             // Render down layer sprites
-            for (int i = sprites[0].Count - 1; i >= 0; i--)
+            foreach (var sprite in sprites[0])
             {
-                var sprite = sprites[0][i];
                 if (!sprite.Alive || !sprite.Visible)
                     continue;
 
@@ -3022,9 +3087,8 @@ public class GameEngine : IRenderable, IRenderTarget
         if (drawSprites)
         {
             // Render up layer sprites
-            for (int i = sprites[1].Count - 1; i >= 0; i--)
+            foreach (var sprite in sprites[1])
             {
-                var sprite = sprites[1][i];
                 if (!sprite.Alive || !sprite.Visible)
                     continue;
 
@@ -3941,6 +4005,7 @@ public class GameEngine : IRenderable, IRenderTarget
                 0x29 when mmx.Type == 0 => AddGunVolt(subid, origin),
                 0x2C when mmx.Type == 1 => AddProbe8201U(subid, origin),
                 0x2D when mmx.Type == 0 => AddBattonBoneG(subid, origin),
+                0x2E when mmx.Type == 0 => AddMetallC15(subid, origin),
                 0x2F => AddArmorSoldier(subid, origin),
                 0x30 when mmx.Type == 0 => AddDigLabour(subid, origin),
                 0x36 when mmx.Type == 0 => AddJamminger(subid, origin),
@@ -4318,6 +4383,18 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+
+    public EntityReference<MetallC15> AddMetallC15(ushort subid, Vector origin)
+    {
+        MetallC15 entity = Entities.Create<MetallC15>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
     public ArmorSoldier AddArmorSoldier(ushort subid, Vector origin)
     {
         ArmorSoldier entity = Entities.Create<ArmorSoldier>(new
@@ -4432,9 +4509,33 @@ public class GameEngine : IRenderable, IRenderTarget
         if (entity is Sprite sprite)
         {
             if (sprite is HUD hud)
-                huds[sprite.Layer].Remove(hud);
+            {
+                var layer = huds[sprite.Layer];
+                layer.Remove(hud);
+
+                int priority = hud.priority;
+                hud.priority = -1;
+
+                for (int i = priority; i < layer.Count; i++)
+                {
+                    hud = layer[i];
+                    hud.priority = i;
+                }
+            }
             else
-                sprites[sprite.Layer].Remove(sprite);
+            {
+                var layer = sprites[sprite.Layer];
+                layer.Remove(sprite);
+
+                int priority = sprite.priority;
+                sprite.priority = -1;
+
+                for (int i = priority; i < layer.Count; i++)
+                {
+                    sprite = layer[i];
+                    sprite.priority = i;
+                }
+            }
         }
 
         entity.Cleanup();
@@ -5330,17 +5431,98 @@ public class GameEngine : IRenderable, IRenderTarget
         FadingControl.Start(Color.Black, 60, ReloadLevel);
     }
 
-    internal void UpdateSpriteLayer(Sprite sprite, int layer)
+    internal void UpdateSpriteLayer(Sprite sprite, int newLayer)
     {
         if (sprite is HUD hud)
         {
-            huds[hud.Layer].Remove(hud);
-            huds[layer].Add(hud);
+            if (newLayer < 0 || newLayer >= huds.Length)
+                throw new IndexOutOfRangeException($"Invalid layer '{newLayer}'.");
+
+            var layer = huds[hud.Layer];
+            layer.Remove(hud);
+
+            for (int i = hud.Priority; i < layer.Count; i++)
+            {
+                var otherHUD = layer[i];
+                otherHUD.priority = i;
+            }
+
+            layer = huds[newLayer];
+            layer.Add(hud);
+            hud.priority = layer.Count - 1;
         }
         else
         {
-            sprites[sprite.Layer].Remove(sprite);
-            sprites[layer].Add(sprite);
+            if (newLayer < 0 || newLayer >= sprites.Length)
+                throw new IndexOutOfRangeException($"Invalid layer '{newLayer}'.");
+
+            var layer = sprites[sprite.Layer];
+            layer.Remove(sprite);
+
+            for (int i = sprite.Priority; i < layer.Count; i++)
+            {
+                var otherSprite = layer[i];
+                otherSprite.priority = i;
+            }
+
+            layer = sprites[newLayer];
+            layer.Add(sprite);
+            sprite.priority = layer.Count - 1;
+        }
+
+        sprite.layer = newLayer;
+    }
+
+    internal void UpdateSpritePriority(Sprite sprite, int priority)
+    {       
+        int layerIndex = sprite.Layer;
+        int lastPriority = sprite.Priority;
+
+        if (sprite is HUD hud)
+        {
+            var layer = huds[layerIndex];
+
+            if (priority < 0)
+                priority = 0;
+            else if (priority >= layer.Count)
+                priority = layer.Count - 1;
+
+            int start = System.Math.Min(priority, lastPriority);
+            int end = System.Math.Max(priority, lastPriority);
+
+            if (layer.Contains(hud))
+                layer.Remove(hud);
+
+            layer.Insert(priority, hud);
+
+            for (int i = start; i <= end; i++)
+            {
+                hud = layer[i];
+                hud.priority = i;
+            }
+        }
+        else
+        {
+            var layer = sprites[layerIndex];
+
+            if (priority < 0)
+                priority = 0;
+            else if (priority >= layer.Count)
+                priority = layer.Count - 1;
+
+            if (layer.Contains(sprite))
+                layer.Remove(sprite);
+
+            int start = System.Math.Min(priority, lastPriority);
+            int end = System.Math.Max(priority, lastPriority);
+
+            layer.Insert(priority, sprite);
+
+            for (int i = start; i <= end; i++)
+            {
+                sprite = layer[i];
+                sprite.priority = i;
+            }
         }
     }
 

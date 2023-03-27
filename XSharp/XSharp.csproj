@@ -209,18 +209,6 @@
   
   <ItemGroup>
     <Folder Include="Engine\Entities\Armors\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\BoomerKuwanger\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\ArmoredArmadillo\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\FlameMammoth\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\LauchOctupus\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\Bosspider\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\DRex\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\Velguarder\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\RangdaBangda\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\Vile\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\StingChameleon\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\SparkMandrill\" />
-    <Folder Include="Engine\Entities\Enemies\Bosses\StormEagle\" />
     <Folder Include="Engine\Entities\Misc\" />
     <Folder Include="Assets\Maps\" />
     <Folder Include="sstates\" />

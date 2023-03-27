@@ -46,7 +46,8 @@ public abstract class Sprite : Entity, IRenderable
     private SpriteSheet spriteSheet = null;
 
     private bool visible = true;
-    private int layer = 0;
+    internal int layer = 0;
+    internal int priority = -1;
 
     private (string name, int count)[] animationNames;
     private AnimationReference currentAnimation = null;
@@ -91,6 +92,7 @@ public abstract class Sprite : Entity, IRenderable
     public bool Visible
     {
         get => visible;
+
         set
         {
             visible = value;
@@ -101,12 +103,26 @@ public abstract class Sprite : Entity, IRenderable
     public int Layer
     {
         get => layer;
+
         set
         {
-            if (Alive && layer != value)
+            if (!Alive)
+                layer = value;
+            else if (layer != value)
                 Engine.UpdateSpriteLayer(this, value);
+        }
+    }
 
-            layer = value;
+    public int Priority
+    {
+        get => priority;
+
+        set
+        {
+            if (!Alive)
+                priority = value;
+            else if (priority != value)
+                Engine.UpdateSpritePriority(this, value);
         }
     }
 
@@ -989,6 +1005,17 @@ public abstract class Sprite : Entity, IRenderable
             Spawn();
     }
 
+    public void BringToFront()
+    {
+        int count = this is HUD.HUD ? Engine.GetHUDs(Layer).Count : Engine.GetSprites(Layer).Count;
+        Priority = count - 1;
+    }
+
+    public void SendToBack()
+    {
+        Priority = 0;
+    }
+
     protected virtual bool OnTakeDamage(Sprite attacker, ref FixedSingle damage)
     {
         return !Invincible && !NoClip;
@@ -1667,10 +1694,10 @@ public abstract class Sprite : Entity, IRenderable
         LandedEvent?.Invoke(this);
     }
 
+    // TODO : Implement call to this
     protected bool CollisionCheck(Sprite sprite)
-    {
-        // TODO : Implement call to this
-        return ShouldCollide(sprite) || sprite.ShouldCollide(this);
+    {        
+        return ShouldCollide(sprite) && sprite.ShouldCollide(this);
     }
 
     public Animation GetAnimation(int index)

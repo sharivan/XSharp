@@ -145,6 +145,8 @@ public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
         AutoAdjustOnTheFloor = false;
         CollisionData = CollisionData.SOLID;
 
+        SendToBack();
+
         if (TrunkBase.FirstRegenerating)
         {
             State = AxeMaxTrunkState.IDLE;

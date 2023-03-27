@@ -553,19 +553,19 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                             {
                                 switch (value)
                                 {
-                                    case >= 0 and < 2:
+                                    case >= 0 and < 4:
                                         State = ChillPenguinState.SLIDING;
                                         break;
 
-                                    case >= 2 and < 4:
+                                    case >= 4 and < 8:
                                         State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
-                                    case >= 4 and < 6:
+                                    case >= 8 and < 10:
                                         State = ChillPenguinState.JUMPING;
                                         break;
 
-                                    case >= 6 and < 12:
+                                    case >= 10 and < 12:
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
@@ -592,19 +592,19 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                             {
                                 switch (value)
                                 {
-                                    case >= 0 and < 2:
+                                    case >= 0 and < 4:
                                         State = ChillPenguinState.SLIDING;
                                         break;
 
-                                    case >= 2 and < 4:
+                                    case >= 4 and < 6:
                                         State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
-                                    case >= 4 and < 6:
+                                    case >= 6 and < 10:
                                         State = ChillPenguinState.JUMPING;
                                         break;
 
-                                    case >= 6 and < 14:
+                                    case >= 10 and < 14:
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
@@ -639,11 +639,11 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
-                                    case >= 6 and < 8:
+                                    case >= 6 and < 10:
                                         State = ChillPenguinState.JUMPING;
                                         break;
 
-                                    case >= 8 and < 12:
+                                    case >= 10 and < 12:
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
@@ -674,11 +674,11 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         State = ChillPenguinState.SLIDING;
                                         break;
 
-                                    case >= 4 and < 6:
+                                    case >= 4 and < 8:
                                         State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
-                                    case >= 6 and < 12:
+                                    case >= 8 and < 12:
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
@@ -713,7 +713,11 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                                         State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
-                                    case >= 6 and < 12:
+                                    case >= 6 and < 10:
+                                        State = ChillPenguinState.JUMPING;
+                                        break;
+
+                                    case >= 10 and < 12:
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
@@ -741,15 +745,19 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                             {
                                 switch (value)
                                 {
-                                    case >= 0 and < 2:
+                                    case >= 0 and < 4:
                                         State = ChillPenguinState.SLIDING;
                                         break;
 
-                                    case >= 2 and < 6:
+                                    case >= 4 and < 8:
                                         State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
-                                    case >= 6 and < 12:
+                                    case >= 8 and < 10:
+                                        State = ChillPenguinState.JUMPING;
+                                        break;
+
+                                    case >= 10 and < 12:
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
@@ -776,19 +784,19 @@ public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
                             {
                                 switch (value)
                                 {
-                                    case >= 0 and < 2:
+                                    case >= 0 and < 4:
                                         State = ChillPenguinState.SLIDING;
                                         break;
 
-                                    case >= 2 and < 4:
+                                    case >= 4 and < 8:
                                         State = ChillPenguinState.SHOOTING_ICE;
                                         break;
 
-                                    case >= 4 and < 8:
+                                    case >= 8 and < 10:
                                         State = ChillPenguinState.JUMPING;
                                         break;
 
-                                    case >= 8 and < 12:
+                                    case >= 10 and < 12:
                                         if (AtLeastOneSculpturesAlive())
                                             State = ChillPenguinState.HANGING;
                                         else
