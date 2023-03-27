@@ -2008,7 +2008,8 @@ public abstract class Sprite : Entity, IRenderable
 
     public void FaceToPlayer()
     {
-        FaceToEntity(Engine.Player);
+        if (Engine.Player != null)
+            FaceToEntity(Engine.Player);
     }
 
     public void FaceToScreenCenter()

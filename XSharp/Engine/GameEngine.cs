@@ -24,6 +24,7 @@ using XSharp.Engine.Entities.Enemies.AxeMax;
 using XSharp.Engine.Entities.Enemies.BombBeen;
 using XSharp.Engine.Entities.Enemies.Bosses;
 using XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
+using XSharp.Engine.Entities.Enemies.DigLabour;
 using XSharp.Engine.Entities.Enemies.Flammingle;
 using XSharp.Engine.Entities.Enemies.GunVolt;
 using XSharp.Engine.Entities.Enemies.RayBit;
@@ -3941,6 +3942,7 @@ public class GameEngine : IRenderable, IRenderTarget
                 0x2C when mmx.Type == 1 => AddProbe8201U(subid, origin),
                 0x2D when mmx.Type == 0 => AddBattonBoneG(subid, origin),
                 0x2F => AddArmorSoldier(subid, origin),
+                0x30 when mmx.Type == 0 => AddDigLabour(subid, origin),
                 0x36 when mmx.Type == 0 => AddJamminger(subid, origin),
                 0x3A when mmx.Type == 0 => AddTombot(subid, origin),
                 0x4D => AddCapsule(subid, origin),
@@ -4319,6 +4321,17 @@ public class GameEngine : IRenderable, IRenderTarget
     public ArmorSoldier AddArmorSoldier(ushort subid, Vector origin)
     {
         ArmorSoldier entity = Entities.Create<ArmorSoldier>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<DigLabour> AddDigLabour(ushort subid, Vector origin)
+    {
+        DigLabour entity = Entities.Create<DigLabour>(new
         {
             Origin = origin
         });

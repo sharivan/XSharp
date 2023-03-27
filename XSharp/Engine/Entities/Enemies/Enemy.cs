@@ -60,6 +60,12 @@ public abstract class Enemy : Sprite
         set;
     } = true;
 
+    public bool AlwaysFaceToPlayer
+    {
+        get;
+        set;
+    } = false;
+
     public HitResponse HitResponse
     {
         get;
@@ -262,6 +268,14 @@ public abstract class Enemy : Sprite
         random -= SmallHealthDropOdd;
         if (random < SmallAmmoDropOdd)
             Engine.DropSmallAmmoRecover(Origin, ITEM_DURATION_FRAMES);
+    }
+
+    protected override void OnThink()
+    {
+        base.OnThink();
+
+        if (AlwaysFaceToPlayer)
+            FaceToPlayer();
     }
 
     protected override void OnDeath()

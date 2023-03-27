@@ -44,7 +44,6 @@ public class GunVolt : Enemy, IStateEntity<GunVoltState>
     public static readonly Box HITBOX = ((0, 1), (-16, -29), (16, 29));
     public static readonly Box COLLISION_BOX = ((0, 0), (-16, -29), (16, 29));
 
-    public static readonly FixedSingle ATTACK_DISTANCE_X = 104;
     public const int SHORT_IDLE_FRAMES = 40;
     public const int LONG_IDLE_FRAMES = 100;
     public const int PRE_SHOOTING_FRAMES = 72;
