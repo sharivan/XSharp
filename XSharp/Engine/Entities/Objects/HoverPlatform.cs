@@ -43,7 +43,6 @@ public class HoverPlatform : Sprite, IStateEntity<HoverPlatformState>, IControll
     #endregion
 
     private EntityReference<TurnCannon> turnCannon;
-    private HoverPlatformState lastState;
 
     public HoverPlatformState State
     {

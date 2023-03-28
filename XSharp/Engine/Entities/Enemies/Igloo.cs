@@ -88,10 +88,6 @@ public class Igloo : Enemy
         return tombot;
     }
 
-    internal void NotifyTombotDeath(EntityReference<Tombot.Tombot> tombot)
-    {
-    }
-
     protected override void OnBroke()
     {
         base.OnBroke();

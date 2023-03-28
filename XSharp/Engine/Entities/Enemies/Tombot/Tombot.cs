@@ -279,11 +279,4 @@ public class Tombot : Enemy, IStateEntity<TombotState>
 
         State = TombotState.LIFT_OFF;
     }
-
-    protected override void OnDeath()
-    {
-        base.OnDeath();
-
-        Igloo?.NotifyTombotDeath(this);
-    }
 }

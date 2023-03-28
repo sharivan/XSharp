@@ -7,7 +7,10 @@
     MegaEDX v1.3: https://github.com/rbrummett/megaedx_v1.3
  */
 
+using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace XSharp.MegaEDX;
 

@@ -7,6 +7,8 @@
     MegaEDX v1.3: https://github.com/rbrummett/megaedx_v1.3
  */
 
+using System;
+
 namespace XSharp.MegaEDX;
 
 public struct MatchPair

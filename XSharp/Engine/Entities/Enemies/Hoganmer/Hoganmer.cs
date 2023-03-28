@@ -37,7 +37,7 @@ public class Hoganmer : Enemy, IStateEntity<HoganmerState>
     };
 
     public const int HEALTH = 16;
-    public static readonly FixedSingle CONTACT_DAMAGE = 2;
+    public static readonly FixedSingle CONTACT_DAMAGE = 3;
     public static readonly Box HITBOX = ((1, 2), (-7, -14), (7, 14));
     public static readonly Box COLLISION_BOX = ((0, 1), (-7, -15), (7, 15));
     public static readonly FixedSingle COLLISION_BOX_LEGS_HEIGHT = 6;
@@ -49,7 +49,7 @@ public class Hoganmer : Enemy, IStateEntity<HoganmerState>
     public const int FRAME_TO_THROW_SPIKE_BALL = 18;
     public const int FRAME_TO_DISABLE_SHIELD = 19;
 
-    public static readonly Box SHIELD_HITBOX = ((-15, 0), (-6, -16), (6, 16));
+    public static readonly Box SHIELD_HITBOX = ((15, 0), (-6, -16), (6, 16));
 
     public static readonly FixedSingle SPIKE_BALL_INITIAL_SPEED = 1024 / 256.0;
     public static readonly FixedSingle SPIKE_BALL_DESACELERATION = 16 / 256.0;
@@ -140,11 +140,6 @@ public class Hoganmer : Enemy, IStateEntity<HoganmerState>
         RegisterState(HoganmerState.IDLE, OnStartIdle, OnIdle, null, "Idle");
         RegisterState(HoganmerState.ATTACKING, OnAttacking, "Attacking");
         RegisterState(HoganmerState.POST_ATTACKING, OnPostAttacking, "PostAttacking");
-
-        shield = Engine.Entities.Create<HoganmerShieldHitbox>(new
-        {
-            KillOnOffscreen = false
-        });
     }
 
     private void OnStartIdle(EntityState state, EntityState lastState)
@@ -197,11 +192,11 @@ public class Hoganmer : Enemy, IStateEntity<HoganmerState>
 
         spikeBall = Engine.Entities.Create<HoganmerSpikeBall>(new
         {
-            Respawnable = true,
-            Parent = this,
+            KillOnOffscreen = false,
             Origin = throwOrigin,
             Direction,
-            Velocity = velocity
+            Velocity = velocity,
+            Parent = this,
         });
 
         SpikeBall.Spawn();
@@ -237,9 +232,14 @@ public class Hoganmer : Enemy, IStateEntity<HoganmerState>
         BigAmmoDropOdd = 175; // 1.75%
         LifeUpDropOdd = 25; // 0.25%
 
-        Shield.Origin = Origin;
-        Shield.Direction = Direction;
-        Shield.Parent = this;
+        shield = Engine.Entities.Create<HoganmerShieldHitbox>(new
+        {
+            KillOnOffscreen = false,
+            Origin,
+            Direction,
+            Parent = this
+        });
+
         Shield.Spawn();
 
         State = HoganmerState.IDLE;

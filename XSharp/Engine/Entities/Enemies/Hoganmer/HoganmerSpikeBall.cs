@@ -44,6 +44,7 @@ public class HoganmerSpikeBall : Enemy
 
         SpawnFacedToPlayer = false;
         HitResponse = HitResponse.REFLECT;
+        DefaultDirection = Direction.RIGHT;
         ContactDamage = Hoganmer.SPIKE_BALL_DAMAGE;
 
         PaletteName = "HoganmerPalette";

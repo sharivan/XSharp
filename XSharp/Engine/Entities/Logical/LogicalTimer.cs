@@ -12,7 +12,7 @@ public class LogicalTimer : LogicalEntity
         set;
     }
 
-    public long FrameCounter
+    public long TickCounter
     {
         get;
         private set;
@@ -24,7 +24,7 @@ public class LogicalTimer : LogicalEntity
 
     public void Reset()
     {
-        FrameCounter = 0;
+        TickCounter = 0;
     }
 
     public void FireTimer()
@@ -37,11 +37,11 @@ public class LogicalTimer : LogicalEntity
 
     public void Increment(int amount)
     {
-        FrameCounter += amount;
+        TickCounter += amount;
     }
     public void Decrement(int amount)
     {
-        FrameCounter -= amount;
+        TickCounter -= amount;
     }
 
     public void Toggle()
@@ -56,14 +56,14 @@ public class LogicalTimer : LogicalEntity
         if (!Enabled)
             return;
 
-        if (FrameCounter >= Interval)
+        if (TickCounter >= Interval)
         {
             FireTimer();
-            FrameCounter = 0;
+            TickCounter = 0;
         }
         else
         {
-            FrameCounter++;
+            TickCounter++;
         }
     }
 }

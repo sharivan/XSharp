@@ -23,14 +23,23 @@ using XSharp.Engine.Entities.Enemies;
 using XSharp.Engine.Entities.Enemies.AxeMax;
 using XSharp.Engine.Entities.Enemies.BombBeen;
 using XSharp.Engine.Entities.Enemies.Bosses;
+using XSharp.Engine.Entities.Enemies.Bosses.BoomerKuwanger;
 using XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
+using XSharp.Engine.Entities.Enemies.Bosses.FlameMammoth;
+using XSharp.Engine.Entities.Enemies.DeathRogumerCannon;
 using XSharp.Engine.Entities.Enemies.DigLabour;
+using XSharp.Engine.Entities.Enemies.DodgeBlaster;
 using XSharp.Engine.Entities.Enemies.Flammingle;
 using XSharp.Engine.Entities.Enemies.GunVolt;
 using XSharp.Engine.Entities.Enemies.Hoganmer;
+using XSharp.Engine.Entities.Enemies.Hotarion;
+using XSharp.Engine.Entities.Enemies.LiftCannon;
 using XSharp.Engine.Entities.Enemies.MegaTortoise;
 using XSharp.Engine.Entities.Enemies.MetallC15;
 using XSharp.Engine.Entities.Enemies.RayBit;
+using XSharp.Engine.Entities.Enemies.RayTrap;
+using XSharp.Engine.Entities.Enemies.ScrapRobo;
+using XSharp.Engine.Entities.Enemies.SlideCannon;
 using XSharp.Engine.Entities.Enemies.Snowball;
 using XSharp.Engine.Entities.Enemies.SnowShooter;
 using XSharp.Engine.Entities.Enemies.Tombot;
@@ -235,12 +244,21 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public static void Initialize(Control control)
     {
-        Engine = new GameEngine(control);
+        if (Engine == null)
+        {
+            Engine = new GameEngine(control);
+            Engine.Initialize();
+        }
     }
 
     public static void Run()
     {
         Engine.Execute();
+    }
+
+    public static void RunSingleFrame()
+    {
+        Engine.RenderSingleFrame();
     }
 
     public static void Dispose()
@@ -849,6 +867,33 @@ public class GameEngine : IRenderable, IRenderTarget
         precacheActions = new Dictionary<string, PrecacheAction>();
 
         lua = new Lua();
+
+        presentationParams = new PresentParameters
+        {
+            Windowed = !FULL_SCREEN,
+            SwapEffect = SwapEffect.Discard,
+            PresentationInterval = VSYNC ? PresentInterval.One : PresentInterval.Immediate,
+            FullScreenRefreshRateInHz = FULL_SCREEN ? TICKRATE : 0,
+            AutoDepthStencilFormat = Format.D16,
+            EnableAutoDepthStencil = true,
+            BackBufferCount = DOUBLE_BUFFERED ? 2 : 1,
+            BackBufferFormat = FULL_SCREEN ? Format.X8R8G8B8 : Format.Unknown,
+            BackBufferHeight = FULL_SCREEN ? Control.ClientSize.Height : 0,
+            BackBufferWidth = FULL_SCREEN ? Control.ClientSize.Width : 0,
+            PresentFlags = VSYNC ? PresentFlags.LockableBackBuffer : PresentFlags.None
+        };
+
+        Direct3D = new Direct3D();
+
+        NoCameraConstraints = NO_CAMERA_CONSTRAINTS;
+        cameraConstraints = new List<Vector>();
+
+        directInput = new DirectInput();
+        keyboard = new Keyboard(directInput);
+    }
+
+    private void Initialize()
+    {
         lua.LoadCLRPackage(); // TODO : This can be DANGEROUS! Fix in the future by adding restrictions on the scripting.
         lua.DoString(@"import ('XSharp', 'XSharp')");
         lua.DoString(@"import ('XSharp', 'XSharp.Engine')");
@@ -864,27 +909,6 @@ public class GameEngine : IRenderable, IRenderTarget
         lua.DoString(@"import ('XSharp', 'XSharp.Engine.Sound')");
         lua.DoString(@"import('XSharp', 'XSharp.Engine.World')");
         lua["engine"] = this;
-
-        presentationParams = new PresentParameters
-        {
-            Windowed = !FULL_SCREEN,
-            SwapEffect = SwapEffect.Discard,
-            PresentationInterval = VSYNC ? PresentInterval.One : PresentInterval.Immediate,
-            FullScreenRefreshRateInHz = FULL_SCREEN ? TICKRATE : 0,
-            AutoDepthStencilFormat = Format.D16,
-            EnableAutoDepthStencil = true,
-            BackBufferCount = DOUBLE_BUFFERED ? 2 : 1,
-            BackBufferFormat = FULL_SCREEN ? Format.X8R8G8B8 : Format.Unknown,
-            BackBufferHeight = FULL_SCREEN ? Control.ClientSize.Height : 0,
-            BackBufferWidth = FULL_SCREEN ? Control.ClientSize.Width : 0,
-            PresentFlags = PresentFlags.LockableBackBuffer
-        };
-
-        Direct3D = new Direct3D();
-
-        NoCameraConstraints = NO_CAMERA_CONSTRAINTS;
-
-        cameraConstraints = new List<Vector>();
 
         // Sound channels:
         // 0 - X
@@ -905,9 +929,6 @@ public class GameEngine : IRenderable, IRenderTarget
         CreateSoundChannel("Unused1", 0.25f); // 6
         CreateSoundChannel("Unused2", 0.25f); // 7
 
-        directInput = new DirectInput();
-
-        keyboard = new Keyboard(directInput);
         keyboard.Properties.BufferSize = 2048;
         keyboard.Acquire();
 
@@ -932,6 +953,22 @@ public class GameEngine : IRenderable, IRenderTarget
 
         DrawScale = DEFAULT_DRAW_SCALE;
         UpdateScale();
+
+        World = new MMXWorld(32, 32);
+        partition = new Partition<Entity>(World.ForegroundLayout.BoundingBox, World.ForegroundLayout.SceneRowCount, World.ForegroundLayout.SceneColCount);
+        resultSet = new EntitySet<Entity>();
+
+        ResetDevice();
+        LoadLevel(@"Assets\ROMs\" + ROM_NAME, INITIAL_LEVEL, INITIAL_CHECKPOINT);
+
+        FrameCounter = 0;
+        renderFrameCounter = 0;
+        lastRenderFrameCounter = 0;
+        previousElapsedTicks = 0;
+        targetElapsedTime = Stopwatch.Frequency / TICKRATE;
+
+        clock.Start();
+        lastMeasuringFPSElapsedTicks = clock.ElapsedTicks;
 
         Running = true;
     }
@@ -1084,8 +1121,8 @@ public class GameEngine : IRenderable, IRenderTarget
 
         highlightMapTextFont = new Font(device, fontDescription);
 
-        whitePixelTexture = Engine.CreateImageTextureFromEmbeddedResource("Tiles.white_pixel.png", Usage.None, Pool.Default);
-        blackPixelTexture = Engine.CreateImageTextureFromEmbeddedResource("Tiles.black_pixel.png", Usage.None, Pool.Default);
+        whitePixelTexture = CreateImageTextureFromEmbeddedResource("Tiles.white_pixel.png", Usage.None, Pool.Default);
+        blackPixelTexture = CreateImageTextureFromEmbeddedResource("Tiles.black_pixel.png", Usage.None, Pool.Default);
 
         SetupQuad(VertexBuffer, SCREEN_WIDTH * 4, SCREEN_HEIGHT * 4);
 
@@ -1462,7 +1499,7 @@ public class GameEngine : IRenderable, IRenderTarget
     {
         string assemblyName = assembly.GetName().Name;
         using var stream = assembly.GetManifestResourceStream($"{assemblyName}.Assets.{path}");
-        var texture = Engine.CreateImageTextureFromStream(stream, usage, pool);
+        var texture = CreateImageTextureFromStream(stream, usage, pool);
         return texture;
     }
 
@@ -2997,25 +3034,10 @@ public class GameEngine : IRenderable, IRenderTarget
         Device.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
     }
 
-    public void Render()
+    private void RenderSingleFrame()
     {
-        Render(this);
-        renderFrameCounter++;
-
-        long elapsedTicks = clock.ElapsedTicks;
-        long remainingTicks = targetElapsedTime - (elapsedTicks - previousElapsedTicks);
-
-        if (remainingTicks > 0)
-        {
-            long msRemaining = 1000 * remainingTicks / Stopwatch.Frequency;
-            if (msRemaining > 0)
-                Thread.Sleep((int) msRemaining);
-        }
-
-        elapsedTicks = clock.ElapsedTicks;
-        previousElapsedTicks = elapsedTicks;
-
-        #region FPS and title update       
+        #region FPS and title update   
+        var elapsedTicks = clock.ElapsedTicks;
         var deltaMilliseconds = 1000 * (elapsedTicks - lastMeasuringFPSElapsedTicks) / Stopwatch.Frequency;
         if (deltaMilliseconds >= 1000)
         {
@@ -3030,6 +3052,27 @@ public class GameEngine : IRenderable, IRenderTarget
             Control.Text = $"X# - FPS: {fps:F2} ({(float) deltaMilliseconds / deltaFrames:F2}ms/frame)";
         }
         #endregion
+
+        Render(this);
+        renderFrameCounter++;
+    }
+
+    private void Render()
+    {
+        RenderSingleFrame();
+
+        long elapsedTicks = clock.ElapsedTicks;
+        long remainingTicks = targetElapsedTime - (elapsedTicks - previousElapsedTicks);
+
+        if (remainingTicks > 0)
+        {
+            int msRemaining = (int) (1000 * remainingTicks / Stopwatch.Frequency);
+            if (msRemaining > 0)
+                Thread.Sleep(msRemaining);
+        }
+
+        elapsedTicks = clock.ElapsedTicks;
+        previousElapsedTicks = elapsedTicks;
     }
 
     public void Render(IRenderTarget target)
@@ -3996,14 +4039,21 @@ public class GameEngine : IRenderable, IRenderTarget
             : id switch
             {
                 0x01 when mmx.Type == 0 => AddHoganmer(subid, origin),
-                0x02 when mmx.Type == 0 && mmx.Level == 8 => AddPenguin(origin),
+                0x02 when mmx.Type == 0 => AddChillPenguin(origin),
                 0x04 when mmx.Type == 0 => AddFlammingle(subid, origin),
+                0x05 when mmx.Type == 0 => AddBoomerKuwanger(origin),
                 0x09 when mmx.Type == 1 => AddScriver(subid, origin),
                 0x0B when mmx.Type == 0 => AddAxeMax(subid, origin),
+                0x0C when mmx.Type == 0 => AddFlameMammoth(origin),
+                0x0D when mmx.Type == 0 => AddRushRoader(subid, origin),
+                0x13 when mmx.Type == 0 => AddDodgeBlaster(subid, origin),
                 0x15 when mmx.Type == 0 => AddSpiky(subid, origin),
                 0x16 when mmx.Type == 0 => AddHoverPlatform(subid, origin),
                 0x17 when mmx.Type == 0 => AddTurnCannon(subid, origin),
                 0x19 when mmx.Type == 0 => AddBombBeen(subid, origin),
+                0x1C when mmx.Type == 0 => AddScrapRobo(subid, origin),
+                0x1E when mmx.Type == 0 => AddSlideCannon(subid, origin),
+                0x29 when mmx.Type == 0 => AddBallDeVoux(subid, origin),
                 0x29 when mmx.Type == 0 => AddGunVolt(subid, origin),
                 0x2C when mmx.Type == 1 => AddProbe8201U(subid, origin),
                 0x2D when mmx.Type == 0 => AddBattonBoneG(subid, origin),
@@ -4011,13 +4061,25 @@ public class GameEngine : IRenderable, IRenderTarget
                 0x2F => AddArmorSoldier(subid, origin),
                 0x30 when mmx.Type == 0 => AddDigLabour(subid, origin),
                 0x36 when mmx.Type == 0 => AddJamminger(subid, origin),
+                0x37 when mmx.Type == 0 => AddHotarion(subid, origin),
+                0x39 when mmx.Type == 0 => AddCompressor(subid, origin),
                 0x3A when mmx.Type == 0 => AddTombot(subid, origin),
+                0x3B when mmx.Type == 0 => AddLadderYadder(subid, origin),
+                0x42 when mmx.Type == 0 => AddRayField(subid, origin),
+                0x44 when mmx.Type == 0 => AddRayTrap(subid, origin),
+                0x46 when mmx.Type == 0 => AddMissiles(subid, origin),
+                0x47 when mmx.Type == 0 => AddFlamePillar(subid, origin),
+                0x49 when mmx.Type == 0 => AddSkyClaw(subid, origin),
+                0x4C when mmx.Type == 0 => AddDrippingLava(subid, origin),
                 0x4D => AddCapsule(subid, origin),
+                0x4F when mmx.Type == 0 => AddRollingGabyoall(subid, origin),
+                0x50 when mmx.Type == 0 => AddDeathRogumerCannon(subid, origin),
                 0x50 when mmx.Type == 1 => AddBattonBoneG(subid, origin),
                 0x51 when mmx.Type == 0 => AddRayBit(subid, origin),
                 0x53 when mmx.Type == 0 => AddSnowShooter(subid, origin),
                 0x54 when mmx.Type == 0 => AddSnowball(subid, origin),
                 0x57 when mmx.Type == 0 => AddIgloo(subid, origin),
+                0x59 when mmx.Type == 0 => AddLiftCannon(subid, origin),
                 0x5B when mmx.Type == 0 => AddMegaTortoise(subid, origin),
                 _ => mmx.Type == 0 && mmx.Level == 8 ? AddScriver(subid, origin) : null
             };
@@ -4030,7 +4092,7 @@ public class GameEngine : IRenderable, IRenderTarget
         killer.InputLocked = true;
         killer.FaceToScreenCenter();
         PlayVictorySound();
-        Engine.DoDelayedAction((int) (6.5 * 60), () => killer.StartTeleporting(true));
+        DoDelayedAction((int) (6.5 * 60), () => killer.StartTeleporting(true));
     }
 
     public EntityReference<CameraLockTrigger> AddCameraLockTrigger(Box boundingBox, IEnumerable<Vector> extensions)
@@ -4256,7 +4318,6 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(effect);
     }
 
-
     public EntityReference<Hoganmer> AddHoganmer(ushort subid, Vector origin)
     {
         Hoganmer entity = Entities.Create<Hoganmer>(new
@@ -4269,17 +4330,17 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
-    public EntityReference<ChillPenguin> AddPenguin(Vector origin)
+    public EntityReference<ChillPenguin> AddChillPenguin(Vector origin)
     {
-        ChillPenguin penguin = Entities.Create<ChillPenguin>(new
+        ChillPenguin entity = Entities.Create<ChillPenguin>(new
         {
             Origin = origin
         });
 
-        penguin.BossDefeatedEvent += OnBossDefeated;
-        Boss = penguin;
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
 
-        return Entities.GetReferenceTo(penguin);
+        return Entities.GetReferenceTo(entity);
     }
 
     public EntityReference<Flammingle> AddFlammingle(ushort subid, Vector origin)
@@ -4290,6 +4351,19 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<BoomerKuwanger> AddBoomerKuwanger(Vector origin)
+    {
+        BoomerKuwanger entity = Entities.Create<BoomerKuwanger>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4307,6 +4381,41 @@ public class GameEngine : IRenderable, IRenderTarget
     public EntityReference<AxeMax> AddAxeMax(ushort subid, Vector origin)
     {
         AxeMax entity = Entities.Create<AxeMax>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<FlameMammoth> AddFlameMammoth(Vector origin)
+    {
+        FlameMammoth entity = Entities.Create<FlameMammoth>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<RushRoader> AddRushRoader(ushort subid, Vector origin)
+    {
+        RushRoader entity = Entities.Create<RushRoader>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<DodgeBlaster> AddDodgeBlaster(ushort subid, Vector origin)
+    {
+        DodgeBlaster entity = Entities.Create<DodgeBlaster>(new
         {
             Origin = origin
         });
@@ -4362,6 +4471,38 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+    public EntityReference<ScrapRobo> AddScrapRobo(ushort subid, Vector origin)
+    {
+        ScrapRobo entity = Entities.Create<ScrapRobo>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<SlideCannon> AddSlideCannon(ushort subid, Vector origin)
+    {
+        SlideCannon entity = Entities.Create<SlideCannon>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<BallDeVoux> AddBallDeVoux(ushort subid, Vector origin)
+    {
+        BallDeVoux entity = Entities.Create<BallDeVoux>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
 
     public EntityReference<GunVolt> AddGunVolt(ushort subid, Vector origin)
     {
@@ -4388,6 +4529,28 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+    public EntityReference<RollingGabyoall> AddRollingGabyoall(ushort subid, Vector origin)
+    {
+        RollingGabyoall entity = Entities.Create<RollingGabyoall>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<DeathRogumerCannon> AddDeathRogumerCannon(ushort subid, Vector origin)
+    {
+        DeathRogumerCannon entity = Entities.Create<DeathRogumerCannon>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
     public EntityReference<BattonBoneG> AddBattonBoneG(ushort subid, Vector origin)
     {
         BattonBoneG entity = Entities.Create<BattonBoneG>(new
@@ -4398,7 +4561,6 @@ public class GameEngine : IRenderable, IRenderTarget
         entity.Place();
         return Entities.GetReferenceTo(entity);
     }
-
 
     public EntityReference<MetallC15> AddMetallC15(ushort subid, Vector origin)
     {
@@ -4444,6 +4606,28 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+    public EntityReference<Hotarion> AddHotarion(ushort subid, Vector origin)
+    {
+        Hotarion entity = Entities.Create<Hotarion>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Compressor> AddCompressor(ushort subid, Vector origin)
+    {
+        Compressor entity = Entities.Create<Compressor>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
     public EntityReference<Tombot> AddTombot(ushort subid, Vector origin)
     {
         Tombot entity = Entities.Create<Tombot>(new
@@ -4452,6 +4636,83 @@ public class GameEngine : IRenderable, IRenderTarget
         });
 
         entity.Place(false);
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<LadderYadder> AddLadderYadder(ushort subid, Vector origin)
+    {
+        LadderYadder entity = Entities.Create<LadderYadder>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place(false);
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<RayField> AddRayField(ushort subid, Vector origin)
+    {
+        RayField entity = Entities.Create<RayField>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<RayTrap> AddRayTrap(ushort subid, Vector origin)
+    {
+        RayTrap entity = Entities.Create<RayTrap>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Missiles> AddMissiles(ushort subid, Vector origin)
+    {
+        Missiles entity = Entities.Create<Missiles>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<FlamePillar> AddFlamePillar(ushort subid, Vector origin)
+    {
+        FlamePillar entity = Entities.Create<FlamePillar>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<SkyClaw> AddSkyClaw(ushort subid, Vector origin)
+    {
+        SkyClaw entity = Entities.Create<SkyClaw>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<DrippingLava> AddDrippingLava(ushort subid, Vector origin)
+    {
+        DrippingLava entity = Entities.Create<DrippingLava>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4505,6 +4766,16 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+    public EntityReference<LiftCannon> AddLiftCannon(ushort subid, Vector origin)
+    {
+        LiftCannon entity = Entities.Create<LiftCannon>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
 
     public EntityReference<MegaTortoise> AddMegaTortoise(ushort subid, Vector origin)
     {
@@ -4938,22 +5209,6 @@ public class GameEngine : IRenderable, IRenderTarget
 
     private void Execute()
     {
-        World = new MMXWorld(32, 32);
-        partition = new Partition<Entity>(World.ForegroundLayout.BoundingBox, World.ForegroundLayout.SceneRowCount, World.ForegroundLayout.SceneColCount);
-        resultSet = new EntitySet<Entity>();
-
-        ResetDevice();
-        LoadLevel(@"Assets\ROMs\" + ROM_NAME, INITIAL_LEVEL, INITIAL_CHECKPOINT);
-
-        FrameCounter = 0;
-        renderFrameCounter = 0;
-        lastRenderFrameCounter = 0;
-        previousElapsedTicks = 0;
-        targetElapsedTime = Stopwatch.Frequency / TICKRATE;
-
-        clock.Start();
-        lastMeasuringFPSElapsedTicks = clock.ElapsedTicks;
-
         while (Running)
         {
             // Main loop
