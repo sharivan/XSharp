@@ -1,7 +1,4 @@
-﻿using SharpDX;
-
-using XSharp.Engine.Graphics;
-using XSharp.Math;
+﻿using XSharp.Engine.Graphics;
 using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.DigLabour;
@@ -50,7 +47,7 @@ public class DigLabourPickaxe : Enemy
         CheckCollisionWithWorld = false;
         ContactDamage = DigLabour.PICKAXE_DAMAGE;
         HitResponse = HitResponse.IGNORE;
-        Invincible = true; 
+        Invincible = true;
     }
 
     protected override void OnContactDamage(Player player)
@@ -58,5 +55,6 @@ public class DigLabourPickaxe : Enemy
         base.OnContactDamage(player);
 
         Pitcher?.NotifyPlayerDamagedByPickaxe();
+        Kill();
     }
 }

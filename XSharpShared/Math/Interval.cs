@@ -1,6 +1,4 @@
-﻿using XSharp.Serialization;
-
-namespace XSharp.Math;
+﻿namespace XSharp.Math;
 
 public struct Interval
 {

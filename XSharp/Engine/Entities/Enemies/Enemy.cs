@@ -195,7 +195,7 @@ public abstract class Enemy : Sprite
             lastPaletteName = PaletteName;
             flashing = true;
             PaletteName = "flashingPalette";
-        }       
+        }
 
         if (Invincible)
         {

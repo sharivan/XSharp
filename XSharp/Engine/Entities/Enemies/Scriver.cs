@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-using SharpDX;
+﻿using SharpDX;
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;

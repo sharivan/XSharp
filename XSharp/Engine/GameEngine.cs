@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -28,6 +27,8 @@ using XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 using XSharp.Engine.Entities.Enemies.DigLabour;
 using XSharp.Engine.Entities.Enemies.Flammingle;
 using XSharp.Engine.Entities.Enemies.GunVolt;
+using XSharp.Engine.Entities.Enemies.Hoganmer;
+using XSharp.Engine.Entities.Enemies.MegaTortoise;
 using XSharp.Engine.Entities.Enemies.MetallC15;
 using XSharp.Engine.Entities.Enemies.RayBit;
 using XSharp.Engine.Entities.Enemies.Snowball;
@@ -3994,6 +3995,7 @@ public class GameEngine : IRenderable, IRenderTarget
             ? null
             : id switch
             {
+                0x01 when mmx.Type == 0 => AddHoganmer(subid, origin),
                 0x02 when mmx.Type == 0 && mmx.Level == 8 => AddPenguin(origin),
                 0x04 when mmx.Type == 0 => AddFlammingle(subid, origin),
                 0x09 when mmx.Type == 1 => AddScriver(subid, origin),
@@ -4016,21 +4018,9 @@ public class GameEngine : IRenderable, IRenderTarget
                 0x53 when mmx.Type == 0 => AddSnowShooter(subid, origin),
                 0x54 when mmx.Type == 0 => AddSnowball(subid, origin),
                 0x57 when mmx.Type == 0 => AddIgloo(subid, origin),
+                0x5B when mmx.Type == 0 => AddMegaTortoise(subid, origin),
                 _ => mmx.Type == 0 && mmx.Level == 8 ? AddScriver(subid, origin) : null
             };
-    }
-
-    internal EntityReference<ChillPenguin> AddPenguin(Vector origin)
-    {
-        ChillPenguin penguin = Entities.Create<ChillPenguin>(new
-        {
-            Origin = origin
-        });
-
-        penguin.BossDefeatedEvent += OnBossDefeated;
-        Boss = penguin;
-
-        return Entities.GetReferenceTo(penguin);
     }
 
     private void OnBossDefeated(Boss boss, Player killer)
@@ -4266,6 +4256,32 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(effect);
     }
 
+
+    public EntityReference<Hoganmer> AddHoganmer(ushort subid, Vector origin)
+    {
+        Hoganmer entity = Entities.Create<Hoganmer>(new
+        {
+            Origin = origin,
+            Respawnable = false
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<ChillPenguin> AddPenguin(Vector origin)
+    {
+        ChillPenguin penguin = Entities.Create<ChillPenguin>(new
+        {
+            Origin = origin
+        });
+
+        penguin.BossDefeatedEvent += OnBossDefeated;
+        Boss = penguin;
+
+        return Entities.GetReferenceTo(penguin);
+    }
+
     public EntityReference<Flammingle> AddFlammingle(ushort subid, Vector origin)
     {
         Flammingle entity = Entities.Create<Flammingle>(new
@@ -4489,6 +4505,18 @@ public class GameEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+
+    public EntityReference<MegaTortoise> AddMegaTortoise(ushort subid, Vector origin)
+    {
+        MegaTortoise entity = Entities.Create<MegaTortoise>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
     private void SpawnX(Vector origin)
     {
         if (Player != null)
@@ -4545,7 +4573,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
         aliveEntities.Remove(entity);
 
-        if (force || !entity.Respawnable)
+        if (force || !entity.KilledOnOffscreen && !entity.Respawnable)
             Entities.Remove(entity);
         else if (entity.SpawnOnNear)
             entity.ResetFromInitParams();
@@ -5474,7 +5502,7 @@ public class GameEngine : IRenderable, IRenderTarget
     }
 
     internal void UpdateSpritePriority(Sprite sprite, int priority)
-    {       
+    {
         int layerIndex = sprite.Layer;
         int lastPriority = sprite.Priority;
 

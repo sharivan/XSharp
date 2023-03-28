@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-using SharpDX;
+﻿using SharpDX;
 
 using XSharp.Engine.Graphics;
 using XSharp.Math;

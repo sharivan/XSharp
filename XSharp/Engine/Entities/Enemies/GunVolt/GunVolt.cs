@@ -251,7 +251,7 @@ public class GunVolt : Enemy, IStateEntity<GunVoltState>
 
     private void ShootMissile()
     {
-        ShootMissile(Origin + ((missileShotCounter % 2 == 0 ? MISSILE1_SPAWN_OFFSET_X: MISSILE2_SPAWN_OFFSET_X) * Direction.GetHorizontalSignal(), MISSILE_SPAWN_OFFSET_Y));
+        ShootMissile(Origin + ((missileShotCounter % 2 == 0 ? MISSILE1_SPAWN_OFFSET_X : MISSILE2_SPAWN_OFFSET_X) * Direction.GetHorizontalSignal(), MISSILE_SPAWN_OFFSET_Y));
 
         Engine.PlaySound(4, "Torpedo");
     }

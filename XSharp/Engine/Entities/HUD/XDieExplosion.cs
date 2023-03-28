@@ -47,6 +47,7 @@ public class XDieExplosion : HUD
 
         SpriteSheetName = "X";
         PaletteName = "x1NormalPalette";
+        MultiAnimation = true;
 
         SetAnimationNames(("DyingExplosion", SparkCount));
     }
@@ -55,7 +56,6 @@ public class XDieExplosion : HUD
     {
         base.OnSpawn();
 
-        MultiAnimation = true;
         frameCounter = 0;
     }
 

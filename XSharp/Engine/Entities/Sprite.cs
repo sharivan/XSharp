@@ -49,7 +49,7 @@ public abstract class Sprite : Entity, IRenderable
     internal int layer = 0;
     internal int priority = -1;
 
-    private (string name, int count)[] animationNames;
+    private (string name, int count, bool startWithCounterSuffix, int startCounterSuffix)[] animationNames;
     private AnimationReference currentAnimation = null;
 
     protected SpriteCollider worldCollider;
@@ -136,7 +136,7 @@ public abstract class Sprite : Entity, IRenderable
     {
         get;
         protected set;
-    }
+    } = false;
 
     public Box DrawBox
     {
@@ -551,14 +551,23 @@ public abstract class Sprite : Entity, IRenderable
 
     public void SetAnimationNames(params string[] animationNames)
     {
-        (string name, int count)[] @params = new (string, int)[animationNames.Length];
+        (string name, int count, bool startWithCounterSuffix, int startCounterSuffix)[] @params = new (string, int, bool, int)[animationNames.Length];
         for (int i = 0; i < animationNames.Length; i++)
-            @params[i] = (animationNames[i], 1);
+            @params[i] = (animationNames[i], 1, false, 1);
 
         SetAnimationNames(@params);
     }
 
     public void SetAnimationNames(params (string name, int count)[] animationNames)
+    {
+        (string name, int count, bool startWithCounterSuffix, int startCounterSuffix)[] @params = new (string, int, bool, int)[animationNames.Length];
+        for (int i = 0; i < animationNames.Length; i++)
+            @params[i] = (animationNames[i].name, animationNames[i].count, false, 1);
+
+        SetAnimationNames(@params);
+    }
+
+    public void SetAnimationNames(params (string name, int count, bool startWithCounterSuffix, int startCounterSuffix)[] animationNames)
     {
         if (animationNames != null && animationNames.Length > 0)
         {
@@ -574,11 +583,11 @@ public abstract class Sprite : Entity, IRenderable
     public void SetAnimationNames()
     {
         var names = SpriteSheet.FrameSequenceNames;
-        animationNames = new (string, int)[names.Count()];
+        animationNames = new (string, int, bool, int)[names.Count()];
 
         int i = 0;
         foreach (var name in names)
-            animationNames[i++] = (name, 1);
+            animationNames[i++] = (name, 1, false, 1);
 
         InitialAnimationName = null;
     }
@@ -849,7 +858,6 @@ public abstract class Sprite : Entity, IRenderable
         Blinking = false;
         invincibilityFrames = DEFAULT_INVINCIBLE_TIME;
         broke = false;
-        MultiAnimation = false;
 
         FadingControl.Reset();
 
@@ -963,7 +971,7 @@ public abstract class Sprite : Entity, IRenderable
 
         if (animationNames != null)
         {
-            foreach (var (name, count) in animationNames)
+            foreach (var (name, count, startWithCounterSuffix, startCounterSuffix) in animationNames)
             {
                 SpriteSheet.FrameSequence sequence = SpriteSheet.GetFrameSequence(name);
                 string frameSequenceName = sequence.Name;
@@ -980,7 +988,7 @@ public abstract class Sprite : Entity, IRenderable
                     for (int i = 0; i < count; i++)
                     {
                         var animation = Animations.Create(frameSequenceName, offset, repeatX, repeatY, initialFrame, startVisible, startOn);
-                        animation.Name = Animations.GetExclusiveName(name);
+                        animation.Name = Animations.GetExclusiveName(name, startWithCounterSuffix, startCounterSuffix);
                         OnAnimationCreated(animation);
                     }
                 }
@@ -1696,7 +1704,7 @@ public abstract class Sprite : Entity, IRenderable
 
     // TODO : Implement call to this
     protected bool CollisionCheck(Sprite sprite)
-    {        
+    {
         return ShouldCollide(sprite) && sprite.ShouldCollide(this);
     }
 

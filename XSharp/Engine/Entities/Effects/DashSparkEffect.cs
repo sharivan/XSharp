@@ -1,5 +1,4 @@
 ﻿using XSharp.Engine.Graphics;
-using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Effects;
 

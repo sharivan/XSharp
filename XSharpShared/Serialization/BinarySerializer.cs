@@ -1181,6 +1181,10 @@ public class BinarySerializer : Serializer, IDisposable
 
         if (!ignoreItems && objectType.IsAssignableTo(typeof(IFactoryItem)))
         {
+            bool isSet = ReadBool();
+            if (!isSet)
+                return null;
+
             var referenceType = ReadType();
             var tempReference = ReadItemReference(referenceType, false);
             if (tempReference == null && Future != null)
@@ -1278,10 +1282,20 @@ public class BinarySerializer : Serializer, IDisposable
         {
             var factory = item.Factory;
             var reference = factory.GetReferenceTo(item);
-            var referenceType = reference.GetType();
 
-            WriteType(referenceType);
-            WriteItemReference(reference, false);
+            if (reference != null)
+            {
+                var referenceType = reference.GetType();
+
+                WriteBool(true);
+                WriteType(referenceType);
+                WriteItemReference(reference, false);
+            }
+            else
+            {
+                WriteBool(false);
+            }
+
             return;
         }
 

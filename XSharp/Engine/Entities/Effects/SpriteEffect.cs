@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-using XSharp.Engine.Graphics;
+﻿using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 

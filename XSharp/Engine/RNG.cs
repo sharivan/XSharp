@@ -46,7 +46,7 @@ public class RNG : ISerializable
         // For now im using an algorithm similar to used by MMIX to generate random numbers.
         seed *= 6364136223846793005L;
         seed += 1442695040888963407L;
-        seed >>= 24;        
+        seed >>= 24;
         return seed;
     }
 

@@ -232,6 +232,18 @@ public abstract class Entity : IIndexedNamedFactoryItem
         set;
     } = false;
 
+    public bool KillOnOffscreen
+    {
+        get;
+        set;
+    } = false;
+
+    public bool KilledOnOffscreen
+    {
+        get;
+        private set;
+    }
+
     public int MinimumIntervalToRespawn
     {
         get;
@@ -325,12 +337,6 @@ public abstract class Entity : IIndexedNamedFactoryItem
         get => stateArray != null && CurrentStateID >= 0 ? stateArray[CurrentStateID] : null;
         set => CurrentStateID = value != null ? value.ID : -1;
     }
-
-    public bool KillOnOffscreen
-    {
-        get;
-        set;
-    } = false;
 
     public long FrameCounter
     {
@@ -727,6 +733,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
         if (KillOnOffscreen && FrameCounter >= MinimumIntervalToKillOnOffScreen && outOfLiveArea)
         {
+            KilledOnOffscreen = true;
             Kill();
             return;
         }
@@ -873,6 +880,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
     {
         Direction = DefaultDirection;
         FrameCounter = 0;
+        KilledOnOffscreen = false;
         SpawnFrame = Engine.FrameCounter;
         Spawning = true;
         CheckTouchingEntities = true;

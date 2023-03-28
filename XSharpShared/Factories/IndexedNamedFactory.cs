@@ -179,7 +179,7 @@ public abstract class IndexedNamedFactory<ItemType> : IIndexedNamedFactory<ItemT
         int counter = startCounterSuffix;
         string possibleName = startWithCounterSuffix ? prefix + counter++ : prefix;
 
-        for (ItemType entity = this[prefix]; entity != null; entity = this[possibleName])
+        for (ItemType entity = this[possibleName]; entity != null; entity = this[possibleName])
             possibleName = prefix + counter++;
 
         return possibleName;

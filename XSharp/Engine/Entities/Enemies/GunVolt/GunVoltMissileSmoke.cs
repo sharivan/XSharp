@@ -1,9 +1,5 @@
-﻿using SharpDX;
-
-using XSharp.Engine.Entities.Effects;
+﻿using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.GunVolt;
 
