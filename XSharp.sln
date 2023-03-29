@@ -7,12 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XSharp", "XSharp\XSharp.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D3D9Test", "D3D9Test\D3D9Test.csproj", "{B2DED961-1DAE-4F07-B380-1527CC67EE1F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Itens de Solução", "Itens de Solução", "{D1A57F07-6955-4CF7-ABE5-368DA660B826}"
-	ProjectSection(SolutionItems) = preProject
-		README.md = README.md
-		XSharp.png = XSharp.png
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NAudioTest", "NAudioTest\NAudioTest.csproj", "{3F5ACBB5-657C-4278-BE10-6AF7EC8130F9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MegaEDX", "MegaEDXCore\MegaEDX.csproj", "{76F4C615-086F-4BBA-82DA-7F6C33E4993A}"
@@ -20,13 +14,15 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{57C7EAFA-DAC9-475B-92FF-4A34536384B8}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		README.md = README.md
+		XSharp.png = XSharp.png
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XSharpDemo", "XSharpDemo\XSharpDemo.csproj", "{3C6F05FC-975F-4227-9F5D-09AE6D9E10FD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XSharpShared", "XSharpShared\XSharpShared.csproj", "{BFD8029F-00BF-4CE9-85AB-58859E87E003}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XSharpLevelEditor", "XSharpLevelEditor\XSharpLevelEditor.csproj", "{9D0EEF6C-AC19-465C-85BB-D6D5CBE2425D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XSharpLevelEditor", "XSharpLevelEditor\XSharpLevelEditor.csproj", "{9D0EEF6C-AC19-465C-85BB-D6D5CBE2425D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

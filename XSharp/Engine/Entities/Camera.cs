@@ -394,7 +394,8 @@ public class Camera : Entity
     {
         base.OnStartTouch(entity);
 
-        if (entity.Alive || entity.Spawning || !entity.SpawnOnNear)
+        var entityDirection = GetDirection(entity);
+        if (entity.Alive || entity.Spawning || !entity.SpawnOnNear || (entity.SpawnOnlyOnDirection & entityDirection) != entityDirection)
             return;
 
         if ((!entity.Dead || Engine.FrameCounter - entity.DeathFrame >= entity.MinimumIntervalToRespawn) && entity.IsInSpawnArea(VectorKind.ORIGIN))

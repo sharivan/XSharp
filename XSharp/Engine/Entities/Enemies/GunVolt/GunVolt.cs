@@ -174,6 +174,7 @@ public class GunVolt : Enemy, IStateEntity<GunVoltState>
         base.OnCreate();
 
         DefaultDirection = Direction.LEFT;
+        SpawnFacedToPlayer = false;
 
         PaletteName = "GunVoltPalette";
         SpriteSheetName = "GunVolt";

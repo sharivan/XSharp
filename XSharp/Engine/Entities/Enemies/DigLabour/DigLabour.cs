@@ -3,8 +3,7 @@
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
-
-using static XSharp.Engine.Consts;
+using XSharp.Math.Physics;
 
 namespace XSharp.Engine.Entities.Enemies.DigLabour;
 
@@ -170,79 +169,13 @@ public class DigLabour : Enemy, IStateEntity<DigLabourState>
         if (player == null)
             return null;
 
-        // The following algorithm is used to determine the vectorial initial velocity of the pickaxe based on fixed initial scalar velocity.
-        // The pickaxe is thrown in a parabolic trajectory, under the effect of the game's gravity and governed by the equations of uniformly varied motion.
-        // The pickaxe trajectory is aimed to hit the player's position, and the initial velocity is calculated based on the player's position and the pickaxe's spawn position.
-        // To compute the initial velocity, we need to solve the following quadratic equation in the unknow tanTheta:
-        //
-        //   g * dx^2 * tanTheta^2 + 2 * v^2 * dx * tanTheta + g * dx^2 - 2 * v^2 * dy = 0
-        //
-        // Where tanTheta = Tan(theta) and theta is the angle of throw.
-        //
-        // The quatratic equation above can be deducted easily by using by isolating and eliminating the unknow dt in the following equation system:
-        //
-        //   dx = vx * dt                (from uniform motion equation)
-        //   dy = vy * dt + g * dt^2 / 2  (from uniformly variable motion equation)
-        //
-        // Also, once we have:
-        //
-        //   vx = v * Cos(theta)
-        //   vy = v * Sin(theta)
-        // 
-        // Then vy / vx = Sin(theta) / Cos(theta) = Tan(theta) = tanTheta, the unknow we are looking for.
-
         var throwOrigin = Origin + (PICKAXE_SPAWN_OFFSET_X * Direction.GetHorizontalSignal(), PICKAXE_SPAWN_OFFSET_Y);
-
-        double v = PICKAXE_INITIAL_SPEED;
-        double g = GRAVITY;
-        double dx = player.Origin.X - throwOrigin.X;
-        double dy = player.Origin.Y - throwOrigin.Y;
-
-        double cosTheta;
-        double sinTheta;
-
-        if (dx == 0)
-        {
-            // When dx is zero the quadradic equation can't be solved due to division by zero.
-            // Instead it, we can notice the throwing in this case is just a vertical throw, i.e., theta is 90 degrees up.
-
-            cosTheta = 0;
-            sinTheta = -1;
-        }
-        else
-        {
-            double alpha = v / (g * dx);
-            double discriminant = v * v + 2 * g * dy - 1 / (alpha * alpha); // This is the discritimant of the quadratic equation.
-
-            if (discriminant < 0)
-                discriminant = 0; // If the discriminant is negative then is impossible to hit the target (player) using the initial speed. A fallback approach is used by simply setting the discriminant to zero.
-
-            double tanTheta = alpha * (-v - System.Math.Sqrt(discriminant));
-
-            // The computation of explicit angle is not needed, once we have its tangent and the throw it's up, i.e., initial vertical speed is negative.
-            // Instead, we compute its cosine end sine using the existing fundamental trigonometric relationships:
-            //
-            //   secTheta^2 = 1 / cosTheta^2 = 1 + tanTheta^2
-            //   sinTheta^2 + cosTheta^2 = 1
-            //
-            // Where secTheta = Sec(theta), sinTheta = Sin(theta) and cosTheta = Cos(theta).
-            // 
-            // Also remembering the restrictions previously imposed:
-            //
-            //   sinTheta is negative.
-            //   Signal of cosTheta is the same signal of dx.
-
-            cosTheta = System.Math.Sign(dx) / System.Math.Sqrt(1 + tanTheta * tanTheta);
-            sinTheta = -System.Math.Sqrt(1 - cosTheta * cosTheta);
-        }
-
-        FixedSingle vx = v * cosTheta;
-        FixedSingle vy = v * sinTheta;
+        MovementUtil.GetObliqueLaunchVelocity(throwOrigin, player.Origin, PICKAXE_INITIAL_SPEED, Gravity, out Vector velocity);
 
         DigLabourPickaxe pickaxe = Engine.Entities.Create<DigLabourPickaxe>(new
         {
             Origin = throwOrigin,
-            Velocity = (vx.TruncFracPart(), vy.TruncFracPart()),
+            Velocity = velocity,
             Direction
         });
 

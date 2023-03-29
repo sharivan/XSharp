@@ -45,7 +45,7 @@ public static class CollisionFlagsExtensions
         return flags & (CollisionFlags.SHIFT1 | CollisionFlags.SHIFT2 | CollisionFlags.SHIFT3 | CollisionFlags.SHIFT4);
     }
 
-    public static bool CanBlockTheMove(this CollisionFlags flags, Direction direction = Direction.ALL)
+    public static bool CanBlockTheMove(this CollisionFlags flags, Direction direction = Direction.BOTH)
     {
         return flags != CollisionFlags.NONE
             && (

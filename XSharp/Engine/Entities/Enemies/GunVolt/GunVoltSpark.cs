@@ -1,4 +1,5 @@
 ﻿using XSharp.Engine.Graphics;
+using XSharp.Math;
 using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.GunVolt;
@@ -12,6 +13,9 @@ public class GunVoltSpark : Enemy
         Engine.CallPrecacheAction<GunVolt>();
     }
     #endregion
+
+    private bool wasLanded;
+    private FixedSingle hSpeed;
 
     public GunVoltSpark()
     {
@@ -32,6 +36,11 @@ public class GunVoltSpark : Enemy
         InitialAnimationName = "Spark";
     }
 
+    public override FixedSingle GetGravity()
+    {
+        return wasLanded ? 0 : base.GetGravity();
+    }
+
     protected override Box GetHitbox()
     {
         return GunVolt.SPARK_HITBOX;
@@ -40,6 +49,17 @@ public class GunVoltSpark : Enemy
     protected override Box GetCollisionBox()
     {
         return GunVolt.SPARK_COLLISION_BOX;
+    }
+
+    protected override void OnLanded()
+    {
+        base.OnLanded();
+
+        if (!wasLanded)
+        {
+            wasLanded = true;
+            CheckCollisionWithWorld = false;
+        }
     }
 
     protected override void OnSpawn()
@@ -51,6 +71,15 @@ public class GunVoltSpark : Enemy
         HitResponse = HitResponse.IGNORE;
         Invincible = true;
 
-        Velocity = (GunVolt.SPARK_SPEED * Direction.GetHorizontalSignal(), GunVolt.SPARK_SPEED);
+        wasLanded = false;
+        hSpeed = GunVolt.SPARK_SPEED * Direction.GetHorizontalSignal();
+        Velocity = (hSpeed, GunVolt.SPARK_SPEED);
+    }
+
+    protected override void OnThink()
+    {
+        base.OnThink();
+
+        Velocity = (hSpeed, wasLanded ? 0 : Velocity.Y);
     }
 }

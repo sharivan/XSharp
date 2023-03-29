@@ -13,13 +13,13 @@ public enum Direction
     RIGHT = 4, // Direita
     DOWN = 8, // Baixo
 
-    LEFTUP = LEFT | UP,
-    LEFTDOWN = LEFT | DOWN,
-    RIGHTUP = RIGHT | UP,
-    RIGHTDOWN = RIGHT | DOWN,
-    LEFTRIGHT = LEFT | RIGHT,
-    UPDOWN = UP | DOWN,
-    ALL = LEFT | UP | RIGHT | DOWN
+    LEF_TUP = LEFT | UP,
+    LEFT_DOWN = LEFT | DOWN,
+    RIGHT_UP = RIGHT | UP,
+    RIGHT_DOWN = RIGHT | DOWN,
+    BOTH_HORIZONTAL = LEFT | RIGHT,
+    BOTH_VERTICAL = UP | DOWN,
+    BOTH = LEFT | UP | RIGHT | DOWN
 }
 
 public static class DirectionExtensions

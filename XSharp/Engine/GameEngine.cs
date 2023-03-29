@@ -4053,7 +4053,7 @@ public class GameEngine : IRenderable, IRenderTarget
                 0x19 when mmx.Type == 0 => AddBombBeen(subid, origin),
                 0x1C when mmx.Type == 0 => AddScrapRobo(subid, origin),
                 0x1E when mmx.Type == 0 => AddSlideCannon(subid, origin),
-                0x29 when mmx.Type == 0 => AddBallDeVoux(subid, origin),
+                0x27 when mmx.Type == 0 => AddBallDeVoux(subid, origin),
                 0x29 when mmx.Type == 0 => AddGunVolt(subid, origin),
                 0x2C when mmx.Type == 1 => AddProbe8201U(subid, origin),
                 0x2D when mmx.Type == 0 => AddBattonBoneG(subid, origin),
@@ -4322,11 +4322,10 @@ public class GameEngine : IRenderable, IRenderTarget
     {
         Hoganmer entity = Entities.Create<Hoganmer>(new
         {
-            Origin = origin,
-            Respawnable = false
+            Origin = origin
         });
 
-        entity.Place();
+        entity.Place(false);
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4511,7 +4510,7 @@ public class GameEngine : IRenderable, IRenderTarget
             Origin = origin
         });
 
-        entity.Place();
+        entity.Place(false, Direction.RIGHT | Direction.BOTH_VERTICAL);
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4751,7 +4750,7 @@ public class GameEngine : IRenderable, IRenderTarget
             Origin = origin
         });
 
-        entity.Place();
+        entity.Place(true, Direction.RIGHT | Direction.BOTH_VERTICAL);
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4784,7 +4783,7 @@ public class GameEngine : IRenderable, IRenderTarget
             Origin = origin
         });
 
-        entity.Place();
+        entity.Place(false);
         return Entities.GetReferenceTo(entity);
     }
 

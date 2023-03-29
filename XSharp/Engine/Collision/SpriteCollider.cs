@@ -331,12 +331,12 @@ public class SpriteCollider
         Box += delta;
     }
 
-    public bool MoveContactSolid(Vector dir, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
+    public bool MoveContactSolid(Vector dir, Direction masks = Direction.BOTH, CollisionFlags ignore = CollisionFlags.NONE)
     {
         return MoveContactSolid(dir, QUERY_MAX_DISTANCE, masks, ignore);
     }
 
-    public bool MoveContactSolid(Vector dir, FixedSingle maxDistance, Direction masks = Direction.ALL, CollisionFlags ignore = CollisionFlags.NONE)
+    public bool MoveContactSolid(Vector dir, FixedSingle maxDistance, Direction masks = Direction.BOTH, CollisionFlags ignore = CollisionFlags.NONE)
     {
         Vector delta1;
         Vector delta2;

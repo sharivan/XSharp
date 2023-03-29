@@ -1004,10 +1004,10 @@ public abstract class Sprite : Entity, IRenderable
         CreateResources();
     }
 
-    public override void Place(bool respawnable = true)
+    public override void Place(bool respawnable = true, Direction spawnOnlyOnDirection = Direction.BOTH)
     {
         CreateResources();
-        base.Place(respawnable);
+        base.Place(respawnable, spawnOnlyOnDirection);
 
         if (IsInSpawnArea(VectorKind.ORIGIN))
             Spawn();

@@ -226,14 +226,14 @@ public class Snowball : Enemy, IStateEntity<SnowballState>
     protected override void OnExplode()
     {
         CreateDebris(SnowballDebrisType.SMALLEST, 3, Direction.UP, false);
-        CreateDebris(SnowballDebrisType.SMALL, 3, Direction.LEFTUP, false);
-        CreateDebris(SnowballDebrisType.MEDIUM, 3, Direction.RIGHTUP, false);
+        CreateDebris(SnowballDebrisType.SMALL, 3, Direction.LEF_TUP, false);
+        CreateDebris(SnowballDebrisType.MEDIUM, 3, Direction.RIGHT_UP, false);
         CreateDebris(SnowballDebrisType.BIG, 3, Direction.LEFT, false);
         CreateDebris(SnowballDebrisType.BIG, 3, Direction.RIGHT, false);
 
         CreateDebris(SnowballDebrisType.SMALLEST, 4, Direction.UP, true);
-        CreateDebris(SnowballDebrisType.SMALLEST, 4, Direction.LEFTUP, true);
-        CreateDebris(SnowballDebrisType.SMALL, 4, Direction.RIGHTUP, true);
+        CreateDebris(SnowballDebrisType.SMALLEST, 4, Direction.LEF_TUP, true);
+        CreateDebris(SnowballDebrisType.SMALL, 4, Direction.RIGHT_UP, true);
         CreateDebris(SnowballDebrisType.MEDIUM, 4, Direction.LEFT, true);
         CreateDebris(SnowballDebrisType.BIG, 4, Direction.RIGHT, true);
     }

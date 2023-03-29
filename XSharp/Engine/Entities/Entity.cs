@@ -232,6 +232,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
         set;
     } = false;
 
+    public Direction SpawnOnlyOnDirection
+    {
+        get;
+        set;
+    } = Direction.BOTH;
+
     public bool KillOnOffscreen
     {
         get;
@@ -999,10 +1005,11 @@ public abstract class Entity : IIndexedNamedFactoryItem
         return CollisionChecker.HasIntersection(GetBox(kind).RoundOriginToFloor(), Engine.Camera.SpawnBoundingBox.RoundOriginToFloor());
     }
 
-    public virtual void Place(bool respawnable = true)
+    public virtual void Place(bool respawnable = true, Direction spawnOnlyOnDirection = Direction.BOTH)
     {
         Respawnable = respawnable;
         SpawnOnNear = true;
+        SpawnOnlyOnDirection = spawnOnlyOnDirection;
 
         initParams["Origin"] = Origin;
 
@@ -1027,6 +1034,11 @@ public abstract class Entity : IIndexedNamedFactoryItem
         return pos.Y < Origin.Y ? Direction.UP : Direction.DOWN;
     }
 
+    public Direction GetDirection(Vector pos)
+    {
+        return GetHorizontalDirection(pos) | GetVerticalDirection(pos);
+    }
+
     public Direction GetHorizontalDirection(Entity entity)
     {
         return GetHorizontalDirection(entity.Origin);
@@ -1035,6 +1047,11 @@ public abstract class Entity : IIndexedNamedFactoryItem
     public Direction GetVerticalDirection(Entity entity)
     {
         return GetVerticalDirection(entity.Origin);
+    }
+
+    public Direction GetDirection(Entity entity)
+    {
+        return GetDirection(entity.Origin);
     }
 
     public static implicit operator EntityReference(Entity entity)

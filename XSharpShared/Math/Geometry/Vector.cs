@@ -71,18 +71,22 @@ public struct Vector : IGeometry
     /// Vetor nulo
     /// </summary>
     public static readonly Vector NULL_VECTOR = new(0, 0); // Vetor nulo
+
     /// <summary>
     /// Vetor leste
     /// </summary>
     public static readonly Vector LEFT_VECTOR = new(-1, 0);
+
     /// <summary>
     /// Vetor norte
     /// </summary>
     public static readonly Vector UP_VECTOR = new(0, -1);
+
     /// <summary>
     /// Vetor oeste
     /// </summary>
     public static readonly Vector RIGHT_VECTOR = new(1, 0);
+
     /// <summary>
     /// Vetor sul
     /// </summary>
