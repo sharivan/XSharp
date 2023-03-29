@@ -12,7 +12,7 @@ public enum MegaTortoiseState
     ATTACKING
 }
 
-public class MegaTortoise : Enemy
+public class MegaTortoise : Enemy, IStateEntity<MegaTortoiseState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

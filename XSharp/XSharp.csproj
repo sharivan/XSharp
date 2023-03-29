@@ -25,6 +25,7 @@
     <None Remove="Assets\Sprites\Enemies\X1\Jamminger.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Jellyfish.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Mega Tortoise.png" />
+    <None Remove="Assets\Sprites\Enemies\X1\Metall C-15.png" />
     <None Remove="Assets\Sprites\Enemies\X1\RayBit.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Rush Roader.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Sine Faller.png" />
@@ -131,6 +132,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Mega Tortoise.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Enemies\X1\Metall C-15.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Assets\Sprites\Enemies\X1\RayBit.png">
