@@ -8,9 +8,10 @@ namespace XSharp.Engine.Entities.Enemies.MetallC15;
 
 public enum MetallC15State
 {
-    IDLE,
+    HIDDEN,
     CHASING,
-    SHOOTING
+    SHOOTING,
+    HIDDING
 }
 
 public class MetallC15 : Enemy, IStateEntity<MetallC15State>
@@ -36,16 +37,25 @@ public class MetallC15 : Enemy, IStateEntity<MetallC15State>
         Color.FromBgra(0xFF382020)  // F
     };
 
-    public const int HEALTH = 2;
+    public const int HEALTH = 1;
     public static readonly FixedSingle CONTACT_DAMAGE = 2;
-    public static readonly Box HITBOX = ((0, -1), (-7, -6), (7, 6));
+    public static readonly Box HIDDEN_HITBOX = ((0, -1), (-7, -6), (7, 6));
+    public static readonly Box SHOWING_HITBOX = ((1, -5), (-8, -9), (8, 9));
+    public static readonly Box COLLISION_BOX = ((0, -5), (-10, -10), (10, 10));
 
     public static readonly FixedSingle ATTACK_DISTANCE = 80;
 
     public const int FRAMES_TO_SHOW = 28;
-    public const int FRAMES_TO_SHOOT_AGAIN = 116;
-    public const int SHOOTING_FRAMES = 113;
-    public const int FRAMES_TO_CHASE = 4;
+    public const int FRAMES_TO_SHOOT = 25;
+    public const int FRAMES_TO_SHOW_BEFORE_SHOOTING = 120;
+    public const int PRE_SHOOTING_FRAMES = 4;
+    public const int SHOOTING_FRAMES = 32;
+    public const int PRE_CHASING_FRAMES = 4;
+    public const int FRAMES_TO_START_CHASING = 29;
+    public const int PRE_HIDDING_FRAMES = 4;
+    public const int HIDDING_FRAMES = 12;
+
+    public static readonly FixedSingle CHASING_SPEED = 448 / 256.0;
 
     public static readonly FixedSingle SHOT_SPEED = 2;
     public static readonly FixedSingle SHOT_OFFSET_X = 3;
@@ -64,20 +74,53 @@ public class MetallC15 : Enemy, IStateEntity<MetallC15State>
         spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Enemies.X1.Metall C-15.png");
         spriteSheet.CurrentPalette = palette;
 
-        var sequence = spriteSheet.AddFrameSquence("Idle");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
+        var sequence = spriteSheet.AddFrameSquence("Hidden");
+        sequence.OriginOffset = -HIDDEN_HITBOX.Origin - HIDDEN_HITBOX.Mins;
+        sequence.Hitbox = HIDDEN_HITBOX;
         sequence.AddFrame(3, 0, 0, 0, 21, 12, 1, true);
 
         sequence = spriteSheet.AddFrameSquence("Chasing");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(0, 0, 323, 1, 70, 48, 24, true);
+        sequence.OriginOffset = -HIDDEN_HITBOX.Origin - HIDDEN_HITBOX.Mins;
+        sequence.Hitbox = HIDDEN_HITBOX;
+        sequence.AddFrame(3, 0, 0, 0, 21, 12, 4);
+        sequence.OriginOffset = -SHOWING_HITBOX.Origin - SHOWING_HITBOX.Mins;
+        sequence.Hitbox = SHOWING_HITBOX;
+        sequence.AddFrame(3, -7, 0, 0, 21, 12, 1);
+        sequence.AddFrame(3, -5, 21, 0, 21, 14, 3);
+        sequence.AddFrame(3, 1, 42, 0, 21, 20, 3);
+        sequence.AddFrame(3, 2, 63, 0, 21, 21, 3);
+        sequence.AddFrame(3, 1, 42, 0, 21, 20, 3);
+        sequence.AddFrame(3, 2, 63, 0, 21, 21, 3);
+        sequence.AddFrame(3, 1, 42, 0, 21, 20, 8);
+        sequence.AddFrame(3, 1, 42, 0, 21, 20, 4, true); // start chasing from here
+        sequence.AddFrame(3, 2, 0, 21, 21, 21, 4);
+        sequence.AddFrame(3, 0, 22, 21, 21, 20, 4);
+        sequence.AddFrame(3, 2, 43, 21, 22, 21, 4);
 
         sequence = spriteSheet.AddFrameSquence("Shooting");
-        sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
-        sequence.Hitbox = HITBOX;
-        sequence.AddFrame(5, 15, 323, 1, 70, 48, 24);
+        sequence.OriginOffset = -HIDDEN_HITBOX.Origin - HIDDEN_HITBOX.Mins;
+        sequence.Hitbox = HIDDEN_HITBOX;
+        sequence.AddFrame(3, 0, 0, 0, 21, 12, 4);
+        sequence.OriginOffset = -SHOWING_HITBOX.Origin - SHOWING_HITBOX.Mins;
+        sequence.Hitbox = SHOWING_HITBOX;
+        sequence.AddFrame(3, -7, 0, 0, 21, 12, 1);
+        sequence.AddFrame(3, -5, 21, 0, 21, 14, 3);
+        sequence.AddFrame(3, 1, 42, 0, 21, 20, 3);
+        sequence.AddFrame(3, 2, 63, 0, 21, 21, 3);
+        sequence.AddFrame(3, 1, 42, 0, 21, 20, 3);
+        sequence.AddFrame(3, 2, 63, 0, 21, 21, 3);
+        sequence.AddFrame(3, 1, 42, 0, 21, 20, 12); // shot spawns at frame 9 from here, total of 28 frames       
+
+        sequence = spriteSheet.AddFrameSquence("Hidding");
+        sequence.OriginOffset = -SHOWING_HITBOX.Origin - SHOWING_HITBOX.Mins;
+        sequence.Hitbox = SHOWING_HITBOX;
+        sequence.AddFrame(3, 1, 42, 0, 21, 20, 4);
+        sequence.OriginOffset = -HIDDEN_HITBOX.Origin - HIDDEN_HITBOX.Mins;
+        sequence.Hitbox = HIDDEN_HITBOX;
+        sequence.AddFrame(3, 8, 42, 0, 21, 20, 1);
+        sequence.AddFrame(3, 2, 21, 0, 21, 14, 3);
+        sequence.AddFrame(3, 0, 0, 0, 21, 12, 2);
+        sequence.AddFrame(3, 2, 21, 0, 21, 14, 2); // total of 12 frames
 
         sequence = spriteSheet.AddFrameSquence("Shot");
         sequence.OriginOffset = -SHOT_HITBOX.Origin - SHOT_HITBOX.Mins;
@@ -88,6 +131,7 @@ public class MetallC15 : Enemy, IStateEntity<MetallC15State>
     #endregion
 
     private bool shotAlive;
+    private bool preAction;
 
     public MetallC15State State
     {
@@ -105,44 +149,106 @@ public class MetallC15 : Enemy, IStateEntity<MetallC15State>
 
         DefaultDirection = Direction.RIGHT;
         SpawnFacedToPlayer = true;
-        AlwaysFaceToPlayer = false;
+        AlwaysFaceToPlayer = true;
 
         PaletteName = "MetallC15Palette";
         SpriteSheetName = "MetallC15";
 
-        SetAnimationNames("Idle", "Chasing", "Shooting");
+        SetAnimationNames("Hidden", "Chasing", "Shooting", "Hidding");
 
         SetupStateArray<MetallC15State>();
-        RegisterState(MetallC15State.IDLE, OnStartIdle, OnIdle, null, "Idle");
-        RegisterState(MetallC15State.CHASING, OnStartChasing, OnChasing, null, "Idle");
+        RegisterState(MetallC15State.HIDDEN, OnStartHidden, OnHidden, null, "Hidden");
+        RegisterState(MetallC15State.CHASING, OnStartChasing, OnChasing, null, "Chasing");
         RegisterState(MetallC15State.SHOOTING, OnStartShooting, OnShooting, null, "Shooting");
+        RegisterState(MetallC15State.HIDDING, OnStartHidding, OnHidding, null, "Hidding");
     }
 
-    private void OnStartIdle(EntityState state, EntityState lastState)
+    private void OnStartHidden(EntityState state, EntityState lastState)
     {
         HitResponse = HitResponse.REFLECT;
     }
 
-    private void OnIdle(EntityState state, long frameCounter)
+    private void OnHidden(EntityState state, long frameCounter)
     {
+        Velocity = Velocity.YVector;
+
+        var player = Engine.Player;
+        if (player == null)
+            return;
+
+        if (player.Direction == Direction)
+        {
+            if (frameCounter >= PRE_CHASING_FRAMES)
+                State = MetallC15State.CHASING;
+        }
+        else if (!shotAlive && frameCounter >= FRAMES_TO_SHOW_BEFORE_SHOOTING)
+        {
+            var distance = Origin.DistanceTo(player.Origin, Metric.MAX);
+            if (distance <= ATTACK_DISTANCE)
+                State = MetallC15State.SHOOTING;
+        }
     }
 
     private void OnStartChasing(EntityState state, EntityState lastState)
     {
         HitResponse = HitResponse.ACCEPT;
+        preAction = true;
     }
 
     private void OnChasing(EntityState state, long frameCounter)
     {
+        preAction = frameCounter < PRE_CHASING_FRAMES;
+
+        var player = Engine.Player;
+        if (player == null)
+        {
+            State = MetallC15State.HIDDING;
+            return;
+        }
+
+        if (player.Direction != Direction)
+            State = MetallC15State.HIDDING;
+        else if (frameCounter < FRAMES_TO_START_CHASING)
+            Velocity = Velocity.YVector;
+        else
+            Velocity = (CHASING_SPEED * Direction.GetHorizontalSignal(), Velocity.Y);
     }
 
     private void OnStartShooting(EntityState state, EntityState lastState)
     {
         HitResponse = HitResponse.ACCEPT;
+        preAction = true;
     }
 
     private void OnShooting(EntityState state, long frameCounter)
     {
+        preAction = frameCounter < PRE_CHASING_FRAMES;
+
+        Velocity = Velocity.YVector;
+
+        if (frameCounter == FRAMES_TO_SHOOT)
+            Shoot();
+        else if (frameCounter >= SHOOTING_FRAMES)
+            State = MetallC15State.HIDDING;
+    }
+
+    private void OnStartHidding(EntityState state, EntityState lastState)
+    {
+        HitResponse = HitResponse.ACCEPT;
+        preAction = true;
+    }
+
+    private void OnHidding(EntityState state, long frameCounter)
+    {
+        preAction = frameCounter < PRE_CHASING_FRAMES;
+
+        Velocity = Velocity.YVector;
+
+        if (frameCounter >= HIDDING_FRAMES)
+        {
+            preAction = false;
+            State = MetallC15State.HIDDEN;
+        }
     }
 
     private EntityReference<MetallC15Shot> Shoot()
@@ -171,7 +277,13 @@ public class MetallC15 : Enemy, IStateEntity<MetallC15State>
 
     protected override Box GetHitbox()
     {
-        return HITBOX;
+        return State switch
+        {
+            MetallC15State.HIDDEN => HIDDEN_HITBOX,
+            MetallC15State.HIDDING => preAction ? SHOWING_HITBOX : HIDDEN_HITBOX,
+            MetallC15State.CHASING or MetallC15State.SHOOTING => preAction ? HIDDEN_HITBOX : SHOWING_HITBOX,
+            _ => Box.EMPTY_BOX,
+        };
     }
 
     protected override void OnSpawn()
@@ -190,7 +302,7 @@ public class MetallC15 : Enemy, IStateEntity<MetallC15State>
 
         shotAlive = false;
 
-        State = MetallC15State.IDLE;
+        State = MetallC15State.HIDDEN;
     }
 
     internal void NotifyShotDeath()

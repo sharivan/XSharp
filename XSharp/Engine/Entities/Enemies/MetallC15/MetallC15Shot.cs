@@ -56,6 +56,13 @@ public class MetallC15Shot : Enemy
         Invincible = true;
     }
 
+    protected override void OnContactDamage(Player player)
+    {
+        base.OnContactDamage(player);
+
+        Kill();
+    }
+
     protected override void OnDeath()
     {
         Shooter?.NotifyShotDeath();
