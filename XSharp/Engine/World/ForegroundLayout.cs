@@ -11,7 +11,7 @@ namespace XSharp.Engine.World;
 
 public class ForegroundLayout : Layout
 {
-    public override Texture Palette => Engine.ForegroundPalette;
+    public override Palette Palette => Engine.ForegroundPalette;
 
     public override Texture Tilemap => Engine.ForegroundTilemap;
 

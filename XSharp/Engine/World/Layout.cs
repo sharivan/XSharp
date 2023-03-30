@@ -114,7 +114,7 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
         private set;
     }
 
-    public abstract Texture Palette
+    public abstract Palette Palette
     {
         get;
     }

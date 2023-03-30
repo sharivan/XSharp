@@ -924,25 +924,32 @@ public struct Box : IShape
     /// <summary>
     /// Escala um retângulo
     /// </summary>
-    /// <param name="factor">Fator de escala</param>
+    /// <param name="scale">Fator de escala</param>
     /// <param name="box">Retângulo</param>
     /// <returns>Retângulo com suas coordenadas e dimensões escaladas por factor</returns>
-    public static Box operator *(FixedSingle factor, Box box)
+    public static Box operator *(FixedSingle scale, Box box)
     {
         Vector m = box.Origin + box.Mins;
-        return new Box(m * factor, Vector.NULL_VECTOR, box.DiagonalVector * factor);
+        return new Box(m * scale, Vector.NULL_VECTOR, box.DiagonalVector * scale);
     }
 
     /// <summary>
     /// Escala um retângulo
     /// </summary>
     /// <param name="box">Retângulo</param>
-    /// /// <param name="factor">Fator de escala</param>
+    /// /// <param name="scale">Fator de escala</param>
     /// <returns>Retângulo com suas coordenadas e dimensões escaladas por factor</returns>
-    public static Box operator *(Box box, FixedSingle factor)
+    public static Box operator *(Box box, FixedSingle scale)
     {
         Vector m = box.Origin + box.Mins;
-        return new Box(m * factor, Vector.NULL_VECTOR, box.DiagonalVector * factor);
+        return new Box(m * scale, Vector.NULL_VECTOR, box.DiagonalVector * scale);
+    }
+
+    public static Box operator *(Box box, Vector scale)
+    {
+        var m = box.Origin + box.Mins;
+        var diagonal = box.DiagonalVector;
+        return new Box((m.X * scale.X, m.Y * scale.Y), Vector.NULL_VECTOR, (diagonal.X * scale.X, diagonal.Y * scale.Y));
     }
 
     /// <summary>

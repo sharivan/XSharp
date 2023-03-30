@@ -12,7 +12,7 @@ namespace XSharp.Engine.World;
 
 public class BackgroundLayout : Layout
 {
-    public override Texture Palette => Engine.BackgroundPalette;
+    public override Palette Palette => Engine.BackgroundPalette;
 
     public override Texture Tilemap => Engine.BackgroundTilemap;
 

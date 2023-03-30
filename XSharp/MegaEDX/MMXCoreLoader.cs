@@ -8,6 +8,7 @@ using SharpDX.Direct3D9;
 using XSharp.Engine;
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Triggers;
+using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
 using XSharp.Math.Geometry;
 
@@ -243,8 +244,8 @@ public class MMXCoreLoader : MMXCore
 
     internal void LoadPalette(bool background = false)
     {
-        var palette = new Texture(Device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
-        DataRectangle rect = palette.LockRectangle(0, LockFlags.Discard);
+        var texture = new Texture(Device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
+        DataRectangle rect = texture.LockRectangle(0, LockFlags.Discard);
 
         using (var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
         {
@@ -255,7 +256,13 @@ public class MMXCoreLoader : MMXCore
             }
         }
 
-        palette.UnlockRectangle(0);
+        texture.UnlockRectangle(0);
+
+        var palette = new Palette()
+        {
+            Texture = texture,
+            Count = 256
+        };
 
         if (background)
             Engine.BackgroundPalette = palette;

@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace XSharpLevelEditor;
+namespace XSharp.Editor;
 
 internal static class Program
 {

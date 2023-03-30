@@ -475,6 +475,11 @@ public struct Vector : IGeometry
             };
     }
 
+    public FixedDouble Dot(Vector vec)
+    {
+        return (FixedDouble) X * (FixedDouble) vec.X + (FixedDouble) Y * (FixedDouble) vec.Y;
+    }
+
     /// <summary>
     /// Adição de vetores
     /// </summary>
@@ -510,45 +515,44 @@ public struct Vector : IGeometry
     /// <summary>
     /// Produto de um vetor por um escalar
     /// </summary>
-    /// <param name="alpha">Escalar</param>
+    /// <param name="scale">Escalar</param>
     /// <param name="vec">Vetor</param>
     /// <returns>O vetor escalado por alpha</returns>
-    public static Vector operator *(FixedSingle alpha, Vector vec)
+    public static Vector operator *(FixedSingle scale, Vector vec)
     {
-        return new(alpha * vec.X, alpha * vec.Y);
+        return new(scale * vec.X, scale * vec.Y);
     }
 
     /// <summary>
     /// Produto de um vetor por um escalar
     /// </summary>
     /// <param name="vec">Vetor</param>
-    /// <param name="alpha">Escalar</param>
+    /// <param name="scale">Escalar</param>
     /// <returns>O vetor escalado por alpha</returns>
-    public static Vector operator *(Vector vec, FixedSingle alpha)
+    public static Vector operator *(Vector vec, FixedSingle scale)
     {
-        return new(alpha * vec.X, alpha * vec.Y);
+        return new(scale * vec.X, scale * vec.Y);
+    }
+
+    public static Vector operator *(Vector vec, Vector scale)
+    {
+        return new(vec.X * scale.X, vec.Y * scale.Y);
     }
 
     /// <summary>
     /// Divisão de vetor por um escalar, o mesmo que multiplicar o vetor pelo inverso do escalar
     /// </summary>
     /// <param name="vec">Vetor</param>
-    /// <param name="alpha">Escalar</param>
+    /// <param name="divisor">Escalar</param>
     /// <returns>O vetor dividido pelo escalar alpha</returns>
-    public static Vector operator /(Vector vec, FixedSingle alpha)
+    public static Vector operator /(Vector vec, FixedSingle divisor)
     {
-        return new(vec.X / alpha, vec.Y / alpha);
+        return new(vec.X / divisor, vec.Y / divisor);
     }
 
-    /// <summary>
-    /// Produto escalar/interno/ponto entre dois vetores
-    /// </summary>
-    /// <param name="vec1">Primeiro vetor</param>
-    /// <param name="vec2">Segundo vetor</param>
-    /// <returns>Produto escalar entre os dois vetores</returns>
-    public static FixedDouble operator *(Vector vec1, Vector vec2)
+    public static Vector operator /(Vector vec, Vector divisor)
     {
-        return (FixedDouble) vec1.X * (FixedDouble) vec2.X + (FixedDouble) vec1.Y * (FixedDouble) vec2.Y;
+        return new(vec.X / divisor.X, vec.Y / divisor.Y);
     }
 
     /// <summary>

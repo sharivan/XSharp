@@ -283,8 +283,8 @@ public class GameEngine : IRenderable, IRenderTarget
     private Texture blackPixelTexture;
     private Texture foregroundTilemap;
     private Texture backgroundTilemap;
-    private Texture foregroundPalette;
-    private Texture backgroundPalette;
+    private Palette foregroundPalette;
+    private Palette backgroundPalette;
 
     private Texture stageTexture;
 
@@ -484,9 +484,9 @@ public class GameEngine : IRenderable, IRenderTarget
         set;
     }
 
-    public Vector MinCameraPos => NoCameraConstraints || Camera.NoConstraints ? World.ForegroundLayout.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
+    public Vector MinCameraPos => Editing || NoCameraConstraints || Camera.NoConstraints ? World.ForegroundLayout.BoundingBox.LeftTop : CameraConstraintsBox.LeftTop;
 
-    public Vector MaxCameraPos => NoCameraConstraints || Camera.NoConstraints ? World.ForegroundLayout.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
+    public Vector MaxCameraPos => Editing || NoCameraConstraints || Camera.NoConstraints ? World.ForegroundLayout.BoundingBox.RightBottom : CameraConstraintsBox.RightBottom;
 
     public bool Paused
     {
@@ -531,7 +531,7 @@ public class GameEngine : IRenderable, IRenderTarget
         set => SetCheckpoint(value);
     }
 
-    internal Texture ForegroundTilemap
+    public Texture ForegroundTilemap
     {
         get => foregroundTilemap;
         set
@@ -544,7 +544,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    internal Texture BackgroundTilemap
+    public Texture BackgroundTilemap
     {
         get => backgroundTilemap;
         set
@@ -557,7 +557,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    internal Texture ForegroundPalette
+    public Palette ForegroundPalette
     {
         get => foregroundPalette;
         set
@@ -570,7 +570,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    internal Texture BackgroundPalette
+    public Palette BackgroundPalette
     {
         get => backgroundPalette;
         set
@@ -827,6 +827,12 @@ public class GameEngine : IRenderable, IRenderTarget
         set;
     } = 0;
 
+    public bool Editing
+    {
+        get;
+        set;
+    } = false;
+
     private GameEngine(Control control)
     {
         Control = control;
@@ -877,9 +883,9 @@ public class GameEngine : IRenderable, IRenderTarget
             AutoDepthStencilFormat = Format.D16,
             EnableAutoDepthStencil = true,
             BackBufferCount = DOUBLE_BUFFERED ? 2 : 1,
-            BackBufferFormat = FULL_SCREEN ? Format.X8R8G8B8 : Format.Unknown,
-            BackBufferHeight = FULL_SCREEN ? Control.ClientSize.Height : 0,
-            BackBufferWidth = FULL_SCREEN ? Control.ClientSize.Width : 0,
+            BackBufferFormat = Format.X8R8G8B8,
+            BackBufferHeight = Control.ClientSize.Height,
+            BackBufferWidth = Control.ClientSize.Width,
             PresentFlags = VSYNC ? PresentFlags.LockableBackBuffer : PresentFlags.None
         };
 
@@ -1540,7 +1546,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void RenderSprite(Texture texture, Palette palette, FadingControl fadingControl, Box box, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
-        RectangleF rDest = WorldBoxToScreen(box);
+        RectangleF rDest = WorldBoxToScreen(box, false);
 
         var matScaling = Matrix.Scaling(1, 1, 1);
 
@@ -2225,6 +2231,29 @@ public class GameEngine : IRenderable, IRenderTarget
 
         //lua.DoString("if engine.Player ~= null then engine.Player:ShootLemon() end");
 
+        if (Editing)
+        {
+            if (keys.HasLeft())
+            {
+                Camera.Origin += 4 * Vector.LEFT_VECTOR;
+            }
+            else if (keys.HasRight())
+            {
+                Camera.Origin += 4 * Vector.RIGHT_VECTOR;
+            }
+
+            if (keys.HasUp())
+            {
+                Camera.Origin += 4 * Vector.UP_VECTOR;
+            }
+            else if (keys.HasDown())
+            {
+                Camera.Origin += 4 * Vector.DOWN_VECTOR;
+            }
+
+            return false;
+        }
+
         HandleScreenEffects();
 
         if (!loadingLevel)
@@ -2400,9 +2429,17 @@ public class GameEngine : IRenderable, IRenderTarget
         return new((float) box.Left, (float) box.Top, (float) box.Width, (float) box.Height);
     }
 
-    public Vector2 WorldVectorToScreen(Vector v)
+    public Vector GetDrawScale()
     {
-        return ToVector2((v.RoundToFloor() - Camera.LeftTop.RoundToFloor()) * DrawScale + drawBox.LeftTop);
+        var drawScaleX = Control.ClientSize.Width / Camera.Width;
+        var drawScaleY = Control.ClientSize.Height / Camera.Height;
+        return (drawScaleX, drawScaleY);
+    }
+
+    public Vector2 WorldVectorToScreen(Vector v, bool transform = true)
+    {
+        var drawScale = transform ? GetDrawScale() : (1, 1);
+        return ToVector2((v.RoundToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? drawBox.LeftTop : (0, 0)));
     }
 
     public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
@@ -2417,17 +2454,20 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public Vector ScreenPointToVector(Point p)
     {
-        return (new Vector(p.X, p.Y) - drawBox.LeftTop) / DrawScale + Camera.LeftTop;
+        var drawScale = GetDrawScale();
+        return (new Vector(p.X, p.Y) - drawBox.LeftTop) / drawScale + Camera.LeftTop;
     }
 
     public Vector ScreenVector2ToWorld(Vector2 v)
     {
-        return (new Vector(v.X, v.Y) - drawBox.LeftTop) / DrawScale + Camera.LeftTop;
+        var drawScale = GetDrawScale();
+        return (new Vector(v.X, v.Y) - drawBox.LeftTop) / drawScale + Camera.LeftTop;
     }
 
-    public RectangleF WorldBoxToScreen(Box box)
+    public RectangleF WorldBoxToScreen(Box box, bool transform = true)
     {
-        return ToRectangleF((box.LeftTopOrigin().RoundOriginToFloor() - Camera.LeftTop.RoundToFloor()) * DrawScale + drawBox.LeftTop);
+        var drawScale = transform ? GetDrawScale() : (1, 1);
+        return ToRectangleF((box.LeftTopOrigin().RoundOriginToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? drawBox.LeftTop : (0, 0)));
     }
 
     public IReadOnlyList<Sprite> GetSprites(int layer)
@@ -2765,8 +2805,8 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void DrawLine(Vector2 from, Vector2 to, float width, Color color, FadingControl fadingControl = null)
     {
-        from *= 4;
-        to *= 4;
+        //from *= 4;
+        //to *= 4;
 
         line.Width = width;
 
@@ -2800,7 +2840,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void DrawRectangle(RectangleF rect, float borderWith, Color color, FadingControl fadingControl = null)
     {
-        rect = new RectangleF(rect.X * 4, rect.Y * 4 + 1, rect.Width * 4, rect.Height * 4);
+        rect = new RectangleF(rect.X, rect.Y + 1, rect.Width, rect.Height);
 
         line.Width = borderWith;
 
@@ -2834,10 +2874,10 @@ public class GameEngine : IRenderable, IRenderTarget
 
     public void FillRectangle(RectangleF rect, Color color, FadingControl fadingControl = null)
     {
-        float x = 4 * rect.Left;
-        float y = 4 * rect.Top;
+        float x = rect.Left;
+        float y = rect.Top;
 
-        var matScaling = Matrix.Scaling(4 * rect.Width, 4 * rect.Height, 1);
+        var matScaling = Matrix.Scaling(rect.Width, rect.Height, 1);
         var matTranslation = Matrix.Translation(x, y + 1, 0);
         Matrix matTransform = matScaling * matTranslation;
 
@@ -3005,7 +3045,7 @@ public class GameEngine : IRenderable, IRenderTarget
         throw new Exception($"Exiting process due device error: {hr} ({hr.Code})");
     }
 
-    private void DrawTexture(Texture texture, bool linear = false)
+    public void DrawTexture(Texture texture, Palette palette = null, bool linear = false)
     {
         Device.PixelShader = PixelShader;
         Device.VertexShader = null;
@@ -3013,7 +3053,7 @@ public class GameEngine : IRenderable, IRenderTarget
         PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, FadingControl.FadingLevel);
         PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, FadingControl.FadingColor.ToVector4());
 
-        var matScaling = Matrix.Scaling(0.25f, 0.25f, 1);
+        var matScaling = Matrix.Scaling(0.25F, 0.25F, 1);
         var matTranslation = Matrix.Translation(-1 * SCREEN_WIDTH * 0.5F, +1 * SCREEN_HEIGHT * 0.5F, 1);
         Matrix matTransform = matScaling * matTranslation;
 
@@ -3021,6 +3061,27 @@ public class GameEngine : IRenderable, IRenderTarget
         Device.SetTransform(TransformState.View, Matrix.Identity);
         Device.SetTransform(TransformState.Texture0, Matrix.Identity);
         Device.SetTransform(TransformState.Texture1, Matrix.Identity);
+
+        PixelShader shader;
+        EffectHandle fadingLevelHandle;
+        EffectHandle fadingColorHandle;
+
+        if (palette != null)
+        {
+            fadingLevelHandle = plsFadingLevelHandle;
+            fadingColorHandle = plsFadingColorHandle;
+            shader = PaletteShader;
+            Device.SetTexture(1, palette.Texture);
+        }
+        else
+        {
+            fadingLevelHandle = psFadingLevelHandle;
+            fadingColorHandle = psFadingColorHandle;
+            shader = PixelShader;
+        }
+
+        Device.PixelShader = shader;
+        Device.VertexShader = null;
 
         Device.SetSamplerState(0, SamplerState.MagFilter, linear ? TextureFilter.Linear : TextureFilter.Point);
         Device.SetSamplerState(0, SamplerState.MinFilter, linear ? TextureFilter.Linear : TextureFilter.Point);
@@ -3158,7 +3219,7 @@ public class GameEngine : IRenderable, IRenderTarget
         }
 
         Device.SetRenderTarget(0, backBuffer);
-        DrawTexture(stageTexture, SAMPLER_STATE_LINEAR);
+        DrawTexture(stageTexture, null, SAMPLER_STATE_LINEAR);
 
         if (nextFrame)
         {
@@ -3195,7 +3256,7 @@ public class GameEngine : IRenderable, IRenderTarget
             }
         }
 
-        if (respawning || SpawningBlackScreen)
+        if (!Editing && (respawning || SpawningBlackScreen))
             FillRectangle(Camera != null ? WorldBoxToScreen(Camera.BoundingBox) : RenderRectangle, Color.Black, FadingControl);
 
         if (drawHitbox || showColliders || showDrawBox || showTriggerBounds)
@@ -3376,8 +3437,8 @@ public class GameEngine : IRenderable, IRenderTarget
         if (drawHighlightedPointingTiles)
         {
             System.Drawing.Point cursorPos = Control.PointToClient(Cursor.Position);
-            Vector v = ScreenPointToVector(cursorPos.X / 4, cursorPos.Y / 4);
-            DrawText($"Mouse Pos: X: {v.X} Y: {v.Y}", highlightMapTextFont, new RectangleF(0, 0, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
+            Vector v = ScreenPointToVector(cursorPos.X, cursorPos.Y);
+            DrawText($"Mouse Pos: X: {(float) v.X} Y: {(float) v.Y}", highlightMapTextFont, new RectangleF(0, 0, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
             Scene scene = World.ForegroundLayout.GetSceneFrom(v);
             if (scene != null)
@@ -3425,8 +3486,8 @@ public class GameEngine : IRenderable, IRenderTarget
             line.Width = 2;
 
             line.Begin();
-            line.Draw(new Vector2[] { 4 * new Vector2(v.X, v.Y - SCREEN_HEIGHT), 4 * new Vector2(v.X, v.Y + SCREEN_HEIGHT) }, Color.Blue);
-            line.Draw(new Vector2[] { 4 * new Vector2(v.X - SCREEN_WIDTH, v.Y), 4 * new Vector2(v.X + SCREEN_WIDTH, v.Y) }, Color.Blue);
+            line.Draw(new Vector2[] { new Vector2(v.X, v.Y - SCREEN_HEIGHT), new Vector2(v.X, v.Y + SCREEN_HEIGHT) }, Color.Blue);
+            line.Draw(new Vector2[] { new Vector2(v.X - SCREEN_WIDTH, v.Y), new Vector2(v.X + SCREEN_WIDTH, v.Y) }, Color.Blue);
             line.End();
         }
 
@@ -4934,11 +4995,11 @@ public class GameEngine : IRenderable, IRenderTarget
         }
     }
 
-    public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, Texture texture, Texture palette, FadingControl fadingControl, Box box)
+    public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, Texture texture, Palette palette, FadingControl fadingControl, Box box)
     {
         Device.SetStreamSource(0, vb, 0, vertexSize);
 
-        RectangleF rDest = WorldBoxToScreen(box);
+        RectangleF rDest = WorldBoxToScreen(box, false);
 
         float x = rDest.Left - SCREEN_WIDTH * 0.5f;
         float y = -rDest.Top + SCREEN_HEIGHT * 0.5f;
@@ -4962,7 +5023,7 @@ public class GameEngine : IRenderable, IRenderTarget
             fadingLevelHandle = plsFadingLevelHandle;
             fadingColorHandle = plsFadingColorHandle;
             shader = PaletteShader;
-            Device.SetTexture(1, palette);
+            Device.SetTexture(1, palette.Texture);
         }
         else
         {
