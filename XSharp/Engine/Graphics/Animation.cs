@@ -296,7 +296,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
         Vector origin = DrawOrigin;
         MMXBox drawBox = origin + srcBox;
-        Vector2 translatedOrigin = GameEngine.Engine.WorldVectorToScreen(drawBox.Origin);
+        Vector2 translatedOrigin = GameEngine.Engine.WorldVectorToScreen(drawBox.Origin, false);
         var origin3 = new Vector3(translatedOrigin.X, translatedOrigin.Y, 0);
 
         Matrix transform = Matrix.Identity;

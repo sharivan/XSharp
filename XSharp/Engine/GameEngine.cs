@@ -2519,6 +2519,7 @@ public class GameEngine : IRenderable, IRenderTarget
     {
         Vector spawnPos;
         Vector cameraPos;
+
         if (romLoaded)
         {
             spawnPos = mmx.CharacterPos;
@@ -2533,7 +2534,7 @@ public class GameEngine : IRenderable, IRenderTarget
         Camera.LeftTop = cameraPos;
 
         SpawnX(spawnPos);
-        CreateHP();
+        HP?.Spawn();
 
         Camera.FocusOn = Player;
         CurrentCheckpoint = checkpoints.Count > 0 ? checkpoints[mmx.Point] : null;
@@ -2597,6 +2598,18 @@ public class GameEngine : IRenderable, IRenderTarget
             });
 
             Camera.Spawn();
+
+            player = Entities.Create<Player>(new
+            {
+                Name = "X",
+                Respawnable = true
+            });
+
+            hp = Entities.Create<PlayerHealthHUD>(new
+            {
+                Name = "HP",
+                Respawnable = true
+            });
 
             if (romLoaded)
             {
@@ -4850,15 +4863,7 @@ public class GameEngine : IRenderable, IRenderTarget
 
     private void SpawnX(Vector origin)
     {
-        if (Player != null)
-            RemoveEntity(Player, true);
-
-        player = Entities.Create<Player>(new
-        {
-            Name = "X",
-            Origin = origin
-        });
-
+        Player.Origin = origin;
         Player.Spawn();
         Player.Lives = lastLives;
     }
@@ -4908,19 +4913,6 @@ public class GameEngine : IRenderable, IRenderTarget
             Entities.Remove(entity);
         else if (entity.SpawnOnNear)
             entity.ResetFromInitParams();
-    }
-
-    private void CreateHP()
-    {
-        if (HP != null)
-            RemoveEntity(HP, true);
-
-        hp = Entities.Create<PlayerHealthHUD>(new
-        {
-            Name = "HP"
-        });
-
-        HP.Spawn();
     }
 
     private void StartReadyHUD()
