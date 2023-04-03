@@ -2,7 +2,7 @@
 
 ![](XSharp.png)
 
-This project aims to recreate an engine very similar to the SNES Mega Man X trilogy. You can test the executable version of this project by downloading the current release accessing https://github.com/sharivan/XSharp/releases. You will need the .NET 7.0 or newer to run this program.
+This project aims to recreate an engine very similar to the SNES Mega Man X trilogy. You can test the executable version of this project by downloading the current release accessing https://github.com/sharivan/XSharp/releases. You will need the runtime of .NET 7.0 or newer to run this program.
 
 A video showing the version v0.2.1-alpha released on March 23, 2023 can be watched at https://www.youtube.com/watch?v=5SOOVi5R4s8
 
@@ -15,7 +15,7 @@ You can control the X using the following keys:
   - Right Arrow: Move to Right.
   - Enter: Toggle pause.
 
-Support to joypad was added, but there is no support to bind custom keys for now. You can use joy2key or similar applications to keyboard to joypad mapping if you want.
+Support to joypad was added (tested using DS4 joypad with DS4Windows only), but there is no support to bind custom keys for now. You can use joy2key or similar key mapping applications for map your keyboard or joypad with your prefered config if you want.
 
 Shortcut Keys:
 
@@ -43,16 +43,17 @@ Shortcut Keys:
 
 Modifications currently in progress:
 
-- Bosses.
-- Lua scripting support, allowing devs and mappers customize levels, enemies, etc.
+- Level editor.
 - Own level format (instead loading from rom of original games). This step is neeeded to make the level editor.
 - More levels for testing.
-- More types of enemies.
+- More kind of enemies.
+- More bosses.
 - Armors.
 - Water graphics.
 - Slippery physics (present in Crystal Snail and Blizzard Buffalo stages).
 - Conveyor physics (present in Mammoth and Sigma 3 stages).
-- Solid based sprites (elevators, moving platforms, etc).
+- Embedded console.
+- Lua scripting support, allowing devs and mappers customize levels, enemies, etc.
 
 Some Pending Fixes:
 
@@ -62,11 +63,9 @@ Some Pending Fixes:
 
 Future additions:
 
+- Abstraction of dependencies like graphical API, S.O. API and others. This is needed to make this project portable for other systems in future.
 - Further polishing of physics.
-- Level editor.
 - Pause menu.
 - Weapons.
 - Demo recorder.
-- Embedded console.
-- Support for other render APIs like D3D11 and OpenGL.
-- Add documentation.
+- Full documentation.
