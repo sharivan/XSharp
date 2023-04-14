@@ -31,7 +31,7 @@ public enum BossDoorDirection
 
 public delegate void BossDoorEvent(BossDoor source);
 
-public class BossDoor : BaseTrigger, IStateEntity<BossDoorState>
+public class BossDoor : BaseTrigger, IFSMEntity<BossDoorState>
 {
     #region Precache
     [Precache]

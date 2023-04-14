@@ -20,7 +20,7 @@ public class SoundChannel : IDisposable, ISerializable
     public string Name
     {
         get => name;
-        set => GameEngine.Engine.UpdateSoundChannelName(this, value);
+        set => BaseEngine.Engine.UpdateSoundChannelName(this, value);
     }
 
     public SoundStream Stream

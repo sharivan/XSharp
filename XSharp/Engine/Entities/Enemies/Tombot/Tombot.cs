@@ -14,7 +14,7 @@ public enum TombotState
     LEAVING = 3
 }
 
-public class Tombot : Enemy, IStateEntity<TombotState>
+public class Tombot : Enemy, IFSMEntity<TombotState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

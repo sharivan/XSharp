@@ -386,14 +386,24 @@ public abstract class Sprite : Entity, IRenderable
 
     public bool CheckCollisionWithWorld
     {
-        get => worldCollider.CheckCollisionWithWorld;
-        protected set => worldCollider.CheckCollisionWithWorld = value;
+        get => worldCollider != null && worldCollider.CheckCollisionWithWorld;
+
+        protected set
+        {
+            if (worldCollider != null)
+                worldCollider.CheckCollisionWithWorld = value;
+        }
     }
 
     public bool CheckCollisionWithSolidSprites
     {
-        get => spriteCollider.CheckCollisionWithSolidSprites;
-        protected set => spriteCollider.CheckCollisionWithSolidSprites = value;
+        get => spriteCollider != null && spriteCollider.CheckCollisionWithSolidSprites;
+
+        protected set
+        {
+            if (spriteCollider != null)
+                spriteCollider.CheckCollisionWithSolidSprites = value;
+        }
     }
 
     public bool CanBeCarriedWhenLanded
@@ -1928,10 +1938,19 @@ public abstract class Sprite : Entity, IRenderable
 
     public virtual void Render(IRenderTarget target)
     {
-        if (!Alive || MarkedToRemove || !Visible)
-            return;
+        if (Engine.Editing)
+        {
+            Animation animation = null;
+            if (InitialAnimationName is not null and not "")
+                animation = Animations[InitialAnimationName];
+            else if (InitialAnimationIndex >= 0 && InitialAnimationIndex < Animations.Count)
+                animation = Animations[InitialAnimationIndex];
+            else if (Animations.Count > 0)
+                animation = Animations[0];
 
-        if (!InvisibleOnNextFrame)
+            animation?.Render(target);
+        }
+        else if (Alive && !MarkedToRemove && Visible && !InvisibleOnNextFrame)
         {
             if (MultiAnimation)
             {

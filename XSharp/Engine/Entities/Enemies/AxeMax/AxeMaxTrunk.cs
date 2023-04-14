@@ -12,7 +12,7 @@ public enum AxeMaxTrunkState
     THROWN = 2
 }
 
-public class AxeMaxTrunk : Sprite, IStateEntity<AxeMaxTrunkState>
+public class AxeMaxTrunk : Sprite, IFSMEntity<AxeMaxTrunkState>
 {
     #region StaticFields
     public static readonly Box IDLE_HITBOX = ((0, 0), (-13, -11), (13, 5));

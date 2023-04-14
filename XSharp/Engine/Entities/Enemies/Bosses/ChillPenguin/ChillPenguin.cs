@@ -20,7 +20,7 @@ public enum ChillPenguinState
     DYING = 9
 }
 
-public class ChillPenguin : Boss, IStateEntity<ChillPenguinState>
+public class ChillPenguin : Boss, IFSMEntity<ChillPenguinState>
 {
     #region StaticFields
     public static readonly bool DONT_ATTACK = false;

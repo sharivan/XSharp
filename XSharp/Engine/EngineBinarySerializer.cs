@@ -42,7 +42,7 @@ public class EngineBinarySerializer : BinarySerializer
         }
 
         int index = ReadInt();
-        var reference = GameEngine.Engine.Entities.GetOrCreateReferenceTo(index, entityType);
+        var reference = BaseEngine.Engine.Entities.GetOrCreateReferenceTo(index, entityType);
         if (reference is null)
             return null;
 
@@ -82,22 +82,22 @@ public class EngineBinarySerializer : BinarySerializer
 
     public override object ReadValue(Type type, bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true)
     {
-        if (type == typeof(GameEngine))
+        if (type == typeof(BaseEngine))
         {
             bool isSet = ReadBool();
-            return isSet ? GameEngine.Engine : null;
+            return isSet ? BaseEngine.Engine : null;
         }
 
         if (type == typeof(World.World))
         {
             bool isSet = ReadBool();
-            return isSet ? GameEngine.Engine.World : null;
+            return isSet ? BaseEngine.Engine.World : null;
         }
 
         if (type == typeof(Partition<Entity>))
         {
             bool isSet = ReadBool();
-            return isSet ? GameEngine.Engine.partition : null;
+            return isSet ? BaseEngine.Engine.partition : null;
         }
 
         return base.ReadValue(type, acceptNonSerializable, ignoreItems, nullable);
@@ -105,7 +105,7 @@ public class EngineBinarySerializer : BinarySerializer
 
     public override void WriteValue(Type type, object value, bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true)
     {
-        if (type == typeof(GameEngine) || type == typeof(World.World) || type == typeof(Partition<Entity>))
+        if (type == typeof(BaseEngine) || type == typeof(World.World) || type == typeof(Partition<Entity>))
             WriteBool(value != null);
         else
             base.WriteValue(type, value, acceptNonSerializable, ignoreItems, nullable);

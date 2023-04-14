@@ -22,7 +22,7 @@ internal enum TurnCannonType
     MOBILE = 1
 }
 
-public class TurnCannon : Enemy, IStateEntity<TurnCannonState>
+public class TurnCannon : Enemy, IFSMEntity<TurnCannonState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

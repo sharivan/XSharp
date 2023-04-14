@@ -21,7 +21,7 @@ public enum JammingerSubState
     LAUGHING2 = 2,
 }
 
-public class Jamminger : Enemy, IStateEntity<JammingerState, JammingerSubState>
+public class Jamminger : Enemy, IFSMEntity<JammingerState, JammingerSubState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

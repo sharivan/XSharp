@@ -14,7 +14,7 @@ public enum RayBitState
     SHOOTING = 3
 }
 
-public class RayBit : Enemy, IStateEntity<RayBitState>
+public class RayBit : Enemy, IFSMEntity<RayBitState>
 {
     #region StaticFields
     public static readonly Color[] RAYBIT_PALETTE = new Color[]

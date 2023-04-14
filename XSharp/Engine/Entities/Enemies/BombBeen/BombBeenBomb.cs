@@ -11,7 +11,7 @@ public enum BombBeenBombState
     ABOUT_TO_EXPLODE = 3
 }
 
-public class BombBeenBomb : Sprite, IStateEntity<BombBeenBombState>
+public class BombBeenBomb : Sprite, IFSMEntity<BombBeenBombState>
 {
     #region Precache
     [Precache]

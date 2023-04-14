@@ -26,7 +26,7 @@ public delegate void EntityActivatorEvent(Entity source, Entity activator);
 [Serializable]
 public abstract class Entity : IIndexedNamedFactoryItem
 {
-    public static GameEngine Engine => GameEngine.Engine;
+    public static BaseEngine Engine => BaseEngine.Engine;
 
     public event EntityEvent SpawnEvent;
     public event EntityEvent DeathEvent;

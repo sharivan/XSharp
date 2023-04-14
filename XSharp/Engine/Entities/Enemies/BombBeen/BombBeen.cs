@@ -13,7 +13,7 @@ public enum BombBeenState
     POST_DROPPING_BOMBS = 2
 }
 
-public class BombBeen : Enemy, IStateEntity<BombBeenState>
+public class BombBeen : Enemy, IFSMEntity<BombBeenState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

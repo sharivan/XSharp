@@ -12,6 +12,11 @@
 	<PackageProjectUrl>https://github.com/sharivan/XSharp</PackageProjectUrl>
 	<NeutralLanguage>en-001</NeutralLanguage>
 	<Title>X#</Title>
+	<GenerateDocumentationFile>False</GenerateDocumentationFile>
+	<SignAssembly>False</SignAssembly>
+	<Authors>Sharivan</Authors>
+	<Description>A Mega Man X engine made in C#</Description>
+	<PackageTags>game;csharp;game-engine;engine;directx;game-development;capcom;direct3d;sharpdx;megaman;x2;x3;directx-9;d3d9;direct3d9;d3d;game-engine-2d;x1;megaman-x;megamanx3;megamanx2;megamanx;megaman-x2;megaman-x3</PackageTags>
   </PropertyGroup> 
   <ItemGroup>
     <None Remove="Assets\Sprites\Effects\Smoke.png" />

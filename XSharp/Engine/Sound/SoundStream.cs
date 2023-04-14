@@ -161,7 +161,7 @@ public class SoundStream : WaveStream, ISerializable
         var path = serializer.ReadString();
         if (path != null)
         {
-            source = GameEngine.Engine.precachedSounds[GameEngine.Engine.precachedSoundsByFileName[path]];
+            source = BaseEngine.Engine.precachedSounds[BaseEngine.Engine.precachedSoundsByFileName[path]];
             Position = serializer.ReadLong();
         }
         else

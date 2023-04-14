@@ -16,7 +16,7 @@ public enum ScriverState
     END_DRILLING = 4
 }
 
-public class Scriver : Enemy, IStateEntity<ScriverState>
+public class Scriver : Enemy, IFSMEntity<ScriverState>
 {
     #region StaticFields
     public static readonly Color[] SCRIVER_PALETTE = new Color[]

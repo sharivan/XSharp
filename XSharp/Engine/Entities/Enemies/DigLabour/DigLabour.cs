@@ -14,7 +14,7 @@ public enum DigLabourState
     LAUGHING
 }
 
-public class DigLabour : Enemy, IStateEntity<DigLabourState>
+public class DigLabour : Enemy, IFSMEntity<DigLabourState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

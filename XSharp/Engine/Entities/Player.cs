@@ -41,7 +41,7 @@ public enum PlayerState
 }
 
 // TODO : This class needs a huge refactor
-public class Player : Sprite, IStateEntity<PlayerState>
+public class Player : Sprite, IFSMEntity<PlayerState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

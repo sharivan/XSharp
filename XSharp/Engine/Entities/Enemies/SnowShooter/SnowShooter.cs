@@ -12,7 +12,7 @@ public enum SnowShooterState
     SHOOTING = 1
 }
 
-public class SnowShooter : Enemy, IStateEntity<SnowShooterState>
+public class SnowShooter : Enemy, IFSMEntity<SnowShooterState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

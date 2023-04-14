@@ -50,7 +50,7 @@ public class ForegroundLayout : Layout
                 {
                     var sceneLT = GetSceneLeftTop(row, col);
                     Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                    Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, Tilemap, Palette, FadingControl, sceneBox);
+                    Engine.RenderVertexBuffer(scene.layers[layer], BaseEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, Tilemap, Palette, FadingControl, sceneBox);
                 }
             }
         }

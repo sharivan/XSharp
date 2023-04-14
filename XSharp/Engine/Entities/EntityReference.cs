@@ -8,21 +8,21 @@ namespace XSharp.Engine.Entities;
 
 public interface IEntityReference : IIndexedNamedFactoryItemReference<Entity>
 {
-    IIndexedNamedFactory<Entity> IIndexedNamedFactoryItemReference<Entity>.Factory => GameEngine.Engine.Entities;
+    IIndexedNamedFactory<Entity> IIndexedNamedFactoryItemReference<Entity>.Factory => BaseEngine.Engine.Entities;
 
-    IIndexedFactory<Entity> IIndexedFactoryItemReference<Entity>.Factory => GameEngine.Engine.Entities;
+    IIndexedFactory<Entity> IIndexedFactoryItemReference<Entity>.Factory => BaseEngine.Engine.Entities;
 
-    INamedFactory<Entity> INamedFactoryItemReference<Entity>.Factory => GameEngine.Engine.Entities;
+    INamedFactory<Entity> INamedFactoryItemReference<Entity>.Factory => BaseEngine.Engine.Entities;
 
-    IFactory<Entity> IFactoryItemReference<Entity>.Factory => GameEngine.Engine.Entities;
+    IFactory<Entity> IFactoryItemReference<Entity>.Factory => BaseEngine.Engine.Entities;
 
-    IIndexedNamedFactory IIndexedNamedFactoryItemReference.Factory => GameEngine.Engine.Entities;
+    IIndexedNamedFactory IIndexedNamedFactoryItemReference.Factory => BaseEngine.Engine.Entities;
 
-    IIndexedFactory IIndexedFactoryItemReference.Factory => GameEngine.Engine.Entities;
+    IIndexedFactory IIndexedFactoryItemReference.Factory => BaseEngine.Engine.Entities;
 
-    INamedFactory INamedFactoryItemReference.Factory => GameEngine.Engine.Entities;
+    INamedFactory INamedFactoryItemReference.Factory => BaseEngine.Engine.Entities;
 
-    IFactory IFactoryItemReference.Factory => GameEngine.Engine.Entities;
+    IFactory IFactoryItemReference.Factory => BaseEngine.Engine.Entities;
 
     new public Entity Target
     {
@@ -125,7 +125,7 @@ public class EntityReference : IndexedNamedFactoryItemReference<Entity>, IEntity
 
     protected override IndexedNamedFactory<Entity> GetFactory()
     {
-        return GameEngine.Engine.Entities;
+        return BaseEngine.Engine.Entities;
     }
 
     public override int GetHashCode()

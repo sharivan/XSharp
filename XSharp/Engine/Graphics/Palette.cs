@@ -24,7 +24,7 @@ public class Palette : IDisposable, ISerializable
     public string Name
     {
         get => name;
-        set => GameEngine.Engine.UpdatePaletteName(this, value);
+        set => BaseEngine.Engine.UpdatePaletteName(this, value);
     }
 
     public Texture Texture
@@ -68,7 +68,7 @@ public class Palette : IDisposable, ISerializable
             colors[i] = color;
         }
 
-        GameEngine.Engine.PrecachePalette(name, colors, Count);
+        BaseEngine.Engine.PrecachePalette(name, colors, Count);
     }
 
     public void Serialize(ISerializer serializer)

@@ -82,7 +82,7 @@ public class Block
         Map map = maps[cell.Row, cell.Col];
         if (map == null)
         {
-            map = GameEngine.Engine.World.ForegroundLayout.AddMap();
+            map = BaseEngine.Engine.World.ForegroundLayout.AddMap();
             maps[cell.Row, cell.Col] = map;
         }
 
@@ -149,8 +149,8 @@ public class Block
                         for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP; tileCol++)
                         {
                             var tilePos = new Vector(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
-                            GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
-                            GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            BaseEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            BaseEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                         }
                     }
                 }

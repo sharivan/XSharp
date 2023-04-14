@@ -24,9 +24,9 @@ public class World : IDisposable
     public static readonly Vector TILE_SIZE_VECTOR = new(TILE_SIZE, TILE_SIZE);
     public static readonly Vector TILE_FRAC_SIZE_VECTOR = new(TILE_FRAC_SIZE, TILE_FRAC_SIZE);
 
-    public static GameEngine Engine => GameEngine.Engine;
+    public static BaseEngine Engine => BaseEngine.Engine;
 
-    public Device Device => GameEngine.Engine.Device;
+    public Device Device => BaseEngine.Engine.Device;
 
     public static Cell GetTileCellFromPos(Vector pos)
     {

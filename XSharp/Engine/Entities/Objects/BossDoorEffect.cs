@@ -4,7 +4,7 @@ using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Objects;
 
-internal class BossDoorEffect : SpriteEffect, IStateEntity<BossDoorState>
+internal class BossDoorEffect : SpriteEffect, IFSMEntity<BossDoorState>
 {
     #region Precache
     [Precache]

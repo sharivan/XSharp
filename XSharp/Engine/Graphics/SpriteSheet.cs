@@ -16,7 +16,7 @@ namespace XSharp.Engine.Graphics;
 
 public class SpriteSheet : IDisposable
 {
-    public static GameEngine Engine => GameEngine.Engine;
+    public static BaseEngine Engine => BaseEngine.Engine;
 
     public class FrameSequence
     {
@@ -208,7 +208,7 @@ public class SpriteSheet : IDisposable
     public string Name
     {
         get => name;
-        set => GameEngine.Engine.UpdateSpriteSheetName(this, value);
+        set => BaseEngine.Engine.UpdateSpriteSheetName(this, value);
     }
 
     public bool Precache
@@ -298,8 +298,8 @@ public class SpriteSheet : IDisposable
             int srcY = (int) boudingBox.Top;
             int width = (int) boudingBox.Width;
             int height = (int) boudingBox.Height;
-            int width1 = (int) GameEngine.NextHighestPowerOfTwo((uint) width);
-            int height1 = (int) GameEngine.NextHighestPowerOfTwo((uint) height);
+            int width1 = (int) BaseEngine.NextHighestPowerOfTwo((uint) width);
+            int height1 = (int) BaseEngine.NextHighestPowerOfTwo((uint) height);
 
             Texture texture;
             if (CurrentPalette == null)
@@ -309,7 +309,7 @@ public class SpriteSheet : IDisposable
                 Surface src = CurrentTexture.GetSurfaceLevel(0);
                 Surface dst = texture.GetSurfaceLevel(0);
 
-                Engine.Device.UpdateSurface(src, GameEngine.ToRectangleF(boudingBox), dst, new Point(0, 0));
+                Engine.Device.UpdateSurface(src, BaseEngine.ToRectangleF(boudingBox), dst, new Point(0, 0));
             }
             else
             {

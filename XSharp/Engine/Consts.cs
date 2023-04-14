@@ -56,6 +56,7 @@ public class Consts
     public const bool NO_CAMERA_CONSTRAINTS = false;
     public const int SCREEN_WIDTH = 256; // In pixels
     public const int SCREEN_HEIGHT = 224; // In pixels
+    public static readonly Vector SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT);
     public static readonly FixedSingle SIZE_RATIO = (float) SCREEN_WIDTH / SCREEN_HEIGHT;
 
     public static readonly Vector EXTENDED_BORDER_SPAWN_SCREEN_OFFSET = (MAP_SIZE, MAP_SIZE);
@@ -178,7 +179,7 @@ public class Consts
     public const int NUM_SPRITE_LAYERS = 2;
 
     public static readonly Vector DEFAULT_DRAW_ORIGIN = Vector.NULL_VECTOR;
-    public static readonly FixedSingle DEFAULT_DRAW_SCALE = 1;
+    public static readonly FixedSingle DEFAULT_DRAW_SCALE = 4;
     public static readonly FixedSingle DEFAULT_CLIENT_WIDTH = DEFAULT_DRAW_SCALE * SCREEN_WIDTH;
     public static readonly FixedSingle DEFAULT_CLIENT_HEIGHT = DEFAULT_DRAW_SCALE * SCREEN_HEIGHT;
     public static readonly Vector DEFAULT_CLIENT_SIZE = (DEFAULT_CLIENT_WIDTH, DEFAULT_CLIENT_HEIGHT);
@@ -234,6 +235,6 @@ public class Consts
     public const string ROM_NAME = "ShittyDash.mmx";
     public static readonly bool SKIP_MENU = false;
     public static readonly bool SKIP_INTRO = false;
-    public const int INITIAL_LEVEL = 8;
-    public const int INITIAL_CHECKPOINT = 0;
+    public const int INITIAL_LEVEL = 6;
+    public const int INITIAL_CHECKPOINT = 1;
 }

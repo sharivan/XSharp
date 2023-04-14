@@ -37,7 +37,7 @@ public class Camera : Entity
         set;
     }
 
-    public static MMXWorld World => GameEngine.Engine.World;
+    public static MMXWorld World => BaseEngine.Engine.World;
 
     public FixedSingle SmoothSpeed
     {
@@ -193,7 +193,7 @@ public class Camera : Entity
         return box - Origin;
     }
 
-    private void SetOrigin(Vector v, bool clamp = true)
+    public void SetOrigin(Vector v, bool clamp = true)
     {
         SetOrigin(v.X, v.Y, clamp);
     }
@@ -210,28 +210,28 @@ public class Camera : Entity
         Vector minCameraPos = Engine.MinCameraPos;
         Vector maxCameraPos = Engine.MaxCameraPos;
 
-        FixedSingle w2 = Width * 0.5;
-        FixedSingle h2 = Height * 0.5;
+        FixedDouble w2 = Width * 0.5;
+        FixedDouble h2 = Height * 0.5;
 
-        FixedSingle minX = minCameraPos.X + w2;
-        FixedSingle minY = minCameraPos.Y + h2;
-        FixedSingle maxX = FixedSingle.Min(maxCameraPos.X, World.ForegroundLayout.Width) - w2;
-        FixedSingle maxY = FixedSingle.Min(maxCameraPos.Y, World.ForegroundLayout.Height) - h2;
+        FixedDouble minX = (FixedDouble) minCameraPos.X + w2;
+        FixedDouble minY = (FixedDouble) minCameraPos.Y + h2;
+        FixedDouble maxX = FixedDouble.Min(maxCameraPos.X, World.ForegroundLayout.Width) - w2;
+        FixedDouble maxY = FixedDouble.Min(maxCameraPos.Y, World.ForegroundLayout.Height) - h2;
 
         if (x < minX)
-            x = minX;
+            x = (FixedSingle) minX;
         else if (x > maxX)
-            x = maxX;
+            x = (FixedSingle) maxX;
 
         if (y < minY)
-            y = minY;
+            y = (FixedSingle) minY;
         else if (y > maxY)
-            y = maxY;
+            y = (FixedSingle) maxY;
 
         return (x, y + (Width - Height) * FixedSingle.HALF);
     }
 
-    private void SetOrigin(FixedSingle x, FixedSingle y, bool clamp = true)
+    public void SetOrigin(FixedSingle x, FixedSingle y, bool clamp = true)
     {
         base.Origin = (clamp ? ClampToBounds(x, y) : new Vector(x, y)).TruncFracPart();
     }

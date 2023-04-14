@@ -11,7 +11,7 @@ public enum AxeMaxLumberjackState
     THROWING = 2
 }
 
-public class AxeMaxLumberjack : Enemy, IStateEntity<AxeMaxLumberjackState>
+public class AxeMaxLumberjack : Enemy, IFSMEntity<AxeMaxLumberjackState>
 {
     #region StaticFields
     public static readonly FixedSingle HP = 16;

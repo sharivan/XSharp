@@ -287,7 +287,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
     public void Render(IRenderTarget target)
     {
         // Se não estiver visível ou não ouver frames então não precisa desenhar nada
-        if (!Visible || Sequence.Count == 0 || RepeatX <= 0 || RepeatY <= 0)
+        if (!BaseEngine.Engine.Editing && !Visible || Sequence.Count == 0 || RepeatX <= 0 || RepeatY <= 0)
             return;
 
         var frame = Sequence[CurrentFrame];
@@ -296,12 +296,12 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
         Vector origin = DrawOrigin;
         MMXBox drawBox = origin + srcBox;
-        Vector2 translatedOrigin = GameEngine.Engine.WorldVectorToScreen(drawBox.Origin, false);
+        Vector2 translatedOrigin = BaseEngine.Engine.WorldVectorToScreen(drawBox.Origin, true);
         var origin3 = new Vector3(translatedOrigin.X, translatedOrigin.Y, 0);
 
         Matrix transform = Matrix.Identity;
 
-        float drawScale = (float) GameEngine.Engine.DrawScale;
+        float drawScale = (float) BaseEngine.Engine.DrawScale;
         transform *= Matrix.Scaling(drawScale);
 
         if (Rotation != FixedSingle.ZERO)
@@ -322,7 +322,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
             transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(origin3);
         }
 
-        GameEngine.Engine.RenderSprite(texture, Sprite.Palette, Sprite.FadingControl, drawBox.LeftTop, transform, RepeatX, RepeatY);
+        BaseEngine.Engine.RenderSprite(texture, Sprite.Palette, Sprite.FadingControl, drawBox.LeftTop, transform, RepeatX, RepeatY);
     }
 
     internal void OnDeviceReset()

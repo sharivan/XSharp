@@ -17,7 +17,7 @@ namespace XSharp.Engine.World;
 
 public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
 {
-    public static GameEngine Engine => GameEngine.Engine;
+    public static BaseEngine Engine => BaseEngine.Engine;
 
     public static World World => Engine.World;
 

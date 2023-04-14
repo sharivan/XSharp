@@ -50,26 +50,23 @@ partial class FrmLevelEditor
         pnlMain = new Panel();
         sdxRender = new SharpDX.Windows.RenderControl();
         pnlRight = new Panel();
-        tabControl1 = new TabControl();
+        tcRight = new TabControl();
         tpTiles = new TabPage();
         sdxTiles = new SharpDX.Windows.RenderControl();
         tpEntities = new TabPage();
         lvEntities = new ListView();
         gbProperties = new GroupBox();
-        dgvProperties = new DataGridView();
-        name = new DataGridViewTextBoxColumn();
-        value = new DataGridViewTextBoxColumn();
+        pgProperties = new PropertyGrid();
         tbMain = new ToolStrip();
         btnPointer = new ToolStripButton();
         btnHand = new ToolStripButton();
         mnuMainMenu.SuspendLayout();
         pnlMain.SuspendLayout();
         pnlRight.SuspendLayout();
-        tabControl1.SuspendLayout();
+        tcRight.SuspendLayout();
         tpTiles.SuspendLayout();
         tpEntities.SuspendLayout();
         gbProperties.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize) dgvProperties).BeginInit();
         tbMain.SuspendLayout();
         SuspendLayout();
         // 
@@ -81,18 +78,18 @@ partial class FrmLevelEditor
         // 
         // ssStatusBar
         // 
-        ssStatusBar.Location = new Point(0, 699);
+        ssStatusBar.Location = new Point(3, 953);
         ssStatusBar.Name = "ssStatusBar";
-        ssStatusBar.Size = new Size(1264, 22);
+        ssStatusBar.Size = new Size(1257, 22);
         ssStatusBar.TabIndex = 2;
         ssStatusBar.Text = "statusStrip1";
         // 
         // mnuMainMenu
         // 
         mnuMainMenu.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, viewToolStripMenuItem, toolsToolStripMenuItem, windowToolStripMenuItem, helpToolStripMenuItem });
-        mnuMainMenu.Location = new Point(0, 0);
+        mnuMainMenu.Location = new Point(3, 64);
         mnuMainMenu.Name = "mnuMainMenu";
-        mnuMainMenu.Size = new Size(1264, 24);
+        mnuMainMenu.Size = new Size(1257, 24);
         mnuMainMenu.TabIndex = 3;
         mnuMainMenu.Text = "menuStrip1";
         // 
@@ -168,9 +165,9 @@ partial class FrmLevelEditor
         pnlMain.Controls.Add(sdxRender);
         pnlMain.Controls.Add(pnlRight);
         pnlMain.Dock = DockStyle.Fill;
-        pnlMain.Location = new Point(0, 49);
+        pnlMain.Location = new Point(3, 113);
         pnlMain.Name = "pnlMain";
-        pnlMain.Size = new Size(1264, 650);
+        pnlMain.Size = new Size(1257, 840);
         pnlMain.TabIndex = 4;
         // 
         // sdxRender
@@ -178,28 +175,32 @@ partial class FrmLevelEditor
         sdxRender.Dock = DockStyle.Fill;
         sdxRender.Location = new Point(0, 0);
         sdxRender.Name = "sdxRender";
-        sdxRender.Size = new Size(967, 650);
+        sdxRender.Size = new Size(960, 840);
         sdxRender.TabIndex = 2;
+        sdxRender.MouseDown += sdxRender_MouseDown;
+        sdxRender.MouseMove += sdxRender_MouseMove;
+        sdxRender.MouseUp += sdxRender_MouseUp;
         // 
         // pnlRight
         // 
-        pnlRight.Controls.Add(tabControl1);
+        pnlRight.Controls.Add(tcRight);
         pnlRight.Controls.Add(gbProperties);
         pnlRight.Dock = DockStyle.Right;
-        pnlRight.Location = new Point(967, 0);
+        pnlRight.Location = new Point(960, 0);
         pnlRight.Name = "pnlRight";
-        pnlRight.Size = new Size(297, 650);
+        pnlRight.Size = new Size(297, 840);
         pnlRight.TabIndex = 3;
         // 
-        // tabControl1
+        // tcRight
         // 
-        tabControl1.Controls.Add(tpTiles);
-        tabControl1.Controls.Add(tpEntities);
-        tabControl1.Location = new Point(3, 3);
-        tabControl1.Name = "tabControl1";
-        tabControl1.SelectedIndex = 0;
-        tabControl1.Size = new Size(291, 366);
-        tabControl1.TabIndex = 2;
+        tcRight.Controls.Add(tpTiles);
+        tcRight.Controls.Add(tpEntities);
+        tcRight.Dock = DockStyle.Fill;
+        tcRight.Location = new Point(0, 0);
+        tcRight.Name = "tcRight";
+        tcRight.SelectedIndex = 0;
+        tcRight.Size = new Size(297, 568);
+        tcRight.TabIndex = 2;
         // 
         // tpTiles
         // 
@@ -207,16 +208,17 @@ partial class FrmLevelEditor
         tpTiles.Location = new Point(4, 24);
         tpTiles.Name = "tpTiles";
         tpTiles.Padding = new Padding(3);
-        tpTiles.Size = new Size(283, 338);
+        tpTiles.Size = new Size(289, 540);
         tpTiles.TabIndex = 0;
         tpTiles.Text = "Tiles";
         tpTiles.UseVisualStyleBackColor = true;
         // 
         // sdxTiles
         // 
-        sdxTiles.Location = new Point(2, 0);
+        sdxTiles.Dock = DockStyle.Fill;
+        sdxTiles.Location = new Point(3, 3);
         sdxTiles.Name = "sdxTiles";
-        sdxTiles.Size = new Size(275, 332);
+        sdxTiles.Size = new Size(283, 534);
         sdxTiles.TabIndex = 0;
         // 
         // tpEntities
@@ -225,57 +227,47 @@ partial class FrmLevelEditor
         tpEntities.Location = new Point(4, 24);
         tpEntities.Name = "tpEntities";
         tpEntities.Padding = new Padding(3);
-        tpEntities.Size = new Size(283, 338);
+        tpEntities.Size = new Size(289, 420);
         tpEntities.TabIndex = 1;
         tpEntities.Text = "Entities";
         tpEntities.UseVisualStyleBackColor = true;
         // 
         // lvEntities
         // 
+        lvEntities.BackColor = SystemColors.ControlDarkDark;
+        lvEntities.Dock = DockStyle.Fill;
         lvEntities.Location = new Point(3, 3);
         lvEntities.Name = "lvEntities";
-        lvEntities.Size = new Size(274, 329);
+        lvEntities.Size = new Size(283, 414);
         lvEntities.TabIndex = 0;
         lvEntities.UseCompatibleStateImageBehavior = false;
         // 
         // gbProperties
         // 
-        gbProperties.Controls.Add(dgvProperties);
-        gbProperties.Location = new Point(3, 375);
+        gbProperties.Controls.Add(pgProperties);
+        gbProperties.Dock = DockStyle.Bottom;
+        gbProperties.Location = new Point(0, 568);
         gbProperties.Name = "gbProperties";
-        gbProperties.Size = new Size(291, 272);
+        gbProperties.Size = new Size(297, 272);
         gbProperties.TabIndex = 1;
         gbProperties.TabStop = false;
         gbProperties.Text = "Properties";
         // 
-        // dgvProperties
+        // pgProperties
         // 
-        dgvProperties.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dgvProperties.Columns.AddRange(new DataGridViewColumn[] { name, value });
-        dgvProperties.Location = new Point(6, 22);
-        dgvProperties.Name = "dgvProperties";
-        dgvProperties.RowTemplate.Height = 25;
-        dgvProperties.Size = new Size(281, 244);
-        dgvProperties.TabIndex = 0;
-        // 
-        // name
-        // 
-        name.Frozen = true;
-        name.HeaderText = "Name";
-        name.Name = "name";
-        name.ReadOnly = true;
-        // 
-        // value
-        // 
-        value.HeaderText = "Value";
-        value.Name = "value";
+        pgProperties.Dock = DockStyle.Fill;
+        pgProperties.Location = new Point(3, 19);
+        pgProperties.Name = "pgProperties";
+        pgProperties.Size = new Size(291, 250);
+        pgProperties.TabIndex = 0;
+        pgProperties.ViewBackColor = SystemColors.ControlDarkDark;
         // 
         // tbMain
         // 
         tbMain.Items.AddRange(new ToolStripItem[] { btnPointer, btnHand });
-        tbMain.Location = new Point(0, 24);
+        tbMain.Location = new Point(3, 88);
         tbMain.Name = "tbMain";
-        tbMain.Size = new Size(1264, 25);
+        tbMain.Size = new Size(1257, 25);
         tbMain.TabIndex = 4;
         tbMain.Text = "toolStrip1";
         // 
@@ -304,12 +296,12 @@ partial class FrmLevelEditor
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(1264, 721);
+        BackColor = SystemColors.ControlDarkDark;
+        ClientSize = new Size(1263, 978);
         Controls.Add(pnlMain);
         Controls.Add(ssStatusBar);
         Controls.Add(tbMain);
         Controls.Add(mnuMainMenu);
-        DoubleBuffered = true;
         MainMenuStrip = mnuMainMenu;
         Name = "FrmLevelEditor";
         Text = "X# Level Editor";
@@ -319,11 +311,10 @@ partial class FrmLevelEditor
         mnuMainMenu.PerformLayout();
         pnlMain.ResumeLayout(false);
         pnlRight.ResumeLayout(false);
-        tabControl1.ResumeLayout(false);
+        tcRight.ResumeLayout(false);
         tpTiles.ResumeLayout(false);
         tpEntities.ResumeLayout(false);
         gbProperties.ResumeLayout(false);
-        ((System.ComponentModel.ISupportInitialize) dgvProperties).EndInit();
         tbMain.ResumeLayout(false);
         tbMain.PerformLayout();
         ResumeLayout(false);
@@ -350,14 +341,12 @@ partial class FrmLevelEditor
     private ToolStripMenuItem helpToolStripMenuItem;
     private ToolStrip tbMain;
     private GroupBox gbProperties;
-    private TabControl tabControl1;
+    private TabControl tcRight;
     private TabPage tpTiles;
     private TabPage tpEntities;
-    private DataGridView dgvProperties;
-    private DataGridViewTextBoxColumn name;
-    private DataGridViewTextBoxColumn value;
     private ListView lvEntities;
     private SharpDX.Windows.RenderControl sdxTiles;
     private ToolStripButton btnPointer;
     private ToolStripButton btnHand;
+    private PropertyGrid pgProperties;
 }

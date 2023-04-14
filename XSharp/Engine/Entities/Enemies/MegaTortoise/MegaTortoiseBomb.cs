@@ -12,7 +12,7 @@ public enum MegaTortoiseBombState
     EXPLODING
 }
 
-public class MegaTortoiseBomb : Enemy, IStateEntity<MegaTortoiseBombState>
+public class MegaTortoiseBomb : Enemy, IFSMEntity<MegaTortoiseBombState>
 {
     #region Precache
     [Precache]

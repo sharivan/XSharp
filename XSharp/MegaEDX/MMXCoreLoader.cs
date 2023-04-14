@@ -5,7 +5,6 @@ using System.IO;
 using SharpDX;
 using SharpDX.Direct3D9;
 
-using XSharp.Engine;
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.Graphics;
@@ -20,7 +19,7 @@ namespace XSharp.MegaEDX;
 
 public class MMXCoreLoader : MMXCore
 {
-    public static GameEngine Engine => GameEngine.Engine;
+    public static Engine.BaseEngine Engine => XSharp.Engine.BaseEngine.Engine;
 
     public static Device Device => Engine.Device;
 

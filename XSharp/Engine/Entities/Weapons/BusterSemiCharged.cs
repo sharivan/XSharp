@@ -15,7 +15,7 @@ public enum SemiChargedState
     EXPLODING = 3
 }
 
-public class BusterSemiCharged : Weapon, IStateEntity<SemiChargedState>
+public class BusterSemiCharged : Weapon, IFSMEntity<SemiChargedState>
 {
     private EntityReference<Entity> hitEntity;
 

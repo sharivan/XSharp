@@ -13,7 +13,7 @@ public enum LemonState
     EXPLODING = 1
 }
 
-public class BusterLemon : Weapon, IStateEntity<LemonState>
+public class BusterLemon : Weapon, IFSMEntity<LemonState>
 {
     private bool reflected;
 

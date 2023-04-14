@@ -15,7 +15,7 @@ public enum BattonBoneGState
     ESCAPING = 2
 }
 
-public class BattonBoneG : Enemy, IStateEntity<BattonBoneGState>
+public class BattonBoneG : Enemy, IFSMEntity<BattonBoneGState>
 {
     #region StaticFields
     public static readonly FixedSingle BATTON_BONE_G_ATTACK_SPEED = 256 / 256.0;

@@ -138,7 +138,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         if (type.IsAbstract)
             throw new ArgumentException($"Type '{type}' is abstract.");
 
-        GameEngine.Engine.CallPrecacheAction(type);
+        BaseEngine.Engine.CallPrecacheAction(type);
 
         int index = firstFreeEntityIndex++;
         var entity = (Entity) Activator.CreateInstance(type);
@@ -177,7 +177,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         entity.ResetFromInitParams();
 
         if (entity.CheckTouchingEntities)
-            GameEngine.Engine.partition.Insert(entity);
+            BaseEngine.Engine.partition.Insert(entity);
 
         return reference;
     }
@@ -195,7 +195,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
     internal void Remove(Entity entity)
     {
         if (entity.CheckTouchingEntities)
-            GameEngine.Engine.partition.Remove(entity);
+            BaseEngine.Engine.partition.Remove(entity);
 
         int index = entity.Index;
         string name = entity.Name;
@@ -254,7 +254,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         }
 
         itemsByName.Clear();
-        GameEngine.Engine.partition.Clear();
+        BaseEngine.Engine.partition.Clear();
 
         firstFreeEntityIndex = 0;
         count = 0;

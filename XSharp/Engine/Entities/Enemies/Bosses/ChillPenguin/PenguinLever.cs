@@ -14,7 +14,7 @@ public enum PenguinLeverState
     HIDING
 }
 
-public class PenguinLever : Sprite, IStateEntity<PenguinLeverState>
+public class PenguinLever : Sprite, IFSMEntity<PenguinLeverState>
 {
     #region Precache
     [Precache]

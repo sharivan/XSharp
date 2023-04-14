@@ -37,7 +37,7 @@ static class Program
         var form = new RenderForm("X#")
         {
             StartPosition = FormStartPosition.Manual,
-            ClientSize = new System.Drawing.Size((int) (DEFAULT_CLIENT_WIDTH * 4), (int) (DEFAULT_CLIENT_HEIGHT * 4))
+            ClientSize = new System.Drawing.Size((int) DEFAULT_CLIENT_WIDTH, (int) DEFAULT_CLIENT_HEIGHT)
         };
 
         form.Load += new EventHandler(Form_Load);
@@ -46,8 +46,8 @@ static class Program
 
         try
         {
-            GameEngine.Initialize(form);
-            GameEngine.Run();
+            BaseEngine.Initialize<GameEngine>(form);
+            BaseEngine.Run();
         }
 #if !DEBUG
         catch (Exception e)
@@ -58,7 +58,7 @@ static class Program
 #endif
         finally
         {
-            GameEngine.Dispose();
+            BaseEngine.Dispose();
         }
     }
 }

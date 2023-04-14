@@ -12,7 +12,7 @@ public enum HoverPlatformState
     TURNING = 1
 }
 
-public class HoverPlatform : Sprite, IStateEntity<HoverPlatformState>, IControllable
+public class HoverPlatform : Sprite, IFSMEntity<HoverPlatformState>, IControllable
 {
     #region StaticFields
     public static readonly Box HITBOX = ((0, 0), (-16, -11), (16, 11));

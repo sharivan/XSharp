@@ -63,7 +63,7 @@ public class BackgroundLayout : Layout
                 {
                     Vector sceneLT = GetSceneLeftTop(row, col);
                     Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                    Engine.RenderVertexBuffer(scene.layers[layer], GameEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, Tilemap, Palette, FadingControl, sceneBox + screenDelta);
+                    Engine.RenderVertexBuffer(scene.layers[layer], BaseEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, Tilemap, Palette, FadingControl, sceneBox + screenDelta);
                 }
             }
         }

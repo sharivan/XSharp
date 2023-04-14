@@ -56,7 +56,7 @@ public class EntitySet<T> : ISet<T>, IReadOnlySet<T>, ISerializable where T : En
 
     public bool IsReadOnly => false;
 
-    public T this[int index] => bitSet[index] ? (T) GameEngine.Engine.Entities[index] : null;
+    public T this[int index] => bitSet[index] ? (T) BaseEngine.Engine.Entities[index] : null;
 
     public EntitySet()
     {

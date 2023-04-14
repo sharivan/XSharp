@@ -11,7 +11,7 @@ public enum BigHealthRecoverState
     IDLE = 1
 }
 
-public class BigHealthRecover : Item, IStateEntity<BigHealthRecoverState>
+public class BigHealthRecover : Item, IFSMEntity<BigHealthRecoverState>
 {
     #region Precache
     [Precache]

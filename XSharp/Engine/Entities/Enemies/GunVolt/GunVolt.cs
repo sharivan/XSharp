@@ -16,7 +16,7 @@ public enum GunVoltState
     POST_SHOOTING = 5
 }
 
-public class GunVolt : Enemy, IStateEntity<GunVoltState>
+public class GunVolt : Enemy, IFSMEntity<GunVoltState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

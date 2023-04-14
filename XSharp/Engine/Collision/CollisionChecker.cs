@@ -14,9 +14,9 @@ namespace XSharp.Engine.Collision;
 [Serializable]
 public abstract class CollisionChecker
 {
-    public static GameEngine Engine => GameEngine.Engine;
+    public static BaseEngine Engine => BaseEngine.Engine;
 
-    public static MMXWorld World => GameEngine.Engine.World;
+    public static MMXWorld World => BaseEngine.Engine.World;
 
     public static Vector GetStepVectorHorizontal(Vector dir, FixedSingle stepSize)
     {

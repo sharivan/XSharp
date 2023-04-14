@@ -14,7 +14,7 @@ public enum MetallC15State
     HIDDING
 }
 
-public class MetallC15 : Enemy, IStateEntity<MetallC15State>
+public class MetallC15 : Enemy, IFSMEntity<MetallC15State>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

@@ -23,11 +23,11 @@ public class Scene : IDisposable
         return new Cell(row, col);
     }
 
-    public const int TILE_PRIMITIVE_SIZE = 2 * GameEngine.VERTEX_SIZE * 3;
+    public const int TILE_PRIMITIVE_SIZE = 2 * BaseEngine.VERTEX_SIZE * 3;
     public const int MAP_PRIMITIVE_SIZE = SIDE_TILES_PER_MAP * SIDE_TILES_PER_MAP * TILE_PRIMITIVE_SIZE;
     public const int BLOCK_PRIMITIVE_SIZE = SIDE_MAPS_PER_BLOCK * SIDE_MAPS_PER_BLOCK * MAP_PRIMITIVE_SIZE;
     public const int SCENE_PRIMITIVE_SIZE = SIDE_BLOCKS_PER_SCENE * SIDE_BLOCKS_PER_SCENE * BLOCK_PRIMITIVE_SIZE;
-    public const int PRIMITIVE_COUNT = SCENE_PRIMITIVE_SIZE / (GameEngine.VERTEX_SIZE * 3);
+    public const int PRIMITIVE_COUNT = SCENE_PRIMITIVE_SIZE / (BaseEngine.VERTEX_SIZE * 3);
 
     internal Block[,] blocks;
     internal VertexBuffer[] layers;
@@ -127,7 +127,7 @@ public class Scene : IDisposable
         Block block = blocks[cell.Row, cell.Col];
         if (block == null)
         {
-            block = GameEngine.Engine.World.ForegroundLayout.AddBlock();
+            block = BaseEngine.Engine.World.ForegroundLayout.AddBlock();
             blocks[cell.Row, cell.Col] = block;
         }
 
@@ -260,8 +260,8 @@ public class Scene : IDisposable
                         for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileCol++)
                         {
                             var tilePos = new Vector(blockPos.X + tileCol * TILE_SIZE, blockPos.Y - tileRow * TILE_SIZE);
-                            GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
-                            GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            BaseEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            BaseEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                         }
                     }
                 }
@@ -278,8 +278,8 @@ public class Scene : IDisposable
     {
         Dispose();
 
-        layers[0] = new VertexBuffer(GameEngine.Engine.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
-        layers[1] = new VertexBuffer(GameEngine.Engine.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, GameEngine.D3DFVF_TLVERTEX, Pool.Managed);
+        layers[0] = new VertexBuffer(BaseEngine.Engine.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, BaseEngine.D3DFVF_TLVERTEX, Pool.Managed);
+        layers[1] = new VertexBuffer(BaseEngine.Engine.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, BaseEngine.D3DFVF_TLVERTEX, Pool.Managed);
 
         DataStream downLayerVBData = layers[0].Lock(0, 0, LockFlags.None);
         DataStream upLayerVBData = layers[1].Lock(0, 0, LockFlags.None);
@@ -302,8 +302,8 @@ public class Scene : IDisposable
                         for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileCol++)
                         {
                             var tilePos = new Vector(blockPos.X + tileCol * TILE_SIZE, blockPos.Y - tileRow * TILE_SIZE);
-                            GameEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
-                            GameEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            BaseEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            BaseEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                         }
                     }
                 }

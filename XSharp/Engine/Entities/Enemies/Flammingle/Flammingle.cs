@@ -12,7 +12,7 @@ public enum FlammingleState
     ATTACKING = 1
 }
 
-public class Flammingle : Enemy, IStateEntity<FlammingleState>
+public class Flammingle : Enemy, IFSMEntity<FlammingleState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

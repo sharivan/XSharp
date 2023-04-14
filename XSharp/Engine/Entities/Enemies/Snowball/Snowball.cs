@@ -13,7 +13,7 @@ public enum SnowballState
     BIG = 2
 }
 
-public class Snowball : Enemy, IStateEntity<SnowballState>
+public class Snowball : Enemy, IFSMEntity<SnowballState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

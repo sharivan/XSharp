@@ -13,7 +13,7 @@ public enum SpikyState
     SKIDDING = 2
 }
 
-public class Spiky : Enemy, IStateEntity<SpikyState>
+public class Spiky : Enemy, IFSMEntity<SpikyState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]

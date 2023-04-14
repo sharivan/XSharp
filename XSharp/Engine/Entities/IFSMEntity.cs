@@ -2,7 +2,7 @@
 
 namespace XSharp.Engine.Entities;
 
-internal interface IStateEntity<TState> where TState : struct, Enum
+internal interface IFSMEntity<TState> where TState : struct, Enum
 {
     public TState State
     {
@@ -11,7 +11,7 @@ internal interface IStateEntity<TState> where TState : struct, Enum
     }
 }
 
-internal interface IStateEntity<TState, TSubState> : IStateEntity<TState>
+internal interface IFSMEntity<TState, TSubState> : IFSMEntity<TState>
     where TState : struct, Enum
     where TSubState : struct, Enum
 {

@@ -13,7 +13,7 @@ public enum HoganmerState
     POST_ATTACKING
 }
 
-public class Hoganmer : Enemy, IStateEntity<HoganmerState>
+public class Hoganmer : Enemy, IFSMEntity<HoganmerState>
 {
     #region StaticFields
     public static readonly Color[] PALETTE = new Color[]
