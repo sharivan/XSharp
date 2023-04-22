@@ -19,12 +19,23 @@ using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Enemies;
+using XSharp.Engine.Entities.Enemies.Amenhopper;
 using XSharp.Engine.Entities.Enemies.AxeMax;
 using XSharp.Engine.Entities.Enemies.BombBeen;
 using XSharp.Engine.Entities.Enemies.Bosses;
+using XSharp.Engine.Entities.Enemies.Bosses.ArmoredArmadillo;
 using XSharp.Engine.Entities.Enemies.Bosses.BoomerKuwanger;
+using XSharp.Engine.Entities.Enemies.Bosses.Bosspider;
 using XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
+using XSharp.Engine.Entities.Enemies.Bosses.DRex;
 using XSharp.Engine.Entities.Enemies.Bosses.FlameMammoth;
+using XSharp.Engine.Entities.Enemies.Bosses.LauchOctupus;
+using XSharp.Engine.Entities.Enemies.Bosses.RangdaBangda;
+using XSharp.Engine.Entities.Enemies.Bosses.Sigma;
+using XSharp.Engine.Entities.Enemies.Bosses.SparkMandrill;
+using XSharp.Engine.Entities.Enemies.Bosses.StingChameleon;
+using XSharp.Engine.Entities.Enemies.Bosses.Vile;
+using XSharp.Engine.Entities.Enemies.Crusher;
 using XSharp.Engine.Entities.Enemies.DeathRogumerCannon;
 using XSharp.Engine.Entities.Enemies.DigLabour;
 using XSharp.Engine.Entities.Enemies.DodgeBlaster;
@@ -35,8 +46,11 @@ using XSharp.Engine.Entities.Enemies.Hotarion;
 using XSharp.Engine.Entities.Enemies.LiftCannon;
 using XSharp.Engine.Entities.Enemies.MegaTortoise;
 using XSharp.Engine.Entities.Enemies.MetallC15;
+using XSharp.Engine.Entities.Enemies.Minibosses.BeeBlader;
+using XSharp.Engine.Entities.Enemies.Minibosses.ThunderSlimer;
 using XSharp.Engine.Entities.Enemies.RayBit;
 using XSharp.Engine.Entities.Enemies.RayTrap;
+using XSharp.Engine.Entities.Enemies.RoadAttackers;
 using XSharp.Engine.Entities.Enemies.ScrapRobo;
 using XSharp.Engine.Entities.Enemies.SlideCannon;
 using XSharp.Engine.Entities.Enemies.Snowball;
@@ -3936,31 +3950,45 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             {
                 0x01 when mmx.Type == 0 => AddHoganmer(subid, origin),
                 0x02 when mmx.Type == 0 => AddChillPenguin(origin),
+                0x03 when mmx.Type == 0 => AddThunderSlimer(subid, origin),
                 0x04 when mmx.Type == 0 => AddFlammingle(subid, origin),
                 0x05 when mmx.Type == 0 => AddBoomerKuwanger(origin),
+                0x06 when mmx.Type == 0 => AddPlanty(subid, origin),
+                0x07 when mmx.Type == 0 => AddLaunchOctupus(subid, origin),
                 0x09 when mmx.Type == 1 => AddScriver(subid, origin),
+                0x0A when mmx.Type == 0 => AddStingChameleon(subid, origin),
                 0x0B when mmx.Type == 0 => AddAxeMax(subid, origin),
                 0x0C when mmx.Type == 0 => AddFlameMammoth(origin),
                 0x0D when mmx.Type == 0 => AddRushRoader(subid, origin),
+                0x0F when mmx.Type == 0 => AddCrusher(subid, origin),
+                0x11 when mmx.Type == 0 => AddRoadAttacker(subid, origin),
                 0x13 when mmx.Type == 0 => AddDodgeBlaster(subid, origin),
+                0x14 when mmx.Type == 0 => AddArmoredArmadillo(subid, origin),
                 0x15 when mmx.Type == 0 => AddSpiky(subid, origin),
                 0x16 when mmx.Type == 0 => AddHoverPlatform(subid, origin),
                 0x17 when mmx.Type == 0 => AddTurnCannon(subid, origin),
                 0x19 when mmx.Type == 0 => AddBombBeen(subid, origin),
-                0x1C when mmx.Type == 0 => AddScrapRobo(subid, origin),
-                0x1E when mmx.Type == 0 => AddSlideCannon(subid, origin),
+                0x1D when mmx.Type == 0 => AddGulpfer(subid, origin),
+                0x1E when mmx.Type == 0 => AddMadPecker(subid, origin),
+                0x20 when mmx.Type == 0 => AddAmenhopper(subid, origin),
+                0x22 when mmx.Type == 0 => AddBeeBlader(subid, origin),
                 0x27 when mmx.Type == 0 => AddBallDeVoux(subid, origin),
                 0x29 when mmx.Type == 0 => AddGunVolt(subid, origin),
+                0x2B when mmx.Type == 0 => AddMineCart(subid, origin),
+                0x2C when mmx.Type == 0 => AddMoleBorer(subid, origin),
                 0x2C when mmx.Type == 1 => AddProbe8201U(subid, origin),
                 0x2D when mmx.Type == 0 => AddBattonBoneG(subid, origin),
                 0x2E when mmx.Type == 0 => AddMetallC15(subid, origin),
                 0x2F => AddArmorSoldier(subid, origin),
                 0x30 when mmx.Type == 0 => AddDigLabour(subid, origin),
+                0x31 when mmx.Type == 0 => AddSparkMandrill(subid, origin),
                 0x36 when mmx.Type == 0 => AddJamminger(subid, origin),
                 0x37 when mmx.Type == 0 => AddHotarion(subid, origin),
                 0x39 when mmx.Type == 0 => AddCompressor(subid, origin),
                 0x3A when mmx.Type == 0 => AddTombot(subid, origin),
                 0x3B when mmx.Type == 0 => AddLadderYadder(subid, origin),
+                0x3D when mmx.Type == 0 => AddBKElevator(subid, origin),
+                0x40 when mmx.Type == 0 => AddCoil(subid, origin),
                 0x42 when mmx.Type == 0 => AddRayField(subid, origin),
                 0x44 when mmx.Type == 0 => AddRayTrap(subid, origin),
                 0x46 when mmx.Type == 0 => AddMissiles(subid, origin),
@@ -3977,6 +4005,13 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                 0x57 when mmx.Type == 0 => AddIgloo(subid, origin),
                 0x59 when mmx.Type == 0 => AddLiftCannon(subid, origin),
                 0x5B when mmx.Type == 0 => AddMegaTortoise(subid, origin),
+                0x5D when mmx.Type == 0 => AddRangdaBangda(subid, origin),
+                0x62 when mmx.Type == 0 => AddDRex(subid, origin),
+                0x63 when mmx.Type == 0 => AddBosspider(subid, origin),
+                0x64 when mmx.Type == 0 => AddPrisionCapsule(subid, origin),
+                0x65 when mmx.Type == 0 => AddJediSigma(origin),
+                0x66 when mmx.Type == 0 => AddVile(subid, origin),
+                0x67 when mmx.Type == 0 => AddRideArmorVile(subid, origin),
                 _ => mmx.Type == 0 && mmx.Level == 8 ? AddScriver(subid, origin) : null
             };
     }
@@ -4238,6 +4273,17 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+    public EntityReference<ThunderSlimer> AddThunderSlimer(ushort subid, Vector origin)
+    {
+        ThunderSlimer entity = Entities.Create<ThunderSlimer>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
     public EntityReference<Flammingle> AddFlammingle(ushort subid, Vector origin)
     {
         Flammingle entity = Entities.Create<Flammingle>(new
@@ -4262,6 +4308,30 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+    public EntityReference<Planty> AddPlanty(ushort subid, Vector origin)
+    {
+        Planty entity = Entities.Create<Planty>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<LaunchOctupus> AddLaunchOctupus(ushort subid, Vector origin)
+    {
+        LaunchOctupus entity = Entities.Create<LaunchOctupus>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
+        return Entities.GetReferenceTo(entity);
+    }
+
     public EntityReference<Scriver> AddScriver(ushort subid, Vector origin)
     {
         Scriver entity = Entities.Create<Scriver>(new
@@ -4270,6 +4340,19 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         });
 
         entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<StingChameleon> AddStingChameleon(ushort subid, Vector origin)
+    {
+        StingChameleon entity = Entities.Create<StingChameleon>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4308,6 +4391,28 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+    public EntityReference<Crusher> AddCrusher(ushort subid, Vector origin)
+    {
+        Crusher entity = Entities.Create<Crusher>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<RoadAttacker> AddRoadAttacker(ushort subid, Vector origin)
+    {
+        RoadAttacker entity = Entities.Create<RoadAttacker>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
     public EntityReference<DodgeBlaster> AddDodgeBlaster(ushort subid, Vector origin)
     {
         DodgeBlaster entity = Entities.Create<DodgeBlaster>(new
@@ -4316,6 +4421,19 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         });
 
         entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<ArmoredArmadillo> AddArmoredArmadillo(ushort subid, Vector origin)
+    {
+        ArmoredArmadillo entity = Entities.Create<ArmoredArmadillo>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4358,6 +4476,50 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     public EntityReference<BombBeen> AddBombBeen(ushort subid, Vector origin)
     {
         BombBeen entity = Entities.Create<BombBeen>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Gulpfer> AddGulpfer(ushort subid, Vector origin)
+    {
+        Gulpfer entity = Entities.Create<Gulpfer>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<MadPecker> AddMadPecker(ushort subid, Vector origin)
+    {
+        MadPecker entity = Entities.Create<MadPecker>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Amenhopper> AddAmenhopper(ushort subid, Vector origin)
+    {
+        Amenhopper entity = Entities.Create<Amenhopper>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<BeeBlader> AddBeeBlader(ushort subid, Vector origin)
+    {
+        BeeBlader entity = Entities.Create<BeeBlader>(new
         {
             Origin = origin
         });
@@ -4410,6 +4572,28 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         return Entities.GetReferenceTo(entity);
     }
 
+    public EntityReference<MineCart> AddMineCart(ushort subid, Vector origin)
+    {
+        MineCart entity = Entities.Create<MineCart>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<MoleBorer> AddMoleBorer(ushort subid, Vector origin)
+    {
+        MoleBorer entity = Entities.Create<MoleBorer>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
     public EntityReference<Probe8201U> AddProbe8201U(ushort subid, Vector origin)
     {
         Probe8201U entity = Entities.Create<Probe8201U>(new
@@ -4448,6 +4632,8 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
     public EntityReference<BattonBoneG> AddBattonBoneG(ushort subid, Vector origin)
     {
+        // TODO : If subid == 0 the enemy will be Batton M-501. Implement it.
+
         BattonBoneG entity = Entities.Create<BattonBoneG>(new
         {
             Origin = origin
@@ -4487,6 +4673,19 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         });
 
         entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<SparkMandrill> AddSparkMandrill(ushort subid, Vector origin)
+    {
+        SparkMandrill entity = Entities.Create<SparkMandrill>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4542,6 +4741,28 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         });
 
         entity.Place(false);
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<BKElevator> AddBKElevator(ushort subid, Vector origin)
+    {
+        BKElevator entity = Entities.Create<BKElevator>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Coil> AddCoil(ushort subid, Vector origin)
+    {
+        Coil entity = Entities.Create<Coil>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
         return Entities.GetReferenceTo(entity);
     }
 
@@ -4680,6 +4901,96 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         });
 
         entity.Place(false);
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<RangdaBangda> AddRangdaBangda(ushort subid, Vector origin)
+    {
+        RangdaBangda entity = Entities.Create<RangdaBangda>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<DRex> AddDRex(ushort subid, Vector origin)
+    {
+        DRex entity = Entities.Create<DRex>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Bosspider> AddBosspider(ushort subid, Vector origin)
+    {
+        Bosspider entity = Entities.Create<Bosspider>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<PrisionCapsule> AddPrisionCapsule(ushort subid, Vector origin)
+    {
+        PrisionCapsule entity = Entities.Create<PrisionCapsule>(new
+        {
+            Origin = origin
+        });
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<JediSigma> AddJediSigma(Vector origin)
+    {
+        JediSigma entity = Entities.Create<JediSigma>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
+        entity.Place();
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<Vile> AddVile(ushort subid, Vector origin)
+    {
+        Vile entity = Entities.Create<Vile>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
+        return Entities.GetReferenceTo(entity);
+    }
+
+    public EntityReference<RideArmorVile> AddRideArmorVile(ushort subid, Vector origin)
+    {
+        RideArmorVile entity = Entities.Create<RideArmorVile>(new
+        {
+            Origin = origin
+        });
+
+        entity.BossDefeatedEvent += OnBossDefeated;
+        Boss = entity;
+
         return Entities.GetReferenceTo(entity);
     }
 

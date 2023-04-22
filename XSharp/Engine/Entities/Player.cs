@@ -1218,8 +1218,15 @@ public class Player : Sprite, IFSMEntity<PlayerState>
                 }
 
                 if (!CheckCollisionWithWorld)
-                {
-                    if (Engine.CurrentCheckpoint != null)
+                {                    
+                    CheckCollisionWithWorld = true;
+                    var collider = WorldCollider;
+                    if (!collider.Landed)
+                        CheckCollisionWithSolidSprites = true;
+                    else
+                        CheckCollisionWithWorld = false;
+
+                    /*if (Engine.CurrentCheckpoint != null)
                     {
                         if (Origin.Y >= Engine.CurrentCheckpoint.Hitbox.Top + SCENE_SIZE * 0.5)
                         {
@@ -1231,7 +1238,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
                             CheckCollisionWithWorld = false;
                             CheckCollisionWithSolidSprites = false;
                         }
-                    }
+                    }*/
                 }
             }
             else

@@ -20,6 +20,10 @@
   </PropertyGroup> 
   <ItemGroup>
     <None Remove="Assets\Sprites\Effects\Smoke.png" />
+    <None Remove="Assets\Sprites\Enemies\Bosses\X1\Sigma.png" />
+    <None Remove="Assets\Sprites\Enemies\Bosses\X1\Wolf Sigma.png" />
+    <None Remove="Assets\Sprites\Enemies\Bosses\X2\Violen.png" />
+    <None Remove="Assets\Sprites\Enemies\Bosses\X3\Sigma.png" />
     <None Remove="Assets\Sprites\Enemies\X1\AxeMax.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Bomb Been.png" />
     <None Remove="Assets\Sprites\Enemies\X1\Dig Labour.png" />
@@ -107,6 +111,18 @@
     <Content Include="Assets\Sounds\OST\X1\34 - Credits.mp3" />
     <Content Include="Assets\Sounds\OST\X1\999 - Test Track.mp3" />
     <EmbeddedResource Include="Assets\Sprites\Effects\Smoke.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Enemies\Bosses\X1\Sigma.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Enemies\Bosses\X1\Wolf Sigma.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Enemies\Bosses\X2\Violen.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Enemies\Bosses\X3\Sigma.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Assets\Sprites\Enemies\X1\AxeMax.png">

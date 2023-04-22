@@ -1,8 +1,8 @@
 ﻿namespace XSharp.Engine.Entities.Enemies.Bosses.Vile;
 
-public class Vile : Boss
+public class RideArmorVile : Boss
 {
-    public Vile()
+    public RideArmorVile()
     {
     }
 }
