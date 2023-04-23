@@ -15,30 +15,27 @@ public abstract class Serializer : ISerializer
 
     public abstract object DeserializeObject(Type type, string name);
 
-    public void SerializeField(string name, object instance)
+    public void SerializeField(string name, Type type, object instance)
     {
-        Type type = instance.GetType();
         var field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
         var value = field.GetValue(instance);
         SerializeObject(name, value);
     }
 
-    public void SerializeProperty(string name, object instance)
+    public void SerializeProperty(string name, Type type, object instance)
     {
-        Type type = instance.GetType();
         var field = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
         var value = field.GetValue(instance);
         SerializeObject(name, value);
     }
 
-    public void DeserializeField(string name, object instance)
+    public void DeserializeField(string name, Type type, object instance)
     {
-        Type type = instance.GetType();
         var field = type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-        DeserializeField(field, instance);
+        DeserializeField(field, type, instance);
     }
 
-    public void DeserializeField(FieldInfo field, object instance)
+    public void DeserializeField(FieldInfo field, Type type, object instance)
     {
         string name = field.Name;
         var fieldType = field.FieldType;
@@ -46,9 +43,8 @@ public abstract class Serializer : ISerializer
         OnFieldDeserialized(field, instance, name, value);
     }
 
-    public void DeserializeProperty(string name, object instance)
+    public void DeserializeProperty(string name, Type type, object instance)
     {
-        Type type = instance.GetType();
         var property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
         DeserializeProperty(property, instance);
     }

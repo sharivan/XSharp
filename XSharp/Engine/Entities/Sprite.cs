@@ -89,6 +89,12 @@ public abstract class Sprite : Entity, IRenderable
         set;
     } = false;
 
+    public NinetyRotation Rotation
+    {
+        get;
+        set;
+    } = NinetyRotation.ANGLE_0;
+
     public bool Visible
     {
         get => visible;
@@ -346,12 +352,60 @@ public abstract class Sprite : Entity, IRenderable
         set;
     } = true;
 
+    public override Box Hitbox
+    {
+        get
+        {
+            Box box = base.Hitbox;
+
+            if (UpsideDown)
+                box = box.Flip(Origin);
+
+            if (Rotation != NinetyRotation.ANGLE_0)
+                box = box.Rotate(Origin, Rotation);
+
+            //if (Scale != 1)
+            //    box = box.Scale(Origin, Scale);
+
+            return box;
+        }
+
+        protected set
+        {
+            Box box = value;
+
+            //if (Scale != 1)
+            //    box = box.ScaleInverse(Origin, Scale);
+
+            if (Rotation != NinetyRotation.ANGLE_0)
+                box = box.Rotate(Origin, Rotation.Inverse());
+
+            if (UpsideDown)
+                box = box.Flip(Origin);
+
+            base.Hitbox = box;
+        }
+    }
+
     public virtual Box CollisionBox
     {
         get
         {
             Box box = Origin + GetCollisionBox();
-            return Direction != DefaultDirection ? box.Mirror(Origin) : box;
+
+            if (Direction != DefaultDirection)
+                box = box.Mirror(Origin);
+
+            if (UpsideDown)
+                box = box.Flip(Origin);
+
+            if (Rotation != NinetyRotation.ANGLE_0)
+                box = box.Rotate(Origin, Rotation);
+
+            //if (Scale != 1)
+            //    box = box.Scale(Origin, Scale);
+
+            return box;
         }
     }
 

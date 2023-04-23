@@ -1228,7 +1228,7 @@ public class BinarySerializer : Serializer, IDisposable
                         string name = field.Name;
                         var fieldType = field.FieldType;
                         if (!fieldType.IsAssignableTo(typeof(MulticastDelegate)))
-                            DeserializeField(field, obj);
+                            DeserializeField(field, type, obj);
                     }
 
                     var events = type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);

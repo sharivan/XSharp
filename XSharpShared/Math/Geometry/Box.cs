@@ -589,6 +589,30 @@ public struct Box : IShape
         return Width > 0 && Height > 0;
     }
 
+    public Box Rotate(NinetyRotation rotation)
+    {
+        return Rotate(Origin, rotation);
+    }
+
+    public Box Rotate(Vector center, NinetyRotation rotation)
+    {
+        if (rotation == NinetyRotation.ANGLE_0)
+            return this;
+
+        var origin = Origin;
+        var mins = origin + Mins;
+        var maxs = origin + Maxs;
+
+        origin = origin.Rotate(center, rotation);
+        mins = mins.Rotate(center, rotation);
+        maxs = maxs.Rotate(center, rotation);
+
+        mins -= origin;
+        mins -= origin;
+
+        return (origin, mins, maxs);
+    }
+
     public Box Scale(Vector origin, FixedSingle scaleX, FixedSingle scaleY)
     {
         return new((Origin - origin).Scale(scaleX, scaleY) + origin, Mins.Scale(scaleX, scaleY), Maxs.Scale(scaleX, scaleY));

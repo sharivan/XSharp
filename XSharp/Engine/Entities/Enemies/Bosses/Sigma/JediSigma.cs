@@ -1,8 +1,15 @@
 ﻿using SharpDX;
 
+using XSharp.Engine.Entities.Objects;
+using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.Graphics;
+using XSharp.Engine.World;
 using XSharp.Math;
 using XSharp.Math.Geometry;
+
+using static XSharp.Engine.World.World;
+using static XSharp.Engine.Consts;
+using XSharp.Engine.Entities.Effects;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Sigma;
 
@@ -12,7 +19,8 @@ public enum JediSigmaState
     INTRODUCING,
     IDLE,
     DEFENDING,
-    ATTACKING
+    ATTACKING,
+    DYING
 }
 
 public class JediSigma : Boss, IFSMEntity<JediSigmaState>
@@ -65,13 +73,21 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
     public static readonly Box CAPE_HITBOX = ((0, 0), (-29, -24), (29, 24));
     public static readonly Box SLASH_HITBOX = ((0, 0), (-22, -25), (22, 25));
     public static readonly Box SHOT_HITBOX = ((0, 0), (-4, -4), (4, 4));
-    public static readonly Box COLLISION_BOX = ((2, 4), (-24, -27), (24, 27));
+    public static readonly Box COLLISION_BOX = ((2, 4), (-24, -28), (24, 28));
     public static readonly FixedSingle COLLISION_BOX_LEGS_HEIGHT = 8;
 
     public static readonly FixedSingle SHOT_OFFSET_X = 0;
     public static readonly FixedSingle SHOT_OFFSET_Y = -20;
     public static readonly FixedSingle SLASH_OFFSET_X = 38;
     public static readonly FixedSingle SLASH_OFFSET_Y = -7;
+
+    public static readonly FixedSingle PLAYER_WALK_OFFSET_X = 79;
+    public static readonly FixedSingle SIGMA_PRE_INTRODUCING_OFFSET_X = 80;
+    public static readonly FixedSingle PRE_INTRODUCING_STEP = 16;
+
+    public const int FRAMES_TO_START_PRE_INTRODUCING = 14;
+    public const int PRE_INTRODUCING_STEPS = 14;
+    public const int FRAMES_TO_START_FILL_HP = 78 + 32;
     #endregion
 
     #region Precache
@@ -98,8 +114,8 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
         sequence.AddFrame(7, 7, 303, 15, 38, 60, 22);
         sequence.AddFrame(15, 2, 357, 20, 50, 55, 20);
         sequence.AddFrame(19, 2, 413, 20, 54, 55, 4);
-        sequence.AddFrame(30, 2, 473, 20, 58, 55, 4);
-        sequence.AddFrame(40, 8, 537, 15, 75, 61, 1, true); // hp start to fill after 32 frames from here
+        sequence.AddFrame(30, 2, 473, 20, 58, 55, 4); // total of 78 frames
+        sequence.AddFrame(40, 7, 537, 15, 75, 61, 1, true); // hp start to fill after 32 frames from here
 
         sequence = spriteSheet.AddFrameSquence("Idle");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
@@ -178,6 +194,16 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
     }
     #endregion
 
+    private EntityReference<Trigger> trigger;
+    private EntityReference<JediSigmaDoor> door;
+    private long triggerFrameCounter;
+    private int introducingCounter;
+    private Vector finalOrigin;
+
+    public Trigger Trigger => trigger;
+
+    public JediSigmaDoor Door => door;
+
     public JediSigmaState State
     {
         get => GetState<JediSigmaState>();
@@ -199,29 +225,179 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
         SpriteSheetName = "JediSigma";
 
         SetAnimationNames(
-            "PreIntroducing", 
-            "Introducing", 
-            "Idle", 
-            "Defending", 
-            "PreAttack", 
-            "Attacking", 
-            "WallJumping", 
-            "Shooting", 
-            "PostShooting", 
-            "Slashing", 
+            "PreIntroducing",
+            "Introducing",
+            "Idle",
+            "Defending",
+            "PreAttack",
+            "Attacking",
+            "WallJumping",
+            "Shooting",
+            "PostShooting",
+            "Slashing",
             "Dying"
         );
 
         SetupStateArray<JediSigmaState>();
-        RegisterState(JediSigmaState.PRE_INTRODUCING, OnIntroducing, "PreIntroducing");
-        RegisterState(JediSigmaState.INTRODUCING, OnIntroducing, "Introducing");
+        RegisterState(JediSigmaState.PRE_INTRODUCING, OnStartPreIntroducing, OnPreIntroducing, null, "PreIntroducing");
+        RegisterState(JediSigmaState.INTRODUCING, OnStartIntroducing, OnIntroducing, null, "Introducing");
         RegisterState(JediSigmaState.IDLE, OnIdle, "Idle");
         RegisterState(JediSigmaState.DEFENDING, OnAttacking, "Defending");
         RegisterState(JediSigmaState.ATTACKING, OnAttacking, "Attacking");
+        RegisterState(JediSigmaState.DYING, "Dying");
+    }
+
+    protected override void OnCreated()
+    {
+        base.OnCreated();
+
+        triggerFrameCounter = 0;
+
+        trigger = Engine.Entities.Create<Trigger>(new
+        {
+            Origin,
+            Hitbox = (Origin, (-32, -10), (32, 4)),
+            KillOnOffscreen = false
+        });
+
+        Trigger.StartTriggerEvent += OnStartTrigger;
+        Trigger.TriggerEvent += OnTrigger;
+
+        door = Engine.Entities.Create<JediSigmaDoor>(new
+        {
+            Origin = (Origin.X, Origin.Y + 31 + 8),
+        });
+
+        Door.sigma = this;
+
+        Trigger.Spawn();
+        Door.Spawn();
+    }
+
+    public override FixedSingle GetGravity()
+    {
+        switch (State)
+        {
+            case JediSigmaState.PRE_INTRODUCING:
+            case JediSigmaState.ATTACKING:
+                return 0;
+
+            default:
+                return base.GetGravity();
+        }
+    }
+
+    private void OnStartTrigger(BaseTrigger source, Entity activator)
+    {
+        if (activator is not Player player)
+            return;
+
+        Engine.Camera.NoConstraints = true;
+        Engine.Camera.FocusOn = null;
+        player.StartBossDoorCrossing();
+        Engine.KillAllAliveEnemiesAndWeapons();
+
+        ChargingEffect chargingEffect = player.ChargingEffect;
+        if (chargingEffect != null)
+            Engine.FreezeSprites(player, Door, chargingEffect);
+        else
+            Engine.FreezeSprites(player, Door);
+
+        player.Animating = false;
+        player.InputLocked = true;
+
+        Cell sceneCell = GetSceneCellFromPos(player.Origin);
+        Box sceneBox = GetSceneBoundingBox(sceneCell);
+        Vector offset = (0, -SCREEN_HEIGHT);
+        Engine.Camera.MoveToLeftTop(sceneBox.LeftTop + offset, (0, CAMERA_BOOS_DOOR_CROSSING_SMOOTH_SPEED));
+
+        Engine.CameraConstraintsOrigin = (0, 0);
+        Engine.CameraConstraintsBox = (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    }
+
+    private void OnTrigger(BaseTrigger source, Entity activator)
+    {
+        if (activator is not Player player)
+            return;
+
+        if (triggerFrameCounter == 48)
+        {
+            Trigger.Enabled = false;
+
+            player.Animating = true;
+            player.StopBossDoorCrossing();
+
+            Engine.UnfreezeSprites();
+            Engine.Camera.NoConstraints = false;
+            Engine.Camera.FocusOn = player;
+
+            Door.Close();
+        }
+        else if (triggerFrameCounter < 48)
+        {
+            player.Velocity = (0, -CROSSING_BOOS_DOOR_SPEED);
+        }
+
+        triggerFrameCounter++;
+    }
+
+    internal void OnDoorClosed()
+    {
+        var player = Engine.Player;
+        //player.Invincible = false;
+        player.Blinking = false;
+        player.WalkTo(Origin - (PLAYER_WALK_OFFSET_X, 0), OnPlayerWakingEnd);
+        //player.InputLocked = false;
+    }
+
+    private void OnPlayerWakingEnd()
+    {
+        var player = Engine.Player;
+        player.FaceToPosition(Origin);
+
+        Spawn();
+    }
+
+    private void OnStartPreIntroducing(EntityState state, EntityState lastState)
+    {
+        introducingCounter = 0;
+    }
+
+    private void OnPreIntroducing(EntityState state, long frameCounter)
+    {
+        if (frameCounter == FRAMES_TO_START_PRE_INTRODUCING)
+        {
+            Origin += (SIGMA_PRE_INTRODUCING_OFFSET_X, -1);
+            finalOrigin = Origin;
+            Origin -= (0, PRE_INTRODUCING_STEPS * PRE_INTRODUCING_STEP);
+            Visible = true;
+        }
+        else if (frameCounter > FRAMES_TO_START_PRE_INTRODUCING)
+        {
+            if (Origin.Y == finalOrigin.Y)
+            {
+                introducingCounter++;
+
+                if (introducingCounter >= PRE_INTRODUCING_STEPS)
+                    State = JediSigmaState.INTRODUCING;
+                else
+                    Origin -= (0, (PRE_INTRODUCING_STEPS - introducingCounter) * PRE_INTRODUCING_STEP);
+            }
+            else
+                Origin += (0, PRE_INTRODUCING_STEP);
+        }
+    }
+
+    private void OnStartIntroducing(EntityState state, EntityState lastState)
+    {
+        CheckCollisionWithWorld = true;
+        CheckCollisionWithSolidSprites = true;
     }
 
     private void OnIntroducing(EntityState state, long frameCounter)
     {
+        if (frameCounter == FRAMES_TO_START_FILL_HP)
+            StartHealthFilling();
     }
 
     private void OnIdle(EntityState state, long frameCounter)
@@ -251,9 +427,32 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
     {
         base.OnSpawn();
 
+        CanGoOutOfMapBounds = true;
+        CheckCollisionWithWorld = false;
+        CheckCollisionWithSolidSprites = false;
         ContactDamage = CONTACT_DAMAGE;
+        Visible = false;
 
         Velocity = Vector.NULL_VECTOR;
         State = JediSigmaState.PRE_INTRODUCING;
+    }
+
+    protected override void OnDeath()
+    {
+        Door?.Kill();
+
+        base.OnDeath();
+    }
+
+    protected override void OnStartBattle()
+    {
+        base.OnStartBattle();
+
+        State = JediSigmaState.IDLE;
+    }
+
+    protected override void OnDying()
+    {
+        State = JediSigmaState.DYING;
     }
 }

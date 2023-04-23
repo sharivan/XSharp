@@ -47,6 +47,7 @@
     <None Remove="Assets\Sprites\Enemies\X1\Turn Cannon.png" />
     <None Remove="Assets\Sprites\Objects\Boomer Kuwanger Elevator.png" />
     <None Remove="Assets\Sprites\Objects\Hover Platform.png" />
+    <None Remove="Assets\Sprites\Objects\Jedi Sigma Door.png" />
     <None Remove="Assets\Sprites\Thumbs.db" />
     <None Remove="Assets\Sprites\X\Thumbs.db" />
   </ItemGroup>
@@ -186,6 +187,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Assets\Sprites\Objects\Hover Platform.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Sprites\Objects\Jedi Sigma Door.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Assets\Sprites\Objects\Platforms.png">

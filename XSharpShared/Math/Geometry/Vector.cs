@@ -221,6 +221,18 @@ public struct Vector : IGeometry
         return new Vector((FixedSingle) (x * cos - y * sin), (FixedSingle) (x * sin + y * cos));
     }
 
+    public Vector Rotate(NinetyRotation rotation)
+    {
+        return rotation switch
+        {
+            NinetyRotation.ANGLE_0 => this,
+            NinetyRotation.ANGLE_90 => (-Y, X),
+            NinetyRotation.ANGLE_180 => (-X, -Y),
+            NinetyRotation.ANGLE_270 => (Y, -X),
+            _ => Rotate(rotation.Normalize()),
+        };
+    }
+
     /// <summary>
     /// Rotaciona o vetor ao redor de um outro vetor
     /// </summary>
@@ -230,6 +242,11 @@ public struct Vector : IGeometry
     public Vector Rotate(Vector center, FixedSingle angle)
     {
         return (this - center).Rotate(angle) + center;
+    }
+
+    public Vector Rotate(Vector center, NinetyRotation rotation)
+    {
+        return (this - center).Rotate(rotation) + center;
     }
 
     /// <summary>

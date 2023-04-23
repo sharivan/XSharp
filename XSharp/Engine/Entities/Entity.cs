@@ -416,12 +416,21 @@ public abstract class Entity : IIndexedNamedFactoryItem
         }
     }
 
-    internal void NotifyCreated()
+    internal void NotifyCreate()
     {
         OnCreate();
     }
 
+    internal void NotifyCreated()
+    {
+        OnCreated();
+    }
+
     protected virtual void OnCreate()
+    {
+    }
+
+    protected virtual void OnCreated()
     {
     }
 

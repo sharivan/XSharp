@@ -166,10 +166,17 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
             if (drawScale != 1)
                 box.Scale(drawOrigin, drawScale);
 
-            if (Rotation != FixedSingle.ZERO)
+            if (Mirrored || Sprite.MirrorAnimationFromDirection && Sprite.Direction != Sprite.DefaultDirection)
+                box = box.Mirror(drawOrigin);
+
+            if (Flipped || Sprite.UpsideDown)
+                box = box.Flip(drawOrigin);
+
+            FixedSingle rotation = Rotation + Sprite.Rotation.ToRadians();
+            if (rotation != FixedSingle.ZERO)
             {
-                var ltRotatedDiff = box.LeftTop.Rotate(drawOrigin, Rotation) - drawOrigin;
-                var rbRotatedDiff = box.RightBottom.Rotate(drawOrigin, Rotation) - drawOrigin;
+                var ltRotatedDiff = box.LeftTop.Rotate(drawOrigin, rotation) - drawOrigin;
+                var rbRotatedDiff = box.RightBottom.Rotate(drawOrigin, rotation) - drawOrigin;
                 Vector mins = (FixedSingle.Min(ltRotatedDiff.X, rbRotatedDiff.X), FixedSingle.Min(ltRotatedDiff.Y, rbRotatedDiff.Y));
                 Vector maxs = (FixedSingle.Max(ltRotatedDiff.X, rbRotatedDiff.X), FixedSingle.Max(ltRotatedDiff.Y, rbRotatedDiff.Y));
                 box = (drawOrigin, mins, maxs);
@@ -177,12 +184,6 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
             if (Scale != FixedSingle.ONE)
                 box = box.Scale(drawOrigin, Scale);
-
-            if (Flipped || Sprite.UpsideDown)
-                box = box.Flip(drawOrigin);
-
-            if (Mirrored || Sprite.MirrorAnimationFromDirection && Sprite.Direction != Sprite.DefaultDirection)
-                box = box.Mirror(drawOrigin);
 
             return box;
         }
@@ -304,23 +305,18 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         float drawScale = (float) BaseEngine.Engine.DrawScale;
         transform *= Matrix.Scaling(drawScale);
 
-        if (Rotation != FixedSingle.ZERO)
-            transform *= Matrix.Translation(-origin3) * Matrix.RotationZ((float) Rotation) * Matrix.Translation(origin3);
+        if (Mirrored || Sprite.MirrorAnimationFromDirection && Sprite.Direction != Sprite.DefaultDirection)
+            transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(origin3);
+
+        if (Flipped || Sprite.UpsideDown)
+            transform *= Matrix.Translation(-origin3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(origin3);
+
+        FixedSingle rotation = Rotation + Sprite.Rotation.ToRadians();
+        if (rotation != FixedSingle.ZERO)
+            transform *= Matrix.Translation(-origin3) * Matrix.RotationZ((float) rotation) * Matrix.Translation(origin3);
 
         if (Scale != FixedSingle.ONE)
             transform *= Matrix.Translation(-origin3) * Matrix.Scaling((float) Scale) * Matrix.Translation(origin3);
-
-        if (Flipped || Sprite.UpsideDown)
-        {
-            if (Mirrored || Sprite.MirrorAnimationFromDirection && Sprite.Direction != Sprite.DefaultDirection)
-                transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, -1, 1) * Matrix.Translation(origin3);
-            else
-                transform *= Matrix.Translation(-origin3) * Matrix.Scaling(1, -1, 1) * Matrix.Translation(origin3);
-        }
-        else if (Mirrored || Sprite.MirrorAnimationFromDirection && Sprite.Direction != Sprite.DefaultDirection)
-        {
-            transform *= Matrix.Translation(-origin3) * Matrix.Scaling(-1, 1, 1) * Matrix.Translation(origin3);
-        }
 
         BaseEngine.Engine.RenderSprite(texture, Sprite.Palette, Sprite.FadingControl, drawBox.LeftTop, transform, RepeatX, RepeatY);
     }

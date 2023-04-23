@@ -432,6 +432,30 @@ public class Player : Sprite, IFSMEntity<PlayerState>
         private set;
     }
 
+    public bool ScriptedWalking
+    {
+        get;
+        private set;
+    }
+
+    private bool ScriptedWalkingLeft
+    {
+        get;
+        set;
+    }
+
+    public Vector ScriptedWalkingDestination
+    {
+        get;
+        private set;
+    }
+
+    public Action ScriptedWalkingEnd
+    {
+        get;
+        private set;
+    }
+
     public bool CanGoOutOfCameraBounds
     {
         get;
@@ -984,6 +1008,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
         Health = Engine.HealthCapacity;
         Freezed = false;
         CrossingBossDoor = false;
+        ScriptedWalking = false;
         CanGoOutOfCameraBounds = false;
         DeadByAbiss = false;
         TakingDamageFrameCounter = 0;
@@ -1202,6 +1227,42 @@ public class Player : Sprite, IFSMEntity<PlayerState>
             if (PressedStart)
                 Engine.ContinueGame();
         }
+        else if (ScriptedWalking)
+        {
+            if (!Landed)
+                return;
+
+            var dest = ScriptedWalkingDestination;
+            if (dest.X < Origin.X)
+            {
+                if (!ScriptedWalkingLeft)
+                {
+                    ScriptedWalking = false;
+                    ScriptedWalkingEnd?.Invoke();
+                }
+                else
+                {
+                    TryMoveLeft();
+                }
+            }
+            else if (dest.X > Origin.X)
+            {
+                if (ScriptedWalkingLeft)
+                {
+                    ScriptedWalking = false;
+                    ScriptedWalkingEnd?.Invoke();
+                }
+                else
+                {
+                    TryMoveRight();
+                }
+            }
+            else
+            {
+                ScriptedWalking = false;
+                ScriptedWalkingEnd?.Invoke();
+            }
+        }
         else if (!CrossingBossDoor && !Dying && !teleporting && !VictoryPosing)
         {
             frameCounter++;
@@ -1218,7 +1279,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
                 }
 
                 if (!CheckCollisionWithWorld)
-                {                    
+                {
                     CheckCollisionWithWorld = true;
                     var collider = WorldCollider;
                     if (!collider.Landed)
@@ -2527,5 +2588,13 @@ public class Player : Sprite, IFSMEntity<PlayerState>
             SetStandState();
         else
             SetAirStateAnimation();
+    }
+
+    public void WalkTo(Vector dest, Action onWalkingEnd)
+    {
+        ScriptedWalking = true;
+        ScriptedWalkingLeft = dest.X < Origin.X;
+        ScriptedWalkingDestination = dest;
+        ScriptedWalkingEnd = onWalkingEnd;
     }
 }

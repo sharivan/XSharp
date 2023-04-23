@@ -192,7 +192,7 @@ public class FadingControl : ISerializable
         FadeIn = serializer.ReadEnum<FadingFlags>();
         FadingFrames = serializer.ReadLong();
         FadingTick = serializer.ReadLong();
-        serializer.DeserializeProperty(nameof(OnFadingComplete), this);
+        serializer.DeserializeProperty(nameof(OnFadingComplete), typeof(FadingControl), this);
     }
 
     public void Serialize(ISerializer serializer)

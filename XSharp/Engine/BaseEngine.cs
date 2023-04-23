@@ -3680,21 +3680,21 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         FadeInOST = serializer.ReadBool();
         FadingOSTFrames = serializer.ReadLong();
         FadingOSTTick = serializer.ReadLong();
-        serializer.DeserializeProperty(nameof(OnFadingOSTComplete), this);
+        serializer.DeserializeProperty(nameof(OnFadingOSTComplete), typeof(BaseEngine), this);
         SpawningBlackScreen = serializer.ReadBool();
         SpawningBlackScreenFrameCounter = serializer.ReadInt();
         DyingEffectActive = serializer.ReadBool();
         DyingEffectFrameCounter = serializer.ReadInt();
         Freezing = serializer.ReadBool();
         FreezingFrames = serializer.ReadInt();
-        serializer.DeserializeProperty(nameof(OnFreezeComplete), this);
+        serializer.DeserializeProperty(nameof(OnFreezeComplete), typeof(BaseEngine), this);
         FreezeFrameCounter = serializer.ReadInt();
         FreezingFrameCounter = serializer.ReadInt();
         FreezingSprites = serializer.ReadBool();
         FreezingSpritesFrames = serializer.ReadInt();
         FreezingSpritesFrameCounter = serializer.ReadInt();
-        serializer.DeserializeProperty(nameof(OnFreezeSpritesComplete), this);
-        serializer.DeserializeProperty(nameof(DelayedAction), this);
+        serializer.DeserializeProperty(nameof(OnFreezeSpritesComplete), typeof(BaseEngine), this);
+        serializer.DeserializeProperty(nameof(DelayedAction), typeof(BaseEngine), this);
         DelayedActionFrames = serializer.ReadInt();
         DelayedActionFrameCounter = serializer.ReadInt();
         BossBattle = serializer.ReadBool();
@@ -4964,7 +4964,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         entity.BossDefeatedEvent += OnBossDefeated;
         Boss = entity;
 
-        entity.Place();
         return Entities.GetReferenceTo(entity);
     }
 
@@ -5715,14 +5714,15 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         OnFreezeComplete?.Invoke();
     }
 
-    internal BossDoor AddBossDoor(byte eventSubId, Vector pos)
+    internal EntityReference<BossDoor> AddBossDoor(byte eventSubId, Vector pos)
     {
         bool secondDoor = (eventSubId & 0x80) != 0;
         BossDoor door = Entities.Create<BossDoor>(new
         {
             Origin = pos,
             Bidirectional = false,
-            StartBossBattle = secondDoor
+            StartBossBattle = secondDoor,
+            AwaysVisible = false
         });
 
         door.OpeningEvent += (BossDoor source) => DoorOpening(secondDoor);

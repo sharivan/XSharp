@@ -2,6 +2,7 @@
 using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
+using XSharp.Math;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -52,15 +53,22 @@ public class BossDoor : BaseTrigger, IFSMEntity<BossDoorState>
     public event BossDoorEvent ClosingEvent;
     public event BossDoorEvent ClosedEvent;
 
-    private EntityReference<BossDoorEffect> effect;
+    private BossDoorOrientation orientation = BossDoorOrientation.VERTICAL;
 
-    private BossDoorEffect Effect => effect;
+    private EntityReference<BossDoorSprite> effect;
+
+    private BossDoorSprite Effect => effect;
 
     public BossDoorOrientation Orientation
     {
-        get;
-        set;
-    } = BossDoorOrientation.VERTICAL;
+        get => orientation;
+        set
+        {
+            orientation = value;
+            if (Effect != null)
+                Effect.Rotation = Orientation == BossDoorOrientation.VERTICAL ? NinetyRotation.ANGLE_0 : NinetyRotation.ANGLE_90;
+        }
+    }
 
     public BossDoorDirection CrossDirection
     {
@@ -86,19 +94,30 @@ public class BossDoor : BaseTrigger, IFSMEntity<BossDoorState>
         set;
     }
 
+    public bool AwaysVisible
+    {
+        get;
+        set;
+    } = true;
+
     public BossDoor()
     {
     }
 
-    protected override void OnCreate()
+    protected override void OnCreated()
     {
-        base.OnCreate();
+        base.OnCreated();
 
-        effect = Engine.Entities.Create<BossDoorEffect>(new
+        effect = Engine.Entities.Create<BossDoorSprite>(new
         {
             Door = this,
-            Visible = false
+            Visible = AwaysVisible,
+            Origin = (Origin.X, Origin.Y - 1),
+            Rotation = Orientation == BossDoorOrientation.VERTICAL ? NinetyRotation.ANGLE_0 : NinetyRotation.ANGLE_90
         });
+
+        if (AwaysVisible)
+            Effect.Spawn();
     }
 
     protected override void OnSpawn()
@@ -108,7 +127,10 @@ public class BossDoor : BaseTrigger, IFSMEntity<BossDoorState>
         Hitbox = GetTriggerBoudingBox(Origin);
 
         Effect.Origin = (Origin.X, Origin.Y - 1);
-        Effect.Spawn();
+        Effect.Rotation = Orientation == BossDoorOrientation.VERTICAL ? NinetyRotation.ANGLE_0 : NinetyRotation.ANGLE_90;
+
+        if (!AwaysVisible)
+            Effect.Spawn();
 
         State = BossDoorState.CLOSED;
     }
@@ -147,14 +169,18 @@ public class BossDoor : BaseTrigger, IFSMEntity<BossDoorState>
             if (!Bidirectional)
                 Enabled = false;
 
-            Effect.Visible = true;
+            if (!AwaysVisible)
+                Effect.Visible = true;
+
             State = BossDoorState.OPENING;
         }
     }
 
     internal void OnStartClosed()
     {
-        Effect.Visible = false;
+        if (!AwaysVisible)
+            Effect.Visible = false;
+
         ClosedEvent?.Invoke(this);
     }
 
@@ -196,7 +222,7 @@ public class BossDoor : BaseTrigger, IFSMEntity<BossDoorState>
         Cell sceneCell = GetSceneCellFromPos(Engine.Player.Origin);
         Box sceneBox = GetSceneBoundingBox(sceneCell);
         Vector offset = GetCameraMoveOffset();
-        Engine.Camera.MoveToLeftTop(sceneBox.LeftTop + offset, (CAMERA_BOOS_DOOR_CROSSING_SMOOTH_SPEED, CAMERA_BOOS_DOOR_CROSSING_SMOOTH_SPEED));
+        Engine.Camera.MoveToLeftTop(sceneBox.LeftTop + offset, Orientation == BossDoorOrientation.VERTICAL ? (CAMERA_BOOS_DOOR_CROSSING_SMOOTH_SPEED, 0) : (0, CAMERA_BOOS_DOOR_CROSSING_SMOOTH_SPEED));
 
         if (StartBossBattle)
         {
@@ -219,7 +245,14 @@ public class BossDoor : BaseTrigger, IFSMEntity<BossDoorState>
         }
         else if (frameCounter < 120)
         {
-            Engine.Player.Velocity = (CROSSING_BOOS_DOOR_SPEED, 0);
+            Engine.Player.Velocity =
+                Orientation == BossDoorOrientation.VERTICAL
+                ? CrossDirection == BossDoorDirection.FORWARD
+                    ? (CROSSING_BOOS_DOOR_SPEED, 0)
+                    : (-CROSSING_BOOS_DOOR_SPEED, 0)
+                : CrossDirection == BossDoorDirection.FORWARD
+                    ? (0, CROSSING_BOOS_DOOR_SPEED)
+                    : (0, -CROSSING_BOOS_DOOR_SPEED);
         }
     }
 

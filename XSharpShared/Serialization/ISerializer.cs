@@ -109,11 +109,11 @@ public interface ISerializer
 
     void WriteObject(object obj, bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true);
 
-    void SerializeField(string name, object instance);
+    void SerializeField(string name, Type type, object instance);
 
-    void SerializeProperty(string name, object instance);
+    void SerializeProperty(string name, Type type, object instance);
 
-    void DeserializeField(string name, object instance);
+    void DeserializeField(string name, Type type, object instance);
 
-    void DeserializeProperty(string name, object instance);
+    void DeserializeProperty(string name, Type type, object instance);
 }

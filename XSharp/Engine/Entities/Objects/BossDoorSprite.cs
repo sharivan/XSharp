@@ -1,16 +1,17 @@
-﻿using XSharp.Engine.Entities.Effects;
-using XSharp.Engine.Graphics;
+﻿using XSharp.Engine.Graphics;
 using XSharp.Math.Geometry;
+using XSharp.Engine.Collision;
+using XSharp.Math;
 
 namespace XSharp.Engine.Entities.Objects;
 
-internal class BossDoorEffect : SpriteEffect, IFSMEntity<BossDoorState>
+internal class BossDoorSprite : Sprite, IFSMEntity<BossDoorState>
 {
     #region Precache
     [Precache]
-    new internal static void Precache()
+    internal static void Precache()
     {
-        var spriteSheet = Engine.CreateSpriteSheet("Boos Door", true, true);
+        var spriteSheet = Engine.CreateSpriteSheet("BoosDoor", true, true);
         spriteSheet.CurrentTexture = Engine.CreateImageTextureFromEmbeddedResource("Sprites.Objects.BossDoor.png");
 
         var bossDoorHitbox = new Box(Vector.NULL_VECTOR, (-8, -23), (24, 25));
@@ -83,7 +84,7 @@ internal class BossDoorEffect : SpriteEffect, IFSMEntity<BossDoorState>
         set => SetState(value);
     }
 
-    public BossDoorEffect()
+    public BossDoorSprite()
     {
     }
 
@@ -91,8 +92,9 @@ internal class BossDoorEffect : SpriteEffect, IFSMEntity<BossDoorState>
     {
         base.OnCreate();
 
-        SpriteSheetName = "Boos Door";
+        SpriteSheetName = "BoosDoor";
         Respawnable = true;
+        CollisionData = CollisionData.SOLID;
 
         SetAnimationNames("Closed", "Opening", "PlayerCrossing", "Closing");
 
@@ -101,6 +103,11 @@ internal class BossDoorEffect : SpriteEffect, IFSMEntity<BossDoorState>
         RegisterState(BossDoorState.OPENING, OnStartOpening, OnOpening, null, "Opening");
         RegisterState(BossDoorState.PLAYER_CROSSING, OnStartPlayerCrossing, OnPlayerCrossing, null, "PlayerCrossing");
         RegisterState(BossDoorState.CLOSING, OnStartClosing, null, OnEndClosing, "Closing");
+    }
+
+    public override FixedSingle GetGravity()
+    {
+        return 0;
     }
 
     private void OnStartClosed(EntityState state, EntityState lastState)
@@ -136,6 +143,13 @@ internal class BossDoorEffect : SpriteEffect, IFSMEntity<BossDoorState>
     private void OnEndClosing(EntityState state)
     {
         Door?.OnEndClosing();
+    }
+
+    protected override void OnSpawn()
+    {
+        base.OnSpawn();
+
+        State = BossDoorState.CLOSED;
     }
 
     protected override void OnDeath()

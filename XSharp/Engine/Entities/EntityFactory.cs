@@ -172,9 +172,10 @@ public class EntityFactory : IndexedNamedFactory<Entity>
             }
         }
 
-        entity.NotifyCreated();
+        entity.NotifyCreate();
         entity.Initialize(initParams);
         entity.ResetFromInitParams();
+        entity.NotifyCreated();
 
         if (entity.CheckTouchingEntities)
             BaseEngine.Engine.partition.Insert(entity);

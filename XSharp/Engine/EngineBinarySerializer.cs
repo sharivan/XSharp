@@ -82,13 +82,13 @@ public class EngineBinarySerializer : BinarySerializer
 
     public override object ReadValue(Type type, bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true)
     {
-        if (type == typeof(BaseEngine))
+        if (type.IsAssignableTo(typeof(BaseEngine)))
         {
             bool isSet = ReadBool();
             return isSet ? BaseEngine.Engine : null;
         }
 
-        if (type == typeof(World.World))
+        if (type.IsAssignableTo(typeof(World.World)))
         {
             bool isSet = ReadBool();
             return isSet ? BaseEngine.Engine.World : null;
@@ -105,7 +105,7 @@ public class EngineBinarySerializer : BinarySerializer
 
     public override void WriteValue(Type type, object value, bool acceptNonSerializable = false, bool ignoreItems = false, bool nullable = true)
     {
-        if (type == typeof(BaseEngine) || type == typeof(World.World) || type == typeof(Partition<Entity>))
+        if (type.IsAssignableTo(typeof(BaseEngine)) || type.IsAssignableTo(typeof(World.World)) || type == typeof(Partition<Entity>))
             WriteBool(value != null);
         else
             base.WriteValue(type, value, acceptNonSerializable, ignoreItems, nullable);
