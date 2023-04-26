@@ -83,7 +83,7 @@ public class SoundStream : WaveStream, ISerializable
         while (totalBytesRead < count)
         {
             int bytesToRead = count - totalBytesRead;
-            if (source.Stream.Position + bytesToRead > StopPoint)
+            if (source.Stream.Position + bytesToRead >= StopPoint)
                 bytesToRead = (int) (StopPoint - source.Stream.Position);
 
             if (bytesToRead < 0)

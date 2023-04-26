@@ -72,8 +72,12 @@
     <Content Include="Assets\Sounds\OST\X1\02 - Title Screen.mp3" />
     <Content Include="Assets\Sounds\OST\X1\03 - Password Screen.mp3" />
     <Content Include="Assets\Sounds\OST\X1\04 - Intro Stage.mp3" />
-    <Content Include="Assets\Sounds\OST\X1\05 - Sigma Intro 1.mp3" />
-    <Content Include="Assets\Sounds\OST\X1\06 - Sigma Boss Battle.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\05 - Sigma Intro 1.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\OST\X1\06 - Sigma Boss Battle.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\Sounds\OST\X1\07 - Zero 1.mp3" />
     <Content Include="Assets\Sounds\OST\X1\08 - Zero 2.mp3" />
     <Content Include="Assets\Sounds\OST\X1\09 - Stage Select 1.mp3" />
@@ -102,10 +106,18 @@
     <Content Include="Assets\Sounds\OST\X1\24 - Sigma Fortress 1.mp3" />
     <Content Include="Assets\Sounds\OST\X1\25 - Sigma Fortress 2.mp3" />
     <Content Include="Assets\Sounds\OST\X1\26 - Sigma Fortress 3.mp3" />
-    <Content Include="Assets\Sounds\OST\X1\27 - Sigma Intro 2.mp3" />
-    <Content Include="Assets\Sounds\OST\X1\28 - Sigma Battle.mp3" />
-    <Content Include="Assets\Sounds\OST\X1\29 - Stigma Defeated.mp3" />
-    <Content Include="Assets\Sounds\OST\X1\30 - Sigma Battle 2.mp3" />
+    <Content Include="Assets\Sounds\OST\X1\27 - Sigma Intro 2.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\OST\X1\28 - Sigma Battle.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\OST\X1\29 - Stigma Defeated.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Sounds\OST\X1\30 - Sigma Battle 2.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\Sounds\OST\X1\31 - Dr. Light.mp3" />
     <Content Include="Assets\Sounds\OST\X1\32 - Ending.mp3" />
     <Content Include="Assets\Sounds\OST\X1\33 - Castings.mp3" />

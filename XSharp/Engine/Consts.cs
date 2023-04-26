@@ -235,6 +235,6 @@ public class Consts
     public const string ROM_NAME = "ShittyDash.mmx";
     public static readonly bool SKIP_MENU = false;
     public static readonly bool SKIP_INTRO = false;
-    public const int INITIAL_LEVEL = 8;
+    public const int INITIAL_LEVEL = 12;
     public const int INITIAL_CHECKPOINT = 0;
 }

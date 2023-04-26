@@ -94,6 +94,13 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
     [Precache]
     new internal static void Precache()
     {
+        Engine.PrecacheSound("Sigma Stage", @"OST\X1\27 - Sigma Intro 2.mp3");
+        Engine.PrecacheSound("Sigma Boss Intro", @"OST\X1\05 - Sigma Intro 1.mp3");
+        Engine.PrecacheSound("Sigma Boss Battle", @"OST\X1\06 - Sigma Boss Battle.mp3");
+        Engine.PrecacheSound("Jedi Sigma Battle", @"OST\X1\28 - Sigma Battle.mp3");
+        Engine.PrecacheSound("Wolf Sigma Intro", @"OST\X1\29 - Stigma Defeated.mp3");
+        Engine.PrecacheSound("Wolf Sigma Battle", @"OST\X1\30 - Sigma Battle 2.mp3");
+
         var palette = Engine.PrecachePalette("JediSigmaPalette", PALETTE);
         var spriteSheet = Engine.CreateSpriteSheet("JediSigma", true, true);
 
@@ -114,13 +121,13 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
         sequence.AddFrame(7, 7, 303, 15, 38, 60, 22);
         sequence.AddFrame(15, 2, 357, 20, 50, 55, 20);
         sequence.AddFrame(19, 2, 413, 20, 54, 55, 4);
-        sequence.AddFrame(30, 2, 473, 20, 58, 55, 4); // total of 78 frames
+        sequence.AddFrame(23, 2, 473, 20, 58, 55, 4); // total of 78 frames
         sequence.AddFrame(40, 7, 537, 15, 75, 61, 1, true); // hp start to fill after 32 frames from here
 
         sequence = spriteSheet.AddFrameSquence("Idle");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
-        sequence.AddFrame(40, 8, 537, 15, 75, 61, 1, true);
+        sequence.AddFrame(40, 7, 537, 15, 75, 61, 1, true);
 
         sequence = spriteSheet.AddFrameSquence("Defending");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
@@ -144,7 +151,7 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
         sequence = spriteSheet.AddFrameSquence("Shooting");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;
         sequence.Hitbox = HITBOX;
-        sequence.AddFrame(40, 8, 537, 15, 75, 61, 32);
+        sequence.AddFrame(40, 7, 537, 15, 75, 61, 32);
         sequence.AddFrame(39, 10, 618, 12, 75, 63, 4, true); // shot spawn here
         sequence.AddFrame(40, 8, 699, 14, 75, 61, 8); // total of 44 frames, loop of 12 frames
 
@@ -158,7 +165,7 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
         sequence.Hitbox = HITBOX;
         sequence.AddFrame(39, 10, 618, 12, 75, 63, 4);
         sequence.AddFrame(40, 7, 780, 15, 75, 60, 8);
-        sequence.AddFrame(40, 8, 537, 15, 75, 61, 12); // total of 24 frames
+        sequence.AddFrame(40, 7, 537, 15, 75, 61, 12); // total of 24 frames
 
         sequence = spriteSheet.AddFrameSquence("Slashing");
         sequence.OriginOffset = -HITBOX.Origin - HITBOX.Mins;

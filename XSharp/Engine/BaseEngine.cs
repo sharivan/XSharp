@@ -199,6 +199,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     private List<Vector> cameraConstraints;
 
     protected bool frameAdvance;
+    protected long frameAdvanceStartTime;
     protected bool recording;
     protected bool playbacking;
 
@@ -1469,8 +1470,22 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         FadingOSTLevel = 0;
         soundChannels[3].Volume = 0.5f;
 
-        if (romLoaded && mmx.Type == 0 && mmx.Level == 8)
-            PlayOST("Chill Penguin", 83, 50.152);
+        if (romLoaded)
+        {
+            if (mmx.Type == 0)
+            {
+                switch (mmx.Level)
+                {
+                    case 8:
+                        PlayOST("Chill Penguin", 83, 50.152);
+                        break;
+
+                    case 12:
+                        PlayOST("Sigma Stage", 9.285, 4.677);
+                        break;
+                }
+            }
+        }
 
         FadingControl.Reset();
         FadingControl.Start(Color.Black, 26, FadingFlags.COLORS, FadingFlags.COLORS, StartReadyHUD);
@@ -1542,6 +1557,11 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                 {
                     wasPressingNextFrame = true;
                     frameAdvance = true;
+                    nextFrame = true;
+                    frameAdvanceStartTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                }
+                else if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - frameAdvanceStartTime >= 1000)
+                {
                     nextFrame = true;
                 }
             }
@@ -2442,8 +2462,19 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                 CurrentCheckpoint = checkpoints[mmx.Point];
                 CameraConstraintsBox = CurrentCheckpoint.Hitbox;
 
-                if (mmx.Type == 0 && mmx.Level == 8)
-                    PrecacheSound("Chill Penguin", @"OST\X1\12 - Chill Penguin.mp3");
+                if (mmx.Type == 0)
+                {
+                    switch (mmx.Level)
+                    {
+                        case 8:
+                            PrecacheSound("Chill Penguin", @"OST\X1\12 - Chill Penguin.mp3");
+                            break;
+
+                        case 12:
+                            PrecacheSound("Sigma Stage", @"OST\X1\27 - Sigma Intro 2.mp3");
+                            break;
+                    }
+                }
             }
             else
             {
@@ -5855,9 +5886,34 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         PlayOST("Boss Intro", 13, 6.328125);
     }
 
+    public void PlaySigmaBossIntroOST()
+    {
+        PlayOST("Sigma Boss Intro", 16.418, 8.226);
+    }
+
     public void PlayBossBatleOST()
     {
         PlayOST("Boss Battle", 57, 28.798);
+    }
+
+    public void PlaySigmaBossBatleOST()
+    {
+        PlayOST("Sigma Boss Battle", 55.348, 0.023);
+    }
+
+    public void PlayJediSigmaBatleOST()
+    {
+        PlayOST("Jedi Sigma Battle", 35.020, 17.339);
+    }
+
+    public void PlayWolfSigmaIntroIntroOST()
+    {
+        PlayOST("Wolf Sigma Intro");
+    }
+
+    public void PlayWolfSigmaBatleOST()
+    {
+        PlayOST("Boss Battle", 105.582, 52.020);
     }
 
     public void PlayVictorySound()

@@ -33,6 +33,8 @@ public static class WaveStreamUtil
 
     public static long TimeToBytePosition(WaveStream stream, double time)
     {
-        return (long) (time * stream.WaveFormat.AverageBytesPerSecond);
+        var position = (long) (time * stream.WaveFormat.AverageBytesPerSecond);
+        position -= position % stream.WaveFormat.BlockAlign;
+        return position;
     }
 }

@@ -109,9 +109,9 @@ public class BinarySerializer : Serializer, IDisposable
             if (reference.Factory == null)
                 return false;
 
-            if (reference is IIndexedFactoryItemReference indexed)
+            if (reference is IIndexedFactoryItemReference indexed && indexed.TargetIndex != -1)
                 reference = indexed.Factory.GetReferenceTo(indexed.TargetIndex);
-            else if (reference is INamedFactoryItemReference named)
+            else if (reference is INamedFactoryItemReference named && named.TargetName != null)
                 reference = named.Factory.GetReferenceTo(named.TargetName);
             else
                 return false;
@@ -1216,8 +1216,27 @@ public class BinarySerializer : Serializer, IDisposable
 
                 obj = FormatterServices.GetUninitializedObject(objectType);
 
+                var eventNames = new HashSet<string>();
+
                 for (var type = objectType; type != null; type = type.BaseType)
                 {
+                    eventNames.Clear();
+
+                    var events = type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    foreach (var eventInfo in events)
+                    {
+                        var field = type.GetField(eventInfo.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                        
+                        var attribute = Attribute.GetCustomAttribute(eventInfo, typeof(NotSerializableAttribute));
+                        if (attribute != null)
+                            continue;
+
+                        var fieldName = field.Name;
+                        eventNames.Add(fieldName);
+
+                        DeserializeEvent(obj, eventInfo);
+                    }
+
                     var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
                     foreach (var field in fields)
                     {
@@ -1226,20 +1245,11 @@ public class BinarySerializer : Serializer, IDisposable
                             continue;
 
                         string name = field.Name;
-                        var fieldType = field.FieldType;
-                        if (!fieldType.IsAssignableTo(typeof(MulticastDelegate)))
-                            DeserializeField(field, type, obj);
-                    }
-
-                    var events = type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-                    foreach (var eventInfo in events)
-                    {
-                        var field = type.GetField(eventInfo.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-                        var attribute = Attribute.GetCustomAttribute(eventInfo, typeof(NotSerializableAttribute));
-                        if (attribute != null)
+                        if (eventNames.Contains(name))
                             continue;
 
-                        DeserializeEvent(obj, eventInfo);
+                        var fieldType = field.FieldType;
+                        DeserializeField(field, type, obj);
                     }
                 }
             }
@@ -1310,8 +1320,28 @@ public class BinarySerializer : Serializer, IDisposable
                 if (!acceptNonSerializable && !objectType.Name.StartsWith("<>c__DisplayClass") && Attribute.GetCustomAttribute(objectType, typeof(SerializableAttribute)) == null)
                     throw new Exception($"Type '{objectType}' is not serializable. Use the attribute 'NotSerialize' if you dont want to serialize members of this type.");
 
+                var eventNames = new HashSet<string>();
+
                 for (var type = objectType; type != null; type = type.BaseType)
                 {
+                    eventNames.Clear();
+
+                    var events = type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    foreach (var eventInfo in events)
+                    {
+                        var field = type.GetField(eventInfo.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+
+                        var attribute = Attribute.GetCustomAttribute(eventInfo, typeof(NotSerializableAttribute));
+                        if (attribute != null)
+                            continue;
+
+                        var fieldName = field.Name;
+                        eventNames.Add(fieldName);
+
+                        var value = (MulticastDelegate) field.GetValue(obj);
+                        SerializeEvent(value);
+                    }
+
                     var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
                     foreach (var field in fields)
                     {
@@ -1320,24 +1350,12 @@ public class BinarySerializer : Serializer, IDisposable
                             continue;
 
                         string name = field.Name;
-                        var fieldType = field.FieldType;
-                        if (!fieldType.IsAssignableTo(typeof(MulticastDelegate)))
-                        {
-                            object value = field.GetValue(obj);
-                            WriteValue(fieldType, value);
-                        }
-                    }
-
-                    var events = type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-                    foreach (var eventInfo in events)
-                    {
-                        var field = type.GetField(eventInfo.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-                        var attribute = Attribute.GetCustomAttribute(eventInfo, typeof(NotSerializableAttribute));
-                        if (attribute != null)
+                        if (eventNames.Contains(name))
                             continue;
 
-                        var value = (MulticastDelegate) field.GetValue(obj);
-                        SerializeEvent(value);
+                        var fieldType = field.FieldType;
+                        object value = field.GetValue(obj);
+                        WriteValue(fieldType, value);
                     }
                 }
             }
@@ -1592,8 +1610,10 @@ public class BinarySerializer : Serializer, IDisposable
             future.Resolve();
 
         foreach (var future in futuresToResolve)
+        {
             if (!future.IsResolved)
                 throw new Exception($"Can't resolve future {future}.");
+        }
 
         foreach (var (array, indices, future) in arrayElementsToResolve)
             array.SetValue(future.Value, indices);
