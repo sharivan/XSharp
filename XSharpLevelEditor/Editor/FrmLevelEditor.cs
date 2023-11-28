@@ -32,19 +32,19 @@ public partial class FrmLevelEditor : MaterialForm
 
         public void Render()
         {
-            var device = BaseEngine.Engine.Device;
+            var device = DX9Engine.Engine.Device;
 
             device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
             device.BeginScene();
 
             var tilemap = BaseEngine.Engine.ForegroundTilemap;
-            int tilemapWidth = tilemap.GetLevelDescription(0).Width;
-            int tilemapHeight = tilemap.GetLevelDescription(0).Height;
+            int tilemapWidth = tilemap.Width;
+            int tilemapHeight = tilemap.Height;
             var palette = BaseEngine.Engine.ForegroundPalette;
             BaseEngine.Engine.DrawTexture(tilemap, palette);
 
             device.EndScene();
-            device.Present(new Rectangle(0, 0, tilemapWidth, tilemapHeight), new Rectangle(0, 0, control.ClientSize.Width, control.ClientSize.Height), control.Handle);
+            device.Present(new SharpDX.Rectangle(0, 0, tilemapWidth, tilemapHeight), new SharpDX.Rectangle(0, 0, control.ClientSize.Width, control.ClientSize.Height), control.Handle);
         }
     }
 
