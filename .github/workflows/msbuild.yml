@@ -56,7 +56,7 @@ jobs:
         path: XSharpDemo\bin\Release\net7.0-windows
         
     - name: Pack Build
-      run: 7z a "XSharp-${{ github.ref_name }}.zip" .\XSharp\bin\Release\net7.0-windows\*
+      run: 7z a "XSharp-${{ github.ref_name }}.zip" .\XSharpDemo\bin\Release\net7.0-windows\*
         
     - name: Publish
       uses: softprops/action-gh-release@v1
