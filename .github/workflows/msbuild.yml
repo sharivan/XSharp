@@ -52,11 +52,11 @@ jobs:
     - name: Upload Build as Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: XSharp_Release
-        path: XSharp\bin\Release
+        name: XSharpDemo_Release
+        path: XSharpDemo\bin\Release\net7.0-windows
         
     - name: Pack Build
-      run: 7z a "XSharp-${{ github.ref_name }}.zip" .\XSharp\bin\Release\*
+      run: 7z a "XSharp-${{ github.ref_name }}.zip" .\XSharp\bin\Release\net7.0-windows\*
         
     - name: Publish
       uses: softprops/action-gh-release@v1
