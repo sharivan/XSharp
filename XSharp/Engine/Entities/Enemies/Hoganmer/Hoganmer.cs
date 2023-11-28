@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -16,8 +15,8 @@ public enum HoganmerState
 public class Hoganmer : Enemy, IFSMEntity<HoganmerState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF006000), // 1
         Color.FromBgra(0xFF009020), // 2
@@ -34,7 +33,7 @@ public class Hoganmer : Enemy, IFSMEntity<HoganmerState>
         Color.FromBgra(0xFFA0A0A0), // D
         Color.FromBgra(0xFFE0E0E0), // E
         Color.FromBgra(0xFF202020)  // F
-    };
+    ];
 
     public const int HEALTH = 16;
     public static readonly FixedSingle CONTACT_DAMAGE = 3;

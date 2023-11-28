@@ -1,22 +1,16 @@
 ﻿namespace XSharp.Engine.World;
 
-public readonly struct Cell
+public readonly struct Cell(int row, int col)
 {
     public int Row
     {
         get;
-    }
+    } = row;
 
     public int Col
     {
         get;
-    }
-
-    public Cell(int row, int col)
-    {
-        Row = row;
-        Col = col;
-    }
+    } = col;
 
     public Cell((int, int) tuple) : this(tuple.Item1, tuple.Item2) { }
 

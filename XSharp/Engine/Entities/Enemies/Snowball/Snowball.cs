@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -16,8 +15,8 @@ public enum SnowballState
 public class Snowball : Enemy, IFSMEntity<SnowballState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent,          // 0
         Color.FromBgra(0xFF7070A0), // 1
         Color.FromBgra(0xFF7888B8), // 2
@@ -34,7 +33,7 @@ public class Snowball : Enemy, IFSMEntity<SnowballState>
         Color.FromBgra(0xFFB01018), // D
         Color.FromBgra(0xFF601020), // E
         Color.FromBgra(0xFF182018)  // F
-    };
+    ];
 
     public const int HEALTH = 8;
     public static readonly FixedSingle CONTACT_DAMAGE = 2;

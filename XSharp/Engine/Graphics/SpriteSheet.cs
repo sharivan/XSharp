@@ -2,21 +2,20 @@
 using System.Collections.Generic;
 using System.IO;
 
-using SharpDX;
-using SharpDX.Direct3D9;
-
+using XSharp.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
-using Color = SharpDX.Color;
-using MMXBox = XSharp.Math.Geometry.Box;
-using Point = SharpDX.Point;
-
 namespace XSharp.Engine.Graphics;
 
-public class SpriteSheet : IDisposable
+public abstract class SpriteSheet : IDisposable
 {
     public static BaseEngine Engine => BaseEngine.Engine;
+
+    protected static Frame CreateFrame(int index, Box boundingBox, Box hitbox, ITexture texture, bool precached)
+    {
+        return new Frame(index, boundingBox, hitbox, texture, precached);
+    }
 
     public class FrameSequence
     {
@@ -48,7 +47,7 @@ public class SpriteSheet : IDisposable
             set;
         }
 
-        public MMXBox Hitbox
+        public Box Hitbox
         {
             get;
             set;
@@ -60,7 +59,7 @@ public class SpriteSheet : IDisposable
             Name = name;
             LoopFromFrame = loopFromFrame;
 
-            frames = new List<Frame>();
+            frames = [];
         }
 
         public void Add(Frame frame)
@@ -107,13 +106,13 @@ public class SpriteSheet : IDisposable
             if (loopPoint)
                 LoopFromFrame = frames.Count;
 
-            var boundingBox = new MMXBox(left + originOffsetX + OriginOffset.X, top + originOffsetY + OriginOffset.Y, left, top, width, height);
+            var boundingBox = new Box(left + originOffsetX + OriginOffset.X, top + originOffsetY + OriginOffset.Y, left, top, width, height);
             Frame frame = Sheet.AddFrame(boundingBox, Hitbox);
             AddRepeated(frame, count);
             return frame;
         }
 
-        public Frame AddFrame(MMXBox boudingBox, MMXBox hitbox, int count = 1, bool loopPoint = false)
+        public Frame AddFrame(Box boudingBox, Box hitbox, int count = 1, bool loopPoint = false)
         {
             if (loopPoint)
                 LoopFromFrame = frames.Count;
@@ -146,17 +145,17 @@ public class SpriteSheet : IDisposable
             get;
         }
 
-        public MMXBox BoundingBox
+        public Box BoundingBox
         {
             get;
         }
 
-        public MMXBox Hitbox
+        public Box Hitbox
         {
             get;
         }
 
-        public Texture Texture
+        public ITexture Texture
         {
             get;
         }
@@ -166,7 +165,7 @@ public class SpriteSheet : IDisposable
             get;
         }
 
-        internal Frame(int index, MMXBox boundingBox, MMXBox hitbox, Texture texture, bool precached)
+        internal Frame(int index, Box boundingBox, Box hitbox, ITexture texture, bool precached)
         {
             Index = index;
             BoundingBox = boundingBox;
@@ -178,9 +177,9 @@ public class SpriteSheet : IDisposable
         public override bool Equals(object obj)
         {
             return obj is Frame frame &&
-                   EqualityComparer<MMXBox>.Default.Equals(BoundingBox, frame.BoundingBox) &&
-                   EqualityComparer<MMXBox>.Default.Equals(Hitbox, frame.Hitbox) &&
-                   EqualityComparer<Texture>.Default.Equals(Texture, frame.Texture);
+                   EqualityComparer<Box>.Default.Equals(BoundingBox, frame.BoundingBox) &&
+                   EqualityComparer<Box>.Default.Equals(Hitbox, frame.Hitbox) &&
+                   EqualityComparer<ITexture>.Default.Equals(Texture, frame.Texture);
         }
 
         public override int GetHashCode()
@@ -196,8 +195,8 @@ public class SpriteSheet : IDisposable
 
     internal string name;
 
-    private readonly List<Frame> frames;
-    private readonly Dictionary<string, FrameSequence> sequences;
+    protected readonly List<Frame> frames;
+    protected readonly Dictionary<string, FrameSequence> sequences;
 
     public int Index
     {
@@ -217,7 +216,7 @@ public class SpriteSheet : IDisposable
         set;
     }
 
-    public Texture CurrentTexture
+    public ITexture CurrentTexture
     {
         get;
         set;
@@ -243,23 +242,23 @@ public class SpriteSheet : IDisposable
 
     public int FrameSequenceCount => sequences.Count;
 
-    internal SpriteSheet(bool disposeTexture = false, bool precache = false)
+    protected SpriteSheet(bool disposeTexture = false, bool precache = false)
     {
         Precache = precache;
         DisposeTexture = disposeTexture;
 
-        frames = new List<Frame>();
-        sequences = new Dictionary<string, FrameSequence>();
+        frames = [];
+        sequences = [];
     }
 
-    internal SpriteSheet(Texture texture, bool disposeTexture = false, bool precache = false)
+    protected SpriteSheet(ITexture texture, bool disposeTexture = false, bool precache = false)
         : this(precache)
     {
         CurrentTexture = texture;
         DisposeTexture = disposeTexture;
     }
 
-    internal SpriteSheet(string imageFileName, bool precache = false)
+    protected SpriteSheet(string imageFileName, bool precache = false)
         : this(precache)
     {
         DisposeTexture = true;
@@ -281,82 +280,11 @@ public class SpriteSheet : IDisposable
 
     public Frame AddFrame(int left, int top, int width, int height, OriginPosition originPosition = OriginPosition.CENTER)
     {
-        var boudingBox = new MMXBox(left, top, width, height, originPosition);
+        var boudingBox = new Box(left, top, width, height, originPosition);
         return AddFrame(boudingBox, boudingBox - boudingBox.Origin);
     }
 
-    public Frame AddFrame(MMXBox boudingBox, MMXBox hitbox)
-    {
-        Frame frame;
-
-        if (Precache)
-        {
-            var description = CurrentTexture.GetLevelDescription(0);
-            int srcWidth = description.Width;
-            int srcHeight = description.Height;
-            int srcX = (int) boudingBox.Left;
-            int srcY = (int) boudingBox.Top;
-            int width = (int) boudingBox.Width;
-            int height = (int) boudingBox.Height;
-            int width1 = (int) BaseEngine.NextHighestPowerOfTwo((uint) width);
-            int height1 = (int) BaseEngine.NextHighestPowerOfTwo((uint) height);
-
-            Texture texture;
-            if (CurrentPalette == null)
-            {
-                texture = new Texture(Engine.Device, width1, height1, 1, Usage.None, description.Format, Pool.Default);
-
-                Surface src = CurrentTexture.GetSurfaceLevel(0);
-                Surface dst = texture.GetSurfaceLevel(0);
-
-                Engine.Device.UpdateSurface(src, BaseEngine.ToRectangleF(boudingBox), dst, new Point(0, 0));
-            }
-            else
-            {
-                texture = new Texture(Engine.Device, width1, height1, 1, Usage.None, Format.L8, Pool.Managed);
-
-                DataRectangle srcRect = CurrentTexture.LockRectangle(0, LockFlags.Discard);
-                DataRectangle dstRect = texture.LockRectangle(0, LockFlags.Discard);
-
-                using (var dstDS = new DataStream(dstRect.DataPointer, width1 * height1 * sizeof(byte), true, true))
-                {
-                    using var srcDS = new DataStream(srcRect.DataPointer, srcWidth * srcHeight * sizeof(int), true, true);
-                    using var reader = new BinaryReader(srcDS);
-                    for (int y = srcY; y < srcY + height; y++)
-                    {
-                        for (int x = srcX; x < srcX + width; x++)
-                        {
-                            srcDS.Seek(y * srcRect.Pitch + x * sizeof(int), SeekOrigin.Begin);
-                            int bgra = reader.ReadInt32();
-                            var color = Color.FromBgra(bgra);
-                            int index = CurrentPalette.LookupColor(color);
-                            dstDS.Write((byte) (index != -1 ? index : 0));
-                        }
-
-                        for (int x = width; x < width1; x++)
-                            dstDS.Write((byte) 0);
-                    }
-
-                    for (int y = height; y < height1; y++)
-                    {
-                        for (int x = 0; x < width1; x++)
-                            dstDS.Write((byte) 0);
-                    }
-                }
-
-                CurrentTexture.UnlockRectangle(0);
-                texture.UnlockRectangle(0);
-            }
-
-            frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, hitbox, texture, true);
-            frames.Add(frame);
-            return frame;
-        }
-
-        frame = new Frame(frames.Count, boudingBox - boudingBox.Origin, hitbox, CurrentTexture, false);
-        frames.Add(frame);
-        return frame;
-    }
+    public abstract Frame AddFrame(Box boudingBox, Box hitbox);
 
     public Frame GetFrame(int frameIndex)
     {

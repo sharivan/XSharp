@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 
-using SharpDX;
-using SharpDX.Direct3D9;
-
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
+using XSharp.Graphics;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -20,8 +18,6 @@ namespace XSharp.MegaEDX;
 public class MMXCoreLoader : MMXCore
 {
     public static Engine.BaseEngine Engine => XSharp.Engine.BaseEngine.Engine;
-
-    public static Device Device => Engine.Device;
 
     public static World World => Engine.World;
 
@@ -124,7 +120,7 @@ public class MMXCoreLoader : MMXCore
             if (mirrored)
                 dataIndex += TILE_SIZE - 1;
 
-            using (var stream = new DataStream(ptr, TILE_SIZE * sizeof(byte), true, true))
+            using (var stream = Engine.CreateDataStream(ptr, TILE_SIZE * sizeof(byte), true, true))
             {
                 for (int col = 0; col < TILE_SIZE; col++)
                 {
@@ -146,8 +142,8 @@ public class MMXCoreLoader : MMXCore
 
     public void RefreshMapCache(bool background = false)
     {
-        var tilemap = new Texture(Device, World.TILEMAP_WIDTH, World.TILEMAP_HEIGHT, 1, Usage.None, Format.L8, Pool.Managed);
-        DataRectangle rect = tilemap.LockRectangle(0, LockFlags.Discard);
+        var tilemap = Engine.CreateEmptyTexture(World.TILEMAP_WIDTH, World.TILEMAP_HEIGHT, Format.L8);
+        DataRectangle rect = tilemap.LockRectangle(true);
 
         Array.Clear(maps);
 
@@ -203,7 +199,7 @@ public class MMXCoreLoader : MMXCore
             maps[i] = wmap.IsNull ? null : wmap;
         }
 
-        tilemap.UnlockRectangle(0);
+        tilemap.UnlockRectangle();
 
         if (background)
             Engine.BackgroundTilemap = tilemap;
@@ -243,25 +239,16 @@ public class MMXCoreLoader : MMXCore
 
     internal void LoadPalette(bool background = false)
     {
-        var texture = new Texture(Device, 256, 1, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
-        DataRectangle rect = texture.LockRectangle(0, LockFlags.Discard);
+        Color[] colors = new Color[256];
+        int k = 0;
 
-        using (var stream = new DataStream(rect.DataPointer, 256 * 1 * sizeof(int), true, true))
+        for (int i = 0; i < 16; i++)
         {
-            for (int i = 0; i < 16; i++)
-            {
-                for (int j = 0; j < 16; j++)
-                    stream.Write(new Color(Transform(palCache[(i << 4) | j], j != 0)).ToRgba());
-            }
+            for (int j = 0; j < 16; j++)
+                colors[k++] = Color.FromBgra(Transform(palCache[(i << 4) | j], j != 0));
         }
 
-        texture.UnlockRectangle(0);
-
-        var palette = new Palette()
-        {
-            Texture = texture,
-            Count = 256
-        };
+        var palette = Engine.PrecachePalette((background ? "BackgroundPalette" : "ForegroundPalette") + PalLoad, colors, colors.Length, false);
 
         if (background)
             Engine.BackgroundPalette = palette;

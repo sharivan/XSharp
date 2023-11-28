@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -16,8 +15,8 @@ public enum SpikyState
 public class Spiky : Enemy, IFSMEntity<SpikyState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF304080), // 1
         Color.FromBgra(0xFF2870D0), // 2
@@ -34,7 +33,7 @@ public class Spiky : Enemy, IFSMEntity<SpikyState>
         Color.FromBgra(0xFF606060), // D
         Color.FromBgra(0xFFB89000), // E
         Color.FromBgra(0xFF282828)  // F
-    };
+    ];
 
     public static readonly FixedSingle SPEED = 384 / 256.0;
     public static readonly FixedSingle TURNING_SPEED_Y = 1344 / 256.0;

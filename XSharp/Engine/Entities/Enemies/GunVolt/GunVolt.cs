@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -19,8 +18,8 @@ public enum GunVoltState
 public class GunVolt : Enemy, IFSMEntity<GunVoltState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF387038), // 1
         Color.FromBgra(0xFFA83050), // 2
@@ -37,7 +36,7 @@ public class GunVolt : Enemy, IFSMEntity<GunVoltState>
         Color.FromBgra(0xFFE0E0E0), // D
         Color.FromBgra(0xFF70D870), // E
         Color.FromBgra(0xFF202028)  // F
-    };
+    ];
 
     public const int HEALTH = 32;
     public static readonly FixedSingle CONTACT_DAMAGE = 3;

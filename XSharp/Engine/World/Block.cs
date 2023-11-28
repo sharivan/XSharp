@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -149,8 +148,8 @@ public class Block
                         for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP; tileCol++)
                         {
                             var tilePos = new Vector(mapPos.X + tileCol * TILE_SIZE, mapPos.Y - tileRow * TILE_SIZE);
-                            BaseEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
-                            BaseEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            BaseEngine.Engine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
+                            BaseEngine.Engine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                         }
                     }
                 }

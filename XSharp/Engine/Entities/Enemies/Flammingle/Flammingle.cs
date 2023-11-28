@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -15,8 +14,8 @@ public enum FlammingleState
 public class Flammingle : Enemy, IFSMEntity<FlammingleState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFFF0F0F0), // 1
         Color.FromBgra(0xFF989898), // 2
@@ -33,7 +32,7 @@ public class Flammingle : Enemy, IFSMEntity<FlammingleState>
         Color.FromBgra(0xFF986830), // D
         Color.FromBgra(0xFF68E8A8), // E
         Color.FromBgra(0xFF282828)  // F
-    };
+    ];
 
     public const int HEALTH = 16;
     public static readonly FixedSingle CONTACT_DAMAGE = 3;

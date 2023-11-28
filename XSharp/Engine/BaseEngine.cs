@@ -5,15 +5,6 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Forms;
-
-using NLua;
-
-using SharpDX;
-using SharpDX.Direct3D9;
-using SharpDX.DirectInput;
-using SharpDX.Mathematics.Interop;
-using SharpDX.Windows;
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
@@ -63,8 +54,11 @@ using XSharp.Engine.Entities.Objects;
 using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.Entities.Weapons;
 using XSharp.Engine.Graphics;
+using XSharp.Engine.Input;
 using XSharp.Engine.Sound;
 using XSharp.Engine.World;
+using XSharp.Graphics;
+using XSharp.Interop;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 using XSharp.MegaEDX;
@@ -72,19 +66,7 @@ using XSharp.MegaEDX;
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.World.World;
 
-using Box = XSharp.Math.Geometry.Box;
-using Color = SharpDX.Color;
-using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
-using Device9 = SharpDX.Direct3D9.Device;
-using DeviceType = SharpDX.Direct3D9.DeviceType;
-using DXSprite = SharpDX.Direct3D9.Sprite;
-using Font = SharpDX.Direct3D9.Font;
 using MMXWorld = XSharp.Engine.World.World;
-using Point = SharpDX.Point;
-using Rectangle = SharpDX.Rectangle;
-using RectangleF = SharpDX.RectangleF;
-using ResultCode = SharpDX.Direct3D9.ResultCode;
-using Sprite = XSharp.Engine.Entities.Sprite;
 
 namespace XSharp.Engine;
 
@@ -96,18 +78,18 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         protected set;
     }
 
-    public static void Initialize(Type engineType, Control control)
+    public static void Initialize(Type engineType, dynamic initializers)
     {
         if (Engine == null)
         {
             Engine = (BaseEngine) Activator.CreateInstance(engineType, true);
-            Engine.Initialize(control);
+            Engine.Initialize(initializers);
         }
     }
 
-    public static void Initialize<EngineType>(Control control) where EngineType : BaseEngine
+    public static void Initialize<EngineType>(dynamic initializers) where EngineType : BaseEngine
     {
-        Initialize(typeof(EngineType), control);
+        Initialize(typeof(EngineType), initializers);
     }
 
     public static void Run()
@@ -120,37 +102,215 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         Engine.RenderSingleFrame();
     }
 
-    public static void Dispose()
+    public static void DisposeEngine()
     {
         if (Engine != null)
         {
-            Engine.Unload();
+            Engine.Dispose();
             Engine = null;
         }
     }
 
-    public const VertexFormat D3DFVF_TLVERTEX = VertexFormat.Position | VertexFormat.Diffuse | VertexFormat.Texture1;
-    public const int VERTEX_SIZE = 5 * sizeof(float) + sizeof(int);
+    public static uint NextHighestPowerOfTwo(uint v)
+    {
+        v--;
+        v |= v >> 1;
+        v |= v >> 2;
+        v |= v >> 4;
+        v |= v >> 8;
+        v |= v >> 16;
+        v++;
 
-    private PresentParameters presentationParams;
-    private DXSprite sprite;
-    private Line line;
-    private Font infoFont;
-    private Font coordsTextFont;
-    private Font highlightMapTextFont;
-    private Texture whitePixelTexture;
-    private Texture blackPixelTexture;
-    private Texture foregroundTilemap;
-    private Texture backgroundTilemap;
+        return v;
+    }
+
+    private static readonly byte[] EMPTY_TEXTURE_DATA = new byte[4096];
+
+    private static void ZeroDataRect(DataRectangle dataRect, int length)
+    {
+        int remaining = length;
+        IntPtr ptr = dataRect.DataPointer;
+        while (remaining > 0)
+        {
+            int bytesToCopy = remaining > EMPTY_TEXTURE_DATA.Length ? EMPTY_TEXTURE_DATA.Length : remaining;
+            Marshal.Copy(EMPTY_TEXTURE_DATA, 0, ptr, bytesToCopy);
+            ptr += bytesToCopy;
+            remaining -= bytesToCopy;
+        }
+    }
+
+    public abstract DataStream CreateDataStream(IntPtr ptr, int sizeInBytes, bool canRead, bool canWrite);
+
+    private void FillRegion(DataRectangle dataRect, int length, Box box, int paletteIndex)
+    {
+        int dstX = (int) box.Left;
+        int dstY = (int) box.Top;
+        int width = (int) box.Width;
+        int height = (int) box.Height;
+
+        using var dstDS = CreateDataStream(dataRect.DataPointer, length * sizeof(byte), true, true);
+        for (int y = dstY; y < dstY + height; y++)
+        {
+            for (int x = dstX; x < dstX + width; x++)
+            {
+                dstDS.Seek(y * dataRect.Pitch + x * sizeof(byte), SeekOrigin.Begin);
+                dstDS.Write((byte) paletteIndex);
+            }
+        }
+    }
+
+    private void DrawChargingPointLevel1Small(DataRectangle dataRect, int length, Vector point)
+    {
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 1, 1), 1);
+    }
+
+    private void DrawChargingPointLevel1Large(DataRectangle dataRect, int length, Vector point)
+    {
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 2, 2), 1);
+    }
+
+    private void DrawChargingPointLevel2Small1(DataRectangle dataRect, int length, Vector point)
+    {
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 1, 1), 2);
+    }
+
+    private void DrawChargingPointLevel2Small2(DataRectangle dataRect, int length, Vector point)
+    {
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 1, 1), 3);
+
+        FillRegion(dataRect, length, new Box(point.X, point.Y - 1, 1, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X, point.Y + 1, 1, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X - 1, point.Y, 1, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X + 1, point.Y, 1, 1), 4);
+
+        FillRegion(dataRect, length, new Box(point.X - 1, point.Y - 1, 1, 1), 5);
+        FillRegion(dataRect, length, new Box(point.X + 1, point.Y - 1, 1, 1), 5);
+        FillRegion(dataRect, length, new Box(point.X - 1, point.Y + 1, 1, 1), 5);
+        FillRegion(dataRect, length, new Box(point.X + 1, point.Y + 1, 1, 1), 5);
+    }
+
+    private void DrawChargingPointLevel2Large1(DataRectangle dataRect, int length, Vector point)
+    {
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 2, 2), 2);
+    }
+
+    private void DrawChargingPointLevel2Large2(DataRectangle dataRect, int length, Vector point)
+    {
+        FillRegion(dataRect, length, new Box(point.X, point.Y, 2, 2), 3);
+
+        FillRegion(dataRect, length, new Box(point.X, point.Y - 1, 2, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X, point.Y + 2, 2, 1), 4);
+        FillRegion(dataRect, length, new Box(point.X - 1, point.Y, 1, 2), 4);
+        FillRegion(dataRect, length, new Box(point.X + 2, point.Y, 1, 2), 4);
+    }
+
+    private void DrawChargingPointSmall(DataRectangle dataRect, int length, Vector point, int level, int type)
+    {
+        switch (type)
+        {
+            case 1:
+                switch (level)
+                {
+                    case 1:
+                        DrawChargingPointLevel1Small(dataRect, length, point);
+                        break;
+
+                    case 2:
+                        DrawChargingPointLevel2Small1(dataRect, length, point);
+                        break;
+                }
+
+                break;
+
+            case 2:
+                switch (level)
+                {
+                    case 1:
+                        DrawChargingPointLevel1Small(dataRect, length, point);
+                        break;
+
+                    case 2:
+                        DrawChargingPointLevel2Small2(dataRect, length, point);
+                        break;
+                }
+
+                break;
+        }
+    }
+
+    private void DrawChargingPointLarge(DataRectangle dataRect, int length, Vector point, int level, int type)
+    {
+        switch (type)
+        {
+            case 1:
+                switch (level)
+                {
+                    case 1:
+                        DrawChargingPointLevel1Large(dataRect, length, point);
+                        break;
+
+                    case 2:
+                        DrawChargingPointLevel2Large1(dataRect, length, point);
+                        break;
+                }
+
+                break;
+
+            case 2:
+                switch (level)
+                {
+                    case 1:
+                        DrawChargingPointLevel1Large(dataRect, length, point);
+                        break;
+
+                    case 2:
+                        DrawChargingPointLevel2Large2(dataRect, length, point);
+                        break;
+                }
+
+                break;
+        }
+    }
+
+    public static void DisposeResource(IDisposable resource)
+    {
+        try
+        {
+            resource?.Dispose();
+        }
+        catch
+        {
+        }
+    }
+
+    private static Vector GetDashSparkOrigin(Player player)
+    {
+        return player.Direction switch
+        {
+            Direction.LEFT => player.Hitbox.LeftTop + (23 - 15, 20),
+            Direction.RIGHT => player.Hitbox.RightTop + (-23 + 15, 20),
+            _ => Vector.NULL_VECTOR,
+        };
+    }
+
+    protected ITexture whitePixelTexture;
+    protected ITexture blackPixelTexture;
+    protected ITexture foregroundTilemap;
+    protected ITexture backgroundTilemap;
+
+    protected ITexture stageTexture;
+
     private Palette foregroundPalette;
     private Palette backgroundPalette;
 
-    private Texture stageTexture;
+    protected IFont infoFont;
+    protected IFont coordsTextFont;
+    protected IFont highlightMapTextFont;
 
-    private EffectHandle psFadingLevelHandle;
-    private EffectHandle psFadingColorHandle;
-    private EffectHandle plsFadingLevelHandle;
-    private EffectHandle plsFadingColorHandle;
+    protected ILine line;
+
+    protected IKeyboard keyboard;
+    protected IJoystick joystick;
 
     private List<SpriteSheet> spriteSheets;
     private Dictionary<string, int> spriteSheetsByName;
@@ -163,12 +323,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     internal Dictionary<string, int> precachedSoundsByFileName;
     private List<SoundChannel> soundChannels;
     private Dictionary<string, int> soundChannelsByName;
-
-    private DirectInput directInput;
-    private Keyboard keyboard;
-    private Joystick joystick;
-
-    private Lua lua;
 
     internal Partition<Entity> partition;
     private EntitySet<Entity> resultSet;
@@ -272,31 +426,16 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
     internal Dictionary<string, PrecacheAction> precacheActions;
 
-    public Control Control
+    public abstract string Title
     {
         get;
-        private set;
+        set;
     }
 
-    public Direct3D Direct3D
+    public abstract Size2F ClientSize
     {
         get;
-        private set;
     }
-
-    public Device9 Device
-    {
-        get;
-        private set;
-    }
-
-    public VertexBuffer VertexBuffer
-    {
-        get;
-        private set;
-    }
-
-    public RectangleF RenderRectangle => ToRectangleF(drawBox);
 
     public MMXWorld World
     {
@@ -308,6 +447,34 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     {
         get;
         private set;
+    }
+
+    public Box DrawBox => drawBox;
+
+    public ITexture ForegroundTilemap
+    {
+        get => foregroundTilemap;
+        set
+        {
+            if (foregroundTilemap != value)
+            {
+                DisposeResource(foregroundTilemap);
+                foregroundTilemap = value;
+            }
+        }
+    }
+
+    public ITexture BackgroundTilemap
+    {
+        get => backgroundTilemap;
+        set
+        {
+            if (backgroundTilemap != value)
+            {
+                DisposeResource(backgroundTilemap);
+                backgroundTilemap = value;
+            }
+        }
     }
 
     public IReadOnlySet<Entity> AliveEntities => aliveEntities;
@@ -369,18 +536,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         set;
     } = DEFAULT_DRAW_SCALE;
 
-    public PixelShader PixelShader
-    {
-        get;
-        private set;
-    }
-
-    public PixelShader PaletteShader
-    {
-        get;
-        private set;
-    }
-
     public string ROMPath
     {
         get;
@@ -393,32 +548,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         set => SetCheckpoint(value);
     }
 
-    public Texture ForegroundTilemap
-    {
-        get => foregroundTilemap;
-        set
-        {
-            if (foregroundTilemap != value)
-            {
-                DisposeResource(foregroundTilemap);
-                foregroundTilemap = value;
-            }
-        }
-    }
-
-    public Texture BackgroundTilemap
-    {
-        get => backgroundTilemap;
-        set
-        {
-            if (backgroundTilemap != value)
-            {
-                DisposeResource(backgroundTilemap);
-                backgroundTilemap = value;
-            }
-        }
-    }
-
     public Palette ForegroundPalette
     {
         get => foregroundPalette;
@@ -426,7 +555,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         {
             if (foregroundPalette != value)
             {
-                DisposeResource(foregroundPalette);
+                //DisposeResource(foregroundPalette);
                 foregroundPalette = value;
             }
         }
@@ -439,7 +568,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         {
             if (backgroundPalette != value)
             {
-                DisposeResource(backgroundPalette);
+                //DisposeResource(backgroundPalette);
                 backgroundPalette = value;
             }
         }
@@ -505,7 +634,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     public bool Running
     {
         get;
-        internal set;
+        protected internal set;
     }
 
     public IReadOnlyList<EntityReference<Checkpoint>> Checkpoints => checkpoints;
@@ -702,89 +831,61 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         set;
     } = false;
 
+    public RectangleF RenderRectangle => DrawBox.ToRectangleF();
+
+    public WaveStreamFactory WaveStreamUtil
+    {
+        get;
+        private set;
+    }
+
     protected BaseEngine()
     {
     }
 
-    protected virtual void Initialize(Control control)
-    {
-        Control = control;
+    protected abstract WaveStreamFactory CreateWaveStreamUtil();
 
+    protected virtual void Initialize(dynamic initializers)
+    {
         RNG = new RNG();
 
         Entities = new EntityFactory();
-        aliveEntities = new EntitySet<Entity>();
-        spawnedEntities = new EntitySet<Entity>();
-        removedEntities = new EntitySet<Entity>();
+        aliveEntities = [];
+        spawnedEntities = [];
+        removedEntities = [];
         sprites = new List<Sprite>[NUM_SPRITE_LAYERS];
         huds = new List<HUD>[NUM_SPRITE_LAYERS];
 
         for (int i = 0; i < sprites.Length; i++)
-            sprites[i] = new List<Sprite>();
+            sprites[i] = [];
 
         for (int i = 0; i < huds.Length; i++)
-            huds[i] = new List<HUD>();
+            huds[i] = [];
 
-        freezingSpriteExceptions = new EntitySet<Sprite>();
-        checkpoints = new List<EntityReference<Checkpoint>>();
+        freezingSpriteExceptions = [];
+        checkpoints = [];
 
-        spriteSheets = new List<SpriteSheet>();
-        spriteSheetsByName = new Dictionary<string, int>();
+        spriteSheets = [];
+        spriteSheetsByName = [];
 
-        precachedPalettes = new List<Palette>();
-        precachedPalettesByName = new Dictionary<string, int>();
+        precachedPalettes = [];
+        precachedPalettesByName = [];
 
-        precachedSounds = new List<PrecachedSound>();
-        precachedSoundsByName = new Dictionary<string, int>();
-        precachedSoundsByFileName = new Dictionary<string, int>();
-        soundChannels = new List<SoundChannel>();
-        soundChannelsByName = new Dictionary<string, int>();
+        precachedSounds = [];
+        precachedSoundsByName = [];
+        precachedSoundsByFileName = [];
+        soundChannels = [];
+        soundChannelsByName = [];
 
         FadingControl = new FadingControl();
         infoMessageFadingControl = new FadingControl();
 
-        precacheActions = new Dictionary<string, PrecacheAction>();
-
-        lua = new Lua();
-
-        presentationParams = new PresentParameters
-        {
-            Windowed = !FULL_SCREEN,
-            SwapEffect = SwapEffect.Discard,
-            PresentationInterval = VSYNC ? PresentInterval.One : PresentInterval.Immediate,
-            FullScreenRefreshRateInHz = FULL_SCREEN ? TICKRATE : 0,
-            AutoDepthStencilFormat = Format.D16,
-            EnableAutoDepthStencil = true,
-            BackBufferCount = DOUBLE_BUFFERED ? 2 : 1,
-            BackBufferFormat = Format.X8R8G8B8,
-            BackBufferHeight = Control.ClientSize.Height,
-            BackBufferWidth = Control.ClientSize.Width,
-            PresentFlags = VSYNC ? PresentFlags.LockableBackBuffer : PresentFlags.None
-        };
-
-        Direct3D = new Direct3D();
+        precacheActions = [];
 
         NoCameraConstraints = NO_CAMERA_CONSTRAINTS;
-        cameraConstraints = new List<Vector>();
+        cameraConstraints = [];
 
-        directInput = new DirectInput();
-        keyboard = new Keyboard(directInput);
-
-        lua.LoadCLRPackage(); // TODO : This can be DANGEROUS! Fix in the future by adding restrictions on the scripting.
-        lua.DoString(@"import ('XSharp', 'XSharp')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Effects')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Enemies')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Enemies.Bosses')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.HUD')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Items')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Objects')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Triggers')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Weapons')");
-        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Sound')");
-        lua.DoString(@"import('XSharp', 'XSharp.Engine.World')");
-        lua["engine"] = this;
+        WaveStreamUtil = CreateWaveStreamUtil();
 
         // Sound channels:
         // 0 - X
@@ -805,26 +906,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         CreateSoundChannel("Unused1", 0.25f); // 6
         CreateSoundChannel("Unused2", 0.25f); // 7
 
-        keyboard.Properties.BufferSize = 2048;
-        keyboard.Acquire();
-
-        var joystickGuid = Guid.Empty;
-        foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Gamepad, DeviceEnumerationFlags.AllDevices))
-            joystickGuid = deviceInstance.InstanceGuid;
-
-        if (joystickGuid == Guid.Empty)
-        {
-            foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
-                joystickGuid = deviceInstance.InstanceGuid;
-        }
-
-        if (joystickGuid != Guid.Empty)
-        {
-            joystick = new Joystick(directInput, joystickGuid);
-            joystick.Properties.BufferSize = 2048;
-            joystick.Acquire();
-        }
-
         loadingLevel = true;
 
         DrawScale = DEFAULT_DRAW_SCALE;
@@ -832,7 +913,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         World = new MMXWorld(32, 32);
         partition = new Partition<Entity>(World.ForegroundLayout.BoundingBox, World.ForegroundLayout.SceneRowCount, World.ForegroundLayout.SceneColCount);
-        resultSet = new EntitySet<Entity>();
+        resultSet = [];
 
         ResetDevice();
         LoadLevel(@"Assets\ROMs\" + ROM_NAME, INITIAL_LEVEL, INITIAL_CHECKPOINT);
@@ -889,8 +970,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     {
         UnloadLevel();
 
-        DisposeResource(lua);
-
         foreach (var channel in soundChannels)
             DisposeResource(channel);
 
@@ -906,66 +985,27 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         DisposeResource(mmx);
         DisposeDevice();
-        DisposeResource(Direct3D);
     }
 
-    protected virtual void ResetDevice()
+    protected abstract ITexture CreateStageTexture();
+
+    protected abstract void InitGraphicDevice();
+
+    private void CreateFonts()
     {
-        DisposeDevice();
-
-        // Creates the Device
-        var device = new Device9(Direct3D, 0, DeviceType.Hardware, Control.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
-        Device = device;
-
-        var function = ShaderBytecode.CompileFromFile("PixelShader.hlsl", "main", "ps_2_0");
-        PixelShader = new PixelShader(device, function);
-
-        psFadingLevelHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
-        psFadingColorHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
-
-        function = ShaderBytecode.CompileFromFile("PaletteShader.hlsl", "main", "ps_2_0");
-        PaletteShader = new PixelShader(device, function);
-
-        plsFadingLevelHandle = PaletteShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
-        plsFadingColorHandle = PaletteShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
-
-        device.VertexShader = null;
-        device.PixelShader = PixelShader;
-        device.VertexFormat = D3DFVF_TLVERTEX;
-
-        VertexBuffer = new VertexBuffer(device, VERTEX_SIZE * 6, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
-
-        device.SetRenderState(RenderState.ZEnable, false);
-        device.SetRenderState(RenderState.Lighting, false);
-        device.SetRenderState(RenderState.AlphaBlendEnable, true);
-        device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
-        device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
-        device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.SelectArg1);
-        device.SetTextureStageState(0, TextureStage.ColorArg1, TextureArgument.Texture);
-        device.SetTextureStageState(1, TextureStage.ColorOperation, TextureOperation.Disable);
-        device.SetTextureStageState(1, TextureStage.AlphaOperation, TextureOperation.Disable);
-        device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-        device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-        stageTexture = new Texture(device, (int) StageSize.X, (int) StageSize.Y, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
-
-        sprite = new DXSprite(device);
-        line = new Line(device);
-
         var fontDescription = new FontDescription()
         {
             Height = 36,
             Italic = false,
             CharacterSet = FontCharacterSet.Ansi,
             FaceName = "Arial",
-            MipLevels = 0,
             OutputPrecision = FontPrecision.TrueType,
             PitchAndFamily = FontPitchAndFamily.Default,
             Quality = FontQuality.Antialiased,
             Weight = FontWeight.Bold
         };
 
-        infoFont = new Font(device, fontDescription);
+        infoFont = CreateFont(fontDescription);
 
         fontDescription = new FontDescription()
         {
@@ -973,14 +1013,13 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             Italic = false,
             CharacterSet = FontCharacterSet.Ansi,
             FaceName = "Arial",
-            MipLevels = 0,
             OutputPrecision = FontPrecision.TrueType,
             PitchAndFamily = FontPitchAndFamily.Default,
             Quality = FontQuality.Antialiased,
             Weight = FontWeight.Bold
         };
 
-        coordsTextFont = new Font(device, fontDescription);
+        coordsTextFont = CreateFont(fontDescription);
 
         fontDescription = new FontDescription()
         {
@@ -988,19 +1027,35 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             Italic = false,
             CharacterSet = FontCharacterSet.Ansi,
             FaceName = "Arial",
-            MipLevels = 0,
             OutputPrecision = FontPrecision.TrueType,
             PitchAndFamily = FontPitchAndFamily.Default,
             Quality = FontQuality.Antialiased,
             Weight = FontWeight.Bold
         };
 
-        highlightMapTextFont = new Font(device, fontDescription);
+        highlightMapTextFont = CreateFont(fontDescription);
+    }
 
-        whitePixelTexture = CreateImageTextureFromEmbeddedResource("Tiles.white_pixel.png", Usage.None, Pool.Default);
-        blackPixelTexture = CreateImageTextureFromEmbeddedResource("Tiles.black_pixel.png", Usage.None, Pool.Default);
+    protected abstract IKeyboard CreateKeyboard();
 
-        SetupQuad(VertexBuffer, (float) StageSize.X, (float) StageSize.Y);
+    protected abstract IJoystick CreateJoystick();
+
+    protected virtual void ResetDevice()
+    {
+        DisposeDevice();
+        InitGraphicDevice();
+
+        keyboard = CreateKeyboard();
+        joystick = CreateJoystick();
+
+        CreateFonts();
+
+        line = CreateLine();
+
+        whitePixelTexture = CreateImageTextureFromEmbeddedResource("Tiles.white_pixel.png", false);
+        blackPixelTexture = CreateImageTextureFromEmbeddedResource("Tiles.black_pixel.png", false);
+
+        stageTexture = CreateStageTexture();
 
         RecallPrecacheActions();
 
@@ -1053,54 +1108,56 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
     internal void AddChargingEffectFrames(SpriteSheet.FrameSequence sequence, int level)
     {
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 2), new Vector(27, 46) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(27, 2), new Vector(27, 46)], [true, true], [2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, true, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 3), new Vector(27, 45), new Vector(5, 24), new Vector(49, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(27, 3), new Vector(27, 45), new Vector(5, 24), new Vector(49, 24)], [true, true, true, true], [2, 2, 2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(6, 24), new Vector(27, 5), new Vector(27, 44), new Vector(48, 24) }, new bool[] { true, true, true, true }, new int[] { 2, 2, 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(6, 24), new Vector(27, 5), new Vector(27, 44), new Vector(48, 24)], [true, true, true, true], [2, 2, 2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 24), new Vector(11, 40), new Vector(43, 8), new Vector(47, 24), new Vector(27, 43), new Vector(28, 6) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(7, 24), new Vector(11, 40), new Vector(43, 8), new Vector(47, 24), new Vector(27, 43), new Vector(28, 6)], [true, true, true, true, false, false], [2, 1, 1, 2, 2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 24), new Vector(12, 39), new Vector(42, 9), new Vector(46, 24), new Vector(27, 42), new Vector(28, 7) }, new bool[] { true, true, true, true, false, false }, new int[] { 2, 1, 1, 2, 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(8, 24), new Vector(12, 39), new Vector(42, 9), new Vector(46, 24), new Vector(27, 42), new Vector(28, 7)], [true, true, true, true, false, false], [2, 1, 1, 2, 2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(11, 8), new Vector(13, 38), new Vector(41, 10), new Vector(43, 40), new Vector(10, 25), new Vector(27, 41), new Vector(27, 7), new Vector(44, 23) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 1, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(11, 8), new Vector(13, 38), new Vector(41, 10), new Vector(43, 40), new Vector(10, 25), new Vector(27, 41), new Vector(27, 7), new Vector(44, 23)], [true, true, true, true, false, false, false, false], [1, 2, 2, 1, 2, 1, 1, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(12, 9), new Vector(14, 37), new Vector(40, 11), new Vector(42, 39), new Vector(11, 25), new Vector(28, 9), new Vector(43, 23) }, new bool[] { true, true, true, true, false, false, false }, new int[] { 1, 2, 2, 1, 2, 1, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(12, 9), new Vector(14, 37), new Vector(40, 11), new Vector(42, 39), new Vector(11, 25), new Vector(28, 9), new Vector(43, 23)], [true, true, true, true, false, false, false], [1, 2, 2, 1, 2, 1, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(13, 10), new Vector(19, 44), new Vector(35, 4), new Vector(41, 38), new Vector(12, 25), new Vector(16, 36), new Vector(39, 13), new Vector(43, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(13, 10), new Vector(19, 44), new Vector(35, 4), new Vector(41, 38), new Vector(12, 25), new Vector(16, 36), new Vector(39, 13), new Vector(43, 24)], [true, true, true, true, false, false, false, false], [1, 2, 2, 1, 1, 2, 2, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(14, 11), new Vector(19, 43), new Vector(35, 5), new Vector(40, 37), new Vector(13, 25), new Vector(17, 35), new Vector(38, 14), new Vector(42, 24) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 1, 2, 2, 1, 1, 2, 2, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(14, 11), new Vector(19, 43), new Vector(35, 5), new Vector(40, 37), new Vector(13, 25), new Vector(17, 35), new Vector(38, 14), new Vector(42, 24)], [true, true, true, true, false, false, false, false], [1, 2, 2, 1, 1, 2, 2, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 16), new Vector(20, 42), new Vector(34, 6), new Vector(47, 32), new Vector(16, 13), new Vector(18, 34), new Vector(37, 15), new Vector(39, 36) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(7, 16), new Vector(20, 42), new Vector(34, 6), new Vector(47, 32), new Vector(16, 13), new Vector(18, 34), new Vector(37, 15), new Vector(39, 36)], [true, true, true, true, false, false, false, false], [2, 1, 1, 2, 1, 2, 2, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 16), new Vector(20, 41), new Vector(34, 7), new Vector(46, 32), new Vector(17, 4), new Vector(19, 33), new Vector(36, 16), new Vector(38, 35) }, new bool[] { true, true, true, true, false, false, false, false }, new int[] { 2, 1, 1, 2, 1, 2, 2, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(8, 16), new Vector(20, 41), new Vector(34, 7), new Vector(46, 32), new Vector(17, 4), new Vector(19, 33), new Vector(36, 16), new Vector(38, 35)], [true, true, true, true, false, false, false, false], [2, 1, 1, 2, 1, 2, 2, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(9, 16), new Vector(19, 4), new Vector(24, 40), new Vector(33, 8), new Vector(35, 44), new Vector(45, 31), new Vector(18, 15), new Vector(37, 34) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(9, 16), new Vector(19, 4), new Vector(24, 40), new Vector(33, 8), new Vector(35, 44), new Vector(45, 31), new Vector(18, 15), new Vector(37, 34)], [true, true, true, true, true, true, false, false], [2, 2, 1, 1, 2, 2, 1, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(10, 17), new Vector(19, 5), new Vector(21, 39), new Vector(39, 9), new Vector(35, 43), new Vector(44, 30), new Vector(19, 16), new Vector(36, 33) }, new bool[] { true, true, true, true, true, true, false, false }, new int[] { 2, 2, 1, 1, 2, 2, 1, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(10, 17), new Vector(19, 5), new Vector(21, 39), new Vector(39, 9), new Vector(35, 43), new Vector(44, 30), new Vector(19, 16), new Vector(36, 33)], [true, true, true, true, true, true, false, false], [2, 2, 1, 1, 2, 2, 1, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(7, 32), new Vector(47, 16), new Vector(12, 18), new Vector(21, 7), new Vector(22, 38), new Vector(33, 11), new Vector(35, 43), new Vector(44, 31) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(7, 32), new Vector(47, 16), new Vector(12, 18), new Vector(21, 7), new Vector(22, 38), new Vector(33, 11), new Vector(35, 43), new Vector(44, 31)], [true, true, false, false, false, false, false, false], [2, 2, 2, 2, 1, 1, 2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(8, 32), new Vector(46, 16), new Vector(13, 19), new Vector(20, 8), new Vector(22, 37), new Vector(33, 12), new Vector(36, 42), new Vector(43, 30) }, new bool[] { true, true, false, false, false, false, false, false }, new int[] { 2, 2, 2, 2, 1, 1, 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(8, 32), new Vector(46, 16), new Vector(13, 19), new Vector(20, 8), new Vector(22, 37), new Vector(33, 12), new Vector(36, 42), new Vector(43, 30)], [true, true, false, false, false, false, false, false], [2, 2, 2, 2, 1, 1, 2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(21, 8), new Vector(33, 40), new Vector(10, 32), new Vector(14, 19), new Vector(42, 30), new Vector(46, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(21, 8), new Vector(33, 40), new Vector(10, 32), new Vector(14, 19), new Vector(42, 30), new Vector(46, 18)], [true, true, false, false, false, false], [1, 1, 2, 2, 2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(21, 9), new Vector(33, 39), new Vector(11, 32), new Vector(15, 20), new Vector(41, 29), new Vector(45, 18) }, new bool[] { true, true, false, false, false, false }, new int[] { 1, 1, 2, 2, 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(21, 9), new Vector(33, 39), new Vector(11, 32), new Vector(15, 20), new Vector(41, 29), new Vector(45, 18)], [true, true, false, false, false, false], [1, 1, 2, 2, 2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(11, 29), new Vector(43, 17), new Vector(23, 10) }, new bool[] { true, true, false }, new int[] { 1, 1, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(11, 29), new Vector(43, 17), new Vector(23, 10)], [true, true, false], [1, 1, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(13, 30), new Vector(42, 19) }, new bool[] { true, true }, new int[] { 1, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(13, 30), new Vector(42, 19)], [true, true], [1, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(14, 29), new Vector(41, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(14, 29), new Vector(41, 20)], [false, false], [1, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(15, 29), new Vector(40, 20) }, new bool[] { false, false }, new int[] { 1, 1 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(15, 29), new Vector(40, 20)], [false, false], [1, 1], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
-        sequence.Sheet.CurrentTexture = CreateChargingTexture(new Vector[] { new Vector(27, 1), new Vector(27, 47) }, new bool[] { true, true }, new int[] { 2, 2 }, level);
+        sequence.Sheet.CurrentTexture = CreateChargingTexture([new Vector(27, 1), new Vector(27, 47)], [true, true], [2, 2], level);
         sequence.AddFrame(0, 0, CHARGING_EFFECT_HITBOX_SIZE, CHARGING_EFFECT_HITBOX_SIZE, 1, false, OriginPosition.CENTER);
     }
 
     public void StartFadingOST(float volume, int frames, bool fadeIn, Action onFadingComplete = null)
     {
+        soundChannels[3].SaveVolume();
+
         FadingOST = true;
         FadingOSTInitialVolume = soundChannels[3].Volume;
         FadingOSTVolume = volume;
@@ -1116,173 +1173,14 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         StartFadingOST(volume, frames, false, onFadingComplete);
     }
 
-    public static uint NextHighestPowerOfTwo(uint v)
-    {
-        v--;
-        v |= v >> 1;
-        v |= v >> 2;
-        v |= v >> 4;
-        v |= v >> 8;
-        v |= v >> 16;
-        v++;
-
-        return v;
-    }
-
-    private static readonly byte[] EMPTY_TEXTURE_DATA = new byte[4096];
-
-    private static void ZeroDataRect(DataRectangle dataRect, int length)
-    {
-        int remaining = length;
-        IntPtr ptr = dataRect.DataPointer;
-        while (remaining > 0)
-        {
-            int bytesToCopy = remaining > EMPTY_TEXTURE_DATA.Length ? EMPTY_TEXTURE_DATA.Length : remaining;
-            Marshal.Copy(EMPTY_TEXTURE_DATA, 0, ptr, bytesToCopy);
-            ptr += bytesToCopy;
-            remaining -= bytesToCopy;
-        }
-    }
-
-    private static void FillRegion(DataRectangle dataRect, int length, Box box, int paletteIndex)
-    {
-        int dstX = (int) box.Left;
-        int dstY = (int) box.Top;
-        int width = (int) box.Width;
-        int height = (int) box.Height;
-
-        using var dstDS = new DataStream(dataRect.DataPointer, length * sizeof(byte), true, true);
-        for (int y = dstY; y < dstY + height; y++)
-        {
-            for (int x = dstX; x < dstX + width; x++)
-            {
-                dstDS.Seek(y * dataRect.Pitch + x * sizeof(byte), SeekOrigin.Begin);
-                dstDS.Write((byte) paletteIndex);
-            }
-        }
-    }
-
-    private static void DrawChargingPointLevel1Small(DataRectangle dataRect, int length, Vector point)
-    {
-        FillRegion(dataRect, length, new Box(point.X, point.Y, 1, 1), 1);
-    }
-
-    private static void DrawChargingPointLevel1Large(DataRectangle dataRect, int length, Vector point)
-    {
-        FillRegion(dataRect, length, new Box(point.X, point.Y, 2, 2), 1);
-    }
-
-    private static void DrawChargingPointLevel2Small1(DataRectangle dataRect, int length, Vector point)
-    {
-        FillRegion(dataRect, length, new Box(point.X, point.Y, 1, 1), 2);
-    }
-
-    private static void DrawChargingPointLevel2Small2(DataRectangle dataRect, int length, Vector point)
-    {
-        FillRegion(dataRect, length, new Box(point.X, point.Y, 1, 1), 3);
-
-        FillRegion(dataRect, length, new Box(point.X, point.Y - 1, 1, 1), 4);
-        FillRegion(dataRect, length, new Box(point.X, point.Y + 1, 1, 1), 4);
-        FillRegion(dataRect, length, new Box(point.X - 1, point.Y, 1, 1), 4);
-        FillRegion(dataRect, length, new Box(point.X + 1, point.Y, 1, 1), 4);
-
-        FillRegion(dataRect, length, new Box(point.X - 1, point.Y - 1, 1, 1), 5);
-        FillRegion(dataRect, length, new Box(point.X + 1, point.Y - 1, 1, 1), 5);
-        FillRegion(dataRect, length, new Box(point.X - 1, point.Y + 1, 1, 1), 5);
-        FillRegion(dataRect, length, new Box(point.X + 1, point.Y + 1, 1, 1), 5);
-    }
-
-    private static void DrawChargingPointLevel2Large1(DataRectangle dataRect, int length, Vector point)
-    {
-        FillRegion(dataRect, length, new Box(point.X, point.Y, 2, 2), 2);
-    }
-
-    private static void DrawChargingPointLevel2Large2(DataRectangle dataRect, int length, Vector point)
-    {
-        FillRegion(dataRect, length, new Box(point.X, point.Y, 2, 2), 3);
-
-        FillRegion(dataRect, length, new Box(point.X, point.Y - 1, 2, 1), 4);
-        FillRegion(dataRect, length, new Box(point.X, point.Y + 2, 2, 1), 4);
-        FillRegion(dataRect, length, new Box(point.X - 1, point.Y, 1, 2), 4);
-        FillRegion(dataRect, length, new Box(point.X + 2, point.Y, 1, 2), 4);
-    }
-
-    private static void DrawChargingPointSmall(DataRectangle dataRect, int length, Vector point, int level, int type)
-    {
-        switch (type)
-        {
-            case 1:
-                switch (level)
-                {
-                    case 1:
-                        DrawChargingPointLevel1Small(dataRect, length, point);
-                        break;
-
-                    case 2:
-                        DrawChargingPointLevel2Small1(dataRect, length, point);
-                        break;
-                }
-
-                break;
-
-            case 2:
-                switch (level)
-                {
-                    case 1:
-                        DrawChargingPointLevel1Small(dataRect, length, point);
-                        break;
-
-                    case 2:
-                        DrawChargingPointLevel2Small2(dataRect, length, point);
-                        break;
-                }
-
-                break;
-        }
-    }
-
-    private static void DrawChargingPointLarge(DataRectangle dataRect, int length, Vector point, int level, int type)
-    {
-        switch (type)
-        {
-            case 1:
-                switch (level)
-                {
-                    case 1:
-                        DrawChargingPointLevel1Large(dataRect, length, point);
-                        break;
-
-                    case 2:
-                        DrawChargingPointLevel2Large1(dataRect, length, point);
-                        break;
-                }
-
-                break;
-
-            case 2:
-                switch (level)
-                {
-                    case 1:
-                        DrawChargingPointLevel1Large(dataRect, length, point);
-                        break;
-
-                    case 2:
-                        DrawChargingPointLevel2Large2(dataRect, length, point);
-                        break;
-                }
-
-                break;
-        }
-    }
-
-    internal Texture CreateChargingTexture(Vector[] points, bool[] large, int[] types, int level)
+    internal ITexture CreateChargingTexture(Vector[] points, bool[] large, int[] types, int level)
     {
         int width1 = (int) NextHighestPowerOfTwo(CHARGING_EFFECT_HITBOX_SIZE);
         int height1 = (int) NextHighestPowerOfTwo(CHARGING_EFFECT_HITBOX_SIZE);
         int length = width1 * height1;
 
-        var result = new Texture(Device, width1, height1, 1, Usage.None, Format.L8, Pool.Managed);
-        DataRectangle rect = result.LockRectangle(0, D3D9LockFlags.Discard);
+        var result = CreateEmptyTexture(width1, height1);
+        DataRectangle rect = result.LockRectangle(true);
 
         ZeroDataRect(rect, length);
 
@@ -1294,154 +1192,58 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                 DrawChargingPointSmall(rect, length, points[i], level, types[i]);
         }
 
-        result.UnlockRectangle(0);
+        result.UnlockRectangle();
         return result;
     }
 
-    public Texture CreateImageTextureFromFile(string filePath, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
+    public abstract ITexture CreateEmptyTexture(int width, int height, Format format = Format.L8);
+
+    public abstract ITexture CreateImageTextureFromFile(string filePath, bool systemMemory = true);
+
+    public ITexture CreateImageTextureFromEmbeddedResource(string path, bool systemMemory = true)
     {
-        var result = Texture.FromFile(Device, filePath, usage, pool);
-        return result;
+        return CreateImageTextureFromEmbeddedResource(Assembly.GetExecutingAssembly(), path, systemMemory);
     }
 
-    public Texture CreateImageTextureFromEmbeddedResource(string path, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
-    {
-        return CreateImageTextureFromEmbeddedResource(Assembly.GetExecutingAssembly(), path, usage, pool);
-    }
-
-    public Texture CreateImageTextureFromEmbeddedResource(Assembly assembly, string path, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
+    public ITexture CreateImageTextureFromEmbeddedResource(Assembly assembly, string path, bool systemMemory = true)
     {
         string assemblyName = assembly.GetName().Name;
         using var stream = assembly.GetManifestResourceStream($"{assemblyName}.Assets.{path}");
-        var texture = CreateImageTextureFromStream(stream, usage, pool);
+        var texture = CreateImageTextureFromStream(stream, systemMemory);
         return texture;
     }
 
-    public Texture CreateImageTextureFromStream(Stream stream, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
-    {
-        var result = Texture.FromStream(Device, stream, usage, pool);
-        return result;
-    }
+    public abstract ITexture CreateImageTextureFromStream(Stream stream, bool systemMemory = true);
 
-    private static void WriteVertex(DataStream vbData, float x, float y, float u, float v)
-    {
-        vbData.Write(x);
-        vbData.Write(y);
-        vbData.Write(0f);
-        vbData.Write(0xffffffff);
-        vbData.Write(u);
-        vbData.Write(v);
-    }
+    protected abstract IFont CreateFont(FontDescription description);
 
-    public static void SetupQuad(VertexBuffer vb, float width, float height)
-    {
-        DataStream vbData = vb.Lock(0, 0, D3D9LockFlags.None);
-        WriteSquare(vbData, (0, 0), (0, 0), (1, 1), (width, height));
-        vb.Unlock();
-    }
+    protected abstract ILine CreateLine();
 
-    public static void SetupQuad(VertexBuffer vb)
-    {
-        DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, D3D9LockFlags.None);
+    public abstract void RenderSprite(ITexture texture, Palette palette, FadingControl fadingControl, Box box, Matrix transform, int repeatX = 1, int repeatY = 1);
 
-        WriteVertex(vbData, 0, 0, 0, 0);
-        WriteVertex(vbData, 1, 0, 1, 0);
-        WriteVertex(vbData, 1, -1, 1, 1);
-        WriteVertex(vbData, 0, -1, 0, 1);
-
-        vb.Unlock();
-    }
-
-    public void RenderSprite(Texture texture, Palette palette, FadingControl fadingControl, Box box, Matrix transform, int repeatX = 1, int repeatY = 1)
-    {
-        RectangleF rDest = WorldBoxToScreen(box, false);
-
-        sprite.Begin(SpriteFlags.AlphaBlend);
-
-        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
-        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
-        Device.SetSamplerState(0, SamplerState.MipFilter, TextureFilter.None);
-
-        PixelShader shader;
-        EffectHandle fadingLevelHandle;
-        EffectHandle fadingColorHandle;
-
-        if (palette != null)
-        {
-            fadingLevelHandle = plsFadingLevelHandle;
-            fadingColorHandle = plsFadingColorHandle;
-            shader = PaletteShader;
-            Device.SetTexture(1, palette.Texture);
-        }
-        else
-        {
-            fadingLevelHandle = psFadingLevelHandle;
-            fadingColorHandle = psFadingColorHandle;
-            shader = PixelShader;
-        }
-
-        Device.PixelShader = shader;
-        Device.VertexShader = null;
-
-        if (fadingControl != null)
-        {
-            shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, fadingControl.FadingLevel);
-            shader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingControl.FadingColor.ToVector4());
-        }
-        else
-        {
-            shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
-        }
-
-        var matTranslation = Matrix.Translation(rDest.Left, rDest.Top, 0);
-        Matrix matTransform = matTranslation * transform;
-        sprite.Transform = matTransform;
-
-        if (repeatX > 1 || repeatY > 1)
-        {
-            Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Wrap);
-            Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Wrap);
-
-            sprite.Draw(texture, Color.FromRgba(0xffffffff), ToRectangleF(box.Scale(box.Origin, repeatX, repeatY) - box.Origin));
-        }
-        else
-        {
-            Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-            Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-            sprite.Draw(texture, Color.FromRgba(0xffffffff));
-        }
-
-        sprite.End();
-    }
-
-    public void RenderSprite(Texture texture, FadingControl fadingControl, Box box, Matrix transform, int repeatX = 1, int repeatY = 1)
+    public void RenderSprite(ITexture texture, FadingControl fadingControl, Box box, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
         RenderSprite(texture, null, fadingControl, box, transform, repeatX, repeatY);
     }
 
-    public void RenderSprite(Texture texture, FadingControl fadingControl, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
+    public void RenderSprite(ITexture texture, FadingControl fadingControl, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
-        var description = texture.GetLevelDescription(0);
-        RenderSprite(texture, null, fadingControl, new Box(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
+        RenderSprite(texture, null, fadingControl, new Box(v.X, v.Y, texture.Width, texture.Height), transform, repeatX, repeatY);
     }
 
-    public void RenderSprite(Texture texture, FadingControl fadingControl, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
+    public void RenderSprite(ITexture texture, FadingControl fadingControl, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
-        var description = texture.GetLevelDescription(0);
-        RenderSprite(texture, null, fadingControl, new Box(x, y, description.Width, description.Height), transform, repeatX, repeatY);
+        RenderSprite(texture, null, fadingControl, new Box(x, y, texture.Width, texture.Height), transform, repeatX, repeatY);
     }
 
-    public void RenderSprite(Texture texture, Palette palette, FadingControl fadingControl, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
+    public void RenderSprite(ITexture texture, Palette palette, FadingControl fadingControl, Vector v, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
-        var description = texture.GetLevelDescription(0);
-        RenderSprite(texture, palette, fadingControl, new Box(v.X, v.Y, description.Width, description.Height), transform, repeatX, repeatY);
+        RenderSprite(texture, palette, fadingControl, new Box(v.X, v.Y, texture.Width, texture.Height), transform, repeatX, repeatY);
     }
 
-    public void RenderSprite(Texture texture, Palette palette, FadingControl fadingControl, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
+    public void RenderSprite(ITexture texture, Palette palette, FadingControl fadingControl, FixedSingle x, FixedSingle y, Matrix transform, int repeatX = 1, int repeatY = 1)
     {
-        var description = texture.GetLevelDescription(0);
-        RenderSprite(texture, palette, fadingControl, new Box(x, y, description.Width, description.Height), transform, repeatX, repeatY);
+        RenderSprite(texture, palette, fadingControl, new Box(x, y, texture.Width, texture.Height), transform, repeatX, repeatY);
     }
 
     private void ClearEntities()
@@ -1496,7 +1298,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         Keys keys = Keys.NONE;
         nextFrame = !frameAdvance;
 
-        if (ENABLE_BACKGROUND_INPUT || Control.Focused)
+        if (ENABLE_BACKGROUND_INPUT || IsFocused())
         {
             keyboard.Poll();
             var state = keyboard.GetCurrentState();
@@ -1933,9 +1735,9 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                         }
                     }
                 }
-                catch (SharpDXException e)
-                {
-                    MessageBox.Show(e.Message);
+                catch (Exception e)
+                {                   
+                    ShowErrorMessage(e.Message);
                     joystick = null;
                 }
             }
@@ -1952,7 +1754,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         {
             FadingOSTTick++;
             if (FadingOSTTick > FadingOSTFrames)
-            {
+            {               
                 FadingOST = false;
                 OnFadingOSTComplete?.Invoke();
             }
@@ -2239,26 +2041,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         return true;
     }
 
-    public static Vector2 ToVector2(Vector v)
-    {
-        return new((float) v.X, (float) v.Y);
-    }
-
-    public static Vector3 ToVector3(Vector v)
-    {
-        return new((float) v.X, (float) v.Y, 0);
-    }
-
-    public static Rectangle ToRectangle(Box box)
-    {
-        return new((int) box.Left, (int) box.Top, (int) box.Width, (int) box.Height);
-    }
-
-    public static RectangleF ToRectangleF(Box box)
-    {
-        return new((float) box.Left, (float) box.Top, (float) box.Width, (float) box.Height);
-    }
-
     public Vector GetDrawScale()
     {
         var scaleX = StageSize.X / Camera.Width;
@@ -2276,7 +2058,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     public Vector2 WorldVectorToScreen(Vector v, bool transform = true)
     {
         var drawScale = transform ? GetDrawScale() : (1, 1);
-        return ToVector2((v.RoundToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? drawBox.LeftTop : (0, 0)));
+        return ((v.RoundToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? drawBox.LeftTop : (0, 0))).ToVector2();
     }
 
     public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
@@ -2304,7 +2086,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     public RectangleF WorldBoxToScreen(Box box, bool transform = true)
     {
         var drawScale = transform ? GetDrawScale() : (1, 1);
-        return ToRectangleF((box.LeftTopOrigin().RoundOriginToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? drawBox.LeftTop : (0, 0)));
+        return ((box.LeftTopOrigin().RoundOriginToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? drawBox.LeftTop : (0, 0))).ToRectangleF();
     }
 
     public IReadOnlyList<Sprite> GetSprites(int layer)
@@ -2524,8 +2306,9 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
     internal void UpdateScale()
     {
-        FixedSingle width = Control.ClientSize.Width;
-        FixedSingle height = Control.ClientSize.Height;
+        var size = ClientSize;
+        FixedSingle width = size.Width;
+        FixedSingle height = size.Height;
 
         Vector drawOrigin;
         /*if (width / height < SIZE_RATIO)
@@ -2664,190 +2447,50 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         DrawLine(WorldVectorToScreen(from), WorldVectorToScreen(to), width, color, fadingControl);
     }
 
-    public void DrawLine(Vector2 from, Vector2 to, float width, Color color, FadingControl fadingControl = null)
-    {
-        //from *= 4;
-        //to *= 4;
-
-        line.Width = width;
-
-        line.Begin();
-
-        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
-        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
-
-        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-        if (fadingControl != null)
-        {
-            Device.PixelShader = PixelShader;
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
-        }
-        else
-        {
-            Device.PixelShader = null;
-        }
-
-        line.Draw(new Vector2[] { from, to }, color);
-        line.End();
-    }
+    public abstract void DrawLine(Vector2 from, Vector2 to, float width, Color color, FadingControl fadingControl = null);
 
     public void DrawRectangle(Box box, float borderWith, Color color, FadingControl fadingControl = null)
     {
         DrawRectangle(WorldBoxToScreen(box), borderWith, color, fadingControl);
     }
 
-    public void DrawRectangle(RectangleF rect, float borderWith, Color color, FadingControl fadingControl = null)
-    {
-        var scale = GetCameraScale();
-        float scaleX = (float) scale.X;
-        float scaleY = (float) scale.Y;
-
-        rect = new RectangleF(rect.X, rect.Y + 1, rect.Width, rect.Height);
-
-        line.Width = borderWith;
-
-        line.Begin();
-
-        var matScaling = Matrix.Scaling(1, 1, 1);
-        var matTranslation = Matrix.Translation(0, 0, 0);
-        Matrix matTransform = matScaling * matTranslation;
-
-        Device.SetTransform(TransformState.World, matTransform);
-        Device.SetTransform(TransformState.View, Matrix.Identity);
-
-        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
-        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
-
-        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-        if (fadingControl != null)
-        {
-            Device.PixelShader = PixelShader;
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
-        }
-        else
-        {
-            Device.PixelShader = null;
-        }
-
-        line.Draw(
-            new Vector2[]
-            {
-                rect.TopLeft,
-                rect.TopRight,
-                rect.BottomRight,
-                rect.BottomLeft,
-                rect.TopLeft
-            },
-            color);
-        line.End();
-    }
+    public abstract void DrawRectangle(RectangleF rect, float borderWith, Color color, FadingControl fadingControl = null);
 
     public void FillRectangle(Box box, Color color, FadingControl fadingControl = null)
     {
         FillRectangle(WorldBoxToScreen(box), color, fadingControl);
     }
 
-    public void FillRectangle(RectangleF rect, Color color, FadingControl fadingControl = null)
-    {
-        float x = rect.Left;
-        float y = rect.Top;
+    public abstract void FillRectangle(RectangleF rect, Color color, FadingControl fadingControl = null);
 
-        var matScaling = Matrix.Scaling(rect.Width, rect.Height, 1);
-        var matTranslation = Matrix.Translation(x, y + 1, 0);
-        Matrix matTransform = matScaling * matTranslation;
-
-        sprite.Begin(SpriteFlags.AlphaBlend);
-
-        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
-        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
-
-        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-        if (fadingControl != null)
-        {
-            Device.PixelShader = PixelShader;
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
-        }
-        else
-        {
-            Device.PixelShader = null;
-        }
-
-        Device.VertexShader = null;
-
-        sprite.Transform = matTransform;
-
-        sprite.Draw(color == Color.Black ? blackPixelTexture : whitePixelTexture, color);
-        sprite.End();
-    }
-
-    public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color, FadingControl fadingControl = null)
+    public void DrawText(string text, IFont font, RectangleF drawRect, FontDrawFlags drawFlags, Color color, FadingControl fadingControl = null)
     {
         DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color, out _, fadingControl);
     }
 
-    public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, Color color, out RawRectangle fontDimension, FadingControl fadingControl = null)
+    public void DrawText(string text, IFont font, RectangleF drawRect, FontDrawFlags drawFlags, Color color, out RectangleF fontDimension, FadingControl fadingControl = null)
     {
         DrawText(text, font, drawRect, drawFlags, Matrix.Identity, color, out fontDimension, fadingControl);
     }
 
-    public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, RawMatrix transform, Color color, FadingControl fadingControl = null)
+    public void DrawText(string text, IFont font, RectangleF drawRect, FontDrawFlags drawFlags, Matrix transform, Color color, FadingControl fadingControl = null)
     {
         DrawText(text, font, drawRect, drawFlags, transform, color, out _, fadingControl);
     }
 
-    public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, float offsetX, float offsetY, Color color, FadingControl fadingControl = null)
+    public void DrawText(string text, IFont font, RectangleF drawRect, FontDrawFlags drawFlags, float offsetX, float offsetY, Color color, FadingControl fadingControl = null)
     {
-        RawMatrix transform = Matrix.Translation(offsetX, offsetY, 0);
+        Matrix transform = Matrix.Translation(offsetX, offsetY, 0);
         DrawText(text, font, drawRect, drawFlags, transform, color, out _, fadingControl);
     }
 
-    public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, float offsetX, float offsetY, Color color, out RawRectangle fontDimension, FadingControl fadingControl = null)
+    public void DrawText(string text, IFont font, RectangleF drawRect, FontDrawFlags drawFlags, float offsetX, float offsetY, Color color, out RectangleF fontDimension, FadingControl fadingControl = null)
     {
-        RawMatrix transform = Matrix.Translation(offsetX, offsetY, 0);
+        Matrix transform = Matrix.Translation(offsetX, offsetY, 0);
         DrawText(text, font, drawRect, drawFlags, transform, color, out fontDimension, fadingControl);
     }
 
-    public void DrawText(string text, Font font, RectangleF drawRect, FontDrawFlags drawFlags, RawMatrix transform, Color color, out RawRectangle fontDimension, FadingControl fadingControl = null)
-    {
-        sprite.Begin();
-
-        Device.VertexShader = null;
-        Device.PixelShader = null;
-
-        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
-        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
-
-        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-        if (fadingControl != null)
-        {
-            Device.PixelShader = PixelShader;
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
-        }
-        else
-        {
-            Device.PixelShader = null;
-        }
-
-        Device.VertexShader = null;
-
-        sprite.Transform = transform;
-
-        fontDimension = font.MeasureText(sprite, text, drawRect, drawFlags);
-        font.DrawText(sprite, text, fontDimension, drawFlags, color);
-        sprite.End();
-    }
+    public abstract void DrawText(string text, IFont font, RectangleF drawRect, FontDrawFlags drawFlags, Matrix transform, Color color, out RectangleF fontDimension, FadingControl fadingControl = null);
 
     public void ShowInfoMessage(string message, int time = 3000, int fadingTime = 1000)
     {
@@ -2857,16 +2500,9 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         infoMessageStartTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
     }
 
-    private static void DisposeResource(IDisposable resource)
-    {
-        try
-        {
-            resource?.Dispose();
-        }
-        catch
-        {
-        }
-    }
+    public abstract void ShowErrorMessage(string message);
+
+    protected abstract void DisposeDeviceResources();
 
     private void DisposeDevice()
     {
@@ -2887,93 +2523,34 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         DisposeResource(whitePixelTexture);
         DisposeResource(blackPixelTexture);
         DisposeResource(stageTexture);
+
         DisposeResource(foregroundTilemap);
         DisposeResource(backgroundTilemap);
+
         DisposeResource(foregroundPalette);
-        DisposeResource(PixelShader);
-        DisposeResource(PaletteShader);
-        DisposeResource(sprite);
-        DisposeResource(line);
+        DisposeResource(backgroundPalette);
+
         DisposeResource(infoFont);
         DisposeResource(coordsTextFont);
         DisposeResource(highlightMapTextFont);
-        DisposeResource(VertexBuffer);
-        DisposeResource(Device);
 
-        Device = null;
+        DisposeResource(line);
+
+        DisposeDeviceResources();
     }
 
-    private bool BeginScene()
-    {
-        var hr = Device.TestCooperativeLevel();
-        if (hr.Success)
-        {
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, BackgroundColor, 1.0f, 0);
-            Device.BeginScene();
-            return true;
-        }
+    protected abstract bool BeginScene();
 
-        if (hr == ResultCode.DeviceLost)
-            return false;
+    protected abstract void EndScene();
 
-        if (hr == ResultCode.DeviceNotReset)
-        {
-            ResetDevice();
-            return false;
-        }
+    protected abstract void Present();
 
-        Running = false;
-        throw new Exception($"Exiting process due device error: {hr} ({hr.Code})");
-    }
-
-    public void DrawTexture(Texture texture, Palette palette = null, bool linear = false)
+    public void DrawTexture(ITexture texture, Palette palette = null, bool linear = false)
     {
         DrawTexture((0, 0, StageSize.X, StageSize.Y), texture, palette, linear);
     }
 
-    public void DrawTexture(Box destBox, Texture texture, Palette palette = null, bool linear = false)
-    {
-        Device.PixelShader = PixelShader;
-        Device.VertexShader = null;
-
-        PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, FadingControl.FadingLevel);
-        PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, FadingControl.FadingColor.ToVector4());
-
-        var matScaling = Matrix.Scaling(1, 1, 1);
-        var matTranslation = Matrix.Translation(-1 * (float) destBox.Width * 0.5F, +1 * (float) destBox.Height * 0.5F, 1);
-        Matrix matTransform = matScaling * matTranslation;
-
-        Device.SetTransform(TransformState.World, matTransform);
-        Device.SetTransform(TransformState.View, Matrix.Identity);
-        Device.SetTransform(TransformState.Texture0, Matrix.Identity);
-        Device.SetTransform(TransformState.Texture1, Matrix.Identity);
-
-        PixelShader shader;
-
-        if (palette != null)
-        {
-            shader = PaletteShader;
-            Device.SetTexture(1, palette.Texture);
-        }
-        else
-        {
-            shader = PixelShader;
-        }
-
-        Device.PixelShader = shader;
-        Device.VertexShader = null;
-
-        Device.SetSamplerState(0, SamplerState.MagFilter, linear ? TextureFilter.Linear : TextureFilter.Point);
-        Device.SetSamplerState(0, SamplerState.MinFilter, linear ? TextureFilter.Linear : TextureFilter.Point);
-        Device.SetSamplerState(0, SamplerState.MipFilter, TextureFilter.None);
-
-        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-        Device.SetStreamSource(0, VertexBuffer, 0, VERTEX_SIZE);
-        Device.SetTexture(0, texture);
-        Device.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
-    }
+    public abstract void DrawTexture(Box destBox, ITexture texture, Palette palette = null, bool linear = false);
 
     private void RenderSingleFrame()
     {
@@ -2990,7 +2567,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             var fps = 1000.0 * deltaFrames / deltaMilliseconds;
 
             // Update window title with FPS once every second
-            Control.Text = $"X# - FPS: {fps:F2} ({(float) deltaMilliseconds / deltaFrames:F2}ms/frame)";
+            Title = $"X# - FPS: {fps:F2} ({(float) deltaMilliseconds / deltaFrames:F2}ms/frame)";
         }
         #endregion
 
@@ -3016,26 +2593,34 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         previousElapsedTicks = elapsedTicks;
     }
 
+    public abstract bool IsFocused();
+
+    protected abstract Point GetCursorPosition();
+
+    public abstract Point PointToClient(Point point);
+
+    protected abstract IRenderTarget GetRenderTarget(int level);
+
+    protected abstract void SetRenderTarget(int level, IRenderTarget target);
+
+    protected abstract void Clear(Color color);
+
+    protected abstract void PrepareRender();
+
     public virtual void Render(IRenderTarget target)
     {
         bool nextFrame = OnFrame();
 
-        if (Device == null)
-            return;
-
         if (!BeginScene())
             return;
 
-        var orthoLH = Matrix.OrthoLH((float) StageSize.X, (float) StageSize.Y, 0.0f, 1.0f);
-        Device.SetTransform(TransformState.Projection, orthoLH);
-        Device.SetTransform(TransformState.World, Matrix.Identity);
-        Device.SetTransform(TransformState.View, Matrix.Identity);
+        PrepareRender();
 
-        var backBuffer = Device.GetRenderTarget(0);
-        var stageSurface = stageTexture.GetSurfaceLevel(0);
+        var backBuffer = GetRenderTarget(0);
+        var stageRenderTarget = stageTexture.RenderTarget;
 
-        Device.SetRenderTarget(0, stageSurface);
-        Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Transparent, 1.0f, 0);
+        SetRenderTarget(0, stageRenderTarget);
+        Clear(Color.Transparent);
 
         if (!Editing && drawBackground)
         {
@@ -3098,7 +2683,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             }
         }
 
-        Device.SetRenderTarget(0, backBuffer);
+        SetRenderTarget(0, backBuffer);
         DrawTexture(stageTexture, null, SAMPLER_STATE_LINEAR);
 
         if (nextFrame)
@@ -3316,7 +2901,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         if (drawHighlightedPointingTiles)
         {
-            System.Drawing.Point cursorPos = Control.PointToClient(Cursor.Position);
+            var cursorPos = PointToClient(GetCursorPosition());
             Vector v = ScreenPointToVector(cursorPos.X, cursorPos.Y);
             DrawText($"Mouse Pos: X: {(float) v.X} Y: {(float) v.Y}", highlightMapTextFont, new RectangleF(0, 0, 400, 50), FontDrawFlags.Left | FontDrawFlags.Top, TOUCHING_MAP_COLOR);
 
@@ -3361,13 +2946,13 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         if (drawPlayerOriginAxis && Player != null)
         {
-            Vector2 v = WorldVectorToScreen(Player.Origin);
+            var v = WorldVectorToScreen(Player.Origin);
 
             line.Width = 2;
 
             line.Begin();
-            line.Draw(new Vector2[] { new Vector2(v.X, v.Y - (float) Camera.Height), new Vector2(v.X, v.Y + (float) Camera.Height) }, Color.Blue);
-            line.Draw(new Vector2[] { new Vector2(v.X - (float) Camera.Width, v.Y), new Vector2(v.X + (float) Camera.Width, v.Y) }, Color.Blue);
+            line.Draw(new Vector2[] { new(v.X, v.Y - (float) Camera.Height), new(v.X, v.Y + (float) Camera.Height) }, Color.Blue);
+            line.Draw(new Vector2[] { new(v.X - (float) Camera.Width, v.Y), new(v.X + (float) Camera.Width, v.Y) }, Color.Blue);
             line.End();
         }
 
@@ -3377,7 +2962,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         if (showInfoText && Player != null)
         {
             string text = $"Checkpoint: {(CurrentCheckpoint != null ? currentCheckpoint.TargetIndex.ToString() : "none")}";
-            DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.White, out RawRectangle fontDimension);
+            DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, Color.White, out RectangleF fontDimension);
 
             text = $"Camera: CX: {(float) Camera.Left * 256}({(float) (Camera.Left - lastCameraLeftTop.X) * 256}) CY: {(float) Camera.Top * 256}({(float) (Camera.Top - lastCameraLeftTop.Y) * 256})";
             DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, fontDimension.Top - fontDimension.Bottom, Color.White, out fontDimension);
@@ -3412,10 +2997,10 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         try
         {
-            Device.EndScene();
-            Device.Present();
+            EndScene();
+            Present();
         }
-        catch (SharpDXException)
+        catch (Exception)
         {
         }
     }
@@ -4181,16 +3766,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         effect.Spawn();
         return Entities.GetReferenceTo(effect);
-    }
-
-    private static Vector GetDashSparkOrigin(Player player)
-    {
-        return player.Direction switch
-        {
-            Direction.LEFT => player.Hitbox.LeftTop + (23 - 15, 20),
-            Direction.RIGHT => player.Hitbox.RightTop + (-23 + 15, 20),
-            _ => Vector.NULL_VECTOR,
-        };
     }
 
     internal EntityReference<DashSparkEffect> StartDashSparkEffect(Player player)
@@ -5091,124 +4666,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         ReadyHUD.Spawn();
     }
 
-    public static void WriteTriangle(DataStream vbData, Vector r0, Vector r1, Vector r2, Vector t0, Vector t1, Vector t2)
-    {
-        WriteVertex(vbData, (float) r0.X, (float) r0.Y, (float) t0.X, (float) t0.Y);
-        WriteVertex(vbData, (float) r1.X, (float) r1.Y, (float) t1.X, (float) t1.Y);
-        WriteVertex(vbData, (float) r2.X, (float) r2.Y, (float) t2.X, (float) t2.Y);
-    }
-
-    public static void WriteSquare(DataStream vbData, Vector vSource, Vector vDest, Vector srcSize, Vector dstSize, bool flipped = false, bool mirrored = false)
-    {
-        if (vSource.X < 0 || vSource.X > 1 || vSource.Y < 0 || vSource.Y > 1)
-            throw new Exception();
-
-        var r0 = new Vector(vDest.X, vDest.Y);
-        var r1 = new Vector(vDest.X + dstSize.X, vDest.Y);
-        var r2 = new Vector(vDest.X + dstSize.X, vDest.Y - dstSize.Y);
-        var r3 = new Vector(vDest.X, vDest.Y - dstSize.Y);
-
-        var t0 = new Vector(vSource.X, vSource.Y);
-        var t1 = new Vector(vSource.X + srcSize.X, vSource.Y);
-        var t2 = new Vector(vSource.X + srcSize.X, vSource.Y + srcSize.Y);
-        var t3 = new Vector(vSource.X, vSource.Y + srcSize.Y);
-
-        if (t0.X < 0 || t0.X > 1 || t0.Y < 0 || t0.Y > 1)
-            throw new Exception();
-
-        if (t1.X < 0 || t1.X > 1 || t1.Y < 0 || t1.Y > 1)
-            throw new Exception();
-
-        if (t2.X < 0 || t2.X > 1 || t2.Y < 0 || t2.Y > 1)
-            throw new Exception();
-
-        if (t3.X < 0 || t3.X > 1 || t3.Y < 0 || t3.Y > 1)
-            throw new Exception();
-
-        if (flipped)
-        {
-            if (mirrored)
-            {
-                WriteTriangle(vbData, r0, r1, r2, t2, t3, t0);
-                WriteTriangle(vbData, r0, r2, r3, t2, t0, t1);
-            }
-            else
-            {
-                WriteTriangle(vbData, r0, r1, r2, t3, t2, t1);
-                WriteTriangle(vbData, r0, r2, r3, t3, t1, t0);
-            }
-        }
-        else if (mirrored)
-        {
-            WriteTriangle(vbData, r0, r1, r2, t1, t0, t3);
-            WriteTriangle(vbData, r0, r2, r3, t1, t3, t2);
-        }
-        else
-        {
-            WriteTriangle(vbData, r0, r1, r2, t0, t1, t2);
-            WriteTriangle(vbData, r0, r2, r3, t0, t2, t3);
-        }
-    }
-
-    public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, Texture texture, Palette palette, FadingControl fadingControl, Box box)
-    {
-        Device.SetStreamSource(0, vb, 0, vertexSize);
-
-        RectangleF rDest = WorldBoxToScreen(box, false);
-
-        var drawScale = GetDrawScale();
-        float x = rDest.Left * (float) drawScale.X - (float) StageSize.X * 0.5f;
-        float y = -rDest.Top * (float) drawScale.Y + (float) StageSize.Y * 0.5f;
-
-        var matScaling = Matrix.Scaling((float) drawScale.X, (float) drawScale.Y, 1);
-        var matTranslation = Matrix.Translation(x, y, 0);
-        Matrix matTransform = matScaling * matTranslation;
-
-        Device.SetTransform(TransformState.World, matTransform);
-        Device.SetTransform(TransformState.View, Matrix.Identity);
-        Device.SetTransform(TransformState.Texture0, Matrix.Identity);
-        Device.SetTransform(TransformState.Texture1, Matrix.Identity);
-        Device.SetTexture(0, texture);
-
-        PixelShader shader;
-        EffectHandle fadingLevelHandle;
-        EffectHandle fadingColorHandle;
-
-        if (palette != null)
-        {
-            fadingLevelHandle = plsFadingLevelHandle;
-            fadingColorHandle = plsFadingColorHandle;
-            shader = PaletteShader;
-            Device.SetTexture(1, palette.Texture);
-        }
-        else
-        {
-            fadingLevelHandle = psFadingLevelHandle;
-            fadingColorHandle = psFadingColorHandle;
-            shader = PixelShader;
-        }
-
-        Device.PixelShader = shader;
-        Device.VertexShader = null;
-
-        if (fadingControl != null)
-        {
-            shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, fadingControl.FadingLevel);
-            shader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingControl.FadingColor.ToVector4());
-        }
-        else
-        {
-            shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
-        }
-
-        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
-        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
-
-        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
-
-        Device.DrawPrimitives(PrimitiveType.TriangleList, 0, primitiveCount);
-    }
+    protected abstract Palette CreatePalette(ITexture texture, int index, string name, int count);
 
     public Palette PrecachePalette(string name, Color[] colors, int capacity = 256, bool raiseExceptionIfNameAlreadyExists = true)
     {
@@ -5223,10 +4681,10 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         if (colors.Length > capacity)
             throw new ArgumentException($"Length of colors should up to {capacity}.");
 
-        var texture = new Texture(Device, capacity, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
-        DataRectangle rect = texture.LockRectangle(0, D3D9LockFlags.None);
+        var texture = CreateEmptyTexture(capacity, 1, Format.A8R8G8B8);
+        DataRectangle rect = texture.LockRectangle();
 
-        using (var stream = new DataStream(rect.DataPointer, capacity * 1 * sizeof(int), true, true))
+        using (var stream = CreateDataStream(rect.DataPointer, capacity * 1 * sizeof(int), true, true))
         {
             for (int i = 0; i < colors.Length; i++)
                 stream.Write(colors[i].ToBgra());
@@ -5235,16 +4693,10 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                 stream.Write(0);
         }
 
-        texture.UnlockRectangle(0);
+        texture.UnlockRectangle();
 
         index = precachedPalettes.Count;
-        var result = new Palette
-        {
-            Texture = texture,
-            Index = index,
-            name = name,
-            Count = colors.Length
-        };
+        var result = CreatePalette(texture, index, name, colors.Length);
 
         precachedPalettes.Add(result);
         precachedPalettesByName.Add(name, index);
@@ -5252,20 +4704,20 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         return result;
     }
 
-    public Texture PrecachePaletteTexture(Texture image, int capacity = 256)
+    public ITexture PrecachePaletteTexture(ITexture image, int capacity = 256)
     {
-        var palette = new Texture(Device, capacity, 1, 1, Usage.None, Format.A8R8G8B8, Pool.Managed);
+        var palette = CreateEmptyTexture(capacity, 1, Format.A8R8G8B8);
 
-        DataRectangle paletteRect = palette.LockRectangle(0, D3D9LockFlags.None);
-        DataRectangle imageRect = image.LockRectangle(0, D3D9LockFlags.None);
+        DataRectangle paletteRect = palette.LockRectangle();
+        DataRectangle imageRect = image.LockRectangle();
 
         try
         {
-            using var paletteStream = new DataStream(paletteRect.DataPointer, capacity * 1 * sizeof(int), true, true);
+            using var paletteStream = CreateDataStream(paletteRect.DataPointer, capacity * 1 * sizeof(int), true, true);
 
-            int width = image.GetLevelDescription(0).Width;
-            int height = image.GetLevelDescription(0).Height;
-            using var imageStream = new DataStream(imageRect.DataPointer, width * height * sizeof(int), true, true);
+            int width = image.Width;
+            int height = image.Height;
+            using var imageStream = CreateDataStream(imageRect.DataPointer, width * height * sizeof(int), true, true);
 
             var colors = new Dictionary<Color, int>();
 
@@ -5285,8 +4737,8 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         }
         finally
         {
-            image.UnlockRectangle(0);
-            palette.UnlockRectangle(0);
+            image.UnlockRectangle();
+            palette.UnlockRectangle();
         }
 
         return palette;
@@ -5338,19 +4790,25 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         return sheet;
     }
 
+    protected abstract SpriteSheet CreateSpriteSheet(bool disposeTexture = false, bool precache = false);
+
+    protected abstract SpriteSheet CreateSpriteSheet(ITexture texture, bool disposeTexture = false, bool precache = false);
+
+    protected abstract SpriteSheet CreateSpriteSheet(string imageFileName, bool precache = false);
+
     public SpriteSheet CreateSpriteSheet(string name, bool disposeTexture = false, bool precache = false, bool raiseExceptionIfNameAlreadyExists = true)
     {
-        return AddSpriteSheet(name, new SpriteSheet(disposeTexture, precache), raiseExceptionIfNameAlreadyExists);
+        return AddSpriteSheet(name, CreateSpriteSheet(disposeTexture, precache), raiseExceptionIfNameAlreadyExists);
     }
 
-    public SpriteSheet CreateSpriteSheet(string name, Texture texture, bool disposeTexture = false, bool precache = false, bool raiseExceptionIfNameAlreadyExists = true)
+    public SpriteSheet CreateSpriteSheet(string name, ITexture texture, bool disposeTexture = false, bool precache = false, bool raiseExceptionIfNameAlreadyExists = true)
     {
-        return AddSpriteSheet(name, new SpriteSheet(texture, disposeTexture, precache), raiseExceptionIfNameAlreadyExists);
+        return AddSpriteSheet(name, CreateSpriteSheet(texture, disposeTexture, precache), raiseExceptionIfNameAlreadyExists);
     }
 
     public SpriteSheet CreateSpriteSheet(string name, string imageFileName, bool precache = false, bool raiseExceptionIfNameAlreadyExists = true)
     {
-        return AddSpriteSheet(name, new SpriteSheet(imageFileName, precache), raiseExceptionIfNameAlreadyExists);
+        return AddSpriteSheet(name, CreateSpriteSheet(imageFileName, precache), raiseExceptionIfNameAlreadyExists);
     }
 
     public SpriteSheet GetSpriteSheetByIndex(int index)
@@ -5379,17 +4837,17 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         sheet.name = name;
     }
 
+    protected abstract SoundChannel CreateSoundChannel(float volume = 1);
+
     internal SoundChannel CreateSoundChannel(string name, float volume)
     {
         if (soundChannelsByName.ContainsKey(name))
             throw new DuplicateSoundChannelNameException(name);
 
         int index = soundChannels.Count;
-        var channel = new SoundChannel(volume)
-        {
-            Index = index,
-            name = name
-        };
+        var channel = CreateSoundChannel(volume);
+        channel.Index = index;
+        channel.name = name;
 
         soundChannels.Add(channel);
         soundChannelsByName.Add(name, index);
@@ -5423,12 +4881,14 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         channel.name = name;
     }
 
+    protected abstract void DoRenderLoop(Action action);
+
     private void Execute()
     {
         while (Running)
         {
             // Main loop
-            RenderLoop.Run(Control, Render);
+            DoRenderLoop(Render);
         }
     }
 
@@ -5439,8 +4899,9 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         var sound = precachedSounds[precachedSoundsByName[name]];
         var channel = soundChannels[channelIndex];
-
+        
         channel.Play(sound, stopTime, loopTime, ignoreUpdatesUntilPlayed);
+        channel.RestoreVolume();
     }
 
     public void PlaySound(int channel, string name, double loopTime, bool ignoreUpdatesUntilFinished = false)
@@ -5486,6 +4947,11 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         PlaySound(3, name);
     }
 
+    public void StopOST()
+    {
+        StopSound(3);
+    }
+
     public void StopOST(string name)
     {
         StopSound(3, name);
@@ -5496,6 +4962,12 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         StopOST("Boss Battle");
     }
 
+    public void StopSound(int channelIndex)
+    {
+        var channel = soundChannels[channelIndex];
+        channel.StopStream();
+    }
+
     public void StopSound(int channelIndex, string name)
     {
         var sound = precachedSounds[precachedSoundsByName[name]];
@@ -5503,12 +4975,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         if (channel.IsPlaying(sound))
             channel.StopStream();
-    }
-
-    public void StopSound(int channelIndex)
-    {
-        var channel = soundChannels[channelIndex];
-        channel.StopStream();
     }
 
     public void StopAllSounds(int exceptChannel = -1)
@@ -5933,6 +5399,18 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         }
     }
 
+    internal void StartSigmaBossBattle()
+    {
+        if (romLoaded && Boss != null)
+        {
+            BossBattle = true;
+            BossIntroducing = true;
+            PlaySigmaBossIntroOST();
+
+            DoDelayedAction(64, Boss.Spawn);
+        }
+    }
+
     public void DoDelayedAction(int frames, Action action)
     {
         DelayedAction = action;
@@ -6119,5 +5597,74 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             var action = kv.Value;
             action.Call();
         }
+    }
+
+    public abstract void WriteVertex(DataStream vbData, float x, float y, float u, float v);
+
+    public virtual void WriteTriangle(DataStream vbData, Vector r0, Vector r1, Vector r2, Vector t0, Vector t1, Vector t2)
+    {
+        WriteVertex(vbData, (float) r0.X, (float) r0.Y, (float) t0.X, (float) t0.Y);
+        WriteVertex(vbData, (float) r1.X, (float) r1.Y, (float) t1.X, (float) t1.Y);
+        WriteVertex(vbData, (float) r2.X, (float) r2.Y, (float) t2.X, (float) t2.Y);
+    }
+
+    public virtual void WriteSquare(DataStream vbData, Vector vSource, Vector vDest, Vector srcSize, Vector dstSize, bool flipped = false, bool mirrored = false)
+    {
+        if (vSource.X < 0 || vSource.X > 1 || vSource.Y < 0 || vSource.Y > 1)
+            throw new Exception();
+
+        var r0 = new Vector(vDest.X, vDest.Y);
+        var r1 = new Vector(vDest.X + dstSize.X, vDest.Y);
+        var r2 = new Vector(vDest.X + dstSize.X, vDest.Y - dstSize.Y);
+        var r3 = new Vector(vDest.X, vDest.Y - dstSize.Y);
+
+        var t0 = new Vector(vSource.X, vSource.Y);
+        var t1 = new Vector(vSource.X + srcSize.X, vSource.Y);
+        var t2 = new Vector(vSource.X + srcSize.X, vSource.Y + srcSize.Y);
+        var t3 = new Vector(vSource.X, vSource.Y + srcSize.Y);
+
+        if (t0.X < 0 || t0.X > 1 || t0.Y < 0 || t0.Y > 1)
+            throw new Exception();
+
+        if (t1.X < 0 || t1.X > 1 || t1.Y < 0 || t1.Y > 1)
+            throw new Exception();
+
+        if (t2.X < 0 || t2.X > 1 || t2.Y < 0 || t2.Y > 1)
+            throw new Exception();
+
+        if (t3.X < 0 || t3.X > 1 || t3.Y < 0 || t3.Y > 1)
+            throw new Exception();
+
+        if (flipped)
+        {
+            if (mirrored)
+            {
+                WriteTriangle(vbData, r0, r1, r2, t2, t3, t0);
+                WriteTriangle(vbData, r0, r2, r3, t2, t0, t1);
+            }
+            else
+            {
+                WriteTriangle(vbData, r0, r1, r2, t3, t2, t1);
+                WriteTriangle(vbData, r0, r2, r3, t3, t1, t0);
+            }
+        }
+        else if (mirrored)
+        {
+            WriteTriangle(vbData, r0, r1, r2, t1, t0, t3);
+            WriteTriangle(vbData, r0, r2, r3, t1, t3, t2);
+        }
+        else
+        {
+            WriteTriangle(vbData, r0, r1, r2, t0, t1, t2);
+            WriteTriangle(vbData, r0, r2, r3, t0, t2, t3);
+        }
+    }
+
+    protected internal abstract Scene CreateScene(int id);
+
+    public void Dispose()
+    {
+        Engine.Running = false;
+        Engine.Unload();
     }
 }

@@ -14,7 +14,7 @@ public enum SnowballDebrisType
 public class SnowballDebrisEffect : SpriteEffect
 {
     #region StaticFields
-    private static readonly string[] ANIMATION_NAMES = { "SmallestDebris", "SmallDebris", "MediumDebris", "BigDebris" };
+    private static readonly string[] ANIMATION_NAMES = ["SmallestDebris", "SmallDebris", "MediumDebris", "BigDebris"];
     #endregion
 
     #region Precache

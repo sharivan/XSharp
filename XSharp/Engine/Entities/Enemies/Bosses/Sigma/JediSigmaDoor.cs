@@ -76,7 +76,7 @@ public class JediSigmaDoor : Sprite, IFSMEntity<JediSigmaDoorState>
 
     public void Close()
     {
-        if (State != JediSigmaDoorState.CLOSING && State != JediSigmaDoorState.CLOSED)
+        if (State is not JediSigmaDoorState.CLOSING and not JediSigmaDoorState.CLOSED)
             State = JediSigmaDoorState.CLOSING;
     }
 

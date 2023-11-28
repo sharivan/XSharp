@@ -4,14 +4,9 @@ using System.IO.Compression;
 
 namespace XSharp.Engine.IO;
 
-public class LevelReader : StreamReader
+public class LevelReader(Stream stream) : StreamReader(stream)
 {
-    private ZipArchive archive;
-
-    public LevelReader(Stream stream) : base(stream)
-    {
-        archive = new ZipArchive(stream);
-    }
+    private ZipArchive archive = new(stream);
 
     public LevelReader(string path)
         : this(File.Open(path, FileMode.Open))

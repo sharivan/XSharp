@@ -1,8 +1,6 @@
-﻿using SharpDX;
-using SharpDX.Direct3D9;
-
-using XSharp.Engine.Entities;
+﻿using XSharp.Engine.Entities;
 using XSharp.Factories;
+using XSharp.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 using XSharp.Serialization;
@@ -293,7 +291,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
         var frame = Sequence[CurrentFrame];
         MMXBox srcBox = frame.BoundingBox;
-        Texture texture = frame.Texture;
+        ITexture texture = frame.Texture;
 
         Vector origin = DrawOrigin;
         MMXBox drawBox = origin + srcBox;

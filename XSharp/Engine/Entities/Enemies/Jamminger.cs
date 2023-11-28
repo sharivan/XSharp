@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -24,8 +23,8 @@ public enum JammingerSubState
 public class Jamminger : Enemy, IFSMEntity<JammingerState, JammingerSubState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFFA82040), // 1
         Color.FromBgra(0xFFE05070), // 2
@@ -42,7 +41,7 @@ public class Jamminger : Enemy, IFSMEntity<JammingerState, JammingerSubState>
         Color.FromBgra(0xFF286890), // D
         Color.FromBgra(0xFF60C0E0), // E
         Color.FromBgra(0xFF302020)  // F
-    };
+    ];
 
     public static readonly FixedSingle CHASING_DECELERATION_DISTANCE = 64;
     public static readonly FixedSingle CHASING_SPEED = 768 / 256.0;

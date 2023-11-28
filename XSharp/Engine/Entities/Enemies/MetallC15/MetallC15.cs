@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -17,8 +16,8 @@ public enum MetallC15State
 public class MetallC15 : Enemy, IFSMEntity<MetallC15State>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent,          // 0
         Color.FromBgra(0xFF004000), // 1
         Color.FromBgra(0xFF006020), // 2
@@ -35,7 +34,7 @@ public class MetallC15 : Enemy, IFSMEntity<MetallC15State>
         Color.FromBgra(0xFF387038), // D
         Color.FromBgra(0xFF281010), // E
         Color.FromBgra(0xFF382020)  // F
-    };
+    ];
 
     public const int HEALTH = 1;
     public static readonly FixedSingle CONTACT_DAMAGE = 2;

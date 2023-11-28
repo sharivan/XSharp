@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
@@ -19,8 +18,8 @@ public enum ScriverState
 public class Scriver : Enemy, IFSMEntity<ScriverState>
 {
     #region StaticFields
-    public static readonly Color[] SCRIVER_PALETTE = new Color[]
-    {
+    public static readonly Color[] SCRIVER_PALETTE =
+    [
         Color.Transparent, // 0
         new Color(48, 40, 96, 255), // 1
         new Color(72, 64, 144, 255), // 2
@@ -37,7 +36,7 @@ public class Scriver : Enemy, IFSMEntity<ScriverState>
         new Color(128, 136, 128, 255), // 13
         new Color(200, 208, 200, 255), // 14
         new Color(32, 32, 32, 255) // 15
-    };
+    ];
 
     public static readonly FixedSingle SCRIVER_START_JUMP_OFFSET_X = 10;
     public static readonly FixedSingle SCRIVER_START_JUMP_OFFSET_Y = -6;

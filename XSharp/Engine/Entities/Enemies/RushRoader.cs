@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -18,8 +17,8 @@ public enum RushRoaderState
 public class RushRoader : Enemy, IFSMEntity<RushRoaderState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF181818), // 1
         Color.FromBgra(0xFF500000), // 2
@@ -36,7 +35,7 @@ public class RushRoader : Enemy, IFSMEntity<RushRoaderState>
         Color.FromBgra(0xFF909090), // D
         Color.FromBgra(0xFFB0B0B0), // E
         Color.FromBgra(0xFFE0E0E0)  // F
-    };
+    ];
 
     public static readonly FixedSingle CHASING_MAX_SPEED = 448 / 256.0;
     public static readonly FixedSingle CHASING_DECELERATION = 8 / 256.0;
@@ -46,7 +45,7 @@ public class RushRoader : Enemy, IFSMEntity<RushRoaderState>
     public static readonly FixedSingle BUMP_SPEED1_Y = -704 / 256.0;
     public static readonly FixedSingle BUMP_SPEED2_Y = -576 / 256.0;
     public static readonly FixedSingle BUMP_SPEED3_Y = -320 / 256.0;
-    public static readonly FixedSingle[] BUMP_SPEED_Y = { BUMP_SPEED1_Y, BUMP_SPEED2_Y, BUMP_SPEED3_Y };
+    public static readonly FixedSingle[] BUMP_SPEED_Y = [BUMP_SPEED1_Y, BUMP_SPEED2_Y, BUMP_SPEED3_Y];
 
     public const int HEALTH = 12;
     public static readonly FixedSingle CONTACT_DAMAGE = 2;

@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Objects;
 using XSharp.Engine.Graphics;
@@ -25,8 +24,8 @@ internal enum TurnCannonType
 public class TurnCannon : Enemy, IFSMEntity<TurnCannonState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent,          // 0
         Color.FromBgra(0xFF585868), // 1
         Color.FromBgra(0xFF788098), // 2
@@ -43,7 +42,7 @@ public class TurnCannon : Enemy, IFSMEntity<TurnCannonState>
         Color.FromBgra(0xFF38A050), // D
         Color.FromBgra(0xFF187848), // E
         Color.FromBgra(0xFF302030), // F
-    };
+    ];
 
     public const int HEALTH = 10;
     public static readonly FixedSingle CONTACT_DAMAGE = 3;

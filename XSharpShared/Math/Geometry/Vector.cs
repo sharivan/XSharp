@@ -19,7 +19,7 @@ public class VectorTypeConverter : TypeConverter
                 ((genericSourceType = sourceType.GetGenericTypeDefinition()) == typeof(ValueTuple<,>)
                 || genericSourceType == typeof(Tuple<,>)
             )
-            ? Util.TupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
+            ? TupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
             : base.CanConvertFrom(context, sourceType));
     }
 

@@ -1,21 +1,14 @@
-﻿using NAudio.Wave;
-
-using XSharp.Serialization;
+﻿using XSharp.Serialization;
 
 namespace XSharp.Engine.Sound;
 
 /// <summary>
 /// Stream for playback
 /// </summary>
-public class SoundStream : WaveStream, ISerializable
+public class SoundStreamHelper : ISoundStream, ISerializable
 {
-    private PrecachedSound source;
-    private bool ignoreUpdatesUntilPlayed;
-
-    /// <summary>
-    /// Return source stream's wave format
-    /// </summary>
-    public override WaveFormat WaveFormat => source.Stream.WaveFormat;
+    protected PrecachedSound source;
+    protected bool ignoreUpdatesUntilPlayed;
 
     public PrecachedSound Source
     {
@@ -26,12 +19,12 @@ public class SoundStream : WaveStream, ISerializable
     /// <summary>
     /// LoopStream simply returns
     /// </summary>
-    public override long Length => source.Stream.Length;
+    public long Length => source.Stream.Length;
 
     /// <summary>
     /// LoopStream simply passes on positioning to source stream
     /// </summary>
-    public override long Position
+    public long Position
     {
         get => source.Stream.Position;
         set => source.Stream.Position = value;
@@ -57,24 +50,24 @@ public class SoundStream : WaveStream, ISerializable
         set;
     }
 
-    public SoundStream()
+    public SoundStreamHelper()
     {
         Playing = false;
     }
 
-    public SoundStream(PrecachedSound source, long stopPoint, long loopPoint)
+    public SoundStreamHelper(PrecachedSound source, long stopPoint, long loopPoint)
     {
         UpdateSource(source, stopPoint, loopPoint);
         Playing = true;
     }
 
-    public SoundStream(PrecachedSound source, double stopTime, double loopTime) : this(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, loopTime) : -1) { }
+    public SoundStreamHelper(PrecachedSound source, double stopTime, double loopTime) : this(source, stopTime >= 0 ? ISoundStream.WaveStreamUtil.TimeToBytePosition(source.Stream, stopTime) : -1, loopTime >= 0 ? ISoundStream.WaveStreamUtil.TimeToBytePosition(source.Stream, loopTime) : -1) { }
 
-    public SoundStream(PrecachedSound source, long loopPoint) : this(source, -1, loopPoint) { }
+    public SoundStreamHelper(PrecachedSound source, long loopPoint) : this(source, -1, loopPoint) { }
 
-    public SoundStream(PrecachedSound source) : this(source, -1, -1) { }
+    public SoundStreamHelper(PrecachedSound source) : this(source, -1, -1) { }
 
-    public override int Read(byte[] buffer, int offset, int count)
+    public int Read(byte[] buffer, int offset, int count)
     {
         if (!Playing)
             return 0;
@@ -148,7 +141,7 @@ public class SoundStream : WaveStream, ISerializable
 
     public void UpdateSource(PrecachedSound source, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
     {
-        UpdateSource(source, stopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, stopTime) : -1, loopTime >= 0 ? WaveStreamUtil.TimeToBytePosition(source.Stream, loopTime) : -1, ignoreUpdatesUntilPlayed);
+        UpdateSource(source, stopTime >= 0 ? ISoundStream.WaveStreamUtil.TimeToBytePosition(source.Stream, stopTime) : -1, loopTime >= 0 ? ISoundStream.WaveStreamUtil.TimeToBytePosition(source.Stream, loopTime) : -1, ignoreUpdatesUntilPlayed);
     }
 
     public void UpdateSource(PrecachedSound source, double loopTime, bool ignoreUpdatesUntilPlayed = false)
@@ -165,7 +158,9 @@ public class SoundStream : WaveStream, ISerializable
             Position = serializer.ReadLong();
         }
         else
+        {
             source = null;
+        }
 
         ignoreUpdatesUntilPlayed = serializer.ReadBool();
         StopPoint = serializer.ReadLong();
@@ -181,11 +176,18 @@ public class SoundStream : WaveStream, ISerializable
             serializer.WriteLong(Position);
         }
         else
+        {
             serializer.WriteString(null);
+        }
 
         serializer.WriteBool(ignoreUpdatesUntilPlayed);
         serializer.WriteLong(StopPoint);
         serializer.WriteLong(LoopPoint);
         serializer.WriteBool(Playing);
+    }
+
+    public void Dispose()
+    {
+        Source?.Dispose();
     }
 }

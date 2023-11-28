@@ -1,5 +1,9 @@
-﻿using System.Configuration;
-using System.Windows.Forms;
+﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 using static XSharp.Engine.Consts;
 
@@ -160,76 +164,5 @@ public sealed class ProgramConfiguratinSection : ConfigurationSection
     {
         get => (int) this["currentSaveSlot"];
         set => this["currentSaveSlot"] = value;
-    }
-}
-
-public class GameEngine : BaseEngine
-{
-    new public static GameEngine Engine => (GameEngine) BaseEngine.Engine;
-
-    protected GameEngine()
-    {
-    }
-
-    public void LoadConfig()
-    {
-        Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-        if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
-        {
-            section = new ProgramConfiguratinSection();
-            config.Sections.Add("ProgramConfiguratinSection", section);
-            config.Save();
-        }
-
-        if (Control is Form)
-        {
-            if (section.Left != -1)
-                Control.Left = section.Left;
-
-            if (section.Top != -1)
-                Control.Top = section.Top;
-        }
-
-        drawHitbox = section.DrawCollisionBox;
-        showColliders = section.ShowColliders;
-        drawLevelBounds = section.DrawMapBounds;
-        drawTouchingMapBounds = section.DrawTouchingMapBounds;
-        drawHighlightedPointingTiles = section.DrawHighlightedPointingTiles;
-        drawPlayerOriginAxis = section.DrawPlayerOriginAxis;
-        showInfoText = section.ShowInfoText;
-        showCheckpointBounds = section.ShowCheckpointBounds;
-        showTriggerBounds = section.ShowTriggerBounds;
-        showTriggerCameraLockDirection = section.ShowTriggerCameraLook;
-        CurrentSaveSlot = section.CurrentSaveSlot;
-    }
-
-    public void SaveConfig()
-    {
-        Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-        if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
-        {
-            section = new ProgramConfiguratinSection();
-            config.Sections.Add("ProgramConfiguratinSection", section);
-        }
-
-        if (Control is Form)
-        {
-            section.Left = Control.Left;
-            section.Top = Control.Top;
-        }
-
-        section.DrawCollisionBox = drawHitbox;
-        section.ShowColliders = showColliders;
-        section.DrawMapBounds = drawLevelBounds;
-        section.DrawTouchingMapBounds = drawTouchingMapBounds;
-        section.DrawHighlightedPointingTiles = drawHighlightedPointingTiles;
-        section.DrawPlayerOriginAxis = drawPlayerOriginAxis;
-        section.ShowInfoText = showInfoText;
-        section.ShowCheckpointBounds = showCheckpointBounds;
-        section.ShowTriggerBounds = showTriggerBounds;
-        section.ShowTriggerCameraLook = showTriggerCameraLockDirection;
-        section.CurrentSaveSlot = CurrentSaveSlot;
-
-        config.Save();
     }
 }

@@ -8,19 +8,14 @@ using XSharp.Serialization;
 
 namespace XSharp.Engine.Graphics;
 
-public class AnimationFactory : IndexedNamedFactoryList<Animation>
+public class AnimationFactory(Sprite sprite) : IndexedNamedFactoryList<Animation>
 {
-    private EntityReference<Sprite> sprite;
+    private EntityReference<Sprite> sprite = sprite;
 
     public Sprite Sprite => sprite;
 
     public AnimationFactory() : this(null)
     {
-    }
-
-    public AnimationFactory(Sprite sprite)
-    {
-        this.sprite = sprite;
     }
 
     public Animation Create(string frameSequenceName, Vector offset, int repeatX, int repeatY, int initialFrame = 0, bool startVisible = true, bool startOn = true, bool mirrored = false, bool flipped = false)

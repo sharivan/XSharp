@@ -1,7 +1,6 @@
-﻿using SharpDX.Direct3D9;
-
-using XSharp.Engine.Entities;
+﻿using XSharp.Engine.Entities;
 using XSharp.Engine.Graphics;
+using XSharp.Graphics;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.World.World;
@@ -14,7 +13,7 @@ public class BackgroundLayout : Layout
 {
     public override Palette Palette => Engine.BackgroundPalette;
 
-    public override Texture Tilemap => Engine.BackgroundTilemap;
+    public override ITexture Tilemap => Engine.BackgroundTilemap;
 
     internal BackgroundLayout(int sceneRowCount, int sceneColCount) : base(sceneRowCount, sceneColCount)
     {
@@ -63,7 +62,7 @@ public class BackgroundLayout : Layout
                 {
                     Vector sceneLT = GetSceneLeftTop(row, col);
                     Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                    Engine.RenderVertexBuffer(scene.layers[layer], BaseEngine.VERTEX_SIZE, Scene.PRIMITIVE_COUNT, Tilemap, Palette, FadingControl, sceneBox + screenDelta);
+                    scene.RenderLayer(layer, Tilemap, Palette, FadingControl, sceneBox + screenDelta);
                 }
             }
         }

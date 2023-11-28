@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -16,8 +15,8 @@ public enum BombBeenState
 public class BombBeen : Enemy, IFSMEntity<BombBeenState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF28D0F8), // 1
         Color.FromBgra(0xFF1058D0), // 2
@@ -34,7 +33,7 @@ public class BombBeen : Enemy, IFSMEntity<BombBeenState>
         Color.FromBgra(0xFFE87818), // D
         Color.FromBgra(0xFFD83000), // E
         Color.FromBgra(0xFF988888)  // F
-    };
+    ];
 
     public static readonly FixedSingle SPEED = 320 / 256.0;
     public static readonly FixedSingle FIRST_BOMB_SPEED_X = 128 / 256.0;

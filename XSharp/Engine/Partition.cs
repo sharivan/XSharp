@@ -9,7 +9,7 @@ using XSharp.Serialization;
 
 namespace XSharp.Engine;
 
-internal class Partition<T> : ISerializable where T : Entity
+internal class Partition<T>(Box box, int rows, int cols) : ISerializable where T : Entity
 {
     private class PartitionCell<U> : ISerializable where U : Entity
     {
@@ -20,14 +20,14 @@ internal class Partition<T> : ISerializable where T : Entity
 
         public PartitionCell()
         {
-            values = new EntitySet<U>();
+            values = [];
         }
 
         public PartitionCell(Box box)
         {
             this.box = box;
 
-            values = new EntitySet<U>();
+            values = [];
         }
 
         public void Insert(U value)
@@ -129,7 +129,7 @@ internal class Partition<T> : ISerializable where T : Entity
         {
             box = reader.ReadBox();
 
-            values ??= new EntitySet<U>();
+            values ??= [];
             values.Deserialize(reader);
         }
 
@@ -140,29 +140,17 @@ internal class Partition<T> : ISerializable where T : Entity
         }
     }
 
-    private Box box;
-    private int rows;
-    private int cols;
+    private Box box = box;
+    private int rows = rows;
+    private int cols = cols;
 
-    private PartitionCell<T>[,] grid;
-    private FixedSingle cellWidth;
-    private FixedSingle cellHeight;
+    private PartitionCell<T>[,] grid = new PartitionCell<T>[cols, rows];
+    private FixedSingle cellWidth = box.Width / cols;
+    private FixedSingle cellHeight = box.Height / rows;
 
     public Partition(FixedSingle left, FixedSingle top, FixedSingle width, FixedSingle height, int rows, int cols)
         : this(new Box(new Vector(left, top), Vector.NULL_VECTOR, new Vector(width, height)), rows, cols)
     {
-    }
-
-    public Partition(Box box, int rows, int cols)
-    {
-        this.box = box;
-        this.rows = rows;
-        this.cols = cols;
-
-        cellWidth = box.Width / cols;
-        cellHeight = box.Height / rows;
-
-        grid = new PartitionCell<T>[cols, rows];
     }
 
     public void Insert(T item)

@@ -600,10 +600,10 @@ public abstract class Sprite : Entity, IRenderable
     {
         FadingControl = new FadingControl();
 
-        touchingSpritesLeft = new EntitySet<Sprite>();
-        touchingSpritesRight = new EntitySet<Sprite>();
-        touchingSpritesUp = new EntitySet<Sprite>();
-        touchingSpritesDown = new EntitySet<Sprite>();
+        touchingSpritesLeft = [];
+        touchingSpritesRight = [];
+        touchingSpritesUp = [];
+        touchingSpritesDown = [];
     }
 
     protected override void OnCreate()

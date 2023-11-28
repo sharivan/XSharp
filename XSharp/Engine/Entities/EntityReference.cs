@@ -226,9 +226,9 @@ public class EntityReference<EntityType> : EntityReference, IEntityReference<Ent
     }
 }
 
-internal class EntityProxyReference<EntityType> : EntityReference<EntityType> where EntityType : Entity
+internal class EntityProxyReference<EntityType>(IEntityReference proxy) : EntityReference<EntityType> where EntityType : Entity
 {
-    private IEntityReference proxy;
+    private IEntityReference proxy = proxy;
 
     public override int TargetIndex
     {
@@ -238,11 +238,6 @@ internal class EntityProxyReference<EntityType> : EntityReference<EntityType> wh
     }
 
     public override string TargetName => proxy?.TargetName;
-
-    public EntityProxyReference(IEntityReference proxy)
-    {
-        this.proxy = proxy;
-    }
 
     public override void Unset()
     {

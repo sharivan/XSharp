@@ -1,10 +1,9 @@
 ﻿using System;
 
-using SharpDX;
-
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Graphics;
+using XSharp.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -44,8 +43,8 @@ public enum PlayerState
 public class Player : Sprite, IFSMEntity<PlayerState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         new Color(224, 224, 224, 255), // 1
         new Color(232, 224, 64, 255), // 2
@@ -78,7 +77,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
         new Color(152, 248, 248, 255), // 29
         new Color(144, 248, 248, 255), // 30
         new Color(136, 248, 248, 255) // 31
-    };
+    ];
     #endregion
 
     #region Precache
@@ -2596,5 +2595,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
         ScriptedWalkingLeft = dest.X < Origin.X;
         ScriptedWalkingDestination = dest;
         ScriptedWalkingEnd = onWalkingEnd;
+
+        Direction = ScriptedWalkingLeft ? Direction.LEFT : Direction.RIGHT;
     }
 }

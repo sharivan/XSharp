@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 
 namespace XSharp.Engine.Entities.Effects;
@@ -7,8 +6,8 @@ namespace XSharp.Engine.Entities.Effects;
 public class Smoke : SpriteEffect
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent,          // 0
         Color.FromBgra(0xFFF8F8F8), // 1
         Color.FromBgra(0xFFF8E070), // 2
@@ -25,7 +24,7 @@ public class Smoke : SpriteEffect
         Color.FromBgra(0xFFC0C0C0), // D
         Color.FromBgra(0xFF888888), // E
         Color.FromBgra(0xFF181818)  // F
-    };
+    ];
     #endregion
 
     #region Precache

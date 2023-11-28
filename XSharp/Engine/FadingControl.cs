@@ -1,10 +1,7 @@
 ﻿using System;
-
-using SharpDX;
-
+using XSharp.Graphics;
+using XSharp.Math.Geometry;
 using XSharp.Serialization;
-
-using Color = SharpDX.Color;
 
 namespace XSharp.Engine;
 
@@ -188,7 +185,7 @@ public class FadingControl : ISerializable
         float z = serializer.ReadFloat();
         float w = serializer.ReadFloat();
         FadingLevel = new Vector4(x, y, z, w);
-        FadingColor = Color.FromAbgr(serializer.ReadInt());
+        FadingColor = Color.FromRgba(serializer.ReadInt());
         FadeIn = serializer.ReadEnum<FadingFlags>();
         FadingFrames = serializer.ReadLong();
         FadingTick = serializer.ReadLong();
@@ -204,7 +201,7 @@ public class FadingControl : ISerializable
         serializer.WriteFloat(FadingLevel.Y);
         serializer.WriteFloat(FadingLevel.Z);
         serializer.WriteFloat(FadingLevel.W);
-        serializer.WriteInt(FadingColor.ToAbgr());
+        serializer.WriteInt(FadingColor.ToRgba());
         serializer.WriteEnum(FadeIn);
         serializer.WriteLong(FadingFrames);
         serializer.WriteLong(FadingTick);

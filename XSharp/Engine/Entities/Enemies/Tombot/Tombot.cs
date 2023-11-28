@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -17,8 +16,8 @@ public enum TombotState
 public class Tombot : Enemy, IFSMEntity<TombotState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent,          // 0
         Color.FromBgra(0xFF283090), // 1
         Color.FromBgra(0xFF4858D8), // 2
@@ -35,7 +34,7 @@ public class Tombot : Enemy, IFSMEntity<TombotState>
         Color.FromBgra(0xFF801808), // D
         Color.FromBgra(0xFFF03808), // E
         Color.FromBgra(0xFF282830)  // F
-    };
+    ];
 
     public const int HEALTH = 2;
     public static readonly FixedSingle CONTACT_DAMAGE = 2;

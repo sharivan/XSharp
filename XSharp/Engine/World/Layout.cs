@@ -2,10 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 
-using SharpDX.Direct3D9;
-
 using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
+using XSharp.Graphics;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -21,20 +20,15 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
 
     public static World World => Engine.World;
 
-    private class LayoutEnumerator : IEnumerator<Scene>
+    private class LayoutEnumerator(Layout layout) : IEnumerator<Scene>
     {
-        private Layout layout;
+        private Layout layout = layout;
         private int row = -1;
         private int col = -1;
 
         public Scene Current => row >= 0 && row < layout.SceneRowCount && col >= 0 && col < layout.SceneColCount ? layout.scenes[row, col] : null;
 
         object IEnumerator.Current => Current;
-
-        public LayoutEnumerator(Layout layout)
-        {
-            this.layout = layout;
-        }
 
         public void Dispose()
         {
@@ -119,7 +113,7 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
         get;
     }
 
-    public abstract Texture Tilemap
+    public abstract ITexture Tilemap
     {
         get;
     }
@@ -129,10 +123,10 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
         SceneRowCount = sceneRowCount;
         SceneColCount = sceneColCount;
 
-        tileList = new List<Tile>();
-        mapList = new List<Map>();
-        blockList = new List<Block>();
-        sceneList = new List<Scene>();
+        tileList = [];
+        mapList = [];
+        blockList = [];
+        sceneList = [];
 
         scenes = new Scene[sceneRowCount, sceneColCount];
 
@@ -240,7 +234,7 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
     public Scene AddScene()
     {
         int id = sceneList.Count;
-        var result = new Scene(id);
+        var result = Engine.CreateScene(id);
         sceneList.Add(result);
 
         return result;

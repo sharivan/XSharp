@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -23,8 +22,8 @@ public class BattonBoneG : Enemy, IFSMEntity<BattonBoneGState>
     public const int BATTON_BONE_G_HEALTH = 2;
     public static readonly FixedSingle BATTON_BONE_G_CONTACT_DAMAGE = 1;
 
-    public static readonly Color[] BATTON_BONE_G_PALETTE = new Color[]
-    {
+    public static readonly Color[] BATTON_BONE_G_PALETTE =
+    [
         Color.Transparent, // 0
         new Color(64, 136, 64, 255), // 1
         new Color(248, 192, 240, 255), // 2
@@ -41,7 +40,7 @@ public class BattonBoneG : Enemy, IFSMEntity<BattonBoneGState>
         new Color(160, 160, 160, 255), // 13
         new Color(104, 104, 104, 255), // 14
         new Color(40, 40, 40, 255), // 15
-    };
+    ];
     #endregion
 
     #region Precache

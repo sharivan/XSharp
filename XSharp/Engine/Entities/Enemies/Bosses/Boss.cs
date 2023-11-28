@@ -1,12 +1,9 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Weapons;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
-
-using Color = SharpDX.Color;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses;
 
@@ -17,7 +14,7 @@ public abstract class Boss : Enemy
     #region StaticFields
     // The interval between each position is five frames.
     private static readonly Vector[] EXPLOSION_ORIGIN_OFFSETS =
-    {
+    [
         (-28, 10), // 0
         (16, -36),
         (-11, 21),
@@ -98,7 +95,7 @@ public abstract class Boss : Enemy
         (13, -9),
         (-18, -35) // 78
         // Fading back from white start before 30 frames
-    };
+    ];
 
     public const int BOSS_HP = 32;
     public const int DEFAULT_BOSS_INVINCIBILITY_TIME = 68;
@@ -343,11 +340,17 @@ public abstract class Boss : Enemy
         }
     }
 
+    protected virtual void OnPlayBossBattleOST()
+    {
+        Engine.PlayBossBatleOST();
+    }
+
     protected virtual void OnStartBattle()
     {
         Engine.Player.InputLocked = false;
         Engine.Player.Invincible = false;
-        Engine.PlayBossBatleOST();
+
+        OnPlayBossBattleOST();
     }
 
     protected void StartHealthFilling()

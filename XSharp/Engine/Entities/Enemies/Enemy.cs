@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Entities.Weapons;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
@@ -17,8 +16,8 @@ public enum HitResponse
 
 public abstract class Enemy : Sprite
 {
-    public static readonly Color[] FLASHING_PALETTE = new Color[]
-    {
+    public static readonly Color[] FLASHING_PALETTE =
+    [
         Color.Transparent, // 0
         new Color(248, 248, 248, 255), // 1
         new Color(240, 248, 248, 255), // 2
@@ -35,7 +34,7 @@ public abstract class Enemy : Sprite
         new Color(152, 248, 248, 255), // 13
         new Color(144, 248, 248, 255), // 14
         new Color(136, 248, 248, 255) // 15
-    };
+    ];
 
     [Precache]
     internal static void Precache()

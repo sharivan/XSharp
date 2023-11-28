@@ -18,7 +18,7 @@ public class CameraLockTrigger : BaseTrigger
     {
         TouchingKind = TouchingKind.VECTOR;
 
-        constraints = new List<Vector>();
+        constraints = [];
     }
 
     protected override void OnStartTrigger(Entity obj)

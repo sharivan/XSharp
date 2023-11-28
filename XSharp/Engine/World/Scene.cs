@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using SharpDX;
-using SharpDX.Direct3D9;
-
 using XSharp.Engine.Graphics;
+using XSharp.Graphics;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
@@ -13,8 +11,10 @@ using Box = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.World;
 
-public class Scene : IDisposable
+public abstract class Scene : IDisposable
 {
+    public static BaseEngine Engine => BaseEngine.Engine;
+
     public static Cell GetBlockCellFromPos(Vector pos)
     {
         int col = (int) (pos.X / BLOCK_SIZE);
@@ -23,15 +23,8 @@ public class Scene : IDisposable
         return new Cell(row, col);
     }
 
-    public const int TILE_PRIMITIVE_SIZE = 2 * BaseEngine.VERTEX_SIZE * 3;
-    public const int MAP_PRIMITIVE_SIZE = SIDE_TILES_PER_MAP * SIDE_TILES_PER_MAP * TILE_PRIMITIVE_SIZE;
-    public const int BLOCK_PRIMITIVE_SIZE = SIDE_MAPS_PER_BLOCK * SIDE_MAPS_PER_BLOCK * MAP_PRIMITIVE_SIZE;
-    public const int SCENE_PRIMITIVE_SIZE = SIDE_BLOCKS_PER_SCENE * SIDE_BLOCKS_PER_SCENE * BLOCK_PRIMITIVE_SIZE;
-    public const int PRIMITIVE_COUNT = SCENE_PRIMITIVE_SIZE / (BaseEngine.VERTEX_SIZE * 3);
-
-    internal Block[,] blocks;
-    internal VertexBuffer[] layers;
-    internal List<Tilemap> tilemaps;
+    protected internal Block[,] blocks;
+    protected internal List<Tilemap> tilemaps;
 
     public int ID
     {
@@ -47,17 +40,16 @@ public class Scene : IDisposable
     public bool Tessellated
     {
         get;
-        private set;
+        protected set;
     }
 
-    internal Scene(int id)
+    protected Scene(int id)
     {
         ID = id;
 
         blocks = new Block[SIDE_BLOCKS_PER_SCENE, SIDE_BLOCKS_PER_SCENE];
-        layers = new VertexBuffer[3];
 
-        tilemaps = new List<Tilemap>();
+        tilemaps = [];
     }
 
     public Tile GetTileFrom(Vector pos)
@@ -100,7 +92,7 @@ public class Scene : IDisposable
         if (block == null)
             return;
 
-        List<Cell> positions = new();
+        List<Cell> positions = [];
 
         for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
         {
@@ -127,7 +119,7 @@ public class Scene : IDisposable
         Block block = blocks[cell.Row, cell.Col];
         if (block == null)
         {
-            block = BaseEngine.Engine.World.ForegroundLayout.AddBlock();
+            block = Engine.World.ForegroundLayout.AddBlock();
             blocks[cell.Row, cell.Col] = block;
         }
 
@@ -196,6 +188,8 @@ public class Scene : IDisposable
             RefreshLayers(box);
     }
 
+    protected abstract void RefreshLayersImpl(int startRow, int startCol, int endRow, int endCol);
+
     private void RefreshLayers(Box box)
     {
         Cell start = GetBlockCellFromPos(box.LeftTop);
@@ -236,108 +230,31 @@ public class Scene : IDisposable
         if (startRow == endRow)
             endRow++;
 
-        int startPos = BLOCK_PRIMITIVE_SIZE * (SIDE_BLOCKS_PER_SCENE * startCol + startRow);
-        int sizeToLock = BLOCK_PRIMITIVE_SIZE * (endRow - startRow);
-
-        for (int col = startCol; col < endCol; col++)
-        {
-            DataStream downLayerVBData = layers[0].Lock(startPos, sizeToLock, LockFlags.None);
-            DataStream upLayerVBData = layers[1].Lock(startPos, sizeToLock, LockFlags.None);
-
-            for (int row = startRow; row < endRow; row++)
-            {
-                var blockPos = new Vector(col * BLOCK_SIZE, -row * BLOCK_SIZE);
-                Block block = blocks[row, col];
-
-                if (block != null)
-                {
-                    block.Tessellate(downLayerVBData, upLayerVBData, blockPos);
-                }
-                else
-                {
-                    for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileRow++)
-                    {
-                        for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileCol++)
-                        {
-                            var tilePos = new Vector(blockPos.X + tileCol * TILE_SIZE, blockPos.Y - tileRow * TILE_SIZE);
-                            BaseEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
-                            BaseEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
-                        }
-                    }
-                }
-            }
-
-            layers[0].Unlock();
-            layers[1].Unlock();
-
-            startPos += SIDE_BLOCKS_PER_SCENE * BLOCK_PRIMITIVE_SIZE;
-        }
+        RefreshLayersImpl(startRow, startCol, endRow, endCol);
     }
+
+    protected void TesselateBlock(Block block, DataStream downLayerVBData, DataStream upLayerVBData, Vector blockPos)
+    {
+        block.Tessellate(downLayerVBData, upLayerVBData, blockPos);
+    }
+
+    protected abstract void TesselateImpl();
 
     internal void Tessellate()
     {
         Dispose();
-
-        layers[0] = new VertexBuffer(BaseEngine.Engine.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, BaseEngine.D3DFVF_TLVERTEX, Pool.Managed);
-        layers[1] = new VertexBuffer(BaseEngine.Engine.Device, SCENE_PRIMITIVE_SIZE, Usage.WriteOnly, BaseEngine.D3DFVF_TLVERTEX, Pool.Managed);
-
-        DataStream downLayerVBData = layers[0].Lock(0, 0, LockFlags.None);
-        DataStream upLayerVBData = layers[1].Lock(0, 0, LockFlags.None);
-
-        for (int col = 0; col < SIDE_BLOCKS_PER_SCENE; col++)
-        {
-            for (int row = 0; row < SIDE_BLOCKS_PER_SCENE; row++)
-            {
-                var blockPos = new Vector(col * BLOCK_SIZE, -row * BLOCK_SIZE);
-                Block block = blocks[row, col];
-
-                if (block != null)
-                {
-                    block.Tessellate(downLayerVBData, upLayerVBData, blockPos);
-                }
-                else
-                {
-                    for (int tileRow = 0; tileRow < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileRow++)
-                    {
-                        for (int tileCol = 0; tileCol < SIDE_TILES_PER_MAP * SIDE_MAPS_PER_BLOCK; tileCol++)
-                        {
-                            var tilePos = new Vector(blockPos.X + tileCol * TILE_SIZE, blockPos.Y - tileRow * TILE_SIZE);
-                            BaseEngine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
-                            BaseEngine.WriteSquare(upLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
-                        }
-                    }
-                }
-            }
-        }
-
-        layers[0].Unlock();
-        layers[1].Unlock();
-
+        TesselateImpl();
         Tessellated = true;
     }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
-        try
-        {
-            for (int i = 0; i < layers.Length; i++)
-            {
-                if (layers[i] != null)
-                {
-                    layers[i].Dispose();
-                    layers[i] = null;
-                }
-            }
-        }
-        finally
-        {
-            Tessellated = false;
-            GC.SuppressFinalize(this);
-        }
     }
 
     internal void OnDisposeDevice()
     {
         Dispose();
     }
+
+    protected internal abstract void RenderLayer(int layer, ITexture tilemap, Palette palette, FadingControl fadingControl, Box sceneBox);
 }

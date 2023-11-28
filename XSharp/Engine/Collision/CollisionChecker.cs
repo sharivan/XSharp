@@ -341,9 +341,9 @@ public abstract class CollisionChecker
 
     protected CollisionChecker()
     {
-        placements = new List<CollisionPlacement>();
-        resultSet = new EntitySet<Entity>();
-        IgnoreSprites = new EntitySet<Sprite>();
+        placements = [];
+        resultSet = [];
+        IgnoreSprites = [];
     }
 
     protected abstract CollisionFlags GetCollisionVectorFlags();

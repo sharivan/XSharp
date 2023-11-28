@@ -1,24 +1,19 @@
 ﻿using System;
 using System.IO;
 
-using SharpDX;
-using SharpDX.Direct3D9;
-
+using XSharp.Graphics;
 using XSharp.Serialization;
-
-using Color = SharpDX.Color;
-using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 
 namespace XSharp.Engine.Graphics;
 
-public class Palette : IDisposable, ISerializable
+public abstract class Palette : IDisposable, ISerializable
 {
-    internal string name;
+    protected internal string name;
 
     public int Index
     {
         get;
-        internal set;
+        protected set;
     }
 
     public string Name
@@ -27,29 +22,29 @@ public class Palette : IDisposable, ISerializable
         set => BaseEngine.Engine.UpdatePaletteName(this, value);
     }
 
-    public Texture Texture
+    public ITexture Texture
     {
         get;
-        internal set;
+        protected set;
     }
 
-    public int Width => Texture.GetLevelDescription(0).Width;
+    public int Width => Texture.Width;
 
-    public int Height => Texture.GetLevelDescription(0).Height;
+    public int Height => Texture.Height;
 
     public int Count
     {
         get;
-        internal set;
+        protected set;
     } = 0;
 
     public int Capacity => Width * Height;
 
-    internal Palette()
+    protected Palette()
     {
     }
 
-    internal Palette(ISerializer serializer)
+    protected Palette(ISerializer serializer)
     {
         Deserialize(serializer);
     }
@@ -63,13 +58,15 @@ public class Palette : IDisposable, ISerializable
         var colors = new Color[Count];
         for (int i = 0; i < Count; i++)
         {
-            int bgra = serializer.ReadInt();
-            var color = Color.FromBgra(bgra);
+            int raw = serializer.ReadInt();
+            var color = new Color(raw);
             colors[i] = color;
         }
 
         BaseEngine.Engine.PrecachePalette(name, colors, Count);
     }
+
+    protected abstract void SerializeContent(ISerializer serializer);
 
     public void Serialize(ISerializer serializer)
     {
@@ -77,24 +74,7 @@ public class Palette : IDisposable, ISerializable
         serializer.WriteInt(Index);
 
         serializer.WriteInt(Count);
-        DataRectangle rect = Texture.LockRectangle(0, D3D9LockFlags.Discard);
-        try
-        {
-            int width = Texture.GetLevelDescription(0).Width;
-            int height = Texture.GetLevelDescription(0).Height;
-
-            using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
-            using var reader = new BinaryReader(stream);
-            for (int i = 0; i < Count; i++)
-            {
-                int bgra = reader.ReadInt32();
-                serializer.WriteInt(bgra);
-            }
-        }
-        finally
-        {
-            Texture.UnlockRectangle(0);
-        }
+        SerializeContent(serializer);
     }
 
     public void Dispose()
@@ -108,71 +88,9 @@ public class Palette : IDisposable, ISerializable
         return LookupColor(color, 0, 256);
     }
 
-    public int LookupColor(Color color, int start, int count)
-    {
-        DataRectangle rect = Texture.LockRectangle(0, D3D9LockFlags.Discard);
-        try
-        {
-            int width = Texture.GetLevelDescription(0).Width;
-            int height = Texture.GetLevelDescription(0).Height;
+    public abstract int LookupColor(Color color, int start, int count);
 
-            using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
-            using var reader = new BinaryReader(stream);
-            for (int i = start; i < start + count; i++)
-            {
-                int bgra = reader.ReadInt32();
-                var c = Color.FromBgra(bgra);
-                if (color == c)
-                    return i;
-            }
-        }
-        finally
-        {
-            Texture.UnlockRectangle(0);
-        }
+    public abstract Color GetColor(int index);
 
-        return -1;
-    }
-
-    public Color GetColor(int index)
-    {
-        DataRectangle rect = Texture.LockRectangle(0, D3D9LockFlags.Discard);
-        try
-        {
-            int width = Texture.GetLevelDescription(0).Width;
-            int height = Texture.GetLevelDescription(0).Height;
-
-            using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
-            using var reader = new BinaryReader(stream);
-            stream.Position = index * sizeof(int);
-            int bgra = reader.ReadInt32();
-            var c = Color.FromBgra(bgra);
-            return c;
-        }
-        finally
-        {
-            Texture.UnlockRectangle(0);
-        }
-    }
-
-    public void SetColor(Texture palette, int index, Color color)
-    {
-        DataRectangle rect = palette.LockRectangle(0, D3D9LockFlags.Discard);
-        try
-        {
-            int width = palette.GetLevelDescription(0).Width;
-            int height = palette.GetLevelDescription(0).Height;
-
-            using var stream = new DataStream(rect.DataPointer, width * height * sizeof(int), true, true);
-            stream.Position = index * sizeof(int);
-            stream.Write(color.ToBgra());
-
-            if (index >= Count)
-                Count = index + 1;
-        }
-        finally
-        {
-            palette.UnlockRectangle(0);
-        }
-    }
+    public abstract void SetColor(ITexture palette, int index, Color color);
 }

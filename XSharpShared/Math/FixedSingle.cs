@@ -17,7 +17,7 @@ public class FixedSingleTypeConverter : TypeConverter
             || base.CanConvertFrom(context, sourceType);
     }
 
-    public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
     {
         return value switch
         {
@@ -29,7 +29,7 @@ public class FixedSingleTypeConverter : TypeConverter
         };
     }
 
-    public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
+    public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
     {
         return destinationType == typeof(float)
             ? (float) (FixedSingle) value

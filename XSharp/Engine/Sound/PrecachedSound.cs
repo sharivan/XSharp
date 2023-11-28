@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using NAudio.Wave;
-
 namespace XSharp.Engine.Sound;
 
 public class PrecachedSound : IDisposable
@@ -16,21 +14,21 @@ public class PrecachedSound : IDisposable
         get;
     }
 
-    public WaveStream Stream
+    public IWaveStream Stream
     {
         get;
         internal set;
     }
 
-    public PrecachedSound(string name, string relativePath, WaveStream stream = null)
+    public PrecachedSound(string name, string relativePath, IWaveStream stream = null)
     {
         RelativePath = relativePath;
         Stream = stream;
 
-        names = new HashSet<string>
-        {
+        names =
+        [
             name
-        };
+        ];
     }
 
     public PrecachedSound(string path, params string[] names)
@@ -38,12 +36,12 @@ public class PrecachedSound : IDisposable
     {
     }
 
-    public PrecachedSound(string path, WaveStream stream = null, params string[] names)
+    public PrecachedSound(string path, IWaveStream stream = null, params string[] names)
     {
         RelativePath = path;
         Stream = stream;
 
-        this.names = names != null && names.Length > 0 ? new HashSet<string>(names) : new HashSet<string>();
+        this.names = names != null && names.Length > 0 ? new HashSet<string>(names) : [];
     }
 
     internal bool AddName(string name)
@@ -68,7 +66,7 @@ public class PrecachedSound : IDisposable
         path = RelativePath;
     }
 
-    public void Deconstruct(out IReadOnlySet<string> names, out string path, out WaveStream stream)
+    public void Deconstruct(out IReadOnlySet<string> names, out string path, out IWaveStream stream)
     {
         names = Names;
         path = RelativePath;

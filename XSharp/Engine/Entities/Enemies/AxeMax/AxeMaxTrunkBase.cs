@@ -70,8 +70,8 @@ public class AxeMaxTrunkBase : Sprite
         SetAnimationNames("TrunkBase");
         InitialAnimationName = "TrunkBase";
 
-        trunkPile = new List<EntityReference<AxeMaxTrunk>>();
-        readyTrunks = new BitSet();
+        trunkPile = [];
+        readyTrunks = [];
     }
 
     public override FixedSingle GetGravity()

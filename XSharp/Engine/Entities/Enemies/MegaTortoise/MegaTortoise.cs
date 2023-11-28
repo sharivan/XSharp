@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -15,8 +14,8 @@ public enum MegaTortoiseState
 public class MegaTortoise : Enemy, IFSMEntity<MegaTortoiseState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF602848), // 1
         Color.FromBgra(0xFFB02040), // 2
@@ -33,7 +32,7 @@ public class MegaTortoise : Enemy, IFSMEntity<MegaTortoiseState>
         Color.FromBgra(0xFF807070), // D
         Color.FromBgra(0xFF504040), // E
         Color.FromBgra(0xFF382020)  // F
-    };
+    ];
 
     public const int HEALTH = 32;
     public static readonly FixedSingle CONTACT_DAMAGE = 4;

@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -9,8 +8,8 @@ namespace XSharp.Engine.Entities.Enemies.AxeMax;
 public class AxeMax : Sprite
 {
     #region StaticFields
-    public static readonly Color[] AXE_MAX_PALETTE = new Color[]
-    {
+    public static readonly Color[] AXE_MAX_PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF386080), // 1
         Color.FromBgra(0xFF6090B0), // 2
@@ -27,7 +26,7 @@ public class AxeMax : Sprite
         Color.FromBgra(0xFF783830), // D
         Color.FromBgra(0xFFF87858), // E
         Color.FromBgra(0xFF302820) // F
-    };
+    ];
 
     public const int TRUNK_COUNT = 2;
     #endregion

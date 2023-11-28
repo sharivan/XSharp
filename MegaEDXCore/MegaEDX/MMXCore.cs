@@ -922,10 +922,10 @@ public class MMXCore : SNESCore
                             // do nothing
                             break;
                         case ESort.SORT_MIN:
-                            tileInfo[i].value = System.Math.Min(tileInfo[i].value, value);
+                            tileInfo[i].value = Math.Min(tileInfo[i].value, value);
                             break;
                         case ESort.SORT_MAX:
-                            tileInfo[i].value = System.Math.Max(tileInfo[i].value, value);
+                            tileInfo[i].value = Math.Max(tileInfo[i].value, value);
                             break;
                         case ESort.SORT_MEDIAN:
                             tileInfo[i].count[value]++;

@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 
 namespace XSharp.Engine.Entities.Effects;
@@ -7,18 +6,18 @@ namespace XSharp.Engine.Entities.Effects;
 public class ChargingEffect : SpriteEffect
 {
     #region StaticFields
-    public static readonly Color[] CHARGE_EFFECT_PALETTE = new Color[]
-    {
+    public static readonly Color[] CHARGE_EFFECT_PALETTE =
+    [
         Color.Transparent, // 0
         new Color(136, 248, 248, 255), // 1
         new Color(248, 224, 112, 255), // 2
         new Color(248, 248, 248, 255), // 3
         new Color(240, 176, 56, 255), // 4
         new Color(240, 144, 96, 255) // 5
-    };
+    ];
 
-    public static readonly Color[] CHARGE_LEVEL_1_PALETTE = new Color[]
-        {
+    public static readonly Color[] CHARGE_LEVEL_1_PALETTE =
+        [
         Color.Transparent, // 0
         new Color(248, 248, 248, 255), // 1
         new Color(232, 224, 64, 255), // 2
@@ -35,10 +34,10 @@ public class ChargingEffect : SpriteEffect
         new Color(248, 248, 248, 255), // 13
         new Color(176, 176, 176, 255), // 14
         new Color(24, 80, 224, 255) // 15
-        };
+        ];
 
-    public static readonly Color[] CHARGE_LEVEL_2_PALETTE = new Color[]
-    {
+    public static readonly Color[] CHARGE_LEVEL_2_PALETTE =
+    [
         Color.Transparent, // 0
         new Color(248, 248, 248, 255), // 1
         new Color(232, 224, 64, 255), // 2
@@ -55,7 +54,7 @@ public class ChargingEffect : SpriteEffect
         new Color(248, 248, 248, 255), // 13
         new Color(176, 176, 176, 255), // 14
         new Color(144, 0, 216, 255) // 15
-    };
+    ];
     #endregion
 
     #region Precache

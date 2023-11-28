@@ -74,7 +74,7 @@ partial class FrmLevelEditor
         // 
         tmrRender.Enabled = true;
         tmrRender.Interval = 15;
-        tmrRender.Tick += timer1_Tick;
+        tmrRender.Tick += Timer1_Tick;
         // 
         // ssStatusBar
         // 
@@ -177,9 +177,9 @@ partial class FrmLevelEditor
         sdxRender.Name = "sdxRender";
         sdxRender.Size = new Size(960, 840);
         sdxRender.TabIndex = 2;
-        sdxRender.MouseDown += sdxRender_MouseDown;
-        sdxRender.MouseMove += sdxRender_MouseMove;
-        sdxRender.MouseUp += sdxRender_MouseUp;
+        sdxRender.MouseDown += SdxRender_MouseDown;
+        sdxRender.MouseMove += SdxRender_MouseMove;
+        sdxRender.MouseUp += SdxRender_MouseUp;
         // 
         // pnlRight
         // 
@@ -279,7 +279,7 @@ partial class FrmLevelEditor
         btnPointer.Name = "btnPointer";
         btnPointer.Size = new Size(23, 22);
         btnPointer.Text = "Pointer";
-        btnPointer.Click += btnPointer_Click;
+        btnPointer.Click += BtnPointer_Click;
         // 
         // btnHand
         // 
@@ -290,7 +290,7 @@ partial class FrmLevelEditor
         btnHand.Size = new Size(23, 22);
         btnHand.Text = "Hand";
         btnHand.ToolTipText = "Hand";
-        btnHand.Click += btnHand_Click;
+        btnHand.Click += BtnHand_Click;
         // 
         // FrmLevelEditor
         // 

@@ -1,12 +1,11 @@
 ﻿using System;
-
-using SharpDX.Direct3D9;
+using XSharp.Graphics;
 
 namespace XSharp.Engine.Graphics;
 
 public class Tileset : IDisposable
 {
-    public Texture Texture
+    public ITexture Texture
     {
         get;
     }

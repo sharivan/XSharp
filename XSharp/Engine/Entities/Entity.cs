@@ -38,7 +38,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
     public event EntityActivatorEvent TouchingEvent;
     public event EntityActivatorEvent EndTouchEvent;
 
-    private Dictionary<string, object> initParams = new();
+    private Dictionary<string, object> initParams = [];
     internal int index = -1;
     internal string name = null;
     private Vector origin = Vector.NULL_VECTOR;
@@ -352,10 +352,10 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     protected Entity()
     {
-        touchingEntities = new EntitySet<Entity>();
-        childs = new EntitySet<Entity>();
-        resultSet = new EntitySet<Entity>();
-        states = new List<EntityState>();
+        touchingEntities = [];
+        childs = [];
+        resultSet = [];
+        states = [];
         lastBox = new Box[BOXKIND_COUNT];
     }
 

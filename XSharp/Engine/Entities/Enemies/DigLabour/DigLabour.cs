@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -17,8 +16,8 @@ public enum DigLabourState
 public class DigLabour : Enemy, IFSMEntity<DigLabourState>
 {
     #region StaticFields
-    public static readonly Color[] PALETTE = new Color[]
-    {
+    public static readonly Color[] PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF406830), // 1
         Color.FromBgra(0xFF70B888), // 2
@@ -35,7 +34,7 @@ public class DigLabour : Enemy, IFSMEntity<DigLabourState>
         Color.FromBgra(0xFF783830), // D
         Color.FromBgra(0xFFF87858), // E
         Color.FromBgra(0xFF302020)  // F
-    };
+    ];
 
     public const int HEALTH = 8;
     public static readonly FixedSingle CONTACT_DAMAGE = 2;

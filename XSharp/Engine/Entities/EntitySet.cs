@@ -60,7 +60,7 @@ public class EntitySet<T> : ISet<T>, IReadOnlySet<T>, ISerializable where T : En
 
     public EntitySet()
     {
-        bitSet = new BitSet();
+        bitSet = [];
     }
 
     public EntitySet(params T[] entities) : this()
@@ -315,7 +315,7 @@ public class EntitySet<T> : ISet<T>, IReadOnlySet<T>, ISerializable where T : En
 
     public void Deserialize(ISerializer reader)
     {
-        bitSet ??= new BitSet();
+        bitSet ??= [];
         bitSet.Deserialize(reader);
     }
 

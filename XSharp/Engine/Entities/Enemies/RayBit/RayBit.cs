@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -17,8 +16,8 @@ public enum RayBitState
 public class RayBit : Enemy, IFSMEntity<RayBitState>
 {
     #region StaticFields
-    public static readonly Color[] RAYBIT_PALETTE = new Color[]
-    {
+    public static readonly Color[] RAYBIT_PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF208050), // 1
         Color.FromBgra(0xFF38A060), // 2
@@ -35,7 +34,7 @@ public class RayBit : Enemy, IFSMEntity<RayBitState>
         Color.FromBgra(0xFF8890E8), // D
         Color.FromBgra(0xFF7058C0), // E
         Color.FromBgra(0xFF402028) // F
-    };
+    ];
 
     public static readonly FixedSingle HP = 4;
     public static readonly FixedSingle CONTACT_DAMAGE = 4;

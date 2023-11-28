@@ -32,16 +32,16 @@ public partial class FrmLevelEditor : MaterialForm
 
         public void Render()
         {
-            var device = Engine.BaseEngine.Engine.Device;
+            var device = BaseEngine.Engine.Device;
 
             device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
             device.BeginScene();
 
-            var tilemap = Engine.BaseEngine.Engine.ForegroundTilemap;
+            var tilemap = BaseEngine.Engine.ForegroundTilemap;
             int tilemapWidth = tilemap.GetLevelDescription(0).Width;
             int tilemapHeight = tilemap.GetLevelDescription(0).Height;
-            var palette = Engine.BaseEngine.Engine.ForegroundPalette;
-            Engine.BaseEngine.Engine.DrawTexture(tilemap, palette);
+            var palette = BaseEngine.Engine.ForegroundPalette;
+            BaseEngine.Engine.DrawTexture(tilemap, palette);
 
             device.EndScene();
             device.Present(new Rectangle(0, 0, tilemapWidth, tilemapHeight), new Rectangle(0, 0, control.ClientSize.Width, control.ClientSize.Height), control.Handle);
@@ -71,10 +71,10 @@ public partial class FrmLevelEditor : MaterialForm
         BaseEngine.Initialize<EditorEngine>(sdxRender);
         BaseEngine.Engine.Editing = true;
 
-        var foregroundLayoutWidth = Engine.BaseEngine.Engine.World.ForegroundLayout.Width;
-        var foregroundLayoutHeight = Engine.BaseEngine.Engine.World.ForegroundLayout.Height;
+        var foregroundLayoutWidth = BaseEngine.Engine.World.ForegroundLayout.Width;
+        var foregroundLayoutHeight = BaseEngine.Engine.World.ForegroundLayout.Height;
         var max = FixedSingle.Max(foregroundLayoutWidth, foregroundLayoutHeight);
-        var ratio = Engine.BaseEngine.Engine.StageSize.Y / Engine.BaseEngine.Engine.StageSize.X;
+        var ratio = BaseEngine.Engine.StageSize.Y / BaseEngine.Engine.StageSize.X;
         //GameEngine.Engine.Camera.Size = (max, max * ratio);
         //GameEngine.Engine.Camera.LeftTop = (0, 0);
 
@@ -101,55 +101,55 @@ public partial class FrmLevelEditor : MaterialForm
             return;
 
         scale = newScale;
-        Engine.BaseEngine.Engine.Camera.Size = SCREEN_SIZE * scale;
+        BaseEngine.Engine.Camera.Size = SCREEN_SIZE * scale;
     }
 
-    private void timer1_Tick(object sender, EventArgs e)
+    private void Timer1_Tick(object sender, EventArgs e)
     {
-        Engine.BaseEngine.RunSingleFrame();
+        BaseEngine.RunSingleFrame();
         tileRender.Render();
     }
 
     private void FrmLevelEditor_FormClosed(object sender, FormClosedEventArgs e)
     {
-        Engine.BaseEngine.Dispose();
+        BaseEngine.DisposeEngine();
     }
 
-    private void btnPointer_Click(object sender, EventArgs e)
+    private void BtnPointer_Click(object sender, EventArgs e)
     {
 
     }
 
-    private void btnHand_Click(object sender, EventArgs e)
+    private void BtnHand_Click(object sender, EventArgs e)
     {
 
     }
 
-    private void sdxRender_MouseDown(object sender, MouseEventArgs e)
+    private void SdxRender_MouseDown(object sender, MouseEventArgs e)
     {
         if (e.Button == MouseButtons.Left)
         {
             startX = e.X;
             startY = e.Y;
-            startCameraOrigin = Engine.BaseEngine.Engine.Camera.Origin;
+            startCameraOrigin = BaseEngine.Engine.Camera.Origin;
             moving = true;
         }
     }
 
-    private void sdxRender_MouseMove(object sender, MouseEventArgs e)
+    private void SdxRender_MouseMove(object sender, MouseEventArgs e)
     {
         if (moving)
         {
             double dx = e.X - startX;
             double dy = e.Y - startY;
 
-            dx *= (double) Engine.BaseEngine.Engine.Camera.Width / sdxRender.Width;
-            dy *= (double) Engine.BaseEngine.Engine.Camera.Height / sdxRender.Height;
-            Engine.BaseEngine.Engine.Camera.SetOrigin(startCameraOrigin - (dx, dy), false);
+            dx *= (double) BaseEngine.Engine.Camera.Width / sdxRender.Width;
+            dy *= (double) BaseEngine.Engine.Camera.Height / sdxRender.Height;
+            BaseEngine.Engine.Camera.SetOrigin(startCameraOrigin - (dx, dy), false);
         }
     }
 
-    private void sdxRender_MouseUp(object sender, MouseEventArgs e)
+    private void SdxRender_MouseUp(object sender, MouseEventArgs e)
     {
         if (e.Button == MouseButtons.Left)
             moving = false;

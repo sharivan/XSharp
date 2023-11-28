@@ -1,5 +1,4 @@
-﻿using SharpDX;
-
+﻿using XSharp.Graphics;
 using XSharp.Engine.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
@@ -25,8 +24,8 @@ public class ChillPenguin : Boss, IFSMEntity<ChillPenguinState>
     #region StaticFields
     public static readonly bool DONT_ATTACK = false;
 
-    public static readonly Color[] PENGUIN_PALETTE = new Color[]
-    {
+    public static readonly Color[] PENGUIN_PALETTE =
+    [
         Color.Transparent, // 0
         Color.FromBgra(0xFF303040), // 1
         Color.FromBgra(0xFF3870F0), // 2
@@ -60,7 +59,7 @@ public class ChillPenguin : Boss, IFSMEntity<ChillPenguinState>
         Color.FromBgra(0xFF98F8F8), // 1D
         Color.FromBgra(0xFF90F8F8), // 1E
         Color.FromBgra(0xFF88F8F8) // 1F
-    };
+    ];
 
     public static readonly Box PENGUIN_COLLISION_BOX = ((0, 2), (-14, -17), (14, 17));
     public static readonly Box PENGUIN_HITBOX = ((0, 2), (-10, -15), (10, 15));

@@ -1,15 +1,12 @@
 ﻿using System;
 
-using NAudio.Wave;
-
 using XSharp.Serialization;
 
 namespace XSharp.Engine.Sound;
 
-public class SoundChannel : IDisposable, ISerializable
+public abstract class SoundChannel : IDisposable, ISerializable
 {
     internal string name;
-    private WaveOutEvent player;
 
     public int Index
     {
@@ -23,7 +20,7 @@ public class SoundChannel : IDisposable, ISerializable
         set => BaseEngine.Engine.UpdateSoundChannelName(this, value);
     }
 
-    public SoundStream Stream
+    public ISoundStream Stream
     {
         get;
     }
@@ -34,35 +31,41 @@ public class SoundChannel : IDisposable, ISerializable
         private set;
     }
 
-    public float Volume
+    public abstract float Volume
     {
-        get => player.Volume;
-        set => player.Volume = value;
+        get;
+        set;
     }
+
+    public float SavedVolume
+    {
+        get;
+        set;
+    } = -1;
 
     public bool Playing => Stream.Playing;
 
-    internal SoundChannel(float volume = 1)
+    protected SoundChannel(float volume = 1)
     {
-        player = new WaveOutEvent()
-        {
-            Volume = volume
-        };
-
-        Stream = new SoundStream();
+        Stream = CreateSoundStream();
 
         Initialized = false;
     }
 
-    public void Dispose()
-    {
-        player.Dispose();
+    protected abstract ISoundStream CreateSoundStream();
+
+    public virtual void Dispose()
+    {      
         Stream.Dispose();
 
         Initialized = false;
 
         GC.SuppressFinalize(this);
     }
+
+    protected abstract void Init(ISoundStream stream);
+
+    protected abstract void Play();
 
     public void Play(PrecachedSound sound, double stopTime, double loopTime, bool ignoreUpdatesUntilPlayed = false)
     {
@@ -77,11 +80,11 @@ public class SoundChannel : IDisposable, ISerializable
 
         if (!Initialized)
         {
-            player.Init(Stream);
+            Init(Stream);
             Initialized = true;
         }
 
-        player.Play();
+        Play();
     }
 
     public void Play(PrecachedSound sound, double loopTime, bool ignoreUpdatesUntilFinished = false)
@@ -111,10 +114,7 @@ public class SoundChannel : IDisposable, ISerializable
         Stream.Stop();
     }
 
-    public void StopPlayer()
-    {
-        player.Stop();
-    }
+    public abstract void StopPlayer();
 
     public void Stop()
     {
@@ -130,23 +130,39 @@ public class SoundChannel : IDisposable, ISerializable
     public void Deserialize(ISerializer serializer)
     {
         Stream.Deserialize(serializer);
-        player.Volume = serializer.ReadFloat();
+        Volume = serializer.ReadFloat();
+        SavedVolume = serializer.ReadFloat();
 
         if (Stream.Playing)
         {
             if (!Initialized)
             {
-                player.Init(Stream);
+                Init(Stream);
                 Initialized = true;
             }
 
-            player.Play();
+            Play();
         }
     }
 
     public void Serialize(ISerializer serializer)
     {
         Stream.Serialize(serializer);
-        serializer.WriteFloat(player.Volume);
+        serializer.WriteFloat(Volume);
+        serializer.WriteFloat(SavedVolume);
+    }
+
+    public void SaveVolume()
+    {
+        SavedVolume = Volume;
+    }
+
+    public void RestoreVolume()
+    {
+        if (SavedVolume >= 0)
+        {
+            Volume = SavedVolume;
+            SavedVolume = -1;
+        }
     }
 }
