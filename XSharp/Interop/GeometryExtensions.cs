@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using XSharp.Math.Geometry;
+﻿using XSharp.Math.Geometry;
 
 namespace XSharp.Interop;
 

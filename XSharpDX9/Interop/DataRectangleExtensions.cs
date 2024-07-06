@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX;
-using XSharp.Graphics;
-
-using DataRectangle = XSharp.Graphics.DataRectangle;
+﻿using DataRectangle = XSharp.Graphics.DataRectangle;
 using DX9DataRectanbgle = SharpDX.DataRectangle;
 
 namespace XSharp.Interop;

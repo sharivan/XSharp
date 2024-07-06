@@ -1,0 +1,875 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using System.Windows.Forms;
+using NLua;
+
+using SharpDX;
+using SharpDX.Direct3D11;
+using SharpDX.DirectInput;
+using SharpDX.Mathematics.Interop;
+using SharpDX.Windows;
+
+using XSharp.Engine;
+using XSharp.Graphics;
+using XSharp.Math.Geometry;
+
+using Box = XSharp.Math.Geometry.Box;
+using Color = XSharp.Graphics.Color;
+using DX9Color = SharpDX.Color;
+using D3D9LockFlags = SharpDX.Direct3D11.LockFlags;
+using Device9 = SharpDX.Direct3D11.Device;
+using DeviceType = SharpDX.Direct3D11.DeviceType;
+using DXSprite = SharpDX.Direct3D11.Sprite;
+using Font = SharpDX.Direct3D11.Font;
+using Rectangle = SharpDX.Rectangle;
+using RectangleF = XSharp.Math.Geometry.RectangleF;
+using DX9RectangleF = SharpDX.RectangleF;
+using ResultCode = SharpDX.Direct3D11.ResultCode;
+using DX11Format = SharpDX.Direct3D11.Format;
+using Format = XSharp.Graphics.Format;
+using System.Drawing.Imaging;
+using System.Reflection;
+using DataStream = XSharp.Graphics.DataStream;
+using XSharp.Engine.Graphics;
+using SharpDX.DXGI;
+using Vector4 = SharpDX.Vector4;
+using Usage = SharpDX.Direct3D11.Usage;
+using PresentParameters = SharpDX.Direct3D11.PresentParameters;
+using SwapEffect = SharpDX.Direct3D11.SwapEffect;
+using PresentFlags = SharpDX.Direct3D11.PresentFlags;
+using Matrix = XSharp.Math.Geometry.Matrix;
+using DX9Matrix = SharpDX.Matrix;
+using XSharp.Engine.World;
+using System.Data;
+using DataRectangle = XSharp.Graphics.DataRectangle;
+using XSharp.Interop;
+using Vector2 = XSharp.Math.Geometry.Vector2;
+using DX9Vector2 = SharpDX.Vector2;
+using FontDrawFlags = XSharp.Graphics.FontDrawFlags;
+using Size2F = XSharp.Math.Geometry.Size2F;
+using Point = XSharp.Math.Geometry.Point;
+using FontDescription = XSharp.Graphics.FontDescription;
+using DX11FontDescription = SharpDX.Direct3D11.FontDescription;
+using XSharp.Engine.Input;
+using NAudio.CoreAudioApi;
+using XSharp.Engine.Sound;
+using System.Configuration;
+using Configuration = System.Configuration.Configuration;
+
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
+using static XSharp.Engine.Consts;
+
+namespace XSharp.Engine;
+
+public class DX11Engine : BaseEngine
+{
+    new public static DX11Engine Engine => (DX11Engine) BaseEngine.Engine;
+
+    public const VertexFormat D3DFVF_TLVERTEX = VertexFormat.Position | VertexFormat.Diffuse | VertexFormat.Texture1;
+    public const int VERTEX_SIZE = 5 * sizeof(float) + sizeof(int);
+
+    private PresentParameters presentationParams;
+    private DXSprite sprite;   
+
+    private EffectHandle psFadingLevelHandle;
+    private EffectHandle psFadingColorHandle;
+    private EffectHandle plsFadingLevelHandle;
+    private EffectHandle plsFadingColorHandle;
+
+    private DirectInput directInput;
+
+    private IRenderTarget[] renderTargets = new IRenderTarget[16];
+
+    private Lua lua;
+
+    public Control Control
+    {
+        get;
+        private set;
+    }
+
+    public Direct3D Direct3D
+    {
+        get;
+        private set;
+    }
+
+    public Device9 Device
+    {
+        get;
+        private set;
+    }
+
+    public VertexBuffer VertexBuffer
+    {
+        get;
+        private set;
+    }
+
+    public PixelShader PixelShader
+    {
+        get;
+        private set;
+    }
+
+    public PixelShader PaletteShader
+    {
+        get;
+        private set;
+    }
+
+    public override string Title
+    {
+        get => Control.Text;
+        set => Control.Text = value;
+    }
+
+    public override Size2F ClientSize
+    {
+        get
+        {
+            var size = Control.Size;
+            return new Size2F(size.Width, size.Height);
+        }
+    }
+
+    protected override WaveStreamFactory CreateWaveStreamUtil()
+    {
+        return new NAudioWaveStreamFactory();
+    }
+
+    protected override ITexture CreateStageTexture()
+    {
+        return new DX11Texture(Device, (int) StageSize.X, (int) StageSize.Y, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
+    }
+
+    protected override void InitGraphicDevice()
+    {
+        // Creates the Device
+        var device = new Device9(Direct3D, 0, DeviceType.Hardware, Control.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
+        Device = device;
+
+        var function = ShaderBytecode.CompileFromFile("PixelShader.hlsl", "main", "ps_2_0");
+        PixelShader = new PixelShader(device, function);
+
+        psFadingLevelHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
+        psFadingColorHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
+
+        function = ShaderBytecode.CompileFromFile("PaletteShader.hlsl", "main", "ps_2_0");
+        PaletteShader = new PixelShader(device, function);
+
+        plsFadingLevelHandle = PaletteShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
+        plsFadingColorHandle = PaletteShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
+
+        device.VertexShader = null;
+        device.PixelShader = PixelShader;
+        device.VertexFormat = D3DFVF_TLVERTEX;
+
+        VertexBuffer = new VertexBuffer(device, VERTEX_SIZE * 6, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
+
+        device.SetRenderState(RenderState.ZEnable, false);
+        device.SetRenderState(RenderState.Lighting, false);
+        device.SetRenderState(RenderState.AlphaBlendEnable, true);
+        device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
+        device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
+        device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.SelectArg1);
+        device.SetTextureStageState(0, TextureStage.ColorArg1, TextureArgument.Texture);
+        device.SetTextureStageState(1, TextureStage.ColorOperation, TextureOperation.Disable);
+        device.SetTextureStageState(1, TextureStage.AlphaOperation, TextureOperation.Disable);
+        device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+        sprite = new DXSprite(device);
+
+        SetupQuad(VertexBuffer, (float) StageSize.X, (float) StageSize.Y);
+    }
+
+    protected override IKeyboard CreateKeyboard()
+    {
+        var result = new Keyboard(directInput);
+        result.Properties.BufferSize = 2048;
+        result.Acquire();
+        return new DX11Keyboard(result);
+    }
+
+    protected override IJoystick CreateJoystick()
+    {
+        var joystickGuid = Guid.Empty;
+        foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Gamepad, DeviceEnumerationFlags.AllDevices))
+            joystickGuid = deviceInstance.InstanceGuid;
+
+        if (joystickGuid == Guid.Empty)
+        {
+            foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
+                joystickGuid = deviceInstance.InstanceGuid;
+        }
+
+        if (joystickGuid != Guid.Empty)
+        {
+            var result = new Joystick(directInput, joystickGuid);
+            result.Properties.BufferSize = 2048;
+            result.Acquire();
+            return new DX11Joystick(result);
+        }
+
+        return null;
+    }
+
+    protected override void Initialize(dynamic initializers)
+    {
+        Control = initializers.control;
+
+        lua = new Lua();
+
+        presentationParams = new PresentParameters
+        {
+            Windowed = !FULL_SCREEN,
+            SwapEffect = SwapEffect.Discard,
+            PresentationInterval = VSYNC ? PresentInterval.One : PresentInterval.Immediate,
+            FullScreenRefreshRateInHz = FULL_SCREEN ? TICKRATE : 0,
+            AutoDepthStencilFormat = DX9Format.D16,
+            EnableAutoDepthStencil = true,
+            BackBufferCount = DOUBLE_BUFFERED ? 2 : 1,
+            BackBufferFormat = DX9Format.X8R8G8B8,
+            BackBufferHeight = Control.ClientSize.Height,
+            BackBufferWidth = Control.ClientSize.Width,
+            PresentFlags = VSYNC ? PresentFlags.LockableBackBuffer : PresentFlags.None
+        };
+
+        Direct3D = new Direct3D();
+
+        directInput = new DirectInput();        
+
+        lua.LoadCLRPackage(); // TODO : This can be DANGEROUS! Fix in the future by adding restrictions on the scripting.
+        lua.DoString(@"import ('XSharp', 'XSharp')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Effects')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Enemies')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Enemies.Bosses')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.HUD')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Items')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Objects')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Triggers')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Entities.Weapons')");
+        lua.DoString(@"import ('XSharp', 'XSharp.Engine.Sound')");
+        lua.DoString(@"import('XSharp', 'XSharp.Engine.World')");
+        lua["engine"] = this;
+
+        base.Initialize((object) initializers);
+    }
+
+    protected override void Unload()
+    {
+        DisposeResource(lua);
+        DisposeResource(Direct3D);
+
+        base.Unload();
+    }
+
+    protected override void DisposeDeviceResources()
+    {
+        DisposeResource(PixelShader);
+        DisposeResource(PaletteShader);
+        DisposeResource(sprite);               
+        DisposeResource(VertexBuffer);
+        DisposeResource(Device);
+
+        Device = null;
+    }
+
+    public override DataStream CreateDataStream(IntPtr ptr, int sizeInBytes, bool canRead, bool canWrite)
+    {
+        return new DX11DataStream(ptr, sizeInBytes, canRead, canWrite);
+    }
+
+    public override ITexture CreateEmptyTexture(int width, int height, Format format = Format.L8)
+    {
+        return CreateEmptyTexture(width, height, Usage.None, format, Pool.Managed);
+    }
+
+    public DX11Texture CreateEmptyTexture(int width, int height, Usage usage, Format format, Pool pool)
+    {
+        return new DX11Texture(Device, width, height, 1, usage, format, pool);
+    }
+
+    public override ITexture CreateImageTextureFromFile(string filePath, bool systemMemory = true)
+    {
+        return CreateImageTextureFromFile(filePath, Usage.None, systemMemory ? Pool.SystemMemory : Pool.Default);
+    }
+
+    public DX11Texture CreateImageTextureFromFile(string filePath, Usage usage, Pool pool)
+    {
+        var result = Texture2D.FromFile(Device, filePath, usage, pool);
+        return new DX11Texture(result);
+    }
+
+    public DX11Texture CreateImageTextureFromEmbeddedResource(string path, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
+    {
+        return CreateImageTextureFromEmbeddedResource(Assembly.GetExecutingAssembly(), path, usage, pool);
+    }
+
+    public DX11Texture CreateImageTextureFromEmbeddedResource(Assembly assembly, string path, Usage usage = Usage.None, Pool pool = Pool.SystemMemory)
+    {
+        string assemblyName = assembly.GetName().Name;
+        using var stream = assembly.GetManifestResourceStream($"{assemblyName}.Assets.{path}");
+        var texture = CreateImageTextureFromStream(stream, usage, pool);
+        return texture;
+    }
+
+    public override ITexture CreateImageTextureFromStream(Stream stream, bool systemMemory = true)
+    {
+        return CreateImageTextureFromStream(stream, Usage.None, systemMemory ? Pool.SystemMemory : Pool.Default);
+    }
+
+    public DX11Texture CreateImageTextureFromStream(Stream stream, Usage usage, Pool pool)
+    {
+        var result = Texture2D.FromStream(Device, stream, usage, pool);
+        return new DX11Texture(result);
+    }
+
+    protected override IFont CreateFont(FontDescription description)
+    {
+        return new DX11Font(sprite, new Font(Device, description.ToDX9FontDescription()));
+    }
+
+    protected override ILine CreateLine()
+    {
+        return new DX11Line(new Line(Device));
+    }
+
+    public override void RenderSprite(ITexture texture, Palette palette, FadingControl fadingControl, Box box, Matrix transform, int repeatX = 1, int repeatY = 1)
+    {
+        RectangleF rDest = WorldBoxToScreen(box, false);
+
+        sprite.Begin(SpriteFlags.AlphaBlend);
+
+        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
+        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+        Device.SetSamplerState(0, SamplerState.MipFilter, TextureFilter.None);
+
+        PixelShader shader;
+        EffectHandle fadingLevelHandle;
+        EffectHandle fadingColorHandle;
+
+        if (palette != null)
+        {
+            fadingLevelHandle = plsFadingLevelHandle;
+            fadingColorHandle = plsFadingColorHandle;
+            shader = PaletteShader;
+            Device.SetTexture(1, (DX9Texture) palette.Texture);
+        }
+        else
+        {
+            fadingLevelHandle = psFadingLevelHandle;
+            fadingColorHandle = psFadingColorHandle;
+            shader = PixelShader;
+        }
+
+        Device.PixelShader = shader;
+        Device.VertexShader = null;
+
+        if (fadingControl != null)
+        {
+            shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, fadingControl.FadingLevel);
+            shader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingControl.FadingColor.ToVector4());
+        }
+        else
+        {
+            shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
+        }
+
+        var matTranslation = DX9Matrix.Translation(rDest.Left, rDest.Top, 0);
+        DX9Matrix matTransform = matTranslation * transform.ToDX9Matrix();
+        sprite.Transform = matTransform;
+
+        if (repeatX > 1 || repeatY > 1)
+        {
+            Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Wrap);
+            Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Wrap);
+
+            sprite.Draw((DX11Texture) texture, Color.FromRgba(0xffffffff).ToDX9Color(), (box.Scale(box.Origin, repeatX, repeatY) - box.Origin).ToRectangleF().ToDX9RectangleF());
+        }
+        else
+        {
+            Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+            Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+            sprite.Draw((DX11Texture) texture, Color.FromRgba(0xffffffff).ToDX9Color());
+        }
+
+        sprite.End();
+    }
+
+    public override void WriteVertex(DataStream vbData, float x, float y, float u, float v)
+    {
+        vbData.Write(x);
+        vbData.Write(y);
+        vbData.Write(0f);
+        vbData.Write(0xffffffff);
+        vbData.Write(u);
+        vbData.Write(v);
+    }
+
+    public void SetupQuad(VertexBuffer vb, float width, float height)
+    {
+        DX11DataStream vbData = vb.Lock(0, 0, D3D9LockFlags.None);
+        WriteSquare(vbData, (0, 0), (0, 0), (1, 1), (width, height));
+        vb.Unlock();
+    }
+
+    public void SetupQuad(VertexBuffer vb)
+    {
+        DX11DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, D3D9LockFlags.None);
+
+        WriteVertex(vbData, 0, 0, 0, 0);
+        WriteVertex(vbData, 1, 0, 1, 0);
+        WriteVertex(vbData, 1, -1, 1, 1);
+        WriteVertex(vbData, 0, -1, 0, 1);
+
+        vb.Unlock();
+    }
+
+    public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, ITexture texture, Palette palette, FadingControl fadingControl, Box box)
+    {
+        Device.SetStreamSource(0, vb, 0, vertexSize);
+
+        RectangleF rDest = WorldBoxToScreen(box, false);
+
+        var drawScale = GetDrawScale();
+        float x = rDest.Left * (float) drawScale.X - (float) StageSize.X * 0.5f;
+        float y = -rDest.Top * (float) drawScale.Y + (float) StageSize.Y * 0.5f;
+
+        var matScaling = DX9Matrix.Scaling((float) drawScale.X, (float) drawScale.Y, 1);
+        var matTranslation = DX9Matrix.Translation(x, y, 0);
+        DX9Matrix matTransform = matScaling * matTranslation;
+
+        Device.SetTransform(TransformState.World, matTransform);
+        Device.SetTransform(TransformState.View, DX9Matrix.Identity);
+        Device.SetTransform(TransformState.Texture0, DX9Matrix.Identity);
+        Device.SetTransform(TransformState.Texture1, DX9Matrix.Identity);
+        Device.SetTexture(0, (DX9Texture) texture);
+
+        PixelShader shader;
+        EffectHandle fadingLevelHandle;
+        EffectHandle fadingColorHandle;
+
+        if (palette != null)
+        {
+            fadingLevelHandle = plsFadingLevelHandle;
+            fadingColorHandle = plsFadingColorHandle;
+            shader = PaletteShader;
+            Device.SetTexture(1, (DX11Texture) palette.Texture);
+        }
+        else
+        {
+            fadingLevelHandle = psFadingLevelHandle;
+            fadingColorHandle = psFadingColorHandle;
+            shader = PixelShader;
+        }
+
+        Device.PixelShader = shader;
+        Device.VertexShader = null;
+
+        if (fadingControl != null)
+        {
+            shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, fadingControl.FadingLevel);
+            shader.Function.ConstantTable.SetValue(Device, fadingColorHandle, fadingControl.FadingColor.ToVector4());
+        }
+        else
+        {
+            shader.Function.ConstantTable.SetValue(Device, fadingLevelHandle, Vector4.Zero);
+        }
+
+        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Point);
+        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Point);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+        Device.DrawPrimitives(PrimitiveType.TriangleList, 0, primitiveCount);
+    }
+
+    protected override SpriteSheet CreateSpriteSheet(bool disposeTexture = false, bool precache = false)
+    {
+        return new DX11SpriteSheet(disposeTexture, precache);
+    }
+
+    protected override SpriteSheet CreateSpriteSheet(ITexture texture, bool disposeTexture = false, bool precache = false)
+    {
+        return new DX11SpriteSheet(texture, disposeTexture, precache);
+    }
+
+    protected override SpriteSheet CreateSpriteSheet(string imageFileName, bool precache = false)
+    {
+        return new DX11SpriteSheet(imageFileName, precache);
+    }
+
+    protected override Palette CreatePalette(ITexture texture, int index, string name, int count)
+    {
+        return new DX11Palette((DX11Texture) texture, index, name, count);
+    }
+
+    protected override Scene CreateScene(int id)
+    {
+        return new DX11Scene(id);
+    }
+
+    protected override bool BeginScene()
+    {
+        if (Device == null)
+            return false;
+
+        var hr = Device.TestCooperativeLevel();
+        if (hr.Success)
+        {
+            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, BackgroundColor.ToDX9Color(), 1.0f, 0);
+            Device.BeginScene();
+            return true;
+        }
+
+        if (hr == ResultCode.DeviceLost)
+            return false;
+
+        if (hr == ResultCode.DeviceNotReset)
+        {
+            ResetDevice();
+            return false;
+        }
+
+        Running = false;
+        throw new Exception($"Exiting process due device error: {hr} ({hr.Code})");
+    }
+
+    protected override void EndScene()
+    {
+        Device.EndScene();
+    }
+
+    protected override void Present()
+    {
+        Device.Present();
+    }
+
+    public override bool IsFocused()
+    {
+        return Control.Focused;
+    }
+
+    protected override Point GetCursorPosition()
+    {
+        return Cursor.Position.ToPoint();
+    }
+
+    public override Point PointToClient(Point point)
+    {
+        return Control.PointToClient(point.ToSDPoint()).ToPoint();
+    }
+
+    protected override IRenderTarget GetRenderTarget(int level)
+    {
+        var result = renderTargets[level];
+        if (result != null)
+            return result;
+
+        var surface = Device.GetRenderTarget(level);
+        if (surface == null)
+            return null;
+
+        result  = new DX11RenderTarget(Device.GetRenderTarget(level));
+        renderTargets[level] = result;
+        return result;
+    }
+
+    protected override void SetRenderTarget(int level, IRenderTarget target)
+    {
+        Device.SetRenderTarget(0, (DX11RenderTarget) target);
+        renderTargets[level] = target;
+    }
+
+    protected override void Clear(Color color)
+    {
+        Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, color.ToDX9Color(), 1.0f, 0);
+    }
+
+    protected override void PrepareRender()
+    {
+        var orthoLH = DX9Matrix.OrthoLH((float) StageSize.X, (float) StageSize.Y, 0.0f, 1.0f);
+        Device.SetTransform(TransformState.Projection, orthoLH);
+        Device.SetTransform(TransformState.World, DX9Matrix.Identity);
+        Device.SetTransform(TransformState.View, DX9Matrix.Identity);
+    }
+
+    protected override void DoRenderLoop(Action action)
+    {
+        RenderLoop.Run(Control, () => action());
+    }
+
+    public override void DrawLine(Vector2 from, Vector2 to, float width, Color color, FadingControl fadingControl = null)
+    {
+        //from *= 4;
+        //to *= 4;
+
+        line.Width = width;
+
+        line.Begin();
+
+        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
+        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+        if (fadingControl != null)
+        {
+            Device.PixelShader = PixelShader;
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
+        }
+        else
+        {
+            Device.PixelShader = null;
+        }
+
+        line.Draw(from, to, color);
+        line.End();
+    }
+
+    public override void DrawRectangle(RectangleF rect, float borderWith, Color color, FadingControl fadingControl = null)
+    {
+        var scale = GetCameraScale();
+        float scaleX = (float) scale.X;
+        float scaleY = (float) scale.Y;
+
+        rect = new RectangleF(rect.X, rect.Y + 1, rect.Width, rect.Height);
+
+        line.Width = borderWith;
+
+        line.Begin();
+
+        var matScaling = DX9Matrix.Scaling(1, 1, 1);
+        var matTranslation = DX9Matrix.Translation(0, 0, 0);
+        DX9Matrix matTransform = matScaling * matTranslation;
+
+        Device.SetTransform(TransformState.World, matTransform);
+        Device.SetTransform(TransformState.View, DX9Matrix.Identity);
+
+        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
+        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+        if (fadingControl != null)
+        {
+            Device.PixelShader = PixelShader;
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
+        }
+        else
+        {
+            Device.PixelShader = null;
+        }
+
+        line.Draw(
+            new Vector2[]
+            {
+                rect.TopLeft,
+                rect.TopRight,
+                rect.BottomRight,
+                rect.BottomLeft,
+                rect.TopLeft
+            },
+            color);
+        line.End();
+    }
+
+    public override void FillRectangle(RectangleF rect, Color color, FadingControl fadingControl = null)
+    {
+        float x = rect.Left;
+        float y = rect.Top;
+
+        var matScaling = DX9Matrix.Scaling(rect.Width, rect.Height, 1);
+        var matTranslation = DX9Matrix.Translation(x, y + 1, 0);
+        DX9Matrix matTransform = matScaling * matTranslation;
+
+        sprite.Begin(SpriteFlags.AlphaBlend);
+
+        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
+        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+        if (fadingControl != null)
+        {
+            Device.PixelShader = PixelShader;
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
+        }
+        else
+        {
+            Device.PixelShader = null;
+        }
+
+        Device.VertexShader = null;
+
+        sprite.Transform = matTransform;
+
+        sprite.Draw((DX11Texture) (color == Color.Black ? blackPixelTexture : whitePixelTexture), color.ToDX9Color());
+        sprite.End();
+    }
+
+    public override void DrawText(string text, IFont font, RectangleF drawRect, FontDrawFlags drawFlags, Matrix transform, Color color, out RectangleF fontDimension, FadingControl fadingControl = null)
+    {
+        sprite.Begin();
+
+        Device.VertexShader = null;
+        Device.PixelShader = null;
+
+        Device.SetSamplerState(0, SamplerState.MagFilter, TextureFilter.Linear);
+        Device.SetSamplerState(0, SamplerState.MinFilter, TextureFilter.Linear);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+        if (fadingControl != null)
+        {
+            Device.PixelShader = PixelShader;
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
+        }
+        else
+        {
+            Device.PixelShader = null;
+        }
+
+        Device.VertexShader = null;
+
+        sprite.Transform = transform.ToDX9Matrix();
+
+        fontDimension = font.MeasureText(text, drawRect, drawFlags);
+        font.DrawText(text, fontDimension, drawFlags, color);
+        sprite.End();
+    }
+
+    public override void DrawTexture(Box destBox, ITexture texture, Palette palette = null, bool linear = false)
+    {
+        Device.PixelShader = PixelShader;
+        Device.VertexShader = null;
+
+        PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, FadingControl.FadingLevel);
+        PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, FadingControl.FadingColor.ToVector4());
+
+        var matScaling = DX9Matrix.Scaling(1, 1, 1);
+        var matTranslation = DX9Matrix.Translation(-1 * (float) destBox.Width * 0.5F, +1 * (float) destBox.Height * 0.5F, 1);
+        DX9Matrix matTransform = matScaling * matTranslation;
+
+        Device.SetTransform(TransformState.World, matTransform);
+        Device.SetTransform(TransformState.View, DX9Matrix.Identity);
+        Device.SetTransform(TransformState.Texture0, DX9Matrix.Identity);
+        Device.SetTransform(TransformState.Texture1, DX9Matrix.Identity);
+
+        PixelShader shader;
+
+        if (palette != null)
+        {
+            shader = PaletteShader;
+            Device.SetTexture(1, (DX11Texture) palette.Texture);
+        }
+        else
+        {
+            shader = PixelShader;
+        }
+
+        Device.PixelShader = shader;
+        Device.VertexShader = null;
+
+        Device.SetSamplerState(0, SamplerState.MagFilter, linear ? TextureFilter.Linear : TextureFilter.Point);
+        Device.SetSamplerState(0, SamplerState.MinFilter, linear ? TextureFilter.Linear : TextureFilter.Point);
+        Device.SetSamplerState(0, SamplerState.MipFilter, TextureFilter.None);
+
+        Device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
+        Device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+
+        Device.SetStreamSource(0, VertexBuffer, 0, VERTEX_SIZE);
+        Device.SetTexture(0, (DX11Texture) texture);
+        Device.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
+    }
+
+    public override void ShowErrorMessage(string message)
+    {
+        MessageBox.Show(message);
+    }
+
+    public void LoadConfig()
+    {
+        Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+        if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
+        {
+            section = new ProgramConfiguratinSection();
+            config.Sections.Add("ProgramConfiguratinSection", section);
+            config.Save();
+        }
+
+        if (Control is Form)
+        {
+            if (section.Left != -1)
+                Control.Left = section.Left;
+
+            if (section.Top != -1)
+                Control.Top = section.Top;
+        }
+
+        drawHitbox = section.DrawCollisionBox;
+        showColliders = section.ShowColliders;
+        drawLevelBounds = section.DrawMapBounds;
+        drawTouchingMapBounds = section.DrawTouchingMapBounds;
+        drawHighlightedPointingTiles = section.DrawHighlightedPointingTiles;
+        drawPlayerOriginAxis = section.DrawPlayerOriginAxis;
+        showInfoText = section.ShowInfoText;
+        showCheckpointBounds = section.ShowCheckpointBounds;
+        showTriggerBounds = section.ShowTriggerBounds;
+        showTriggerCameraLockDirection = section.ShowTriggerCameraLook;
+        CurrentSaveSlot = section.CurrentSaveSlot;
+    }
+
+    public void SaveConfig()
+    {
+        Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+        if (config.Sections["ProgramConfiguratinSection"] is not ProgramConfiguratinSection section)
+        {
+            section = new ProgramConfiguratinSection();
+            config.Sections.Add("ProgramConfiguratinSection", section);
+        }
+
+        if (Control is Form)
+        {
+            section.Left = Control.Left;
+            section.Top = Control.Top;
+        }
+
+        section.DrawCollisionBox = drawHitbox;
+        section.ShowColliders = showColliders;
+        section.DrawMapBounds = drawLevelBounds;
+        section.DrawTouchingMapBounds = drawTouchingMapBounds;
+        section.DrawHighlightedPointingTiles = drawHighlightedPointingTiles;
+        section.DrawPlayerOriginAxis = drawPlayerOriginAxis;
+        section.ShowInfoText = showInfoText;
+        section.ShowCheckpointBounds = showCheckpointBounds;
+        section.ShowTriggerBounds = showTriggerBounds;
+        section.ShowTriggerCameraLook = showTriggerCameraLockDirection;
+        section.CurrentSaveSlot = CurrentSaveSlot;
+
+        config.Save();
+    }
+
+    protected override SoundChannel CreateSoundChannel(float volume = 1)
+    {
+        return new NAudioSoundChannel(volume);
+    }
+}

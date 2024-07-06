@@ -1,9 +1,4 @@
 ﻿using SharpDX.Direct3D9;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XSharp.Engine.Graphics;
 
 namespace XSharp.Graphics;
@@ -29,6 +24,6 @@ public class DX9RenderTarget : IRenderTarget
 
     public static implicit operator DX9RenderTarget(Surface surface)
     {
-        return surface !=  null ? new DX9RenderTarget(surface) : null;
+        return surface != null ? new DX9RenderTarget(surface) : null;
     }
 }

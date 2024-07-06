@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\XSharp\XSharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Engine\Graphics\" />
+    <Folder Include="Engine\Input\" />
+    <Folder Include="Engine\World\" />
+    <Folder Include="Engine\Sound\" />
+    <Folder Include="Interop\" />
+  </ItemGroup>
+
+</Project>

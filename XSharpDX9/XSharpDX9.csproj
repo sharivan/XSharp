@@ -23,11 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSoft.SharpDX.Desktop" Version="4.2.1" />
+    <PackageReference Include="DSoft.SharpDX.Desktop" Version="4.3.2406.51" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="NAudio.Core" Version="2.2.1" />
     <PackageReference Include="NAudio.WinForms" Version="2.2.1" />
-    <PackageReference Include="NLua" Version="1.6.3" />
+    <PackageReference Include="NLua" Version="1.7.3" />
     <PackageReference Include="SharpDX" Version="4.2.0" />
     <PackageReference Include="SharpDX.Direct3D9" Version="4.2.0" />
     <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />

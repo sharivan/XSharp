@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using DX9Key = SharpDX.DirectInput.Key;
 using Key = XSharp.Engine.Input.Key;
-using DX9Key = SharpDX.DirectInput.Key;
 
 namespace XSharp.Interop;
 

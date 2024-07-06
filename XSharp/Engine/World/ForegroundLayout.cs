@@ -49,7 +49,7 @@ public class ForegroundLayout : Layout
                 {
                     var sceneLT = GetSceneLeftTop(row, col);
                     Box sceneBox = GetSceneBoundingBoxFromPos(sceneLT);
-                    scene.RenderLayer(layer, Tilemap, Palette, FadingControl, sceneBox);                   
+                    scene.RenderLayer(layer, Tilemap, Palette, FadingControl, sceneBox);
                 }
             }
         }

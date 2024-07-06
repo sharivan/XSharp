@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Color = XSharp.Graphics.Color;
+﻿using Color = XSharp.Graphics.Color;
 using DX9Color = SharpDX.Color;
 
 namespace XSharp.Interop;

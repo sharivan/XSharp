@@ -450,7 +450,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
         SetupStateArray(typeof(T));
     }
 
-    protected virtual Type GetStateType()
+    protected virtual Type GetStateBaseType()
     {
         return typeof(EntityState);
     }
@@ -463,13 +463,75 @@ public abstract class Entity : IIndexedNamedFactoryItem
     {
     }
 
-    protected EntityState RegisterState(int id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int subStateCount)
+    protected EntityState RegisterState(Type stateType)
     {
-        Type stateType = GetStateType();
+        return RegisterState(-1, stateType);
+    }
+
+    protected EntityState RegisterState(int id, Type stateType)
+    {
+        Type baseType = GetStateBaseType();
+        if (stateType != baseType && !stateType.IsSubclassOf(baseType))
+            throw new Exception($"State type class '{stateType.Name}' must be equals or derived from the class '{baseType.Name}'.");
+
         var state = (EntityState) Activator.CreateInstance(stateType);
 
         state.entity = this;
-        state.ID = id;
+
+        if (state.ID < 0)
+        {
+            if (id < 0)
+                throw new Exception("State type must be specified.");
+
+            state.ID = id;
+        }
+        else if (state.ID != id)
+        {
+            if (id >= 0)
+                throw new Exception("State id doesn't match.");
+
+            id = state.ID;
+        }
+
+        states.Add(state);
+        stateArray[id] = state;
+        OnRegisterState(state);
+
+        return state;
+    }
+
+    protected StateClass RegisterState<StateClass>() where StateClass : EntityState
+    {
+        return (StateClass) RegisterState(typeof(StateClass));
+    }
+
+    protected StateClass RegisterState<StateClass>(int id) where StateClass : EntityState
+    {
+        return (StateClass) RegisterState(id, typeof(StateClass));
+    }
+
+    protected EntityState RegisterState(int id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int subStateCount)
+    {
+        Type stateType = GetStateBaseType();
+        var state = (EntityState) Activator.CreateInstance(stateType);
+
+        state.entity = this;
+
+        if (state.ID < 0)
+        {
+            if (id < 0)
+                throw new Exception("State type must be specified.");
+
+            state.ID = id;
+        }
+        else if (state.ID != id)
+        {
+            if (id >= 0)
+                throw new Exception("State id doesn't match.");
+
+            id = state.ID;
+        }
+
         state.StartEvent += onStart;
         state.FrameEvent += onFrame;
         state.EndEvent += onEnd;

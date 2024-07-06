@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX.Direct3D9;
+﻿using SharpDX.Direct3D9;
 
 using XSharp.Graphics;
 using XSharp.Interop;
@@ -19,7 +13,7 @@ public class DX9Line : ILine
     private Line line;
 
     public float Width
-    { 
+    {
         get => line.Width;
         set => line.Width = value;
     }

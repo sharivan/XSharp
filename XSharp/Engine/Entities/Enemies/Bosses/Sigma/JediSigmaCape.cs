@@ -16,7 +16,7 @@ public class JediSigmaCape : SpriteEffect
     #endregion
 
     internal EntityReference<JediSigma> sigma;
-    
+
     public JediSigma Sigma => sigma;
 
     public JediSigmaCape()

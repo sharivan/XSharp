@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using DX9Vector2 = SharpDX.Vector2;
+using DX9Vector3 = SharpDX.Vector3;
+using DX9Vector4 = SharpDX.Vector4;
 using Vector2 = XSharp.Math.Geometry.Vector2;
 using Vector3 = XSharp.Math.Geometry.Vector3;
 using Vector4 = XSharp.Math.Geometry.Vector4;
-using DX9Vector2 = SharpDX.Vector2;
-using DX9Vector3 = SharpDX.Vector3;
-using DX9Vector4 = SharpDX.Vector4;
 
 namespace XSharp.Interop;
 

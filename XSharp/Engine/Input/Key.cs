@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace XSharp.Engine.Input;
+﻿namespace XSharp.Engine.Input;
 
 /// <summary>	
 /// Keyboard device constants.	
@@ -15,26 +9,26 @@ namespace XSharp.Engine.Input;
 public enum Key : int
 {
     Escape = unchecked((int) 1),
-    D1 = unchecked((int) 2),	
-    D2 = unchecked((int) 3),	
-    D3 = unchecked((int) 4),	
-    D4 = unchecked((int) 5),	
+    D1 = unchecked((int) 2),
+    D2 = unchecked((int) 3),
+    D3 = unchecked((int) 4),
+    D4 = unchecked((int) 5),
     D5 = unchecked((int) 6),
-    D6 = unchecked((int) 7),	
+    D6 = unchecked((int) 7),
     D7 = unchecked((int) 8),
     D8 = unchecked((int) 9),
     D9 = unchecked((int) 10),
     D0 = unchecked((int) 11),
     Minus = unchecked((int) 12),
     Equals = unchecked((int) 13),
-    Back = unchecked((int) 14),	
+    Back = unchecked((int) 14),
     Tab = unchecked((int) 15),
     Q = unchecked((int) 16),
     W = unchecked((int) 17),
     E = unchecked((int) 18),
     R = unchecked((int) 19),
     T = unchecked((int) 20),
-    Y = unchecked((int) 21),	
+    Y = unchecked((int) 21),
     U = unchecked((int) 22),
     I = unchecked((int) 23),
     O = unchecked((int) 24),
@@ -43,15 +37,15 @@ public enum Key : int
     RightBracket = unchecked((int) 27),
     Return = unchecked((int) 28),
     LeftControl = unchecked((int) 29),
-    A = unchecked((int) 30),	
+    A = unchecked((int) 30),
     S = unchecked((int) 31),
     D = unchecked((int) 32),
     F = unchecked((int) 33),
-    G = unchecked((int) 34),	
+    G = unchecked((int) 34),
     H = unchecked((int) 35),
     J = unchecked((int) 36),
     K = unchecked((int) 37),
-    L = unchecked((int) 38),	
+    L = unchecked((int) 38),
     Semicolon = unchecked((int) 39),
     Apostrophe = unchecked((int) 40),
     Grave = unchecked((int) 41),

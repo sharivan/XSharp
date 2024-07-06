@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using DX9Point = SharpDX.Point;
 using Point = XSharp.Math.Geometry.Point;
 using SDPoint = System.Drawing.Point;
-using DX9Point = SharpDX.Point;
 
 namespace XSharp.Interop;
 

@@ -1,67 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using System.Windows.Forms;
-using NLua;
-
-using SharpDX;
+﻿using NLua;
 using SharpDX.Direct3D9;
 using SharpDX.DirectInput;
-using SharpDX.Mathematics.Interop;
+using SharpDX.DXGI;
 using SharpDX.Windows;
-
-using XSharp.Engine;
+using System.Configuration;
+using System.Reflection;
+using System.Windows.Forms;
+using XSharp.Engine.Graphics;
+using XSharp.Engine.Input;
+using XSharp.Engine.Sound;
+using XSharp.Engine.World;
 using XSharp.Graphics;
-using XSharp.Math.Geometry;
-
+using XSharp.Interop;
 using static XSharp.Engine.Consts;
-
 using Box = XSharp.Math.Geometry.Box;
 using Color = XSharp.Graphics.Color;
-using DX9Color = SharpDX.Color;
+using Configuration = System.Configuration.Configuration;
 using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
+using DataStream = XSharp.Graphics.DataStream;
 using Device9 = SharpDX.Direct3D9.Device;
 using DeviceType = SharpDX.Direct3D9.DeviceType;
+using DX9Format = SharpDX.Direct3D9.Format;
+using DX9Matrix = SharpDX.Matrix;
 using DXSprite = SharpDX.Direct3D9.Sprite;
 using Font = SharpDX.Direct3D9.Font;
-using Rectangle = SharpDX.Rectangle;
-using RectangleF = XSharp.Math.Geometry.RectangleF;
-using DX9RectangleF = SharpDX.RectangleF;
-using ResultCode = SharpDX.Direct3D9.ResultCode;
-using DX9Format = SharpDX.Direct3D9.Format;
-using Format = XSharp.Graphics.Format;
-using System.Drawing.Imaging;
-using System.Reflection;
-using DataStream = XSharp.Graphics.DataStream;
-using XSharp.Engine.Graphics;
-using SharpDX.DXGI;
-using Vector4 = SharpDX.Vector4;
-using Usage = SharpDX.Direct3D9.Usage;
-using PresentParameters = SharpDX.Direct3D9.PresentParameters;
-using SwapEffect = SharpDX.Direct3D9.SwapEffect;
-using PresentFlags = SharpDX.Direct3D9.PresentFlags;
-using Matrix = XSharp.Math.Geometry.Matrix;
-using DX9Matrix = SharpDX.Matrix;
-using XSharp.Engine.World;
-using System.Data;
-using DataRectangle = XSharp.Graphics.DataRectangle;
-using XSharp.Interop;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
-using Vector2 = XSharp.Math.Geometry.Vector2;
-using DX9Vector2 = SharpDX.Vector2;
-using FontDrawFlags = XSharp.Graphics.FontDrawFlags;
-using Size2F = XSharp.Math.Geometry.Size2F;
-using Point = XSharp.Math.Geometry.Point;
 using FontDescription = XSharp.Graphics.FontDescription;
-using DX9FontDescription = SharpDX.Direct3D9.FontDescription;
-using XSharp.Engine.Input;
-using NAudio.CoreAudioApi;
-using XSharp.Engine.Sound;
-using System.Configuration;
-using Configuration = System.Configuration.Configuration;
+using FontDrawFlags = XSharp.Graphics.FontDrawFlags;
+using Format = XSharp.Graphics.Format;
+using Matrix = XSharp.Math.Geometry.Matrix;
+using Point = XSharp.Math.Geometry.Point;
+using PresentFlags = SharpDX.Direct3D9.PresentFlags;
+using PresentParameters = SharpDX.Direct3D9.PresentParameters;
+using RectangleF = XSharp.Math.Geometry.RectangleF;
+using ResultCode = SharpDX.Direct3D9.ResultCode;
+using Size2F = XSharp.Math.Geometry.Size2F;
+using SwapEffect = SharpDX.Direct3D9.SwapEffect;
+using Usage = SharpDX.Direct3D9.Usage;
+using Vector2 = XSharp.Math.Geometry.Vector2;
+using Vector4 = SharpDX.Vector4;
 
 namespace XSharp.Engine;
 
@@ -73,7 +49,7 @@ public class DX9Engine : BaseEngine
     public const int VERTEX_SIZE = 5 * sizeof(float) + sizeof(int);
 
     private PresentParameters presentationParams;
-    private DXSprite sprite;   
+    private DXSprite sprite;
 
     private EffectHandle psFadingLevelHandle;
     private EffectHandle psFadingColorHandle;
@@ -242,7 +218,7 @@ public class DX9Engine : BaseEngine
 
         Direct3D = new Direct3D();
 
-        directInput = new DirectInput();        
+        directInput = new DirectInput();
 
         lua.LoadCLRPackage(); // TODO : This can be DANGEROUS! Fix in the future by adding restrictions on the scripting.
         lua.DoString(@"import ('XSharp', 'XSharp')");
@@ -275,7 +251,7 @@ public class DX9Engine : BaseEngine
     {
         DisposeResource(PixelShader);
         DisposeResource(PaletteShader);
-        DisposeResource(sprite);               
+        DisposeResource(sprite);
         DisposeResource(VertexBuffer);
         DisposeResource(Device);
 
@@ -580,7 +556,7 @@ public class DX9Engine : BaseEngine
         if (surface == null)
             return null;
 
-        result  = new DX9RenderTarget(Device.GetRenderTarget(level));
+        result = new DX9RenderTarget(Device.GetRenderTarget(level));
         renderTargets[level] = result;
         return result;
     }

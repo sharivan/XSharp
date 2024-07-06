@@ -1,5 +1,5 @@
-﻿using XSharp.Graphics;
-using XSharp.Engine.Graphics;
+﻿using XSharp.Engine.Graphics;
+using XSharp.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
@@ -545,274 +545,274 @@ public class ChillPenguin : Boss, IFSMEntity<ChillPenguinState>
                     switch (lastState)
                     {
                         case ChillPenguinState.SHOOTING_ICE:
-                        {
-                            while (State == ChillPenguinState.IDLE)
                             {
-                                switch (value)
+                                while (State == ChillPenguinState.IDLE)
                                 {
-                                    case >= 0 and < 4:
-                                        State = ChillPenguinState.SLIDING;
-                                        break;
+                                    switch (value)
+                                    {
+                                        case >= 0 and < 4:
+                                            State = ChillPenguinState.SLIDING;
+                                            break;
 
-                                    case >= 4 and < 8:
-                                        State = ChillPenguinState.SHOOTING_ICE;
-                                        break;
+                                        case >= 4 and < 8:
+                                            State = ChillPenguinState.SHOOTING_ICE;
+                                            break;
 
-                                    case >= 8 and < 10:
-                                        State = ChillPenguinState.JUMPING;
-                                        break;
+                                        case >= 8 and < 10:
+                                            State = ChillPenguinState.JUMPING;
+                                            break;
 
-                                    case >= 10 and < 12:
-                                        if (AtLeastOneSculpturesAlive())
-                                            State = ChillPenguinState.HANGING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        case >= 10 and < 12:
+                                            if (AtLeastOneSculpturesAlive())
+                                                State = ChillPenguinState.HANGING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
 
-                                    default:
-                                        if (!AllSculpturesAlive())
-                                            State = ChillPenguinState.BLOWING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        default:
+                                            if (!AllSculpturesAlive())
+                                                State = ChillPenguinState.BLOWING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
+                                    }
                                 }
-                            }
 
-                            break;
-                        }
+                                break;
+                            }
 
                         case ChillPenguinState.BLOWING:
-                        {
-                            while (State == ChillPenguinState.IDLE)
                             {
-                                switch (value)
+                                while (State == ChillPenguinState.IDLE)
                                 {
-                                    case >= 0 and < 4:
-                                        State = ChillPenguinState.SLIDING;
-                                        break;
+                                    switch (value)
+                                    {
+                                        case >= 0 and < 4:
+                                            State = ChillPenguinState.SLIDING;
+                                            break;
 
-                                    case >= 4 and < 6:
-                                        State = ChillPenguinState.SHOOTING_ICE;
-                                        break;
+                                        case >= 4 and < 6:
+                                            State = ChillPenguinState.SHOOTING_ICE;
+                                            break;
 
-                                    case >= 6 and < 10:
-                                        State = ChillPenguinState.JUMPING;
-                                        break;
+                                        case >= 6 and < 10:
+                                            State = ChillPenguinState.JUMPING;
+                                            break;
 
-                                    case >= 10 and < 14:
-                                        if (AtLeastOneSculpturesAlive())
-                                            State = ChillPenguinState.HANGING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        case >= 10 and < 14:
+                                            if (AtLeastOneSculpturesAlive())
+                                                State = ChillPenguinState.HANGING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
 
-                                    default:
-                                        if (!AllSculpturesAlive())
-                                            State = ChillPenguinState.BLOWING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        default:
+                                            if (!AllSculpturesAlive())
+                                                State = ChillPenguinState.BLOWING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
+                                    }
                                 }
-                            }
 
-                            break;
-                        }
+                                break;
+                            }
 
                         case ChillPenguinState.SLIDING:
-                        {
-                            while (State == ChillPenguinState.IDLE)
                             {
-                                switch (value)
+                                while (State == ChillPenguinState.IDLE)
                                 {
-                                    case >= 0 and < 2:
-                                        State = ChillPenguinState.SLIDING;
-                                        break;
+                                    switch (value)
+                                    {
+                                        case >= 0 and < 2:
+                                            State = ChillPenguinState.SLIDING;
+                                            break;
 
-                                    case >= 2 and < 6:
-                                        State = ChillPenguinState.SHOOTING_ICE;
-                                        break;
+                                        case >= 2 and < 6:
+                                            State = ChillPenguinState.SHOOTING_ICE;
+                                            break;
 
-                                    case >= 6 and < 10:
-                                        State = ChillPenguinState.JUMPING;
-                                        break;
+                                        case >= 6 and < 10:
+                                            State = ChillPenguinState.JUMPING;
+                                            break;
 
-                                    case >= 10 and < 12:
-                                        if (AtLeastOneSculpturesAlive())
-                                            State = ChillPenguinState.HANGING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        case >= 10 and < 12:
+                                            if (AtLeastOneSculpturesAlive())
+                                                State = ChillPenguinState.HANGING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
 
-                                    default:
-                                        if (!AllSculpturesAlive())
-                                            State = ChillPenguinState.BLOWING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        default:
+                                            if (!AllSculpturesAlive())
+                                                State = ChillPenguinState.BLOWING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
+                                    }
                                 }
-                            }
 
-                            break;
-                        }
+                                break;
+                            }
 
                         case ChillPenguinState.JUMPING:
-                        {
-                            while (State == ChillPenguinState.IDLE)
                             {
-                                switch (value)
+                                while (State == ChillPenguinState.IDLE)
                                 {
-                                    case >= 0 and < 4:
-                                        State = ChillPenguinState.SLIDING;
-                                        break;
+                                    switch (value)
+                                    {
+                                        case >= 0 and < 4:
+                                            State = ChillPenguinState.SLIDING;
+                                            break;
 
-                                    case >= 4 and < 8:
-                                        State = ChillPenguinState.SHOOTING_ICE;
-                                        break;
+                                        case >= 4 and < 8:
+                                            State = ChillPenguinState.SHOOTING_ICE;
+                                            break;
 
-                                    case >= 8 and < 12:
-                                        if (AtLeastOneSculpturesAlive())
-                                            State = ChillPenguinState.HANGING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        case >= 8 and < 12:
+                                            if (AtLeastOneSculpturesAlive())
+                                                State = ChillPenguinState.HANGING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
 
-                                    default:
-                                        if (!AllSculpturesAlive())
-                                            State = ChillPenguinState.BLOWING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        default:
+                                            if (!AllSculpturesAlive())
+                                                State = ChillPenguinState.BLOWING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
+                                    }
                                 }
-                            }
 
-                            break;
-                        }
+                                break;
+                            }
 
                         case ChillPenguinState.HANGING:
-                        {
-                            while (State == ChillPenguinState.IDLE)
                             {
-                                switch (value)
+                                while (State == ChillPenguinState.IDLE)
                                 {
-                                    case >= 0 and < 4:
-                                        State = ChillPenguinState.SLIDING;
-                                        break;
+                                    switch (value)
+                                    {
+                                        case >= 0 and < 4:
+                                            State = ChillPenguinState.SLIDING;
+                                            break;
 
-                                    case >= 4 and < 6:
-                                        State = ChillPenguinState.SHOOTING_ICE;
-                                        break;
+                                        case >= 4 and < 6:
+                                            State = ChillPenguinState.SHOOTING_ICE;
+                                            break;
 
-                                    case >= 6 and < 10:
-                                        State = ChillPenguinState.JUMPING;
-                                        break;
+                                        case >= 6 and < 10:
+                                            State = ChillPenguinState.JUMPING;
+                                            break;
 
-                                    case >= 10 and < 12:
-                                        if (AtLeastOneSculpturesAlive())
-                                            State = ChillPenguinState.HANGING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        case >= 10 and < 12:
+                                            if (AtLeastOneSculpturesAlive())
+                                                State = ChillPenguinState.HANGING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
 
-                                    default:
-                                        if (!AllSculpturesAlive())
-                                            State = ChillPenguinState.BLOWING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        default:
+                                            if (!AllSculpturesAlive())
+                                                State = ChillPenguinState.BLOWING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
+                                    }
                                 }
-                            }
 
-                            break;
-                        }
+                                break;
+                            }
 
                         case ChillPenguinState.TAKING_DAMAGE:
                         case ChillPenguinState.IN_FLAMES:
-                        {
-                            while (State == ChillPenguinState.IDLE)
                             {
-                                switch (value)
+                                while (State == ChillPenguinState.IDLE)
                                 {
-                                    case >= 0 and < 4:
-                                        State = ChillPenguinState.SLIDING;
-                                        break;
+                                    switch (value)
+                                    {
+                                        case >= 0 and < 4:
+                                            State = ChillPenguinState.SLIDING;
+                                            break;
 
-                                    case >= 4 and < 8:
-                                        State = ChillPenguinState.SHOOTING_ICE;
-                                        break;
+                                        case >= 4 and < 8:
+                                            State = ChillPenguinState.SHOOTING_ICE;
+                                            break;
 
-                                    case >= 8 and < 10:
-                                        State = ChillPenguinState.JUMPING;
-                                        break;
+                                        case >= 8 and < 10:
+                                            State = ChillPenguinState.JUMPING;
+                                            break;
 
-                                    case >= 10 and < 12:
-                                        if (AtLeastOneSculpturesAlive())
-                                            State = ChillPenguinState.HANGING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        case >= 10 and < 12:
+                                            if (AtLeastOneSculpturesAlive())
+                                                State = ChillPenguinState.HANGING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
 
-                                    default:
-                                        if (!AllSculpturesAlive())
-                                            State = ChillPenguinState.BLOWING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        default:
+                                            if (!AllSculpturesAlive())
+                                                State = ChillPenguinState.BLOWING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
+                                    }
                                 }
-                            }
 
-                            break;
-                        }
+                                break;
+                            }
 
                         default:
-                        {
-                            while (State == ChillPenguinState.IDLE)
                             {
-                                switch (value)
+                                while (State == ChillPenguinState.IDLE)
                                 {
-                                    case >= 0 and < 4:
-                                        State = ChillPenguinState.SLIDING;
-                                        break;
+                                    switch (value)
+                                    {
+                                        case >= 0 and < 4:
+                                            State = ChillPenguinState.SLIDING;
+                                            break;
 
-                                    case >= 4 and < 8:
-                                        State = ChillPenguinState.SHOOTING_ICE;
-                                        break;
+                                        case >= 4 and < 8:
+                                            State = ChillPenguinState.SHOOTING_ICE;
+                                            break;
 
-                                    case >= 8 and < 10:
-                                        State = ChillPenguinState.JUMPING;
-                                        break;
+                                        case >= 8 and < 10:
+                                            State = ChillPenguinState.JUMPING;
+                                            break;
 
-                                    case >= 10 and < 12:
-                                        if (AtLeastOneSculpturesAlive())
-                                            State = ChillPenguinState.HANGING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        case >= 10 and < 12:
+                                            if (AtLeastOneSculpturesAlive())
+                                                State = ChillPenguinState.HANGING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
 
-                                    default:
-                                        if (!AllSculpturesAlive())
-                                            State = ChillPenguinState.BLOWING;
-                                        else
-                                            value = Engine.RNG.NextUInt(16);
+                                        default:
+                                            if (!AllSculpturesAlive())
+                                                State = ChillPenguinState.BLOWING;
+                                            else
+                                                value = Engine.RNG.NextUInt(16);
 
-                                        break;
+                                            break;
+                                    }
                                 }
-                            }
 
-                            break;
-                        }
+                                break;
+                            }
                     }
                 }
             }
@@ -1078,18 +1078,18 @@ public class ChillPenguin : Boss, IFSMEntity<ChillPenguinState>
                 switch (State)
                 {
                     case ChillPenguinState.JUMPING:
-                    {
-                        FixedSingle jumpSpeedX = (Engine.Player.Origin.X - Origin.X) / PENGUIN_JUMP_FRAMES;
-                        Velocity = (jumpSpeedX, -PENGUIN_JUMP_SPEED_Y);
-                        break;
-                    }
+                        {
+                            FixedSingle jumpSpeedX = (Engine.Player.Origin.X - Origin.X) / PENGUIN_JUMP_FRAMES;
+                            Velocity = (jumpSpeedX, -PENGUIN_JUMP_SPEED_Y);
+                            break;
+                        }
 
                     case ChillPenguinState.HANGING:
-                    {
-                        FixedSingle jumpSpeedX = (Lever.Origin.X - Origin.X) / PENGUIN_FRAMES_TO_HANG;
-                        Velocity = (jumpSpeedX, -PENGUIN_HANGING_JUMP_SPEED_Y);
-                        break;
-                    }
+                        {
+                            FixedSingle jumpSpeedX = (Lever.Origin.X - Origin.X) / PENGUIN_FRAMES_TO_HANG;
+                            Velocity = (jumpSpeedX, -PENGUIN_HANGING_JUMP_SPEED_Y);
+                            break;
+                        }
                 }
 
                 SetCurrentAnimationByName("Jumping");

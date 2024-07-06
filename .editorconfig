@@ -76,6 +76,12 @@ dotnet_diagnostic.CS8602.severity = none
 # CS8604: Possível argumento de referência nula.
 dotnet_diagnostic.CS8604.severity = none
 
+# IDE0007: Usar o tipo implícito
+csharp_style_var_when_type_is_apparent = true
+
+# IDE0008: Usar o tipo explícito
+dotnet_diagnostic.IDE0008.severity = silent
+
 [*.vb]
 #### Estilos de nomenclatura ####
 

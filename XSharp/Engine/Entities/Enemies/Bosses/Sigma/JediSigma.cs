@@ -1,13 +1,12 @@
-﻿using XSharp.Graphics;
+﻿using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
+using XSharp.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
-
-using static XSharp.Engine.World.World;
 using static XSharp.Engine.Consts;
-using XSharp.Engine.Entities.Effects;
+using static XSharp.Engine.World.World;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Sigma;
 

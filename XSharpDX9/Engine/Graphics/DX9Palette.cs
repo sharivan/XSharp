@@ -1,18 +1,8 @@
-﻿using SharpDX.Direct3D9;
-using SharpDX;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using XSharp.Graphics;
+﻿using XSharp.Graphics;
 using XSharp.Serialization;
-
-using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using Color = XSharp.Graphics.Color;
+using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
 using DataRectangle = XSharp.Graphics.DataRectangle;
-using DataStream = XSharp.Graphics.DataStream;
 
 namespace XSharp.Engine.Graphics;
 

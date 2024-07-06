@@ -4,7 +4,6 @@ using System.IO;
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Triggers;
-using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
 using XSharp.Graphics;
 using XSharp.Math.Geometry;
@@ -344,137 +343,137 @@ public class MMXCoreLoader : MMXCore
                         switch (info.eventId)
                         {
                             case 0x00: // camera lock
-                            {
-                                uint pBase;
-                                if (expandedROM && expandedROMVersion >= 4)
                                 {
-                                    pBase = Snes2pc((int) (lockBank << 16) | (0x8000 + Level * 0x800 + info.eventSubId * 0x20));
-                                }
-                                else
-                                {
-                                    var borderOffset = ReadWord((int) (Snes2pc(pBorders) + 2 * info.eventSubId));
-                                    pBase = Snes2pc(borderOffset | ((pBorders >> 16) << 16));
-                                }
-
-                                int right = ReadWord(pBase);
-                                pBase += 2;
-                                int left = ReadWord(pBase);
-                                pBase += 2;
-                                int bottom = ReadWord(pBase);
-                                pBase += 2;
-                                int top = ReadWord(pBase);
-                                pBase += 2;
-
-                                var boudingBox = new Box(left, top, right - left, bottom - top);
-
-                                uint lockNum = 0;
-
-                                var extensions = new List<Vector>();
-                                while (((expandedROM && expandedROMVersion >= 4) ? ReadWord(pBase) : rom[pBase]) != 0)
-                                {
-                                    Box lockBox = boudingBox;
-                                    ushort camOffset = 0;
-                                    ushort camValue = 0;
-
+                                    uint pBase;
                                     if (expandedROM && expandedROMVersion >= 4)
                                     {
-                                        camOffset = ReadWord(pBase);
-                                        pBase += 2;
-                                        camValue = ReadWord(pBase);
-                                        pBase += 2;
+                                        pBase = Snes2pc((int) (lockBank << 16) | (0x8000 + Level * 0x800 + info.eventSubId * 0x20));
                                     }
                                     else
                                     {
-                                        ushort offset = (ushort) ((rom[pBase] - 1) << 2);
-                                        camOffset = ReadWord(pLocks + offset + 0x0);
-                                        camValue = ReadWord(pLocks + offset + 0x2);
-                                        pBase++;
+                                        var borderOffset = ReadWord((int) (Snes2pc(pBorders) + 2 * info.eventSubId));
+                                        pBase = Snes2pc(borderOffset | ((pBorders >> 16) << 16));
                                     }
 
-                                    int lockX0 = (left + right) / 2;
-                                    int lockY0 = (top + bottom) / 2;
+                                    int right = ReadWord(pBase);
+                                    pBase += 2;
+                                    int left = ReadWord(pBase);
+                                    pBase += 2;
+                                    int bottom = ReadWord(pBase);
+                                    pBase += 2;
+                                    int top = ReadWord(pBase);
+                                    pBase += 2;
 
-                                    int lockLeft = lockX0;
-                                    int lockTop = lockY0;
-                                    int lockRight = lockX0;
-                                    int lockBottom = lockY0;
+                                    var boudingBox = new Box(left, top, right - left, bottom - top);
 
-                                    if (Type > 0)
-                                        camOffset -= 0x10;
+                                    uint lockNum = 0;
 
-                                    if (camOffset is 0x1E5E or 0x1E6E or 0x1E68 or 0x1E60)
+                                    var extensions = new List<Vector>();
+                                    while (((expandedROM && expandedROMVersion >= 4) ? ReadWord(pBase) : rom[pBase]) != 0)
                                     {
-                                        if (camOffset == 0x1E5E)
+                                        Box lockBox = boudingBox;
+                                        ushort camOffset = 0;
+                                        ushort camValue = 0;
+
+                                        if (expandedROM && expandedROMVersion >= 4)
                                         {
-                                            lockLeft = camValue;
+                                            camOffset = ReadWord(pBase);
+                                            pBase += 2;
+                                            camValue = ReadWord(pBase);
+                                            pBase += 2;
                                         }
-                                        else if (camOffset == 0x1E6E)
+                                        else
                                         {
-                                            lockBottom = camValue + SCREEN_HEIGHT;
+                                            ushort offset = (ushort) ((rom[pBase] - 1) << 2);
+                                            camOffset = ReadWord(pLocks + offset + 0x0);
+                                            camValue = ReadWord(pLocks + offset + 0x2);
+                                            pBase++;
                                         }
-                                        else if (camOffset == 0x1E68)
+
+                                        int lockX0 = (left + right) / 2;
+                                        int lockY0 = (top + bottom) / 2;
+
+                                        int lockLeft = lockX0;
+                                        int lockTop = lockY0;
+                                        int lockRight = lockX0;
+                                        int lockBottom = lockY0;
+
+                                        if (Type > 0)
+                                            camOffset -= 0x10;
+
+                                        if (camOffset is 0x1E5E or 0x1E6E or 0x1E68 or 0x1E60)
                                         {
-                                            lockTop = camValue;
+                                            if (camOffset == 0x1E5E)
+                                            {
+                                                lockLeft = camValue;
+                                            }
+                                            else if (camOffset == 0x1E6E)
+                                            {
+                                                lockBottom = camValue + SCREEN_HEIGHT;
+                                            }
+                                            else if (camOffset == 0x1E68)
+                                            {
+                                                lockTop = camValue;
+                                            }
+                                            else if (camOffset == 0x1E60)
+                                            {
+                                                lockRight = camValue + SCREEN_WIDTH;
+                                            }
                                         }
-                                        else if (camOffset == 0x1E60)
-                                        {
-                                            lockRight = camValue + SCREEN_WIDTH;
-                                        }
+
+                                        int lockX = lockLeft < lockX0 ? lockLeft : lockRight;
+                                        int lockY = lockTop < lockY0 ? lockTop : lockBottom;
+
+                                        extensions.Add((lockX - lockX0, lockY - lockY0));
+                                        lockNum++;
                                     }
 
-                                    int lockX = lockLeft < lockX0 ? lockLeft : lockRight;
-                                    int lockY = lockTop < lockY0 ? lockTop : lockBottom;
-
-                                    extensions.Add((lockX - lockX0, lockY - lockY0));
-                                    lockNum++;
+                                    Engine.AddCameraLockTrigger(boudingBox, extensions);
+                                    break;
                                 }
-
-                                Engine.AddCameraLockTrigger(boudingBox, extensions);
-                                break;
-                            }
 
                             case 0x02:
                             case 0x0B: // checkpoint trigger
-                            {
-                                Engine.AddCheckpointTrigger((ushort) (info.eventSubId & 0xf), (info.xpos, info.ypos));
-                                break;
-                            }
+                                {
+                                    Engine.AddCheckpointTrigger((ushort) (info.eventSubId & 0xf), (info.xpos, info.ypos));
+                                    break;
+                                }
 
                             case 0x15: // dynamic change object/enemy tiles (vertical)
-                            {
-                                Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
-                                break;
-                            }
+                                {
+                                    Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
+                                    break;
+                                }
 
                             case 0x16: // dynamic change background tiles tiles (vertical)
-                            {
-                                Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
-                                break;
-                            }
+                                {
+                                    Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
+                                    break;
+                                }
 
                             case 0x17: // dynamic change palette (vertical)
-                            {
-                                Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.PALETTE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
-                                break;
-                            }
+                                {
+                                    Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.PALETTE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.VERTICAL);
+                                    break;
+                                }
 
                             case 0x18: // dynamic change object/enemy tiles (horizontal)
-                            {
-                                Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
-                                break;
-                            }
+                                {
+                                    Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.OBJECT_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
+                                    break;
+                                }
 
                             case 0x19: // dynamic change background tiles tiles (horizontal)
-                            {
-                                Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
-                                break;
-                            }
+                                {
+                                    Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.BACKGROUND_TILE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
+                                    break;
+                                }
 
                             case 0x1A: // dynamic change palette (horizontal)
-                            {
-                                Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.PALETTE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
-                                break;
-                            }
+                                {
+                                    Engine.AddChangeDynamicPropertyTrigger((info.xpos, info.ypos), DynamicProperty.PALETTE, info.eventSubId & 0xf, (info.eventSubId >> 4) & 0xf, SplitterTriggerOrientation.HORIZONTAL);
+                                    break;
+                                }
                         }
 
                         break;

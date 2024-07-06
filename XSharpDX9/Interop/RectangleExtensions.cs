@@ -1,15 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using XSharp.Math.Geometry;
-
+﻿using DX9Rectangle = SharpDX.Rectangle;
+using DX9RectangleF = SharpDX.RectangleF;
 using Rectangle = XSharp.Math.Geometry.Rectangle;
 using RectangleF = XSharp.Math.Geometry.RectangleF;
-using DX9Rectangle = SharpDX.Rectangle;
-using DX9RectangleF = SharpDX.RectangleF;
 
 namespace XSharp.Interop;
 

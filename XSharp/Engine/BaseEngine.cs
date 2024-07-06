@@ -1736,7 +1736,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                     }
                 }
                 catch (Exception e)
-                {                   
+                {
                     ShowErrorMessage(e.Message);
                     joystick = null;
                 }
@@ -1754,7 +1754,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         {
             FadingOSTTick++;
             if (FadingOSTTick > FadingOSTFrames)
-            {               
+            {
                 FadingOST = false;
                 OnFadingOSTComplete?.Invoke();
             }
@@ -2736,114 +2736,114 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                 switch (entity)
                 {
                     case Sprite sprite when sprite is not HUD and not SpriteEffect:
-                    {
-                        if (drawHitbox)
                         {
-                            Box hitbox = sprite.Hitbox;
-                            var rect = WorldBoxToScreen(hitbox);
-
-                            if (!entity.Alive)
+                            if (drawHitbox)
                             {
-                                if (entity.Respawnable || entity.SpawnOnNear)
-                                    FillRectangle(rect, DEAD_RESPAWNABLE_HITBOX_COLOR);
-                                else
-                                    FillRectangle(rect, DEAD_HITBOX_COLOR);
-                            }
-                            else
-                            {
-                                FillRectangle(rect, HITBOX_COLOR);
-                            }
+                                Box hitbox = sprite.Hitbox;
+                                var rect = WorldBoxToScreen(hitbox);
 
-                            bool touchingNull = false;
-                            foreach (var touching in entity.TouchingEntities)
-                            {
-                                if (touching == null)
-                                    touchingNull = true;
-                                else if (touching is Sprite)
-                                    DrawLine(entity.Origin, touching.Origin, 2, HITBOX_BORDER_COLOR);
-                            }
-
-                            if (touchingNull)
-                                DrawRectangle(rect, 2, HITBOX_BORDER_COLOR);
-                        }
-
-                        if (showDrawBox)
-                        {
-                            Box drawBox = sprite.DrawBox;
-                            var rect = WorldBoxToScreen(drawBox);
-                            FillRectangle(rect, BOUNDING_BOX_COLOR);
-                        }
-
-                        if (showColliders)
-                        {
-                            SpriteCollider collider = sprite.WorldCollider;
-                            if (collider != null)
-                            {
-                                FillRectangle(WorldBoxToScreen(collider.DownCollider), DOWN_COLLIDER_COLOR);
-                                FillRectangle(WorldBoxToScreen(collider.UpCollider), UP_COLLIDER_COLOR);
-                                FillRectangle(WorldBoxToScreen(collider.LeftCollider), LEFT_COLLIDER_COLOR);
-                                FillRectangle(WorldBoxToScreen(collider.RightCollider), RIGHT_COLLIDER_COLOR);
-                            }
-                        }
-
-                        break;
-                    }
-
-                    case BaseTrigger trigger when showTriggerBounds:
-                    {
-                        var rect = WorldBoxToScreen(trigger.Hitbox);
-
-                        if (trigger is not ChangeDynamicPropertyTrigger)
-                        {
-                            if (Player != null && trigger.IsTouching(Player))
-                                FillRectangle(rect, TRIGGER_BOX_COLOR);
-                        }
-
-                        switch (trigger)
-                        {
-                            case CheckpointTriggerOnce:
-                                DrawRectangle(rect, 4, CHECKPOINT_TRIGGER_BORDER_BOX_COLOR);
-                                break;
-
-                            case CameraLockTrigger cameraLockTrigger when showTriggerCameraLockDirection:
-                            {
-                                DrawRectangle(rect, 4, TRIGGER_BORDER_BOX_COLOR);
-
-                                Vector constraintOrigin = cameraLockTrigger.ConstraintOrigin;
-                                foreach (var constraint in cameraLockTrigger.Constraints)
-                                    DrawLine(WorldVectorToScreen(constraintOrigin), WorldVectorToScreen(constraintOrigin + constraint), 4, CAMERA_LOCK_COLOR);
-
-                                break;
-                            }
-
-                            case ChangeDynamicPropertyTrigger changeDynamicPropertyTrigger:
-                            {
-                                var box = changeDynamicPropertyTrigger.Hitbox;
-                                var origin = box.Origin;
-                                var mins = box.Mins;
-                                var maxs = box.Maxs;
-                                switch (changeDynamicPropertyTrigger.Orientation)
+                                if (!entity.Alive)
                                 {
-                                    case SplitterTriggerOrientation.HORIZONTAL:
-                                        DrawLine(new Vector(origin.X + mins.X, origin.Y), new Vector(origin.X + maxs.X, origin.Y), 4, Color.Purple);
-                                        break;
-
-                                    case SplitterTriggerOrientation.VERTICAL:
-                                        DrawLine(new Vector(origin.X, origin.Y + mins.Y), new Vector(origin.X, origin.Y + maxs.Y), 4, Color.Purple);
-                                        break;
-
+                                    if (entity.Respawnable || entity.SpawnOnNear)
+                                        FillRectangle(rect, DEAD_RESPAWNABLE_HITBOX_COLOR);
+                                    else
+                                        FillRectangle(rect, DEAD_HITBOX_COLOR);
+                                }
+                                else
+                                {
+                                    FillRectangle(rect, HITBOX_COLOR);
                                 }
 
-                                break;
+                                bool touchingNull = false;
+                                foreach (var touching in entity.TouchingEntities)
+                                {
+                                    if (touching == null)
+                                        touchingNull = true;
+                                    else if (touching is Sprite)
+                                        DrawLine(entity.Origin, touching.Origin, 2, HITBOX_BORDER_COLOR);
+                                }
+
+                                if (touchingNull)
+                                    DrawRectangle(rect, 2, HITBOX_BORDER_COLOR);
                             }
 
-                            default:
-                                DrawRectangle(rect, 4, TRIGGER_BORDER_BOX_COLOR);
-                                break;
+                            if (showDrawBox)
+                            {
+                                Box drawBox = sprite.DrawBox;
+                                var rect = WorldBoxToScreen(drawBox);
+                                FillRectangle(rect, BOUNDING_BOX_COLOR);
+                            }
+
+                            if (showColliders)
+                            {
+                                SpriteCollider collider = sprite.WorldCollider;
+                                if (collider != null)
+                                {
+                                    FillRectangle(WorldBoxToScreen(collider.DownCollider), DOWN_COLLIDER_COLOR);
+                                    FillRectangle(WorldBoxToScreen(collider.UpCollider), UP_COLLIDER_COLOR);
+                                    FillRectangle(WorldBoxToScreen(collider.LeftCollider), LEFT_COLLIDER_COLOR);
+                                    FillRectangle(WorldBoxToScreen(collider.RightCollider), RIGHT_COLLIDER_COLOR);
+                                }
+                            }
+
+                            break;
                         }
 
-                        break;
-                    }
+                    case BaseTrigger trigger when showTriggerBounds:
+                        {
+                            var rect = WorldBoxToScreen(trigger.Hitbox);
+
+                            if (trigger is not ChangeDynamicPropertyTrigger)
+                            {
+                                if (Player != null && trigger.IsTouching(Player))
+                                    FillRectangle(rect, TRIGGER_BOX_COLOR);
+                            }
+
+                            switch (trigger)
+                            {
+                                case CheckpointTriggerOnce:
+                                    DrawRectangle(rect, 4, CHECKPOINT_TRIGGER_BORDER_BOX_COLOR);
+                                    break;
+
+                                case CameraLockTrigger cameraLockTrigger when showTriggerCameraLockDirection:
+                                    {
+                                        DrawRectangle(rect, 4, TRIGGER_BORDER_BOX_COLOR);
+
+                                        Vector constraintOrigin = cameraLockTrigger.ConstraintOrigin;
+                                        foreach (var constraint in cameraLockTrigger.Constraints)
+                                            DrawLine(WorldVectorToScreen(constraintOrigin), WorldVectorToScreen(constraintOrigin + constraint), 4, CAMERA_LOCK_COLOR);
+
+                                        break;
+                                    }
+
+                                case ChangeDynamicPropertyTrigger changeDynamicPropertyTrigger:
+                                    {
+                                        var box = changeDynamicPropertyTrigger.Hitbox;
+                                        var origin = box.Origin;
+                                        var mins = box.Mins;
+                                        var maxs = box.Maxs;
+                                        switch (changeDynamicPropertyTrigger.Orientation)
+                                        {
+                                            case SplitterTriggerOrientation.HORIZONTAL:
+                                                DrawLine(new Vector(origin.X + mins.X, origin.Y), new Vector(origin.X + maxs.X, origin.Y), 4, Color.Purple);
+                                                break;
+
+                                            case SplitterTriggerOrientation.VERTICAL:
+                                                DrawLine(new Vector(origin.X, origin.Y + mins.Y), new Vector(origin.X, origin.Y + maxs.Y), 4, Color.Purple);
+                                                break;
+
+                                        }
+
+                                        break;
+                                    }
+
+                                default:
+                                    DrawRectangle(rect, 4, TRIGGER_BORDER_BOX_COLOR);
+                                    break;
+                            }
+
+                            break;
+                        }
                 }
             }
         }
@@ -2951,8 +2951,8 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             line.Width = 2;
 
             line.Begin();
-            line.Draw(new Vector2[] { new(v.X, v.Y - (float) Camera.Height), new(v.X, v.Y + (float) Camera.Height) }, Color.Blue);
-            line.Draw(new Vector2[] { new(v.X - (float) Camera.Width, v.Y), new(v.X + (float) Camera.Width, v.Y) }, Color.Blue);
+            line.Draw([new(v.X, v.Y - (float) Camera.Height), new(v.X, v.Y + (float) Camera.Height)], Color.Blue);
+            line.Draw([new(v.X - (float) Camera.Width, v.Y), new(v.X + (float) Camera.Width, v.Y)], Color.Blue);
             line.End();
         }
 
@@ -4899,7 +4899,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         var sound = precachedSounds[precachedSoundsByName[name]];
         var channel = soundChannels[channelIndex];
-        
+
         channel.Play(sound, stopTime, loopTime, ignoreUpdatesUntilPlayed);
         channel.RestoreVolume();
     }
@@ -5664,7 +5664,8 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
     public void Dispose()
     {
-        Engine.Running = false;
-        Engine.Unload();
+        Running = false;
+        Unload();
+        GC.SuppressFinalize(this);
     }
 }

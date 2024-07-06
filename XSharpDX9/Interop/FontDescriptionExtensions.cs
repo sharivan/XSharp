@@ -1,23 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using FontDescription = XSharp.Graphics.FontDescription;
-using FontCharacterSet = XSharp.Graphics.FontCharacterSet;
-using FontDrawFlags = XSharp.Graphics.FontDrawFlags;
-using FontPitchAndFamily = XSharp.Graphics.FontPitchAndFamily;
-using FontPrecision = XSharp.Graphics.FontPrecision;
-using FontQuality = XSharp.Graphics.FontQuality;
-using FontWeight = XSharp.Graphics.FontWeight;
+﻿using DX9FontCharacterSet = SharpDX.Direct3D9.FontCharacterSet;
 using DX9FontDescription = SharpDX.Direct3D9.FontDescription;
-using DX9FontCharacterSet = SharpDX.Direct3D9.FontCharacterSet;
 using DX9FontDrawFlags = SharpDX.Direct3D9.FontDrawFlags;
 using DX9FontPitchAndFamily = SharpDX.Direct3D9.FontPitchAndFamily;
 using DX9FontPrecision = SharpDX.Direct3D9.FontPrecision;
 using DX9FontQuality = SharpDX.Direct3D9.FontQuality;
 using DX9FontWeight = SharpDX.Direct3D9.FontWeight;
+using FontCharacterSet = XSharp.Graphics.FontCharacterSet;
+using FontDescription = XSharp.Graphics.FontDescription;
+using FontDrawFlags = XSharp.Graphics.FontDrawFlags;
+using FontPitchAndFamily = XSharp.Graphics.FontPitchAndFamily;
+using FontPrecision = XSharp.Graphics.FontPrecision;
+using FontQuality = XSharp.Graphics.FontQuality;
+using FontWeight = XSharp.Graphics.FontWeight;
 
 namespace XSharp.Interop;
 

@@ -55,7 +55,7 @@ public abstract class SoundChannel : IDisposable, ISerializable
     protected abstract ISoundStream CreateSoundStream();
 
     public virtual void Dispose()
-    {      
+    {
         Stream.Dispose();
 
         Initialized = false;

@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.Direct3D;
 using DataStreamImpl = SharpDX.DataStream;
 
@@ -88,7 +81,7 @@ public class DX9DataStream : DataStream
     }
 
     public unsafe override int ReadByte()
-    {      
+    {
         return impl.ReadByte();
     }
 

@@ -24,7 +24,7 @@ public class EntityState
 
     public bool Current => Entity.CurrentStateID == ID;
 
-    public int ID
+    public virtual int ID
     {
         get;
         internal set;

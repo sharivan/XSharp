@@ -1,5 +1,5 @@
-﻿using XSharp.Graphics;
-using XSharp.Engine.Graphics;
+﻿using XSharp.Engine.Graphics;
+using XSharp.Graphics;
 
 namespace XSharp.Engine.Entities.Effects;
 

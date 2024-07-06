@@ -1,8 +1,7 @@
-﻿using XSharp.Graphics;
-using XSharp.Engine.Entities.Weapons;
+﻿using XSharp.Engine.Entities.Weapons;
 using XSharp.Engine.Graphics;
+using XSharp.Graphics;
 using XSharp.Math;
-
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities.Enemies;

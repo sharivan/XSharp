@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 
 using XSharp.Graphics;
 using XSharp.Serialization;

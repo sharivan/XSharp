@@ -662,9 +662,19 @@ public abstract class Sprite : Entity, IRenderable
         return animation != null ? animation.Index : -1;
     }
 
-    protected override Type GetStateType()
+    protected override Type GetStateBaseType()
     {
         return typeof(SpriteState);
+    }
+
+    protected new StateClass RegisterState<StateClass>() where StateClass : SpriteState
+    {
+        return (StateClass) RegisterState(typeof(StateClass));
+    }
+
+    protected new StateClass RegisterState<StateClass>(int id) where StateClass : SpriteState
+    {
+        return (StateClass) RegisterState(id, typeof(StateClass));
     }
 
     protected SpriteState RegisterState(int id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int subStateCount, int animationIndex, int initialFrame = 0)

@@ -1,6 +1,4 @@
-﻿using XSharp.Math.Geometry;
-
-namespace XSharp.Engine.Entities.Objects;
+﻿namespace XSharp.Engine.Entities.Objects;
 
 public class PrisionCapsule : Sprite
 {

@@ -1,17 +1,10 @@
 ﻿using SharpDX.Direct3D9;
-using SharpDX.Mathematics.Interop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using XSharp.Interop;
 using XSharp.Math.Geometry;
 
 using DX9ColorBGRA = SharpDX.ColorBGRA;
 using DX9Rectangle = SharpDX.Rectangle;
-using DX9RectangleF = SharpDX.RectangleF;
 
 namespace XSharp.Graphics;
 

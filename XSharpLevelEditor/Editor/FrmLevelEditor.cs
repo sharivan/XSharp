@@ -1,16 +1,12 @@
-using System;
-using System.Windows.Forms;
-
 using MaterialSkin;
 using MaterialSkin.Controls;
-
 using SharpDX;
 using SharpDX.Direct3D9;
-
+using System;
+using System.Windows.Forms;
 using XSharp.Engine;
 using XSharp.Math;
 using XSharp.Math.Geometry;
-
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Editor;

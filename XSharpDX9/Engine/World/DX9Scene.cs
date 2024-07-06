@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX;
-using SharpDX.Direct3D9;
+﻿using SharpDX.Direct3D9;
 using XSharp.Engine.Graphics;
 using XSharp.Graphics;
 using XSharp.Math.Geometry;

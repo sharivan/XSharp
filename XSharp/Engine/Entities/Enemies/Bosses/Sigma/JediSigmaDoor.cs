@@ -1,7 +1,7 @@
-﻿using XSharp.Engine.Graphics;
-using XSharp.Math.Geometry;
-using XSharp.Engine.Collision;
+﻿using XSharp.Engine.Collision;
+using XSharp.Engine.Graphics;
 using XSharp.Math;
+using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Sigma;
 
@@ -109,7 +109,7 @@ public class JediSigmaDoor : Sprite, IFSMEntity<JediSigmaDoorState>
 
     protected override void OnSpawn()
     {
-        base.OnSpawn(); 
+        base.OnSpawn();
 
         State = JediSigmaDoorState.OPEN;
     }

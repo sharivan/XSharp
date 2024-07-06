@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace XSharp.Graphics;
+﻿namespace XSharp.Graphics;
 
 /// <summary>
 /// Specifies quality options for font rendering.

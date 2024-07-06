@@ -11,7 +11,7 @@ namespace XSharp.Util;
 
 public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 {
-    private const int BITS_PER_SLOT = 8 * sizeof(ulong);
+    public const int BITS_PER_SLOT = 8 * sizeof(ulong);
 
     private static readonly ulong[] MASK =
     {
@@ -1326,7 +1326,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
     public static BitSet operator ~(BitSet set)
     {
         var result = new BitSet();
-        result.Complementary(result);
+        set.Complementary(result);
         return result;
     }
 
@@ -1334,6 +1334,20 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
     {
         var result = new BitSet();
         left.ExceptWith(right, result);
+        return result;
+    }
+
+    public static BitSet operator <<(BitSet set, int count)
+    {
+        var result = new BitSet(set);
+        result.ShiftLeft(count);
+        return result;
+    }
+
+    public static BitSet operator >>(BitSet set, int count)
+    {
+        var result = new BitSet(set);
+        result.ShiftRight(count);
         return result;
     }
 }

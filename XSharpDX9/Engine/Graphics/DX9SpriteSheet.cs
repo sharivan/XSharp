@@ -1,22 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX.Direct3D9;
-using SharpDX;
-
+﻿using SharpDX.Direct3D9;
 using XSharp.Graphics;
 using XSharp.Interop;
-
-using MMXBox = XSharp.Math.Geometry.Box;
-using DX9Point = SharpDX.Point;
 using Color = XSharp.Graphics.Color;
 using DataRectangle = XSharp.Graphics.DataRectangle;
+using DX9Point = SharpDX.Point;
 using Format = XSharp.Graphics.Format;
-using DX9Format = SharpDX.Direct3D9.Format;
-using DataStream = XSharp.Graphics.DataStream;
+using MMXBox = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.Graphics;
 

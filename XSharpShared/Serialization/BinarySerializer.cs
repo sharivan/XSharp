@@ -1226,7 +1226,7 @@ public class BinarySerializer : Serializer, IDisposable
                     foreach (var eventInfo in events)
                     {
                         var field = type.GetField(eventInfo.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-                        
+
                         var attribute = Attribute.GetCustomAttribute(eventInfo, typeof(NotSerializableAttribute));
                         if (attribute != null)
                             continue;

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using NAudio.Wave;
+﻿using NAudio.Wave;
 
 namespace XSharp.Engine.Sound;
 
@@ -13,7 +7,7 @@ public class NAudioWaveStream : WaveStream, IWaveStream
     private WaveStream stream;
 
     public override long Position
-    { 
+    {
         get => stream.Position;
         set => stream.Position = value;
     }

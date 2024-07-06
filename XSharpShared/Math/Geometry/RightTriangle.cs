@@ -162,11 +162,11 @@ public struct RightTriangle : IShape
                 return hCathetus >= 0 ? Vector.RIGHT_VECTOR : Vector.LEFT_VECTOR;
 
             case RightTriangleSide.HYPOTENUSE:
-            {
-                int sign = vCathetus.Signal == hCathetus.Signal ? 1 : -1;
-                var v = new Vector(sign * vCathetus, -sign * hCathetus);
-                return v.Versor(metric);
-            }
+                {
+                    int sign = vCathetus.Signal == hCathetus.Signal ? 1 : -1;
+                    var v = new Vector(sign * vCathetus, -sign * hCathetus);
+                    return v.Versor(metric);
+                }
         }
 
         return Vector.NULL_VECTOR;

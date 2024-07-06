@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using NAudio.Wave;
+﻿using NAudio.Wave;
 
 using XSharp.Serialization;
 
@@ -15,9 +9,9 @@ public class NAudioSoundStream : WaveStream, ISoundStream
     private SoundStreamHelper helper;
 
     public PrecachedSound Source
-    { 
-        get => helper.Source; 
-        set => helper.Source = value; 
+    {
+        get => helper.Source;
+        set => helper.Source = value;
     }
 
     /// <summary>
@@ -28,27 +22,27 @@ public class NAudioSoundStream : WaveStream, ISoundStream
     public override long Length => helper.Length;
 
     public override long Position
-    { 
-        get => helper.Position; 
-        set => helper.Position = value; 
+    {
+        get => helper.Position;
+        set => helper.Position = value;
     }
 
     public long StopPoint
-    { 
-        get => helper.StopPoint; 
-        set => helper.StopPoint = value; 
+    {
+        get => helper.StopPoint;
+        set => helper.StopPoint = value;
     }
 
-    public long LoopPoint 
-    { 
-        get => helper.LoopPoint; 
-        set => helper.LoopPoint = value; 
+    public long LoopPoint
+    {
+        get => helper.LoopPoint;
+        set => helper.LoopPoint = value;
     }
 
-    public bool Playing 
-    { 
-        get => helper.Playing; 
-        set => helper.Playing = value; 
+    public bool Playing
+    {
+        get => helper.Playing;
+        set => helper.Playing = value;
     }
 
     public NAudioSoundStream()

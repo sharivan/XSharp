@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using XSharp.Util;
-
-namespace XSharp.Graphics;
+﻿namespace XSharp.Graphics;
 
 /// <summary>	
 /// <p>Defines font attributes.</p>	
