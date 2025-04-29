@@ -3,6 +3,8 @@ using System.Runtime.CompilerServices;
 
 namespace XSharp.Util;
 
+#pragma warning disable CS8500 // Isso pega o endereço, obtém o tamanho ou declara um ponteiro para um tipo gerenciado
+
 /// <summary>
 /// The implementation of this class is filled by InteropBuilder post-building-event.
 /// </summary>
@@ -45,12 +47,12 @@ internal class Interop
         return (TCAST[]) (object) arrayData;
     }
 
-    public static unsafe void memcpy(void* pDest, void* pSrc, int count)
+    public static unsafe void MemoryCopy(void* pDest, void* pSrc, int count)
     {
         Unsafe.CopyBlockUnaligned(pDest, pSrc, (uint) count);
     }
 
-    public static unsafe void memset(void* pDest, byte value, int count)
+    public static unsafe void MemorySet(void* pDest, byte value, int count)
     {
         Unsafe.InitBlockUnaligned(pDest, value, (uint) count);
     }
@@ -176,3 +178,5 @@ internal class Interop
         }
     }*/
 }
+
+#pragma warning restore CS8500 // Isso pega o endereço, obtém o tamanho ou declara um ponteiro para um tipo gerenciado

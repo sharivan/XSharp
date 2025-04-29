@@ -69,7 +69,7 @@ public class MegaEDCore : IDisposable
         reader = new BinaryReader(ms);
         writter = new BinaryWriter(ms);
 
-        stream.Read(rom, 0, romSize);
+        stream.ReadExactly(rom, 0, romSize);
         Init();
 
         return true;

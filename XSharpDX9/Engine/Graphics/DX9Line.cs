@@ -8,19 +8,14 @@ using DX9Vector2 = SharpDX.Vector2;
 
 namespace XSharp.Engine.Graphics;
 
-public class DX9Line : ILine
+public class DX9Line(Line line) : ILine
 {
-    private Line line;
+    private Line line = line;
 
     public float Width
     {
         get => line.Width;
         set => line.Width = value;
-    }
-
-    public DX9Line(Line line)
-    {
-        this.line = line;
     }
 
     public void Begin()

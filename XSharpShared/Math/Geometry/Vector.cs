@@ -62,8 +62,13 @@ public class VectorTypeConverter : TypeConverter
 /// <summary>
 /// Vetor bidimensional
 /// </summary>
+/// <remarks>
+/// Cria um vetor a partir de duas coordenadas
+/// </remarks>
+/// <param name="x">Coordenada x</param>
+/// <param name="y">Coordenada y</param>
 [TypeConverter(typeof(VectorTypeConverter))]
-public struct Vector : IGeometry
+public struct Vector(FixedSingle x, FixedSingle y) : IGeometry
 {
     public const GeometryType type = GeometryType.VECTOR;
 
@@ -101,7 +106,7 @@ public struct Vector : IGeometry
     {
         get;
         private set;
-    }
+    } = x;
 
     /// <summary>
     /// Coordenada y do vetor
@@ -110,7 +115,7 @@ public struct Vector : IGeometry
     {
         get;
         private set;
-    }
+    } = y;
 
     /// <summary>
     /// Módulo/Norma/Comprimento do vetor
@@ -125,17 +130,6 @@ public struct Vector : IGeometry
     public Vector XVector => new(X, 0);
 
     public Vector YVector => new(0, Y);
-
-    /// <summary>
-    /// Cria um vetor a partir de duas coordenadas
-    /// </summary>
-    /// <param name="x">Coordenada x</param>
-    /// <param name="y">Coordenada y</param>
-    public Vector(FixedSingle x, FixedSingle y)
-    {
-        X = x;
-        Y = y;
-    }
 
     public Vector((FixedSingle, FixedSingle) tuple) : this(tuple.Item1, tuple.Item2) { }
 

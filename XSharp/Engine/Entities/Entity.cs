@@ -41,8 +41,8 @@ public abstract class Entity : IIndexedNamedFactoryItem
     private Dictionary<string, object> initParams = [];
     internal int index = -1;
     internal string name = null;
+    internal string targetName = null;
     private Vector origin = Vector.NULL_VECTOR;
-    private Direction direction = Direction.RIGHT;
     internal EntityReference parent = null;
 
     private bool doThink;
@@ -63,10 +63,6 @@ public abstract class Entity : IIndexedNamedFactoryItem
     private List<EntityState> states;
     private EntityState[] stateArray;
     private int currentStateID;
-
-    private bool checkTouchingEntities = true;
-    private bool checkTouchingWithDeadEntities = false;
-
     private Box[] lastBox;
 
     public EntityFactory Factory => Engine.Entities;
@@ -83,6 +79,12 @@ public abstract class Entity : IIndexedNamedFactoryItem
     {
         get => name;
         internal set => Engine.Entities.UpdateEntityName(this, value);
+    }
+
+    public string TargetName
+    {
+        get => targetName;
+        set => Engine.Entities.UpdateEntityTargetName(this, value);
     }
 
     public Entity Parent
@@ -137,13 +139,13 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public Direction Direction
     {
-        get => direction;
+        get;
 
         set
         {
-            if (value != direction)
+            if (value != field)
             {
-                direction = value;
+                field = value;
 
                 foreach (Entity child in childs)
                 {
@@ -157,7 +159,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
                 UpdatePartition();
             }
         }
-    }
+    } = Direction.RIGHT;
 
     public bool UpdateDirectionFromParent
     {
@@ -288,19 +290,19 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public bool CheckTouchingEntities
     {
-        get => checkTouchingEntities;
+        get;
         set
         {
-            if (value && !checkTouchingEntities)
+            if (value && !field)
                 Engine.partition.Insert(this);
-            else if (!value && checkTouchingEntities)
+            else if (!value && field)
                 Engine.partition.Remove(this);
 
-            checkTouchingEntities = value;
+            field = value;
 
             UpdateLastBoxes();
         }
-    }
+    } = true;
 
     public TouchingKind TouchingKind
     {
@@ -316,13 +318,13 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public bool CheckTouchingWithDeadEntities
     {
-        get => checkTouchingWithDeadEntities;
+        get;
         set
         {
-            checkTouchingWithDeadEntities = value;
+            field = value;
             UpdatePartition();
         }
-    }
+    } = false;
 
     public int StateCount => states.Count;
 
@@ -378,7 +380,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
             if (!property.CanWrite)
                 throw new ArgumentException($"Field or property '{attr}' is not writable.");
 
-            if (property.GetCustomAttribute(typeof(NotStartupableAttribute)) != null)
+            if (property.GetCustomAttribute<NotStartupableAttribute>() != null)
                 throw new ArgumentException($"Field or property '{attr}' can't be initialized by this way.");
 
             Type propertyType = property.PropertyType;
@@ -593,27 +595,27 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     protected EntityState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames(typeof(U)).Length);
+        return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames<U>().Length);
     }
 
     protected EntityState RegisterState<T, U>(T id, EntityStateStartEvent onStart) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames(typeof(U)).Length);
+        return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames<U>().Length);
     }
 
     protected EntityState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames(typeof(U)).Length);
+        return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames<U>().Length);
     }
 
     protected EntityState RegisterState<T, U>(T id, EntityStateEndEvent onEnd) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames(typeof(U)).Length);
+        return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames<U>().Length);
     }
 
     protected EntityState RegisterState<T, U>(T id) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length);
+        return RegisterState((int) (object) id, null, null, null, Enum.GetNames<U>().Length);
     }
 
     protected void UnregisterState(int id)

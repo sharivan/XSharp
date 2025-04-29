@@ -17,14 +17,9 @@ public partial class FrmLevelEditor : MaterialForm
     public const float MIN_SCALE = 0.25f;
     public const float MAX_SCALE = 10.0f;
 
-    private class TileRender
+    private class TileRender(Control control)
     {
-        private Control control;
-
-        public TileRender(Control control)
-        {
-            this.control = control;
-        }
+        private Control control = control;
 
         public void Render()
         {

@@ -3,6 +3,8 @@ using XSharp.Graphics;
 using XSharp.Math;
 using XSharp.Math.Geometry;
 
+using static XSharp.Engine.Functions;
+
 namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;
 
 public enum ChillPenguinState
@@ -1102,7 +1104,7 @@ public class ChillPenguin : Boss, IFSMEntity<ChillPenguinState>
             case "Introducing" when !HealthFilling && Health == 0:
                 StartHealthFilling();
 
-                Lever.Origin = World.World.GetSceneBoundingBoxFromPos(Origin).MiddleTop + (0, 12);
+                Lever.Origin = GetSceneBoundingBoxFromPos(Origin).MiddleTop + (0, 12);
                 Lever.Spawn();
                 break;
 

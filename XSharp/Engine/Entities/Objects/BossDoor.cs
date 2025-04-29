@@ -5,7 +5,7 @@ using XSharp.Engine.World;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
-using static XSharp.Engine.World.World;
+using static XSharp.Engine.Functions;
 
 namespace XSharp.Engine.Entities.Objects;
 
@@ -52,22 +52,19 @@ public class BossDoor : BaseTrigger, IFSMEntity<BossDoorState>
     public event BossDoorEvent ClosingEvent;
     public event BossDoorEvent ClosedEvent;
 
-    private BossDoorOrientation orientation = BossDoorOrientation.VERTICAL;
-
     private EntityReference<BossDoorSprite> effect;
 
     private BossDoorSprite Effect => effect;
 
     public BossDoorOrientation Orientation
     {
-        get => orientation;
+        get;
         set
         {
-            orientation = value;
-            if (Effect != null)
-                Effect.Rotation = Orientation == BossDoorOrientation.VERTICAL ? NinetyRotation.ANGLE_0 : NinetyRotation.ANGLE_90;
+            field = value;
+            Effect?.Rotation = Orientation == BossDoorOrientation.VERTICAL ? NinetyRotation.ANGLE_0 : NinetyRotation.ANGLE_90;
         }
-    }
+    } = BossDoorOrientation.VERTICAL;
 
     public BossDoorDirection CrossDirection
     {

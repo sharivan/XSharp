@@ -10,14 +10,9 @@ using XSharp.Engine.Graphics;
 
 namespace XSharp.Graphics;
 
-public class DX11RenderTarget : IRenderTarget
+public class DX11RenderTarget(Surface surface) : IRenderTarget
 {
-    internal Surface surface;
-
-    public DX11RenderTarget(Surface surface)
-    {
-        this.surface = surface;
-    }
+    internal Surface surface = surface;
 
     public void Dispose()
     {
@@ -26,7 +21,7 @@ public class DX11RenderTarget : IRenderTarget
 
     public static implicit operator Surface(DX11RenderTarget renderTarget)
     {
-        return renderTarget != null ? renderTarget.surface : null;
+        return renderTarget?.surface;
     }
 
     public static implicit operator DX11RenderTarget(Surface surface)

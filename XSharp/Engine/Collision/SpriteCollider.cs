@@ -22,10 +22,6 @@ public class SpriteCollider
     private LanderCollisionChecker upCollisionChecker;
     private LanderCollisionChecker downCollisionChecker;
     private LanderCollisionChecker innerCollisionChecker;
-
-    private CollisionFlags leftMaskFlags;
-    private CollisionFlags upMaskFlags;
-    private CollisionFlags rightMaskFlags;
     private CollisionFlags innerMaskFlags;
 
     private bool leftMaskComputed;
@@ -125,12 +121,14 @@ public class SpriteCollider
         {
             if (!leftMaskComputed)
             {
-                leftMaskFlags = leftCollisionChecker.GetTouchingFlags(Direction.LEFT);
+                field = leftCollisionChecker.GetTouchingFlags(Direction.LEFT);
                 leftMaskComputed = true;
             }
 
-            return leftMaskFlags;
+            return field;
         }
+
+        private set;
     }
 
     public bool BlockedUp => UpMaskFlags.CanBlockTheMove(Direction.UP);
@@ -141,12 +139,14 @@ public class SpriteCollider
         {
             if (!upMaskComputed)
             {
-                upMaskFlags = upCollisionChecker.GetTouchingFlags(Direction.UP);
+                field = upCollisionChecker.GetTouchingFlags(Direction.UP);
                 upMaskComputed = true;
             }
 
-            return upMaskFlags;
+            return field;
         }
+
+        private set;
     }
 
     public bool BlockedRight => RightMaskFlags.CanBlockTheMove(Direction.RIGHT);
@@ -157,12 +157,14 @@ public class SpriteCollider
         {
             if (!rightMaskComputed)
             {
-                rightMaskFlags = rightCollisionChecker.GetTouchingFlags(Direction.RIGHT);
+                field = rightCollisionChecker.GetTouchingFlags(Direction.RIGHT);
                 rightMaskComputed = true;
             }
 
-            return rightMaskFlags;
+            return field;
         }
+
+        private set;
     }
 
     public bool Landed => LandedOnBlock || LandedOnSlope || LandedOnTopLadder || LandedOnLethalSpike || LandedOnNonLethalSpike;
@@ -315,9 +317,9 @@ public class SpriteCollider
         if (DownMaskFlags == CollisionFlags.SLOPE)
             LandedSlope = downCollisionChecker.SlopeTriangle;
 
-        upMaskFlags = upCollisionChecker.GetTouchingFlags(Direction.UP);
-        leftMaskFlags = leftCollisionChecker.GetTouchingFlags(Direction.LEFT);
-        rightMaskFlags = rightCollisionChecker.GetTouchingFlags(Direction.RIGHT);
+        UpMaskFlags = upCollisionChecker.GetTouchingFlags(Direction.UP);
+        LeftMaskFlags = leftCollisionChecker.GetTouchingFlags(Direction.LEFT);
+        RightMaskFlags = rightCollisionChecker.GetTouchingFlags(Direction.RIGHT);
         innerMaskFlags = innerCollisionChecker.GetCollisionFlags();
 
         leftMaskComputed = true;

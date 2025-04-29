@@ -55,6 +55,8 @@ public class EntityFactory : IndexedNamedFactory<Entity>
     private EntityReference lastEntity = null;
     private int firstFreeEntityIndex;
 
+    private Dictionary<string, EntitySet<Entity>> entitiesByTargetName;
+
     new public Entity this[int index]
     {
         get => entities[index];
@@ -75,6 +77,8 @@ public class EntityFactory : IndexedNamedFactory<Entity>
     {
         entities = new Entity[MAX_ENTITIES];
         references = new EntityReference[MAX_ENTITIES];
+
+        entitiesByTargetName = [];
 
         firstFreeEntityIndex = 0;
     }
@@ -149,8 +153,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         entities[index] = entity;
         references[index] = reference;
 
-        if (LastEntity is not null)
-            LastEntity.next = GetReferenceTo(entity);
+        LastEntity?.next = GetReferenceTo(entity);
 
         entity.previous = lastEntity;
         entity.next = null;
@@ -293,6 +296,41 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         UpdateItemName(entity, name);
     }
 
+    internal void UpdateEntityTargetName(Entity entity, string targetName)
+    {
+        string oldTargetName = entity.TargetName;
+        if (oldTargetName == targetName)
+            return;
+
+        if (oldTargetName == null)
+        {
+            var entitySet = new EntitySet<Entity>();
+            entitiesByTargetName.Add(targetName, entitySet);
+            entitySet.Add(entity);
+        }
+        else
+        {
+            if (entitiesByTargetName.TryGetValue(oldTargetName, out var entitySet))
+                entitySet.Remove(entity);
+
+            if (!entitiesByTargetName.TryGetValue(targetName, out entitySet))
+            {
+                entitySet = [];
+                entitiesByTargetName.Add(targetName, entitySet);
+            }
+
+            entitySet.Add(entity);
+        }
+    }
+
+    public IEnumerable<Entity> GetEntitiesByTargetName(string targetName)
+    {
+        if (entitiesByTargetName.TryGetValue(targetName, out var entitySet))
+            return entitySet;
+
+        return null;
+    }
+
     protected override Type GetDefaultItemReferenceType(Type itemType)
     {
         return itemType == typeof(Entity) ? typeof(EntityReference) : typeof(EntityReference<>).MakeGenericType(itemType);
@@ -322,6 +360,15 @@ public class EntityFactory : IndexedNamedFactory<Entity>
             references[entity.index] = GetOrCreateReferenceTo(entity.index, entity.GetType());
         }
 
+        int countByTargetName = serializer.ReadInt();
+        for (int i = 0; i < countByTargetName; i++)
+        {
+            string targetName = serializer.ReadString();
+            var entitySet = new EntitySet<Entity>();
+            entitiesByTargetName.Add(targetName, entitySet);
+            entitySet.Deserialize(serializer);
+        }
+
         firstFreeEntityIndex = serializer.ReadInt();
         firstEntity = serializer.ReadEntityReference();
         lastEntity = serializer.ReadEntityReference();
@@ -338,6 +385,13 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         {
             if (entity != null)
                 serializer.WriteObject(entity, false, true);
+        }
+
+        serializer.WriteInt(entitiesByTargetName.Count);
+        foreach (var entry in entitiesByTargetName)
+        {
+            serializer.WriteString(entry.Key);
+            entry.Value.Serialize(serializer);
         }
 
         serializer.WriteInt(firstFreeEntityIndex);

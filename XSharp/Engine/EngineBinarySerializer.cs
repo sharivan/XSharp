@@ -27,7 +27,7 @@ public class EngineBinarySerializer : BinarySerializer
             return ReadEntityReference(referenceType.GetGenericArguments()[0], nullable);
 
         if (referenceType == typeof(EntityReference))
-            return ReadEntityReference(typeof(Entity), nullable);
+            return ReadEntityReference<Entity>(nullable);
 
         return base.ReadItemReference(referenceType, nullable);
     }
@@ -56,7 +56,7 @@ public class EngineBinarySerializer : BinarySerializer
 
     public EntityReference ReadEntityReference(bool nullable = false)
     {
-        return ReadEntityReference(typeof(Entity), nullable);
+        return ReadEntityReference<Entity>(nullable);
     }
 
     public EntityReference<EntityType> ReadEntityReference<EntityType>(bool nullable = false) where EntityType : Entity

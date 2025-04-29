@@ -49,7 +49,7 @@ public class BusterSemiCharged : Weapon, IFSMEntity<SemiChargedState>
 
         SpriteSheetName = "X Weapons";
 
-        SetupStateArray(typeof(SemiChargedState));
+        SetupStateArray<SemiChargedState>();
         RegisterState(SemiChargedState.FIRING, OnStartFiring, "SemiChargedShotFiring");
         RegisterState(SemiChargedState.SHOOTING, OnStartShooting, OnShooting, null, "SemiChargedShot");
         RegisterState(SemiChargedState.HITTING, OnStartHitting, "SemiChargedShotHit");

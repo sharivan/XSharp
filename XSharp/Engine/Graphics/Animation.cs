@@ -17,10 +17,6 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 {
     internal EntityReference<Sprite> sprite;
     internal string name;
-
-    [NotSerializable]
-    private SpriteSheet.FrameSequence sequence;
-
     private bool animating;
     private int currentFrame;
     private bool animationEndFired;
@@ -49,13 +45,16 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         private set;
     }
 
+    [field: NotSerializable]
     private SpriteSheet.FrameSequence Sequence
     {
         get
         {
-            sequence ??= SpriteSheet.GetFrameSequence(FrameSequenceName);
-            return sequence;
+            field ??= SpriteSheet.GetFrameSequence(FrameSequenceName);
+            return field;
         }
+
+        set;
     }
 
     public SpriteSheet SpriteSheet => Sprite.SpriteSheet;
@@ -203,7 +202,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         RepeatX = repeatX;
         RepeatY = repeatY;
 
-        sequence = SpriteSheet.GetFrameSequence(frameSequenceName);
+        Sequence = SpriteSheet.GetFrameSequence(frameSequenceName);
         InitialFrame = initialFrame;
         Visible = startVisible;
         animating = startOn;
@@ -321,7 +320,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
 
     internal void OnDeviceReset()
     {
-        sequence = null;
+        Sequence = null;
     }
 
     public override int GetHashCode()

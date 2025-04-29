@@ -10,7 +10,7 @@ public enum SetOperation
     INTERSECTION
 }
 
-public class GeometrySet : IGeometry
+public class GeometrySet(SetOperation operation, params (IGeometry part, bool negate)[] parts) : IGeometry
 {
     public const GeometryType type = GeometryType.SET;
 
@@ -50,7 +50,7 @@ public class GeometrySet : IGeometry
         part3 = Diference(b, a);
     }
 
-    protected readonly List<(IGeometry part, bool negate)> parts;
+    protected readonly List<(IGeometry part, bool negate)> parts = new List<(IGeometry part, bool negate)>(parts);
 
     public GeometryType Type => type;
 
@@ -64,20 +64,13 @@ public class GeometrySet : IGeometry
     {
         get;
         set;
-    }
+    } = operation;
 
     public virtual FixedSingle Length => throw new NotImplementedException();
 
     public int Count => parts.Count;
 
     public IEnumerable<(IGeometry part, bool negate)> Parts => parts;
-
-    public GeometrySet(SetOperation operation, params (IGeometry part, bool negate)[] parts)
-    {
-        Operation = operation;
-
-        this.parts = new List<(IGeometry part, bool negate)>(parts);
-    }
 
     public virtual FixedSingle GetLength(Metric metric)
     {

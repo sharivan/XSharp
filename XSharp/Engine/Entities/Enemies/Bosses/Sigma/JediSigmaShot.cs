@@ -14,7 +14,7 @@ public class JediSigmaShot : Enemy
     }
     #endregion
 
-    internal EntityReference<JediSigma> shooter;
+    internal EntityReference<JediSigma> shooter = null;
 
     public JediSigma Shooter => shooter;
 

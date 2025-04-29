@@ -26,7 +26,7 @@ public class AxeMaxLumberjack : Enemy, IFSMEntity<AxeMaxLumberjackState>
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(AxeMax));
+        Engine.CallPrecacheAction<AxeMax>();
     }
     #endregion
 

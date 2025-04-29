@@ -344,13 +344,13 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         if (initialSlotCount < 0)
             throw new ArgumentException($"Invalid negative initial slot count value '{initialSlotCount}'.");
 
-        bits = new List<ulong>();
+        bits = [];
         SlotCount = initialSlotCount;
     }
 
     public BitSet(BitSet other)
     {
-        bits = new List<ulong>();
+        bits = [];
 
         if (other != null)
             UnionWith(other);
@@ -707,7 +707,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void Deserialize(ISerializer reader)
     {
-        bits ??= new List<ulong>();
+        bits ??= [];
 
         SlotCount = reader.ReadInt();
         for (int i = 0; i < SlotCount; i++)

@@ -10,7 +10,7 @@ public class TurnCannonShot : Enemy
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(TurnCannon));
+        Engine.CallPrecacheAction<TurnCannon>();
     }
     #endregion
 

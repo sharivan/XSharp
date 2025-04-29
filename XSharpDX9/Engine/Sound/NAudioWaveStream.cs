@@ -2,9 +2,9 @@
 
 namespace XSharp.Engine.Sound;
 
-public class NAudioWaveStream : WaveStream, IWaveStream
+public class NAudioWaveStream(WaveStream stream) : WaveStream, IWaveStream
 {
-    private WaveStream stream;
+    private WaveStream stream = stream;
 
     public override long Position
     {
@@ -15,11 +15,6 @@ public class NAudioWaveStream : WaveStream, IWaveStream
     public override long Length => stream.Length;
 
     public override WaveFormat WaveFormat => stream.WaveFormat;
-
-    public NAudioWaveStream(WaveStream stream)
-    {
-        this.stream = stream;
-    }
 
     public new void Dispose()
     {

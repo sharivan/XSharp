@@ -78,8 +78,6 @@ public class HealthHUD : HUD
         return HP_BOTTOM - GetHeight(capacity);
     }
 
-    private HUDImage image = HUDImage.NONE;
-
     private AnimationReference topAnimation;
     private AnimationReference middleAnimation;
     private AnimationReference middleEmptyAnimation;
@@ -106,15 +104,15 @@ public class HealthHUD : HUD
 
     public HUDImage Image
     {
-        get => image;
+        get;
 
         protected set
         {
-            if (ResourcesCreated && value != image)
+            if (ResourcesCreated && value != field)
             {
-                if (image != HUDImage.NONE)
+                if (field != HUDImage.NONE)
                 {
-                    Animation animation = hudImageAnimation[(int) image];
+                    Animation animation = hudImageAnimation[(int) field];
                     animation.Visible = false;
                 }
 
@@ -125,9 +123,9 @@ public class HealthHUD : HUD
                 }
             }
 
-            image = value;
+            field = value;
         }
-    }
+    } = HUDImage.NONE;
 
     protected Animation TopAnimation => topAnimation;
 
@@ -186,8 +184,7 @@ public class HealthHUD : HUD
         base.OnPostThink();
 
         var imageAnimation = ImageAnimation;
-        if (imageAnimation != null)
-            imageAnimation.Offset = (1, 2 * Capacity + 6);
+        imageAnimation?.Offset = (1, 2 * Capacity + 6);
 
         BottomAnimation.Offset = (0, 2 * Capacity + 4);
         MiddleEmptyAnimation.RepeatY = (int) (Capacity - Value);

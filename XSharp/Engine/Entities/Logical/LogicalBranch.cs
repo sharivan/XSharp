@@ -4,53 +4,67 @@ public delegate void LogicalBranchEvent(LogicalBranch source);
 
 public class LogicalBranch : LogicalEntity
 {
-    public event LogicalBranchEvent TrueEvent;
-    public event LogicalBranchEvent FalseEvent;
+    private bool value = false;
+
+    public event LogicalBranchEvent OnTrue;
+    public event LogicalBranchEvent OnFalse;
 
     public bool Value
     {
-        get;
-        set;
+        get => value;
+        set => SetValue(value);
     }
 
     public LogicalBranch()
     {
     }
 
-    public void SetValueTest(bool value)
+    public ThreeStateResult SetValue(bool value)
     {
         if (!Enabled)
-            return;
+            return ThreeStateResult.UNDEFINED;
 
-        Value = value;
-        Test();
+        this.value = value;
+        return value ? ThreeStateResult.TRUE : ThreeStateResult.FALSE;
     }
 
-    public void Toggle()
+    public ThreeStateResult SetValueTest(bool value)
     {
         if (!Enabled)
-            return;
+            return ThreeStateResult.UNDEFINED;
 
-        Value = !Value;
+        this.value = value;
+        return Test();
     }
 
-    public void ToggleTest()
+    public ThreeStateResult ToggleValue()
     {
         if (!Enabled)
-            return;
+            return ThreeStateResult.UNDEFINED;
+
+        value = !value;
+        return value ? ThreeStateResult.TRUE : ThreeStateResult.FALSE;
+    }
+
+    public ThreeStateResult ToggleTest()
+    {
+        if (!Enabled)
+            return ThreeStateResult.UNDEFINED;
 
         Toggle();
-        Test();
+        return Test();
     }
 
-    public void Test()
+    public ThreeStateResult Test()
     {
         if (!Enabled)
-            return;
+            return ThreeStateResult.UNDEFINED;
 
-        if (Value)
-            TrueEvent?.Invoke(this);
+        if (value)
+            OnTrue?.Invoke(this);
         else
-            FalseEvent?.Invoke(this);
+            OnFalse?.Invoke(this);
+
+        return value ? ThreeStateResult.TRUE : ThreeStateResult.FALSE;
     }
 }

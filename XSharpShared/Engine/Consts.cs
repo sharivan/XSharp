@@ -4,12 +4,6 @@ using XSharp.Math.Geometry;
 
 namespace XSharp.Engine;
 
-public enum CollisionBoxType
-{
-    X1,
-    X2X3
-}
-
 public class Consts
 {
     public const int SAVE_SLOT_COUNT = 100;

@@ -20,7 +20,7 @@ public class PenguinLever : Sprite, IFSMEntity<PenguinLeverState>
     [Precache]
     internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(ChillPenguin));
+        Engine.CallPrecacheAction<ChillPenguin>();
     }
     #endregion
 

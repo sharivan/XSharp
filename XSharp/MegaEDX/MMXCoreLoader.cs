@@ -344,8 +344,8 @@ public class MMXCoreLoader : MMXCore
                         {
                             case 0x00: // camera lock
                                 {
-                                    uint pBase;
-                                    if (expandedROM && expandedROMVersion >= 4)
+                                uint pBase;
+                                if (expandedROM && expandedROMVersion >= 4)
                                     {
                                         pBase = Snes2pc((int) (lockBank << 16) | (0x8000 + Level * 0x800 + info.eventSubId * 0x20));
                                     }
@@ -371,26 +371,24 @@ public class MMXCoreLoader : MMXCore
                                     var extensions = new List<Vector>();
                                     while (((expandedROM && expandedROMVersion >= 4) ? ReadWord(pBase) : rom[pBase]) != 0)
                                     {
-                                        Box lockBox = boudingBox;
-                                        ushort camOffset = 0;
-                                        ushort camValue = 0;
+                                    ushort camOffset;
+                                    ushort camValue;
+                                    if (expandedROM && expandedROMVersion >= 4)
+                                    {
+                                        camOffset = ReadWord(pBase);
+                                        pBase += 2;
+                                        camValue = ReadWord(pBase);
+                                        pBase += 2;
+                                    }
+                                    else
+                                    {
+                                        ushort offset = (ushort) ((rom[pBase] - 1) << 2);
+                                        camOffset = ReadWord(pLocks + offset + 0x0);
+                                        camValue = ReadWord(pLocks + offset + 0x2);
+                                        pBase++;
+                                    }
 
-                                        if (expandedROM && expandedROMVersion >= 4)
-                                        {
-                                            camOffset = ReadWord(pBase);
-                                            pBase += 2;
-                                            camValue = ReadWord(pBase);
-                                            pBase += 2;
-                                        }
-                                        else
-                                        {
-                                            ushort offset = (ushort) ((rom[pBase] - 1) << 2);
-                                            camOffset = ReadWord(pLocks + offset + 0x0);
-                                            camValue = ReadWord(pLocks + offset + 0x2);
-                                            pBase++;
-                                        }
-
-                                        int lockX0 = (left + right) / 2;
+                                    int lockX0 = (left + right) / 2;
                                         int lockY0 = (top + bottom) / 2;
 
                                         int lockLeft = lockX0;

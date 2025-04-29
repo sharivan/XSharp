@@ -13,7 +13,7 @@ public class PenguinFrozenBlock : Sprite
     [Precache]
     internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(ChillPenguin));
+        Engine.CallPrecacheAction<ChillPenguin>();
     }
     #endregion
 

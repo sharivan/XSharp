@@ -249,6 +249,13 @@ public class DX9Engine : BaseEngine
 
     protected override void DisposeDeviceResources()
     {
+        for (int i = 0; i < renderTargets.Length; i++)
+        {
+            var target = renderTargets[i];
+            DisposeResource(target);
+            renderTargets[i] = null;
+        }
+
         DisposeResource(PixelShader);
         DisposeResource(PaletteShader);
         DisposeResource(sprite);
@@ -556,7 +563,7 @@ public class DX9Engine : BaseEngine
         if (surface == null)
             return null;
 
-        result = new DX9RenderTarget(Device.GetRenderTarget(level));
+        result = new DX9RenderTarget(Device.GetRenderTarget(level), false);
         renderTargets[level] = result;
         return result;
     }

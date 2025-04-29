@@ -6,7 +6,7 @@ using XSharp.Math;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
-using static XSharp.Engine.World.World;
+using static XSharp.Engine.Functions;
 
 namespace XSharp.Engine.Collision;
 

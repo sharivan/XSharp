@@ -47,7 +47,7 @@ public class BusterCharged : Weapon, IFSMEntity<ChargedState>
 
         SpriteSheetName = "X Weapons";
 
-        SetupStateArray(typeof(ChargedState));
+        SetupStateArray<ChargedState>();
         RegisterState(ChargedState.FIRING, OnStartFiring, "ChargedShotFiring");
         RegisterState(ChargedState.SHOOTING, OnStartShooting, OnShooting, null, "ChargedShot");
         RegisterState(ChargedState.HITTING, OnStartHitting, "ChargedShotHit");

@@ -17,7 +17,7 @@ public class SmallHealthRecover : Item, IFSMEntity<SmallHealthRecoverState>
     [Precache]
     internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Weapon));
+        Engine.CallPrecacheAction<Weapon>();
     }
     #endregion
 

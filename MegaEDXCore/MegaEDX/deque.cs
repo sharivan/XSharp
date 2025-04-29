@@ -46,8 +46,8 @@ public class Deque<T> : IEnumerable<T>, ICollection, IEnumerable
 
     public Deque()
     {
-        front = new List<T>();
-        back = new List<T>();
+        front = [];
+        back = [];
     }
 
     public Deque(int capacity)
@@ -68,8 +68,8 @@ public class Deque<T> : IEnumerable<T>, ICollection, IEnumerable
     {
         if (backCollection == null && frontCollection == null)
             throw new ArgumentException("Collections cannot both be null");
-        front = new List<T>();
-        back = new List<T>();
+        front = [];
+        back = [];
 
         if (backCollection != null)
         {

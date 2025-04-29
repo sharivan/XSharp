@@ -15,14 +15,12 @@ public class WallKickEffect : SpriteEffect
         };
     }
 
-    private Player player;
-
     public Player Player
     {
-        get => player;
+        get;
         set
         {
-            player = value;
+            field = value;
             if (value != null)
                 Origin = GetOrigin(value);
         }

@@ -18,11 +18,7 @@ public class Map
         return new Cell(row, col);
     }
 
-    internal Tile[,] tiles;
-    internal int[,] palette;
-    internal bool[,] flipped;
-    internal bool[,] mirrored;
-    internal bool[,] upLayer;
+    internal MapCell[,] cells;
 
     public int ID
     {
@@ -35,11 +31,7 @@ public class Map
         set;
     }
 
-    public Tile this[int row, int col]
-    {
-        get => tiles[row, col];
-        set => tiles[row, col] = value;
-    }
+    public MapCell this[int row, int col] => cells[row, col];
 
     public bool IsNull
     {
@@ -49,7 +41,7 @@ public class Map
             {
                 for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
                 {
-                    Tile tile = tiles[row, col];
+                    Tile tile = cells[row, col].Tile;
                     if (tile != null)
                         return false;
                 }
@@ -59,16 +51,24 @@ public class Map
         }
     }
 
-    internal Map(int id, CollisionData collisionData = CollisionData.NONE)
+    internal Map(int id, CollisionData collisionData = CollisionData.NONE, bool fill = false)
     {
         ID = id;
         CollisionData = collisionData;
 
-        tiles = new Tile[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
-        palette = new int[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
-        flipped = new bool[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
-        mirrored = new bool[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
-        upLayer = new bool[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
+        cells = new MapCell[SIDE_TILES_PER_MAP, SIDE_TILES_PER_MAP];
+
+        if (fill)
+        {
+            for (int col = 0; col < SIDE_TILES_PER_MAP; col++)
+            {
+                for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
+                {
+                    var cell = new MapCell();
+                    cells[row, col] = cell;
+                }
+            }
+        }
     }
 
     public Tile GetTileFrom(Vector pos)
@@ -77,7 +77,7 @@ public class Map
         int row = tsp.Row;
         int col = tsp.Col;
 
-        return row < 0 || col < 0 || row >= SIDE_TILES_PER_MAP || col >= SIDE_TILES_PER_MAP ? null : tiles[row, col];
+        return row < 0 || col < 0 || row >= SIDE_TILES_PER_MAP || col >= SIDE_TILES_PER_MAP ? null : cells[row, col]?.Tile;
     }
 
     public void RemoveTile(Tile tile)
@@ -89,14 +89,9 @@ public class Map
         {
             for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
             {
-                if (tiles[row, col] == tile)
-                {
-                    tiles[row, col] = null;
-                    palette[row, col] = -1;
-                    flipped[row, col] = false;
-                    mirrored[row, col] = false;
-                    upLayer[row, col] = false;
-                }
+                var cell = cells[row, col];
+                if (cell != null && cell.Tile == tile)
+                    cells[row, col] = null;
             }
         }
     }
@@ -104,7 +99,7 @@ public class Map
     public Tile GetTile(Vector pos)
     {
         Cell cell = GetTileCellFromPos(pos);
-        return tiles[cell.Row, cell.Col];
+        return cells[cell.Row, cell.Col]?.Tile;
     }
 
     public void SetTile(Vector pos, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
@@ -120,11 +115,18 @@ public class Map
 
     public void SetTile(Cell cell, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
     {
-        tiles[cell.Row, cell.Col] = tile;
-        this.palette[cell.Row, cell.Col] = palette;
-        this.flipped[cell.Row, cell.Col] = flipped;
-        this.mirrored[cell.Row, cell.Col] = mirrored;
-        this.upLayer[cell.Row, cell.Col] = upLayer;
+        var mapCell = cells[cell.Row, cell.Col];
+        if (mapCell == null)
+        {
+            mapCell = new MapCell();
+            cells[cell.Row, cell.Col] = mapCell;
+        }
+
+        mapCell.Tile = tile;
+        mapCell.Palette = palette;
+        mapCell.Flipped = flipped;
+        mapCell.Mirrored = mirrored;
+        mapCell.UpLayer = upLayer;
     }
 
     public void FillRectangle(MMXBox box, Tile tile, int palette = -1, bool flipped = false, bool mirrored = false, bool upLayer = false)
@@ -151,12 +153,12 @@ public class Map
             for (int row = 0; row < SIDE_TILES_PER_MAP; row++)
             {
                 var tilePos = new Vector(pos.X + col * TILE_SIZE, pos.Y - row * TILE_SIZE);
-                Tile tile = tiles[row, col];
+                var cell = cells[row, col];
 
-                if (tile != null)
+                if (cell != null)
                 {
                     var tilemapPos = new Vector((ID % 32 * SIDE_TILES_PER_MAP + col) * World.TILE_FRAC_SIZE, (ID / 32 * SIDE_TILES_PER_MAP + row) * World.TILE_FRAC_SIZE);
-                    if (upLayer[row, col])
+                    if (cell.UpLayer)
                     {
                         BaseEngine.Engine.WriteSquare(downLayerVBData, Vector.NULL_VECTOR, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);
                         BaseEngine.Engine.WriteSquare(upLayerVBData, tilemapPos, tilePos, World.TILE_FRAC_SIZE_VECTOR, World.TILE_SIZE_VECTOR);

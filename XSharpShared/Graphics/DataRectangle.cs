@@ -2,15 +2,9 @@
 
 namespace XSharp.Graphics;
 
-public struct DataRectangle
+public struct DataRectangle(IntPtr dataPointer, int pitch)
 {
-    public IntPtr DataPointer;
+    public IntPtr DataPointer = dataPointer;
 
-    public int Pitch;
-
-    public DataRectangle(IntPtr dataPointer, int pitch)
-    {
-        DataPointer = dataPointer;
-        Pitch = pitch;
-    }
+    public int Pitch = pitch;
 }

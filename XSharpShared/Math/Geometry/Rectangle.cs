@@ -9,28 +9,35 @@ namespace XSharp.Math.Geometry;
 /// Define a Rectangle. This structure is slightly different from System.Drawing.Rectangle as it is
 /// internally storing Left,Top,Right,Bottom instead of Left,Top,Width,Height.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="Rectangle"/> struct.
+/// </remarks>
+/// <param name="x">The left.</param>
+/// <param name="y">The top.</param>
+/// <param name="width">The width.</param>
+/// <param name="height">The height.</param>
 [StructLayout(LayoutKind.Sequential)]
-public struct Rectangle : IEquatable<Rectangle>
+public struct Rectangle(int x, int y, int width, int height) : IEquatable<Rectangle>
 {
     /// <summary>
     /// The left.
     /// </summary>
-    public int Left;
+    public int Left = x;
 
     /// <summary>
     /// The top.
     /// </summary>
-    public int Top;
+    public int Top = y;
 
     /// <summary>
     /// The right.
     /// </summary>
-    public int Right;
+    public int Right = x + width;
 
     /// <summary>
     /// The bottom.
     /// </summary>
-    public int Bottom;
+    public int Bottom = y + height;
 
     /// <summary>
     /// An empty rectangle.
@@ -40,21 +47,6 @@ public struct Rectangle : IEquatable<Rectangle>
     static Rectangle()
     {
         Empty = new Rectangle();
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Rectangle"/> struct.
-    /// </summary>
-    /// <param name="x">The left.</param>
-    /// <param name="y">The top.</param>
-    /// <param name="width">The width.</param>
-    /// <param name="height">The height.</param>
-    public Rectangle(int x, int y, int width, int height)
-    {
-        Left = x;
-        Top = y;
-        Right = x + width;
-        Bottom = y + height;
     }
 
     /// <summary>

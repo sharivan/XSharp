@@ -64,7 +64,7 @@ using XSharp.Math.Geometry;
 using XSharp.MegaEDX;
 
 using static XSharp.Engine.Consts;
-using static XSharp.Engine.World.World;
+using static XSharp.Engine.Functions;
 
 using MMXWorld = XSharp.Engine.World.World;
 
@@ -299,10 +299,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     protected ITexture backgroundTilemap;
 
     protected ITexture stageTexture;
-
-    private Palette foregroundPalette;
-    private Palette backgroundPalette;
-
     protected IFont infoFont;
     protected IFont coordsTextFont;
     protected IFont highlightMapTextFont;
@@ -550,26 +546,26 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
     public Palette ForegroundPalette
     {
-        get => foregroundPalette;
+        get;
         set
         {
-            if (foregroundPalette != value)
+            if (field != value)
             {
                 //DisposeResource(foregroundPalette);
-                foregroundPalette = value;
+                field = value;
             }
         }
     }
 
     public Palette BackgroundPalette
     {
-        get => backgroundPalette;
+        get;
         set
         {
-            if (backgroundPalette != value)
+            if (field != value)
             {
                 //DisposeResource(backgroundPalette);
-                backgroundPalette = value;
+                field = value;
             }
         }
     }
@@ -936,10 +932,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         {
             sound = precachedSounds[index];
             sound.AddName(name);
-
-            if (!precachedSoundsByName.ContainsKey(name))
-                precachedSoundsByName.Add(name, index);
-
+            precachedSoundsByName.TryAdd(name, index);
             return false;
         }
 
@@ -1437,9 +1430,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                 if (!wasPressingToggleNoClip)
                 {
                     wasPressingToggleNoClip = true;
-                    if (Player != null)
-                        Player.NoClip = !Player.NoClip;
-
+                    Player?.NoClip = !Player.NoClip;
                     ShowInfoMessage($"No clip {(Player.NoClip ? "activated" : "deactivated")}.");
                 }
             }
@@ -2527,8 +2518,8 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         DisposeResource(foregroundTilemap);
         DisposeResource(backgroundTilemap);
 
-        DisposeResource(foregroundPalette);
-        DisposeResource(backgroundPalette);
+        DisposeResource(ForegroundPalette);
+        DisposeResource(BackgroundPalette);
 
         DisposeResource(infoFont);
         DisposeResource(coordsTextFont);
@@ -2968,7 +2959,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, fontDimension.Top - fontDimension.Bottom, Color.White, out fontDimension);
 
             text = $"Player: X: {(float) Player.Origin.X * 256}({(float) (Player.Origin.X - lastPlayerOrigin.X) * 256}) Y: {(float) Player.Origin.Y * 256}({(float) (Player.Origin.Y - lastPlayerOrigin.Y) * 256}) VX: {(float) Player.Velocity.X * 256}({(float) (Player.Velocity.X - lastPlayerVelocity.X) * 256}) VY: {(float) Player.Velocity.Y * -256}({(float) (Player.Velocity.Y - lastPlayerVelocity.Y) * -256}) Gravity: {(float) Player.GetGravity() * 256}";
-            DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, 2 * (fontDimension.Top - fontDimension.Bottom), Color.White, out fontDimension);
+            DrawText(text, infoFont, drawRect, FontDrawFlags.Bottom | FontDrawFlags.Left, 0, 2 * (fontDimension.Top - fontDimension.Bottom), Color.White, out _);
         }
 
         if (infoMessage != null)
@@ -3215,9 +3206,8 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             string typeName = serializer.ReadString(false);
             var action = new PrecacheAction(serializer);
             precacheActions.Add(typeName, action);
-            if (!this.precacheActions.ContainsKey(typeName))
+            if (this.precacheActions.TryAdd(typeName, action))
             {
-                this.precacheActions.Add(typeName, action);
                 action.Reset(false);
                 actionsToCall.Add(action);
             }
@@ -5222,8 +5212,8 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             AwaysVisible = false
         });
 
-        door.OpeningEvent += (BossDoor source) => DoorOpening(secondDoor);
-        door.ClosedEvent += (BossDoor source) => DoorClosing(secondDoor);
+        door.OpeningEvent += source => DoorOpening(secondDoor);
+        door.ClosedEvent += source => DoorClosing(secondDoor);
         door.Spawn();
 
         return door;
@@ -5493,9 +5483,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             int start = System.Math.Min(priority, lastPriority);
             int end = System.Math.Max(priority, lastPriority);
 
-            if (layer.Contains(hud))
-                layer.Remove(hud);
-
+            layer.Remove(hud);
             layer.Insert(priority, hud);
 
             for (int i = start; i <= end; i++)
@@ -5513,8 +5501,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             else if (priority >= layer.Count)
                 priority = layer.Count - 1;
 
-            if (layer.Contains(sprite))
-                layer.Remove(sprite);
+            layer.Remove(sprite);
 
             int start = System.Math.Min(priority, lastPriority);
             int end = System.Math.Max(priority, lastPriority);
@@ -5537,12 +5524,9 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
         for (var type = baseType; type != null; type = type.BaseType)
         {
-            string name = type.Name;
             if (precacheActions.TryGetValue(type.AssemblyQualifiedName, out var action))
             {
-                if (previous != null)
-                    previous.Parent = action;
-
+                previous?.Parent = action;
                 break;
             }
 
@@ -5553,7 +5537,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
             foreach (var method in methods)
             {
-                Attribute attribute = method.GetCustomAttribute(typeof(PrecacheAttribute));
+                var attribute = method.GetCustomAttribute<PrecacheAttribute>();
                 if (attribute != null)
                 {
                     if (method.GetParameters().Length > 0)
@@ -5569,9 +5553,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
                 }
             }
 
-            if (previous != null)
-                previous.Parent = action;
-
+            previous?.Parent = action;
             previous = action;
         }
 
@@ -5667,5 +5649,25 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         Running = false;
         Unload();
         GC.SuppressFinalize(this);
+    }
+
+    public Tileset AddTileset(string name, int rows, int cols)
+    {
+        return new Tileset(name, rows, cols);
+    }
+
+    public Tileset AddTileset(string name, Palette palette, int rows, int cols)
+    {
+        return new Tileset(name, palette, rows, cols);
+    }
+
+    public Tilemap AddTilemap(string name, int rows, int cols)
+    {
+        return new Tilemap(name, rows, cols);
+    }
+
+    public Tilemap AddTilemap(string name, Tileset tileset, int rows, int cols)
+    {
+        return new Tilemap(name, tileset, rows, cols);
     }
 }

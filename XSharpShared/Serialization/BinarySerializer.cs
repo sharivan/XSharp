@@ -160,11 +160,11 @@ public class BinarySerializer : Serializer, IDisposable
         }
     }
 
-    public class FutureDelegate : IFuture
+    public class FutureDelegate(Type delegateType, MethodInfo method, BinarySerializer.IFuture target) : IFuture
     {
-        internal Type delegateType;
-        internal MethodInfo method;
-        internal IFuture target;
+        internal Type delegateType = delegateType;
+        internal MethodInfo method = method;
+        internal IFuture target = target;
 
         private Delegate value;
 
@@ -180,13 +180,6 @@ public class BinarySerializer : Serializer, IDisposable
         object IFuture.Value => Value;
 
         public bool IsResolved => target.IsResolved;
-
-        public FutureDelegate(Type delegateType, MethodInfo method, IFuture target)
-        {
-            this.delegateType = delegateType;
-            this.method = method;
-            this.target = target;
-        }
 
         public bool Resolve()
         {
@@ -204,10 +197,10 @@ public class BinarySerializer : Serializer, IDisposable
         }
     }
 
-    public class FutureTuple : ITuple, IFuture
+    public class FutureTuple(Type tupleType, object[] values) : ITuple, IFuture
     {
-        internal Type tupleType;
-        internal object[] values;
+        internal Type tupleType = tupleType;
+        internal object[] values = values;
 
         private ITuple value;
 
@@ -241,12 +234,6 @@ public class BinarySerializer : Serializer, IDisposable
             }
         }
 
-        public FutureTuple(Type tupleType, object[] values)
-        {
-            this.tupleType = tupleType;
-            this.values = values;
-        }
-
         public bool Resolve()
         {
             bool resolved = true;
@@ -264,6 +251,17 @@ public class BinarySerializer : Serializer, IDisposable
         {
             return $"{{values={values}}}";
         }
+    }
+
+    private static object GetUninitializedObject(Type type)
+    {
+        object obj;
+#if NET5_0_OR_GREATER
+        obj = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(type);
+#else
+        obj = System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+#endif
+        return obj;
     }
 
     protected BinaryReader reader;
@@ -312,13 +310,13 @@ public class BinarySerializer : Serializer, IDisposable
 
     private void CreateLists()
     {
-        futuresToResolve = new List<IFuture>();
-        arrayElementsToResolve = new List<(Array, int[], IFuture)>();
-        listsToResolve = new List<(IList, int, IFuture)>();
-        dictionariesToResolve = new List<(IDictionary, object, IFuture)>();
-        fieldsToResolve = new List<(FieldInfo, object, IFuture)>();
-        propertiesToResolve = new List<(PropertyInfo, object, IFuture)>();
-        eventsToResolve = new List<(EventInfo, object, FutureDelegate)>();
+        futuresToResolve = [];
+        arrayElementsToResolve = [];
+        listsToResolve = [];
+        dictionariesToResolve = [];
+        fieldsToResolve = [];
+        propertiesToResolve = [];
+        eventsToResolve = [];
     }
 
     public override byte ReadByte()
@@ -1017,7 +1015,7 @@ public class BinarySerializer : Serializer, IDisposable
                 return null;
         }
 
-        var fakeReference = (IFactoryItemReference) FormatterServices.GetUninitializedObject(referenceType);
+        var fakeReference = (IFactoryItemReference) GetUninitializedObject(referenceType);
         fakeReference.Deserialize(this);
         var factory = fakeReference.Factory;
         if (factory == null)
@@ -1205,7 +1203,7 @@ public class BinarySerializer : Serializer, IDisposable
         {
             if (objectType.IsAssignableTo(typeof(ISerializable)))
             {
-                var serializable = (ISerializable) FormatterServices.GetUninitializedObject(objectType);
+                var serializable = (ISerializable) GetUninitializedObject(objectType);
                 serializable.Deserialize(this);
                 obj = serializable;
             }
@@ -1214,7 +1212,7 @@ public class BinarySerializer : Serializer, IDisposable
                 if (!acceptNonSerializable && !objectType.Name.StartsWith("<>c__DisplayClass") && (SerializableAttribute) Attribute.GetCustomAttribute(objectType, typeof(SerializableAttribute)) == null)
                     throw new Exception($"Type '{objectType}' is not serializable. Use the attribute 'NotSerialize' if you dont want to serialize members of this type.");
 
-                obj = FormatterServices.GetUninitializedObject(objectType);
+                obj = GetUninitializedObject(objectType);
 
                 var eventNames = new HashSet<string>();
 

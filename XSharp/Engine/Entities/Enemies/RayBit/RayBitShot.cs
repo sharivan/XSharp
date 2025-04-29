@@ -18,7 +18,7 @@ public class RayBitShot : Enemy
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(RayBit));
+        Engine.CallPrecacheAction<RayBit>();
     }
     #endregion
 

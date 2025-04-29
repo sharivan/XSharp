@@ -1,0 +1,24 @@
+{ "frames": {
+   "X[small].aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 2048, "h": 512 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 2048, "h": 512 },
+    "sourceSize": { "w": 2048, "h": 512 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "https://github.com/LibreSprite/LibreSprite/",
+  "version": "1.1-dev",
+  "image": "C:\\Users\\miste\\Documents\\Projects\\c#\\vc#\\src\\XSharp\\XSharp\\Assets\\Sprites\\X\\X[small][new].png",
+  "format": "I8",
+  "size": { "w": 2048, "h": 512 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

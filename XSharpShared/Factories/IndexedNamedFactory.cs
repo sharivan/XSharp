@@ -35,7 +35,7 @@ public abstract class IndexedNamedFactory<ItemType> : IIndexedNamedFactory<ItemT
 
     public IndexedNamedFactory()
     {
-        itemsByName = new Dictionary<string, int>();
+        itemsByName = [];
     }
 
     protected abstract Type GetDefaultItemReferenceType(Type itemType);
@@ -230,7 +230,7 @@ public abstract class IndexedNamedFactory<ItemType> : IIndexedNamedFactory<ItemT
     public virtual void Deserialize(ISerializer serializer)
     {
         if (itemsByName == null)
-            itemsByName = new Dictionary<string, int>();
+            itemsByName = [];
         else
             itemsByName.Clear();
 

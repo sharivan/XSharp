@@ -7,7 +7,7 @@ using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Graphics;
 
-public abstract class SpriteSheet : IDisposable
+public abstract class SpriteSheet(bool disposeTexture = false, bool precache = false) : IDisposable
 {
     public static BaseEngine Engine => BaseEngine.Engine;
 
@@ -194,8 +194,8 @@ public abstract class SpriteSheet : IDisposable
 
     internal string name;
 
-    protected readonly List<Frame> frames;
-    protected readonly Dictionary<string, FrameSequence> sequences;
+    protected readonly List<Frame> frames = [];
+    protected readonly Dictionary<string, FrameSequence> sequences = [];
 
     public int Index
     {
@@ -213,7 +213,7 @@ public abstract class SpriteSheet : IDisposable
     {
         get;
         set;
-    }
+    } = precache;
 
     public ITexture CurrentTexture
     {
@@ -231,7 +231,7 @@ public abstract class SpriteSheet : IDisposable
     {
         get;
         set;
-    }
+    } = disposeTexture;
 
     public IEnumerable<string> FrameSequenceNames => sequences.Keys;
 
@@ -240,15 +240,6 @@ public abstract class SpriteSheet : IDisposable
     public int FrameCount => frames.Count;
 
     public int FrameSequenceCount => sequences.Count;
-
-    protected SpriteSheet(bool disposeTexture = false, bool precache = false)
-    {
-        Precache = precache;
-        DisposeTexture = disposeTexture;
-
-        frames = [];
-        sequences = [];
-    }
 
     protected SpriteSheet(ITexture texture, bool disposeTexture = false, bool precache = false)
         : this(precache)

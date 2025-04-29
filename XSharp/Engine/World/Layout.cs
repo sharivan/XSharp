@@ -8,13 +8,13 @@ using XSharp.Graphics;
 using XSharp.Math.Geometry;
 
 using static XSharp.Engine.Consts;
-using static XSharp.Engine.World.World;
+using static XSharp.Engine.Functions;
 
 using Box = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.World;
 
-public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
+public abstract class Layout(int sceneRowCount, int sceneColCount) : IRenderable, IEnumerable<Scene>, IDisposable
 {
     public static BaseEngine Engine => BaseEngine.Engine;
 
@@ -59,12 +59,12 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
         }
     }
 
-    private readonly List<Tile> tileList;
-    private readonly List<Map> mapList;
-    private readonly List<Block> blockList;
-    private readonly List<Scene> sceneList;
+    private readonly List<Tile> tileList = [];
+    private readonly List<Map> mapList = [];
+    private readonly List<Block> blockList = [];
+    private readonly List<Scene> sceneList = [];
 
-    protected Scene[,] scenes;
+    protected Scene[,] scenes = new Scene[sceneRowCount, sceneColCount];
 
     public Scene this[int row, int col] => scenes[row, col];
 
@@ -84,13 +84,13 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
     {
         get;
         private set;
-    }
+    } = sceneRowCount;
 
     public int SceneColCount
     {
         get;
         private set;
-    }
+    } = sceneColCount;
 
     public int Width => SceneColCount * SCENE_SIZE;
 
@@ -106,7 +106,7 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
     {
         get;
         private set;
-    }
+    } = new FadingControl();
 
     public abstract Palette Palette
     {
@@ -116,21 +116,6 @@ public abstract class Layout : IRenderable, IEnumerable<Scene>, IDisposable
     public abstract ITexture Tilemap
     {
         get;
-    }
-
-    protected Layout(int sceneRowCount, int sceneColCount)
-    {
-        SceneRowCount = sceneRowCount;
-        SceneColCount = sceneColCount;
-
-        tileList = [];
-        mapList = [];
-        blockList = [];
-        sceneList = [];
-
-        scenes = new Scene[sceneRowCount, sceneColCount];
-
-        FadingControl = new FadingControl();
     }
 
     public Tile GetTileFrom(Vector pos)

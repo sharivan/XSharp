@@ -2,14 +2,9 @@
 
 namespace XSharp.Engine.Input;
 
-public class DX9Capabilities : ICapabilities
+public class DX9Capabilities(Capabilities capabilities) : ICapabilities
 {
-    internal Capabilities capabilities;
+    internal Capabilities capabilities = capabilities;
 
     public int ButtonCount => capabilities.ButtonCount;
-
-    public DX9Capabilities(Capabilities capabilities)
-    {
-        this.capabilities = capabilities;
-    }
 }

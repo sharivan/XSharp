@@ -25,7 +25,7 @@ public struct STileInfo
         this.num = num;
         this.value = value;
 
-        count = new Dictionary<byte, uint>();
+        count = [];
     }
 };
 
@@ -388,20 +388,20 @@ public class MMXCore : SNESCore
 
         palettesOffset = new uint[16];
 
-        checkpointInfoTable = new List<CheckPointInfo>();
+        checkpointInfoTable = [];
 
-        graphicsToPalette = new Dictionary<uint, uint>();
-        graphicsToAssembly = new Dictionary<uint, uint>();
+        graphicsToPalette = [];
+        graphicsToAssembly = [];
 
         pSpriteOffset = new uint[4];
 
         eventTable = new List<EventInfo>[256];
         for (int i = 0; i < 256; i++)
-            eventTable[i] = new List<EventInfo>();
+            eventTable[i] = [];
 
         propertyTable = new PropertyInfo[256];
 
-        spriteUpdate = new HashSet<uint>();
+        spriteUpdate = [];
 
         fontPalCache = new ushort[0x20];
         fontCache = new byte[0x4800];
@@ -609,7 +609,7 @@ public class MMXCore : SNESCore
             {
                 // look up the subid to get the camera lock
 
-                uint b = 0;
+                uint b;
                 if (expandedROM && expandedROMVersion >= 4)
                 {
                     b = Snes2pc((int) (lockBank << 16) | (0x8000 + Level * 0x800 + e.eventSubId * 0x20));
@@ -627,8 +627,6 @@ public class MMXCore : SNESCore
                 int bottom = ReadShort(b);
                 b += 2;
                 int top = ReadShort(b);
-                b += 2;
-
                 rect = new Rectangle(left, top, right - left, bottom - top);
             }
         }
@@ -674,11 +672,10 @@ public class MMXCore : SNESCore
             for (int i = 0; i < tileCnt; ++i)
             {
                 uint map = (uint) (baseMap + (tileCnt - i - 1) * 4);
-                sbyte xpos = 0;
-                sbyte ypos = 0;
-                uint tile = 0;
-                uint info = 0;
-
+                sbyte xpos;
+                sbyte ypos;
+                uint tile;
+                uint info;
                 if (Type == 0)
                 {
                     xpos = (sbyte) rom[map++];
@@ -692,8 +689,6 @@ public class MMXCore : SNESCore
                     ypos = (sbyte) rom[map + 2];
                     tile = rom[map + 3];
                     info = rom[map + 0];
-
-                    map += 4;
                 }
 
                 if (Type == 2)
@@ -702,7 +697,6 @@ public class MMXCore : SNESCore
                     tile -= (uint) ((assemblyNum is 0x61 or 0x92) ? 0x20 :
                         (assemblyNum is 0x68 or 0x79 or 0xae) ? 0x40 :
                         0x0);
-                    tile &= 0xFF;
                 }
 
                 bool largeSprite = (info & 0x20) != 0;
@@ -911,7 +905,7 @@ public class MMXCore : SNESCore
             {
                 tileInfo[i].num = i;
                 tileInfo[i].value = (byte) (sortType == ESort.SORT_MIN ? 0xFF : 0x0);
-                tileInfo[i].count = new Dictionary<byte, uint>();
+                tileInfo[i].count = [];
 
                 for (int p = 0; p < 32; ++p)
                 {
@@ -1782,16 +1776,13 @@ public class MMXCore : SNESCore
         {
             int baseIndex = (int) (ReadWord((uint) (paletteOffset + iLevel * 2)) + i * 2);
             int mainIndex = ReadWord((uint) (paletteOffset + baseIndex));
-            int writeTo = 0;
-            int colorPointer = 0;
-
             while (true)
             {
-                colorPointer = ReadWord((uint) (paletteOffset + mainIndex));
+                int colorPointer = ReadWord((uint) (paletteOffset + mainIndex));
                 if (colorPointer == 0xFFFF)
                     break;
 
-                writeTo = ReadWord((uint) (paletteOffset + 0x2 + mainIndex)) & 0xFF;
+                int writeTo = ReadWord((uint) (paletteOffset + 0x2 + mainIndex)) & 0xFF;
                 if (writeTo > 0x7F)
                 {
                     //MessageBox(NULL, "Palette overflow.", "Error", MB_ICONERROR);
@@ -1831,7 +1822,6 @@ public class MMXCore : SNESCore
                         mapping[writeIndex + 0x10] = ReadWord(takeBlock);
                         takeBlock += 2;
                         mapping[writeIndex + 0x11] = ReadWord(takeBlock);
-                        takeBlock += 2;
                         writeIndex += 2;
                     }
 

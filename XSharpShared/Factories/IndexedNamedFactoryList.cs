@@ -17,8 +17,8 @@ public abstract class IndexedNamedFactoryList<ItemType> : IndexedNamedFactory<It
 
     public IndexedNamedFactoryList()
     {
-        items = new List<ItemType>();
-        references = new List<IndexedNamedFactoryItemReference<ItemType>>();
+        items = [];
+        references = [];
     }
 
     protected abstract void OnCreateReference(IndexedNamedFactoryItemReference<ItemType> reference);
@@ -59,12 +59,12 @@ public abstract class IndexedNamedFactoryList<ItemType> : IndexedNamedFactory<It
         base.Deserialize(serializer);
 
         if (items == null)
-            items = new List<ItemType>();
+            items = [];
         else
             items.Clear();
 
         if (references == null)
-            references = new List<IndexedNamedFactoryItemReference<ItemType>>();
+            references = [];
         else
             references.Clear();
 

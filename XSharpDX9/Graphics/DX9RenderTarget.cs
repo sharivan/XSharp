@@ -3,23 +3,25 @@ using XSharp.Engine.Graphics;
 
 namespace XSharp.Graphics;
 
-public class DX9RenderTarget : IRenderTarget
+public class DX9RenderTarget(Surface surface, bool disposeSurface = true) : IRenderTarget
 {
-    internal Surface surface;
+    internal Surface surface = surface;
 
-    public DX9RenderTarget(Surface surface)
+    public bool DisposeSurface
     {
-        this.surface = surface;
-    }
+        get;
+        set;
+    } = disposeSurface;
 
     public void Dispose()
     {
-        surface?.Dispose();
+        if (DisposeSurface)
+            surface?.Dispose();
     }
 
     public static implicit operator Surface(DX9RenderTarget renderTarget)
     {
-        return renderTarget != null ? renderTarget.surface : null;
+        return renderTarget?.surface;
     }
 
     public static implicit operator DX9RenderTarget(Surface surface)

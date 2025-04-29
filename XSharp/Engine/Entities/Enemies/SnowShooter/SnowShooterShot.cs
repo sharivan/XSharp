@@ -10,7 +10,7 @@ public class SnowShooterShot : Enemy
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(SnowShooter));
+        Engine.CallPrecacheAction<SnowShooter>();
     }
     #endregion
 

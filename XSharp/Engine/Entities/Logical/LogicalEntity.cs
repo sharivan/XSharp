@@ -2,12 +2,19 @@
 
 namespace XSharp.Engine.Entities.Logical;
 
+public delegate void LogicalEntityEvent(LogicalEntity source);
+
 public abstract class LogicalEntity : Entity, IEnableDisable
 {
+    private bool enabled = true;
+
+    public event LogicalEntityEvent OnEnabled;
+    public event LogicalEntityEvent OnDisabled;
+
     public bool Enabled
     {
-        get;
-        set;
+        get => enabled;
+        set => SetEnabled(value);
     }
 
     protected LogicalEntity()
@@ -26,13 +33,31 @@ public abstract class LogicalEntity : Entity, IEnableDisable
         Enabled = true;
     }
 
+    public void SetEnabled(bool value)
+    {
+        if (enabled == value)
+            return;
+
+        enabled = value;
+
+        if (enabled)
+            OnEnabled?.Invoke(this);
+        else
+            OnDisabled?.Invoke(this);
+    }
+
     public void Enable()
     {
-        Enabled = true;
+        SetEnabled(true);
     }
 
     public void Disable()
     {
-        Enabled = false;
+        SetEnabled(false);
+    }
+
+    public void Toggle()
+    {
+        SetEnabled(!enabled);
     }
 }

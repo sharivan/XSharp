@@ -7,8 +7,6 @@ namespace XSharp.Engine.Entities;
 [Serializable]
 public class SpriteState : EntityState
 {
-    private string animationName;
-
     public Sprite Sprite => (Sprite) Entity;
 
     public int AnimationIndex
@@ -25,10 +23,10 @@ public class SpriteState : EntityState
 
     public string AnimationName
     {
-        get => animationName;
+        get;
         set
         {
-            animationName = value;
+            field = value;
             AnimationIndex = Sprite != null ? Sprite.GetAnimationIndexByName(value) : -1;
         }
     }
@@ -164,8 +162,6 @@ public class SpriteState : EntityState
 [Serializable]
 public class SpriteSubState : EntitySubState
 {
-    private string animationName;
-
     new public SpriteState State => (SpriteState) base.State;
 
     public Sprite Sprite => State.Sprite;
@@ -184,10 +180,10 @@ public class SpriteSubState : EntitySubState
 
     public string AnimationName
     {
-        get => animationName;
+        get;
         set
         {
-            animationName = value;
+            field = value;
             AnimationIndex = Sprite != null ? Sprite.GetAnimationIndexByName(value) : -1;
         }
     }

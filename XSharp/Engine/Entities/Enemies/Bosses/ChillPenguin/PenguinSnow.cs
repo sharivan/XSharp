@@ -12,7 +12,7 @@ internal class PenguinSnow : Enemy
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(ChillPenguin));
+        Engine.CallPrecacheAction<ChillPenguin>();
     }
     #endregion
 

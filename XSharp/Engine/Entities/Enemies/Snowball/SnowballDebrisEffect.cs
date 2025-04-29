@@ -25,20 +25,19 @@ public class SnowballDebrisEffect : SpriteEffect
     }
     #endregion
 
-    private SnowballDebrisType debrisType = SnowballDebrisType.SMALL;
     internal int initialBlinkFrame = 3;
 
     public SnowballDebrisType DebrisType
     {
-        get => debrisType;
+        get;
         set
         {
-            debrisType = value;
+            field = value;
 
             if (ResourcesCreated)
                 SetCurrentAnimationByName(ANIMATION_NAMES[(int) value]);
         }
-    }
+    } = SnowballDebrisType.SMALL;
 
     public SnowballDebrisEffect()
     {
@@ -64,7 +63,7 @@ public class SnowballDebrisEffect : SpriteEffect
         KillOnOffscreen = true;
         Blinking = false;
 
-        SetCurrentAnimationByName(ANIMATION_NAMES[(int) debrisType]);
+        SetCurrentAnimationByName(ANIMATION_NAMES[(int) DebrisType]);
     }
 
     protected override void OnThink()

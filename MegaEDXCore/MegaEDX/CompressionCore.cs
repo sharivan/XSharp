@@ -138,12 +138,11 @@ public static class CompressionCore
                     // length
                     byte currentByte = rom[romOff + pointer++];
                     uint length = (uint) (currentByte >> 2);
-                    uint offset = 0;
                     uint baseWriteIndex = writeIndex;
 
                     count += length;
 
-                    offset = (uint) (((currentByte & 0x3) << 8) + rom[romOff + pointer++]);
+                    uint offset = (uint) (((currentByte & 0x3) << 8) + rom[romOff + pointer++]);
 
                     for (int i = 0; length != 0; ++i)
                     {
@@ -248,12 +247,11 @@ public static class CompressionCore
                     }
                     else
                     {
-                        byte tuple = 0;
 
                         // write out compressed length (top 6b), offset/distance (bottom 10b)
                         dest[control] |= flag;
                         // length + 2b of offset
-                        tuple = (byte) ((match.length << 2) | (match.offset >> 8));
+                        byte tuple = (byte) ((match.length << 2) | (match.offset >> 8));
                         dest[destOff++] = tuple;
                         tuple = (byte) (match.offset & 0xff);
                         dest[destOff++] = tuple;

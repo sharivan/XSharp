@@ -8,14 +8,9 @@ using XSharp.Math.Geometry;
 namespace XSharp.Serialization;
 
 // TODO : Implement the remaining.
-public class JSONSerializer : Serializer
+public class JSONSerializer(JsonDocument document) : Serializer
 {
-    private JsonDocument document;
-
-    public JSONSerializer(JsonDocument document)
-    {
-        this.document = document;
-    }
+    private JsonDocument document = document;
 
     public override object DeserializeObject(string name)
     {
@@ -29,7 +24,7 @@ public class JSONSerializer : Serializer
 
     public T DeserializeObject<T>(string name)
     {
-        return (T) JsonSerializer.Deserialize(document, typeof(T));
+        return JsonSerializer.Deserialize<T>(document);
     }
 
     public override bool ReadBool()

@@ -53,7 +53,7 @@ public static class Utilities
         unsafe
         {
             // TODO plug in Interop a pluggable CopyMemory using cpblk or memcpy based on architecture
-            Interop.memcpy((void*) dest, (void*) src, sizeInBytesToCopy);
+            Interop.MemoryCopy((void*) dest, (void*) src, sizeInBytesToCopy);
         }
     }
 
@@ -104,7 +104,7 @@ public static class Utilities
     {
         unsafe
         {
-            Interop.memset((void*) dest, value, sizeInBytesToClear);
+            Interop.MemorySet((void*) dest, value, sizeInBytesToClear);
         }
     }
 
@@ -450,7 +450,7 @@ public static class Utilities
     {
         string managedString = Marshal.PtrToStringAnsi(pointer); // copy null-terminating unmanaged text from pointer to a managed string
         if (managedString != null && managedString.Length > maxLength)
-            managedString = managedString.Substring(0, maxLength);
+            managedString = managedString[..maxLength];
 
         return managedString;
     }
@@ -465,7 +465,7 @@ public static class Utilities
     {
         string managedString = Marshal.PtrToStringUni(pointer); // copy null-terminating unmanaged text from pointer to a managed string
         if (managedString != null && managedString.Length > maxLength)
-            managedString = managedString.Substring(0, maxLength);
+            managedString = managedString[..maxLength];
 
         return managedString;
     }

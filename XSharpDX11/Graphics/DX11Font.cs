@@ -21,15 +21,10 @@ using System.Drawing;
 
 namespace XSharp.Graphics;
 
-public class DX11Font : IFont
+public class DX11Font(DXWriteDevice device, string fontFamilyName, DXWriteFontWeight fontWeight, DXWriteFontStyle fontStyle, float fontSize) : IFont
 {
     private DX2D1Device device;
-    private TextFormat format;
-
-    public DX11Font(DXWriteDevice device, string fontFamilyName, DXWriteFontWeight fontWeight, DXWriteFontStyle fontStyle, float fontSize)
-    {
-        this.format = new TextFormat(device.fac, fontWeight, fontStyle, fontSize);
-    }
+    private TextFormat format = new TextFormat(device.fac, fontWeight, fontStyle, fontSize);
 
     public int DrawText(string text, RectangleF rect, FontDrawFlags drawFlags, Color color)
     {

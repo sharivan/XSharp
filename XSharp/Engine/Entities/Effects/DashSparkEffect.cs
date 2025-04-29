@@ -10,22 +10,20 @@ public enum DashingSparkEffectState
 
 public class DashSparkEffect : SpriteEffect
 {
-    private DashingSparkEffectState state = DashingSparkEffectState.PRE_DASHING;
-
     public DashingSparkEffectState State
     {
-        get => state;
+        get;
         set
         {
-            state = value;
-            if (state == DashingSparkEffectState.DASHING)
+            field = value;
+            if (field == DashingSparkEffectState.DASHING)
             {
                 Parent = null;
                 SetCurrentAnimationByName("DashSparkEffect");
                 CurrentAnimation.StartFromBegin();
             }
         }
-    }
+    } = DashingSparkEffectState.PRE_DASHING;
 
     public DashSparkEffect()
     {

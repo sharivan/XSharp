@@ -10,7 +10,7 @@ public class PenguinIceExplosionEffect : SpriteEffect
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(ChillPenguin));
+        Engine.CallPrecacheAction<ChillPenguin>();
     }
     #endregion
 

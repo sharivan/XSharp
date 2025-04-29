@@ -2,20 +2,13 @@
 
 namespace XSharp.Engine.Input;
 
-public class DX9Joystick : IJoystick
+public class DX9Joystick(Joystick joystick) : IJoystick
 {
-    private Joystick joystick;
-    private DX9Capabilities capabilities;
-    private DX9JoystickState state;
+    private Joystick joystick = joystick;
+    private DX9Capabilities capabilities = null;
+    private DX9JoystickState state = null;
 
     public ICapabilities Capabilities => GetCapabilities();
-
-    public DX9Joystick(Joystick joystick)
-    {
-        this.joystick = joystick;
-        capabilities = null;
-        state = null;
-    }
 
     public void Dispose()
     {

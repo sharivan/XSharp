@@ -17,7 +17,7 @@ public class BombBeenBomb : Sprite, IFSMEntity<BombBeenBombState>
     [Precache]
     internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(BombBeen));
+        Engine.CallPrecacheAction<BombBeen>();
     }
     #endregion
 

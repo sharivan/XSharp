@@ -18,7 +18,7 @@ public class AxeMaxTrunkBase : Sprite
     [Precache]
     internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(AxeMax));
+        Engine.CallPrecacheAction<AxeMax>();
     }
     #endregion
 

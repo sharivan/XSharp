@@ -126,9 +126,37 @@ public struct FixedSingle : ISignedNumber<FixedSingle>
         RawValue = (int) (value * FIXED_DIVISOR);
     }
 
+    public FixedSingle(int pixel, double subPixel) : this(pixel + subPixel / 256.0)
+    {
+    }
+
+    public string ToString(FixedSingleStringFormat format)
+    {
+        switch (format)
+        {
+            case FixedSingleStringFormat.DECIMAL:
+                return DoubleValue.ToString(CultureInfo.InvariantCulture);
+
+            case FixedSingleStringFormat.SUBPIXEL:
+                return RawValue.ToString(CultureInfo.InvariantCulture);
+
+            case FixedSingleStringFormat.PIXEL_SUBPIXEL:
+            {
+                var pixel = IntValue;
+                var subPixel = (float) (RawValue & FIXED_BITS_COUNT) / (1 << (FIXED_BITS_COUNT - 8));
+                if (subPixel == 0)
+                    return pixel.ToString(CultureInfo.InvariantCulture);
+
+                return $"{pixel.ToString(CultureInfo.InvariantCulture)}_{subPixel.ToString(CultureInfo.InvariantCulture)}";
+            }
+        }
+
+        return "?";
+    }
+
     public override string ToString()
     {
-        return DoubleValue.ToString(CultureInfo.InvariantCulture);
+        return ToString(FixedSingleStringFormat.DECIMAL);
     }
 
     public override bool Equals(object obj)

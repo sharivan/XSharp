@@ -45,7 +45,7 @@ public class BusterLemon : Weapon, IFSMEntity<LemonState>
 
         SpriteSheetName = "X Weapons";
 
-        SetupStateArray(typeof(LemonState));
+        SetupStateArray<LemonState>();
         RegisterState(LemonState.SHOOTING, OnStartShot, OnShooting, null, "LemonShot");
         RegisterState(LemonState.EXPLODING, null, OnExploding, OnExploded, "LemonShotExplode");
     }

@@ -2,16 +2,10 @@
 
 namespace XSharp.Engine.Input;
 
-public class DX9Keyboard : IKeyboard
+public class DX9Keyboard(Keyboard keyboard) : IKeyboard
 {
-    private Keyboard keyboard;
-    private DX9KeyboardState state;
-
-    public DX9Keyboard(Keyboard keyboard)
-    {
-        this.keyboard = keyboard;
-        state = null;
-    }
+    private Keyboard keyboard = keyboard;
+    private DX9KeyboardState state = null;
 
     public void Dispose()
     {

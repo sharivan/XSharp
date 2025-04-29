@@ -11,7 +11,7 @@ using Box = XSharp.Math.Geometry.Box;
 
 namespace XSharp.Engine.World;
 
-public abstract class Scene : IDisposable
+public abstract class Scene(int id) : IDisposable
 {
     public static BaseEngine Engine => BaseEngine.Engine;
 
@@ -23,13 +23,13 @@ public abstract class Scene : IDisposable
         return new Cell(row, col);
     }
 
-    protected internal Block[,] blocks;
-    protected internal List<Tilemap> tilemaps;
+    protected internal Block[,] blocks = new Block[SIDE_BLOCKS_PER_SCENE, SIDE_BLOCKS_PER_SCENE];
+    protected internal List<Tilemap> tilemaps = [];
 
     public int ID
     {
         get;
-    }
+    } = id;
 
     public Block this[int row, int col]
     {
@@ -41,15 +41,6 @@ public abstract class Scene : IDisposable
     {
         get;
         protected set;
-    }
-
-    protected Scene(int id)
-    {
-        ID = id;
-
-        blocks = new Block[SIDE_BLOCKS_PER_SCENE, SIDE_BLOCKS_PER_SCENE];
-
-        tilemaps = [];
     }
 
     public Tile GetTileFrom(Vector pos)

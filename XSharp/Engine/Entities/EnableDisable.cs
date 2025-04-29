@@ -11,4 +11,9 @@ public interface IEnableDisable
     public void Enable();
 
     public void Disable();
+
+    public void Toggle()
+    {
+        Enabled = !Enabled;
+    }      
 }

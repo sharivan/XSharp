@@ -6,8 +6,13 @@ namespace XSharp.Math.Geometry;
 /// <summary>
 /// Structure using the same layout than <see cref="System.Drawing.Size"/>.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="Size2"/> struct.
+/// </remarks>
+/// <param name="width">The x.</param>
+/// <param name="height">The y.</param>
 [StructLayout(LayoutKind.Sequential)]
-public struct Size2 : IEquatable<Size2>
+public struct Size2(int width, int height) : IEquatable<Size2>
 {
     /// <summary>
     /// A zero size with (width, height) = (0,0)
@@ -20,25 +25,14 @@ public struct Size2 : IEquatable<Size2>
     public static readonly Size2 Empty = Zero;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Size2"/> struct.
-    /// </summary>
-    /// <param name="width">The x.</param>
-    /// <param name="height">The y.</param>
-    public Size2(int width, int height)
-    {
-        Width = width;
-        Height = height;
-    }
-
-    /// <summary>
     /// Width.
     /// </summary>
-    public int Width;
+    public int Width = width;
 
     /// <summary>
     /// Height.
     /// </summary>
-    public int Height;
+    public int Height = height;
 
     /// <summary>
     /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.

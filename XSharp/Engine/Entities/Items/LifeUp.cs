@@ -11,7 +11,7 @@ public class LifeUp : Item
     [Precache]
     internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Weapon));
+        Engine.CallPrecacheAction<Weapon>();
     }
     #endregion
 

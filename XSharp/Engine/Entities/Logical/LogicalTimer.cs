@@ -4,7 +4,7 @@ public delegate void TimerEvent(LogicalTimer source);
 
 public class LogicalTimer : LogicalEntity
 {
-    public event TimerEvent TimerEvent;
+    public event TimerEvent OnTimer;
 
     public int Interval // in frames
     {
@@ -32,21 +32,17 @@ public class LogicalTimer : LogicalEntity
         if (!Enabled)
             return;
 
-        TimerEvent?.Invoke(this);
+        OnTimer?.Invoke(this);
     }
 
     public void Increment(int amount)
     {
         TickCounter += amount;
     }
+
     public void Decrement(int amount)
     {
         TickCounter -= amount;
-    }
-
-    public void Toggle()
-    {
-        Enabled = !Enabled;
     }
 
     protected override void OnThink()

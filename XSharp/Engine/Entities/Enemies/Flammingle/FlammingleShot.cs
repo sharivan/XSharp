@@ -10,7 +10,7 @@ public class FlammingleShot : Enemy
     [Precache]
     new internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(Flammingle));
+        Engine.CallPrecacheAction<Flammingle>();
     }
     #endregion
 

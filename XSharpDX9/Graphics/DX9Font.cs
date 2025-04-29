@@ -8,21 +8,15 @@ using DX9Rectangle = SharpDX.Rectangle;
 
 namespace XSharp.Graphics;
 
-public class DX9Font : IFont
+public class DX9Font(Sprite sprite, Font font) : IFont
 {
-    private Font font;
+    private Font font = font;
 
     public Sprite Sprite
     {
         get;
         set;
-    }
-
-    public DX9Font(Sprite sprite, Font font)
-    {
-        Sprite = sprite;
-        this.font = font;
-    }
+    } = sprite;
 
     public int DrawText(string text, RectangleF rect, FontDrawFlags drawFlags, Color color)
     {

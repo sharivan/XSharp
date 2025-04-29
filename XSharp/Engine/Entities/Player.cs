@@ -383,12 +383,11 @@ public class Player : Sprite, IFSMEntity<PlayerState>
     }
     #endregion
 
-    private int lives;
 
     private readonly Keys[] keyBuffer = new Keys[KEY_BUFFER_COUNT];
     protected bool death;
 
-    private readonly AnimationReference[,] animations = new AnimationReference[Enum.GetNames(typeof(PlayerState)).Length, 3];
+    private readonly AnimationReference[,] animations = new AnimationReference[Enum.GetNames<PlayerState>().Length, 3];
 
     private long frameCounter = 0;
 
@@ -405,7 +404,6 @@ public class Player : Sprite, IFSMEntity<PlayerState>
     private int wallSlideFrameCounter;
 
     private PlayerState state = PlayerState.NONE;
-    private PlayerState forcedState = PlayerState.NONE;
     private Direction stateDirection;
     internal int shots;
     private int shotFrameCounter;
@@ -469,13 +467,13 @@ public class Player : Sprite, IFSMEntity<PlayerState>
 
     public PlayerState ForcedState
     {
-        get => forcedState;
+        get;
         set
         {
-            forcedState = value;
-            SetState(forcedState, 0);
+            field = value;
+            SetState(field, 0);
         }
-    }
+    } = PlayerState.NONE;
 
     public PlayerState ForcedStateException
     {
@@ -593,13 +591,13 @@ public class Player : Sprite, IFSMEntity<PlayerState>
 
     public int Lives
     {
-        get => lives;
+        get;
         set
         {
             if (value is < MIN_LIVES or > MAX_LIVES)
                 return;
 
-            lives = value;
+            field = value;
         }
     }
 
@@ -725,7 +723,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
 
     protected void SetState(PlayerState state, Direction direction, int startAnimationIndex = -1)
     {
-        if (state == PlayerState.NONE || forcedState != PlayerState.NONE && state != ForcedStateException && state != forcedState)
+        if (state == PlayerState.NONE || ForcedState != PlayerState.NONE && state != ForcedStateException && state != ForcedState)
             return;
 
         if (state == PlayerState.STAND)
@@ -2053,7 +2051,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
     private bool CanWallJumpOnWorldLeft()
     {
         var collider = WorldCollider;
-        var leftWallJumpBoxDetector = new Box(collider.Box.LeftTop - (8, 1), 8, collider.Box.Height - collider.LegsHeight - 1);
+        var leftWallJumpBoxDetector = new Box(collider.Box.LeftTop - (8, 1), 8, collider.Box.Height - collider.LegsHeight);
         return Engine.World.GetCollisionFlags(leftWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE_WALL, true, false, this).IsClimbable();
     }
 
@@ -2072,7 +2070,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
     private bool CanWallJumpOnWorldRight()
     {
         var collider = WorldCollider;
-        var rightWallJumpBoxDetector = new Box(collider.Box.RightTop + (1, -1), 8, collider.Box.Height - collider.LegsHeight - 1);
+        var rightWallJumpBoxDetector = new Box(collider.Box.RightTop + (1, -1), 8, collider.Box.Height - collider.LegsHeight);
         return Engine.World.GetCollisionFlags(rightWallJumpBoxDetector, CollisionFlags.SLOPE | CollisionFlags.UNCLIMBABLE_WALL, true, false, this).IsClimbable();
     }
 
@@ -2206,8 +2204,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
         else if (ContainsAnimation(PlayerState.PRE_DASH, animation, true))
         {
             DashSparkEffect effect = dashSparkEffect;
-            if (effect != null)
-                effect.State = DashingSparkEffectState.DASHING;
+            effect?.State = DashingSparkEffectState.DASHING;
 
             SetState(PlayerState.DASH, 0);
         }

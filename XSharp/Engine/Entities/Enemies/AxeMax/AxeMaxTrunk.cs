@@ -24,7 +24,7 @@ public class AxeMaxTrunk : Sprite, IFSMEntity<AxeMaxTrunkState>
     [Precache]
     internal static void Precache()
     {
-        Engine.CallPrecacheAction(typeof(AxeMax));
+        Engine.CallPrecacheAction<AxeMax>();
     }
     #endregion
 

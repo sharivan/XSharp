@@ -9,28 +9,35 @@ namespace XSharp.Math.Geometry;
 /// Define a RectangleF. This structure is slightly different from System.Drawing.RectangleF as it is
 /// internally storing Left,Top,Right,Bottom instead of Left,Top,Width,Height.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="RectangleF"/> struct.
+/// </remarks>
+/// <param name="x">The left.</param>
+/// <param name="y">The top.</param>
+/// <param name="width">The width.</param>
+/// <param name="height">The height.</param>
 [StructLayout(LayoutKind.Sequential)]
-public struct RectangleF : IEquatable<RectangleF>
+public struct RectangleF(float x, float y, float width, float height) : IEquatable<RectangleF>
 {
     /// <summary>
     /// The left.
     /// </summary>
-    public float Left;
+    public float Left = x;
 
     /// <summary>
     /// The top.
     /// </summary>
-    public float Top;
+    public float Top = y;
 
     /// <summary>
     /// The right.
     /// </summary>
-    public float Right;
+    public float Right = x + width;
 
     /// <summary>
     /// The bottom.
     /// </summary>
-    public float Bottom;
+    public float Bottom = y + height;
 
     /// <summary>
     /// An empty rectangle.
@@ -57,21 +64,6 @@ public struct RectangleF : IEquatable<RectangleF>
             Right = float.PositiveInfinity,
             Bottom = float.PositiveInfinity
         };
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RectangleF"/> struct.
-    /// </summary>
-    /// <param name="x">The left.</param>
-    /// <param name="y">The top.</param>
-    /// <param name="width">The width.</param>
-    /// <param name="height">The height.</param>
-    public RectangleF(float x, float y, float width, float height)
-    {
-        Left = x;
-        Top = y;
-        Right = x + width;
-        Bottom = y + height;
     }
 
     /// <summary>

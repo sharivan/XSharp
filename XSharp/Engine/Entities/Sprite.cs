@@ -44,8 +44,6 @@ public abstract class Sprite : Entity, IRenderable
 
     [NotSerializable]
     private SpriteSheet spriteSheet = null;
-
-    private bool visible = true;
     internal int layer = 0;
     internal int priority = -1;
 
@@ -97,14 +95,14 @@ public abstract class Sprite : Entity, IRenderable
 
     public bool Visible
     {
-        get => visible;
+        get;
 
         set
         {
-            visible = value;
+            field = value;
             UpdatePartition();
         }
-    }
+    } = true;
 
     public int Layer
     {
@@ -413,8 +411,7 @@ public abstract class Sprite : Entity, IRenderable
     {
         get
         {
-            if (worldCollider != null)
-                worldCollider.Box = CollisionBox;
+            worldCollider?.Box = CollisionBox;
 
             return worldCollider;
         }
@@ -441,23 +438,14 @@ public abstract class Sprite : Entity, IRenderable
     public bool CheckCollisionWithWorld
     {
         get => worldCollider != null && worldCollider.CheckCollisionWithWorld;
-
-        protected set
-        {
-            if (worldCollider != null)
-                worldCollider.CheckCollisionWithWorld = value;
-        }
+        protected set => worldCollider?.CheckCollisionWithWorld = value;
     }
 
     public bool CheckCollisionWithSolidSprites
     {
         get => spriteCollider != null && spriteCollider.CheckCollisionWithSolidSprites;
 
-        protected set
-        {
-            if (spriteCollider != null)
-                spriteCollider.CheckCollisionWithSolidSprites = value;
-        }
+        protected set => spriteCollider?.CheckCollisionWithSolidSprites = value;
     }
 
     public bool CanBeCarriedWhenLanded
@@ -732,27 +720,27 @@ public abstract class Sprite : Entity, IRenderable
 
     protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames<U>().Length, animationIndex, initialFrame);
     }
 
     protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames<U>().Length, animationIndex, initialFrame);
     }
 
     protected SpriteState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames<U>().Length, animationIndex, initialFrame);
     }
 
     protected SpriteState RegisterState<T, U>(T id, EntityStateEndEvent onEnd, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames<U>().Length, animationIndex, initialFrame);
     }
 
     protected SpriteState RegisterState<T, U>(T id, int animationIndex, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length, animationIndex, initialFrame);
+        return RegisterState((int) (object) id, null, null, null, Enum.GetNames<U>().Length, animationIndex, initialFrame);
     }
 
     protected SpriteState RegisterState(int id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, int subStateCount, string animationName, int initialFrame = 0)
@@ -810,27 +798,27 @@ public abstract class Sprite : Entity, IRenderable
 
     protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, EntityStateFrameEvent onFrame, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
+        return RegisterState((int) (object) id, onStart, onFrame, onEnd, Enum.GetNames<U>().Length, animationName, initialFrame);
     }
 
     protected SpriteState RegisterState<T, U>(T id, EntityStateStartEvent onStart, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
+        return RegisterState((int) (object) id, onStart, null, null, Enum.GetNames<U>().Length, animationName, initialFrame);
     }
 
     protected SpriteState RegisterState<T, U>(T id, EntityStateFrameEvent onFrame, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
+        return RegisterState((int) (object) id, null, onFrame, null, Enum.GetNames<U>().Length, animationName, initialFrame);
     }
 
     protected SpriteState RegisterState<T, U>(T id, EntityStateEndEvent onEnd, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
+        return RegisterState((int) (object) id, null, null, onEnd, Enum.GetNames<U>().Length, animationName, initialFrame);
     }
 
     protected SpriteState RegisterState<T, U>(T id, string animationName, int initialFrame = 0) where T : struct, Enum where U : struct, Enum
     {
-        return RegisterState((int) (object) id, null, null, null, Enum.GetNames(typeof(U)).Length, animationName, initialFrame);
+        return RegisterState((int) (object) id, null, null, null, Enum.GetNames<U>().Length, animationName, initialFrame);
     }
 
     protected virtual bool OnCreateAnimation(string animationName, ref Vector offset, ref int repeatX, ref int repeatY, ref int initialSequenceIndex, ref bool startVisible, ref bool startOn)

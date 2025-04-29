@@ -7,8 +7,13 @@ namespace XSharp.Math.Geometry;
 /// <summary>
 /// Structure using the same layout than <see cref="System.Drawing.Point"/>.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="Point"/> struct.
+/// </remarks>
+/// <param name="x">The x.</param>
+/// <param name="y">The y.</param>
 [StructLayout(LayoutKind.Sequential)]
-public struct Point : IEquatable<Point>
+public struct Point(int x, int y) : IEquatable<Point>
 {
     /// <summary>
     /// A point with (0,0) coordinates.
@@ -16,25 +21,14 @@ public struct Point : IEquatable<Point>
     public static readonly Point Zero = new Point(0, 0);
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Point"/> struct.
-    /// </summary>
-    /// <param name="x">The x.</param>
-    /// <param name="y">The y.</param>
-    public Point(int x, int y)
-    {
-        X = x;
-        Y = y;
-    }
-
-    /// <summary>
     /// Left coordinate.
     /// </summary>
-    public int X;
+    public int X = x;
 
     /// <summary>
     /// Top coordinate.
     /// </summary>
-    public int Y;
+    public int Y = y;
 
     /// <summary>
     /// Determines whether the specified <see cref="System.Object"/> is equal to this instance.

@@ -1,84 +1,98 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using System.Windows.Forms;
+﻿using NAudio.CoreAudioApi;
 using NLua;
-
 using SharpDX;
+using SharpDX.D3DCompiler;
+using SharpDX.Direct2D1;
+using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DirectInput;
+using SharpDX.DXGI;
 using SharpDX.Mathematics.Interop;
 using SharpDX.Windows;
-
-using XSharp.Engine;
-using XSharp.Graphics;
-using XSharp.Math.Geometry;
-
-using Box = XSharp.Math.Geometry.Box;
-using Color = XSharp.Graphics.Color;
-using DX9Color = SharpDX.Color;
-using D3D9LockFlags = SharpDX.Direct3D11.LockFlags;
-using Device9 = SharpDX.Direct3D11.Device;
-using DeviceType = SharpDX.Direct3D11.DeviceType;
-using DXSprite = SharpDX.Direct3D11.Sprite;
-using Font = SharpDX.Direct3D11.Font;
-using Rectangle = SharpDX.Rectangle;
-using RectangleF = XSharp.Math.Geometry.RectangleF;
-using DX9RectangleF = SharpDX.RectangleF;
-using ResultCode = SharpDX.Direct3D11.ResultCode;
-using DX11Format = SharpDX.Direct3D11.Format;
-using Format = XSharp.Graphics.Format;
-using System.Drawing.Imaging;
-using System.Reflection;
-using DataStream = XSharp.Graphics.DataStream;
-using XSharp.Engine.Graphics;
-using SharpDX.DXGI;
-using Vector4 = SharpDX.Vector4;
-using Usage = SharpDX.Direct3D11.Usage;
-using PresentParameters = SharpDX.Direct3D11.PresentParameters;
-using SwapEffect = SharpDX.Direct3D11.SwapEffect;
-using PresentFlags = SharpDX.Direct3D11.PresentFlags;
-using Matrix = XSharp.Math.Geometry.Matrix;
-using DX9Matrix = SharpDX.Matrix;
-using XSharp.Engine.World;
-using System.Data;
-using DataRectangle = XSharp.Graphics.DataRectangle;
-using XSharp.Interop;
-using Vector2 = XSharp.Math.Geometry.Vector2;
-using DX9Vector2 = SharpDX.Vector2;
-using FontDrawFlags = XSharp.Graphics.FontDrawFlags;
-using Size2F = XSharp.Math.Geometry.Size2F;
-using Point = XSharp.Math.Geometry.Point;
-using FontDescription = XSharp.Graphics.FontDescription;
-using DX11FontDescription = SharpDX.Direct3D11.FontDescription;
-using XSharp.Engine.Input;
-using NAudio.CoreAudioApi;
-using XSharp.Engine.Sound;
+using System;
+using System.Collections.Generic;
 using System.Configuration;
-using Configuration = System.Configuration.Configuration;
-
+using System.Data;
+using System.Drawing.Imaging;
+using System.Linq;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using XSharp.Engine;
+using XSharp.Engine.Graphics;
+using XSharp.Engine.Input;
+using XSharp.Engine.Sound;
+using XSharp.Engine.World;
+using XSharp.Graphics;
+using XSharp.Interop;
+using XSharp.Math.Geometry;
+using XSharpDX11.Engine.Graphics;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 using static XSharp.Engine.Consts;
+using Box = XSharp.Math.Geometry.Box;
+using Buffer = SharpDX.Direct3D11.Buffer;
+using Color = XSharp.Graphics.Color;
+using Configuration = System.Configuration.Configuration;
+using D3D9LockFlags = SharpDX.Direct3D11.LockFlags;
+using DataRectangle = XSharp.Graphics.DataRectangle;
+using DataStream = XSharp.Graphics.DataStream;
+using Device = SharpDX.Direct3D11.Device;
+using Device9 = SharpDX.Direct3D11.Device;
+using DeviceContext = SharpDX.Direct3D11.DeviceContext;
+using DeviceType = SharpDX.Direct3D11.DeviceType;
+using DX11FontDescription = SharpDX.Direct3D11.FontDescription;
+using DX11Format = SharpDX.Direct3D11.Format;
+using DX9Color = SharpDX.Color;
+using DX9Matrix = SharpDX.Matrix;
+using DX9RectangleF = SharpDX.RectangleF;
+using DX9Vector2 = SharpDX.Vector2;
+using DXSprite = SharpDX.Direct3D11.Sprite;
+using Font = SharpDX.Direct3D11.Font;
+using FontDescription = XSharp.Graphics.FontDescription;
+using FontDrawFlags = XSharp.Graphics.FontDrawFlags;
+using Format = XSharp.Graphics.Format;
+using MapFlags = SharpDX.Direct3D11.MapFlags;
+using Matrix = XSharp.Math.Geometry.Matrix;
+using Point = XSharp.Math.Geometry.Point;
+using PresentFlags = SharpDX.Direct3D11.PresentFlags;
+using PresentParameters = SharpDX.Direct3D11.PresentParameters;
+using Rectangle = SharpDX.Rectangle;
+using RectangleF = XSharp.Math.Geometry.RectangleF;
+using ResultCode = SharpDX.Direct3D11.ResultCode;
+using Size2F = XSharp.Math.Geometry.Size2F;
+using SwapEffect = SharpDX.Direct3D11.SwapEffect;
+using Usage = SharpDX.Direct3D11.Usage;
+using Vector2 = XSharp.Math.Geometry.Vector2;
+using Vector4 = SharpDX.Vector4;
 
 namespace XSharp.Engine;
 
 public class DX11Engine : BaseEngine
 {
+    private static float[] QUAD_VERTICES =
+    {
+      // position     uv
+        -1,  1, 0,    0, 0,
+         1,  1, 0,    1, 0,
+         1, -1, 0,    1, 1,
+
+        -1,  1, 0,    0, 0,
+         1, -1, 0,    1, 1,
+        -1, -1, 0,    0, 1
+    };
     new public static DX11Engine Engine => (DX11Engine) BaseEngine.Engine;
 
-    public const VertexFormat D3DFVF_TLVERTEX = VertexFormat.Position | VertexFormat.Diffuse | VertexFormat.Texture1;
-    public const int VERTEX_SIZE = 5 * sizeof(float) + sizeof(int);
+    public const int VERTEX_FIELD_COUNT = 5;
+    public const int VERTEX_SIZE = VERTEX_FIELD_COUNT * sizeof(float);
 
     private PresentParameters presentationParams;
-    private DXSprite sprite;   
+    private DXSprite sprite;
 
-    private EffectHandle psFadingLevelHandle;
-    private EffectHandle psFadingColorHandle;
-    private EffectHandle plsFadingLevelHandle;
-    private EffectHandle plsFadingColorHandle;
+    private Buffer vsTransformBuffer;
+    private Buffer psFadingParams;
+    private Buffer plsFadingParams;
 
     private DirectInput directInput;
 
@@ -92,19 +106,26 @@ public class DX11Engine : BaseEngine
         private set;
     }
 
-    public Direct3D Direct3D
+    public Device Device
     {
         get;
         private set;
     }
 
-    public Device9 Device
+    public DeviceContext Context => Device.ImmediateContext;
+
+    public SwapChain SwapChain
     {
         get;
         private set;
     }
 
-    public VertexBuffer VertexBuffer
+    public VertexBufferBinding VertexBuffer
+    {
+        get;
+        private set;
+    }
+    public VertexShader VertexShader
     {
         get;
         private set;
@@ -117,6 +138,12 @@ public class DX11Engine : BaseEngine
     }
 
     public PixelShader PaletteShader
+    {
+        get;
+        private set;
+    }
+
+    public SamplerState Sampler
     {
         get;
         private set;
@@ -150,42 +177,123 @@ public class DX11Engine : BaseEngine
     protected override void InitGraphicDevice()
     {
         // Creates the Device
-        var device = new Device9(Direct3D, 0, DeviceType.Hardware, Control.Handle, CreateFlags.HardwareVertexProcessing | CreateFlags.FpuPreserve | CreateFlags.Multithreaded, presentationParams);
+        var swapChainDesc = new SwapChainDescription()
+        {
+            BufferCount = DOUBLE_BUFFERED ? 2 : 1,
+            ModeDescription = new ModeDescription(Control.ClientSize.Width, Control.ClientSize.Height,
+                new Rational(TICKRATE, 1), SharpDX.DXGI.Format.R8G8B8A8_UNorm),
+            IsWindowed = !FULL_SCREEN,
+            OutputHandle = Control.Handle,
+            SampleDescription = new SampleDescription(1, 0),
+            SwapEffect = SwapEffect.Discard,
+            Usage = Usage.RenderTargetOutput
+        };
+
+        SharpDX.Direct3D11.Device.CreateWithSwapChain(DriverType.Hardware, DeviceCreationFlags.BgraSupport,
+            swapChainDesc, out var device, out var swapChain);
         Device = device;
+        SwapChain = swapChain;
 
-        var function = ShaderBytecode.CompileFromFile("PixelShader.hlsl", "main", "ps_2_0");
-        PixelShader = new PixelShader(device, function);
+        // Render target view
+        using var backBuffer = swapChain.GetBackBuffer<Texture2D>(0);
+        using var renderTargetView = new RenderTargetView(device, backBuffer);
 
-        psFadingLevelHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
-        psFadingColorHandle = PixelShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
+        // Viewport
+        Context.Rasterizer.SetViewport(0, 0, Control.ClientSize.Width, Control.ClientSize.Height);
 
-        function = ShaderBytecode.CompileFromFile("PaletteShader.hlsl", "main", "ps_2_0");
-        PaletteShader = new PixelShader(device, function);
+        var vertexShaderByteCode = ShaderBytecode.CompileFromFile("VertexShader.hlsl", "VSMain", "ps_4_0");
+        VertexShader = new VertexShader(device, vertexShaderByteCode);
 
-        plsFadingLevelHandle = PaletteShader.Function.ConstantTable.GetConstantByName(null, "fadingLevel");
-        plsFadingColorHandle = PaletteShader.Function.ConstantTable.GetConstantByName(null, "fadingColor");
+        // Cria buffer
+        var bufferDesc = new BufferDescription()
+        {
+            Usage = ResourceUsage.Default,
+            SizeInBytes = Utilities.SizeOf<Matrix>(),
+            BindFlags = BindFlags.ConstantBuffer,
+            CpuAccessFlags = CpuAccessFlags.None,
+            OptionFlags = ResourceOptionFlags.None,
+        };
 
-        device.VertexShader = null;
-        device.PixelShader = PixelShader;
-        device.VertexFormat = D3DFVF_TLVERTEX;
+        // Cria um DataStream para a matriz
+        var dataStream = new DX11DataStream(Utilities.SizeOf<Matrix>(), true, true);
+        dataStream.Write(Matrix.Identity);
+        dataStream.Position = 0;
 
-        VertexBuffer = new VertexBuffer(device, VERTEX_SIZE * 6, Usage.WriteOnly, D3DFVF_TLVERTEX, Pool.Managed);
+        vsTransformBuffer = new Buffer(device, dataStream, bufferDesc);
 
-        device.SetRenderState(RenderState.ZEnable, false);
-        device.SetRenderState(RenderState.Lighting, false);
-        device.SetRenderState(RenderState.AlphaBlendEnable, true);
-        device.SetRenderState(RenderState.SourceBlend, Blend.SourceAlpha);
-        device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
-        device.SetTextureStageState(0, TextureStage.AlphaOperation, TextureOperation.SelectArg1);
-        device.SetTextureStageState(0, TextureStage.ColorArg1, TextureArgument.Texture);
-        device.SetTextureStageState(1, TextureStage.ColorOperation, TextureOperation.Disable);
-        device.SetTextureStageState(1, TextureStage.AlphaOperation, TextureOperation.Disable);
-        device.SetSamplerState(0, SamplerState.AddressU, TextureAddress.Clamp);
-        device.SetSamplerState(0, SamplerState.AddressV, TextureAddress.Clamp);
+        var pixelShaderBytecode = ShaderBytecode.CompileFromFile("PixelShader.hlsl", "PSMain", "ps_4_0");
+        PixelShader = new PixelShader(device, pixelShaderBytecode);
+
+        bufferDesc = new BufferDescription()
+        {
+            Usage = ResourceUsage.Default,
+            SizeInBytes = Utilities.SizeOf<FadingParams>(),
+            BindFlags = BindFlags.ConstantBuffer,
+            CpuAccessFlags = CpuAccessFlags.None,
+            OptionFlags = ResourceOptionFlags.None,
+        };
+
+        // Cria um DataStream para a matriz
+        dataStream = new DX11DataStream(Utilities.SizeOf<FadingParams>(), true, true);
+        dataStream.Write(new FadingParams());
+        dataStream.Position = 0;
+
+        psFadingParams = new Buffer(device, dataStream, bufferDesc);
+
+        bufferDesc = new BufferDescription()
+        {
+            Usage = ResourceUsage.Default,
+            SizeInBytes = Utilities.SizeOf<FadingParams>(),
+            BindFlags = BindFlags.ConstantBuffer,
+            CpuAccessFlags = CpuAccessFlags.None,
+            OptionFlags = ResourceOptionFlags.None,
+        };
+
+        // Cria um DataStream para a matriz
+        dataStream = new DX11DataStream(Utilities.SizeOf<FadingParams>(), true, true);
+        dataStream.Write(new FadingParams()));
+        dataStream.Position = 0;
+
+        vsTransformBuffer = new Buffer(device, dataStream, bufferDesc);
+
+        pixelShaderBytecode = ShaderBytecode.CompileFromFile("PaletteShader.hlsl", "PSMain", "ps_4_0");
+        PaletteShader = new PixelShader(device, pixelShaderBytecode);
+
+        plsFadingParams = new Buffer(device, dataStream, bufferDesc);
+
+        // Vertex layout
+        var layout = new InputLayout(device,
+            ShaderSignature.GetInputSignature(vertexShaderByteCode),
+            new[] {
+                new InputElement("POSITION", 0, SharpDX.DXGI.Format.R32G32B32_Float, 0, 0),
+                new InputElement("TEXCOORD", 0, SharpDX.DXGI.Format.R32G32_Float, 3 * sizeof(float), 0)
+            });
+
+        Context.InputAssembler.InputLayout = layout;
+        Context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
+
+        var samplerDesc = new SamplerStateDescription()
+        {
+            Filter = Filter.MinMagMipLinear,
+            AddressU = TextureAddressMode.Clamp,
+            AddressV = TextureAddressMode.Clamp,
+            AddressW = TextureAddressMode.Clamp,
+            ComparisonFunction = Comparison.Never,
+            MinimumLod = 0,
+            MaximumLod = float.MaxValue
+        };
+        Sampler = new SamplerState(device, samplerDesc);
+
+        Context.VertexShader.Set(VertexShader);
+        Context.PixelShader.Set(PixelShader);
+        Context.PixelShader.SetSampler(0, Sampler);
+        
+        var buffer = Buffer.Create(device, BindFlags.VertexBuffer, QUAD_VERTICES);
+        VertexBuffer = new VertexBufferBinding(buffer, VERTEX_SIZE, 0);
+
+        SetupQuad(buffer, (float) StageSize.X, (float) StageSize.Y);
 
         sprite = new DXSprite(device);
-
-        SetupQuad(VertexBuffer, (float) StageSize.X, (float) StageSize.Y);
     }
 
     protected override IKeyboard CreateKeyboard()
@@ -224,23 +332,6 @@ public class DX11Engine : BaseEngine
         Control = initializers.control;
 
         lua = new Lua();
-
-        presentationParams = new PresentParameters
-        {
-            Windowed = !FULL_SCREEN,
-            SwapEffect = SwapEffect.Discard,
-            PresentationInterval = VSYNC ? PresentInterval.One : PresentInterval.Immediate,
-            FullScreenRefreshRateInHz = FULL_SCREEN ? TICKRATE : 0,
-            AutoDepthStencilFormat = DX9Format.D16,
-            EnableAutoDepthStencil = true,
-            BackBufferCount = DOUBLE_BUFFERED ? 2 : 1,
-            BackBufferFormat = DX9Format.X8R8G8B8,
-            BackBufferHeight = Control.ClientSize.Height,
-            BackBufferWidth = Control.ClientSize.Width,
-            PresentFlags = VSYNC ? PresentFlags.LockableBackBuffer : PresentFlags.None
-        };
-
-        Direct3D = new Direct3D();
 
         directInput = new DirectInput();        
 
@@ -358,14 +449,14 @@ public class DX11Engine : BaseEngine
 
         if (palette != null)
         {
-            fadingLevelHandle = plsFadingLevelHandle;
+            fadingLevelHandle = plsFadingParams;
             fadingColorHandle = plsFadingColorHandle;
             shader = PaletteShader;
             Device.SetTexture(1, (DX9Texture) palette.Texture);
         }
         else
         {
-            fadingLevelHandle = psFadingLevelHandle;
+            fadingLevelHandle = psFadingParams;
             fadingColorHandle = psFadingColorHandle;
             shader = PixelShader;
         }
@@ -410,28 +501,36 @@ public class DX11Engine : BaseEngine
         vbData.Write(x);
         vbData.Write(y);
         vbData.Write(0f);
-        vbData.Write(0xffffffff);
         vbData.Write(u);
         vbData.Write(v);
     }
 
-    public void SetupQuad(VertexBuffer vb, float width, float height)
+    public void SetupQuad(DataStream vbData, float width, float height)
     {
-        DX11DataStream vbData = vb.Lock(0, 0, D3D9LockFlags.None);
         WriteSquare(vbData, (0, 0), (0, 0), (1, 1), (width, height));
-        vb.Unlock();
     }
 
-    public void SetupQuad(VertexBuffer vb)
+    public void SetupQuad(Buffer vb)
     {
-        DX11DataStream vbData = vb.Lock(0, 4 * VERTEX_SIZE, D3D9LockFlags.None);
+        var box = Context.MapSubresource(
+            vb,
+            0,
+            MapMode.WriteDiscard,
+            MapFlags.None
+        );
+        try
+        {
+            DX11DataStream vbData = new DX11DataStream(box.DataPointer, 4 * VERTEX_SIZE, true, true);
 
-        WriteVertex(vbData, 0, 0, 0, 0);
-        WriteVertex(vbData, 1, 0, 1, 0);
-        WriteVertex(vbData, 1, -1, 1, 1);
-        WriteVertex(vbData, 0, -1, 0, 1);
-
-        vb.Unlock();
+            WriteVertex(vbData, 0, 0, 0, 0);
+            WriteVertex(vbData, 1, 0, 1, 0);
+            WriteVertex(vbData, 1, -1, 1, 1);
+            WriteVertex(vbData, 0, -1, 0, 1);
+        }
+        finally
+        {
+            Context.UnmapSubresource(vb, 0);
+        }
     }
 
     public void RenderVertexBuffer(VertexBuffer vb, int vertexSize, int primitiveCount, ITexture texture, Palette palette, FadingControl fadingControl, Box box)
@@ -460,14 +559,14 @@ public class DX11Engine : BaseEngine
 
         if (palette != null)
         {
-            fadingLevelHandle = plsFadingLevelHandle;
+            fadingLevelHandle = plsFadingParams;
             fadingColorHandle = plsFadingColorHandle;
             shader = PaletteShader;
             Device.SetTexture(1, (DX11Texture) palette.Texture);
         }
         else
         {
-            fadingLevelHandle = psFadingLevelHandle;
+            fadingLevelHandle = psFadingParams;
             fadingColorHandle = psFadingColorHandle;
             shader = PixelShader;
         }
@@ -527,7 +626,7 @@ public class DX11Engine : BaseEngine
         var hr = Device.TestCooperativeLevel();
         if (hr.Success)
         {
-            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, BackgroundColor.ToDX9Color(), 1.0f, 0);
+            Device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, BackgroundColor.ToDX11Color(), 1.0f, 0);
             Device.BeginScene();
             return true;
         }
@@ -627,7 +726,7 @@ public class DX11Engine : BaseEngine
         if (fadingControl != null)
         {
             Device.PixelShader = PixelShader;
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingParams, fadingControl.FadingLevel);
             PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
         }
         else
@@ -667,7 +766,7 @@ public class DX11Engine : BaseEngine
         if (fadingControl != null)
         {
             Device.PixelShader = PixelShader;
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingParams, fadingControl.FadingLevel);
             PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
         }
         else
@@ -708,7 +807,7 @@ public class DX11Engine : BaseEngine
         if (fadingControl != null)
         {
             Device.PixelShader = PixelShader;
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingParams, fadingControl.FadingLevel);
             PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
         }
         else
@@ -740,7 +839,7 @@ public class DX11Engine : BaseEngine
         if (fadingControl != null)
         {
             Device.PixelShader = PixelShader;
-            PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, fadingControl.FadingLevel);
+            PixelShader.Function.ConstantTable.SetValue(Device, psFadingParams, fadingControl.FadingLevel);
             PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, fadingControl.FadingColor.ToVector4());
         }
         else
@@ -762,7 +861,7 @@ public class DX11Engine : BaseEngine
         Device.PixelShader = PixelShader;
         Device.VertexShader = null;
 
-        PixelShader.Function.ConstantTable.SetValue(Device, psFadingLevelHandle, FadingControl.FadingLevel);
+        PixelShader.Function.ConstantTable.SetValue(Device, psFadingParams, FadingControl.FadingLevel);
         PixelShader.Function.ConstantTable.SetValue(Device, psFadingColorHandle, FadingControl.FadingColor.ToVector4());
 
         var matScaling = DX9Matrix.Scaling(1, 1, 1);

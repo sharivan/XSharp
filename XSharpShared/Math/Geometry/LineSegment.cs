@@ -5,7 +5,12 @@ namespace XSharp.Math.Geometry;
 /// <summary>
 /// Segmento de reta
 /// </summary>
-public struct LineSegment : IGeometry
+/// <remarks>
+/// Cria um segmento de reta a partir de dois pontos
+/// </remarks>
+/// <param name="start">Ponto inicial do segmento</param>
+/// <param name="end">Ponto final do segmento</param>
+public struct LineSegment(Vector start, Vector end) : IGeometry
 {
     public const GeometryType type = GeometryType.LINE_SEGMENT;
 
@@ -18,7 +23,7 @@ public struct LineSegment : IGeometry
     {
         get;
         private set;
-    }
+    } = start;
 
     /// <summary>
     /// Ponto final do segmento
@@ -27,23 +32,12 @@ public struct LineSegment : IGeometry
     {
         get;
         private set;
-    }
+    } = end;
 
     /// <summary>
     /// Comprimento do segmento
     /// </summary>
     public FixedSingle Length => Start.DistanceTo(End);
-
-    /// <summary>
-    /// Cria um segmento de reta a partir de dois pontos
-    /// </summary>
-    /// <param name="start">Ponto inicial do segmento</param>
-    /// <param name="end">Ponto final do segmento</param>
-    public LineSegment(Vector start, Vector end)
-    {
-        Start = start;
-        End = end;
-    }
 
     public FixedSingle GetLength(Metric metric)
     {

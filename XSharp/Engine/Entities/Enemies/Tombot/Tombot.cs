@@ -113,7 +113,7 @@ public class Tombot : Enemy, IFSMEntity<TombotState>
     }
     #endregion
 
-    internal EntityReference<Igloo> igloo;
+    internal EntityReference<Igloo> igloo = null;
 
     public TombotState State
     {
