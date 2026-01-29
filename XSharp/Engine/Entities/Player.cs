@@ -4,8 +4,8 @@ using XSharp.Engine.Collision;
 using XSharp.Engine.Entities.Effects;
 using XSharp.Engine.Graphics;
 using XSharp.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 using static XSharp.Engine.Consts;
 
@@ -382,7 +382,6 @@ public class Player : Sprite, IFSMEntity<PlayerState>
         spriteSheet.ReleaseCurrentTexture();
     }
     #endregion
-
 
     private readonly Keys[] keyBuffer = new Keys[KEY_BUFFER_COUNT];
     protected bool death;
@@ -2500,6 +2499,7 @@ public class Player : Sprite, IFSMEntity<PlayerState>
 
     public void DoHurtAnimation(bool knockback = true)
     {
+        // TODO : Implement knockback check
         DoHurtAnimation(Direction);
     }
 

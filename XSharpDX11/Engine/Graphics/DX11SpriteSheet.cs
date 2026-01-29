@@ -10,7 +10,7 @@ using SharpDX;
 using XSharp.Graphics;
 using XSharp.Interop;
 
-using MMXBox = XSharp.Math.Geometry.Box;
+using MMXBox = XSharp.Math.Fixed.Geometry.Box;
 using DX9Point = SharpDX.Point;
 using Color = XSharp.Graphics.Color;
 using DataRectangle = XSharp.Graphics.DataRectangle;

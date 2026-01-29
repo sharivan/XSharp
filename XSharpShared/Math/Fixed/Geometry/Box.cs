@@ -2,10 +2,10 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-
+using XSharp.Math.Fixed;
 using XSharp.Util;
 
-namespace XSharp.Math.Geometry;
+namespace XSharp.Math.Fixed.Geometry;
 
 [Flags]
 public enum BoxSide
@@ -112,7 +112,7 @@ public class BoxTypeConverter : TypeConverter
 /// Retângulo bidimensional com lados paralelos aos eixos coordenados
 /// </summary>
 [TypeConverter(typeof(BoxTypeConverter))]
-public struct Box : IShape
+public readonly struct Box : IShape
 {
     public const GeometryType type = GeometryType.BOX;
 
@@ -133,7 +133,6 @@ public struct Box : IShape
     public Vector Origin
     {
         get;
-        private set;
     }
 
     /// <summary>
@@ -142,7 +141,6 @@ public struct Box : IShape
     public Vector Mins
     {
         get;
-        private set;
     }
 
     /// <summary>
@@ -151,7 +149,6 @@ public struct Box : IShape
     public Vector Maxs
     {
         get;
-        private set;
     }
 
     public FixedSingle X => Origin.X;
@@ -344,9 +341,14 @@ public struct Box : IShape
         return obj != null && obj is Box other && this == other;
     }
 
+    public string ToString(FixedStringFormat format)
+    {
+        return "[" + Origin.ToString(format) + " : " + Mins.ToString(format) + " : " + Maxs.ToString(format) + "]";
+    }
+
     public override string ToString()
     {
-        return "[" + Origin + " : " + Mins + " : " + Maxs + "]";
+        return ToString(FixedStringFormat.DECIMAL);
     }
 
     public Box LeftTopOrigin()

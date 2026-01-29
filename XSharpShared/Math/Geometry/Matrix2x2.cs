@@ -1,4 +1,6 @@
 ﻿using System.Runtime.InteropServices;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Math.Geometry;
 

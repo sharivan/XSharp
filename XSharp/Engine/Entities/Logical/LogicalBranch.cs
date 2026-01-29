@@ -2,11 +2,15 @@
 
 public delegate void LogicalBranchEvent(LogicalBranch source);
 
+[Entity("logic_branch")]
 public class LogicalBranch : LogicalEntity
 {
     private bool value = false;
 
+    [Output]
     public event LogicalBranchEvent OnTrue;
+
+    [Output]
     public event LogicalBranchEvent OnFalse;
 
     public bool Value
@@ -19,6 +23,7 @@ public class LogicalBranch : LogicalEntity
     {
     }
 
+    [Input]
     public ThreeStateResult SetValue(bool value)
     {
         if (!Enabled)
@@ -28,6 +33,7 @@ public class LogicalBranch : LogicalEntity
         return value ? ThreeStateResult.TRUE : ThreeStateResult.FALSE;
     }
 
+    [Input]
     public ThreeStateResult SetValueTest(bool value)
     {
         if (!Enabled)
@@ -37,6 +43,7 @@ public class LogicalBranch : LogicalEntity
         return Test();
     }
 
+    [Input]
     public ThreeStateResult ToggleValue()
     {
         if (!Enabled)
@@ -46,6 +53,7 @@ public class LogicalBranch : LogicalEntity
         return value ? ThreeStateResult.TRUE : ThreeStateResult.FALSE;
     }
 
+    [Input]
     public ThreeStateResult ToggleTest()
     {
         if (!Enabled)
@@ -55,6 +63,7 @@ public class LogicalBranch : LogicalEntity
         return Test();
     }
 
+    [Input]
     public ThreeStateResult Test()
     {
         if (!Enabled)

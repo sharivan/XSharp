@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using XSharp.Math.Fixed;
 
-namespace XSharp.Math.Geometry;
+namespace XSharp.Math.Fixed.Geometry;
 
 [Flags]
 public enum RightTriangleSide
@@ -17,21 +19,20 @@ public enum RightTriangleSide
     ALL = BORDERS | INNER
 }
 
-public struct RightTriangle : IShape
+public readonly struct RightTriangle : IShape
 {
     public const GeometryType type = GeometryType.RIGHT_TRIANGLE;
 
     public static readonly RightTriangle EMPTY = new(Vector.NULL_VECTOR, 0, 0);
 
-    private FixedSingle hCathetus;
-    private FixedSingle vCathetus;
+    private readonly FixedSingle hCathetus;
+    private readonly FixedSingle vCathetus;
 
     public GeometryType Type => type;
 
     public Vector Origin
     {
         get;
-        private set;
     }
 
     public Vector HypothenuseOpositeVertex => Origin;
@@ -271,9 +272,14 @@ public struct RightTriangle : IShape
         return new RightTriangle(Origin + (hCathetus, vCathetus), -hCathetus, -vCathetus);
     }
 
+    public string ToString(FixedStringFormat format)
+    {
+        return "[" + Origin.ToString(format) + " : " + hCathetus.ToString(format) + " : " + vCathetus.ToString(format) + "]";
+    }
+
     public override string ToString()
     {
-        return "[" + Origin + " : " + hCathetus + " : " + vCathetus + "]";
+        return ToString(FixedStringFormat.DECIMAL);
     }
 
     public override int GetHashCode()

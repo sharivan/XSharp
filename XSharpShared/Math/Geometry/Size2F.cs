@@ -17,7 +17,7 @@ public struct Size2F(float width, float height) : IEquatable<Size2F>
     /// <summary>
     /// A zero size with (width, height) = (0,0)
     /// </summary>
-    public static readonly Size2F Zero = new Size2F(0, 0);
+    public static readonly Size2F Zero = new(0, 0);
 
     /// <summary>
     /// A zero size with (width, height) = (0,0)

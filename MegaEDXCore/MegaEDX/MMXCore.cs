@@ -115,7 +115,7 @@ public class MMXCore : SNESCore
     internal const uint NUM_SPRITE_TILES = 0x2000;
     internal const uint NUM_SPRITE_PALETTES = 0x200;
 
-    internal static readonly byte[] vrambase = {
+    internal static readonly byte[] vrambase = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00,
@@ -148,40 +148,40 @@ public class MMXCore : SNESCore
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-    };
+    ];
 
-    internal static readonly uint[] p_layout = { 0x868D24, 0x868888, 0x8689B3, 0x808199 };
-    internal static readonly uint[] p_scenes = { 0x868D93, 0x8688F7, 0x868A22, 0x808257 };
-    internal static readonly uint[] p_blocks = { 0x868E02, 0x868966, 0x868A91, 0 };
-    internal static readonly uint[] p_maps = { 0x868E71, 0x8689D5, 0x868B00, 0x8081B3 };
-    internal static readonly uint[] p_collis = { 0x868EE0, 0x868A44, 0x868B6F, 0 };
+    internal static readonly uint[] p_layout = [0x868D24, 0x868888, 0x8689B3, 0x808199];
+    internal static readonly uint[] p_scenes = [0x868D93, 0x8688F7, 0x868A22, 0x808257];
+    internal static readonly uint[] p_blocks = [0x868E02, 0x868966, 0x868A91, 0];
+    internal static readonly uint[] p_maps = [0x868E71, 0x8689D5, 0x868B00, 0x8081B3];
+    internal static readonly uint[] p_collis = [0x868EE0, 0x868A44, 0x868B6F, 0];
     /*const*/
-    internal static readonly uint[] p_checkp = { 0x86A780, 0x86A4C5, 0x86A8E4, 0 };
-    internal static readonly uint[] p_palett = { 0x868133, 0x86817A, 0x868180, 0 };
-    internal static readonly uint[] p_font = { 0x86F744, 0x86FA4C, 0x86F77D, 0 };
-    internal static readonly uint[] p_unknow = { 0x86A1D5, 0, 0, 0 }; // Unknow
-    internal static readonly uint[] p_gfxcfg = { 0x86F56F, 0x86F831, 0x86F3C3, 0x80B75B };
-    internal static readonly uint[] p_gfxpos = { 0x86F6F7, 0x86F9FF, 0x86F730, 0x81E391 };
-    internal static readonly uint[] p_events = { 0x8582C2, 0x29D3D1, 0x3CCE4B, 0x80C18B };
-    internal static readonly uint[] p_borders = { 0x86E4E2, 0x82EBE9, 0x83DE43, 0 };
-    internal static readonly uint[] p_locks = { 0x86ECD0, 0x82FAE4, 0x83F2CC, 0 };
-    internal static readonly uint[] p_properties = { 0, 0, 0x86E28E, 0 };
-    internal static readonly uint[] p_spriteAssembly = { 0x8D8000, 0x8D8000, 0x8D8000, 0 };
-    internal static readonly uint[] p_spriteOffset = { 0x86A5E4, 0x86A34D, 0x86E28E, 0 };
-    internal static readonly uint[] p_objOffset = { 0x86DE9B, 0x86A34D, 0, 0 };
+    internal static readonly uint[] p_checkp = [0x86A780, 0x86A4C5, 0x86A8E4, 0];
+    internal static readonly uint[] p_palett = [0x868133, 0x86817A, 0x868180, 0];
+    internal static readonly uint[] p_font = [0x86F744, 0x86FA4C, 0x86F77D, 0];
+    internal static readonly uint[] p_unknow = [0x86A1D5, 0, 0, 0]; // Unknow
+    internal static readonly uint[] p_gfxcfg = [0x86F56F, 0x86F831, 0x86F3C3, 0x80B75B];
+    internal static readonly uint[] p_gfxpos = [0x86F6F7, 0x86F9FF, 0x86F730, 0x81E391];
+    internal static readonly uint[] p_events = [0x8582C2, 0x29D3D1, 0x3CCE4B, 0x80C18B];
+    internal static readonly uint[] p_borders = [0x86E4E2, 0x82EBE9, 0x83DE43, 0];
+    internal static readonly uint[] p_locks = [0x86ECD0, 0x82FAE4, 0x83F2CC, 0];
+    internal static readonly uint[] p_properties = [0, 0, 0x86E28E, 0];
+    internal static readonly uint[] p_spriteAssembly = [0x8D8000, 0x8D8000, 0x8D8000, 0];
+    internal static readonly uint[] p_spriteOffset = [0x86A5E4, 0x86A34D, 0x86E28E, 0];
+    internal static readonly uint[] p_objOffset = [0x86DE9B, 0x86A34D, 0, 0];
 
     // enemy
-    internal static readonly uint[] p_gfxobj = { 0x86ACEE, 0xAAB2D4, 0x888623, 0 };
-    internal static readonly uint[] p_gfxpal = { 0x86ACF1, 0xAAB2D7, 0x888626, 0 };
+    internal static readonly uint[] p_gfxobj = [0x86ACEE, 0xAAB2D4, 0x888623, 0];
+    internal static readonly uint[] p_gfxpal = [0x86ACF1, 0xAAB2D7, 0x888626, 0];
     // TODO: sprite
     // TODO: misc object
 
     // capsule
-    internal static readonly uint[] p_capsulepos = { 0, 0x86D6F1, 0, 0 };
+    internal static readonly uint[] p_capsulepos = [0, 0x86D6F1, 0, 0];
 
-    internal static readonly uint[] p_blayout = { 0x868F4F, 0x868AB3, 0x868BDE, 0 };
-    internal static readonly uint[] p_bscenes = { 0x868FBE, 0x868B22, 0x868C4D, 0 };
-    internal static readonly uint[] p_bblocks = { 0x86902D, 0x868B91, 0x868CBC, 0 };
+    internal static readonly uint[] p_blayout = [0x868F4F, 0x868AB3, 0x868BDE, 0];
+    internal static readonly uint[] p_bscenes = [0x868FBE, 0x868B22, 0x868C4D, 0];
+    internal static readonly uint[] p_bblocks = [0x86902D, 0x868B91, 0x868CBC, 0];
     protected readonly byte[] vram;
     protected readonly ushort[] mapping;
     protected readonly byte[] sceneLayout;

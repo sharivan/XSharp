@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-
+using System.Linq;
 using XSharp.Factories;
 using XSharp.Serialization;
-
+using XSharp.Util;
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine.Entities;
@@ -49,6 +49,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
 
     private Entity[] entities;
     private EntityReference[] references;
+    private BitSet freeEntities;
     private int count = 0;
 
     private EntityReference firstEntity = null;
@@ -77,10 +78,13 @@ public class EntityFactory : IndexedNamedFactory<Entity>
     {
         entities = new Entity[MAX_ENTITIES];
         references = new EntityReference[MAX_ENTITIES];
+        freeEntities = new BitSet(MAX_ENTITIES);
 
         entitiesByTargetName = [];
 
         firstFreeEntityIndex = 0;
+
+        freeEntities.Complementary();
     }
 
     public override IEnumerator<Entity> GetEnumerator()
@@ -144,7 +148,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
 
         BaseEngine.Engine.CallPrecacheAction(type);
 
-        int index = firstFreeEntityIndex++;
+        int index = firstFreeEntityIndex;
         var entity = (Entity) Activator.CreateInstance(type);
         var reference = GetOrCreateReferenceTo(index, type);
 
@@ -152,6 +156,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         entity.reference = reference;
         entities[index] = entity;
         references[index] = reference;
+        freeEntities.Reset(index);
 
         LastEntity?.next = GetReferenceTo(entity);
 
@@ -164,16 +169,21 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         if (entity.Name is not null and not "")
             itemsByName.Add(entity.Name, index);
 
-        count++;
-
-        for (int i = firstFreeEntityIndex; i < MAX_ENTITIES; i++)
+        if (entity.TargetName is not null and not "")
         {
-            if (entities[i] == null)
+            if (!entitiesByTargetName.TryGetValue(entity.TargetName, out var entitySet))
             {
-                firstFreeEntityIndex = i;
-                break;
+                entitySet = [];
+                entitiesByTargetName.Add(entity.TargetName, entitySet);
             }
+
+            entitySet.Add(entity);
         }
+
+        count++;
+        firstFreeEntityIndex = freeEntities.FirstSetBit();
+        if (firstFreeEntityIndex == -1)
+            firstFreeEntityIndex = MAX_ENTITIES;
 
         entity.NotifyCreate();
         entity.Initialize(initParams);
@@ -203,10 +213,11 @@ public class EntityFactory : IndexedNamedFactory<Entity>
 
         int index = entity.Index;
         string name = entity.Name;
+        string targetName = entity.TargetName;
 
-        EntityReference reference = GetReferenceTo(entity);
-        EntityReference next = entity.next;
-        EntityReference previous = entity.previous;
+        var reference = GetReferenceTo(entity);
+        var next = entity.next;
+        var previous = entity.previous;
 
         if (next is not null)
             ((Entity) next).previous = previous;
@@ -222,10 +233,18 @@ public class EntityFactory : IndexedNamedFactory<Entity>
 
         entities[index] = null;
         references[index] = null;
+        freeEntities.Set(index);
         reference.Unset();
 
         if (name is not null and not "")
             itemsByName.Remove(entity.Name);
+
+        if (targetName is not null and not "" && entitiesByTargetName.TryGetValue(targetName, out var entitySet))
+        {
+            entitySet.Remove(entity);
+            if (entitySet.Count == 0)
+                entitiesByTargetName.Remove(targetName);
+        }
 
         entity.Index = -1;
         entity.reference = null;
@@ -242,7 +261,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
             var entity = entities[i];
             if (entity != null)
             {
-                foreach (Entity child in entity.childs)
+                foreach (var child in entity.childs)
                     child.parent = null;
 
                 entity.childs.Clear();
@@ -258,6 +277,7 @@ public class EntityFactory : IndexedNamedFactory<Entity>
         }
 
         itemsByName.Clear();
+        entitiesByTargetName.Clear();
         BaseEngine.Engine.partition.Clear();
 
         firstFreeEntityIndex = 0;
@@ -408,5 +428,31 @@ public class EntityFactory : IndexedNamedFactory<Entity>
     {
         if (itemsByName.TryGetValue(name, out int index))
             references[index] = (EntityReference) reference;
+    }
+
+    public void FireInput(string targetName, string inputName, params object[] args)
+    {
+        var targets = GetEntitiesByTargetName(targetName);
+        if (targets == null)
+            return;
+
+        foreach (var target in targets)
+        {
+            var method = BaseEngine.Engine.GetInputByTarget(target, inputName);
+            method?.Invoke(target, args);
+        }
+    }
+
+    public void RegisterOutput(string targetName, string outputName, Delegate action)
+    {
+        var targets = GetEntitiesByTargetName(targetName);
+        if (targets == null)
+            return;
+
+        foreach (var target in targets)
+        {
+            var @event = BaseEngine.Engine.GetOutputByTarget(target, outputName);
+            @event?.AddEventHandler(target, action);
+        }
     }
 }

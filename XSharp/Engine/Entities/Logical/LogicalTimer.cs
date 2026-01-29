@@ -2,8 +2,10 @@
 
 public delegate void TimerEvent(LogicalTimer source);
 
+[Entity("logic_timer")]
 public class LogicalTimer : LogicalEntity
 {
+    [Output]
     public event TimerEvent OnTimer;
 
     public int Interval // in frames
@@ -22,11 +24,13 @@ public class LogicalTimer : LogicalEntity
     {
     }
 
+    [Input]
     public void Reset()
     {
         TickCounter = 0;
     }
 
+    [Input]
     public void FireTimer()
     {
         if (!Enabled)
@@ -35,11 +39,13 @@ public class LogicalTimer : LogicalEntity
         OnTimer?.Invoke(this);
     }
 
+    [Input]
     public void Increment(int amount)
     {
         TickCounter += amount;
     }
 
+    [Input]
     public void Decrement(int amount)
     {
         TickCounter -= amount;

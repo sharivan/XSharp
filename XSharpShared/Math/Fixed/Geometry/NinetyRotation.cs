@@ -1,6 +1,7 @@
 ﻿using System;
+using XSharp.Math.Fixed;
 
-namespace XSharp.Math.Geometry;
+namespace XSharp.Math.Fixed.Geometry;
 
 public enum NinetyRotation
 {

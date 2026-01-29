@@ -1,4 +1,4 @@
-﻿namespace XSharp.Math;
+﻿namespace XSharp.Math.Fixed;
 
 public struct Interval
 {

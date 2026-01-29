@@ -1,7 +1,6 @@
 ﻿using XSharp.Engine.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
-
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using static XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin.ChillPenguin;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.ChillPenguin;

@@ -6,8 +6,7 @@ using System.Reflection;
 
 using XSharp.Engine.Collision;
 using XSharp.Factories;
-using XSharp.Math.Geometry;
-
+using XSharp.Math.Fixed.Geometry;
 using static XSharp.Engine.Consts;
 
 using SerializableAttribute = XSharp.Serialization.SerializableAttribute;
@@ -42,7 +41,6 @@ public abstract class Entity : IIndexedNamedFactoryItem
     internal int index = -1;
     internal string name = null;
     internal string targetName = null;
-    private Vector origin = Vector.NULL_VECTOR;
     internal EntityReference parent = null;
 
     private bool doThink;
@@ -75,12 +73,14 @@ public abstract class Entity : IIndexedNamedFactoryItem
         internal set => index = value;
     }
 
+    [Property]
     public string Name
     {
         get => name;
-        internal set => Engine.Entities.UpdateEntityName(this, value);
+        set => Engine.Entities.UpdateEntityName(this, value);
     }
 
+    [Property]
     public string TargetName
     {
         get => targetName;
@@ -109,15 +109,16 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     public IEnumerable<Entity> Childs => childs;
 
+    [Property]
     public Vector Origin
     {
-        get => origin;
+        get;
         set
         {
             value = value.TruncFracPart();
-            LastOrigin = origin;
-            Vector delta = value - origin;
-            origin = value;
+            LastOrigin = field;
+            Vector delta = value - field;
+            field = value;
 
             if (delta != Vector.NULL_VECTOR)
             {
@@ -127,9 +128,9 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
             UpdatePartition();
         }
-    }
+    } = Vector.NULL_VECTOR;
 
-    public Vector IntegerOrigin => Origin.RoundToFloor();
+    public Vector PixelOrigin => Origin.RoundToFloor();
 
     public Vector LastOrigin
     {
@@ -397,7 +398,7 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
     protected internal void ResetFromInitParams()
     {
-        Type type = GetType();
+        var type = GetType();
         foreach (var kv in initParams)
         {
             string name = kv.Key;
@@ -405,13 +406,25 @@ public abstract class Entity : IIndexedNamedFactoryItem
 
             var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(prop => prop.Name == name);
             var property = properties.FirstOrDefault(prop => prop.DeclaringType == type) ?? properties.First();
+            if (property == null)
+                continue;
 
-            Type propertyType = property.PropertyType;
-            Type valueType = value.GetType();
+            var propertyType = property.PropertyType;
+            var valueType = value.GetType();
             if (valueType != propertyType && !propertyType.IsAssignableFrom(valueType))
             {
-                TypeConverter conv = TypeDescriptor.GetConverter(propertyType);
-                value = conv.ConvertFrom(value);
+                var conv = TypeDescriptor.GetConverter(propertyType);
+
+                try
+                {
+                    value = conv.ConvertFrom(value);
+                }
+                catch (NotSupportedException)
+                {
+                    // TODO : Implement!
+                    // Engine.Console.WriteLine("some thing here");
+                    continue;
+                }
             }
 
             property.SetValue(this, value);

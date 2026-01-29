@@ -9,13 +9,25 @@ namespace XSharp.Engine.Entities.Logical;
 public delegate void MathCounterEvent(MathCounter source);
 public delegate void MathCounterValueEvent(MathCounter source, float value);
 
+[Entity("math_counter")]
 public class MathCounter : LogicalEntity
 {
+    [Output]
     public event MathCounterValueEvent OutValue;
+
+    [Output]
     public event MathCounterEvent OnHitMin;
+
+    [Output]
     public event MathCounterEvent OnHitMax;
+
+    [Output]
     public event MathCounterValueEvent OutGetValue;
+
+    [Output]
     public event MathCounterEvent OnChangedFromMin;
+
+    [Output]
     public event MathCounterEvent OnChangedFromMax;
 
     private float value = 0;
@@ -64,6 +76,7 @@ public class MathCounter : LogicalEntity
             value = MaxValue;
     }
 
+    [Input]
     public float GetValue()
     {
         if (!Enabled)
@@ -73,6 +86,7 @@ public class MathCounter : LogicalEntity
         return value;
     }
 
+    [Input]
     public float SetValue(float value)
     {
         if (!Enabled)
@@ -103,6 +117,7 @@ public class MathCounter : LogicalEntity
         return Value;
     }
 
+    [Input]
     public float SetValueNoFire(float value)
     {
         if (!Enabled)
@@ -113,6 +128,7 @@ public class MathCounter : LogicalEntity
         return Value;
     }
 
+    [Input]
     public float Reset()
     {
         if (!Enabled)
@@ -121,6 +137,7 @@ public class MathCounter : LogicalEntity
         return SetValue(InitialValue);
     }
 
+    [Input]
     public float Increment()
     {
         if (!Enabled)
@@ -129,6 +146,7 @@ public class MathCounter : LogicalEntity
         return SetValue(value + 1);
     }
 
+    [Input]
     public float Decrement()
     {
         if (!Enabled)
@@ -137,6 +155,7 @@ public class MathCounter : LogicalEntity
         return SetValue(value - 1);
     }
 
+    [Input]
     public float Add(float value)
     {
         if (!Enabled)
@@ -145,6 +164,7 @@ public class MathCounter : LogicalEntity
         return SetValue(this.value + value);
     }
 
+    [Input]
     public float Subtract(float value)
     {
         if (!Enabled)
@@ -153,6 +173,7 @@ public class MathCounter : LogicalEntity
         return SetValue(this.value - value);
     }
 
+    [Input]
     public float Multiply(float value)
     {
         if (!Enabled)
@@ -161,6 +182,7 @@ public class MathCounter : LogicalEntity
         return SetValue(this.value * value);
     }
 
+    [Input]
     public float Divide(float value)
     {
         if (!Enabled)

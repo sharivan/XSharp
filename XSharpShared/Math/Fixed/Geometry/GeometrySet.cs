@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using XSharp.Math.Fixed;
 
-namespace XSharp.Math.Geometry;
+namespace XSharp.Math.Fixed.Geometry;
 
 public enum SetOperation
 {
@@ -50,7 +51,7 @@ public class GeometrySet(SetOperation operation, params (IGeometry part, bool ne
         part3 = Diference(b, a);
     }
 
-    protected readonly List<(IGeometry part, bool negate)> parts = new List<(IGeometry part, bool negate)>(parts);
+    protected readonly List<(IGeometry part, bool negate)> parts = new(parts);
 
     public GeometryType Type => type;
 

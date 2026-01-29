@@ -8,25 +8,57 @@ namespace XSharp.Engine.Entities.Logical;
 
 public delegate void LogicalRandomEvent(LogicalRandom source);
 
+[Entity("logic_random")]
 public class LogicalRandom : LogicalEntity
 {
     private bool triggered = false;
 
+    [Output]
     public event LogicalRandomEvent OnTrigger01;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger02;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger03;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger04;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger05;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger06;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger07;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger08;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger09;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger10;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger11;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger12;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger13;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger14;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger15;
+
+    [Output]
     public event LogicalRandomEvent OnTrigger16;
 
     public bool Once
@@ -39,6 +71,7 @@ public class LogicalRandom : LogicalEntity
     {
     }
 
+    [Input]
     public uint Trigger()
     {
         if (!Enabled)
@@ -49,7 +82,7 @@ public class LogicalRandom : LogicalEntity
 
         triggered = true;
 
-        uint rnd = Engine.RNG.NextUInt(1, 16);
+        uint rnd = Engine.RNG.NextValue(1, 16);
         switch (rnd)
         {
             case 1:

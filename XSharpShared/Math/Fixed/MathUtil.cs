@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace XSharp.Math;
+namespace XSharp.Math.Fixed;
 
 public static class MathUtil
 {
@@ -52,7 +52,7 @@ public static class MathUtil
         int bInt = *(int*) &b;
 
         // Different signs means they do not match.
-        if ((aInt < 0) != (bInt < 0))
+        if (aInt < 0 != bInt < 0)
             return false;
 
         // Find the difference in ULPs.
@@ -61,7 +61,7 @@ public static class MathUtil
         // Choose of maxUlp = 4
         // according to http://code.google.com/p/googletest/source/browse/trunk/include/gtest/internal/gtest-internal.h
         const int maxUlp = 4;
-        return (ulp <= maxUlp);
+        return ulp <= maxUlp;
     }
 
     /// <summary>
@@ -94,7 +94,7 @@ public static class MathUtil
     public static bool WithinEpsilon(float a, float b, float epsilon)
     {
         float num = a - b;
-        return ((-epsilon <= num) && (num <= epsilon));
+        return -epsilon <= num && num <= epsilon;
     }
 
     /// <summary>
@@ -276,7 +276,7 @@ public static class MathUtil
     /// <returns>The result of linear interpolation of values based on the amount.</returns>
     public static byte Lerp(byte from, byte to, float amount)
     {
-        return (byte) Lerp((float) from, (float) to, amount);
+        return (byte) Lerp( from, (float) to, amount);
     }
 
     /// <summary>
@@ -288,9 +288,9 @@ public static class MathUtil
     /// <param name="amount">Value between 0 and 1 indicating interpolation amount.</param>
     public static float SmoothStep(float amount)
     {
-        return (amount <= 0) ? 0
-            : (amount >= 1) ? 1
-            : amount * amount * (3 - (2 * amount));
+        return amount <= 0 ? 0
+            : amount >= 1 ? 1
+            : amount * amount * (3 - 2 * amount);
     }
 
     /// <summary>
@@ -302,9 +302,9 @@ public static class MathUtil
     /// <param name="amount">Value between 0 and 1 indicating interpolation amount.</param>
     public static float SmootherStep(float amount)
     {
-        return (amount <= 0) ? 0
-            : (amount >= 1) ? 1
-            : amount * amount * amount * (amount * ((amount * 6) - 15) + 10);
+        return amount <= 0 ? 0
+            : amount >= 1 ? 1
+            : amount * amount * amount * (amount * (amount * 6 - 15) + 10);
     }
 
     /// <summary>
@@ -375,7 +375,7 @@ public static class MathUtil
             throw new ArgumentException(string.Format("min {0} should be less than or equal to max {1}", min, max), nameof(min));
 
         var range_size = maxd - mind;
-        return (float) (mind + (valued - mind) - (range_size * System.Math.Floor((valued - mind) / range_size)));
+        return (float) (mind + (valued - mind) - range_size * System.Math.Floor((valued - mind) / range_size));
     }
 
     /// <summary>
@@ -412,8 +412,8 @@ public static class MathUtil
         var cx = x - centerX;
         var cy = y - centerY;
 
-        var componentX = (cx * cx) / (2 * sigmaX * sigmaX);
-        var componentY = (cy * cy) / (2 * sigmaY * sigmaY);
+        var componentX = cx * cx / (2 * sigmaX * sigmaX);
+        var componentY = cy * cy / (2 * sigmaY * sigmaY);
 
         return amplitude * System.Math.Exp(-(componentX + componentY));
     }

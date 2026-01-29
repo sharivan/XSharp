@@ -8,7 +8,7 @@ using XSharp.Exporter.JSON;
 using XSharp.Exporter.Map;
 using XSharp.Exporter.MegaEDX;
 using XSharp.Graphics;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed.Geometry;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace XSharp.Exporter;

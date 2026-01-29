@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XSharp.Math;
+namespace XSharp.Math.Fixed;
 
-public enum FixedSingleStringFormat
+public enum FixedStringFormat
 {
     DECIMAL,
     PIXEL_SUBPIXEL,
-    SUBPIXEL
+    SUBPIXEL,
+    INT_FRAC,
+    RAW
 }

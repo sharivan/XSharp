@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using XSharp.Math.Fixed;
 using XSharp.Util;
 
 namespace XSharp.Math.Geometry;
@@ -20,17 +21,17 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     /// <summary>
     /// A <see cref="Quaternion"/> with all of its components set to zero.
     /// </summary>
-    public static readonly Quaternion Zero = new Quaternion();
+    public static readonly Quaternion Zero = new();
 
     /// <summary>
     /// A <see cref="Quaternion"/> with all of its components set to one.
     /// </summary>
-    public static readonly Quaternion One = new Quaternion(1.0f, 1.0f, 1.0f, 1.0f);
+    public static readonly Quaternion One = new(1.0f, 1.0f, 1.0f, 1.0f);
 
     /// <summary>
     /// The identity <see cref="Quaternion"/> (0, 0, 0, 1).
     /// </summary>
-    public static readonly Quaternion Identity = new Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    public static readonly Quaternion Identity = new(0.0f, 0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// The X component of the quaternion.
@@ -295,7 +296,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     /// <returns>A four-element array containing the components of the quaternion.</returns>
     public float[] ToArray()
     {
-        return new float[] { X, Y, Z, W };
+        return [X, Y, Z, W];
     }
 
     /// <summary>
@@ -1160,11 +1161,12 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
         Exponential(ref q1, out q1Exp);
         Exponential(ref q2, out q2Exp);
 
-        Quaternion[] results = new Quaternion[3];
-        results[0] = q1 * Exponential(-0.25f * (Logarithm(q1Exp * q2) + Logarithm(q1Exp * q0)));
-        results[1] = q2 * Exponential(-0.25f * (Logarithm(q2Exp * q3) + Logarithm(q2Exp * q1)));
-        results[2] = q2;
-
+        Quaternion[] results =
+        [
+            q1 * Exponential(-0.25f * (Logarithm(q1Exp * q2) + Logarithm(q1Exp * q0))),
+            q2 * Exponential(-0.25f * (Logarithm(q2Exp * q3) + Logarithm(q2Exp * q1))),
+            q2,
+        ];
         return results;
     }
 

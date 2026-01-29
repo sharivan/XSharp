@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using XSharp.Math.Fixed;
 using XSharp.Util;
 
 namespace XSharp.Math.Geometry;
@@ -20,32 +21,32 @@ public struct Vector4 : IEquatable<Vector4>, IFormattable
     /// <summary>
     /// A <see cref="Vector4"/> with all of its components set to zero.
     /// </summary>
-    public static readonly Vector4 Zero = new Vector4();
+    public static readonly Vector4 Zero = new();
 
     /// <summary>
     /// The X unit <see cref="Vector4"/> (1, 0, 0, 0).
     /// </summary>
-    public static readonly Vector4 UnitX = new Vector4(1.0f, 0.0f, 0.0f, 0.0f);
+    public static readonly Vector4 UnitX = new(1.0f, 0.0f, 0.0f, 0.0f);
 
     /// <summary>
     /// The Y unit <see cref="Vector4"/> (0, 1, 0, 0).
     /// </summary>
-    public static readonly Vector4 UnitY = new Vector4(0.0f, 1.0f, 0.0f, 0.0f);
+    public static readonly Vector4 UnitY = new(0.0f, 1.0f, 0.0f, 0.0f);
 
     /// <summary>
     /// The Z unit <see cref="Vector4"/> (0, 0, 1, 0).
     /// </summary>
-    public static readonly Vector4 UnitZ = new Vector4(0.0f, 0.0f, 1.0f, 0.0f);
+    public static readonly Vector4 UnitZ = new(0.0f, 0.0f, 1.0f, 0.0f);
 
     /// <summary>
     /// The W unit <see cref="Vector4"/> (0, 0, 0, 1).
     /// </summary>
-    public static readonly Vector4 UnitW = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+    public static readonly Vector4 UnitW = new(0.0f, 0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// A <see cref="Vector4"/> with all of its components set to one.
     /// </summary>
-    public static readonly Vector4 One = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    public static readonly Vector4 One = new(1.0f, 1.0f, 1.0f, 1.0f);
 
     /// <summary>
     /// The X component of the vector.
@@ -235,7 +236,7 @@ public struct Vector4 : IEquatable<Vector4>, IFormattable
     /// <returns>A four-element array containing the components of the vector.</returns>
     public float[] ToArray()
     {
-        return new float[] { X, Y, Z, W };
+        return [X, Y, Z, W];
     }
 
     /// <summary>

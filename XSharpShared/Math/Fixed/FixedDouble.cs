@@ -1,7 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Globalization;
 
-namespace XSharp.Math;
+namespace XSharp.Math.Fixed;
 
 public class FixedDoubleTypeConverter : TypeConverter
 {
@@ -15,7 +16,7 @@ public class FixedDoubleTypeConverter : TypeConverter
             || base.CanConvertFrom(context, sourceType);
     }
 
-    public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
     {
         return value switch
         {
@@ -28,7 +29,7 @@ public class FixedDoubleTypeConverter : TypeConverter
         };
     }
 
-    public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
+    public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
     {
         return destinationType == typeof(double)
             ? (double) (FixedDouble) value
@@ -37,10 +38,10 @@ public class FixedDoubleTypeConverter : TypeConverter
 }
 
 [TypeConverter(typeof(FixedDoubleTypeConverter))]
-public struct FixedDouble : IComparable<FixedDouble>
+public readonly struct FixedDouble : IComparable<FixedDouble>
 {
     public const int FIXED_BITS_COUNT = 16;
-    public const long FIXED_DIVISOR = 1L << FIXED_BITS_COUNT;
+    public const long RAW_ONE = 1L << FIXED_BITS_COUNT;
 
     private const long INT_PART_MASK = -1L << FIXED_BITS_COUNT;
     private const long FRAC_PART_MASK = ~INT_PART_MASK;
@@ -59,7 +60,6 @@ public struct FixedDouble : IComparable<FixedDouble>
     public long RawValue
     {
         get;
-        private set;
     }
 
     public int IntValue => (int) LongValue;
@@ -80,11 +80,18 @@ public struct FixedDouble : IComparable<FixedDouble>
 
     public FixedDouble FracPart => this - LongValue;
 
-    public float FloatValue => RawValue / (float) FIXED_DIVISOR;
+    public float FloatValue => RawValue / (float) RAW_ONE;
 
-    public double DoubleValue => RawValue / (double) FIXED_DIVISOR;
+    public double DoubleValue => RawValue / (double) RAW_ONE;
 
-    public FixedDouble Abs => new((RawValue + (RawValue >> 63)) ^ (RawValue >> 63));
+    public FixedDouble Abs
+    {
+        get
+        {
+            var mask = RawValue >> 63;
+            return new(RawValue + mask ^ mask);
+        }
+    }
 
     public int Signal => RawValue == 0 ? 0 : RawValue > 0 ? 1 : -1;
 
@@ -95,17 +102,54 @@ public struct FixedDouble : IComparable<FixedDouble>
 
     public FixedDouble(float value)
     {
-        RawValue = (long) (value * FIXED_DIVISOR);
+        RawValue = (long) (value * RAW_ONE);
     }
 
     public FixedDouble(double value)
     {
-        RawValue = (long) (value * FIXED_DIVISOR);
+        RawValue = (long) (value * RAW_ONE);
+    }
+
+    public string ToString(FixedStringFormat format)
+    {
+        switch (format)
+        {
+            case FixedStringFormat.DECIMAL:
+                return DoubleValue.ToString(CultureInfo.InvariantCulture);
+
+            case FixedStringFormat.SUBPIXEL:
+                return ((double) RawValue / (1 << FIXED_BITS_COUNT - 8)).ToString(CultureInfo.InvariantCulture);
+
+            case FixedStringFormat.PIXEL_SUBPIXEL:
+            {
+                var pixel = LongValue;
+                var subPixel = (double) (RawValue & FIXED_BITS_COUNT) / (1 << FIXED_BITS_COUNT - 8);
+                if (subPixel == 0)
+                    return pixel.ToString(CultureInfo.InvariantCulture);
+
+                return $"_{pixel.ToString(CultureInfo.InvariantCulture)}_{subPixel.ToString(CultureInfo.InvariantCulture)}";
+            }
+
+            case FixedStringFormat.INT_FRAC:
+            {
+                var intPart = LongValue;
+                var fracPart = RawFracPart;
+                if (fracPart == 0)
+                    return intPart.ToString(CultureInfo.InvariantCulture);
+
+                return $"{intPart.ToString(CultureInfo.InvariantCulture)}|{fracPart.ToString(CultureInfo.InvariantCulture)}";
+            }
+
+            case FixedStringFormat.RAW:
+                return $"|{RawValue.ToString(CultureInfo.InvariantCulture)}";
+        }
+
+        return "?";
     }
 
     public override string ToString()
     {
-        return DoubleValue.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return DoubleValue.ToString(CultureInfo.InvariantCulture);
     }
 
     public override bool Equals(object obj)
@@ -121,6 +165,21 @@ public struct FixedDouble : IComparable<FixedDouble>
     public static FixedDouble FromRawValue(long rawValue)
     {
         return new(rawValue);
+    }
+
+    public static FixedDouble FromSubpixels(double subPixels)
+    {
+        return new FixedDouble(subPixels / 256.0);
+    }
+
+    public static FixedDouble FromPixelsAndSubPixels(int pixels, double subPixels)
+    {
+        return new FixedDouble(pixels + subPixels / 256.0);
+    }
+
+    public static FixedDouble FromIntAndRawFracPart(int intPart, long rawFracPart)
+    {
+        return new FixedDouble((intPart << FIXED_BITS_COUNT) + rawFracPart);
     }
 
     public int CompareTo(FixedDouble other)
@@ -147,13 +206,25 @@ public struct FixedDouble : IComparable<FixedDouble>
         long intPart = LongValue;
 
         return Signal >= 0
-            ? RawFracPart > 1 << (FIXED_BITS_COUNT - 1) ? intPart + 1 : intPart
-            : RawFracPart > 1 << (FIXED_BITS_COUNT - 1) ? intPart - 1 : intPart;
+            ? RawFracPart > 1 << FIXED_BITS_COUNT - 1 ? intPart + 1 : intPart
+            : RawFracPart > 1 << FIXED_BITS_COUNT - 1 ? intPart - 1 : intPart;
+    }
+
+    public long Round(RoundMode mode)
+    {
+        return mode switch
+        {
+            RoundMode.FLOOR => Floor(),
+            RoundMode.CEIL => Ceil(),
+            RoundMode.TRUNCATE => (long) this,
+            RoundMode.NEAREST => Round(),
+            _ => throw new ArgumentException("Invalid round mode", nameof(mode))
+        };
     }
 
     public FixedDouble TruncFracPart(int bits = 8)
     {
-        return new FixedDouble(RawValue & (-1 << (FIXED_BITS_COUNT - bits)));
+        return new FixedDouble(RawValue & -1 << FIXED_BITS_COUNT - bits);
     }
 
     public FixedDouble Clamp(FixedDouble min, FixedDouble max)
@@ -163,7 +234,32 @@ public struct FixedDouble : IComparable<FixedDouble>
 
     public FixedDouble Sqrt()
     {
-        return System.Math.Sqrt(DoubleValue);
+        if (RawValue < 0)
+            throw new ArgumentOutOfRangeException("Negative square root.");
+
+        long val = RawValue << FIXED_BITS_COUNT;
+        long res = 0;
+        long bit = 1L << sizeof(long) - 2;
+
+        while (bit > val)
+            bit >>= 2;
+
+        while (bit != 0)
+        {
+            if (val >= res + bit)
+            {
+                val -= res + bit;
+                res = (res >> 1) + bit;
+            }
+            else
+            {
+                res >>= 1;
+            }
+
+            bit >>= 2;
+        }
+
+        return new FixedDouble(res);
     }
 
     public FixedDouble Exp()
@@ -273,7 +369,7 @@ public struct FixedDouble : IComparable<FixedDouble>
 
     public static FixedDouble operator *(FixedDouble left, FixedDouble right)
     {
-        return new((left.RawValue * right.RawValue) >> FIXED_BITS_COUNT);
+        return new(left.RawValue * right.RawValue >> FIXED_BITS_COUNT);
     }
 
     public static FixedDouble operator /(FixedDouble left, FixedDouble right)
@@ -298,7 +394,7 @@ public struct FixedDouble : IComparable<FixedDouble>
 
     public static explicit operator FixedSingle(FixedDouble src)
     {
-        return FixedSingle.FromRawValue((int) (src.RawValue >> (FIXED_BITS_COUNT - FixedSingle.FIXED_BITS_COUNT)));
+        return FixedSingle.FromRawValue((int) (src.RawValue >> FIXED_BITS_COUNT - FixedSingle.FIXED_BITS_COUNT));
     }
 
     public static implicit operator double(FixedDouble src)
@@ -323,7 +419,7 @@ public struct FixedDouble : IComparable<FixedDouble>
 
     public static implicit operator FixedDouble(FixedSingle src)
     {
-        return new((long) src.RawValue << (FIXED_BITS_COUNT - FixedSingle.FIXED_BITS_COUNT));
+        return new((long) src.RawValue << FIXED_BITS_COUNT - FixedSingle.FIXED_BITS_COUNT);
     }
 
     public static implicit operator FixedDouble(double src)

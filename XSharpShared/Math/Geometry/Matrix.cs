@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using XSharp.Math.Fixed;
 
 namespace XSharp.Math.Geometry;
 
@@ -19,12 +20,12 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// <summary>
     /// A <see cref="Matrix"/> with all of its components set to zero.
     /// </summary>
-    public static readonly Matrix Zero = new Matrix();
+    public static readonly Matrix Zero = new();
 
     /// <summary>
     /// The identity <see cref="Matrix"/>.
     /// </summary>
-    public static readonly Matrix Identity = new Matrix() { M11 = 1.0f, M22 = 1.0f, M33 = 1.0f, M44 = 1.0f };
+    public static readonly Matrix Identity = new() { M11 = 1.0f, M22 = 1.0f, M33 = 1.0f, M44 = 1.0f };
 
     /// <summary>
     /// Value at row 1 column 1 of the matrix.
@@ -313,7 +314,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector4 Row1
     {
-        get => new Vector4(M11, M12, M13, M14);
+        get => new(M11, M12, M13, M14);
         set { M11 = value.X; M12 = value.Y; M13 = value.Z; M14 = value.W; }
     }
 
@@ -322,7 +323,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector4 Row2
     {
-        get => new Vector4(M21, M22, M23, M24);
+        get => new(M21, M22, M23, M24);
         set { M21 = value.X; M22 = value.Y; M23 = value.Z; M24 = value.W; }
     }
 
@@ -331,7 +332,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector4 Row3
     {
-        get => new Vector4(M31, M32, M33, M34);
+        get => new(M31, M32, M33, M34);
         set { M31 = value.X; M32 = value.Y; M33 = value.Z; M34 = value.W; }
     }
 
@@ -340,7 +341,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector4 Row4
     {
-        get => new Vector4(M41, M42, M43, M44);
+        get => new(M41, M42, M43, M44);
         set { M41 = value.X; M42 = value.Y; M43 = value.Z; M44 = value.W; }
     }
 
@@ -349,7 +350,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector4 Column1
     {
-        get => new Vector4(M11, M21, M31, M41);
+        get => new(M11, M21, M31, M41);
         set { M11 = value.X; M21 = value.Y; M31 = value.Z; M41 = value.W; }
     }
 
@@ -358,7 +359,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector4 Column2
     {
-        get => new Vector4(M12, M22, M32, M42);
+        get => new(M12, M22, M32, M42);
         set { M12 = value.X; M22 = value.Y; M32 = value.Z; M42 = value.W; }
     }
 
@@ -367,7 +368,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector4 Column3
     {
-        get => new Vector4(M13, M23, M33, M43);
+        get => new(M13, M23, M33, M43);
         set { M13 = value.X; M23 = value.Y; M33 = value.Z; M43 = value.W; }
     }
 
@@ -376,7 +377,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector4 Column4
     {
-        get => new Vector4(M14, M24, M34, M44);
+        get => new(M14, M24, M34, M44);
         set { M14 = value.X; M24 = value.Y; M34 = value.Z; M44 = value.W; }
     }
 
@@ -385,7 +386,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector3 TranslationVector
     {
-        get => new Vector3(M41, M42, M43);
+        get => new(M41, M42, M43);
         set { M41 = value.X; M42 = value.Y; M43 = value.Z; }
     }
 
@@ -394,7 +395,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// </summary>
     public Vector3 ScaleVector
     {
-        get => new Vector3(M11, M22, M33);
+        get => new(M11, M22, M33);
         set { M11 = value.X; M22 = value.Y; M33 = value.Z; }
     }
 
@@ -799,7 +800,7 @@ public struct Matrix : IEquatable<Matrix>, IFormattable
     /// <returns>A sixteen-element array containing the components of the matrix.</returns>
     public float[] ToArray()
     {
-        return new[] { M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44 };
+        return [M11, M12, M13, M14, M21, M22, M23, M24, M31, M32, M33, M34, M41, M42, M43, M44];
     }
 
     /// <summary>

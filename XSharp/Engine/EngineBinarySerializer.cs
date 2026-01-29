@@ -7,6 +7,8 @@ using XSharp.Serialization;
 
 namespace XSharp.Engine;
 
+#pragma warning disable IDE0079 // Remover a supressão desnecessária
+#pragma warning disable CA2263 // Preferir sobrecarga genérica quando o tipo for conhecido
 public class EngineBinarySerializer : BinarySerializer
 {
     public EngineBinarySerializer(Stream stream) : base(stream)
@@ -27,7 +29,7 @@ public class EngineBinarySerializer : BinarySerializer
             return ReadEntityReference(referenceType.GetGenericArguments()[0], nullable);
 
         if (referenceType == typeof(EntityReference))
-            return ReadEntityReference<Entity>(nullable);
+            return ReadEntityReference(typeof(Entity), nullable);
 
         return base.ReadItemReference(referenceType, nullable);
     }
@@ -56,7 +58,7 @@ public class EngineBinarySerializer : BinarySerializer
 
     public EntityReference ReadEntityReference(bool nullable = false)
     {
-        return ReadEntityReference<Entity>(nullable);
+        return ReadEntityReference(typeof(Entity), nullable);
     }
 
     public EntityReference<EntityType> ReadEntityReference<EntityType>(bool nullable = false) where EntityType : Entity
@@ -111,3 +113,5 @@ public class EngineBinarySerializer : BinarySerializer
             base.WriteValue(type, value, acceptNonSerializable, ignoreItems, nullable);
     }
 }
+#pragma warning restore CA2263 // Preferir sobrecarga genérica quando o tipo for conhecido
+#pragma warning restore IDE0079 // Remover a supressão desnecessária

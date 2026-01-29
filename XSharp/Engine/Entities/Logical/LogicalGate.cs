@@ -9,14 +9,20 @@ namespace XSharp.Engine.Entities.Logical;
 public delegate void LogicalGateEvent(LogicalGate source);
 public delegate void LogicalGateValueEvent(LogicalGate source, bool value);
 
+[Entity("logic_gate")]
 public class LogicalGate : LogicalEntity
 {
     private LogicalGateMode mode = LogicalGateMode.AND;
     private bool inValueA = false;
     private bool inValueB = false;
 
+    [Output]
     public event LogicalGateEvent OnResultTrue;
+
+    [Output]
     public event LogicalGateEvent OnResultFalse;
+
+    [Output]
     public event LogicalGateValueEvent OutValue;
 
     public LogicalGateMode Mode
@@ -89,6 +95,7 @@ public class LogicalGate : LogicalEntity
             OnResultFalse?.Invoke(this);
     }
 
+    [Input]
     public void SetMode(LogicalGateMode type)
     {
         if (!Enabled)
@@ -98,6 +105,7 @@ public class LogicalGate : LogicalEntity
         EvalTest();
     }
 
+    [Input]
     public void SetValueA(bool value)
     {
         if (!Enabled)
@@ -107,6 +115,7 @@ public class LogicalGate : LogicalEntity
         EvalTest();
     }
 
+    [Input]
     public void SetValueB(bool value)
     {
         if (!Enabled)
@@ -116,6 +125,7 @@ public class LogicalGate : LogicalEntity
         EvalTest();
     }
 
+    [Input]
     public ThreeStateResult GetValue()
     {
         if (!Enabled)

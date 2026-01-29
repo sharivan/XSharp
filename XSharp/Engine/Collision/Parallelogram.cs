@@ -1,7 +1,6 @@
 ﻿using System;
-
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 using SerializableAttribute = XSharp.Serialization.SerializableAttribute;
 

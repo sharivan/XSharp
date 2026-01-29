@@ -1,6 +1,7 @@
-﻿using XSharp.Math.Geometry;
+﻿using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
-namespace XSharp.Math.Physics;
+namespace XSharp.Math.Fixed.Physics;
 
 public static class MovementUtil
 {

@@ -8,26 +8,60 @@ namespace XSharp.Engine.Entities.Logical;
 
 public delegate void LogicalSwitchEvent(LogicalSwitch source);
 
+[Entity("logic_switch")]
 public class LogicalSwitch : LogicalEntity
 {
     private int value = 0;
 
+    [Output]
     public event LogicalSwitchEvent OnCase01;
+
+    [Output]
     public event LogicalSwitchEvent OnCase02;
+
+    [Output]
     public event LogicalSwitchEvent OnCase03;
+
+    [Output]
     public event LogicalSwitchEvent OnCase04;
+
+    [Output]
     public event LogicalSwitchEvent OnCase05;
+
+    [Output]
     public event LogicalSwitchEvent OnCase06;
+
+    [Output]
     public event LogicalSwitchEvent OnCase07;
+
+    [Output]
     public event LogicalSwitchEvent OnCase08;
+
+    [Output]
     public event LogicalSwitchEvent OnCase09;
+
+    [Output]
     public event LogicalSwitchEvent OnCase10;
+
+    [Output]
     public event LogicalSwitchEvent OnCase11;
+
+    [Output]
     public event LogicalSwitchEvent OnCase12;
+
+    [Output]
     public event LogicalSwitchEvent OnCase13;
+
+    [Output]
     public event LogicalSwitchEvent OnCase14;
+
+    [Output]
     public event LogicalSwitchEvent OnCase15;
+
+    [Output]
     public event LogicalSwitchEvent OnCase16;
+
+    [Output]
     public event LogicalSwitchEvent OnDefault;
 
     public int Value
@@ -40,6 +74,7 @@ public class LogicalSwitch : LogicalEntity
     {
     }
 
+    [Input]
     public int SetValue(int value)
     {
         if (!Enabled)
@@ -49,6 +84,7 @@ public class LogicalSwitch : LogicalEntity
         return value;
     }
 
+    [Input]
     public int SetValueTest(int value)
     {
         if (!Enabled)
@@ -58,6 +94,7 @@ public class LogicalSwitch : LogicalEntity
         return Test();
     }
 
+    [Input]
     public int Test()
     {
         if (!Enabled)

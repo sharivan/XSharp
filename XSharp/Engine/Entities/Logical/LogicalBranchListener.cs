@@ -9,10 +9,16 @@ namespace XSharp.Engine.Entities.Logical;
 
 public delegate void LogicalBranchListenerEvent(LogicalBranchListener source);
 
+[Entity("logic_branch_listener")]
 public class LogicalBranchListener : LogicalEntity
 {
+    [Output]
     public event LogicalBranchListenerEvent OnAllTrue;
+
+    [Output]
     public event LogicalBranchListenerEvent OnAllFalse;
+
+    [Output]
     public event LogicalBranchListenerEvent OnMixed;
 
     public LogicalBranch Branch01
@@ -139,6 +145,7 @@ public class LogicalBranchListener : LogicalEntity
         };
     }
 
+    [Input]
     public void SetValue(bool value)
     {
         if (!Enabled)
@@ -151,6 +158,7 @@ public class LogicalBranchListener : LogicalEntity
         }
     }
 
+    [Input]
     public void ToggleBranches()
     {
         if (!Enabled)
@@ -163,6 +171,7 @@ public class LogicalBranchListener : LogicalEntity
         }
     }
 
+    [Input]
     public void ToggleTest()
     {
         if (!Enabled)
@@ -197,6 +206,7 @@ public class LogicalBranchListener : LogicalEntity
         }
     }
 
+    [Input]
     public void Test()
     {
         if (!Enabled)

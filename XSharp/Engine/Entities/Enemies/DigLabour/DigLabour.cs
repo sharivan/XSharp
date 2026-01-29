@@ -1,8 +1,8 @@
 ﻿using XSharp.Engine.Graphics;
 using XSharp.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
-using XSharp.Math.Physics;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
+using XSharp.Math.Fixed.Physics;
 
 namespace XSharp.Engine.Entities.Enemies.DigLabour;
 

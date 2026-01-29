@@ -3,9 +3,8 @@ using XSharp.Engine.Entities.Triggers;
 using XSharp.Engine.Graphics;
 using XSharp.Engine.World;
 using XSharp.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
-
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.Functions;
 
@@ -477,7 +476,7 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
         }
         else
         {
-            var value = Engine.RNG.NextUInt(16);
+            var value = Engine.RNG.NextValue(16);
 
             switch (lastState)
             {
@@ -525,7 +524,7 @@ public class JediSigma : Boss, IFSMEntity<JediSigmaState>
     {
         if (frameCounter >= DEFENDING_FRAMES)
         {
-            var value = Engine.RNG.NextUInt(16);
+            var value = Engine.RNG.NextValue(16);
             switch (value)
             {
                 case >= 0 and < 8:

@@ -1,7 +1,6 @@
 ﻿using XSharp.Engine.Entities.Items;
-using XSharp.Math;
-using XSharp.Math.Geometry;
-
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using static XSharp.Engine.Consts;
 
 using MMXWorld = XSharp.Engine.World.World;

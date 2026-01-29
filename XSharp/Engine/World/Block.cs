@@ -1,9 +1,8 @@
 ﻿using XSharp.Graphics;
-using XSharp.Math.Geometry;
-
+using XSharp.Math.Fixed.Geometry;
 using static XSharp.Engine.Consts;
 
-using MMXBox = XSharp.Math.Geometry.Box;
+using MMXBox = XSharp.Math.Fixed.Geometry.Box;
 
 namespace XSharp.Engine.World;
 

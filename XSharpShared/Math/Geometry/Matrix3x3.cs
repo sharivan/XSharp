@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using XSharp.Math.Fixed;
 using XSharp.Util;
 
 namespace XSharp.Math.Geometry;
@@ -20,12 +21,12 @@ public struct Matrix3x3 : IEquatable<Matrix3x3>, IFormattable
     /// <summary>
     /// A <see cref="Matrix3x3"/> with all of its components set to zero.
     /// </summary>
-    public static readonly Matrix3x3 Zero = new Matrix3x3();
+    public static readonly Matrix3x3 Zero = new();
 
     /// <summary>
     /// The identity <see cref="Matrix3x3"/>.
     /// </summary>
-    public static readonly Matrix3x3 Identity = new Matrix3x3() { M11 = 1.0f, M22 = 1.0f, M33 = 1.0f };
+    public static readonly Matrix3x3 Identity = new() { M11 = 1.0f, M22 = 1.0f, M33 = 1.0f };
 
     /// <summary>
     /// Value at row 1 column 1 of the Matrix3x3.
@@ -136,7 +137,7 @@ public struct Matrix3x3 : IEquatable<Matrix3x3>, IFormattable
     /// </summary>
     public Vector3 Row1
     {
-        get => new Vector3(M11, M12, M13);
+        get => new(M11, M12, M13);
         set { M11 = value.X; M12 = value.Y; M13 = value.Z; }
     }
 
@@ -145,7 +146,7 @@ public struct Matrix3x3 : IEquatable<Matrix3x3>, IFormattable
     /// </summary>
     public Vector3 Row2
     {
-        get => new Vector3(M21, M22, M23);
+        get => new(M21, M22, M23);
         set { M21 = value.X; M22 = value.Y; M23 = value.Z; }
     }
 
@@ -154,7 +155,7 @@ public struct Matrix3x3 : IEquatable<Matrix3x3>, IFormattable
     /// </summary>
     public Vector3 Row3
     {
-        get => new Vector3(M31, M32, M33);
+        get => new(M31, M32, M33);
         set { M31 = value.X; M32 = value.Y; M33 = value.Z; }
     }
 
@@ -163,7 +164,7 @@ public struct Matrix3x3 : IEquatable<Matrix3x3>, IFormattable
     /// </summary>
     public Vector3 Column1
     {
-        get => new Vector3(M11, M21, M31);
+        get => new(M11, M21, M31);
         set { M11 = value.X; M21 = value.Y; M31 = value.Z; }
     }
 
@@ -172,7 +173,7 @@ public struct Matrix3x3 : IEquatable<Matrix3x3>, IFormattable
     /// </summary>
     public Vector3 Column2
     {
-        get => new Vector3(M12, M22, M32);
+        get => new(M12, M22, M32);
         set { M12 = value.X; M22 = value.Y; M32 = value.Z; }
     }
 
@@ -181,7 +182,7 @@ public struct Matrix3x3 : IEquatable<Matrix3x3>, IFormattable
     /// </summary>
     public Vector3 Column3
     {
-        get => new Vector3(M13, M23, M33);
+        get => new(M13, M23, M33);
         set { M13 = value.X; M23 = value.Y; M33 = value.Z; }
     }
 
@@ -190,7 +191,7 @@ public struct Matrix3x3 : IEquatable<Matrix3x3>, IFormattable
     /// </summary>
     public Vector3 ScaleVector
     {
-        get => new Vector3(M11, M22, M33);
+        get => new(M11, M22, M33);
         set { M11 = value.X; M22 = value.Y; M33 = value.Z; }
     }
 
@@ -540,7 +541,7 @@ public struct Matrix3x3 : IEquatable<Matrix3x3>, IFormattable
     /// <returns>A 9-element array containing the components of the Matrix3x3.</returns>
     public float[] ToArray()
     {
-        return new[] { M11, M12, M13, M21, M22, M23, M31, M32, M33 };
+        return [M11, M12, M13, M21, M22, M23, M31, M32, M33];
     }
 
     /// <summary>

@@ -4,64 +4,49 @@ namespace XSharp.Engine;
 
 public class RNG : ISerializable
 {
-    private ulong seed;
+    private ushort seed;
 
-    internal RNG(ulong seed = 0)
+    internal RNG(ushort seed = 0)
     {
         UpdateSeed(seed);
     }
 
     public void Deserialize(ISerializer reader)
     {
-        seed = reader.ReadULong();
+        seed = reader.ReadUShort();
     }
 
     public void Serialize(ISerializer writer)
     {
-        writer.WriteULong(seed);
+        writer.WriteUShort(seed);
     }
 
-    public void UpdateSeed(ulong seed)
+    public void UpdateSeed(ushort seed)
     {
-        this.seed = seed & ulong.MaxValue; // It ensures that seed will be always positive.
+        this.seed = seed;
     }
 
-    public uint NextUInt()
+    public ushort NextValue()
     {
-        return (uint) NextULong();
-    }
-
-    public uint NextUInt(uint start, uint end)
-    {
-        return start + NextUInt() % (end - start); // This one will change the distribution by using modulus, but original game does the same thing.
-    }
-
-    public uint NextUInt(uint count)
-    {
-        return NextUInt(0, count);
-    }
-
-    public ulong NextULong()
-    {
-        // For now im using an algorithm similar to used by MMIX to generate random numbers.
-        seed *= 6364136223846793005L;
-        seed += 1442695040888963407L;
-        seed >>= 24;
+        // This algoritm is the same used by SNES MMX games
+        byte next_rng_H = (byte) (((3 * seed) >> 8) & 0xff);
+        byte next_rng_L = (byte) ((next_rng_H + seed) & 0xff);
+        seed = (ushort) ((next_rng_H << 1) + next_rng_L);
         return seed;
     }
 
-    public ulong NextULong(ulong start, ulong end)
+    public ushort NextValue(ushort start, ushort end)
     {
-        return start + NextULong() % (end - start);
+        return (ushort) (start + NextValue() % (end - start)); // This one will change the distribution by using modulus, but original game does the same thing.
     }
 
-    public ulong NextLong(ulong count)
+    public ushort NextValue(ushort count)
     {
-        return NextULong(0, count);
+        return NextValue(0, count);
     }
 
-    public double NextDouble()
+    public float NextFloat()
     {
-        return (double) NextULong() / ulong.MaxValue;
+        return (float) NextValue() / ushort.MaxValue;
     }
 }

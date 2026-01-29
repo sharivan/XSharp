@@ -18,7 +18,7 @@ public struct Point(int x, int y) : IEquatable<Point>
     /// <summary>
     /// A point with (0,0) coordinates.
     /// </summary>
-    public static readonly Point Zero = new Point(0, 0);
+    public static readonly Point Zero = new(0, 0);
 
     /// <summary>
     /// Left coordinate.

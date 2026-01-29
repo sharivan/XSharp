@@ -1,8 +1,7 @@
 ﻿using XSharp.Engine.Entities;
 using XSharp.Engine.World;
-using XSharp.Math;
-using XSharp.Math.Geometry;
-
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.Functions;
 

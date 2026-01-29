@@ -3,13 +3,13 @@ using System.Linq;
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.Serialization;
 
 using static XSharp.Engine.Consts;
 
-using Box = XSharp.Math.Geometry.Box;
+using Box = XSharp.Math.Fixed.Geometry.Box;
 
 namespace XSharp.Engine.Entities;
 
@@ -57,8 +57,6 @@ public abstract class Sprite : Entity, IRenderable
     private bool lastBlockedLeft = false;
     private bool lastBlockedRight = false;
     private bool lastLanded = false;
-
-    private Vector vel;
     protected bool moving;
     protected bool breakable;
     protected FixedSingle health;
@@ -147,7 +145,7 @@ public abstract class Sprite : Entity, IRenderable
         get
         {
             if (!MultiAnimation)
-                return CurrentAnimation != null ? CurrentAnimation.DrawBox : IntegerOrigin + Box.EMPTY_BOX;
+                return CurrentAnimation != null ? CurrentAnimation.DrawBox : PixelOrigin + Box.EMPTY_BOX;
 
             Box result = Box.EMPTY_BOX;
             foreach (var animation in Animations)
@@ -324,11 +322,11 @@ public abstract class Sprite : Entity, IRenderable
 
     public Vector Velocity
     {
-        get => vel;
+        get;
         set
         {
-            LastVelocity = vel;
-            vel = value.TruncFracPart();
+            LastVelocity = field;
+            field = value.TruncFracPart();
         }
     }
 

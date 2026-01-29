@@ -8,8 +8,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
 using XSharp.Factories;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 using TupleExtensions = XSharp.Util.TupleExtensions;
 
@@ -907,18 +907,47 @@ public class BinarySerializer : Serializer, IDisposable
     public MethodInfo ReadMethodInfo()
     {
         var declaringType = ReadType();
+        bool isStatic = ReadBool();
+        return ReadMethodInfo(declaringType, isStatic);
+    }
+
+    public MethodInfo ReadMethodInfo(Type declaringType, bool isStatic = false)
+    {
         string name = ReadString(false);
         var types = ReadTypes();
-        bool isStatic = ReadBool();
         return declaringType.GetMethod(name, (isStatic ? BindingFlags.Static : BindingFlags.Instance) | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly, types);
     }
 
-    public void WriteMethodInfo(MethodInfo info)
+    public EventInfo ReadEventInfo()
     {
-        WriteType(info.DeclaringType);
+        var declaringType = ReadType();
+        return ReadEventInfo(declaringType);
+    }
+
+    public EventInfo ReadEventInfo(Type declaringType)
+    {
+        string name = ReadString(false);
+        return declaringType.GetEvent(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+    }
+
+    public void WriteMethodInfo(MethodInfo info, bool writeDeclaringType = true, bool writeStaticFlag = true)
+    {
+        if (writeDeclaringType)
+            WriteType(info.DeclaringType);
+
+        if (writeStaticFlag)
+            WriteBool(info.IsStatic);
+
         WriteString(info.Name, false);
         WriteTypes(info.GetParameters().Select((p) => p.ParameterType));
-        WriteBool(info.IsStatic);
+    }
+
+    public void WriteEventInfo(EventInfo info, bool writeDeclaringType = true)
+    {
+        if (writeDeclaringType)
+            WriteType(info.DeclaringType);
+
+        WriteString(info.Name, false);
     }
 
     public override object ReadDelegate(bool nullable = true)
@@ -1114,7 +1143,7 @@ public class BinarySerializer : Serializer, IDisposable
             WriteDelegate(handler);
     }
 
-    protected bool OnReadObject(Type type, ref object obj)
+    protected virtual bool OnReadObject(Type type, ref object obj)
     {
         return false;
     }

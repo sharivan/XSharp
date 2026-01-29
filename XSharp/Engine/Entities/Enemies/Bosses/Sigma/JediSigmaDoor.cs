@@ -1,7 +1,7 @@
 ﻿using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses.Sigma;
 

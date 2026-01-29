@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Entities;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.Util;
 
 using static XSharp.Engine.Consts;
 
-using Box = XSharp.Math.Geometry.Box;
+using Box = XSharp.Math.Fixed.Geometry.Box;
 
 namespace XSharp.Engine.World;
 

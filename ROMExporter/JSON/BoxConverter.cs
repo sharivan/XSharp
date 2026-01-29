@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Exporter.JSON;
 

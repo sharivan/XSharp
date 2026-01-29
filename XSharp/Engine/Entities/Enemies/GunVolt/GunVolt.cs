@@ -1,7 +1,7 @@
 ﻿using XSharp.Engine.Graphics;
 using XSharp.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.GunVolt;
 
@@ -199,7 +199,7 @@ public class GunVolt : Enemy, IFSMEntity<GunVoltState>
     {
         if (frameCounter >= PRE_SHOOTING_FRAMES)
         {
-            var choice = Engine.RNG.NextUInt(16);
+            var choice = Engine.RNG.NextValue(16);
             if (choice % 2 == 0)
             {
                 missileShotCounter = 0;
@@ -243,7 +243,7 @@ public class GunVolt : Enemy, IFSMEntity<GunVoltState>
     {
         if (frameCounter >= POST_SHOOTING_FRAMES)
         {
-            var choice = Engine.RNG.NextUInt(16);
+            var choice = Engine.RNG.NextValue(16);
             idleFrames = choice % 4 == 0 ? LONG_IDLE_FRAMES : SHORT_IDLE_FRAMES;
             State = GunVoltState.IDLE;
         }

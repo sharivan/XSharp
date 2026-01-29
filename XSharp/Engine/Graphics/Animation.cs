@@ -1,11 +1,12 @@
 ﻿using XSharp.Engine.Entities;
 using XSharp.Factories;
 using XSharp.Graphics;
-using XSharp.Math;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.Math.Geometry;
 using XSharp.Serialization;
 
-using MMXBox = XSharp.Math.Geometry.Box;
+using MMXBox = XSharp.Math.Fixed.Geometry.Box;
 using Sprite = XSharp.Engine.Entities.Sprite;
 
 namespace XSharp.Engine.Graphics;
@@ -149,7 +150,7 @@ public class Animation : IIndexedNamedFactoryItem, IRenderable
         set;
     } = 1;
 
-    public Vector DrawOrigin => Sprite.IntegerOrigin + Offset;
+    public Vector DrawOrigin => Sprite.PixelOrigin + Offset;
 
     public MMXBox DrawBox
     {

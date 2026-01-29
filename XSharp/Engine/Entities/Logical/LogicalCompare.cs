@@ -8,14 +8,22 @@ namespace XSharp.Engine.Entities.Logical;
 
 public delegate void LogicalCompareEvent(LogicalCompare source);
 
+[Entity("logic_compare")]
 public class LogicalCompare : LogicalEntity
 {
     private float value = 0;
     private float compareValue = 0;
 
+    [Output]
     public event LogicalCompareEvent OnLessThan;
+
+    [Output]
     public event LogicalCompareEvent OnEqualTo;
+
+    [Output]
     public event LogicalCompareEvent OnNotEqualTo;
+
+    [Output]
     public event LogicalCompareEvent OnGreaterThan;
 
     public float InitialValue
@@ -47,6 +55,7 @@ public class LogicalCompare : LogicalEntity
         value = InitialValue;
     }
 
+    [Input]
     public void SetValue(float value)
     {
         if (!Enabled)
@@ -55,6 +64,7 @@ public class LogicalCompare : LogicalEntity
         this.value = value;
     }
 
+    [Input]
     public int Compare()
     {
         if (!Enabled)
@@ -83,6 +93,7 @@ public class LogicalCompare : LogicalEntity
         return result;
     }
 
+    [Input]
     public int SetValueCompare(float value)
     {
         if (!Enabled)
@@ -92,6 +103,7 @@ public class LogicalCompare : LogicalEntity
         return Compare();
     }
 
+    [Input]
     public void SetCompareValue(float compareValue)
     {
         if (!Enabled)

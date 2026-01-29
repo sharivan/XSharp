@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
+using XSharp.Math.Fixed;
 using XSharp.Util;
 
 namespace XSharp.Math.Geometry;
@@ -21,67 +21,67 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
     /// <summary>
     /// A <see cref="Vector3"/> with all of its components set to zero.
     /// </summary>
-    public static readonly Vector3 Zero = new Vector3();
+    public static readonly Vector3 Zero = new();
 
     /// <summary>
     /// The X unit <see cref="Vector3"/> (1, 0, 0).
     /// </summary>
-    public static readonly Vector3 UnitX = new Vector3(1.0f, 0.0f, 0.0f);
+    public static readonly Vector3 UnitX = new(1.0f, 0.0f, 0.0f);
 
     /// <summary>
     /// The Y unit <see cref="Vector3"/> (0, 1, 0).
     /// </summary>
-    public static readonly Vector3 UnitY = new Vector3(0.0f, 1.0f, 0.0f);
+    public static readonly Vector3 UnitY = new(0.0f, 1.0f, 0.0f);
 
     /// <summary>
     /// The Z unit <see cref="Vector3"/> (0, 0, 1).
     /// </summary>
-    public static readonly Vector3 UnitZ = new Vector3(0.0f, 0.0f, 1.0f);
+    public static readonly Vector3 UnitZ = new(0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// A <see cref="Vector3"/> with all of its components set to one.
     /// </summary>
-    public static readonly Vector3 One = new Vector3(1.0f, 1.0f, 1.0f);
+    public static readonly Vector3 One = new(1.0f, 1.0f, 1.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating up (0, 1, 0).
     /// </summary>
-    public static readonly Vector3 Up = new Vector3(0.0f, 1.0f, 0.0f);
+    public static readonly Vector3 Up = new(0.0f, 1.0f, 0.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating down (0, -1, 0).
     /// </summary>
-    public static readonly Vector3 Down = new Vector3(0.0f, -1.0f, 0.0f);
+    public static readonly Vector3 Down = new(0.0f, -1.0f, 0.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating left (-1, 0, 0).
     /// </summary>
-    public static readonly Vector3 Left = new Vector3(-1.0f, 0.0f, 0.0f);
+    public static readonly Vector3 Left = new(-1.0f, 0.0f, 0.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating right (1, 0, 0).
     /// </summary>
-    public static readonly Vector3 Right = new Vector3(1.0f, 0.0f, 0.0f);
+    public static readonly Vector3 Right = new(1.0f, 0.0f, 0.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating forward in a right-handed coordinate system (0, 0, -1).
     /// </summary>
-    public static readonly Vector3 ForwardRH = new Vector3(0.0f, 0.0f, -1.0f);
+    public static readonly Vector3 ForwardRH = new(0.0f, 0.0f, -1.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating forward in a left-handed coordinate system (0, 0, 1).
     /// </summary>
-    public static readonly Vector3 ForwardLH = new Vector3(0.0f, 0.0f, 1.0f);
+    public static readonly Vector3 ForwardLH = new(0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating backward in a right-handed coordinate system (0, 0, 1).
     /// </summary>
-    public static readonly Vector3 BackwardRH = new Vector3(0.0f, 0.0f, 1.0f);
+    public static readonly Vector3 BackwardRH = new(0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// A unit <see cref="Vector3"/> designating backward in a left-handed coordinate system (0, 0, -1).
     /// </summary>
-    public static readonly Vector3 BackwardLH = new Vector3(0.0f, 0.0f, -1.0f);
+    public static readonly Vector3 BackwardLH = new(0.0f, 0.0f, -1.0f);
 
     /// <summary>
     /// The X component of the vector.
@@ -244,7 +244,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
     /// <returns>A three-element array containing the components of the vector.</returns>
     public float[] ToArray()
     {
-        return new float[] { X, Y, Z };
+        return [X, Y, Z];
     }
 
     /// <summary>

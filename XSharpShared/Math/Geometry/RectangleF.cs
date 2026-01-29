@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using XSharp.Math.Fixed;
 
 namespace XSharp.Math.Geometry;
 
@@ -122,7 +123,7 @@ public struct RectangleF(float x, float y, float width, float height) : IEquatab
     /// </value>
     public Vector2 Location
     {
-        get => new Vector2(X, Y);
+        get => new(X, Y);
         set
         {
             X = value.X;
@@ -164,7 +165,7 @@ public struct RectangleF(float x, float y, float width, float height) : IEquatab
     /// <value>The size of the rectangle.</value>
     public Size2F Size
     {
-        get => new Size2F(Width, Height);
+        get => new(Width, Height);
         set
         {
             Width = value.Width;

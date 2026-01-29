@@ -1,8 +1,8 @@
 ﻿using System;
 
 using XSharp.Factories;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Serialization;
 

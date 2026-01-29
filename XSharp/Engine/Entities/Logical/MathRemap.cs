@@ -8,8 +8,10 @@ namespace XSharp.Engine.Entities.Logical;
 
 public delegate void MathRemapValueEvent(MathRemap source, float value);
 
+[Entity("math_remap")]
 public class MathRemap : LogicalEntity
 {
+    [Output]
     public event MathRemapValueEvent OutValue;
 
     public float MinInput
@@ -53,6 +55,7 @@ public class MathRemap : LogicalEntity
         return MinOutput;
     }
 
+    [Input]
     public float InValue(float input)
     {
         if (!Enabled)

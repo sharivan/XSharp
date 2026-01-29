@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 using XSharp.Engine.World;
 using XSharp.Exporter.JSON;
 using XSharp.Exporter.Util;
-using XSharp.Math.Geometry;
-
+using XSharp.Math.Fixed.Geometry;
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.Functions;
 

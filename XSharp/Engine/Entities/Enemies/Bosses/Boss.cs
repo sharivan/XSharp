@@ -2,7 +2,8 @@
 using XSharp.Engine.Entities.Weapons;
 using XSharp.Engine.Graphics;
 using XSharp.Graphics;
-using XSharp.Math;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.Bosses;

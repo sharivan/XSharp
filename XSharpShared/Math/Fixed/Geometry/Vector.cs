@@ -2,12 +2,12 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-
+using XSharp.Math.Fixed;
 using XSharp.Util;
 
 using TupleExtensions = XSharp.Util.TupleExtensions;
 
-namespace XSharp.Math.Geometry;
+namespace XSharp.Math.Fixed.Geometry;
 
 public class VectorTypeConverter : TypeConverter
 {
@@ -16,9 +16,9 @@ public class VectorTypeConverter : TypeConverter
         Type genericSourceType;
         return sourceType == typeof(Vector)
             || sourceType.IsGenericType && (
-                ((genericSourceType = sourceType.GetGenericTypeDefinition()) == typeof(ValueTuple<,>)
+                (genericSourceType = sourceType.GetGenericTypeDefinition()) == typeof(ValueTuple<,>)
                 || genericSourceType == typeof(Tuple<,>)
-            )
+            
             ? TupleExtensions.CanConvertTupleToArray<FixedSingle>(sourceType)
             : base.CanConvertFrom(context, sourceType));
     }
@@ -68,7 +68,7 @@ public class VectorTypeConverter : TypeConverter
 /// <param name="x">Coordenada x</param>
 /// <param name="y">Coordenada y</param>
 [TypeConverter(typeof(VectorTypeConverter))]
-public struct Vector(FixedSingle x, FixedSingle y) : IGeometry
+public readonly struct Vector(FixedSingle x, FixedSingle y) : IGeometry
 {
     public const GeometryType type = GeometryType.VECTOR;
 
@@ -105,7 +105,6 @@ public struct Vector(FixedSingle x, FixedSingle y) : IGeometry
     public FixedSingle X
     {
         get;
-        private set;
     } = x;
 
     /// <summary>
@@ -114,7 +113,6 @@ public struct Vector(FixedSingle x, FixedSingle y) : IGeometry
     public FixedSingle Y
     {
         get;
-        private set;
     } = y;
 
     /// <summary>
@@ -147,9 +145,14 @@ public struct Vector(FixedSingle x, FixedSingle y) : IGeometry
         return this == other;
     }
 
+    public string ToString(FixedStringFormat format)
+    {
+        return "(" + X.ToString(format) + ", " + Y.ToString(format) + ")";
+    }
+
     public override string ToString()
     {
-        return "(" + X + ", " + Y + ")";
+        return ToString(FixedStringFormat.DECIMAL);
     }
 
     public Vector Flip(Vector origin)

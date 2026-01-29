@@ -27,11 +27,10 @@ using XSharp.Engine.Sound;
 using XSharp.Engine.World;
 using XSharp.Graphics;
 using XSharp.Interop;
-using XSharp.Math.Geometry;
 using XSharpDX11.Engine.Graphics;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 using static XSharp.Engine.Consts;
-using Box = XSharp.Math.Geometry.Box;
+using Box = XSharp.Math.Fixed.Geometry.Box;
 using Buffer = SharpDX.Direct3D11.Buffer;
 using Color = XSharp.Graphics.Color;
 using Configuration = System.Configuration.Configuration;
@@ -72,7 +71,7 @@ namespace XSharp.Engine;
 public class DX11Engine : BaseEngine
 {
     private static float[] QUAD_VERTICES =
-    {
+    [
       // position     uv
         -1,  1, 0,    0, 0,
          1,  1, 0,    1, 0,
@@ -81,7 +80,7 @@ public class DX11Engine : BaseEngine
         -1,  1, 0,    0, 0,
          1, -1, 0,    1, 1,
         -1, -1, 0,    0, 1
-    };
+    ];
     new public static DX11Engine Engine => (DX11Engine) BaseEngine.Engine;
 
     public const int VERTEX_FIELD_COUNT = 5;
@@ -251,7 +250,7 @@ public class DX11Engine : BaseEngine
 
         // Cria um DataStream para a matriz
         dataStream = new DX11DataStream(Utilities.SizeOf<FadingParams>(), true, true);
-        dataStream.Write(new FadingParams()));
+        dataStream.Write(new FadingParams());
         dataStream.Position = 0;
 
         vsTransformBuffer = new Buffer(device, dataStream, bufferDesc);
@@ -775,14 +774,13 @@ public class DX11Engine : BaseEngine
         }
 
         line.Draw(
-            new Vector2[]
-            {
+            [
                 rect.TopLeft,
                 rect.TopRight,
                 rect.BottomRight,
                 rect.BottomLeft,
                 rect.TopLeft
-            },
+            ],
             color);
         line.End();
     }

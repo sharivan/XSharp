@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using XSharp.Math;
+using XSharp.Math.Fixed;
 using XSharp.Math.Geometry;
 
 namespace XSharp.Graphics;
@@ -340,7 +340,7 @@ public partial struct Color : IEquatable<Color>, IFormattable
     /// <returns>A four-element array containing the components of the color in RGBA order.</returns>
     public byte[] ToArray()
     {
-        return new[] { R, G, B, A };
+        return [R, G, B, A];
     }
 
     /// <summary>

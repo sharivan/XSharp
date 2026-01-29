@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using XSharp.Math;
+using XSharp.Math.Fixed;
 
 namespace XSharp.Exporter.JSON;
 
@@ -27,6 +27,6 @@ internal class FixedSingleConverter : JsonConverter<FixedSingle>
 
     public override void Write(Utf8JsonWriter writer, FixedSingle value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToString(FixedSingleStringFormat.PIXEL_SUBPIXEL));
+        writer.WriteStringValue(value.ToString(FixedStringFormat.PIXEL_SUBPIXEL));
     }
 }

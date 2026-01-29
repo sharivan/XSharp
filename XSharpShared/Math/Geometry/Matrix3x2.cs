@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using XSharp.Math.Fixed;
 
 namespace XSharp.Math.Geometry;
 
@@ -15,7 +16,7 @@ public struct Matrix3x2
     /// Gets the identity matrix.
     /// </summary>
     /// <value>The identity matrix.</value>
-    public readonly static Matrix3x2 Identity = new Matrix3x2(1, 0, 0, 1, 0, 0);
+    public readonly static Matrix3x2 Identity = new(1, 0, 0, 1, 0, 0);
 
     /// <summary>
     /// Element (1,1)
@@ -102,7 +103,7 @@ public struct Matrix3x2
     /// </summary>
     public Vector2 Row1
     {
-        get => new Vector2(M11, M12);
+        get => new(M11, M12);
         set { M11 = value.X; M12 = value.Y; }
     }
 
@@ -111,7 +112,7 @@ public struct Matrix3x2
     /// </summary>
     public Vector2 Row2
     {
-        get => new Vector2(M21, M22);
+        get => new(M21, M22);
         set { M21 = value.X; M22 = value.Y; }
     }
 
@@ -120,7 +121,7 @@ public struct Matrix3x2
     /// </summary>
     public Vector2 Row3
     {
-        get => new Vector2(M31, M32);
+        get => new(M31, M32);
         set { M31 = value.X; M32 = value.Y; }
     }
 
@@ -129,7 +130,7 @@ public struct Matrix3x2
     /// </summary>
     public Vector3 Column1
     {
-        get => new Vector3(M11, M21, M31);
+        get => new(M11, M21, M31);
         set { M11 = value.X; M21 = value.Y; M31 = value.Z; }
     }
 
@@ -138,7 +139,7 @@ public struct Matrix3x2
     /// </summary>
     public Vector3 Column2
     {
-        get => new Vector3(M12, M22, M32);
+        get => new(M12, M22, M32);
         set { M12 = value.X; M22 = value.Y; M32 = value.Z; }
     }
 
@@ -147,7 +148,7 @@ public struct Matrix3x2
     /// </summary>
     public Vector2 TranslationVector
     {
-        get => new Vector2(M31, M32);
+        get => new(M31, M32);
         set { M31 = value.X; M32 = value.Y; }
     }
 
@@ -156,7 +157,7 @@ public struct Matrix3x2
     /// </summary>
     public Vector2 ScaleVector
     {
-        get => new Vector2(M11, M22);
+        get => new(M11, M22);
         set { M11 = value.X; M22 = value.Y; }
     }
 
@@ -243,7 +244,7 @@ public struct Matrix3x2
     /// <returns>A sixteen-element array containing the components of the matrix.</returns>
     public float[] ToArray()
     {
-        return new[] { M11, M12, M21, M22, M31, M32 };
+        return [M11, M12, M21, M22, M31, M32];
     }
 
     /// <summary>

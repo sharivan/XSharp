@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Exporter.JSON;
 
@@ -51,8 +51,8 @@ internal class VectorConverter : JsonConverter<Vector>
     public override void Write(Utf8JsonWriter writer, Vector value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
-        writer.WriteString("x", value.X.ToString(FixedSingleStringFormat.PIXEL_SUBPIXEL));
-        writer.WriteString("y", value.Y.ToString(FixedSingleStringFormat.PIXEL_SUBPIXEL));
+        writer.WriteString("x", value.X.ToString(FixedStringFormat.PIXEL_SUBPIXEL));
+        writer.WriteString("y", value.Y.ToString(FixedStringFormat.PIXEL_SUBPIXEL));
         writer.WriteEndObject();
     }
 }

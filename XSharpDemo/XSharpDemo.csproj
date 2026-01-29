@@ -7,7 +7,12 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>XSharp.Demo</RootNamespace>
+    <ApplicationIcon>xsharp-logo_256x256_.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="xsharp-logo_256x256_.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Net.Http" Version="4.3.4" />

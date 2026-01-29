@@ -14,7 +14,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
     public const int BITS_PER_SLOT = 8 * sizeof(ulong);
 
     private static readonly ulong[] MASK =
-    {
+    [
         1UL << 0,
         1UL << 1,
         1UL << 2,
@@ -79,10 +79,10 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         1UL << 61,
         1UL << 62,
         1UL << 63
-    };
+    ];
 
     private static readonly ulong[] START_MASK =
-    {
+    [
         0xffffffffffffffffUL << 0,
         0xffffffffffffffffUL << 1,
         0xffffffffffffffffUL << 2,
@@ -147,10 +147,10 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         0xffffffffffffffffUL << 61,
         0xffffffffffffffffUL << 62,
         0xffffffffffffffffUL << 63
-    };
+    ];
 
     private static readonly ulong[] END_MASK =
-    {
+    [
         0xffffffffffffffffUL >> 63,
         0xffffffffffffffffUL >> 62,
         0xffffffffffffffffUL >> 61,
@@ -215,7 +215,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         0xffffffffffffffffUL >> 2,
         0xffffffffffffffffUL >> 1,
         0xffffffffffffffffUL >> 0
-    };
+    ];
 
     // Types and constants used in the functions below
     private const ulong M1 = 0x5555555555555555;  // Binary: 0101...
@@ -226,7 +226,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
     private const ulong DeBruijnSequence = 0x37E84A99DAE458F;
 
     private static readonly int[] MultiplyDeBruijnBitPosition =
-    {
+    [
         0, 1, 17, 2, 18, 50, 3, 57,
         47, 19, 22, 51, 29, 4, 33, 58,
         15, 48, 20, 27, 25, 23, 52, 41,
@@ -235,7 +235,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         14, 26, 24, 40, 53, 37, 42, 7,
         62, 55, 45, 31, 13, 39, 36, 6,
         61, 44, 12, 35, 60, 11, 10, 9,
-    };
+    ];
 
     // This uses fewer arithmetic operations than any other known implementation on machines with fast multiplication.
     // This algorithm uses 12 arithmetic operations, one of which is a multiply.
@@ -259,9 +259,17 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return MultiplyDeBruijnBitPosition[(ulong) ((long) b & -(long) b) * DeBruijnSequence >> 58];
     }
 
-    private static string ULongToBinaryString(ulong theNumber)
+    private static string ULongToReversedBinary(ulong value)
     {
-        return Convert.ToString((long) theNumber, 2).PadLeft(BITS_PER_SLOT, '0');
+        char[] buffer = new char[BITS_PER_SLOT];
+
+        for (int i = 0; i < BITS_PER_SLOT; i++)
+        {
+            buffer[i] = (char) ('0' + (value & 1));
+            value >>= 1;
+        }
+
+        return new string(buffer, 0, BITS_PER_SLOT);
     }
 
     private class BitSetEnumerator : IEnumerator<int>
@@ -394,7 +402,12 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return (slotBits & bitMask) != 0;
     }
 
-    public void Set(int start, int count)
+    public void SetRange(int start)
+    {
+        SetRange(start, BitCount - start);
+    }
+
+    public void SetRange(int start, int count)
     {
         int end = start + count;
 
@@ -436,7 +449,12 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return (slotBits & bitMask) != 0;
     }
 
-    public void Reset(int start, int count)
+    public void ResetRange(int start)
+    {
+        ResetRange(start, BitCount - start);
+    }
+
+    public void ResetRange(int start, int count)
     {
         int end = start + count;
 
@@ -478,7 +496,12 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return test;
     }
 
-    public void Toggle(int start, int count)
+    public void ToggleRange(int start)
+    {
+        ToggleRange(start, BitCount - start);
+    }
+
+    public void ToggleRange(int start, int count)
     {
         int end = start + count;
 
@@ -548,7 +571,12 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return (slotBits & bitMask) != 0;
     }
 
-    public bool Test(int start, int count)
+    public bool TestRange(int start)
+    {
+        return TestRange(start, BitCount - start);
+    }
+
+    public bool TestRange(int start, int count)
     {
         int end = start + count;
 
@@ -699,7 +727,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
             else
                 builder.Append(' ');
 
-            builder.Append(ULongToBinaryString(slotBits));
+            builder.Append(ULongToReversedBinary(slotBits));
         }
 
         return builder.ToString();
@@ -1081,10 +1109,55 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void Complementary()
     {
-        for (int i = 0; i < SlotCount; i++)
+        Complementary(0, BitCount);
+    }
+
+    public void Complementary(int count)
+    {
+        Complementary(0, count);
+    }
+
+    public void Complementary(int start, int count)
+    {
+        int end = start + count;
+
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
+
+        int startSlot = start / BITS_PER_SLOT;
+        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
+        int slotDiff = endSlot - SlotCount;
+
+        const ulong MASK = ~0UL;
+        ulong slotBits;
+        ulong startMask;
+
+        if (slotDiff > 0)
         {
-            ulong slotBits = bits[i];
-            bits[i] = ~slotBits;
+            for (int i = 0; i < slotDiff; i++)
+                bits.Add(MASK);
+        }
+
+        if (endSlot == startSlot + 1)
+        {
+            slotBits = bits[startSlot];
+            startMask = (MASK << (start % BITS_PER_SLOT)) & (MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1));
+            bits[startSlot] = startMask ^ slotBits;
+            return;
+        }
+
+        slotBits = bits[startSlot];
+        startMask = MASK << (start % BITS_PER_SLOT);
+        bits[startSlot] = startMask ^ slotBits;
+
+        slotBits = bits[endSlot - 1];
+        ulong endMask = MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1);
+        bits[endSlot - 1] = endMask ^ slotBits;
+
+        for (int i = startSlot + 1; i < endSlot - 1; i++)
+        {
+            slotBits = bits[i];
+            bits[i] = MASK ^ slotBits;
         }
     }
 
@@ -1164,7 +1237,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
         if (bitsToShift >= end - start)
         {
-            Reset(start, end - start);
+            ResetRange(start, end - start);
             return;
         }
 
@@ -1211,7 +1284,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
         if (bitsToShift >= end - start)
         {
-            Reset(start, end - start);
+            ResetRange(start, end - start);
             return;
         }
 

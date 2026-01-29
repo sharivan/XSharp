@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using XSharp.Math.Fixed;
 using XSharp.Util;
 
 namespace XSharp.Math.Geometry;
@@ -20,22 +21,22 @@ public struct Vector2 : IEquatable<Vector2>, IFormattable
     /// <summary>
     /// A <see cref="Vector2"/> with all of its components set to zero.
     /// </summary>
-    public static readonly Vector2 Zero = new Vector2();
+    public static readonly Vector2 Zero = new();
 
     /// <summary>
     /// The X unit <see cref="Vector2"/> (1, 0).
     /// </summary>
-    public static readonly Vector2 UnitX = new Vector2(1.0f, 0.0f);
+    public static readonly Vector2 UnitX = new(1.0f, 0.0f);
 
     /// <summary>
     /// The Y unit <see cref="Vector2"/> (0, 1).
     /// </summary>
-    public static readonly Vector2 UnitY = new Vector2(0.0f, 1.0f);
+    public static readonly Vector2 UnitY = new(0.0f, 1.0f);
 
     /// <summary>
     /// A <see cref="Vector2"/> with all of its components set to one.
     /// </summary>
-    public static readonly Vector2 One = new Vector2(1.0f, 1.0f);
+    public static readonly Vector2 One = new(1.0f, 1.0f);
 
     /// <summary>
     /// The X component of the vector.
@@ -174,7 +175,7 @@ public struct Vector2 : IEquatable<Vector2>, IFormattable
     /// <returns>A two-element array containing the components of the vector.</returns>
     public float[] ToArray()
     {
-        return new float[] { X, Y };
+        return [X, Y];
     }
 
     /// <summary>

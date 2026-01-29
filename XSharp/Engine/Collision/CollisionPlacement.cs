@@ -1,4 +1,4 @@
-﻿using XSharp.Math.Geometry;
+﻿using XSharp.Math.Fixed.Geometry;
 using XSharp.Serialization;
 
 namespace XSharp.Engine.Collision;

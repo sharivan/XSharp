@@ -348,8 +348,8 @@ class DequeTest
 {
     static void Main()
     {
-        int[] arrFront = { 5, 4, 3, 2, 1 };
-        int[] arrBack = { 6, 7, 8, 9, 10 };
+        int[] arrFront = [5, 4, 3, 2, 1];
+        int[] arrBack = [6, 7, 8, 9, 10];
 
         // create new Deque using these arrays
         var d = new Deque<int>(arrBack, arrFront);

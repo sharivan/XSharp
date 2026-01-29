@@ -2,8 +2,8 @@
 
 using XSharp.Engine.Entities;
 using XSharp.Factories;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.Serialization;
 
 namespace XSharp.Engine.Graphics;

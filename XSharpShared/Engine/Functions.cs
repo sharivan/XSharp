@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XSharp.Engine.World;
-using XSharp.Math.Geometry;
-
+using XSharp.Math.Fixed.Geometry;
 using static XSharp.Engine.Consts;
 
 namespace XSharp.Engine;

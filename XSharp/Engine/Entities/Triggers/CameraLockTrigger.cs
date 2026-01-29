@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
-
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Engine.Entities.Triggers;
 

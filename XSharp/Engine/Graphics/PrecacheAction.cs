@@ -25,7 +25,6 @@ public class PrecacheAction : ISerializable
     public PrecacheAction Parent
     {
         get => parent != null ? BaseEngine.Engine.precacheActions[parent] : null;
-
         internal set => parent = value?.Type.AssemblyQualifiedName;
     }
 

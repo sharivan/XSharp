@@ -2,8 +2,8 @@
 
 using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.Util;
 
 namespace XSharp.Engine.Entities.Enemies.AxeMax;
@@ -86,12 +86,12 @@ public class AxeMaxTrunkBase : Sprite
 
     internal bool IsAllTrunksReady()
     {
-        return trunkPile.Count == 0 || readyTrunks.Test(0, trunkPile.Count);
+        return trunkPile.Count == 0 || readyTrunks.TestRange(0, trunkPile.Count);
     }
 
     internal Vector GetTrunkPositionFromIndex(int index)
     {
-        var origin = IntegerOrigin;
+        var origin = PixelOrigin;
         return (origin.X, origin.Y - 16 * (index + 1));
     }
 

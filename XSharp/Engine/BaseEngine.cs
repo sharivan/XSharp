@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -59,13 +60,14 @@ using XSharp.Engine.Sound;
 using XSharp.Engine.World;
 using XSharp.Graphics;
 using XSharp.Interop;
-using XSharp.Math;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.Math.Geometry;
 using XSharp.MegaEDX;
 
 using static XSharp.Engine.Consts;
 using static XSharp.Engine.Functions;
-
+using EventInfo = System.Reflection.EventInfo;
 using MMXWorld = XSharp.Engine.World.World;
 
 namespace XSharp.Engine;
@@ -344,7 +346,6 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     private bool paused;
 
     private long lastCurrentMemoryUsage;
-    private Box drawBox;
     private EntityReference<Checkpoint> currentCheckpoint;
     private List<Vector> cameraConstraints;
 
@@ -421,6 +422,9 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     private EntityReference<Boss> boss;
 
     internal Dictionary<string, PrecacheAction> precacheActions;
+    internal Dictionary<string, Type> entityClasses;
+    internal Dictionary<(Type type, string inputName), MethodInfo> entityInputs;
+    internal Dictionary<(Type type, string outputName), EventInfo> entityOutputs;
 
     public abstract string Title
     {
@@ -445,7 +449,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         private set;
     }
 
-    public Box DrawBox => drawBox;
+    public Box DrawBox { get; private set; }
 
     public ITexture ForegroundTilemap
     {
@@ -877,6 +881,9 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         infoMessageFadingControl = new FadingControl();
 
         precacheActions = [];
+        entityClasses = [];
+        entityInputs = [];
+        entityOutputs = [];
 
         NoCameraConstraints = NO_CAMERA_CONSTRAINTS;
         cameraConstraints = [];
@@ -923,7 +930,54 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         clock.Start();
         lastMeasuringFPSElapsedTicks = clock.ElapsedTicks;
 
+        RegisterInputsAndOutputs();
+
         Running = true;
+    }
+
+    private void RegisterInputsAndOutputs()
+    {
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        foreach (var assembly in assemblies)
+        {
+            var types = assembly.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(Entity)));
+
+            foreach (var type in types)
+            {
+                var attr = type.GetCustomAttribute<EntityAttribute>(inherit: false);
+                if (attr != null)
+                {
+                    string className = attr.ClassName;
+                    className ??= type.Name;
+                    RegisterEntityClass(className, type);
+                }
+
+                var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+                foreach (var method in methods)
+                {
+                    var methodAttr = method.GetCustomAttribute<InputAttribute>(inherit: true);
+                    if (methodAttr == null)
+                        continue;
+
+                    string inputName = methodAttr.Name;
+                    inputName ??= method.Name;
+                    RegisterEntityInput(type, inputName, method);
+                }
+
+                var events = type.GetEvents(BindingFlags.Public);
+                foreach (var evt in events)
+                {
+                    var eventAttr = evt.GetCustomAttribute<OutputAttribute>(inherit: true);
+                    if (eventAttr == null)
+                        continue;
+
+                    string outputName = eventAttr.Name;
+                    outputName ??= evt.Name;
+                    RegisterEntityOutput(type, outputName, evt);
+                }
+            }
+        }
     }
 
     public bool PrecacheSound(string name, string relativePath, out PrecachedSound sound, bool raiseExceptionIfNameExists = true)
@@ -2049,7 +2103,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     public Vector2 WorldVectorToScreen(Vector v, bool transform = true)
     {
         var drawScale = transform ? GetDrawScale() : (1, 1);
-        return ((v.RoundToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? drawBox.LeftTop : (0, 0))).ToVector2();
+        return ((v.RoundToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? DrawBox.LeftTop : (0, 0))).ToVector2();
     }
 
     public Vector2 WorldVectorToScreen(FixedSingle x, FixedSingle y)
@@ -2065,19 +2119,19 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
     public Vector ScreenPointToVector(Point p)
     {
         var drawScale = GetDrawScale();
-        return (new Vector(p.X, p.Y) - drawBox.LeftTop) / drawScale + Camera.LeftTop;
+        return (new Vector(p.X, p.Y) - DrawBox.LeftTop) / drawScale + Camera.LeftTop;
     }
 
     public Vector ScreenVector2ToWorld(Vector2 v)
     {
         var drawScale = GetDrawScale();
-        return (new Vector(v.X, v.Y) - drawBox.LeftTop) / drawScale + Camera.LeftTop;
+        return (new Vector(v.X, v.Y) - DrawBox.LeftTop) / drawScale + Camera.LeftTop;
     }
 
     public RectangleF WorldBoxToScreen(Box box, bool transform = true)
     {
         var drawScale = transform ? GetDrawScale() : (1, 1);
-        return ((box.LeftTopOrigin().RoundOriginToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? drawBox.LeftTop : (0, 0))).ToRectangleF();
+        return ((box.LeftTopOrigin().RoundOriginToFloor() - Camera.LeftTop.RoundToFloor()) * drawScale + (transform ? DrawBox.LeftTop : (0, 0))).ToRectangleF();
     }
 
     public IReadOnlyList<Sprite> GetSprites(int layer)
@@ -2318,7 +2372,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         }*/
         drawOrigin = Vector.NULL_VECTOR;
 
-        drawBox = new Box(drawOrigin.X, drawOrigin.Y, width, height);
+        DrawBox = new Box(drawOrigin.X, drawOrigin.Y, width, height);
     }
 
     private void DrawSlopeMap(Box box, RightTriangle triangle, Color color, float strokeWidth)
@@ -3223,6 +3277,35 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         foreach (var action in actionsToCall)
             action.Call();
 
+        entityClasses.Clear();
+        int classCount = serializer.ReadInt();
+        for (int i = 0; i < classCount; i++)
+        {
+            string className = serializer.ReadString();
+            var type = serializer.ReadType();
+            entityClasses.Add(className, type);
+        }
+
+        entityInputs.Clear();
+        int inputCount = serializer.ReadInt();
+        for (int i = 0; i < inputCount; i++)
+        {
+            var type = serializer.ReadType();
+            string inputName = serializer.ReadString();
+            var method = serializer.ReadMethodInfo(type);
+            entityInputs.Add((type, inputName), method);
+        }
+
+        entityOutputs.Clear();
+        int outputCount = serializer.ReadInt();
+        for (int i = 0; i < outputCount; i++)
+        {
+            var type = serializer.ReadType();
+            string inputName = serializer.ReadString();
+            var @event = serializer.ReadEventInfo(type);
+            entityOutputs.Add((type, inputName), @event);
+        }
+
         partition.Deserialize(serializer);
 
         checkpoints.Clear();
@@ -3379,6 +3462,42 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
 
             serializer.WriteString(typeName, false);
             action.Serialize(serializer);
+        }
+
+        serializer.WriteInt(entityClasses.Count);
+        foreach (var kv in entityClasses)
+        {
+            string className = kv.Key;
+            var type = kv.Value;
+    
+            serializer.WriteString(className);
+            serializer.WriteType(type);
+        }
+
+        serializer.WriteInt(entityInputs.Count);
+        foreach (var kv in entityInputs)
+        {
+            var key = kv.Key;
+            var type = key.type;
+            string inputName = key.inputName;
+            var method = kv.Value;
+
+            serializer.WriteType(type);
+            serializer.WriteString(inputName);
+            serializer.WriteMethodInfo(method, false, false);
+        }
+
+        serializer.WriteInt(entityOutputs.Count);
+        foreach (var kv in entityOutputs)
+        {
+            var key = kv.Key;
+            var type = key.type;
+            string inputName = key.outputName;
+            var @event = kv.Value;
+
+            serializer.WriteType(type);
+            serializer.WriteString(inputName);
+            serializer.WriteEventInfo(@event, false);
         }
 
         partition.Serialize(serializer);
@@ -5579,6 +5698,47 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
             var action = kv.Value;
             action.Call();
         }
+    }
+
+    internal void RegisterEntityClass(string className, Type type)
+    {
+        entityClasses.Add(className, type);
+    }
+
+    internal void RegisterEntityInput(Type type, string inputName, MethodInfo method)
+    {
+        entityInputs.Add((type, inputName), method);
+    }
+
+    internal void RegisterEntityOutput(Type type, string outputName, EventInfo @event)
+    {
+        entityOutputs.Add((type, outputName), @event);
+    }
+
+    internal Type GetEntityClass(string className)
+    {
+        if (entityClasses.TryGetValue(className, out var type))
+            return type;
+
+        return null;
+    }
+
+    internal MethodInfo GetInputByTarget(Entity target, string inputName)
+    {
+        Type type = target.GetType();
+        if (entityInputs.TryGetValue((type, inputName), out var method))
+            return method;
+
+        return null;
+    }
+
+    internal EventInfo GetOutputByTarget(Entity target, string outputName)
+    {
+        Type type = target.GetType();
+        if (entityOutputs.TryGetValue((type, outputName), out var @event))
+            return @event;
+
+        return null;
     }
 
     public abstract void WriteVertex(DataStream vbData, float x, float y, float u, float v);

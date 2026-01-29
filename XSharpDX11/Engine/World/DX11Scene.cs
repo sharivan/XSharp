@@ -9,10 +9,9 @@ using SharpDX.Direct3D11;
 
 using XSharp.Engine.Graphics;
 using XSharp.Graphics;
-using XSharp.Math.Geometry;
-
+using XSharp.Math.Fixed.Geometry;
 using static XSharp.Engine.Consts;
-using Box = XSharp.Math.Geometry.Box;
+using Box = XSharp.Math.Fixed.Geometry.Box;
 
 namespace XSharp.Engine.World;
 

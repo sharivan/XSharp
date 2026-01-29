@@ -5,7 +5,7 @@ using Color = XSharp.Graphics.Color;
 using DataRectangle = XSharp.Graphics.DataRectangle;
 using DX9Point = SharpDX.Point;
 using Format = XSharp.Graphics.Format;
-using MMXBox = XSharp.Math.Geometry.Box;
+using MMXBox = XSharp.Math.Fixed.Geometry.Box;
 
 namespace XSharp.Engine.Graphics;
 

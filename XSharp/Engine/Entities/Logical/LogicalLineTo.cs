@@ -1,5 +1,6 @@
 ﻿using XSharp.Interop;
-using XSharp.Math;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.Math.Geometry;
 
 namespace XSharp.Engine.Entities.Logical;
@@ -7,23 +8,30 @@ namespace XSharp.Engine.Entities.Logical;
 public delegate void LogicalLineToDistanceEvent(LogicalLineTo source, float distance);
 public delegate void LogicalLineToVectorEvent(LogicalLineTo source, Vector2 vector);
 
-public class LogicalLineTo : LogicalBranch
+[Entity("logic_line_to")]
+public class LogicalLineTo : LogicalEntity
 {
     private FixedSingle lastDistance;
 
+    [Output]
     public event LogicalLineToDistanceEvent OnChangeDistance;
+
+    [Output]
     public event LogicalLineToVectorEvent OnChangeVector;
+
+    private Entity startEntity;
+    private Entity endEntity;
 
     public Entity StartEntity
     {
-        get;
-        set;
+        get => startEntity;
+        set => SetStartEntity(value);
     }
 
     public Entity EndEntity
     {
-        get;
-        set;
+        get => endEntity;
+        set => SetEndEntity(value);
     }
 
     public Metric Metric
@@ -34,6 +42,18 @@ public class LogicalLineTo : LogicalBranch
 
     public LogicalLineTo()
     {
+    }
+
+    [Input]
+    public void SetStartEntity(Entity entity)
+    {
+        startEntity = entity;
+    }
+
+    [Input]
+    public void SetEndEntity(Entity entity)
+    {
+        endEntity = entity;
     }
 
     protected override void OnSpawn()

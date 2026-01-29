@@ -1,4 +1,4 @@
-﻿using XSharp.Math.Geometry;
+﻿using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Engine.Entities.Triggers;
 
@@ -45,17 +45,17 @@ public class SplitterTrigger : BaseTrigger
         switch (Orientation)
         {
             case SplitterTriggerOrientation.HORIZONTAL:
-                if (targetOrigin.Y < IntegerOrigin.Y && targetLastOrigin.Y >= IntegerOrigin.Y)
+                if (targetOrigin.Y < PixelOrigin.Y && targetLastOrigin.Y >= PixelOrigin.Y)
                     OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
-                else if (targetOrigin.Y >= IntegerOrigin.Y && targetLastOrigin.Y < IntegerOrigin.Y)
+                else if (targetOrigin.Y >= PixelOrigin.Y && targetLastOrigin.Y < PixelOrigin.Y)
                     OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
 
                 break;
 
             case SplitterTriggerOrientation.VERTICAL:
-                if (targetOrigin.X < IntegerOrigin.X && targetLastOrigin.X >= IntegerOrigin.X)
+                if (targetOrigin.X < PixelOrigin.X && targetLastOrigin.X >= PixelOrigin.X)
                     OnSplitterTriggerEvent(entity, SplitterTriggerDirection.BACKWARD);
-                else if (targetOrigin.X >= IntegerOrigin.X && targetLastOrigin.X < IntegerOrigin.X)
+                else if (targetOrigin.X >= PixelOrigin.X && targetLastOrigin.X < PixelOrigin.X)
                     OnSplitterTriggerEvent(entity, SplitterTriggerDirection.FORWARD);
 
                 break;

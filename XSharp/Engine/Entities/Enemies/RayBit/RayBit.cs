@@ -1,7 +1,7 @@
 ﻿using XSharp.Engine.Graphics;
 using XSharp.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.RayBit;
 
@@ -173,7 +173,7 @@ public class RayBit : Enemy, IFSMEntity<RayBitState>
 
     private RayBitState RandomNonIdleState()
     {
-        var random = Engine.RNG.NextUInt(16);
+        var random = Engine.RNG.NextValue(16);
         return random % 2 == 0 ? RayBitState.JUMPING : RayBitState.SHOOTING;
     }
 

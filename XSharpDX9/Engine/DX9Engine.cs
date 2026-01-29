@@ -13,7 +13,7 @@ using XSharp.Engine.World;
 using XSharp.Graphics;
 using XSharp.Interop;
 using static XSharp.Engine.Consts;
-using Box = XSharp.Math.Geometry.Box;
+using Box = XSharp.Math.Fixed.Geometry.Box;
 using Color = XSharp.Graphics.Color;
 using Configuration = System.Configuration.Configuration;
 using D3D9LockFlags = SharpDX.Direct3D9.LockFlags;
@@ -659,14 +659,13 @@ public class DX9Engine : BaseEngine
         }
 
         line.Draw(
-            new Vector2[]
-            {
+            [
                 rect.TopLeft,
                 rect.TopRight,
                 rect.BottomRight,
                 rect.BottomLeft,
                 rect.TopLeft
-            },
+            ],
             color);
         line.End();
     }

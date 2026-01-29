@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using XSharp.Math;
+using XSharp.Math.Fixed;
 using XSharp.Math.Geometry;
 
 namespace XSharp.Graphics;
@@ -18,12 +18,12 @@ public struct Color4 : IEquatable<Color4>, IFormattable
     /// <summary>
     /// The Black color (0, 0, 0, 1).
     /// </summary>
-    public static readonly Color4 Black = new Color4(0.0f, 0.0f, 0.0f, 1.0f);
+    public static readonly Color4 Black = new(0.0f, 0.0f, 0.0f, 1.0f);
 
     /// <summary>
     /// The White color (1, 1, 1, 1).
     /// </summary>
-    public static readonly Color4 White = new Color4(1.0f, 1.0f, 1.0f, 1.0f);
+    public static readonly Color4 White = new(1.0f, 1.0f, 1.0f, 1.0f);
 
     /// <summary>
     /// The red component of the color.
@@ -267,7 +267,7 @@ public struct Color4 : IEquatable<Color4>, IFormattable
     /// <returns>A four-element array containing the components of the color.</returns>
     public float[] ToArray()
     {
-        return new float[] { Red, Green, Blue, Alpha };
+        return [Red, Green, Blue, Alpha];
     }
 
     /// <summary>

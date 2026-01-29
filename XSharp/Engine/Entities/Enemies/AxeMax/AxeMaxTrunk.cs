@@ -1,7 +1,7 @@
 ﻿using XSharp.Engine.Collision;
 using XSharp.Engine.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Engine.Entities.Enemies.AxeMax;
 
@@ -57,7 +57,7 @@ public class AxeMaxTrunk : Sprite, IFSMEntity<AxeMaxTrunkState>
 
     public bool Thrown => State == AxeMaxTrunkState.THROWN;
 
-    public bool Ready => Idle && IntegerOrigin.Y == TrunkBase.GetTrunkPositionFromIndex(TrunkIndex).Y && Landed;
+    public bool Ready => Idle && PixelOrigin.Y == TrunkBase.GetTrunkPositionFromIndex(TrunkIndex).Y && Landed;
 
     public AxeMaxTrunk()
     {
@@ -91,7 +91,7 @@ public class AxeMaxTrunk : Sprite, IFSMEntity<AxeMaxTrunkState>
 
     private void OnIdle(EntityState state, long frameCounter)
     {
-        var origin = IntegerOrigin;
+        var origin = PixelOrigin;
         var targetOrigin = TrunkBase.GetTrunkPositionFromIndex(TrunkIndex);
 
         if (TrunkBase.Landed && (TrunkBase.AxeMax.Lumberjack == null || !TrunkBase.AxeMax.Lumberjack.Throwing) && origin.Y > targetOrigin.Y)
@@ -100,7 +100,7 @@ public class AxeMaxTrunk : Sprite, IFSMEntity<AxeMaxTrunkState>
 
     private void OnRising(EntityState state, long frameCounter)
     {
-        var origin = IntegerOrigin;
+        var origin = PixelOrigin;
         var targetOrigin = TrunkBase.GetTrunkPositionFromIndex(TrunkIndex);
 
         if (origin.Y <= targetOrigin.Y)

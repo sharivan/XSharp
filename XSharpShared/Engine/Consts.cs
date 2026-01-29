@@ -1,6 +1,6 @@
 ﻿using XSharp.Graphics;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 
 namespace XSharp.Engine;
 
@@ -64,27 +64,27 @@ public class Consts
     public static readonly Vector WORLD_OFFSET = (0, -1);
 
     public static readonly FixedSingle GRAVITY = 0.25;
-    public static readonly FixedSingle UNDERWATER_GRAVITY = 33 / 256.0;
+    public static readonly FixedSingle UNDERWATER_GRAVITY = FixedSingle.FromSubpixels(33);
     public static readonly FixedSingle TERMINAL_DOWNWARD_SPEED = 5.75;
     public static readonly FixedSingle TELEPORT_SPEED = 8;
-    public static readonly FixedSingle UNDERWATER_TERMINAL_DOWNWARD_SPEED = 737 / 256.0;
-    public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_JUMP = (1363 + 0 * 64) / 256.0;
-    public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = (1417 + 1 * 64) / 256.0;
-    public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2 = (1505 + 1 * 64) / 256.0;
-    public static readonly FixedSingle LADDER_CLIMB_SPEED = 376 / 256.0;
+    public static readonly FixedSingle UNDERWATER_TERMINAL_DOWNWARD_SPEED = FixedSingle.FromSubpixels(737);
+    public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_JUMP = FixedSingle.FromSubpixels(1363 + 0 * 64);
+    public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_1 = FixedSingle.FromSubpixels(1417 + 1 * 64);
+    public static readonly FixedSingle INITIAL_UPWARD_SPEED_FROM_SLOPE_JUMP_2 = FixedSingle.FromSubpixels(1505 + 1 * 64);
+    public static readonly FixedSingle LADDER_CLIMB_SPEED = FixedSingle.FromSubpixels(376);
     public static readonly FixedSingle WALL_SLIDE_SPEED = 2;
     public static readonly FixedSingle UNDERWATER_WALL_SLIDE_SPEED = 1;
     public static readonly FixedSingle PRE_WALKING_SPEED = 1;
     public const int MAX_FRAMES_TO_PRESERVE_WALKING_SPEED = 10;
     public const bool PAUSE_AFTER_WALKING_SPEED_ENDS = true; // X2 and X3 use this, but X1 not.
-    public static readonly FixedSingle WALKING_SPEED = 376 / 256.0;
-    public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_1 = 408 / 256.0;
-    public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_2 = 456 / 256.0;
-    public static readonly FixedSingle DASH_SPEED = 885 / 256.0;
+    public static readonly FixedSingle WALKING_SPEED = FixedSingle.FromSubpixels(376);
+    public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_1 = FixedSingle.FromSubpixels(408);
+    public static readonly FixedSingle SLOPE_DOWNWARD_WALKING_SPEED_2 = FixedSingle.FromSubpixels(456);
+    public static readonly FixedSingle DASH_SPEED = FixedSingle.FromSubpixels(885);
     public static readonly FixedSingle CAMERA_BOOS_DOOR_CROSSING_SMOOTH_SPEED = 2.5;
     public static readonly FixedSingle CAMERA_SMOOTH_SPEED = 8;
-    public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_X = -138 / 256.0;
-    public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_Y = -512 / 256.0;
+    public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_X = FixedSingle.FromSubpixels(-138);
+    public static readonly FixedSingle INITIAL_DAMAGE_RECOIL_SPEED_Y = FixedSingle.FromSubpixels(-512);
     public static readonly Vector INITIAL_DAMAGE_RECOIL_SPEED = (INITIAL_DAMAGE_RECOIL_SPEED_X, INITIAL_DAMAGE_RECOIL_SPEED_Y);
     public const int DASH_DURATION = 33;
     public const int WALL_JUMP_DURATION = 14;
@@ -98,21 +98,21 @@ public class Consts
     public static readonly FixedSingle FALL_ANIMATION_MINIMAL_SPEED = 1.25;
     public static readonly FixedSingle NO_CLIP_SPEED = 6;
     public static readonly FixedSingle NO_CLIP_SPEED_BOOST = 2.5 * NO_CLIP_SPEED;
-    public static readonly FixedSingle CROSSING_BOOS_DOOR_SPEED = 116 / 256.0;
+    public static readonly FixedSingle CROSSING_BOOS_DOOR_SPEED = FixedSingle.FromSubpixels(116);
 
     public const int MAX_SHOTS = 3;
 
     public static readonly Box LEMON_HITBOX = (Vector.NULL_VECTOR, (-4, -4), (4, 4));
-    public static readonly FixedSingle LEMON_INITIAL_SPEED = 1024 / 256.0;
-    public static readonly FixedSingle LEMON_ACCELERATION = 64 / 256.0;
-    public static readonly FixedSingle LEMON_TERMINAL_SPEED = 1536 / 256.0;
-    public static readonly FixedSingle LEMON_REFLECTION_VSPEED = -768 / 256.0;
+    public static readonly FixedSingle LEMON_INITIAL_SPEED = FixedSingle.FromSubpixels(1024);
+    public static readonly FixedSingle LEMON_ACCELERATION = FixedSingle.FromSubpixels(64);
+    public static readonly FixedSingle LEMON_TERMINAL_SPEED = FixedSingle.FromSubpixels(1536);
+    public static readonly FixedSingle LEMON_REFLECTION_VSPEED = FixedSingle.FromSubpixels(-768);
 
     public static readonly Box SEMI_CHARGED_HITBOX1 = (Vector.NULL_VECTOR, (-9, -9), (9, 9));
     public static readonly Box SEMI_CHARGED_HITBOX2 = (Vector.NULL_VECTOR, (-13, -13), (13, 13));
     public static readonly Box SEMI_CHARGED_HITBOX3 = (Vector.NULL_VECTOR, (-16, -9), (16, 9));
-    public static readonly FixedSingle SEMI_CHARGED_INITIAL_SPEED = 1536 / 256.0;
-    public static readonly FixedSingle CHARGED_SPEED = 2048 / 256.0;
+    public static readonly FixedSingle SEMI_CHARGED_INITIAL_SPEED = FixedSingle.FromSubpixels(1536);
+    public static readonly FixedSingle CHARGED_SPEED = FixedSingle.FromSubpixels(2048);
 
     public const int CHARGING_EFFECT_HITBOX_SIZE = 52;
     public static readonly Box CHARGED_HITBOX1 = (Vector.NULL_VECTOR, (-13, -9), (13, 9));

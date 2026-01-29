@@ -3,12 +3,12 @@ using System.Dynamic;
 using XSharp.Engine.Collision;
 using XSharp.Exporter.Map;
 using XSharp.Graphics;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.MegaEDX;
 
 using static XSharp.Engine.Consts;
 
-using Box = XSharp.Math.Geometry.Box;
+using Box = XSharp.Math.Fixed.Geometry.Box;
 
 namespace XSharp.Exporter.MegaEDX;
 

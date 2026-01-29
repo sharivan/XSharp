@@ -628,7 +628,7 @@ public static class Utilities
 
         Debug.Assert(num >= 0);
         if (num == 0)
-            return new byte[0];
+            return [];
 
         byte[] buffer = new byte[num];
         int bytesRead = 0;
@@ -1026,7 +1026,7 @@ public static class Utilities
         internal TElement[] ToArray()
         {
             if (count == 0)
-                return new TElement[0];
+                return [];
             if (items.Length == count)
                 return items;
             var elementArray = new TElement[count];

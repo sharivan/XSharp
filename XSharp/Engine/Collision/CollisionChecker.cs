@@ -2,8 +2,8 @@
 using System.Linq;
 
 using XSharp.Engine.Entities;
-using XSharp.Math;
-using XSharp.Math.Geometry;
+using XSharp.Math.Fixed;
+using XSharp.Math.Fixed.Geometry;
 using XSharp.Serialization;
 using XSharp.Util;
 

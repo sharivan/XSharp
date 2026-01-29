@@ -1,6 +1,7 @@
 ﻿using System;
+using XSharp.Math.Fixed;
 
-namespace XSharp.Math.Geometry;
+namespace XSharp.Math.Fixed.Geometry;
 
 /// <summary>
 /// Segmento de reta
@@ -10,7 +11,7 @@ namespace XSharp.Math.Geometry;
 /// </remarks>
 /// <param name="start">Ponto inicial do segmento</param>
 /// <param name="end">Ponto final do segmento</param>
-public struct LineSegment(Vector start, Vector end) : IGeometry
+public readonly struct LineSegment(Vector start, Vector end) : IGeometry
 {
     public const GeometryType type = GeometryType.LINE_SEGMENT;
 
@@ -22,7 +23,6 @@ public struct LineSegment(Vector start, Vector end) : IGeometry
     public Vector Start
     {
         get;
-        private set;
     } = start;
 
     /// <summary>
@@ -31,7 +31,6 @@ public struct LineSegment(Vector start, Vector end) : IGeometry
     public Vector End
     {
         get;
-        private set;
     } = end;
 
     /// <summary>
@@ -247,9 +246,14 @@ public struct LineSegment(Vector start, Vector end) : IGeometry
         return Start == other.Start && End == other.End || Start == other.End && End == other.Start;
     }
 
+    public string ToString(FixedStringFormat format)
+    {
+        return "[" + Start.ToString(format) + " : " + End.ToString(format) + "]";
+    }
+
     public override string ToString()
     {
-        return "[" + Start + " : " + End + "]";
+        return ToString(FixedStringFormat.DECIMAL);
     }
 
     public override int GetHashCode()
