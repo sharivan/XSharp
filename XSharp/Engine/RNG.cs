@@ -35,14 +35,48 @@ public class RNG : ISerializable
         return seed;
     }
 
+    public ushort NextValue(ushort count)
+    {
+        return NextValue(0, count);
+    }
+
     public ushort NextValue(ushort start, ushort end)
     {
         return (ushort) (start + NextValue() % (end - start)); // This one will change the distribution by using modulus, but original game does the same thing.
     }
 
-    public ushort NextValue(ushort count)
+    public uint NextInt()
     {
-        return NextValue(0, count);
+        ushort hi = NextValue();
+        ushort lo = NextValue();
+        return (uint) (hi << 16) | lo;
+    }
+
+    public uint NextInt(uint count)
+    {
+        return NextInt(0, count);
+    }
+
+    public uint NextInt(uint start, uint end)
+    {
+        return start + NextInt() % (end - start);
+    }
+
+    public ulong NextLong()
+    {
+        uint hi = NextInt();
+        uint lo = NextInt();
+        return (ulong) (hi << 32) | lo;
+    }
+
+    public ulong NextLong(ulong count)
+    {
+        return NextLong(0, count);
+    }
+
+    public ulong NextLong(ulong start, ulong end)
+    {
+        return start + NextLong() % (end - start);
     }
 
     public float NextFloat()
