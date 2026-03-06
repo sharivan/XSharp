@@ -1884,7 +1884,7 @@ public abstract class BaseEngine : IRenderable, IRenderTarget
         if (!nextFrame)
             return false;
 
-        RNG.UpdateSeed((ushort) FrameCounter);
+        RNG.NextValue();
 
         if (Player != null)
         {

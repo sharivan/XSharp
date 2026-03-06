@@ -1,12 +1,17 @@
-﻿using XSharp.Serialization;
+﻿using System;
+using XSharp.Serialization;
 
 namespace XSharp.Engine;
 
 public class RNG : ISerializable
 {
+    public const ushort INITIAL_SEED = 0x0D37; // Initial seed used by SNES MMX games.
+
     private ushort seed;
 
-    internal RNG(ushort seed = 0)
+    public ushort Value => seed;
+
+    internal RNG(ushort seed = INITIAL_SEED)
     {
         UpdateSeed(seed);
     }
@@ -31,7 +36,7 @@ public class RNG : ISerializable
         // This algoritm is the same used by SNES MMX games
         byte next_rng_H = (byte) (((3 * seed) >> 8) & 0xff);
         byte next_rng_L = (byte) ((next_rng_H + seed) & 0xff);
-        seed = (ushort) ((next_rng_H << 1) + next_rng_L);
+        seed = (ushort) ((next_rng_H << 8) | next_rng_L);
         return seed;
     }
 
@@ -42,12 +47,12 @@ public class RNG : ISerializable
 
     public ushort NextValue(ushort start, ushort end)
     {
-        return (ushort) (start + NextValue() % (end - start)); // This one will change the distribution by using modulus, but original game does the same thing.
+        return (ushort) (start + Value % (end - start)); // This one will change the distribution by using modulus, but original game does the same thing.
     }
 
     public uint NextInt()
     {
-        ushort hi = NextValue();
+        ushort hi = Value;
         ushort lo = NextValue();
         return (uint) (hi << 16) | lo;
     }
@@ -81,6 +86,6 @@ public class RNG : ISerializable
 
     public float NextFloat()
     {
-        return (float) NextValue() / ushort.MaxValue;
+        return (float) Value / ushort.MaxValue;
     }
 }
