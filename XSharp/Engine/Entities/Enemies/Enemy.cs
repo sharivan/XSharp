@@ -1,4 +1,5 @@
-﻿using XSharp.Engine.Entities.Weapons;
+﻿using System;
+using XSharp.Engine.Entities.Weapons;
 using XSharp.Engine.Graphics;
 using XSharp.Graphics;
 using XSharp.Math.Fixed;
@@ -232,7 +233,7 @@ public abstract class Enemy : Sprite
 
         OnExplode();
 
-        var random = Engine.RNG.NextLong((ulong) TotalDropOdd);
+        var random = ((float) Engine.RNG.Value / ushort.MaxValue) * TotalDropOdd;
         if (random > TotalDropOdd - NothingDropOdd)
             return;
 
