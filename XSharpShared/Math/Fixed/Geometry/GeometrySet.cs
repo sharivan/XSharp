@@ -51,7 +51,7 @@ public class GeometrySet(SetOperation operation, params (IGeometry part, bool ne
         part3 = Diference(b, a);
     }
 
-    protected readonly List<(IGeometry part, bool negate)> parts = new(parts);
+    protected readonly List<(IGeometry part, bool negate)> parts = [.. parts];
 
     public GeometryType Type => type;
 

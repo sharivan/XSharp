@@ -272,6 +272,38 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         return new string(buffer, 0, BITS_PER_SLOT);
     }
 
+    public static int GetSlotCountForBitCount(int bitCount)
+    {
+        if (bitCount < 0)
+            throw new ArgumentException($"Invalid negative bit count value '{bitCount}'.");
+
+        return bitCount == 0 ? 0 : (bitCount - 1) / BITS_PER_SLOT + 1;
+    }
+
+    private void SetBitValue(int index, bool value)
+    {
+        if (value)
+            Set(index);
+        else
+            Reset(index);
+    }
+
+    private static HashSet<int> MaterializeSet(IEnumerable<int> other)
+    {
+        return other as HashSet<int> ?? [.. other];
+    }
+
+    private int GetEffectiveSlotCount()
+    {
+        for (int i = bits.Count - 1; i >= 0; i--)
+        {
+            if (bits[i] != 0)
+                return i + 1;
+        }
+
+        return 0;
+    }
+
     private class BitSetEnumerator : IEnumerator<int>
     {
         private BitSet set;
@@ -347,13 +379,13 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public bool this[int index] => Test(index);
 
-    public BitSet(int initialSlotCount = 1)
+    public BitSet(int bitCount = sizeof(long))
     {
-        if (initialSlotCount < 0)
-            throw new ArgumentException($"Invalid negative initial slot count value '{initialSlotCount}'.");
+        if (bitCount < 0)
+            throw new ArgumentException($"Invalid negative initial bit count value '{bitCount}'.");
 
         bits = [];
-        SlotCount = initialSlotCount;
+        SlotCount = GetSlotCountForBitCount(bitCount);
     }
 
     public BitSet(BitSet other)
@@ -471,7 +503,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
         if (endSlot == startSlot + 1)
         {
-            bits[startSlot] |= ~(MASK << (start % BITS_PER_SLOT)) & ~(MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1));
+            bits[startSlot] &= ~((MASK << (start % BITS_PER_SLOT)) & (MASK >> (BITS_PER_SLOT - (end - 1) % BITS_PER_SLOT - 1)));
             return;
         }
 
@@ -679,12 +711,24 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public int FirstSetBit(int start, int count)
     {
+        if (start < 0)
+            start = 0;
+
+        if (count <= 0 || start >= BitCount)
+            return -1;
+
         int end = start + count;
         if (end <= start)
             return -1;
 
+        if (end > BitCount)
+            end = BitCount;
+
         int startSlot = start / BITS_PER_SLOT;
         int endSlot = (end - 1) / BITS_PER_SLOT + 1;
+
+        if (startSlot >= SlotCount)
+            return -1;
 
         ulong startBitmask = START_MASK[start % BITS_PER_SLOT];
         ulong endBitmask = END_MASK[(end - 1) % BITS_PER_SLOT];
@@ -751,19 +795,23 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(bits);
+        var hash = new HashCode();
+        int effectiveSlotCount = GetEffectiveSlotCount();
+        hash.Add(effectiveSlotCount);
+
+        for (int i = 0; i < effectiveSlotCount; i++)
+            hash.Add(bits[i]);
+
+        return hash.ToHashCode();
     }
 
     public bool Add(int item)
     {
-        return Set(item);
+        return !Set(item);
     }
 
     public void ExceptWith(BitSet mask)
     {
-        if (SlotCount < mask.SlotCount)
-            SlotCount = mask.SlotCount;
-
         int count = System.Math.Min(SlotCount, mask.SlotCount);
         for (int i = 0; i < count; i++)
         {
@@ -774,12 +822,12 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void ExceptWith(BitSet other, BitSet result)
     {
-        result.SlotCount = System.Math.Min(SlotCount, other.SlotCount);
+        result.SlotCount = SlotCount;
 
         for (int i = 0; i < result.SlotCount; i++)
         {
             ulong slotBits = bits[i];
-            ulong otherSlotBits = other.bits[i];
+            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
             result.bits[i] = slotBits & ~otherSlotBits;
         }
     }
@@ -799,15 +847,15 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void IntersectWith(BitSet other)
     {
-        if (SlotCount < other.SlotCount)
-            SlotCount = other.SlotCount;
-
         int count = System.Math.Min(SlotCount, other.SlotCount);
         for (int i = 0; i < count; i++)
         {
             ulong otherSlotBits = other.bits[i];
             bits[i] &= otherSlotBits;
         }
+
+        for (int i = count; i < SlotCount; i++)
+            bits[i] = 0;
     }
 
     public void IntersectWith(BitSet other, BitSet result)
@@ -830,9 +878,10 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         }
         else
         {
-            foreach (var index in this)
+            var setToKeep = MaterializeSet(other);
+            for (int index = FirstSetBit(); index >= 0; index = FirstSetBit(index + 1))
             {
-                if (!other.Contains(index))
+                if (!setToKeep.Contains(index))
                     Reset(index);
             }
         }
@@ -840,20 +889,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public bool IsProperSubsetOf(BitSet other)
     {
-        bool propper = false;
-        for (int i = 0; i < SlotCount; i++)
-        {
-            ulong slotBits = bits[i];
-            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
-
-            if ((slotBits & otherSlotBits) != slotBits)
-                return false;
-
-            if (slotBits != otherSlotBits)
-                propper = true;
-        }
-
-        return propper;
+        return other is not null && IsSubsetOf(other) && !Equals(other);
     }
 
     public bool IsProperSubsetOf(IEnumerable<int> other)
@@ -861,34 +897,22 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         if (other is BitSet set)
             return IsProperSubsetOf(set);
 
-        int count = 0;
+        var otherSet = MaterializeSet(other);
+        if (Count >= otherSet.Count)
+            return false;
+
         foreach (var index in this)
         {
-            if (!other.Contains(index))
+            if (!otherSet.Contains(index))
                 return false;
-
-            count++;
         }
 
-        return count < other.Count();
+        return true;
     }
 
     public bool IsProperSupersetOf(BitSet other)
     {
-        bool propper = false;
-        for (int i = 0; i < SlotCount; i++)
-        {
-            ulong slotBits = bits[i];
-            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
-
-            if ((slotBits & otherSlotBits) != otherSlotBits)
-                return false;
-
-            if (slotBits != otherSlotBits)
-                propper = true;
-        }
-
-        return propper;
+        return other is not null && IsSupersetOf(other) && !Equals(other);
     }
 
     public bool IsProperSupersetOf(IEnumerable<int> other)
@@ -896,16 +920,17 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         if (other is BitSet set)
             return IsProperSupersetOf(set);
 
-        int count = 0;
-        foreach (var index in this)
-        {
-            if (!other.Contains(index))
-                return false;
+        var otherSet = MaterializeSet(other);
+        if (Count <= otherSet.Count)
+            return false;
 
-            count++;
+        foreach (var index in otherSet)
+        {
+            if (!Test(index))
+                return false;
         }
 
-        return count > other.Count();
+        return true;
     }
 
     public bool IsSubsetOf(BitSet other)
@@ -926,9 +951,10 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         if (other is BitSet set)
             return IsSubsetOf(set);
 
+        var otherSet = MaterializeSet(other);
         foreach (var index in this)
         {
-            if (!other.Contains(index))
+            if (!otherSet.Contains(index))
                 return false;
         }
 
@@ -937,15 +963,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public bool IsSupersetOf(BitSet other)
     {
-        for (int i = 0; i < SlotCount; i++)
-        {
-            ulong slotBits = bits[i];
-            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
-            if ((slotBits & otherSlotBits) != otherSlotBits)
-                return false;
-        }
-
-        return true;
+        return other is not null && other.IsSubsetOf(this);
     }
 
     public bool IsSupersetOf(IEnumerable<int> other)
@@ -992,6 +1010,9 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public bool Equals(BitSet other)
     {
+        if (other is null)
+            return false;
+
         int count = System.Math.Max(SlotCount, other.SlotCount);
         for (int i = 0; i < count; i++)
         {
@@ -1006,7 +1027,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public override bool Equals(object? obj)
     {
-        return obj is BitSet set && Equals(bits, set.bits);
+        return obj is BitSet set && Equals(set);
     }
 
     public bool SetEquals(IEnumerable<int> other)
@@ -1014,10 +1035,11 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         if (other is BitSet set)
             return Equals(set);
 
-        if (Count != other.Count())
+        var otherSet = MaterializeSet(other);
+        if (Count != otherSet.Count)
             return false;
 
-        foreach (var index in other)
+        foreach (var index in otherSet)
         {
             if (!Test(index))
                 return false;
@@ -1028,14 +1050,14 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void SymmetricExceptWith(BitSet other)
     {
-        if (SlotCount > other.SlotCount)
+        if (SlotCount < other.SlotCount)
             SlotCount = other.SlotCount;
 
         for (int i = 0; i < SlotCount; i++)
         {
             ulong slotBits = bits[i];
-            ulong otherSlotBits = other.bits[i];
-            bits[i] = (slotBits & ~otherSlotBits) | (~slotBits & otherSlotBits);
+            ulong otherSlotBits = i < other.SlotCount ? other.bits[i] : 0;
+            bits[i] = slotBits ^ otherSlotBits;
         }
     }
 
@@ -1047,7 +1069,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         {
             ulong slotBits = bits[i];
             ulong otherSlotBits = other.bits[i];
-            result.bits[i] = (slotBits & ~otherSlotBits) | (~slotBits & otherSlotBits);
+            result.bits[i] = slotBits ^ otherSlotBits;
         }
     }
 
@@ -1056,18 +1078,11 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         if (other is BitSet set)
         {
             SymmetricExceptWith(set);
+            return;
         }
-        else
-        {
-            foreach (var index in this)
-            {
-                foreach (var otherIndex in other)
-                {
-                    if (index == otherIndex)
-                        Reset(index);
-                }
-            }
-        }
+
+        foreach (var index in MaterializeSet(other))
+            Toggle(index);
     }
 
     public void UnionWith(BitSet mask)
@@ -1221,49 +1236,44 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public void ShiftLeft(int bitsToShift)
     {
-        ShiftRight(0, BitCount, bitsToShift);
+        ShiftLeft(0, BitCount, bitsToShift);
     }
 
     public void ShiftLeft(int start, int bitsToShift)
     {
-        ShiftRight(start, BitCount, bitsToShift);
+        ShiftLeft(start, BitCount, bitsToShift);
     }
 
-    // TODO : Fix me!
     public void ShiftLeft(int start, int end, int bitsToShift)
     {
-        if (start < 0 || end <= 0 || start >= end)
-            throw new ArgumentException("Invalid bit range");
-
-        if (bitsToShift >= end - start)
+        if (bitsToShift < 0)
         {
-            ResetRange(start, end - start);
+            ShiftRight(start, end, -bitsToShift);
             return;
         }
 
-        int startSlot = start / BITS_PER_SLOT;
-        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
-        int slotsToShift = endSlot - startSlot;
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
 
-        if (endSlot > SlotCount)
-            SlotCount = endSlot;
+        int length = end - start;
+        if (bitsToShift == 0)
+            return;
 
-        for (int i = endSlot - 1; i >= startSlot; i--)
+        if (bitsToShift >= length)
         {
-            ulong shifted = bits[i - slotsToShift] << bitsToShift;
-
-            if (bitsToShift > 0 && i > startSlot)
-            {
-                ulong carry = bits[i - 1] >> (BITS_PER_SLOT - bitsToShift);
-                shifted |= carry;
-            }
-
-            bits[i] = shifted;
+            ResetRange(start, length);
+            return;
         }
 
-        ulong mask = ((1UL << (end - start + 1)) - 1UL) << start % BITS_PER_SLOT;
-        for (int i = startSlot; i < endSlot; i++)
-            bits[i] = (bits[i] & ~mask) | ((bits[i] & mask) << bitsToShift);
+        bool[] buffer = new bool[length];
+        for (int i = 0; i < length; i++)
+            buffer[i] = Test(start + i);
+
+        for (int i = length - 1; i >= bitsToShift; i--)
+            SetBitValue(start + i, buffer[i - bitsToShift]);
+
+        for (int i = 0; i < bitsToShift; i++)
+            Reset(start + i);
     }
 
     public void ShiftRight(int bitsToShift)
@@ -1276,43 +1286,36 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         ShiftRight(start, BitCount, bitsToShift);
     }
 
-    // TODO : Fix me!
     public void ShiftRight(int start, int end, int bitsToShift)
     {
-        if (start < 0 || end <= 0 || start >= end)
-            throw new ArgumentException("Invalid bit range");
-
-        if (bitsToShift >= end - start)
+        if (bitsToShift < 0)
         {
-            ResetRange(start, end - start);
+            ShiftLeft(start, end, -bitsToShift);
             return;
         }
 
-        int startSlot = start / BITS_PER_SLOT;
-        int endSlot = (end - 1) / BITS_PER_SLOT + 1;
-        int slotsToShift = endSlot - startSlot;
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
 
-        if (endSlot > SlotCount)
-            SlotCount = endSlot;
+        int length = end - start;
+        if (bitsToShift == 0)
+            return;
 
-        ulong shifted = 0;
-
-        for (int i = endSlot - 1; i >= startSlot; i--)
+        if (bitsToShift >= length)
         {
-            ulong carry = i == startSlot ? bits[i] << (BITS_PER_SLOT - bitsToShift) : bits[i] << (BITS_PER_SLOT - bitsToShift) | shifted >> bitsToShift;
-            shifted = bits[i] >> bitsToShift;
-            bits[i] = carry;
+            ResetRange(start, length);
+            return;
         }
 
-        int mask = (1 << bitsToShift) - 1;
-        ulong maskBits = (ulong) mask << (BITS_PER_SLOT - bitsToShift);
+        bool[] buffer = new bool[length];
+        for (int i = 0; i < length; i++)
+            buffer[i] = Test(start + i);
 
-        for (int i = endSlot - slotsToShift; i < endSlot; i++)
-        {
-            bits[i] &= maskBits;
-            bits[i] |= shifted << (BITS_PER_SLOT - bitsToShift);
-            shifted >>= bitsToShift;
-        }
+        for (int i = 0; i < length - bitsToShift; i++)
+            SetBitValue(start + i, buffer[i + bitsToShift]);
+
+        for (int i = length - bitsToShift; i < length; i++)
+            Reset(start + i);
     }
 
     public void RotateLeft(int start, int bitsToRotate)
@@ -1320,9 +1323,28 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         RotateLeft(start, BitCount, bitsToRotate);
     }
 
-    // TODO : Implement me!
     public void RotateLeft(int start, int end, int bitsToRotate)
     {
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
+
+        int length = end - start;
+        if (length == 0)
+            return;
+
+        bitsToRotate %= length;
+        if (bitsToRotate < 0)
+            bitsToRotate += length;
+
+        if (bitsToRotate == 0)
+            return;
+
+        bool[] buffer = new bool[length];
+        for (int i = 0; i < length; i++)
+            buffer[i] = Test(start + i);
+
+        for (int i = 0; i < length; i++)
+            SetBitValue(start + i, buffer[(i - bitsToRotate + length) % length]);
     }
 
     public void RotateRight(int start, int bitsToRotate)
@@ -1330,9 +1352,28 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         RotateRight(start, BitCount, bitsToRotate);
     }
 
-    // TODO : Implement me!
     public void RotateRight(int start, int end, int bitsToRotate)
     {
+        if (start < 0 || end <= 0 || start >= end)
+            throw new ArgumentException("Invalid bit range");
+
+        int length = end - start;
+        if (length == 0)
+            return;
+
+        bitsToRotate %= length;
+        if (bitsToRotate < 0)
+            bitsToRotate += length;
+
+        if (bitsToRotate == 0)
+            return;
+
+        bool[] buffer = new bool[length];
+        for (int i = 0; i < length; i++)
+            buffer[i] = Test(start + i);
+
+        for (int i = 0; i < length; i++)
+            SetBitValue(start + i, buffer[(i + bitsToRotate) % length]);
     }
 
     public IEnumerator<int> GetEnumerator()
@@ -1357,22 +1398,40 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
 
     public static bool operator <=(BitSet left, BitSet right)
     {
-        return ReferenceEquals(left, right) || left is null ? right is null : right.IsSubsetOf(left);
+        if (ReferenceEquals(left, right))
+            return true;
+
+        if (left is null || right is null)
+            return false;
+
+        return left.IsSubsetOf(right);
     }
 
     public static bool operator <(BitSet left, BitSet right)
     {
-        return !ReferenceEquals(left, right) && left is null && right is null && right.IsProperSubsetOf(left);
+        if (ReferenceEquals(left, right) || left is null || right is null)
+            return false;
+
+        return left.IsProperSubsetOf(right);
     }
 
     public static bool operator >=(BitSet left, BitSet right)
     {
-        return !(left < right);
+        if (ReferenceEquals(left, right))
+            return true;
+
+        if (left is null || right is null)
+            return false;
+
+        return left.IsSupersetOf(right);
     }
 
     public static bool operator >(BitSet left, BitSet right)
     {
-        return !(left <= right);
+        if (ReferenceEquals(left, right) || left is null || right is null)
+            return false;
+
+        return left.IsProperSupersetOf(right);
     }
 
     public static BitSet operator &(BitSet left, BitSet right)
