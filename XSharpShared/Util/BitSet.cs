@@ -1121,7 +1121,7 @@ public class BitSet : ISet<int>, IReadOnlySet<int>, ISerializable
         if (slotDiff > 0)
         {
             for (int i = 0; i < slotDiff; i++)
-                bits.Add(MASK);
+                bits.Add(0);
         }
 
         if (endSlot == startSlot + 1)
